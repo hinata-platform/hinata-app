@@ -218,7 +218,7 @@ class _BoardColumnState extends State<_BoardColumn> {
                                   fontSize: AppType.caption,
                                   fontWeight: FontWeight.w600,
                                   color: overWip
-                                      ? AppColors.danger
+                                      ? AppColors.dangerInk
                                       : AppColors.inkSoft,
                                 ),
                               ),

@@ -379,7 +379,7 @@ class _LabelChip extends StatelessWidget {
                         LucideIcons.check,
                         size: 14,
                         color: selected
-                            ? AppColors.accentStrong
+                            ? AppColors.accentInk
                             : AppColors.inkFaint,
                       )
                     : const SizedBox.shrink(),
@@ -390,7 +390,7 @@ class _LabelChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                  color: selected ? AppColors.accentInk : AppColors.inkSoft,
                 ),
               ),
               if (onDelete != null) ...[

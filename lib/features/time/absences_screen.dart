@@ -34,7 +34,7 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_scope_row.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
-import '../../core/widgets/hive_widgets.dart' show PageHead, PrimaryButton;
+import '../../core/widgets/hive_widgets.dart' show PrimaryButton;
 import '../../core/widgets/soft_card.dart';
 import '../absences/absence_actions.dart';
 import '../absences/absence_balances_panel.dart';
@@ -228,7 +228,13 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
 
   void _switchScope(String scope) {
     if (_scope == scope) return;
-    setState(() => _scope = scope);
+    setState(() {
+      _scope = scope;
+      // The docked search belongs to the absences; another list docks only
+      // the scope, and coming back finds the filters, with the search button
+      // still washed if a query is set.
+      _searching = false;
+    });
     // Only a list that has nothing yet: each keeps its own pages, so coming
     // back to one is the rows that were already there, where they were.
     if (scope == kAbsenceScopeBalances || scope == kAbsenceScopeTeam) return;
@@ -449,8 +455,8 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
                 ),
               ]
             : const [],
-        bottom: compact && managed ? _scopeRow(team) : null,
-        bottomHeight: compact && managed ? kGlassDockRow : 0,
+        bottom: compact ? _dock(managed, team) : null,
+        bottomHeight: compact ? kGlassDockRow : 0,
         child: compact
             ? _body(managed)
             : Column(
@@ -463,11 +469,9 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
                       context.pageGutter,
                       12,
                     ),
-                    child: PageHead(
-                      title: context.t('nav.time'),
+                    child: TimeHead(
+                      current: TimeView.absences,
                       actions: [
-                        const TimeViewSwitcher(current: TimeView.absences),
-                        const SizedBox(width: 8),
                         PrimaryButton(
                           icon: LucideIcons.calendarPlus,
                           label: context.t(
@@ -511,35 +515,128 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
     await followAbsenceChoice(context, chosen);
   }
 
-  /// The lists, each a glass pill of its own, as on the approvals page. The
-  /// team calendar joins them only while it exists.
+  /// The lists the reader may open. The team calendar joins them only while
+  /// it exists.
+  List<GlassScope> _scopes(bool team) => [
+    for (final (scope, icon) in [
+      (kAbsenceScopeMine, LucideIcons.calendarOff),
+      (kAbsenceScopeRequests, LucideIcons.listChecks),
+      (kAbsenceScopeInbox, LucideIcons.inbox),
+      (kAbsenceScopeBalances, LucideIcons.wallet),
+      if (team) (kAbsenceScopeTeam, LucideIcons.usersRound),
+    ])
+      (key: scope, icon: icon, label: context.t('absence.view.scope.$scope')),
+  ];
+
+  /// The lists on a wide window, each a glass pill of its own, as on the
+  /// approvals page. There is room for all of them side by side.
   Widget _scopeRow(bool team) => GlassScopeRow(
-    scopes: [
-      for (final (scope, icon) in [
-        (kAbsenceScopeMine, LucideIcons.calendarOff),
-        (kAbsenceScopeRequests, LucideIcons.listChecks),
-        (kAbsenceScopeInbox, LucideIcons.inbox),
-        (kAbsenceScopeBalances, LucideIcons.wallet),
-        if (team) (kAbsenceScopeTeam, LucideIcons.usersRound),
-      ])
-        (key: scope, icon: icon, label: context.t('absence.view.scope.$scope')),
-    ],
+    scopes: _scopes(team),
     active: _shownScope,
     onSelected: _switchScope,
   );
 
-  /// The gap over the first row of the list.
+  /// The list on screen as one pill that opens the others — the phone's form.
   ///
-  /// On a phone the scopes are docked into the app bar and the filters are the
-  /// line right under them, so the two read as one head. A full gutter between
-  /// them pushed the filters a finger's width away from the pills they belong
-  /// with; 6 points leave them as close together as the title and the scopes
-  /// above. Without the dock (module off) the ordinary gutter stands.
+  /// Five pills of their own were a row, and the filters under them a second
+  /// one: three lines in the blur with the title. Folded into one pill the
+  /// scope rides at the head of the filter row, and its wash says when the
+  /// page is not on the reader's own absences, which is where it opens.
+  Widget _scopePill(bool team) {
+    final scopes = _scopes(team);
+    final shown = scopes.firstWhere(
+      (scope) => scope.key == _shownScope,
+      orElse: () => scopes.first,
+    );
+    return Tooltip(
+      message: context.t('absence.view.scopeMenu'),
+      child: GlassFilterPill(
+        icon: shown.icon,
+        label: shown.label,
+        active: shown.key != kAbsenceScopeMine,
+        onTap: (anchor) => unawaited(_pickScope(anchor, scopes)),
+      ),
+    );
+  }
+
+  Future<void> _pickScope(Rect? anchor, List<GlassScope> scopes) async {
+    if (anchor == null) return;
+    final picked = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor,
+      width: 240,
+      value: _shownScope,
+      items: [
+        for (final scope in scopes)
+          GlassMenuItem(
+            value: scope.key,
+            label: scope.label,
+            leading: Icon(scope.icon, size: 16, color: AppColors.inkSoft),
+          ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    _switchScope(picked);
+  }
+
+  /// The phone's one docked row: the scope, then the search and the filters
+  /// of the reader's own absences, scrolling sideways together. The search
+  /// field takes the row over only while somebody types in it.
+  ///
+  /// The filters narrow the absences alone, so the other lists dock the scope
+  /// by itself rather than pills that would do nothing there.
+  Widget _dock(bool managed, bool team) {
+    final mine = _shownScope == kAbsenceScopeMine;
+    final searching = _searching && mine;
+    final gutter = context.pageGutter;
+    return Padding(
+      // The scroller carries the gutter so the pills run to the screen's edge;
+      // the search field, which does not scroll, takes it outside.
+      padding: EdgeInsets.symmetric(horizontal: searching ? gutter : 0),
+      // The bar hands the reserved height down as a tight constraint; the
+      // Align lets the row come in under it.
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: GlassSearchDock(
+          searching: searching,
+          controller: _search,
+          hint: context.t('absence.view.search'),
+          onChanged: _onSearchChanged,
+          onClose: () => setState(() => _searching = false),
+          controls: SizedBox(
+            height: kGlassControlHeight,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: gutter),
+              child: Row(
+                children: [
+                  if (managed) _scopePill(team),
+                  if (mine) ...[
+                    if (managed) const SizedBox(width: 8),
+                    GlassSearchButton(
+                      tooltip: context.t('absence.view.search'),
+                      active: _query.isNotEmpty,
+                      onTap: () => setState(() => _searching = true),
+                    ),
+                    for (final pill in _filterPills()) ...[
+                      const SizedBox(width: 8),
+                      pill,
+                    ],
+                  ],
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// The gap over the first row of the list: on a phone the docked row is
+  /// already counted in the top gutter, so the ordinary gutter follows it.
   EdgeInsets _padding() => EdgeInsets.fromLTRB(
     context.pageGutter,
-    context.isCompact
-        ? context.topGutter + (_managed ? 6 : context.pageGutter)
-        : 0,
+    context.isCompact ? context.topGutter + context.pageGutter : 0,
     context.pageGutter,
     context.pageGutter + context.bottomGutter,
   );
@@ -571,10 +668,12 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
           controller: _scroll,
           slivers: [
             SliverPadding(padding: EdgeInsets.only(top: padding.top)),
-            SliverPadding(
-              padding: horizontal.copyWith(bottom: 12),
-              sliver: SliverToBoxAdapter(child: _filters()),
-            ),
+            // A phone docks them in the app bar instead.
+            if (!context.isCompact)
+              SliverPadding(
+                padding: horizontal.copyWith(bottom: 12),
+                sliver: SliverToBoxAdapter(child: _filters()),
+              ),
             if (managed) ..._pending(horizontal),
             ..._absenceRows(state, horizontal, managed),
             SliverPadding(
@@ -604,59 +703,46 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
     ],
   );
 
-  /// The page's tools. On a phone they are one docked line — the search takes
-  /// the row over only while somebody types in it, the way the list's do; a
-  /// field above a row of pills put three lines of chrome over the first
-  /// absence. On a wide window they lay out and wrap.
-  Widget _filters() => context.isCompact
-      ? Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: GlassSearchDock(
-            searching: _searching,
+  /// The page's tools on a wide window: the search field and, beside it, the
+  /// filters and the order. (A phone docks them, see [_dock].)
+  ///
+  /// The field gives way rather than the pills: in one wrap of fixed parts
+  /// the order alone fell onto a third line at tablet width, under the scopes
+  /// and the filters. Here the field takes at most two parts in seven of the
+  /// row and the pills the rest, so they share a line wherever the pills fit,
+  /// and where they do not they wrap among themselves beside the field.
+  Widget _filters() => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Flexible(
+        flex: 2,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 260),
+          child: GlassSearchField(
             controller: _search,
             hint: context.t('absence.view.search'),
             onChanged: _onSearchChanged,
-            onClose: () => setState(() => _searching = false),
-            controls: SizedBox(
-              height: kGlassControlHeight,
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                // The gutter is spent outside; inside it would clip the last
-                // pill rather than let it scroll into view.
-                clipBehavior: Clip.none,
-                child: Row(
-                  children: [
-                    GlassSearchButton(
-                      tooltip: context.t('absence.view.search'),
-                      active: _query.isNotEmpty,
-                      onTap: () => setState(() => _searching = true),
-                    ),
-                    for (final pill in _filterPills()) ...[
-                      const SizedBox(width: 8),
-                      pill,
-                    ],
-                  ],
-                ),
-              ),
-            ),
           ),
-        )
-      : Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            SizedBox(
-              width: 260,
-              child: GlassSearchField(
-                controller: _search,
-                hint: context.t('absence.view.search'),
-                onChanged: _onSearchChanged,
-              ),
-            ),
-            ..._filterPills(),
-          ],
-        );
+        ),
+      ),
+      const SizedBox(width: 8),
+      Flexible(
+        flex: 5,
+        child: Padding(
+          // The pills are shorter than the field; centred on its first line.
+          padding: const EdgeInsets.only(
+            top: (kGlassPillHeight - kGlassControlHeight) / 2,
+          ),
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: _filterPills(),
+          ),
+        ),
+      ),
+    ],
+  );
 
   List<Widget> _filterPills() {
     final localizations = MaterialLocalizations.of(context);

@@ -501,7 +501,7 @@ class _SelectableScope extends StatelessWidget {
               Icon(
                 selected ? LucideIcons.check : LucideIcons.plus,
                 size: 14,
-                color: selected ? AppColors.accentStrong : AppColors.inkFaint,
+                color: selected ? AppColors.accentInk : AppColors.inkFaint,
               ),
               const SizedBox(width: 7),
               Column(
@@ -513,7 +513,7 @@ class _SelectableScope extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
-                      color: selected ? AppColors.accentStrong : AppColors.ink,
+                      color: selected ? AppColors.accentInk : AppColors.ink,
                     ),
                   ),
                   Text(

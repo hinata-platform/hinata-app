@@ -144,7 +144,7 @@ class _DockedSelectionToggle extends StatelessWidget {
                 child: Icon(
                   active ? LucideIcons.listX : LucideIcons.listChecks,
                   size: 18,
-                  color: active ? AppColors.accentStrong : AppColors.ink,
+                  color: active ? AppColors.accentInk : AppColors.ink,
                 ),
               ),
             ),

@@ -94,7 +94,7 @@ class _FocusItem extends StatelessWidget {
                                 fontFamily: AppTheme.fontMono,
                                 fontSize: AppType.caption,
                                 color: due.late
-                                    ? AppColors.danger
+                                    ? AppColors.dangerInk
                                     : AppColors.inkFaint,
                               ),
                             ),
@@ -524,7 +524,7 @@ class _Bars extends StatelessWidget {
                         fontFamily: AppTheme.fontMono,
                         fontSize: AppType.caption,
                         color: b.today
-                            ? AppColors.accentStrong
+                            ? AppColors.accentInk
                             : AppColors.inkFaint,
                         fontWeight: b.today ? FontWeight.w700 : FontWeight.w400,
                       ),

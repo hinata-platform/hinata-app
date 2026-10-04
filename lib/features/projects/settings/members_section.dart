@@ -180,7 +180,7 @@ class _LeadStar extends StatelessWidget {
                   Icon(
                     isLead ? LucideIcons.star : LucideIcons.star,
                     size: 15,
-                    color: isLead ? AppColors.accentStrong : AppColors.inkFaint,
+                    color: isLead ? AppColors.accentInk : AppColors.inkFaint,
                   ),
                   if (isLead) ...[
                     const SizedBox(width: 6),

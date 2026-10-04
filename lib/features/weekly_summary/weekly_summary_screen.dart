@@ -844,7 +844,7 @@ class _ContributorRow extends StatelessWidget {
               fontFamily: AppTheme.fontMono,
               fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
-              color: rank <= 3 ? AppColors.accentStrong : AppColors.inkFaint,
+              color: rank <= 3 ? AppColors.accentInk : AppColors.inkFaint,
             ),
           ),
         ),

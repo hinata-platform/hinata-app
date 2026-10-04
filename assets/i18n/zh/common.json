@@ -1939,7 +1939,8 @@
       },
       "noMatch": "没有匹配项",
       "noMatchMessage": "没有符合这些筛选条件的缺勤。",
-      "clearFilters": "清除筛选"
+      "clearFilters": "清除筛选",
+      "scopeMenu": "选择列表"
     },
     "team": {
       "group": "小组",
@@ -2448,7 +2449,8 @@
     "subpages": "子页面",
     "moveUnder": "移动到…下",
     "moveUnderTitle": "移动到哪个页面下？",
-    "pageActions": "页面操作"
+    "pageActions": "页面操作",
+    "resultCount": "结果：{{count}}"
   },
   "md": {
     "heading1": "标题 1",

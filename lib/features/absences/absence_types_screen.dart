@@ -357,7 +357,7 @@ class _Badge extends StatelessWidget {
       style: TextStyle(
         fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
-        color: tone ?? AppColors.accentStrong,
+        color: tone ?? AppColors.accentInk,
       ),
     ),
   );

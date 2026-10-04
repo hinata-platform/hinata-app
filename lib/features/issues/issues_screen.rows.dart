@@ -186,10 +186,33 @@ class _IssueTableHeader extends StatelessWidget {
   }
 }
 
+/// The narrowest list width at which the issue table still gives its title a
+/// fair share, at text scale 1.
+///
+/// The table spends about 190 px on fixed parts (card padding, the id column,
+/// the gaps, the chevron) and divides the rest 5 : 3 : 3 : 3 : 2, so the title
+/// gets 5/16 of it, less its type glyph. At 1000 px that leaves the title some
+/// 220 px, roughly thirty characters: enough to tell two issues apart. On a
+/// tablet's ~680 px it was ~120 px, about fifteen characters, and every title
+/// in the list read "Wire up project …". Below this width the list draws the
+/// phone's cards instead, which give the title the full width and two lines.
+const double kIssueTableMinWidth = 1000;
+
+/// Whether a list [width] px wide draws issues as a table or as cards. One
+/// rule for every issue list, so the same window never shows the table on one
+/// page and cards on the next. Pass the width the list really has (a
+/// [LayoutBuilder] or [SliverLayoutBuilder]), not the window's.
+///
+/// The threshold grows with the text scale: larger text needs more pixels for
+/// the same number of characters, in the title and in the badges beside it.
+bool issueTableFits(BuildContext context, double width) =>
+    width >= MediaQuery.textScalerOf(context).scale(kIssueTableMinWidth);
+
 class IssueRow extends StatelessWidget {
   const IssueRow({
     super.key,
     required this.issue,
+    this.table,
     this.assignee,
     this.assigneeAvatar,
     this.assigneePronouns,
@@ -202,6 +225,12 @@ class IssueRow extends StatelessWidget {
   });
 
   final Issue issue;
+
+  /// Table line (true) or the phone's card (false). The host list decides it
+  /// once with [issueTableFits] so its column header agrees with every row;
+  /// left null, the row falls back to the window's layout class.
+  final bool? table;
+
   final String? assignee;
   final String? assigneeAvatar;
   final String? assigneePronouns;
@@ -221,7 +250,7 @@ class IssueRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final due = dueLabel(context, issue.dueDate);
-    final compact = context.isCompact;
+    final compact = table == null ? context.isCompact : !table!;
     final name = assignee ?? '';
 
     final tap = selectionMode
@@ -320,7 +349,9 @@ class IssueRow extends StatelessWidget {
                       style: TextStyle(
                         fontFamily: AppTheme.fontMono,
                         fontSize: AppType.caption,
-                        color: due.late ? AppColors.danger : AppColors.inkSoft,
+                        color: due.late
+                            ? AppColors.dangerInk
+                            : AppColors.inkSoft,
                       ),
                     ),
                   ],
@@ -438,7 +469,7 @@ class IssueRow extends StatelessWidget {
                   fontFamily: AppTheme.fontMono,
                   fontSize: AppType.caption,
                   color: due != null && due.late
-                      ? AppColors.danger
+                      ? AppColors.dangerInk
                       : AppColors.inkSoft,
                 ),
               ),
@@ -490,7 +521,7 @@ class _SelectBox extends StatelessWidget {
     selected ? LucideIcons.squareCheck : LucideIcons.square,
     size: 18,
     color: selected
-        ? AppColors.accentStrong
+        ? AppColors.accentInk
         : AppColors.inkFaint.withValues(alpha: 0.8),
   );
 }

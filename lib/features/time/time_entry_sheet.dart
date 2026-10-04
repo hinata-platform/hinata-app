@@ -941,7 +941,7 @@ class _ModeButton extends StatelessWidget {
               Icon(
                 icon,
                 size: 15,
-                color: selected ? AppColors.accentStrong : AppColors.inkSoft,
+                color: selected ? AppColors.accentInk : AppColors.inkSoft,
               ),
               const SizedBox(width: 8),
               Flexible(
@@ -951,9 +951,7 @@ class _ModeButton extends StatelessWidget {
                   style: TextStyle(
                     fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkSoft,
+                    color: selected ? AppColors.accentInk : AppColors.inkSoft,
                   ),
                 ),
               ),

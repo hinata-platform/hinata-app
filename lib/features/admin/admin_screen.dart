@@ -877,7 +877,7 @@ class _NavItem extends StatelessWidget {
                   Icon(
                     meta.icon,
                     size: 17,
-                    color: active ? AppColors.accentStrong : tokens.inkSoft,
+                    color: active ? AppColors.accentInk : tokens.inkSoft,
                   ),
                   const SizedBox(width: 11),
                   Expanded(
@@ -886,7 +886,7 @@ class _NavItem extends StatelessWidget {
                       style: TextStyle(
                         fontSize: AppType.label,
                         fontWeight: active ? FontWeight.w600 : FontWeight.w500,
-                        color: active ? AppColors.accentStrong : tokens.ink,
+                        color: active ? AppColors.accentInk : tokens.ink,
                       ),
                       overflow: TextOverflow.ellipsis,
                     ),

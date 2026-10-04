@@ -792,7 +792,7 @@ class _ActRow extends StatelessWidget {
                           style: TextStyle(
                             fontSize: AppType.label,
                             fontWeight: FontWeight.w700,
-                            color: danger ? AppColors.danger : AppColors.ink,
+                            color: danger ? AppColors.dangerInk : AppColors.ink,
                           ),
                         ),
                         Text(

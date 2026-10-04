@@ -258,9 +258,7 @@ class _ServerManagerSheetState extends State<_ServerManagerSheet> {
                         : context.t('common.edit'),
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
-                      color: _editing
-                          ? AppColors.accentStrong
-                          : AppColors.inkSoft,
+                      color: _editing ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                 ),
@@ -468,9 +466,7 @@ class _ServerRow extends StatelessWidget {
                     child: Icon(
                       LucideIcons.server,
                       size: 21,
-                      color: active
-                          ? AppColors.accentStrong
-                          : AppColors.inkSoft,
+                      color: active ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                   const SizedBox(width: 13),

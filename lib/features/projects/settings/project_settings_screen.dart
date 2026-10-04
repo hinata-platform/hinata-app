@@ -1041,7 +1041,7 @@ class _SaveBar extends StatelessWidget {
               Icon(
                 valid ? LucideIcons.info : LucideIcons.triangleAlert,
                 size: 17,
-                color: valid ? AppColors.accentStrong : AppColors.danger,
+                color: valid ? AppColors.accentInk : AppColors.danger,
               ),
               const SizedBox(width: 8),
               Expanded(

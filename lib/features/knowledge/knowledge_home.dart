@@ -11,10 +11,18 @@ import 'knowledge_tokens.dart';
 import '../../core/theme/app_type.dart';
 
 /// KB home: search + a card grid of spaces + a "recently updated" list.
+///
+/// The query belongs to the page, not to this widget: on a phone the search is
+/// a pill docked in the app bar, on a wide window a field at the top of this
+/// body, and a window resized across the line keeps what was typed.
 class KnowledgeHome extends StatefulWidget {
   const KnowledgeHome({
     super.key,
     required this.repo,
+    required this.search,
+    required this.query,
+    required this.onQueryChanged,
+    required this.showSearchField,
     required this.onOpenArticle,
     required this.onOpenSpace,
     required this.onNewSpace,
@@ -22,6 +30,16 @@ class KnowledgeHome extends StatefulWidget {
   });
 
   final KnowledgeRepository repo;
+
+  /// The page's search text, shared with the docked search on a phone.
+  final TextEditingController search;
+  final String query;
+  final ValueChanged<String> onQueryChanged;
+
+  /// Whether this body draws the search field itself (a wide window). On a
+  /// phone the field lives in the app bar's docked row instead.
+  final bool showSearchField;
+
   final ValueChanged<String> onOpenArticle;
   final ValueChanged<String> onOpenSpace;
   final VoidCallback onNewSpace;
@@ -34,32 +52,26 @@ class KnowledgeHome extends StatefulWidget {
 }
 
 class _KnowledgeHomeState extends State<KnowledgeHome> {
-  final _search = TextEditingController();
-  String _query = '';
-
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final repo = widget.repo;
-    final matches = _query.trim().isEmpty
+    final query = widget.query.trim().toLowerCase();
+    final matches = query.isEmpty
         ? null
         : repo.articles.where((a) {
             final sp = repo.spaceById(a.spaceId);
             final hay = '${a.title} ${sp?.name ?? ''} ${a.labels.join(' ')}'
                 .toLowerCase();
-            return hay.contains(_query.toLowerCase());
+            return hay.contains(query);
           }).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _searchBar(),
-        const SizedBox(height: 22),
+        if (widget.showSearchField) ...[
+          _searchBar(),
+          const SizedBox(height: 22),
+        ],
         if (matches != null)
           _results(matches)
         else ...[
@@ -121,9 +133,9 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
               label: context.t('knowledge.searchHint'),
               textField: true,
               child: TextField(
-                controller: _search,
+                controller: widget.search,
                 textInputAction: TextInputAction.search,
-                onChanged: (v) => setState(() => _query = v),
+                onChanged: widget.onQueryChanged,
                 style: const TextStyle(fontSize: AppType.body),
                 decoration: InputDecoration(
                   isCollapsed: true,
@@ -138,17 +150,18 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
               ),
             ),
           ),
-          if (_query.isNotEmpty) _clearButton(),
+          if (widget.query.isNotEmpty) _clearButton(),
         ],
       ),
     );
   }
 
   Widget _clearButton() {
-    void clear() => setState(() {
-      _query = '';
-      _search.clear();
-    });
+    void clear() {
+      widget.search.clear();
+      widget.onQueryChanged('');
+    }
+
     // The outer detector catches an 11-point band above, below and before
     // the 26-point face (37×48 in all; the end side stays flush so the face
     // keeps its place). A tap on the face itself is won by the InkWell, so it
@@ -195,7 +208,10 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _sectionHeader(
-          '${matches.length} result${matches.length != 1 ? 's' : ''}',
+          context.t(
+            'knowledge.resultCount',
+            variables: {'count': '${matches.length}'},
+          ),
         ),
         const SizedBox(height: 12),
         for (final a in matches)

@@ -519,7 +519,7 @@ class _IssueFilterDialogState extends State<_IssueFilterDialog> {
             onPressed: _toggleArchived,
             style: TextButton.styleFrom(
               foregroundColor: _filter.archivedOnly
-                  ? AppColors.accentStrong
+                  ? AppColors.accentInk
                   : tokens.inkSoft,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               minimumSize: const Size(0, 30),
@@ -627,7 +627,7 @@ class _OptionRowState extends State<_OptionRow> {
                       ? LucideIcons.circleCheckBig
                       : LucideIcons.circle,
                   size: 18,
-                  color: widget.selected ? AppColors.accentStrong : t.inkFaint,
+                  color: widget.selected ? AppColors.accentInk : t.inkFaint,
                 ),
               ],
             ),
@@ -683,7 +683,7 @@ class _ScopeChip extends StatelessWidget {
                 style: TextStyle(
                   fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
-                  color: active ? AppColors.accentStrong : tokens.ink,
+                  color: active ? AppColors.accentInk : tokens.ink,
                 ),
               ),
               if (count > 0) ...[

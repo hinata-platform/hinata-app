@@ -328,7 +328,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
             Icon(
               LucideIcons.search,
               size: 16,
-              color: focused ? AppColors.accentStrong : AppColors.textSecondary,
+              color: focused ? AppColors.accentInk : AppColors.textSecondary,
             ),
             const SizedBox(width: 9),
             Expanded(
@@ -476,7 +476,7 @@ class _PersonRow extends StatelessWidget {
                 selected ? LucideIcons.circleCheck : LucideIcons.circle,
                 size: 18,
                 color: selected
-                    ? AppColors.accentStrong
+                    ? AppColors.accentInk
                     : AppColors.textSecondary.withValues(alpha: 0.7),
               ),
               const SizedBox(width: 10),
