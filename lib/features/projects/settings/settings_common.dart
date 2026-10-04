@@ -823,9 +823,7 @@ class _TargetRow extends StatelessWidget {
                   Icon(
                     selected ? LucideIcons.circleCheckBig : LucideIcons.circle,
                     size: 18,
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkFaint,
+                    color: selected ? AppColors.accentInk : AppColors.inkFaint,
                   ),
                 ],
               ),

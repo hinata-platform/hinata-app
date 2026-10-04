@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:fl_chart/fl_chart.dart';
@@ -5,6 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassFilterPill, kGlassDockRow;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -25,6 +28,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/soft_card.dart';
+import '../shell/page_chrome.dart';
 import 'logo_raster.dart';
 import 'report_pdf.dart';
 import 'reports_cubit.dart';
@@ -331,43 +335,89 @@ class _ReportsViewState extends State<_ReportsView> {
 
   // ── build ─────────────────────────────────────────────────────────────────
 
+  /// Export needs a loaded report to export.
+  bool get _canExport => _projects.isNotEmpty && !_loading && _error == null;
+
+  /// The phone's export: the bar draws the button, the page owns the menu and
+  /// hangs it off the button's rect.
+  Future<void> _exportFromBar(Rect? anchor) async {
+    // Null means the button was not on screen to measure.
+    if (anchor == null) return;
+    final format = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor,
+      value: '',
+      items: _exportItems(context),
+    );
+    if (format != null && mounted) await _export(format);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: context.pagePadding,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          PageHead(
-            title: context.t('reports.title'),
-            subtitle: _projectName().isEmpty
-                ? context.t('reports.subtitle')
-                : context.t(
-                    'reports.forProject',
-                    variables: {'project': _projectName()},
-                  ),
-            actions: [
-              if (_projects.isNotEmpty && !_loading && _error == null)
-                _ExportButton(onSelected: _export),
-            ],
-          ),
-          const SizedBox(height: 16),
-          if (_projects.isNotEmpty)
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: _ProjectPicker(
-                projects: _projects,
-                selected: _projectId,
-                onChanged: (value) {
-                  _projectId = value;
-                  _loadReports();
-                },
+    final compact = context.isCompact;
+    final scope = _projects.isEmpty
+        ? null
+        : _ProjectScopePill(
+            projects: _projects,
+            selected: _projectId,
+            onChanged: (value) {
+              _projectId = value;
+              _loadReports();
+            },
+          );
+    // On a phone the bar already says "Reports": export is its one action and
+    // the project scope docks below it in the blur, instead of a second head,
+    // a button and a dropdown stacked down the page above the first chart. On
+    // a wide window the page carries its own head with all three.
+    return PageChrome(
+      title: context.t('reports.title'),
+      actions: compact && _canExport
+          ? [
+              PageAction(
+                icon: LucideIcons.download,
+                label: context.t('reports.export'),
+                primary: true,
+                onTap: (anchor) => unawaited(_exportFromBar(anchor)),
               ),
-            ),
-          const SizedBox(height: 20),
-          _body(context),
-        ],
+            ]
+          : const [],
+      bottom: compact && scope != null
+          ? Padding(
+              padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+              // The bar hands the reserved height down as a tight constraint;
+              // the Align lets the shorter pill centre in it.
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: scope,
+              ),
+            )
+          : null,
+      bottomHeight: compact && scope != null ? kGlassDockRow : 0,
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: context.pagePadding,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!compact) ...[
+              PageHead(
+                title: context.t('reports.title'),
+                subtitle: _projectName().isEmpty
+                    ? context.t('reports.subtitle')
+                    : context.t(
+                        'reports.forProject',
+                        variables: {'project': _projectName()},
+                      ),
+                actions: [
+                  ?scope,
+                  if (_canExport) _ExportButton(onSelected: _export),
+                ],
+              ),
+              const SizedBox(height: 20),
+            ],
+            _body(context),
+          ],
+        ),
       ),
     );
   }
@@ -828,6 +878,25 @@ class _SectionTitle extends StatelessWidget {
 
 // ─────────────────────────── controls ──────────────────────────────────────
 
+/// The export formats, one list for the wide button and the phone's bar action.
+List<GlassMenuItem<String>> _exportItems(BuildContext context) => [
+  GlassMenuItem(
+    value: 'pdf',
+    label: context.t('reports.exportPdf'),
+    leading: const Icon(LucideIcons.fileText, size: 18),
+  ),
+  GlassMenuItem(
+    value: 'csv',
+    label: context.t('reports.exportCsv'),
+    leading: const Icon(LucideIcons.table, size: 18),
+  ),
+  GlassMenuItem(
+    value: 'json',
+    label: context.t('reports.exportJson'),
+    leading: const Icon(LucideIcons.braces, size: 18),
+  ),
+];
+
 class _ExportButton extends StatelessWidget {
   const _ExportButton({required this.onSelected});
   final ValueChanged<String> onSelected;
@@ -837,23 +906,7 @@ class _ExportButton extends StatelessWidget {
     return GlassPopupMenu<String>(
       value: '',
       onSelected: onSelected,
-      items: [
-        GlassMenuItem(
-          value: 'pdf',
-          label: context.t('reports.exportPdf'),
-          leading: const Icon(LucideIcons.fileText, size: 18),
-        ),
-        GlassMenuItem(
-          value: 'csv',
-          label: context.t('reports.exportCsv'),
-          leading: const Icon(LucideIcons.table, size: 18),
-        ),
-        GlassMenuItem(
-          value: 'json',
-          label: context.t('reports.exportJson'),
-          leading: const Icon(LucideIcons.braces, size: 18),
-        ),
-      ],
+      items: _exportItems(context),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         decoration: BoxDecoration(
@@ -881,8 +934,13 @@ class _ExportButton extends StatelessWidget {
   }
 }
 
-class _ProjectPicker extends StatelessWidget {
-  const _ProjectPicker({
+/// The project the report covers, as a glass pill in the docked row (phone)
+/// or in the page head (wide).
+///
+/// Never washed amber: a report always covers exactly one project, so there is
+/// no unscoped state for the wash to tell apart from this one.
+class _ProjectScopePill extends StatelessWidget {
+  const _ProjectScopePill({
     required this.projects,
     required this.selected,
     required this.onChanged,
@@ -890,47 +948,30 @@ class _ProjectPicker extends StatelessWidget {
 
   final List<Project> projects;
   final String? selected;
-  final ValueChanged<String?> onChanged;
+  final ValueChanged<String> onChanged;
 
-  @override
-  Widget build(BuildContext context) {
-    final label = selected != null
-        ? projects.where((p) => p.id == selected).firstOrNull?.name ??
-              projects.first.name
-        : projects.first.name;
-    return GlassPopupMenu<String?>(
-      value: selected,
-      onSelected: onChanged,
+  Project get _current =>
+      projects.where((p) => p.id == selected).firstOrNull ?? projects.first;
+
+  Future<void> _pick(BuildContext context, Rect? anchor) async {
+    // Null means the pill is no longer on screen: nothing to hang a menu off.
+    if (anchor == null) return;
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor,
+      value: _current.id,
       items: [
         for (final p in projects) GlassMenuItem(value: p.id, label: p.name),
       ],
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 240),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          border: Border.all(color: AppColors.hairline),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: AppType.label,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(LucideIcons.chevronDown, size: 16, color: AppColors.inkSoft),
-          ],
-        ),
-      ),
     );
+    if (chosen != null && chosen != _current.id) onChanged(chosen);
   }
+
+  @override
+  Widget build(BuildContext context) => GlassFilterPill(
+    icon: LucideIcons.folderKanban,
+    label: _current.name,
+    active: false,
+    onTap: (anchor) => unawaited(_pick(context, anchor)),
+  );
 }

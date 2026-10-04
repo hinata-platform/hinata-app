@@ -615,7 +615,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
         style: TextStyle(
           fontSize: AppType.caption,
           height: 1.4,
-          color: short ? AppColors.danger : AppColors.textSecondary,
+          color: short ? AppColors.dangerInk : AppColors.textSecondary,
         ),
       ),
     );

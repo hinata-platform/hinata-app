@@ -463,13 +463,9 @@ class _TimeViewState extends State<_TimeView> {
                     context.pageGutter,
                     12,
                   ),
-                  child: PageHead(
-                    title: context.t('nav.time'),
-                    actions: [
-                      const TimeViewSwitcher(current: TimeView.list),
-                      const SizedBox(width: 8),
-                      TimeAddButton(onNewEntry: _newEntry),
-                    ],
+                  child: TimeHead(
+                    current: TimeView.list,
+                    actions: [TimeAddButton(onNewEntry: _newEntry)],
                   ),
                 ),
                 Padding(

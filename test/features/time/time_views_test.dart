@@ -181,6 +181,53 @@ void main() {
     expect(find.text('time.view.timesheet'), findsNothing);
     expect(answered, isNull);
   });
+
+  // --- the wide switcher (HIN-110) -------------------------------------------
+
+  Widget switcher(double width) => MediaQuery(
+    data: const MediaQueryData(size: Size(1440, 900)),
+    child: BlocProvider<TimePolicyCubit>.value(
+      value: FakeTimePolicyCubit(TimePolicySnapshot.none, _NoTimeRepository()),
+      child: MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: SizedBox(
+              width: width,
+              child: const Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TimeViewSwitcher(current: TimeView.calendar),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  testWidgets('with room to spare, every view says its name', (tester) async {
+    tester.view
+      ..physicalSize = const Size(2400, 900)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(switcher(2000));
+    await tester.pumpAndSettle();
+
+    for (final view in TimeView.values.where((v) => !v.requiresApprovals)) {
+      expect(find.text(view.labelKey), findsOneWidget);
+    }
+  });
+
+  testWidgets('short of room, only the one on screen keeps its name', (
+    tester,
+  ) async {
+    await tester.pumpWidget(switcher(600));
+    await tester.pumpAndSettle();
+
+    expect(find.text('time.view.calendar'), findsOneWidget);
+    // The others are glyphs, named by their tooltips rather than on screen.
+    expect(find.text('time.view.timesheet'), findsNothing);
+    expect(find.byTooltip('time.view.timesheet'), findsOneWidget);
+  });
 }
 
 /// A repository nothing asks anything of. The fake cubit already holds the

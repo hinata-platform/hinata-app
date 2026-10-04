@@ -630,9 +630,7 @@ class _Option extends StatelessWidget {
                   Icon(
                     icon,
                     size: 17,
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkSoft,
+                    color: selected ? AppColors.accentInk : AppColors.inkSoft,
                   ),
                   const SizedBox(width: 11),
                   Expanded(

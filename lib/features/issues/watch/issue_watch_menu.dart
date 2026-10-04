@@ -80,7 +80,7 @@ GlassMenuItem<T> issueWatchMenuItem<T>(
   leading: Icon(
     watching ? LucideIcons.eye : LucideIcons.eyeOff,
     size: 16,
-    color: watching ? AppColors.accentStrong : AppColors.inkSoft,
+    color: watching ? AppColors.accentInk : AppColors.inkSoft,
   ),
   trailing: Icon(forwardChevron(context), size: 15, color: AppColors.inkFaint),
 );
@@ -272,7 +272,7 @@ class _ToggleRowState extends State<_ToggleRow> {
                     widget.watching ? LucideIcons.eye : LucideIcons.eyeOff,
                     size: 17,
                     color: widget.watching
-                        ? AppColors.accentStrong
+                        ? AppColors.accentInk
                         : t.ink.withValues(alpha: disabled ? 0.4 : 1),
                   ),
                 ),

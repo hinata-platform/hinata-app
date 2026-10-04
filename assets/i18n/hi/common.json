@@ -1939,7 +1939,8 @@
       },
       "noMatch": "कुछ नहीं मिला",
       "noMatchMessage": "इन फ़िल्टरों से कोई अनुपस्थिति मेल नहीं खाती।",
-      "clearFilters": "फ़िल्टर हटाएँ"
+      "clearFilters": "फ़िल्टर हटाएँ",
+      "scopeMenu": "सूची चुनें"
     },
     "team": {
       "group": "समूह",
@@ -2448,7 +2449,8 @@
     "subpages": "उप-पृष्ठ",
     "moveUnder": "…के नीचे ले जाएँ",
     "moveUnderTitle": "किस पेज के नीचे ले जाएँ?",
-    "pageActions": "पेज की कार्रवाइयाँ"
+    "pageActions": "पेज की कार्रवाइयाँ",
+    "resultCount": "परिणाम: {{count}}"
   },
   "md": {
     "heading1": "शीर्षक 1",

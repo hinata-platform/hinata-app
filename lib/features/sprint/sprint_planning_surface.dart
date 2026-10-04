@@ -564,7 +564,7 @@ class _StateBadge extends StatelessWidget {
           Icon(
             active ? LucideIcons.zap : LucideIcons.clock,
             size: 12,
-            color: active ? AppColors.accentStrong : AppColors.inkSoft,
+            color: active ? AppColors.accentInk : AppColors.inkSoft,
           ),
           const SizedBox(width: 4),
           Text(
@@ -572,7 +572,7 @@ class _StateBadge extends StatelessWidget {
             style: TextStyle(
               fontSize: AppType.caption,
               fontWeight: FontWeight.w600,
-              color: active ? AppColors.accentStrong : AppColors.inkSoft,
+              color: active ? AppColors.accentInk : AppColors.inkSoft,
             ),
           ),
         ],

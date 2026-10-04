@@ -1170,14 +1170,22 @@ class _IssuesScreenState extends State<IssuesScreen> {
                               context.pageGutter,
                               14,
                             ),
-                            sliver: Builder(
-                              builder: (context) {
+                            // Measured here rather than read off the window:
+                            // the rail and the gutters take their share first,
+                            // and the table only pays off when what is left
+                            // gives the title room to be read.
+                            sliver: SliverLayoutBuilder(
+                              builder: (context, constraints) {
+                                final table = issueTableFits(
+                                  context,
+                                  constraints.crossAxisExtent,
+                                );
                                 // Lightweight row descriptors (headers / issues /
                                 // spacers) fed to a lazy builder, so only on-screen
                                 // rows are ever built — a workspace with thousands of
                                 // issues no longer constructs every SoftCard per frame.
                                 final entries = _grouping == IssueGrouping.none
-                                    ? _flatEntries(list)
+                                    ? _flatEntries(list, table: table)
                                     : _groupedEntries(sections);
                                 return SliverList.builder(
                                   itemCount: entries.length,
@@ -1187,6 +1195,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                     ref.avatars,
                                     ref.pronouns,
                                     ref.palette,
+                                    table: table,
                                   ),
                                 );
                               },
@@ -1357,8 +1366,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// Flat (ungrouped) row descriptors: an optional table header then one entry
   /// per issue. Cheap to build every frame — the actual [IssueRow] widgets are
   /// constructed lazily by [_buildEntry] only when scrolled into view.
-  List<_RowEntry> _flatEntries(List<Issue> list) => [
-    if (!context.isCompact) const _RowEntry.tableHeader(),
+  List<_RowEntry> _flatEntries(List<Issue> list, {required bool table}) => [
+    if (table) const _RowEntry.tableHeader(),
     for (final issue in list) _RowEntry.issue(issue),
   ];
 
@@ -1385,8 +1394,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
     Map<String, String> names,
     Map<String, String> avatars,
     Map<String, String> pronouns,
-    ProjectPalette palette,
-  ) {
+    ProjectPalette palette, {
+    required bool table,
+  }) {
     switch (entry.kind) {
       case _RowKind.tableHeader:
         return const _IssueTableHeader();
@@ -1411,6 +1421,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
             assigneeAvatar: avatars[issue.assigneeId],
             assigneePronouns: pronouns[issue.assigneeId],
             palette: palette,
+            table: table,
             selectionMode: _selectionMode,
             selected: _selected.containsKey(issue.id),
             onToggleSelect: () => _toggleSelection(issue),

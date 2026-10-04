@@ -115,7 +115,7 @@ class HolidayCalendarCard extends StatelessWidget {
                         fontSize: AppType.caption,
                         height: 1.35,
                         color: calendar.importFailed
-                            ? AppColors.danger
+                            ? AppColors.dangerInk
                             : AppColors.textSecondary,
                       ),
                     ),

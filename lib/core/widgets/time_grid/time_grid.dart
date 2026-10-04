@@ -1006,7 +1006,7 @@ class _DayHeading extends StatelessWidget {
           style: TextStyle(
             fontSize: AppType.caption,
             fontWeight: FontWeight.w600,
-            color: today ? AppColors.accentStrong : AppColors.inkFaint,
+            color: today ? AppColors.accentInk : AppColors.inkFaint,
           ),
         ),
         const SizedBox(height: 2),
@@ -1029,7 +1029,7 @@ class _DayHeading extends StatelessWidget {
                 style: TextStyle(
                   fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
-                  color: today ? AppColors.accentStrong : AppColors.ink,
+                  color: today ? AppColors.accentInk : AppColors.ink,
                 ),
               ),
             ),

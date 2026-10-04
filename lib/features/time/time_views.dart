@@ -13,7 +13,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass_chrome.dart' show kOnAmber;
-import '../../core/widgets/hive_widgets.dart' show GhostButton;
+import '../../core/widgets/hive_widgets.dart' show GhostButton, PageHead;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../absences/absence_actions.dart';
@@ -82,53 +82,169 @@ List<TimeView> visibleViews(TimePolicySnapshot policy) => [
     if (policy.approvalsEnabled || !view.requiresApprovals) view,
 ];
 
+/// The head every page of the module wears **on a wide window**: the module's
+/// name, the [TimeViewSwitcher] and the page's own [actions].
+///
+/// Its own row rather than [PageHead] with the switcher among the actions,
+/// because there every action is laid out at whatever width it asks for, and
+/// the switcher could not know how much room it has. Here the title and the
+/// actions take theirs first and the switcher is handed the rest, so it can
+/// name every view where they fit and fall back to glyphs only where they do
+/// not.
+class TimeHead extends StatelessWidget {
+  const TimeHead({super.key, required this.current, this.actions = const []});
+
+  final TimeView current;
+  final List<Widget> actions;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        // The page head's own title, at its own width — capped, so a large
+        // text scale shrinks the title the way [PageHead] does rather than
+        // pushing the switcher and the actions off the edge.
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
+          child: IntrinsicWidth(child: PageHead(title: context.t('nav.time'))),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: TimeViewSwitcher(current: current),
+          ),
+        ),
+        for (final action in actions) ...[const SizedBox(width: 10), action],
+      ],
+    ),
+  );
+}
+
 /// The switcher every page of the module wears **on a wide window**.
 ///
 /// A glass pill with one chip per view, the same control the Gantt chart uses.
 /// On a phone there is no room for it in the two lines the chrome is allowed,
 /// and it is [showTimeViewMenu] under the app bar's title instead.
+///
+/// Every view is named where the width it is given allows: a row of bare
+/// glyphs makes the reader recognise five pages by their shape. Where the names
+/// do not all fit, the one on screen keeps its name and the others fall back to
+/// glyphs with the name as a tooltip, and with less room still every chip is a
+/// glyph. Given no bound — placed straight into a row — it assumes the room a
+/// wide head used to have.
 class TimeViewSwitcher extends StatelessWidget {
   const TimeViewSwitcher({super.key, required this.current});
 
   final TimeView current;
 
+  /// A chip's padding and glyph around its label, and an icon-only chip, as
+  /// [GlassSwitchChip] draws them; the track's own inset and the gap between
+  /// chips, as [GlassSwitchBar] and [build] lay them out.
+  static const double _namedChrome = 12 + 15 + 5 + 12;
+  static const double _glyphChip = 11 + 18 + 11;
+  static const double _track = 12;
+  static const double _gap = 2;
+
   @override
   Widget build(BuildContext context) {
-    final iconOnly = !context.isExpanded;
     final views = visibleViews(context.watch<TimePolicyCubit>().state);
-    // Five words side by side are wider than the head has beside a title and
-    // the add button, so past four views only the one on screen is named and
-    // the others show their glyph, with the name as a tooltip.
-    final named = !iconOnly && views.length <= 4;
-    return GlassSwitchBar(
-      compact: iconOnly,
-      // Wider by a chip for each view past three, so a new one does not
-      // squeeze the ones that were already there.
-      maxWidth: iconOnly
-          ? 170 + 45.0 * (views.length - 3)
-          : named
-          ? 330 + 115.0 * (views.length - 3)
-          : 150 + 45.0 * views.length,
-      chips: [
-        for (final view in views) ...[
-          if (view != views.first) const SizedBox(width: 2),
-          GlassSwitchChip(
-            label: context.t(view.labelKey),
-            icon: view.icon,
-            active: view == current,
-            iconOnly: iconOnly || (!named && view != current),
-            // Going rather than pushing: the three are one destination seen
-            // three ways, so stepping back from the calendar belongs outside
-            // the module, not on the list you came through. The one you are on
-            // is not a button — null, so it does not ripple, take focus, or
-            // announce itself as one.
-            onTap: view == current ? null : () => context.go(view.route),
-          ),
-        ],
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final room = constraints.hasBoundedWidth
+            ? constraints.maxWidth
+            : _legacyRoom(context, views.length);
+        final labels = [for (final view in views) context.t(view.labelKey)];
+        final widths = _labelWidths(context, labels);
+        final gaps = _gap * (views.length - 1);
+        // A point of slack per chip: a measured label and a laid-out one can
+        // differ by a rounding, and a clipped last letter is worse than a
+        // glyph.
+        final allNamed =
+            _track +
+            gaps +
+            widths.fold<double>(0, (sum, w) => sum + w + _namedChrome + 1);
+        final currentIndex = views.indexOf(current);
+        final currentNamed =
+            _track +
+            gaps +
+            _glyphChip * (views.length - 1) +
+            (currentIndex < 0 ? _glyphChip : widths[currentIndex]) +
+            _namedChrome +
+            1;
+        final mode = allNamed <= room
+            ? _Naming.all
+            : currentNamed <= room
+            ? _Naming.current
+            : _Naming.none;
+        return GlassSwitchBar(
+          // The height of the bar follows the window, not the naming: on a
+          // tablet the head is a control row's height whatever it shows.
+          compact: !context.isExpanded,
+          maxWidth: room,
+          chips: [
+            for (final (index, view) in views.indexed) ...[
+              if (index > 0) const SizedBox(width: _gap),
+              GlassSwitchChip(
+                label: labels[index],
+                icon: view.icon,
+                active: view == current,
+                iconOnly: switch (mode) {
+                  _Naming.all => false,
+                  _Naming.current => view != current,
+                  _Naming.none => true,
+                },
+                // Going rather than pushing: the views are one destination
+                // seen several ways, so stepping back from the calendar belongs
+                // outside the module, not on the list you came through. The one
+                // you are on is not a button — null, so it does not ripple,
+                // take focus, or announce itself as one.
+                onTap: view == current ? null : () => context.go(view.route),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
+
+  /// Each label's width as the chip sets it.
+  static List<double> _labelWidths(BuildContext context, List<String> labels) {
+    final style = DefaultTextStyle.of(context).style.merge(
+      const TextStyle(fontSize: AppType.label, fontWeight: FontWeight.w700),
+    );
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    final painter = TextPainter(
+      textDirection: direction,
+      textScaler: scaler,
+      maxLines: 1,
+    );
+    try {
+      return [
+        for (final label in labels)
+          (painter
+                ..text = TextSpan(text: label, style: style)
+                ..layout())
+              .width,
+      ];
+    } finally {
+      painter.dispose();
+    }
+  }
+
+  /// The room assumed without a bound: the one on screen named on a large
+  /// window, glyphs only below it — what the switcher showed before it was
+  /// handed its width.
+  static double _legacyRoom(BuildContext context, int views) =>
+      context.isExpanded
+      ? _track + (_glyphChip + _gap) * views + 120
+      : _track + (_glyphChip + _gap) * views;
 }
+
+/// How many of the switcher's chips carry their name.
+enum _Naming { all, current, none }
 
 /// The "+", which is two things.
 ///

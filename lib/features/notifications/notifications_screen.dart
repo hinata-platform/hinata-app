@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/repositories/notification_repository.dart';
 import '../../core/blocs/paged_cubit.dart';
@@ -15,6 +16,7 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
+import '../shell/page_chrome.dart';
 import 'notifications_cubit.dart';
 import '../../core/theme/app_type.dart';
 
@@ -79,6 +81,10 @@ class _NotificationsScreenState extends State<_NotificationsBody> {
     if (mounted) setState(() => _markingAll = false);
   }
 
+  /// A tear-off rather than a closure, so the bar's action compares equal from
+  /// one build to the next and the chrome is not re-published every frame.
+  void _markAllFromBar(Rect? _) => _markAllRead(_cubit.state.items);
+
   Future<void> _delete(AppNotification notification) async {
     try {
       await _cubit.delete(notification.id);
@@ -124,121 +130,170 @@ class _NotificationsScreenState extends State<_NotificationsBody> {
     return BlocBuilder<NotificationsCubit, PagedState<AppNotification>>(
       bloc: _cubit,
       builder: (context, state) {
-        return RefreshIndicator(
-          onRefresh: _cubit.load,
-          child: AsyncView(
-            isLoading: state.isLoading,
-            hasData: state.hasData,
-            errorKey: state.errorKey,
-            onRetry: _cubit.load,
-            builder: (context) {
-              final notifications = state.items;
-              final unreadCount = notifications.where((n) => !n.read).length;
-              final groups = _groupByBucket(notifications);
-              final showEmpty = notifications.isEmpty;
-              final showLoader = state.isLoadingMore;
-              // Lazy builder instead of a concrete children list: the feed paginates
-              // (infinite scroll), so as pages accumulate only the on-screen group
-              // cards should be built, not every past group up-front.
-              final itemCount =
-                  1 +
-                  (showEmpty ? 1 : 0) +
-                  groups.length +
-                  (showLoader ? 1 : 0);
-              return ListView.builder(
-                controller: _scroll,
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: context.pagePadding,
-                itemCount: itemCount,
-                itemBuilder: (context, index) {
-                  if (index == 0) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        SectionHeader(
-                          title: context.t('notifications.title'),
-                          actionLabel: unreadCount > 0 && !_markingAll
-                              ? context.t('notifications.markAllRead')
-                              : null,
-                          onAction: () => _markAllRead(notifications),
-                        ),
-                        if (unreadCount > 0)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              context.t(
-                                'notifications.unreadCount',
-                                variables: {'count': '$unreadCount'},
-                              ),
-                              style: TextStyle(
-                                fontSize: AppType.label,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.accentInk,
-                              ),
-                            ),
-                          ),
-                        const SizedBox(height: 12),
-                      ],
-                    );
-                  }
-                  var i = index - 1;
-                  if (showEmpty) {
-                    if (i == 0) {
-                      return HiveEmptyState(
-                        title: context.t('notifications.title'),
-                        message: context.t('notifications.empty'),
-                      );
-                    }
-                    i -= 1;
-                  }
-                  if (i < groups.length) {
-                    final group = groups[i];
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        _GroupLabel(
-                          label: context.t(
-                            'notifications.group.${group.bucket.key}',
-                          ),
-                        ),
-                        SoftCard(
-                          padding: EdgeInsets.zero,
-                          child: Column(
-                            children: [
-                              for (var j = 0; j < group.items.length; j++) ...[
-                                if (j > 0)
-                                  Divider(
-                                    height: 1,
-                                    indent: 62,
-                                    color: AppColors.hairline2,
-                                  ),
-                                NotificationSwipe(
-                                  notification: group.items[j],
-                                  onDelete: _delete,
-                                  onToggleRead: _toggleRead,
-                                  child: _NotificationTile(
-                                    notification: group.items[j],
-                                    onTap: () => _open(group.items[j]),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 18),
-                      ],
-                    );
-                  }
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 20),
-                    child: Center(child: HiveLoader(size: 30)),
-                  );
-                },
-              );
-            },
-          ),
+        final compact = context.isCompact;
+        final unread = state.items.where((n) => !n.read).length;
+        return PageChrome(
+          title: context.t('notifications.title'),
+          // A phone's bar has room for one action, and this page has exactly
+          // one. While it runs the button spins rather than vanishing, so a
+          // second tap has nothing to land on. Nothing unread, nothing to do.
+          actions: compact && unread > 0
+              ? [
+                  PageAction(
+                    icon: LucideIcons.checkCheck,
+                    label: context.t('notifications.markAllRead'),
+                    primary: true,
+                    busy: _markingAll,
+                    onTap: _markAllFromBar,
+                  ),
+                ]
+              : const [],
+          child: _feed(context, state, compact: compact),
         );
       },
+    );
+  }
+
+  Widget _feed(
+    BuildContext context,
+    PagedState<AppNotification> state, {
+    required bool compact,
+  }) {
+    return RefreshIndicator(
+      onRefresh: _cubit.load,
+      child: AsyncView(
+        isLoading: state.isLoading,
+        hasData: state.hasData,
+        errorKey: state.errorKey,
+        onRetry: _cubit.load,
+        builder: (context) {
+          final notifications = state.items;
+          final unreadCount = notifications.where((n) => !n.read).length;
+          final groups = _groupByBucket(notifications);
+          final showEmpty = notifications.isEmpty;
+          final showLoader = state.isLoadingMore;
+          // Lazy builder instead of a concrete children list: the feed paginates
+          // (infinite scroll), so as pages accumulate only the on-screen group
+          // cards should be built, not every past group up-front.
+          final itemCount =
+              1 + (showEmpty ? 1 : 0) + groups.length + (showLoader ? 1 : 0);
+          return ListView.builder(
+            controller: _scroll,
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: context.pagePadding,
+            itemCount: itemCount,
+            itemBuilder: (context, index) {
+              if (index == 0) {
+                return _head(
+                  context,
+                  unreadCount: unreadCount,
+                  onMarkAll: compact ? null : () => _markAllRead(notifications),
+                );
+              }
+              var i = index - 1;
+              if (showEmpty) {
+                if (i == 0) {
+                  return HiveEmptyState(
+                    title: context.t('notifications.title'),
+                    message: context.t('notifications.empty'),
+                  );
+                }
+                i -= 1;
+              }
+              if (i < groups.length) {
+                final group = groups[i];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _GroupLabel(
+                      label: context.t(
+                        'notifications.group.${group.bucket.key}',
+                      ),
+                    ),
+                    SoftCard(
+                      padding: EdgeInsets.zero,
+                      child: Column(
+                        children: [
+                          for (var j = 0; j < group.items.length; j++) ...[
+                            if (j > 0)
+                              Divider(
+                                height: 1,
+                                indent: 62,
+                                color: AppColors.hairline2,
+                              ),
+                            NotificationSwipe(
+                              notification: group.items[j],
+                              onDelete: _delete,
+                              onToggleRead: _toggleRead,
+                              child: _NotificationTile(
+                                notification: group.items[j],
+                                onTap: () => _open(group.items[j]),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                  ],
+                );
+              }
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 20),
+                child: Center(child: HiveLoader(size: 30)),
+              );
+            },
+          );
+        },
+      ),
+    );
+  }
+
+  /// The count of unread items, and on a wide window the action beside it.
+  ///
+  /// No title: the bar above already says "Notifications", on a phone and on
+  /// a wide window alike, since this is a sub-page. The count is information,
+  /// not a heading, so it is one quiet line. On a phone the action lives in
+  /// the bar ([onMarkAll] is null); on a wide window the bar's own action
+  /// would sit at the far end of the window, so it stays by the count.
+  Widget _head(
+    BuildContext context, {
+    required int unreadCount,
+    required VoidCallback? onMarkAll,
+  }) {
+    if (unreadCount == 0) return const SizedBox(height: 4);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              context.t(
+                'notifications.unreadCount',
+                variables: {'count': '$unreadCount'},
+              ),
+              style: TextStyle(
+                fontSize: AppType.label,
+                fontWeight: FontWeight.w600,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ),
+          if (onMarkAll != null)
+            TextButton.icon(
+              onPressed: _markingAll ? null : onMarkAll,
+              style: TextButton.styleFrom(foregroundColor: AppColors.accentInk),
+              icon: const Icon(LucideIcons.checkCheck, size: 16),
+              label: Text(
+                context.t('notifications.markAllRead'),
+                style: const TextStyle(
+                  fontSize: AppType.caption,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

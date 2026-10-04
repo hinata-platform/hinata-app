@@ -172,7 +172,7 @@ class _FilterChip extends StatelessWidget {
               style: TextStyle(
                 fontSize: AppType.label,
                 fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                color: active ? AppColors.accentStrong : AppColors.ink,
+                color: active ? AppColors.accentInk : AppColors.ink,
               ),
             ),
             const SizedBox(width: 4),

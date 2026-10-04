@@ -1939,7 +1939,8 @@
       },
       "noMatch": "Nichts gefunden",
       "noMatchMessage": "Keine Abwesenheit passt zu diesen Filtern.",
-      "clearFilters": "Filter zurücksetzen"
+      "clearFilters": "Filter zurücksetzen",
+      "scopeMenu": "Liste wählen"
     },
     "team": {
       "group": "Gruppe",
@@ -2448,7 +2449,8 @@
     "subpages": "Unterseiten",
     "moveUnder": "Verschieben unter…",
     "moveUnderTitle": "Unter welche Seite verschieben?",
-    "pageActions": "Seitenaktionen"
+    "pageActions": "Seitenaktionen",
+    "resultCount": "Treffer: {{count}}"
   },
   "md": {
     "heading1": "Überschrift 1",
