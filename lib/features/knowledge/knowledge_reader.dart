@@ -603,7 +603,9 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
             child: Text(
               t.text,
               style: TextStyle(
-                fontSize: t.level == 3 ? 12 : 12.5,
+                fontSize: t.level == AppType.badge
+                    ? AppType.caption
+                    : AppType.label,
                 height: 1.35,
                 fontWeight: on ? FontWeight.w600 : FontWeight.w400,
                 color: on ? KbTokens.accent : AppColors.inkSoft,

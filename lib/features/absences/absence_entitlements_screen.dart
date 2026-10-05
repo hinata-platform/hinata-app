@@ -836,7 +836,7 @@ class _Figure extends StatelessWidget {
       Text(
         value,
         style: TextStyle(
-          fontSize: strong ? 14 : 13,
+          fontSize: strong ? AppType.body : AppType.label,
           fontWeight: strong ? FontWeight.w800 : FontWeight.w600,
           fontFeatures: const [FontFeature.tabularFigures()],
           color: strong ? AppColors.accentInk : AppColors.ink,

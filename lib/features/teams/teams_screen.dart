@@ -215,7 +215,7 @@ class _TeamsViewState extends State<_TeamsView> {
                           ),
                           mainAxisSpacing: 18,
                           crossAxisSpacing: 18,
-                          mainAxisExtent: 206,
+                          mainAxisExtent: context.tileExtent(206),
                         ),
                         // The dashed tile is the empty state only. Beside
                         // real teams it was a second way to the action the

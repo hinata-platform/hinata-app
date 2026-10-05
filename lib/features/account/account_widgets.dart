@@ -226,7 +226,7 @@ class AccountPill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = color ?? AppColors.accentStrong;
+    final fg = color ?? AppColors.accentInk;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
       decoration: BoxDecoration(
@@ -240,12 +240,16 @@ class AccountPill extends StatelessWidget {
             Icon(icon, size: 12, color: fg),
             const SizedBox(width: 4),
           ],
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: AppType.caption,
-              fontWeight: FontWeight.w700,
-              color: fg,
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppType.caption,
+                fontWeight: FontWeight.w700,
+                color: fg,
+              ),
             ),
           ),
         ],

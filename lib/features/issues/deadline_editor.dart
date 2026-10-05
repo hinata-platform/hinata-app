@@ -808,7 +808,7 @@ class DeadlineOffsetLabel extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
-                fontSize: compact ? 11.5 : 13,
+                fontSize: compact ? AppType.caption : AppType.label,
                 fontWeight: FontWeight.w600,
                 color: date == null ? AppColors.inkFaint : AppColors.ink,
               ),

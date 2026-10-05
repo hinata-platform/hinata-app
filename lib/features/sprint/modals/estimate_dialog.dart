@@ -144,7 +144,7 @@ class _PokerCard extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: muted ? AppTheme.fontUi : AppTheme.fontBrand,
-              fontSize: muted ? 14 : 24,
+              fontSize: muted ? AppType.body : AppType.display,
               fontWeight: FontWeight.w700,
               color: selected
                   ? kOnAmber
