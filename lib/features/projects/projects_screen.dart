@@ -277,7 +277,7 @@ class _ProjectsViewState extends State<_ProjectsView> {
                           ),
                           mainAxisSpacing: 18,
                           crossAxisSpacing: 18,
-                          mainAxisExtent: 210,
+                          mainAxisExtent: context.tileExtent(210),
                         ),
                         delegate: SliverChildBuilderDelegate(
                           (context, index) => _ProjectCard(

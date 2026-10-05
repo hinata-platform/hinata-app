@@ -874,7 +874,7 @@ class _MonthCell extends StatelessWidget {
           overflow: TextOverflow.clip,
           softWrap: false,
           style: TextStyle(
-            fontSize: emphatic ? 12 : 11,
+            fontSize: emphatic ? AppType.caption : AppType.caption,
             fontWeight: FontWeight.w700,
             color: AppColors.ink,
           ),

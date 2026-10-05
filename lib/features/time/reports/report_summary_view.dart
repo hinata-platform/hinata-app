@@ -148,7 +148,7 @@ class _Figure extends StatelessWidget {
                     value,
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: compact ? 18 : 22,
+                      fontSize: compact ? AppType.heading : AppType.display,
                       fontWeight: FontWeight.w600,
                       color: AppColors.ink,
                       height: 1.15,

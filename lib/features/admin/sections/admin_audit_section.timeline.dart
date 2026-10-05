@@ -255,7 +255,7 @@ class _MiniChip extends StatelessWidget {
             label,
             style: TextStyle(
               fontFamily: mono ? AppTheme.fontMono : null,
-              fontSize: mono ? 10.5 : 11,
+              fontSize: mono ? AppType.caption : AppType.caption,
               fontWeight: FontWeight.w600,
               color: c,
             ),

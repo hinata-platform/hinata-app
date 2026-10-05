@@ -240,7 +240,7 @@ class _DetailRow extends StatelessWidget {
                   value,
                   style: TextStyle(
                     fontFamily: mono ? AppTheme.fontMono : null,
-                    fontSize: mono ? 13 : 13.5,
+                    fontSize: mono ? AppType.label : AppType.label,
                     fontWeight: FontWeight.w600,
                     color: valueColor ?? tokens.ink,
                     height: 1.3,
