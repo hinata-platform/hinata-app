@@ -44,6 +44,7 @@ import '../../core/repositories/admin_repository.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
+import 'dashboard_columns.dart';
 import 'dashboard_cubit.dart';
 import '../../core/theme/app_type.dart';
 
@@ -66,19 +67,6 @@ const double _gap = 18;
 /// Width of the edit-mode picker fields and their anchored popovers (kept equal
 /// so the dropdown lines up exactly under its field).
 const double _kPickerWidth = 300;
-
-/// Stable card keys for show/hide personalisation. `hero` is the anchor card
-/// (with the board picker) and is never hideable.
-abstract final class _Card {
-  static const hero = 'hero';
-  static const focus = 'focus';
-  static const git = 'git';
-  static const kpis = 'kpis';
-  static const completion = 'completion';
-  static const tracker = 'tracker';
-  static const ranking = 'ranking';
-  static const away = 'away';
-}
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -255,10 +243,10 @@ class _DashboardViewState extends State<_DashboardView> {
   }
 
   Widget _content(BuildContext context, DashboardData data) {
-    final wide = !context.isCompact;
     // Effective personalisation: the live draft while editing, else the saved
     // snapshot from the server.
     final prefs = _editing ? _draft : data.prefs;
+    final cards = _cards(data, prefs);
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
@@ -282,7 +270,16 @@ class _DashboardViewState extends State<_DashboardView> {
             ),
           ],
           const SizedBox(height: 22),
-          if (wide) _wideGrid(data, prefs) else _stack(data, prefs),
+          // In view mode a hidden card is simply not there; in edit mode every
+          // card renders, dimmed with its toggle, so it can be switched back on.
+          DashboardColumns(
+            shown: {
+              for (final key in cards.keys)
+                if (_editing || !prefs.isHidden(key)) key,
+            },
+            gap: _gap,
+            card: (key) => _editableCard(key, cards[key]!, prefs.isHidden(key)),
+          ),
         ],
       ),
     );
@@ -310,104 +307,31 @@ class _DashboardViewState extends State<_DashboardView> {
 
   /// Every card the data has, by key.
   Map<String, Widget> _cards(DashboardData data, DashboardPrefs prefs) => {
-    _Card.hero: _sprintCard(data.activeBoard),
-    _Card.kpis: _Kpis(
+    DashboardCard.hero: _sprintCard(data.activeBoard),
+    DashboardCard.kpis: DashboardKpis(
       today: data.todayCount,
       completion: data.completion,
       projectIds: prefs.projectIds,
     ),
-    _Card.focus: _FocusCard(issues: data.todayTasks),
-    _Card.completion: _CompletionCard(completion: data.completion),
-    _Card.tracker: _TrackerCard(week: data.tracker, month: data.trackerMonth),
+    DashboardCard.focus: _FocusCard(issues: data.todayTasks),
+    DashboardCard.completion: _CompletionCard(completion: data.completion),
+    DashboardCard.tracker: DashboardTrackerCard(
+      week: data.tracker,
+      month: data.trackerMonth,
+    ),
     if (data.gitActivity.isNotEmpty)
-      _Card.git: _GitCard(events: data.gitActivity),
-    _Card.ranking: _LeaderboardCard(ranking: data.ranking),
+      DashboardCard.git: _GitCard(events: data.gitActivity),
+    DashboardCard.ranking: _LeaderboardCard(ranking: data.ranking),
     // Only with the team calendar on (HIN-118); otherwise it does not exist,
     // not even as a card that could be switched back on. The policy reads off
     // whenever absence management is, so one question covers both.
     if (context.read<TimePolicyCubit>().state.absenceCalendar.isOn)
-      _Card.away: const _AwayTodayCard(),
+      DashboardCard.away: const _AwayTodayCard(),
   };
-
-  // Desktop / tablet: the cards spread over golden columns by how tall they
-  // stand ([GoldenColumns]), one column while the content is narrower than φ².
-  //
-  // Not two fixed lists: without git activity, or with a card hidden, one side
-  // of a fixed split ended several hundred pixels above the other.
-  Widget _wideGrid(DashboardData data, DashboardPrefs prefs) {
-    final cards = _cards(data, prefs);
-    // In view mode a hidden card is simply not there; in edit mode every card
-    // renders, dimmed with its toggle, so it can be switched back on.
-    bool shown(String key) =>
-        cards.containsKey(key) && (_editing || !prefs.isHidden(key));
-    GoldenGroup<String>? group(
-      List<String> keys, {
-      required double weight,
-      bool wide = false,
-      bool lead = false,
-    }) {
-      final visible = keys.where(shown).toList();
-      return visible.isEmpty
-          ? null
-          : GoldenGroup(visible, weight: weight, wide: wide, lead: lead);
-    }
-
-    final groups = [
-      // The hero leads: it holds the board picker the page is personalised by.
-      group([_Card.hero], weight: 7, wide: true, lead: true),
-      group([_Card.kpis, _Card.completion], weight: 6),
-      group([_Card.focus], weight: 6),
-      group([_Card.away], weight: 4),
-      group([_Card.tracker], weight: 5, wide: true),
-      group([_Card.git], weight: 6),
-      group([_Card.ranking], weight: 5.5),
-    ].nonNulls.toList();
-    return GoldenColumns<String>(
-      groups: groups,
-      gap: _gap,
-      card: (key) => _editableCard(key, cards[key]!, prefs.isHidden(key)),
-    );
-  }
-
-  // Phone: one column.
-  Widget _stack(DashboardData data, DashboardPrefs prefs) {
-    final cards = _cards(data, prefs);
-    const order = [
-      _Card.hero,
-      _Card.kpis,
-      _Card.focus,
-      _Card.away,
-      _Card.completion,
-      _Card.tracker,
-      _Card.git,
-      _Card.ranking,
-    ];
-    return _column([
-      for (final key in order)
-        if (cards[key] case final card?) (key, card),
-    ], prefs);
-  }
-
-  /// Builds a column from `(cardKey, widget)` pairs: in view mode hidden cards
-  /// are dropped (and their gap with them); in edit mode every card renders,
-  /// wrapped with a show/hide toggle (hidden ones dimmed).
-  Widget _column(List<(String, Widget)> items, DashboardPrefs prefs) {
-    final children = <Widget>[];
-    for (final (key, widget) in items) {
-      final hidden = prefs.isHidden(key);
-      if (!_editing && hidden) continue;
-      if (children.isNotEmpty) children.add(const SizedBox(height: _gap));
-      children.add(_editableCard(key, widget, hidden));
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: children,
-    );
-  }
 
   Widget _editableCard(String key, Widget child, bool hidden) {
     // The hero is the personalisation anchor (holds the board picker) — always on.
-    if (!_editing || key == _Card.hero) return child;
+    if (!_editing || key == DashboardCard.hero) return child;
     return _HideableCard(
       hidden: hidden,
       onToggle: () => _toggleCard(key),

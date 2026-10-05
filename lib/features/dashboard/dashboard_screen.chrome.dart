@@ -76,6 +76,44 @@ class _CardHead extends StatelessWidget {
   }
 }
 
+/// What a panel with nothing to show says instead of drawing an empty chart
+/// or frame: one quiet sentence under its title. The panel keeps its place
+/// and its title, so it is still found where it always is, but it no longer
+/// spends a screen's worth of attention on zeros.
+class _EmptyLine extends StatelessWidget {
+  const _EmptyLine(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 6),
+    child: Text(
+      text,
+      style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+    ),
+  );
+}
+
+/// A panel that has nothing to show at all: its title and [_EmptyLine].
+class _EmptyPanel extends StatelessWidget {
+  const _EmptyPanel({required this.title, required this.message});
+
+  final String title;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) => _GlassCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _CardHead(title: title),
+        _EmptyLine(message),
+      ],
+    ),
+  );
+}
+
 // ══════════════════════ Customize (edit mode) ══════════════════════════════
 
 /// The header toggle. Desktop/tablet show icon + label; mobile shows the icon

@@ -420,7 +420,9 @@
     "awayMore": "و{{count}} آخرون",
     "awayOpen": "فتح تقويم الفريق",
     "showCard": "إظهار البطاقة",
-    "hideCard": "إخفاء البطاقة"
+    "hideCard": "إخفاء البطاقة",
+    "focusTimeNone": "لا يوجد وقت تركيز هذا الأسبوع بعد.",
+    "progressNone": "لا توجد مهام هنا بعد."
   },
   "comments": {
     "actionCamera": "التقاط صورة أو فيديو",
