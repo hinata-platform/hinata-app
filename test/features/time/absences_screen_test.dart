@@ -431,6 +431,50 @@ void main() {
     expect(find.text('absence.sick.reportedAndReturned'), findsOneWidget);
   });
 
+  testWidgets(
+    'the wide head\'s arrow reports sickness, as the calendar\'s does',
+    (tester) async {
+      wide(tester);
+      final repository = _FakeRequests();
+      await tester.pumpWidget(
+        host(
+          repository,
+          types: const [_vacationType, _sickType],
+          child: const TimeAbsencesScreen(),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // The request stays the button itself; the arrow beside it is the
+      // calendar's, with the sick report behind it.
+      expect(find.text('absence.request.ask'), findsWidgets);
+      await tester.tap(find.byTooltip('absence.sick.report'));
+      await tester.pumpAndSettle();
+      expect(find.text('absence.sick.report'), findsOneWidget);
+
+      await tester.tap(find.text('absence.sick.report'));
+      await tester.pumpAndSettle();
+      expect(find.text('absence.sick.title'), findsOneWidget);
+
+      await tester.tap(find.text('absence.sick.report'));
+      await tester.pumpAndSettle();
+      expect(repository.sickReports, 1);
+    },
+  );
+
+  testWidgets('without the module the head has no arrow to report with', (
+    tester,
+  ) async {
+    wide(tester);
+    await tester.pumpWidget(
+      host(_FakeRequests(), moduleOn: false, child: const TimeAbsencesScreen()),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byTooltip('absence.sick.report'), findsNothing);
+    expect(find.text('absence.sick.report'), findsNothing);
+  });
+
   // --- the module switch ---------------------------------------------------------
 
   testWidgets('with the module off there are absences, and no requests', (

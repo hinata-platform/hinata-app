@@ -35,27 +35,64 @@ part 'user_management_screen.rows.dart';
 /// page holds the app bar's title row and exactly one more.
 const double _kUmDockHeight = kGlassDockRow;
 
+/// Lets the admin shell's app-bar action open the invite dialog of the board
+/// in its pane: on a wide window the board is a section of the admin area and
+/// publishes no app bar of its own.
+class UserInviteController {
+  Future<void> Function()? _invite;
+
+  /// Opens the invite dialog of the board this controller is attached to.
+  void invite() => _invite?.call();
+}
+
 /// Admin **User management** board: a paginated directory of every platform
 /// user with search, role/status/origin filters, sortable columns, a per-user
 /// detail drawer, bulk actions and the full account lifecycle. Admin-gated.
+///
+/// A section of the admin area, the way the audit log is one: on compact it
+/// owns its own [PageChrome] (title, back, docked filters, Invite); on a wide
+/// window it lives in the admin rail layout's pane, with its filter row above
+/// the directory and Invite in the admin shell's app bar via
+/// [inviteController].
 class UserManagementScreen extends StatelessWidget {
-  const UserManagementScreen({super.key, this.focusUserId});
+  const UserManagementScreen({
+    super.key,
+    this.focusUserId,
+    this.onBack,
+    this.inviteController,
+  });
 
   /// When set (e.g. from an admin approval deep-link `?user=<id>`), the matching
   /// user's detail drawer is opened automatically once the board has loaded.
   final String? focusUserId;
 
+  /// Compact only: the back handler of the section's own [PageChrome].
+  final VoidCallback? onBack;
+
+  /// Wide only: how the admin shell's Invite action reaches this board.
+  final UserInviteController? inviteController;
+
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => UserManagementCubit(context.read<AdminRepository>()),
-    child: _UserManagementBoard(focusUserId: focusUserId),
+    child: _UserManagementBoard(
+      focusUserId: focusUserId,
+      onBack: onBack,
+      inviteController: inviteController,
+    ),
   );
 }
 
 class _UserManagementBoard extends StatefulWidget {
-  const _UserManagementBoard({this.focusUserId});
+  const _UserManagementBoard({
+    this.focusUserId,
+    this.onBack,
+    this.inviteController,
+  });
 
   final String? focusUserId;
+  final VoidCallback? onBack;
+  final UserInviteController? inviteController;
 
   @override
   State<_UserManagementBoard> createState() => _UserManagementScreenState();
@@ -103,7 +140,22 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
   @override
   void initState() {
     super.initState();
+    widget.inviteController?._invite = _invite;
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _UserManagementBoard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.inviteController != widget.inviteController) {
+      oldWidget.inviteController?._invite = null;
+      widget.inviteController?._invite = _invite;
+    }
+    // A new deep link while the board is already open: open that user too.
+    if (oldWidget.focusUserId != widget.focusUserId) {
+      _focusHandled = false;
+      if (!_loading) _openFocusedUser();
+    }
   }
 
   /// Opens the drawer for [UserManagementScreen.focusUserId] once, fetching the
@@ -124,6 +176,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
 
   @override
   void dispose() {
+    widget.inviteController?._invite = null;
     _debounce?.cancel();
     _searchCtrl.dispose();
     super.dispose();
@@ -403,10 +456,31 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
-    // Title + Invite action + the search/filter toolbar all ride in the shell's
-    // glass app bar (via PageChrome) — the screen body draws no chrome of its own.
+    final board = Stack(
+      children: [
+        _body(context, compact: compact),
+        if (_sel.isNotEmpty) _bulkBar(context),
+      ],
+    );
+    // Wide: a section in the admin rail layout, whose PageChrome carries the
+    // title and Invite; the filter row stays in-pane above the directory, as
+    // the audit log's does.
+    if (!compact) {
+      return Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _dockedToolbar(context, compact: false),
+          ),
+          Expanded(child: board),
+        ],
+      );
+    }
+    // Compact: title, back, Invite and the search/filter row all ride in the
+    // shell's glass app bar (via PageChrome); the body draws no chrome.
     return PageChrome(
       title: context.t('admin.um.title'),
+      onBack: widget.onBack,
       actions: [
         PageAction(
           icon: LucideIcons.userPlus,
@@ -415,15 +489,13 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
           primary: true,
         ),
       ],
-      bottom: _dockedToolbar(context, compact: compact),
-      bottomHeight: compact ? _kUmDockHeight : 0,
-      child: Stack(
-        children: [_body(context), if (_sel.isNotEmpty) _bulkBar(context)],
-      ),
+      bottom: _dockedToolbar(context, compact: true),
+      bottomHeight: _kUmDockHeight,
+      child: board,
     );
   }
 
-  Widget _body(BuildContext context) {
+  Widget _body(BuildContext context, {required bool compact}) {
     if (_loading && _page == null) {
       return const Center(child: HiveLoader());
     }
@@ -446,11 +518,14 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
       );
     }
     final page = _page!;
+    // Compact scrolls under the glass app bar and spans the page; wide sits in
+    // the admin pane, which already clears the bar and keeps the gutters.
+    final gutter = compact ? context.pageGutter : 0.0;
     return ListView(
       padding: EdgeInsets.fromLTRB(
-        context.pageGutter,
-        14 + context.topGutter,
-        context.pageGutter,
+        gutter,
+        compact ? 14 + context.topGutter : 0,
+        gutter,
         16 + context.bottomGutter + (_sel.isNotEmpty ? 64 : 0),
       ),
       children: [

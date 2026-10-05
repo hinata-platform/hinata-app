@@ -472,16 +472,26 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
                     child: TimeHead(
                       current: TimeView.absences,
                       actions: [
-                        PrimaryButton(
-                          icon: LucideIcons.calendarPlus,
-                          label: context.t(
-                            managed
-                                ? 'absence.request.ask'
-                                : 'availability.timeOff.add',
+                        // With absence management the calendar's split
+                        // button: the request up front, and behind the arrow
+                        // the same rows as the phone's "+", the sick report
+                        // among them. Without it there is nothing to report
+                        // sickness with, and an arrow would only repeat the
+                        // button.
+                        if (managed)
+                          TimeAddButton(
+                            onNewEntry: () => unawaited(askForAbsence(context)),
+                            label: 'absence.request.ask',
+                            icon: LucideIcons.calendarPlus,
+                            menuTooltip: 'absence.sick.report',
+                          )
+                        else
+                          PrimaryButton(
+                            icon: LucideIcons.calendarPlus,
+                            label: context.t('availability.timeOff.add'),
+                            onPressed: () => unawaited(askForAbsence(context)),
+                            collapseToIcon: true,
                           ),
-                          onPressed: () => unawaited(askForAbsence(context)),
-                          collapseToIcon: true,
-                        ),
                       ],
                     ),
                   ),

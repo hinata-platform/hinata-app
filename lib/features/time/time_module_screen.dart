@@ -14,6 +14,8 @@
 /// the way the approvals page already keeps its two lists.
 library;
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../shell/page_chrome.dart';
@@ -85,17 +87,8 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
   }
 
   /// One view, told whether it is the one on screen.
-  ///
-  /// A branch behind the others goes on building, which would otherwise mean
-  /// its chrome in the shell's bar ([PageChromeVisibility]) and its animations
-  /// on the raster thread ([TickerMode]) while nobody is looking at it.
-  Widget _branch(TimeView view) {
-    final visible = view == widget.view;
-    return TickerMode(
-      enabled: visible,
-      child: PageChromeVisibility(visible: visible, child: _view(view)),
-    );
-  }
+  Widget _branch(TimeView view) =>
+      TimeViewBranch(visible: view == widget.view, child: _view(view));
 
   Widget _view(TimeView view) => switch (view) {
     TimeView.list => const TimeScreen(),
@@ -124,4 +117,61 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
     // there is nothing to decide.
     TimeView.approvals => const ApprovalsScreen(),
   };
+}
+
+/// One view of the module, kept built behind the others while it is not the
+/// one on screen.
+///
+/// A branch behind the others goes on building, which would otherwise mean
+/// its chrome in the shell's bar ([PageChromeVisibility]) and its animations
+/// on the raster thread ([TickerMode]) while nobody is looking at it.
+///
+/// Its tickers stop a moment after it is hidden, not at once. A tooltip is
+/// painted in the app's overlay, above the stack, but animated by the widget
+/// it belongs to: clicking a switcher chip hid the branch while the chip's
+/// tooltip was fading out, the fade froze, and the tooltip stayed burnt in
+/// over the next view. The grace lets that fade finish.
+class TimeViewBranch extends StatefulWidget {
+  const TimeViewBranch({super.key, required this.visible, required this.child});
+
+  final bool visible;
+  final Widget child;
+
+  /// Longer than any fade a tooltip or a pressed state runs when its view is
+  /// left.
+  static const grace = Duration(milliseconds: 300);
+
+  @override
+  State<TimeViewBranch> createState() => _TimeViewBranchState();
+}
+
+class _TimeViewBranchState extends State<TimeViewBranch> {
+  late bool _ticking = widget.visible;
+  Timer? _stop;
+
+  @override
+  void didUpdateWidget(TimeViewBranch oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.visible) {
+      _stop?.cancel();
+      _ticking = true;
+    } else if (oldWidget.visible) {
+      _stop?.cancel();
+      _stop = Timer(TimeViewBranch.grace, () {
+        if (mounted) setState(() => _ticking = false);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _stop?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => TickerMode(
+    enabled: _ticking,
+    child: PageChromeVisibility(visible: widget.visible, child: widget.child),
+  );
 }

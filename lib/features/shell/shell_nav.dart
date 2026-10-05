@@ -177,7 +177,6 @@ double pageContentMax(String location) {
 /// article, a board) override it through `PageChrome`.
 String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location == '/admin') return 'admin.title';
-  if (location.startsWith('/admin/users')) return 'admin.users';
   if (location == '/organization') return 'org.title';
   if (location.startsWith('/organization/holidays')) {
     return 'availability.admin.pageTitle';
@@ -222,7 +221,6 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
 /// the flag and the parameter is gone rather than left to be passed and
 /// ignored.
 String subPageBackRoute(String location) {
-  if (location.startsWith('/admin/users')) return '/admin';
   if (location == '/admin') return '/settings';
   // Every page under Organisation goes back to it.
   if (location.startsWith('/organization/')) return '/organization';
