@@ -323,11 +323,13 @@ class CalendarConversion extends Equatable {
 }
 
 /// The colours a subscription can take. Fixed, so each one is measured against
-/// both themes once rather than whatever a person picks.
+/// both themes once rather than whatever a person picks: every one clears 3:1
+/// on the light and the dark canvas, which the dashed outline of a suggested
+/// block needs (measured 2026-10-05, between 3.43:1 and 4.92:1).
 const calendarColorChoices = [
   '#4F7DD9',
-  '#2E9E8F',
-  '#D9822B',
+  '#27897C',
+  '#BF6D1E',
   '#B4549B',
   '#6B8E23',
   '#C0504D',
