@@ -181,7 +181,12 @@ class GlassSwitchBar extends StatelessWidget {
   /// What the bar occupies: a docked control's height on a phone, a search
   /// field's on a wide window, where it rides beside a page title rather than
   /// in a toolbar.
-  double get _height => compact ? kGlassControlHeight : kGlassPillHeight;
+  double get _height => heightFor(compact: compact);
+
+  /// The height a bar of the given shape draws at — for a row that lines its
+  /// own controls up with the bar instead of guessing the number.
+  static double heightFor({required bool compact}) =>
+      compact ? kGlassControlHeight : kGlassPillHeight;
 
   @override
   Widget build(BuildContext context) {

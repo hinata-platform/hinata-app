@@ -566,6 +566,10 @@ class HiveAvatarStack extends StatelessWidget {
 
 // ───────────────────────────── page head ────────────────────────────────
 
+/// Height of every control in a page head: the round glass buttons and the
+/// labelled primary and ghost buttons beside them.
+const double kHeadControlHeight = 48;
+
 /// Page title + subtitle on the left, optional action buttons on the right.
 class PageHead extends StatelessWidget {
   const PageHead({
@@ -582,7 +586,7 @@ class PageHead extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Expanded(
           child: Column(
@@ -618,7 +622,29 @@ class PageHead extends StatelessWidget {
             ],
           ),
         ),
-        for (final a in actions) ...[const SizedBox(width: 10), a],
+        // The labelled buttons stand as tall as the round ones beside them,
+        // so the row reads as one line of controls. Scoped to the head: the
+        // same buttons in dialogs and forms keep their own height.
+        FilledButtonTheme(
+          data: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, kHeadControlHeight),
+            ),
+          ),
+          child: OutlinedButtonTheme(
+            data: OutlinedButtonThemeData(
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(0, kHeadControlHeight),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final a in actions) ...[const SizedBox(width: 10), a],
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

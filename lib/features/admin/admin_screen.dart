@@ -33,6 +33,7 @@ import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
 import 'sections/admin_mcp_section.dart';
 import 'sections/admin_security_section.dart';
+import 'users/user_management_screen.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/settings_split.dart';
@@ -126,11 +127,15 @@ const _navItems = <_SectionMeta>[
 // ─────────────────────────── Root screen ─────────────────────────────────
 
 class AdminScreen extends StatelessWidget {
-  const AdminScreen({super.key, this.initialSection});
+  const AdminScreen({super.key, this.initialSection, this.focusUserId});
 
   /// Optional section to open on entry (e.g. a deep link `/admin?section=connect`).
   /// Matched against the [_AdminSection] enum names.
   final String? initialSection;
+
+  /// With the `users` section: the user whose detail drawer opens once the
+  /// directory has loaded (an approval deep link's `?user=<id>`).
+  final String? focusUserId;
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -146,14 +151,15 @@ class AdminScreen extends StatelessWidget {
             AuditLogCubit.admin(context.read<AdminRepository>()),
       ),
     ],
-    child: _AdminView(initialSection: initialSection),
+    child: _AdminView(initialSection: initialSection, focusUserId: focusUserId),
   );
 }
 
 class _AdminView extends StatefulWidget {
-  const _AdminView({this.initialSection});
+  const _AdminView({this.initialSection, this.focusUserId});
 
   final String? initialSection;
+  final String? focusUserId;
 
   @override
   State<_AdminView> createState() => _AdminViewState();
@@ -166,21 +172,35 @@ class _AdminViewState extends State<_AdminView> {
   // Mobile: when non-null, the detail view is shown instead of the list.
   _AdminSection? _mobileSection;
 
+  /// Reaches the Invite dialog of the user directory in the wide pane from the
+  /// app bar's action.
+  final UserInviteController _invite = UserInviteController();
+
   @override
   void initState() {
     super.initState();
     _applyInitialSection();
   }
 
+  @override
+  void didUpdateWidget(covariant _AdminView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A deep link into the admin area while it is already open lands on the
+    // same page: follow it to the section it names.
+    if (oldWidget.initialSection != widget.initialSection ||
+        oldWidget.focusUserId != widget.focusUserId) {
+      _applyInitialSection();
+    }
+  }
+
   /// Preselects the section named by [AdminScreen.initialSection] (deep link).
   /// Sets both the desktop and mobile targets so the right one is honoured once
-  /// the layout resolves at build time. `users` opens its own screen, so it is
-  /// left to the normal tap flow.
+  /// the layout resolves at build time.
   void _applyInitialSection() {
     final name = widget.initialSection;
     if (name == null || name.isEmpty) return;
     for (final s in _AdminSection.values) {
-      if (s != _AdminSection.users && s.name == name) {
+      if (s.name == name) {
         _desktopSection = s;
         _mobileSection = s;
         return;
@@ -218,10 +238,6 @@ class _AdminViewState extends State<_AdminView> {
   }
 
   void _selectSection(_AdminSection sec, {required bool mobile}) {
-    if (sec == _AdminSection.users) {
-      context.push('/admin/users');
-      return;
-    }
     if (mobile) {
       setState(() => _mobileSection = sec);
     } else {
@@ -275,6 +291,13 @@ class _AdminViewState extends State<_AdminView> {
                 onBack: () => setState(() => _mobileSection = null),
               );
             }
+            // So does the user directory, for its search and filter row.
+            if (current == _AdminSection.users) {
+              return UserManagementScreen(
+                focusUserId: widget.focusUserId,
+                onBack: () => setState(() => _mobileSection = null),
+              );
+            }
             return PageChrome(
               title: context.t(_sectionTitleKey(current)),
               onBack: () => setState(() => _mobileSection = null),
@@ -299,7 +322,9 @@ class _AdminViewState extends State<_AdminView> {
         // header chrome of its own.
         return PageChrome(
           title: context.t(_sectionTitleKey(_desktopSection)),
-          actions: _saveActions(context, _desktopSection),
+          actions: _desktopSection == _AdminSection.users
+              ? _inviteActions(context)
+              : _saveActions(context, _desktopSection),
           // The rail plus a pane of cards: wider than the reading width, and
           // capped by the shell so the section title and Save in the bar line
           // up with the rail and the pane below them.
@@ -309,6 +334,8 @@ class _AdminViewState extends State<_AdminView> {
             settings: settings,
             onSectionChanged: (s) => _selectSection(s, mobile: false),
             onOpenTimeTracking: _openTimeTracking(context),
+            focusUserId: widget.focusUserId,
+            inviteController: _invite,
           ),
         );
       },
@@ -322,6 +349,17 @@ class _AdminViewState extends State<_AdminView> {
       (context.read<AuthBloc>().state.user?.isOrgAdmin ?? false)
       ? () => context.go('/organization')
       : null;
+
+  /// The user directory's Invite, in the app bar where the other sections put
+  /// Save; the directory in the pane opens the dialog.
+  List<PageAction> _inviteActions(BuildContext context) => [
+    PageAction(
+      icon: LucideIcons.userPlus,
+      label: context.t('admin.um.inviteUsers'),
+      onTap: (_) => _invite.invite(),
+      primary: true,
+    ),
+  ];
 
   /// The Save action published into the glass app bar — omitted for sections
   /// that manage their own persistence (audit log, connect).
@@ -339,10 +377,12 @@ class _AdminViewState extends State<_AdminView> {
   }
 }
 
-/// Connect + audit log manage themselves (no shared settings draft to save), so
-/// they surface no Save action.
+/// Connect, the audit log and the user directory manage themselves (no shared
+/// settings draft to save), so they surface no Save action.
 bool _sectionHasSave(_AdminSection section) =>
-    section != _AdminSection.auditLog && section != _AdminSection.connect;
+    section != _AdminSection.auditLog &&
+    section != _AdminSection.connect &&
+    section != _AdminSection.users;
 
 /// i18n key for an admin section's title (shared by the shell app bar and the
 /// in-pane section header).
@@ -443,7 +483,6 @@ class _MobileNavTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isUsers = meta.section == _AdminSection.users;
     return Material(
       color: Colors.transparent,
       child: Semantics(
@@ -476,7 +515,7 @@ class _MobileNavTile extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  isUsers ? LucideIcons.externalLink : forwardChevron(context),
+                  forwardChevron(context),
                   size: 18,
                   color: AppColors.inkFaint,
                 ),
@@ -559,7 +598,9 @@ class _WideAdminShell extends StatelessWidget {
     required this.section,
     required this.settings,
     required this.onSectionChanged,
+    required this.inviteController,
     this.onOpenTimeTracking,
+    this.focusUserId,
   });
 
   final _AdminSection section;
@@ -570,10 +611,18 @@ class _WideAdminShell extends StatelessWidget {
   /// time-tracking flag opens the Organisation page that owns it.
   final VoidCallback? onOpenTimeTracking;
 
+  /// The user whose drawer the directory opens on entry (deep link).
+  final String? focusUserId;
+
+  /// Connects the app bar's Invite to the directory in the pane.
+  final UserInviteController inviteController;
+
   @override
   Widget build(BuildContext context) {
-    // The audit log owns its own scroll + pagination and wants the full pane.
-    final selfScrolling = section == _AdminSection.auditLog;
+    // The audit log and the user directory own their scroll + pagination and
+    // want the full pane.
+    final selfScrolling =
+        section == _AdminSection.auditLog || section == _AdminSection.users;
     return SettingsSplitLayout<_AdminSection>(
       header: SettingsRailHeader(
         // The admin console is where the logo is configured, two clicks
@@ -594,9 +643,6 @@ class _WideAdminShell extends StatelessWidget {
             icon: item.icon,
             label: context.t(item.labelKey),
             group: context.t('admin.${item.group}'),
-            trailing: item.section == _AdminSection.users
-                ? LucideIcons.externalLink
-                : null,
           ),
       ],
       selected: section,
@@ -604,7 +650,14 @@ class _WideAdminShell extends StatelessWidget {
       bodyScrolls: !selfScrolling,
       // No cap: an admin section spreads its cards over the pane it has.
       bodyMaxWidth: double.infinity,
-      body: selfScrolling ? const AdminAuditSection() : _body(),
+      body: switch (section) {
+        _AdminSection.auditLog => const AdminAuditSection(),
+        _AdminSection.users => UserManagementScreen(
+          focusUserId: focusUserId,
+          inviteController: inviteController,
+        ),
+        _ => _body(),
+      },
     );
   }
 

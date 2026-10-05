@@ -97,29 +97,74 @@ class TimeHead extends StatelessWidget {
   final TimeView current;
   final List<Widget> actions;
 
+  /// How tall the switcher and every action beside it stand: the switcher's
+  /// own height, so the glass pill and the buttons share a top and a bottom.
+  static double lineHeight(BuildContext context) =>
+      GlassSwitchBar.heightFor(compact: !context.isExpanded);
+
   @override
-  Widget build(BuildContext context) => LayoutBuilder(
-    builder: (context, constraints) => Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // The page head's own title, at its own width — capped, so a large
-        // text scale shrinks the title the way [PageHead] does rather than
-        // pushing the switcher and the actions off the edge.
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
-          child: IntrinsicWidth(child: PageHead(title: context.t('nav.time'))),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: TimeViewSwitcher(current: current),
+  Widget build(BuildContext context) {
+    final line = lineHeight(context);
+    final theme = Theme.of(context);
+    // Vertically tight on every platform. A desktop's compact density cut the
+    // labelled buttons to 36 points while the pill beside them is 42, and a
+    // touch density's 13-point padding needs more than the line has; with the
+    // padding tight the label fits, and the line's height is what the button
+    // is given (see the SizedBox below).
+    final density = VisualDensity(
+      horizontal: theme.visualDensity.horizontal,
+      vertical: VisualDensity.compact.vertical,
+    );
+    return LayoutBuilder(
+      builder: (context, constraints) => Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // The page head's own title, at its own width — capped, so a large
+          // text scale shrinks the title the way [PageHead] does rather than
+          // pushing the switcher and the actions off the edge.
+          ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
+            child: IntrinsicWidth(
+              child: PageHead(title: context.t('nav.time')),
+            ),
           ),
-        ),
-        for (final action in actions) ...[const SizedBox(width: 10), action],
-      ],
-    ),
-  );
+          const SizedBox(width: 10),
+          // One line of controls at one height: each action is handed exactly
+          // the switcher's height, so the amber button is flush with the glass
+          // pill at the top and the bottom instead of sitting on its baseline.
+          Expanded(
+            child: FilledButtonTheme(
+              data: FilledButtonThemeData(
+                style: FilledButton.styleFrom(visualDensity: density),
+              ),
+              child: OutlinedButtonTheme(
+                data: OutlinedButtonThemeData(
+                  style: OutlinedButton.styleFrom(visualDensity: density),
+                ),
+                child: SizedBox(
+                  height: line,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Align(
+                          alignment: AlignmentDirectional.centerEnd,
+                          child: TimeViewSwitcher(current: current),
+                        ),
+                      ),
+                      for (final action in actions) ...[
+                        const SizedBox(width: 10),
+                        SizedBox(height: line, child: action),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// The switcher every page of the module wears **on a wide window**.
@@ -403,17 +448,28 @@ Future<bool> followAbsenceChoice(
 /// was what made it run out of room; the arrow opens the absence rows the
 /// phone's "+" has. [absenceFrom] and [absenceTo] are the days the page shows,
 /// which the form starts on.
+///
+/// The absences page wears the same button with its own first half: [label]
+/// and [icon] name what the main part does there, [menuTooltip] the arrow.
 class TimeAddButton extends StatelessWidget {
   const TimeAddButton({
     super.key,
     required this.onNewEntry,
     this.absenceFrom,
     this.absenceTo,
+    this.label = 'time.entry.new',
+    this.icon = LucideIcons.plus,
+    this.menuTooltip = 'time.view.absences',
   });
 
   final VoidCallback onNewEntry;
   final DateTime? absenceFrom;
   final DateTime? absenceTo;
+
+  /// i18n keys of the main half's label and of the arrow's tooltip.
+  final String label;
+  final String menuTooltip;
+  final IconData icon;
 
   @override
   Widget build(BuildContext context) {
@@ -430,39 +486,44 @@ class TimeAddButton extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: radius),
         );
     const radius = Radius.circular(AppTheme.radiusControl);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        FilledButton.icon(
-          onPressed: onNewEntry,
-          style: half(
-            const BorderRadius.horizontal(left: radius),
-            const EdgeInsets.fromLTRB(16, 13, 14, 13),
+    // Both halves at the height the row hands the button — [TimeHead] gives it
+    // the switcher's — so the arrow is never shorter than the label beside it.
+    return IntrinsicHeight(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          FilledButton.icon(
+            onPressed: onNewEntry,
+            style: half(
+              const BorderRadius.horizontal(left: radius),
+              const EdgeInsets.fromLTRB(16, 13, 14, 13),
+            ),
+            icon: Icon(icon, size: 16),
+            label: Text(context.t(label)),
           ),
-          icon: const Icon(LucideIcons.plus, size: 16),
-          label: Text(context.t('time.entry.new')),
-        ),
-        const SizedBox(width: 1),
-        Builder(
-          builder: (anchorContext) => Tooltip(
-            message: context.t('time.view.absences'),
-            child: FilledButton(
-              onPressed: () => unawaited(
-                showAbsenceMenu(
-                  anchorContext,
-                  from: absenceFrom,
-                  to: absenceTo,
+          const SizedBox(width: 1),
+          Builder(
+            builder: (anchorContext) => Tooltip(
+              message: context.t(menuTooltip),
+              child: FilledButton(
+                onPressed: () => unawaited(
+                  showAbsenceMenu(
+                    anchorContext,
+                    from: absenceFrom,
+                    to: absenceTo,
+                  ),
                 ),
+                style: half(
+                  const BorderRadius.horizontal(right: radius),
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
+                ),
+                child: const Icon(LucideIcons.chevronDown, size: 16),
               ),
-              style: half(
-                const BorderRadius.horizontal(right: radius),
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
-              ),
-              child: const Icon(LucideIcons.chevronDown, size: 16),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
