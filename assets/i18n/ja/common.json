@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "プロジェクトテンプレートを切り替え",
       "PROJECT_SCHEDULE_SHIFTED": "プロジェクトの日付を変更",
       "USER_EMAIL_CHANGED": "管理者がメールを変更",
-      "ARTICLE_MOVED": "ページを移動"
+      "ARTICLE_MOVED": "ページを移動",
+      "TIME_REPORT_EXPORTED": "工数レポートをエクスポート",
+      "TIME_ENTRIES_IMPORTED": "工数エントリーをインポート",
+      "TIME_OFF_REQUEST_EDITED": "休暇申請を編集",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "休暇失効の通知を送信",
+      "TIME_OFF_PROPOSAL_DECIDED": "休暇失効を決定",
+      "TIME_OFF_REPORT_EXPORTED": "休暇レポートをエクスポート",
+      "TIME_OFF_YEAR_RUN": "休暇の年次処理",
+      "TIME_OFF_RETENTION_RUN": "休暇の保持期間処理",
+      "PROJECT_COPIED": "プロジェクトをコピー",
+      "PROJECT_TEMPLATE_MARKED": "プロジェクトをテンプレートに設定",
+      "PROJECT_INSTANTIATED": "テンプレートからプロジェクトを作成"
     },
     "meta": {
       "oldRole": "変更前のロール",

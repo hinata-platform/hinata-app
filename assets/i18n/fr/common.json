@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Modèles de projet basculés",
       "PROJECT_SCHEDULE_SHIFTED": "Date du projet déplacée",
       "USER_EMAIL_CHANGED": "E-mail modifié par un administrateur",
-      "ARTICLE_MOVED": "Page déplacée"
+      "ARTICLE_MOVED": "Page déplacée",
+      "TIME_REPORT_EXPORTED": "Rapport de temps exporté",
+      "TIME_ENTRIES_IMPORTED": "Saisies de temps importées",
+      "TIME_OFF_REQUEST_EDITED": "Demande d'absence modifiée",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "Avis d’expiration des congés envoyé",
+      "TIME_OFF_PROPOSAL_DECIDED": "Décision sur l’expiration des congés",
+      "TIME_OFF_REPORT_EXPORTED": "Rapport d'absences exporté",
+      "TIME_OFF_YEAR_RUN": "Traitement annuel des absences",
+      "TIME_OFF_RETENTION_RUN": "Purge de conservation des absences",
+      "PROJECT_COPIED": "Projet copié",
+      "PROJECT_TEMPLATE_MARKED": "Projet marqué comme modèle",
+      "PROJECT_INSTANTIATED": "Projet créé à partir d’un modèle"
     },
     "meta": {
       "oldRole": "Rôle précédent",
