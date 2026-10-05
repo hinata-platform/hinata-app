@@ -615,7 +615,9 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
               children: [
                 TextField(
                   controller: _description,
-                  autofocus: !_isEdit,
+                  // Not for an event: its title is already here, and a keyboard
+                  // would cover the placement it is opened to choose.
+                  autofocus: !_isEdit && !_isFromEvent,
                   maxLength: 2000,
                   maxLines: 2,
                   minLines: 1,
@@ -1132,10 +1134,7 @@ class _MeasuredInterval extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(
-                  context.t(labelKey),
-                  style: GlassFieldStyle.caption,
-                ),
+                Text(context.t(labelKey), style: GlassFieldStyle.caption),
                 const SizedBox(height: 2),
                 Text(
                   '${localizations.formatMediumDate(start)} · '
