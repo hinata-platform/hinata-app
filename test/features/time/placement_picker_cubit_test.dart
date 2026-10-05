@@ -1,10 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/issue_repository.dart';
-import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/features/time/placement_picker_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The placement picker's two searches reach their repositories as asked and
 /// come back as they answered.
@@ -18,23 +16,20 @@ void main() {
     state: 'todo',
   );
 
-  late _FakeProjects projects;
-  late _FakeIssues issues;
+  late FakeProjectRepository projects;
+  late FakeIssueRepository issues;
   late PlacementPickerCubit cubit;
 
   setUp(() {
-    projects = _FakeProjects();
-    issues = _FakeIssues();
+    projects = FakeProjectRepository();
+    issues = FakeIssueRepository();
     cubit = PlacementPickerCubit(projects, issues);
     addTearDown(cubit.close);
   });
 
   test('searches projects and issues with the size asked for', () async {
-    projects.answers[#searchProjects] = Future.value((
-      projects: [alpha],
-      total: 1,
-    ));
-    issues.answers[#issues] = Future.value((issues: [issue], total: 1));
+    projects.answer(#searchProjects, (projects: [alpha], total: 1));
+    issues.answer(#issues, (issues: [issue], total: 1));
 
     expect((await cubit.searchProjects(query: 'al', size: 8)).projects, [
       alpha,
@@ -51,31 +46,21 @@ void main() {
   });
 
   test('an issue search without a query asks for none', () async {
-    issues.answers[#issues] = Future.value((issues: <Issue>[], total: 0));
+    issues.answer(#issues, (issues: <Issue>[], total: 0));
 
     await cubit.searchIssues(size: 12);
 
     expect(issues.calls.single, invoked(#issues, named: {#query: null}));
   });
 
-  test('passes a refusal through', () async {
-    projects.failure = refusal;
-    issues.failure = refusal;
+  test('passes a failure through', () async {
+    projects.fail(#searchProjects, failure);
+    issues.fail(#issues, failure);
 
     await expectLater(
       () => cubit.searchProjects(query: '', size: 8),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.searchIssues(size: 12), throwsRefusal);
+    await expectLater(() => cubit.searchIssues(size: 12), throwsFailure);
   });
-}
-
-class _FakeProjects with RecordingRepository implements ProjectRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeIssues with RecordingRepository implements IssueRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

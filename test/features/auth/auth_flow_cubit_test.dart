@@ -1,30 +1,27 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/core_models.dart' show SsoProvider;
-import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/features/auth/auth_flow_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeAuth with RecordingFake implements AuthRepository {}
+import '../../support/recording_fake.dart';
 
 typedef _Tokens = ({String access, String refresh});
 
 /// The signed-out screens reach the auth endpoints through this cubit: one
 /// call per intent, with the same arguments, and the answer handed back.
 void main() {
-  late _FakeAuth auth;
+  late FakeAuthRepository auth;
   late AuthFlowCubit cubit;
   const tokens = (access: 'a', refresh: 'r');
 
   setUp(() {
-    auth = _FakeAuth();
+    auth = FakeAuthRepository();
     cubit = AuthFlowCubit(auth);
   });
   tearDown(() => cubit.close());
 
   test('the token flows answer the pair the server issued', () async {
     for (final member in [#exchangeSso, #acceptInvite, #acceptPasswordReset]) {
-      auth.answers[member] = () => Future<_Tokens>.value(tokens);
+      auth.answer<_Tokens>(member, tokens);
     }
 
     expect(await cubit.exchangeSso('c1'), tokens);
@@ -43,14 +40,12 @@ void main() {
       final providers = <SsoProvider>[];
       const invite = (email: 'a@example.org', displayName: 'A');
       const verified = (pendingApproval: true, access: null, refresh: null);
-      auth.answers[#ssoProviders] = () =>
-          Future<List<SsoProvider>>.value(providers);
-      auth.answers[#inviteInfo] = () =>
-          Future<({String email, String displayName})>.value(invite);
-      auth.answers[#verifyEmail] = () =>
-          Future<
-            ({bool pendingApproval, String? access, String? refresh})
-          >.value(verified);
+      auth.answer<List<SsoProvider>>(#ssoProviders, providers);
+      auth.answer<({String email, String displayName})>(#inviteInfo, invite);
+      auth.answer<({bool pendingApproval, String? access, String? refresh})>(
+        #verifyEmail,
+        verified,
+      );
 
       expect(await cubit.ssoProviders(), same(providers));
       expect(await cubit.inviteInfo('t1'), invite);
@@ -68,7 +63,7 @@ void main() {
         #resendVerification,
         #requestPasswordReset,
       ]) {
-        auth.answers[member] = () => Future<void>.value();
+        auth.answer<void>(member, null);
       }
 
       await cubit.register(
@@ -92,7 +87,7 @@ void main() {
   );
 
   test('a refused redemption comes back as the same failure', () async {
-    auth.answers[#exchangeSso] = () => Future<_Tokens>.error(failure);
+    auth.fail(#exchangeSso, failure);
 
     await expectLater(cubit.exchangeSso('c1'), throwsA(same(failure)));
   });

@@ -198,22 +198,18 @@ class _TagPickerBodyState extends State<_TagPickerBody> {
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 8),
-          // The hint goes when typing starts; the label stays for a screen
-          // reader.
-          child: Semantics(
-            label: context.t('time.tags.search'),
-            textField: true,
-            child: TextField(
-              controller: _controller,
-              autofocus: true,
-              maxLength: 40,
-              onChanged: _onChanged,
-              decoration: InputDecoration(
-                isDense: true,
-                counterText: '',
-                hintText: context.t('time.tags.search'),
-                prefixIcon: const Icon(LucideIcons.tag, size: 16),
-              ),
+          // Named by its hint alone: a text field keeps the hint as its name
+          // after typing starts, and a second label read it twice.
+          child: TextField(
+            controller: _controller,
+            autofocus: true,
+            maxLength: 40,
+            onChanged: _onChanged,
+            decoration: InputDecoration(
+              isDense: true,
+              counterText: '',
+              hintText: context.t('time.tags.search'),
+              prefixIcon: const Icon(LucideIcons.tag, size: 16),
             ),
           ),
         ),

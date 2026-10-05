@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../core/api/api_client.dart' show ApiFailure;
 import '../../../core/i18n/i18n.dart';
-import '../../../core/widgets/markdown_toolbar.dart';
+import '../../../core/widgets/markdown_editing_actions.dart';
 import '../../../core/util/file_pick.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassErrorToast, showGlassToast;

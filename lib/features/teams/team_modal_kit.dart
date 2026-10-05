@@ -6,6 +6,7 @@ import '../../core/models/team_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/hue_labels.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import 'team_widgets.dart';
 import '../../core/theme/app_type.dart';
@@ -424,28 +425,28 @@ class ColorPicker extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        for (final s in teamSwatches)
+        for (final swatch in teamSwatches)
           Semantics(
             button: true,
-            selected: hue == s.hue,
-            label: context.t(s.nameKey),
+            selected: hue == swatch,
+            label: hueLabel(context, swatch),
             // The fill sits under its own transparent Material so the press
             // ripple shows on top of the colour rather than under it.
             child: Container(
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: teamHueColor(s.hue),
+                color: teamHueColor(swatch),
                 borderRadius: BorderRadius.circular(9),
                 border: Border.all(
-                  color: hue == s.hue ? AppColors.ink : Colors.transparent,
+                  color: hue == swatch ? AppColors.ink : Colors.transparent,
                   width: 2,
                 ),
               ),
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  onTap: () => onChanged(s.hue),
+                  onTap: () => onChanged(swatch),
                   borderRadius: BorderRadius.circular(9),
                 ),
               ),

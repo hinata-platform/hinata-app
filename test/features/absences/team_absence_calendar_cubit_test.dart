@@ -5,11 +5,11 @@ import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/features/absences/team_absence_calendar_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
-  late RecordingTeams teams;
+  late FakeAbsenceRepository absences;
+  late FakeTeamRepository teams;
   late TeamAbsenceCalendarCubit cubit;
 
   final from = DateTime(2026, 6, 1);
@@ -17,8 +17,8 @@ void main() {
   const scope = TeamAbsenceScope(teamId: 'team1', label: 'Core');
 
   setUp(() {
-    absences = RecordingAbsences();
-    teams = RecordingTeams();
+    absences = FakeAbsenceRepository();
+    teams = FakeTeamRepository();
     cubit = TeamAbsenceCalendarCubit(absences, teams);
   });
 
@@ -42,17 +42,19 @@ void main() {
     );
 
     expect(result, same(page));
-    expectCall(
+    expect(
       absences.only,
-      #teamCalendar,
-      named: {
-        #from: from,
-        #to: to,
-        #scope: scope,
-        #awayOnly: true,
-        #page: 1,
-        #size: 100,
-      },
+      invoked(
+        #teamCalendar,
+        named: {
+          #from: from,
+          #to: to,
+          #scope: scope,
+          #awayOnly: true,
+          #page: 1,
+          #size: 100,
+        },
+      ),
     );
   });
 
@@ -72,20 +74,22 @@ void main() {
     );
 
     expect(result, same(band));
-    expectCall(
+    expect(
       absences.only,
-      #capacityBand,
-      named: {
-        #from: from,
-        #to: to,
-        #scope: scope,
-        #resolution: CapacityResolution.week,
-      },
+      invoked(
+        #capacityBand,
+        named: {
+          #from: from,
+          #to: to,
+          #scope: scope,
+          #resolution: CapacityResolution.week,
+        },
+      ),
     );
   });
 
   test('a reader who does not plan the group gets no band', () async {
-    absences.fail<CapacityBand>(
+    absences.fail(
       #capacityBand,
       ApiFailure('error.availability.forbidden', statusCode: 403),
     );
@@ -101,7 +105,7 @@ void main() {
   });
 
   test('any other failure of the band is handed back', () async {
-    absences.fail<CapacityBand>(#capacityBand, failure);
+    absences.fail(#capacityBand, failure);
 
     await expectLater(
       cubit.band(
@@ -120,6 +124,6 @@ void main() {
     ]);
 
     expect(await cubit.teams(), [(id: 'team1', name: 'Core')]);
-    expectCall(teams.only, #teams);
+    expect(teams.only, invoked(#teams));
   });
 }

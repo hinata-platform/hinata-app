@@ -823,7 +823,7 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 13.5,
+                      fontSize: AppType.label,
                       fontWeight: FontWeight.w700,
                       color: _ViewerInk.ink,
                     ),
@@ -834,7 +834,7 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                      fontSize: 11.5,
+                      fontSize: AppType.caption,
                       color: _ViewerInk.soft,
                     ),
                   ),
@@ -887,7 +887,7 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: AppTheme.fontMono,
-                      fontSize: 12,
+                      fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
                       // Reads as a value between two buttons, so it carries the
                       // same weight as the glyphs either side of it.
@@ -1013,7 +1013,7 @@ class _Counter extends StatelessWidget {
         label,
         style: const TextStyle(
           fontFamily: AppTheme.fontMono,
-          fontSize: 11.5,
+          fontSize: AppType.caption,
           fontWeight: FontWeight.w600,
           color: _ViewerInk.soft,
         ),

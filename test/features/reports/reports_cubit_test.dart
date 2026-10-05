@@ -5,22 +5,22 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/reports/reports_cubit.dart';
 
-import '../projects/repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// The reports page's cubit: each request sent as the page asked, each answer
 /// and failure handed back unchanged.
 void main() {
-  late RecordingProjects projects;
-  late RecordingUsers users;
-  late RecordingDashboard dashboard;
-  late RecordingMeta meta;
+  late FakeProjectRepository projects;
+  late FakeUserRepository users;
+  late FakeDashboardRepository dashboard;
+  late FakeMetaRepository meta;
   late ReportsCubit cubit;
 
   setUp(() {
-    projects = RecordingProjects();
-    users = RecordingUsers();
-    dashboard = RecordingDashboard();
-    meta = RecordingMeta();
+    projects = FakeProjectRepository();
+    users = FakeUserRepository();
+    dashboard = FakeDashboardRepository();
+    meta = FakeMetaRepository();
     cubit = ReportsCubit(
       projects: projects,
       users: users,
@@ -33,8 +33,8 @@ void main() {
   test('reads the projects and the people together', () async {
     const project = Project(id: 'p1', key: 'KULT', name: 'Kultur');
     const uma = DirectoryUser(id: 'u1', username: 'uma', displayName: 'Uma');
-    projects.answers[#projects] = () async => const [project];
-    users.answers[#users] = () async => const [uma];
+    projects.answer(#projects, const [project]);
+    users.answer(#users, const [uma]);
 
     final answer = await cubit.projectsAndUsers();
 
@@ -43,14 +43,14 @@ void main() {
   });
 
   test('a failed read passes the failure on', () async {
-    projects.answers[#projects] = () async => const <Project>[];
-    users.answers[#users] = () async => throw ApiFailure('errors.forbidden');
+    projects.answer(#projects, const <Project>[]);
+    users.fail(#users, ApiFailure('errors.forbidden'));
 
     await expectLater(cubit.projectsAndUsers(), throwsA(isA<ApiFailure>()));
   });
 
   test('asks one report with its query', () async {
-    dashboard.answers[#report] = () async => const {'OPEN': 4};
+    dashboard.answer(#report, const {'OPEN': 4});
     final query = <String, dynamic>{'projectId': 'p1'};
 
     expect(await cubit.report('issues-by-state', query), {'OPEN': 4});
@@ -64,7 +64,7 @@ void main() {
     final points = [
       TrendPoint(date: DateTime(2026, 10, 1), created: 2, resolved: 1),
     ];
-    dashboard.answers[#createdVsResolved] = () async => points;
+    dashboard.answer(#createdVsResolved, points);
 
     expect(await cubit.createdVsResolved('p1', days: 30), points);
     final call = dashboard.callTo(#createdVsResolved);
@@ -79,9 +79,8 @@ void main() {
       setupCompleted: true,
     );
     meta
-      ..answers[#meta] = (() async => server)
-      ..answers[#organizationLogo] = () async =>
-          (bytes: const [1, 2], isSvg: false);
+      ..answer(#meta, server)
+      ..answer(#organizationLogo, (bytes: const [1, 2], isSvg: false));
 
     expect(await cubit.meta(), server);
     final logo = await cubit.organizationLogo();
@@ -90,7 +89,7 @@ void main() {
   });
 
   test('no logo is null, not a failure', () async {
-    meta.answers[#organizationLogo] = () async => null;
+    meta.answer(#organizationLogo, null);
 
     expect(await cubit.organizationLogo(), isNull);
   });

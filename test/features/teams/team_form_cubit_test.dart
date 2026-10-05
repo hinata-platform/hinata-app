@@ -4,23 +4,23 @@ import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/features/teams/team_form_cubit.dart';
 
-import '../projects/repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// The create- and edit-team modal's cubit.
 void main() {
-  late RecordingTeams teams;
+  late FakeTeamRepository teams;
   late TeamFormCubit cubit;
 
   const team = Team(id: 't1', key: 'OPS', name: 'Ops');
 
   setUp(() {
-    teams = RecordingTeams();
+    teams = FakeTeamRepository();
     cubit = TeamFormCubit(teams);
   });
   tearDown(() => cubit.close());
 
   test('creates a team as the form filled it in', () async {
-    teams.answers[#createTeam] = () async => team;
+    teams.answer(#createTeam, team);
 
     final answer = await cubit.create(
       name: 'Ops',
@@ -41,7 +41,7 @@ void main() {
   });
 
   test('writes the edited fields', () async {
-    teams.answers[#updateTeam] = () async => team;
+    teams.answer(#updateTeam, team);
     final patch = <String, dynamic>{'name': 'Ops', 'colorHue': 30};
 
     expect(await cubit.update('t1', patch), team);
@@ -49,7 +49,7 @@ void main() {
   });
 
   test('passes a taken key on', () async {
-    teams.answers[#createTeam] = () async => throw ApiFailure('teams.keyTaken');
+    teams.fail(#createTeam, ApiFailure('teams.keyTaken'));
 
     await expectLater(
       cubit.create(name: 'Ops', key: 'OPS', colorHue: 0, icon: 'users'),
@@ -61,8 +61,8 @@ void main() {
 
   test('uploads and removes the picture', () async {
     teams
-      ..answers[#uploadTeamAvatar] = (() async => 'https://x/t1.png?v=1')
-      ..answers[#deleteTeamAvatar] = () async {};
+      ..answer(#uploadTeamAvatar, 'https://x/t1.png?v=1')
+      ..answer<void>(#deleteTeamAvatar, null);
     final file = MultipartFile.fromBytes(const [1], filename: 't.png');
 
     expect(await cubit.uploadAvatar('t1', file), 'https://x/t1.png?v=1');

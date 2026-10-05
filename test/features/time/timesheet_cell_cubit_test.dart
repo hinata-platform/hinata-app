@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/timesheet_cell_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// An opened timesheet cell reads and writes through this cubit: each call
 /// reaches the repository as asked and comes back as it answered.
@@ -12,11 +11,11 @@ void main() {
   const entry = WorkItem(id: 'e1', durationMinutes: 45, activityType: 'WORK');
   const saved = SavedTimeEntry(entry: entry);
 
-  late _FakeTime time;
+  late FakeTimeRepository time;
   late TimesheetCellCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
+    time = FakeTimeRepository();
     cubit = TimesheetCellCubit(time);
     addTearDown(cubit.close);
   });
@@ -29,9 +28,9 @@ void main() {
       durationMinutes: 45,
       date: day,
     );
-    time.answers[#entries] = Future.value((items: [entry], total: 1));
-    time.answers[#create] = Future.value(saved);
-    time.answers[#delete] = Future<void>.value();
+    time.answer(#entries, (items: [entry], total: 1));
+    time.answer(#create, saved);
+    time.answer<void>(#delete, null);
 
     expect((await cubit.entries(filter: filter, size: 50)).items, [entry]);
     expect(await cubit.create(draft), saved);
@@ -44,22 +43,19 @@ void main() {
     ]);
   });
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
+  test('passes a failure through', () async {
+    time.fail(#entries, failure);
+    time.fail(#create, failure);
+    time.fail(#delete, failure);
 
     await expectLater(
       () => cubit.entries(filter: const TimeEntryFilter(), size: 50),
-      throwsRefusal,
+      throwsFailure,
     );
     await expectLater(
       () => cubit.create(const TimeEntryDraft(durationMinutes: 45)),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.delete('e1'), throwsRefusal);
+    await expectLater(() => cubit.delete('e1'), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

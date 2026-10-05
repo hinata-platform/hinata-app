@@ -795,19 +795,27 @@ class _KpiCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: _CountUp(
-                value: value,
-                style: TextStyle(
-                  fontFamily: AppTheme.fontBrand,
-                  fontSize: AppType.hero,
-                  fontWeight: FontWeight.w700,
-                  height: 1,
-                  letterSpacing: -0.5,
-                  color: AppColors.ink,
+          // A box of fixed size around the counting figure: every frame of
+          // the count changes its width, and without the box that change
+          // climbs to the IntrinsicHeight that levels the tiles and lays both
+          // pairs out again.
+          SizedBox(
+            width: double.infinity,
+            height: MediaQuery.textScalerOf(context).scale(AppType.hero),
+            child: Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: _CountUp(
+                  value: value,
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontBrand,
+                    fontSize: AppType.hero,
+                    fontWeight: FontWeight.w700,
+                    height: 1,
+                    letterSpacing: -0.5,
+                    color: AppColors.ink,
+                  ),
                 ),
               ),
             ),

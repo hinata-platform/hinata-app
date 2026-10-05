@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "समय टाइप करें",
       "typeDuration": "अवधि टाइप करें"
+    },
+    "hue": {
+      "default": "डिफ़ॉल्ट रंग",
+      "honey": "शहद",
+      "indigo": "इंडिगो",
+      "violet": "बैंगनी",
+      "teal": "फ़िरोज़ी",
+      "green": "हरा",
+      "coral": "मूँगा",
+      "pink": "गुलाबी",
+      "amber": "एम्बर",
+      "red": "लाल",
+      "orange": "नारंगी",
+      "cyan": "सियान",
+      "blue": "नीला",
+      "custom": "कस्टम"
+    },
+    "pagination": {
+      "previous": "पिछला पृष्ठ",
+      "next": "अगला पृष्ठ",
+      "page": "पृष्ठ {{page}}"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "अंतिम वेतन के साथ भुगतान",
       "done": "दर्ज किया गया",
       "confirmTitle": "{{days}} का {{what}}?"
-    },
-    "hue": {
-      "default": "डिफ़ॉल्ट रंग",
-      "red": "लाल",
-      "orange": "नारंगी",
-      "amber": "एम्बर",
-      "green": "हरा",
-      "teal": "हरित-नील",
-      "cyan": "सियान",
-      "blue": "नीला",
-      "violet": "बैंगनी",
-      "pink": "गुलाबी"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "{{count}} और। उन्हें ढूँढने के लिए खोजें या फ़िल्टर करें।"
   },
   "gantt": {
-    "title": "टाइमलाइन",
     "subtitle": "निर्भरताओं, माइलस्टोन और क्रिटिकल पाथ के साथ गैंट दृश्य",
     "column": "इश्यू",
     "empty": "कोई निर्धारित इश्यू नहीं। टाइमलाइन पर देखने के लिए इश्यू पर प्रारंभ तिथि और नियत तिथि सेट करें।",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "यहाँ सभी पेज नहीं दिखते, क्योंकि वे एक सूची के लिए बहुत ज़्यादा हैं। इसलिए कोई उप-पेज ऊपर दिख सकता है, भले ही उसका मूल पेज मौजूद हो।"
     },
-    "hue": {
-      "honey": "शहद",
-      "indigo": "इंडिगो",
-      "violet": "बैंगनी",
-      "teal": "फ़िरोज़ी",
-      "green": "हरा",
-      "coral": "मूँगा",
-      "pink": "गुलाबी",
-      "amber": "एम्बर"
-    },
     "spaceIconOption": "आइकन {{n}} / {{count}}",
     "subpages": "उप-पृष्ठ",
     "moveUnder": "…के नीचे ले जाएँ",
     "moveUnderTitle": "किस पेज के नीचे ले जाएँ?",
     "pageActions": "पेज की कार्रवाइयाँ",
-    "resultCount": "परिणाम: {{count}}"
+    "resultCount": "परिणाम: {{count}}",
+    "moveUnderConfirm": {
+      "title": "कौन पढ़ सकता है, यह बदलें?",
+      "message": "“{{page}}” और उसके उप-पेज तब {{place}} पढ़ सकेंगे।",
+      "confirm": "ले जाएँ"
+    }
   },
   "md": {
     "heading1": "शीर्षक 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "यह भूमिका आपको प्रशासन का कोई दूसरा व्यक्ति देता है।",
       "selectUser": "{{name}} चुनें",
       "selectPage": "इस पेज के सभी उपयोगकर्ता चुनें",
-      "previousPage": "पिछला पेज",
-      "nextPage": "अगला पेज",
-      "pageNumber": "पेज {{n}}",
       "removeEmail": "{{email}} हटाएँ"
     },
     "iosStoreUrl": "iOS App Store का URL",
@@ -3502,11 +3502,6 @@
     "selectedCount": "{{count}} चयनित",
     "collapse": "समेटें",
     "expand": "विस्तृत करें",
-    "pagination": {
-      "previous": "पिछला पृष्ठ",
-      "next": "अगला पृष्ठ",
-      "page": "पृष्ठ {{page}}"
-    },
     "selectIssue": "{{issue}} चुनें"
   },
   "teams": {
@@ -3545,17 +3540,6 @@
     "iconLabel": "आइकन",
     "optional": "वैकल्पिक",
     "back": "वापस",
-    "color": {
-      "honey": "शहद",
-      "indigo": "इंडिगो",
-      "violet": "बैंगनी",
-      "teal": "फ़िरोज़ी",
-      "green": "हरा",
-      "coral": "मूँगा",
-      "custom": "कस्टम",
-      "pink": "गुलाबी",
-      "amber": "कहरुबा"
-    },
     "role": {
       "admin": "टीम-एडमिन",
       "adminShort": "एडमिन",

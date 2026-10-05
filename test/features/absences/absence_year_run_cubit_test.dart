@@ -4,14 +4,14 @@ import 'package:hinata/core/models/absence_models.dart';
 import 'package:hinata/core/models/absence_report_models.dart';
 import 'package:hinata/features/absences/absence_year_run_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
+  late FakeAbsenceRepository absences;
   late AbsenceYearRunCubit cubit;
 
   setUp(() {
-    absences = RecordingAbsences();
+    absences = FakeAbsenceRepository();
     cubit = AbsenceYearRunCubit(absences);
   });
 
@@ -28,13 +28,16 @@ void main() {
 
     expect(result.run, same(run));
     expect(result.types, same(types));
-    expectCall(absences.calls.first, #yearRun);
-    expectCall(absences.calls.last, #types, named: {#includeInactive: true});
+    expect(absences.calls.first, invoked(#yearRun));
+    expect(
+      absences.calls.last,
+      invoked(#types, named: {#includeInactive: true}),
+    );
   });
 
-  test('overview hands a refusal back unchanged', () async {
+  test('overview hands a failure back unchanged', () async {
     absences
-      ..fail<AbsenceYearRun>(#yearRun, failure)
+      ..fail(#yearRun, failure)
       ..answer<List<AbsenceType>>(#types, const <AbsenceType>[]);
 
     await expectLater(cubit.overview(), throwsA(same(failure)));
@@ -50,12 +53,14 @@ void main() {
     expect(await cubit.missingNotices(page: 1, size: 50), missing);
     expect(await cubit.proposals(page: 2, size: 50), proposals);
 
-    expectCall(
+    expect(
       absences.calls.first,
-      #missingNotices,
-      named: {#page: 1, #size: 50},
+      invoked(#missingNotices, named: {#page: 1, #size: 50}),
     );
-    expectCall(absences.calls.last, #proposals, named: {#page: 2, #size: 50});
+    expect(
+      absences.calls.last,
+      invoked(#proposals, named: {#page: 2, #size: 50}),
+    );
   });
 
   test('sendNotice sends it about the row given', () async {
@@ -75,10 +80,9 @@ void main() {
     );
 
     expect(result, same(notice));
-    expectCall(
+    expect(
       absences.only,
-      #sendNotice,
-      named: {#userId: 'u1', #typeId: 't1', #year: 2025},
+      invoked(#sendNotice, named: {#userId: 'u1', #typeId: 't1', #year: 2025}),
     );
   });
 
@@ -90,15 +94,13 @@ void main() {
     await cubit.decide('p1', lapse: true, reason: 'long illness');
     await cubit.decide('p2', lapse: false, reason: 'not yet');
 
-    expectCall(
+    expect(
       absences.calls.first,
-      #confirmProposal,
-      positional: ['p1', 'long illness'],
+      invoked(#confirmProposal, positional: ['p1', 'long illness']),
     );
-    expectCall(
+    expect(
       absences.calls.last,
-      #dismissProposal,
-      positional: ['p2', 'not yet'],
+      invoked(#dismissProposal, positional: ['p2', 'not yet']),
     );
   });
 }

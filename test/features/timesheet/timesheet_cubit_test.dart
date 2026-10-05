@@ -3,14 +3,9 @@ import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/availability_repository.dart';
-import 'package:hinata/core/repositories/project_repository.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
-import 'package:hinata/core/repositories/timesheet_repository.dart';
-import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/features/timesheet/timesheet_cubit.dart';
 
-import '../time/recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The timesheet reads its rows, its period, its labels, its filter searches
 /// and the reader's capacity through this cubit: each read reaches the right
@@ -27,19 +22,19 @@ void main() {
   final from = DateTime(2026, 9, 7);
   final to = DateTime(2026, 9, 13);
 
-  late _FakeTime time;
-  late _FakeTimesheets timesheets;
-  late _FakeUsers users;
-  late _FakeProjects projects;
-  late _FakeAvailability availability;
+  late FakeTimeRepository time;
+  late FakeTimesheetRepository timesheets;
+  late FakeUserRepository users;
+  late FakeProjectRepository projects;
+  late FakeAvailabilityRepository availability;
   late TimesheetCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
-    timesheets = _FakeTimesheets();
-    users = _FakeUsers();
-    projects = _FakeProjects();
-    availability = _FakeAvailability();
+    time = FakeTimeRepository();
+    timesheets = FakeTimesheetRepository();
+    users = FakeUserRepository();
+    projects = FakeProjectRepository();
+    availability = FakeAvailabilityRepository();
     cubit = TimesheetCubit(
       time: time,
       timesheets: timesheets,
@@ -51,8 +46,8 @@ void main() {
   });
 
   test('reads rows from the route each page asks', () async {
-    time.answers[#timesheet] = Future.value((items: [row], total: 1));
-    timesheets.answers[#timesheet] = Future.value([row]);
+    time.answer(#timesheet, (items: [row], total: 1));
+    timesheets.answer(#timesheet, [row]);
 
     final page = await cubit.moduleRows(
       from: from,
@@ -90,7 +85,7 @@ void main() {
 
   test('reads the periods around a window', () async {
     final period = ApprovalPeriod(start: from, end: to, type: 'WEEKLY');
-    time.answers[#approvalPeriods] = Future.value([period]);
+    time.answer(#approvalPeriods, [period]);
 
     expect(await cubit.approvalPeriods(from: from, to: to, projectId: 'p1'), [
       period,
@@ -105,13 +100,10 @@ void main() {
   });
 
   test('names rows and searches the filters', () async {
-    users.answers[#usersByIds] = Future.value([ada]);
-    users.answers[#searchUsers] = Future.value((items: [ada], total: 1));
-    projects.answers[#resolveProjects] = Future.value([alpha]);
-    projects.answers[#searchProjects] = Future.value((
-      projects: [alpha],
-      total: 1,
-    ));
+    users.answer(#usersByIds, [ada]);
+    users.answer(#searchUsers, (items: [ada], total: 1));
+    projects.answer(#resolveProjects, [alpha]);
+    projects.answer(#searchProjects, (projects: [alpha], total: 1));
 
     expect(await cubit.usersByIds(['u1']), [ada]);
     expect((await cubit.searchUsers('ad', page: 1, size: 20)).items, [ada]);
@@ -143,7 +135,7 @@ void main() {
 
   test("reads the reader's capacity", () async {
     final capacity = Capacity(from: from, to: to);
-    availability.answers[#capacity] = Future.value(capacity);
+    availability.answer(#capacity, capacity);
 
     expect(await cubit.capacity(from, to), capacity);
     expect(
@@ -152,63 +144,38 @@ void main() {
     );
   });
 
-  test('passes a refusal through', () async {
-    for (final fake in <RecordingRepository>[
-      time,
-      timesheets,
-      users,
-      projects,
-      availability,
-    ]) {
-      fake.failure = refusal;
-    }
+  test('passes a failure through', () async {
+    time
+      ..fail(#timesheet, failure)
+      ..fail(#approvalPeriods, failure);
+    timesheets.fail(#timesheet, failure);
+    users
+      ..fail(#usersByIds, failure)
+      ..fail(#searchUsers, failure);
+    projects
+      ..fail(#resolveProjects, failure)
+      ..fail(#searchProjects, failure);
+    availability.fail(#capacity, failure);
 
     await expectLater(
       () => cubit.moduleRows(from: from, to: to, size: 200),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.rows(from, to), throwsRefusal);
+    await expectLater(() => cubit.rows(from, to), throwsFailure);
     await expectLater(
       () => cubit.approvalPeriods(from: from, to: to),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.usersByIds(['u1']), throwsRefusal);
-    await expectLater(() => cubit.resolveProjects(['p1']), throwsRefusal);
+    await expectLater(() => cubit.usersByIds(['u1']), throwsFailure);
+    await expectLater(() => cubit.resolveProjects(['p1']), throwsFailure);
     await expectLater(
       () => cubit.searchUsers('', page: 0, size: 20),
-      throwsRefusal,
+      throwsFailure,
     );
     await expectLater(
       () => cubit.searchProjects(query: '', page: 0, size: 20),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.capacity(from, to), throwsRefusal);
+    await expectLater(() => cubit.capacity(from, to), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeTimesheets with RecordingRepository implements TimesheetRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeUsers with RecordingRepository implements UserRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeProjects with RecordingRepository implements ProjectRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeAvailability
-    with RecordingRepository
-    implements AvailabilityRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

@@ -3,7 +3,8 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/issues_cubit.dart';
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -43,8 +44,7 @@ void main() {
 
     test('pages with the query the head shows at fetch time', () async {
       final issue = testIssue();
-      issues.answers[#issues] = (_) =>
-          Future.value((issues: [issue], total: 1));
+      issues.answer(#issues, (issues: [issue], total: 1));
       query = (
         projectId: 'p1',
         archived: true,
@@ -71,8 +71,8 @@ void main() {
     test('reads the directory and the projects for the rows', () async {
       const user = DirectoryUser(id: 'u1', username: 'ada', displayName: 'Ada');
       const project = Project(id: 'p1', key: 'HIN', name: 'Hinata');
-      users.answers[#users] = (_) => Future.value(const [user]);
-      projects.answers[#projects] = (_) => Future.value(const [project]);
+      users.answer(#users, const [user]);
+      projects.answer(#projects, const [project]);
       final reference = await cubit.reference();
       expect(reference.users, [user]);
       expect(reference.projects, [project]);
@@ -106,7 +106,7 @@ void main() {
     });
 
     test('passes a refused deadline on unchanged', () async {
-      await expectFailurePassedOn<List<Issue>>(
+      await expectFailurePassedOn(
         issues,
         #bulkSetDeadline,
         () => cubit.bulkSetDeadline(const ['i1'], clearDueDate: true),
@@ -153,11 +153,7 @@ void main() {
     });
 
     test('passes a failed export read on unchanged', () async {
-      await expectFailurePassedOn<List<Issue>>(
-        issues,
-        #allIssues,
-        () => cubit.all(query),
-      );
+      await expectFailurePassedOn(issues, #allIssues, () => cubit.all(query));
     });
   });
 }

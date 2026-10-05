@@ -5,26 +5,26 @@ import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/teams/team_project_cubit.dart';
 
-import '../projects/repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// The add-project modal's cubit: attach, or create a project for the team.
 void main() {
-  late RecordingTeams teams;
-  late RecordingProjects projects;
+  late FakeTeamRepository teams;
+  late FakeProjectRepository projects;
   late TeamProjectCubit cubit;
 
   const team = Team(id: 't1', key: 'OPS', name: 'Ops');
   const created = Project(id: 'p9', key: 'NEW', name: 'New');
 
   setUp(() {
-    teams = RecordingTeams();
-    projects = RecordingProjects();
+    teams = FakeTeamRepository();
+    projects = FakeProjectRepository();
     cubit = TeamProjectCubit(teams: teams, projects: projects);
   });
   tearDown(() => cubit.close());
 
   test('attaches the picked projects', () async {
-    teams.answers[#attachTeamProjects] = () async => team;
+    teams.answer(#attachTeamProjects, team);
 
     expect(await cubit.attach('t1', ['p1', 'p2']), team);
     expect(teams.callTo(#attachTeamProjects).positionalArguments, [
@@ -34,7 +34,7 @@ void main() {
   });
 
   test('creates a project that belongs to the team', () async {
-    teams.answers[#createTeamProject] = () async => created;
+    teams.answer(#createTeamProject, created);
 
     final answer = await cubit.create(
       't1',
@@ -60,8 +60,7 @@ void main() {
   });
 
   test('passes a refused creation on', () async {
-    teams.answers[#createTeamProject] = () async =>
-        throw ApiFailure('projects.keyTaken');
+    teams.fail(#createTeamProject, ApiFailure('projects.keyTaken'));
 
     await expectLater(
       cubit.create('t1', key: 'NEW', name: 'New'),
@@ -70,7 +69,7 @@ void main() {
   });
 
   test('uploads the picture to the new project', () async {
-    projects.answers[#uploadProjectAvatar] = () async => 'https://x/p9.png';
+    projects.answer(#uploadProjectAvatar, 'https://x/p9.png');
     final file = MultipartFile.fromBytes(const [1], filename: 'p.png');
 
     expect(await cubit.uploadProjectAvatar('p9', file), 'https://x/p9.png');

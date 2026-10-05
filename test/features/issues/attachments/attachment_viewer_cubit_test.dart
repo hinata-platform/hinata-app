@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/features/issues/attachments/attachment_viewer_cubit.dart';
 
-import '../recording_fakes.dart';
+import '../../../support/recording_fake.dart';
 
 void main() {
   late FakeApiClient api;
@@ -25,10 +25,6 @@ void main() {
   });
 
   test('passes a failed download on unchanged', () async {
-    await expectFailurePassedOn<({List<int> bytes, String contentType})?>(
-      api,
-      #getBytes,
-      () => cubit.download('/x'),
-    );
+    await expectFailurePassedOn(api, #getBytes, () => cubit.download('/x'));
   });
 }

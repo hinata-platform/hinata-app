@@ -2,35 +2,26 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/content_models.dart';
 import 'package:hinata/core/models/team_models.dart' show Team;
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/dashboard_repository.dart';
-import 'package:hinata/core/repositories/project_repository.dart';
-import 'package:hinata/core/repositories/team_repository.dart';
 import 'package:hinata/features/dashboard/dashboard_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeDashboard with RecordingFake implements DashboardRepository {}
-
-class _FakeProjects with RecordingFake implements ProjectRepository {}
-
-class _FakeTeams with RecordingFake implements TeamRepository {}
+import '../../support/recording_fake.dart';
 
 /// The dashboard previews unsaved personalisation while it is edited: every
 /// load asks the page which prefs, if any, it previews right now.
 void main() {
-  late _FakeDashboard dashboard;
-  late _FakeProjects projects;
-  late _FakeTeams teams;
+  late FakeDashboardRepository dashboard;
+  late FakeProjectRepository projects;
+  late FakeTeamRepository teams;
   late DashboardCubit cubit;
 
   setUp(() {
-    dashboard = _FakeDashboard();
-    projects = _FakeProjects();
-    teams = _FakeTeams();
+    dashboard = FakeDashboardRepository();
+    projects = FakeProjectRepository();
+    teams = FakeTeamRepository();
     cubit = DashboardCubit(dashboard, projects, teams);
     // The payload is not what is under test here; its absence is reported the
     // way the page shows it.
-    dashboard.answers[#dashboard] = () => Future<DashboardData>.error(failure);
+    dashboard.fail(#dashboard, failure);
   });
   tearDown(() => cubit.close());
 
@@ -57,9 +48,8 @@ void main() {
   test('the pickers read projects, then teams', () async {
     final projectList = <Project>[];
     final teamList = <Team>[];
-    projects.answers[#projects] = () =>
-        Future<List<Project>>.value(projectList);
-    teams.answers[#teams] = () => Future<List<Team>>.value(teamList);
+    projects.answer<List<Project>>(#projects, projectList);
+    teams.answer<List<Team>>(#teams, teamList);
 
     final data = await cubit.pickerData();
 
@@ -68,7 +58,7 @@ void main() {
   });
 
   test('without projects the teams are not asked', () async {
-    projects.answers[#projects] = () => Future<List<Project>>.error(failure);
+    projects.fail(#projects, failure);
 
     await expectLater(cubit.pickerData(), throwsA(same(failure)));
     expect(teams.calls, isEmpty);
@@ -76,8 +66,7 @@ void main() {
 
   test('saving sends the draft and passes a failure back', () async {
     const draft = DashboardPrefs(projectIds: ['p1']);
-    dashboard.answers[#saveDashboardPrefs] = () =>
-        Future<DashboardPrefs>.error(failure);
+    dashboard.fail(#saveDashboardPrefs, failure);
 
     await expectLater(cubit.savePrefs(draft), throwsA(same(failure)));
     expect(dashboard.only.positionalArguments, [same(draft)]);

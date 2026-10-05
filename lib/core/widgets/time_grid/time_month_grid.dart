@@ -759,10 +759,14 @@ class _Cell extends StatelessWidget {
     final hidden = items.length - shown;
 
     // The cell shows only the day's number; the full date names it for a
-    // screen reader, and the hint says what holding it does.
+    // screen reader, and the hint says what holding it does. Formatted only
+    // while one is listening: the grid scrolls without end, and every cell
+    // formatting a date nobody hears costs the fling.
     final cell = Semantics(
       button: onTapDay != null,
-      label: MaterialLocalizations.of(context).formatFullDate(at),
+      label: MediaQuery.accessibleNavigationOf(context)
+          ? MaterialLocalizations.of(context).formatFullDate(at)
+          : null,
       onLongPressHint: onDayMenu != null
           ? context.t('time.calendar.dayActions')
           : null,

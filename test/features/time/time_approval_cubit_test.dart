@@ -1,9 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/time_approval_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The five things that can happen to a submission reach the repository as
 /// asked and come back as it answered — refusals included, since the actions
@@ -18,17 +17,17 @@ void main() {
     status: ApprovalStatus.submitted,
   );
 
-  late _FakeTime time;
+  late FakeTimeRepository time;
   late TimeApprovalCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
+    time = FakeTimeRepository();
     cubit = TimeApprovalCubit(time);
     addTearDown(cubit.close);
   });
 
   test('hands a span in for the projects named', () async {
-    time.answers[#submitPeriod] = Future.value([approval]);
+    time.answer(#submitPeriod, [approval]);
 
     final submitted = await cubit.submit(
       periodStart: DateTime(2026, 9, 1),
@@ -54,7 +53,7 @@ void main() {
     'withdraws, approves, rejects and reopens the submission named',
     () async {
       for (final member in [#withdrawApproval, #approve, #reject, #reopen]) {
-        time.answers[member] = Future.value(approval);
+        time.answer(member, approval);
       }
 
       expect(await cubit.withdraw('a1'), approval);
@@ -71,24 +70,27 @@ void main() {
     },
   );
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
+  test('passes a failure through', () async {
+    for (final member in [
+      #submitPeriod,
+      #withdrawApproval,
+      #approve,
+      #reject,
+      #reopen,
+    ]) {
+      time.fail(member, failure);
+    }
 
     await expectLater(
       () => cubit.submit(
         periodStart: DateTime(2026, 9, 1),
         periodEnd: DateTime(2026, 9, 30),
       ),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.withdraw('a1'), throwsRefusal);
-    await expectLater(() => cubit.approve('a1'), throwsRefusal);
-    await expectLater(() => cubit.reject('a1', note: 'no'), throwsRefusal);
-    await expectLater(() => cubit.reopen('a1', note: 'no'), throwsRefusal);
+    await expectLater(() => cubit.withdraw('a1'), throwsFailure);
+    await expectLater(() => cubit.approve('a1'), throwsFailure);
+    await expectLater(() => cubit.reject('a1', note: 'no'), throwsFailure);
+    await expectLater(() => cubit.reopen('a1', note: 'no'), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

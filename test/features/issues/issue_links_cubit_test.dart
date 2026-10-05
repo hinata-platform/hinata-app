@@ -3,7 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/issue_links_cubit.dart';
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -76,7 +77,7 @@ void main() {
   });
 
   test('passes a refused change on unchanged', () async {
-    await expectFailurePassedOn<List<IssueLink>>(
+    await expectFailurePassedOn(
       issues,
       #deleteIssueLink,
       () => cubit.remove('i1', 'l1'),

@@ -170,15 +170,11 @@ abstract final class AppColors {
   static Color get brandInk => _dark ? railInk : navy;
 
   // Amber foreground for the *active* state — an icon or label on [accentSoft]
-  // or on a plain theme surface. [accentStrong] is the deeper amber that reads
-  // on the light cream fill; on dark, where [accentSoft] is only a faint wash
-  // over a near-black surface, that same deep amber sinks into the background,
-  // so this lifts to the brighter [accent].
-  //
-  // In light, [accentStrong] itself reaches only 3.0:1 on the canvas and 2.8:1
-  // on [accentSoft]; read as a label it takes this deeper honey, 4.6:1 on the
-  // amber wash and 5.4:1 on white (HIN-110, measured).
-  static Color get accentInk => _dark ? accent : const Color(0xFF876017);
+  // or on a plain theme surface. In light that is [accentText]: [accentStrong]
+  // reaches only 3.0:1 on the canvas and 2.8:1 on the amber wash, the deeper
+  // honey 6.1:1 and 5.6:1 (HIN-110, measured). On dark, where [accentSoft] is
+  // only a faint wash over a near-black surface, the brighter [accent] reads.
+  static Color get accentInk => _dark ? accent : accentText;
 
   // The wash behind weekends and holidays in the team absence calendar
   // (HIN-118). In dark mode the recessed canvas is nearly black against a card

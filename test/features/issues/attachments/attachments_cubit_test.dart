@@ -2,7 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/features/issues/attachments/attachments_cubit.dart';
 
-import '../recording_fakes.dart';
+import '../issue_fixtures.dart';
+import '../../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -70,8 +71,11 @@ void main() {
   });
 
   test('downloads through the client, the archive by its path', () async {
-    issues.answers[#attachmentsArchivePath] = (call) =>
-        '/api/v1/issues/${call.positionalArguments.single}/attachments/archive';
+    issues.answerWith(
+      #attachmentsArchivePath,
+      (call) =>
+          '/api/v1/issues/${call.positionalArguments.single}/attachments/archive',
+    );
     expect(cubit.archivePath('i1'), '/api/v1/issues/i1/attachments/archive');
 
     await expectForwarded(
@@ -84,7 +88,7 @@ void main() {
   });
 
   test('passes a refused delete on unchanged', () async {
-    await expectFailurePassedOn<void>(
+    await expectFailurePassedOn(
       issues,
       #deleteAttachment,
       () => cubit.delete('i1', 'a1'),

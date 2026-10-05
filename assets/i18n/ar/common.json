@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "اكتب الوقت",
       "typeDuration": "اكتب المدة"
+    },
+    "hue": {
+      "default": "اللون الافتراضي",
+      "honey": "عسلي",
+      "indigo": "نيلي",
+      "violet": "بنفسجي",
+      "teal": "تركوازي",
+      "green": "أخضر",
+      "coral": "مرجاني",
+      "pink": "وردي",
+      "amber": "كهرماني",
+      "red": "أحمر",
+      "orange": "برتقالي",
+      "cyan": "سماوي",
+      "blue": "أزرق",
+      "custom": "مخصص"
+    },
+    "pagination": {
+      "previous": "الصفحة السابقة",
+      "next": "الصفحة التالية",
+      "page": "الصفحة {{page}}"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "عُوّض مع آخر راتب",
       "done": "تم التسجيل",
       "confirmTitle": "{{what}} بمقدار {{days}}؟"
-    },
-    "hue": {
-      "default": "اللون الافتراضي",
-      "red": "أحمر",
-      "orange": "برتقالي",
-      "amber": "كهرماني",
-      "green": "أخضر",
-      "teal": "أزرق مخضر",
-      "cyan": "سماوي",
-      "blue": "أزرق",
-      "violet": "بنفسجي",
-      "pink": "وردي"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "{{count}} أخرى. ابحث أو استخدم التصفية للعثور عليها."
   },
   "gantt": {
-    "title": "الخط الزمني",
     "subtitle": "عرض جانت مع التبعيات والمعالم والمسار الحرج",
     "column": "المهمة",
     "empty": "لا توجد مهام مجدولة. حدّد تاريخي البدء والاستحقاق للمهام لتظهر على الخط الزمني.",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "لا تظهر كل الصفحات هنا لأنها أكثر من أن تتسع لها قائمة واحدة. لذلك قد تظهر صفحة فرعية في الأعلى مع أن صفحتها الأم موجودة."
     },
-    "hue": {
-      "honey": "عسلي",
-      "indigo": "نيلي",
-      "violet": "بنفسجي",
-      "teal": "تركوازي",
-      "green": "أخضر",
-      "coral": "مرجاني",
-      "pink": "وردي",
-      "amber": "كهرماني"
-    },
     "spaceIconOption": "الأيقونة {{n}} من {{count}}",
     "subpages": "الصفحات الفرعية",
     "moveUnder": "نقل تحت…",
     "moveUnderTitle": "تحت أي صفحة؟",
     "pageActions": "إجراءات الصفحة",
-    "resultCount": "النتائج: {{count}}"
+    "resultCount": "النتائج: {{count}}",
+    "moveUnderConfirm": {
+      "title": "تغيير من يمكنه قراءتها؟",
+      "message": "ستصبح «{{page}}» وصفحاتها الفرعية قابلة للقراءة من {{place}}.",
+      "confirm": "نقل"
+    }
   },
   "md": {
     "heading1": "عنوان 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "يمنحك هذا الدور شخص آخر من الإدارة.",
       "selectUser": "تحديد {{name}}",
       "selectPage": "تحديد كل المستخدمين في هذه الصفحة",
-      "previousPage": "الصفحة السابقة",
-      "nextPage": "الصفحة التالية",
-      "pageNumber": "الصفحة {{n}}",
       "removeEmail": "إزالة {{email}}"
     },
     "iosStoreUrl": "عنوان متجر iOS App Store",
@@ -3502,11 +3502,6 @@
     "selectedCount": "تم تحديد {{count}}",
     "collapse": "طي",
     "expand": "توسيع",
-    "pagination": {
-      "previous": "الصفحة السابقة",
-      "next": "الصفحة التالية",
-      "page": "الصفحة {{page}}"
-    },
     "selectIssue": "تحديد {{issue}}"
   },
   "teams": {
@@ -3545,17 +3540,6 @@
     "iconLabel": "الأيقونة",
     "optional": "اختياري",
     "back": "رجوع",
-    "color": {
-      "honey": "عسلي",
-      "indigo": "نيلي",
-      "violet": "بنفسجي",
-      "teal": "تركوازي",
-      "green": "أخضر",
-      "coral": "مرجاني",
-      "custom": "مخصص",
-      "pink": "وردي",
-      "amber": "كهرماني"
-    },
     "role": {
       "admin": "مشرف الفريق",
       "adminShort": "مشرف",

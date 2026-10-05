@@ -97,7 +97,7 @@ class TeamSettingsTab extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      _hueName(context, team.colorHue),
+                      hueLabel(context, team.colorHue),
                       style: TextStyle(
                         fontSize: AppType.label,
                         color: AppColors.ink,
@@ -209,13 +209,6 @@ class TeamSettingsTab extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _hueName(BuildContext context, int hue) {
-    for (final s in teamSwatches) {
-      if (s.hue == hue) return context.t(s.nameKey);
-    }
-    return context.t('teams.color.custom');
   }
 }
 

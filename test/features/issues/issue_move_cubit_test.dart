@@ -3,7 +3,7 @@ import 'package:hinata/core/models/issue_move.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/issue_move_cubit.dart';
 
-import 'recording_fakes.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -61,7 +61,7 @@ void main() {
   });
 
   test('passes a refused move on unchanged', () async {
-    await expectFailurePassedOn<List<Issue>>(
+    await expectFailurePassedOn(
       issues,
       #moveIssues,
       () => cubit.move(const ['i1'], 'p2', stateMap: const {}),

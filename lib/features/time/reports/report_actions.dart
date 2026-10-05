@@ -218,21 +218,16 @@ class _NameFormState extends State<_NameForm> {
           padding: const EdgeInsets.fromLTRB(22, 0, 22, 8),
           child: GlassField(
             label: context.t('time.reports.save.name'),
-            // The caption above is a plain Text; this ties it to the field.
-            child: Semantics(
-              label: context.t('time.reports.save.name'),
-              textField: true,
-              child: TextField(
-                controller: _name,
-                autofocus: true,
-                maxLength: 100,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _submit(),
-                onChanged: (_) => setState(() {}),
-                decoration: glassInputDecoration(
-                  hint: context.t('time.reports.save.nameHint'),
-                ).copyWith(counterText: ''),
-              ),
+            child: TextField(
+              controller: _name,
+              autofocus: true,
+              maxLength: 100,
+              textInputAction: TextInputAction.done,
+              onSubmitted: (_) => _submit(),
+              onChanged: (_) => setState(() {}),
+              decoration: glassInputDecoration(
+                hint: context.t('time.reports.save.nameHint'),
+              ).copyWith(counterText: ''),
             ),
           ),
         ),
