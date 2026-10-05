@@ -138,6 +138,7 @@ class TimeGridLayer {
     this.label,
     this.glyph,
     this.hatched = false,
+    this.dashed = false,
   });
 
   final String id;
@@ -171,4 +172,13 @@ class TimeGridLayer {
   /// another, and a third flat rectangle in the same grid is a colour nobody can
   /// name.
   final bool hatched;
+
+  /// Whether blocks are drawn as a dashed outline over a faint fill rather than
+  /// a solid bar. Blocks only.
+  ///
+  /// For a **suggestion**: an event from somebody's own calendar that is not an
+  /// entry until they take it over (HIN-94). Solid blocks are recorded time;
+  /// a dashed one is time that could be, and it must never read as already
+  /// counted.
+  final bool dashed;
 }

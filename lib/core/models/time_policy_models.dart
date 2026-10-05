@@ -42,6 +42,7 @@ class TimePolicySnapshot extends Equatable {
     this.absenceCalendar = AbsenceCalendarLevel.off,
     this.workloadReportsEnabled = false,
     this.absenceReportsEnabled = false,
+    this.icsImportEnabled = false,
   });
 
   /// What the server enforces when it says nothing: a year, as the 1.x routes
@@ -149,6 +150,10 @@ class TimePolicySnapshot extends Equatable {
   /// Whether the report "absences and balances" exists (HIN-119): only while
   /// absence management does, and only with its own policy on.
   final bool absenceReportsEnabled;
+
+  /// Whether people may subscribe to their own calendars (HIN-94). Off, the
+  /// settings section and the calendar layer are not offered at all.
+  final bool icsImportEnabled;
 
   /// Whether `GET /time/hints` answers at all. Asked before calling it, so a
   /// screen never pays for a 404.
@@ -322,6 +327,7 @@ class TimePolicySnapshot extends Equatable {
         absenceCalendar: absenceCalendar,
         workloadReportsEnabled: workloadReportsEnabled,
         absenceReportsEnabled: absenceReportsEnabled,
+        icsImportEnabled: icsImportEnabled,
       );
 
   factory TimePolicySnapshot.fromJson(Map<String, dynamic> json) {
@@ -364,6 +370,7 @@ class TimePolicySnapshot extends Equatable {
       ),
       workloadReportsEnabled: json['workloadReportsEnabled'] as bool? ?? false,
       absenceReportsEnabled: json['absenceReportsEnabled'] as bool? ?? false,
+      icsImportEnabled: json['icsImportEnabled'] as bool? ?? false,
     );
   }
 
@@ -394,6 +401,7 @@ class TimePolicySnapshot extends Equatable {
     absenceCalendar,
     workloadReportsEnabled,
     absenceReportsEnabled,
+    icsImportEnabled,
   ];
 }
 

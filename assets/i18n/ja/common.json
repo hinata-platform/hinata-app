@@ -1521,6 +1521,21 @@
         "billable": "請求対象",
         "user": "メンバー"
       }
+    },
+    "calendarEvents": {
+      "takeOverTitle": "作業記録として取り込む",
+      "takeOverHint": "時間はカレンダーから取り込まれます。記録先を選んでください。",
+      "takeOver": "取り込む",
+      "showLayer": "カレンダーの予定を表示",
+      "alreadyTaken": "この予定はすでに記録になっています。",
+      "notConvertible": "終日の予定や 1 日を超える予定は記録にできません。",
+      "takenOver": "予定を記録として取り込みました",
+      "untitled": "タイトルなしの予定",
+      "converted": "取り込み済み",
+      "layer": "カレンダー",
+      "openToday": "今日の予定のうち {{count}} 件がまだ取り込まれていません",
+      "openToday_plural": "今日の予定のうち {{count}} 件がまだ取り込まれていません",
+      "dismissChip": "今は非表示にする"
     }
   },
   "availability": {
@@ -4434,6 +4449,68 @@
     "nav": {
       "corrections": "例外と修正",
       "deadlines": "期限"
+    }
+  },
+  "calendarSubscriptions": {
+    "title": "カレンダーの購読",
+    "subtitle": "自分のカレンダーの予定を時間管理に表示し、記録として取り込めます。表示されるのはあなただけです。",
+    "add": "追加",
+    "added": "カレンダーを追加しました。読み込み中です。",
+    "deleted": "カレンダーを削除しました",
+    "empty": {
+      "title": "購読中のカレンダーはありません",
+      "message": "Google、Outlook、Apple のカレンダーの非公開アドレスを追加すると、作業時間の横に予定が表示されます。"
+    },
+    "limit": "購読できるカレンダーは最大 {{count}} 件です。",
+    "ruleOn": "終了した予定は自動で取り込まれます",
+    "skipped": "{{count}} 件の予定を取り込めませんでした：{{reason}}",
+    "skipped_plural": "{{count}} 件の予定を取り込めませんでした：{{reason}}",
+    "status": {
+      "off": "一時停止中",
+      "pending": "最初の読み込みを待っています",
+      "running": "読み込み中",
+      "ok": "予定 {{count}} 件、{{when}} に読み込み",
+      "ok_plural": "予定 {{count}} 件、{{when}} に読み込み",
+      "paused": "5 回続けて失敗したため一時停止しました。",
+      "failed": "カレンダーを読み込めませんでした。"
+    },
+    "refresh": "今すぐ更新",
+    "pause": "一時停止",
+    "resume": "再開",
+    "actions": "{{name}} の操作",
+    "delete": {
+      "title": "カレンダーを削除しますか？",
+      "message": "「{{name}}」とその予定が時間管理から消えます。取り込み済みの記録は残ります。"
+    },
+    "form": {
+      "addTitle": "カレンダーを購読",
+      "editTitle": "カレンダーを編集",
+      "subtitle": "hinata はカレンダーを読み取るだけで、何も書き戻しません。",
+      "name": "名前",
+      "nameHint": "例：仕事",
+      "url": "非公開アドレス（ICS）",
+      "urlKeep": "空欄のままにすると保存済みのアドレスを使います",
+      "urlHint": "非公開のアドレスです。暗号化して保存され、再表示されません。",
+      "subscribe": "購読する",
+      "color": "色",
+      "rule": "終了した予定を自動で取り込む",
+      "ruleHint": "オンにした後に始まる予定だけが、終了後に取り込まれます。",
+      "ruleProject": "これらの記録のプロジェクト"
+    },
+    "help": {
+      "toggle": "アドレスはどこにありますか？",
+      "google": "設定 → 対象のカレンダー → カレンダーの統合 → iCal 形式の非公開アドレス。",
+      "outlook": "設定 → 予定表 → 共有予定表 → 予定表を公開 → ICS リンク。",
+      "apple": "iCloud.com → カレンダー → 公開カレンダーとして共有 → リンクをコピー。",
+      "privacy": "このアドレスを知っている人は誰でもカレンダーを読めます。hinata はあなたの代わりにプロバイダーから取得し、前後数週間分だけを保持します。"
+    },
+    "color": {
+      "blue": "青",
+      "teal": "青緑",
+      "orange": "オレンジ",
+      "plum": "プラム",
+      "olive": "オリーブ",
+      "red": "赤"
     }
   }
 }

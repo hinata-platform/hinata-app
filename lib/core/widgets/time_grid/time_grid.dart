@@ -61,7 +61,7 @@ const double _kBlockTwoLines =
     2 * kTimeGridBlockPadV + kTimeGridBlockTitleLine + kTimeGridBlockSubLine;
 
 /// One block, worked out: where it goes and what colour it is.
-typedef _Placed = ({TimeGridSlot slot, Rect rect, Color tint});
+typedef _Placed = ({TimeGridSlot slot, Rect rect, Color tint, bool dashed});
 
 class TimeGrid extends StatefulWidget {
   const TimeGrid({
@@ -836,6 +836,7 @@ class _TimeGridState extends State<TimeGrid> {
                 child: _Block(
                   item: placed.slot.item,
                   tint: placed.tint,
+                  dashed: placed.dashed,
                   dimmed: drag?.item?.id == placed.slot.item.id,
                 ),
               ),
@@ -867,6 +868,7 @@ class _TimeGridState extends State<TimeGrid> {
           layer.id,
           layer.placement,
           layer.tint,
+          layer.dashed,
           for (final item in layer.items) ...[
             item.id,
             item.start,
@@ -886,6 +888,7 @@ class _TimeGridState extends State<TimeGrid> {
             slot: slot,
             rect: _rectOf(slot, index, columnWidth),
             tint: slot.item.tint ?? layer.tint ?? AppColors.accent,
+            dashed: layer.dashed,
           ));
         }
       }
@@ -1306,10 +1309,18 @@ Widget _bandSlot({required VoidCallback? onTap, required Widget pill}) {
 }
 
 class _Block extends StatelessWidget {
-  const _Block({required this.item, required this.tint, this.dimmed = false});
+  const _Block({
+    required this.item,
+    required this.tint,
+    this.dimmed = false,
+    this.dashed = false,
+  });
 
   final TimeGridItem item;
   final Color tint;
+
+  /// A suggestion rather than recorded time; see [TimeGridLayer.dashed].
+  final bool dashed;
 
   /// The block a drag has picked up: still in its old place, but plainly not
   /// the thing being moved.
@@ -1317,63 +1328,111 @@ class _Block extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Opacity(
-      opacity: dimmed ? 0.35 : 1,
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 6,
-          vertical: kTimeGridBlockPadV,
-        ),
-        decoration: BoxDecoration(
-          color: tint.withValues(alpha: 0.20),
-          borderRadius: BorderRadius.circular(6),
-          border: Border(left: BorderSide(color: tint, width: 2.5)),
-        ),
-        // What fits, decided from the height the block was actually given.
-        // A quarter-hour entry is fifteen points tall; two lines of text are
-        // thirty-two, and the difference used to be painted as a striped bar
-        // across the entry. The title is always shown — a block with no words
-        // in it is not worth drawing — and the second line only where there is
-        // room for a whole one.
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            final room = constraints.maxHeight;
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+    final body = Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 6,
+        vertical: kTimeGridBlockPadV,
+      ),
+      decoration: dashed
+          ? BoxDecoration(
+              color: tint.withValues(alpha: 0.07),
+              borderRadius: BorderRadius.circular(6),
+            )
+          : BoxDecoration(
+              color: tint.withValues(alpha: 0.20),
+              borderRadius: BorderRadius.circular(6),
+              border: Border(left: BorderSide(color: tint, width: 2.5)),
+            ),
+      // What fits, decided from the height the block was actually given.
+      // A quarter-hour entry is fifteen points tall; two lines of text are
+      // thirty-two, and the difference used to be painted as a striped bar
+      // across the entry. The title is always shown — a block with no words
+      // in it is not worth drawing — and the second line only where there is
+      // room for a whole one.
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final room = constraints.maxHeight;
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                item.title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  // Explicit, so the line box is the number the geometry
+                  // above reserves rather than whatever the font asks for.
+                  height: kTimeGridBlockTitleLine / AppType.caption,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
+              if (item.subtitle != null &&
+                  room >= _kBlockTwoLines - 2 * kTimeGridBlockPadV)
                 Text(
-                  item.title,
+                  item.subtitle!,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: AppType.caption,
-                    // Explicit, so the line box is the number the geometry
-                    // above reserves rather than whatever the font asks for.
-                    height: kTimeGridBlockTitleLine / AppType.caption,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
+                    height: kTimeGridBlockSubLine / AppType.caption,
+                    color: AppColors.inkSoft,
                   ),
                 ),
-                if (item.subtitle != null &&
-                    room >= _kBlockTwoLines - 2 * kTimeGridBlockPadV)
-                  Text(
-                    item.subtitle!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppType.caption,
-                      height: kTimeGridBlockSubLine / AppType.caption,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
+            ],
+          );
+        },
       ),
     );
+    return Opacity(
+      opacity: dimmed ? 0.35 : 1,
+      child: dashed
+          ? CustomPaint(
+              foregroundPainter: _DashedOutline(color: tint),
+              child: body,
+            )
+          : body,
+    );
   }
+}
+
+/// The outline of a suggested block: a dashed rounded rectangle in the
+/// block's own colour, at full strength so it clears 3:1 against the canvas.
+class _DashedOutline extends CustomPainter {
+  const _DashedOutline({required this.color});
+
+  final Color color;
+
+  static const double _dash = 4;
+  static const double _gap = 3;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.25;
+    final outline = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(
+          (Offset.zero & size).deflate(0.75),
+          const Radius.circular(6),
+        ),
+      );
+    for (final metric in outline.computeMetrics()) {
+      for (var at = 0.0; at < metric.length; at += _dash + _gap) {
+        canvas.drawPath(
+          metric.extractPath(at, math.min(at + _dash, metric.length)),
+          paint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_DashedOutline old) => old.color != color;
 }
 
 class _DragPreview extends StatelessWidget {

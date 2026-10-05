@@ -1521,6 +1521,21 @@
         "billable": "Facturable",
         "user": "Persona"
       }
+    },
+    "calendarEvents": {
+      "takeOverTitle": "Pasar a registro de tiempo",
+      "takeOverHint": "Las horas vienen de tu calendario. Elige dónde va el registro.",
+      "takeOver": "Pasar",
+      "showLayer": "Mostrar eventos del calendario",
+      "alreadyTaken": "Este evento ya es un registro.",
+      "notConvertible": "Los eventos de día completo o de más de un día no pueden ser un registro.",
+      "takenOver": "Evento pasado a registro",
+      "untitled": "Evento sin título",
+      "converted": "Pasado",
+      "layer": "Calendario",
+      "openToday": "{{count}} evento de hoy aún sin pasar",
+      "openToday_plural": "{{count}} eventos de hoy aún sin pasar",
+      "dismissChip": "Ocultar por ahora"
     }
   },
   "availability": {
@@ -4434,6 +4449,68 @@
     "nav": {
       "corrections": "Excepciones y correcciones",
       "deadlines": "Plazos"
+    }
+  },
+  "calendarSubscriptions": {
+    "title": "Suscripciones de calendario",
+    "subtitle": "Muestra los eventos de tus propios calendarios en el registro de tiempo y pásalos a registros. Solo tú los ves.",
+    "add": "Añadir",
+    "added": "Calendario añadido. Se está leyendo ahora.",
+    "deleted": "Calendario eliminado",
+    "empty": {
+      "title": "Ningún calendario suscrito",
+      "message": "Añade la dirección privada de tu calendario de Google, Outlook o Apple para ver tus citas junto a tu tiempo."
+    },
+    "limit": "Puedes suscribirte a {{count}} calendarios como máximo.",
+    "ruleOn": "Los eventos pasados se pasan automáticamente",
+    "skipped": "{{count}} evento sin pasar: {{reason}}",
+    "skipped_plural": "{{count}} eventos sin pasar: {{reason}}",
+    "status": {
+      "off": "Pausado por ti",
+      "pending": "Esperando la primera lectura",
+      "running": "Leyendo ahora",
+      "ok": "{{count}} evento, leído {{when}}",
+      "ok_plural": "{{count}} eventos, leído {{when}}",
+      "paused": "Pausado tras cinco lecturas fallidas.",
+      "failed": "No se pudo leer el calendario."
+    },
+    "refresh": "Actualizar ahora",
+    "pause": "Pausar",
+    "resume": "Reanudar",
+    "actions": "Acciones para {{name}}",
+    "delete": {
+      "title": "¿Quitar el calendario?",
+      "message": "«{{name}}» y sus eventos desaparecen del registro de tiempo. Los registros ya pasados se quedan."
+    },
+    "form": {
+      "addTitle": "Suscribirse a un calendario",
+      "editTitle": "Editar calendario",
+      "subtitle": "hinata solo lee el calendario. No se escribe nada de vuelta.",
+      "name": "Nombre",
+      "nameHint": "Por ejemplo Trabajo",
+      "url": "Dirección privada (ICS)",
+      "urlKeep": "Déjalo vacío para mantener la dirección guardada",
+      "urlHint": "Una dirección privada. Se guarda cifrada y no se vuelve a mostrar.",
+      "subscribe": "Suscribirse",
+      "color": "Color",
+      "rule": "Pasar automáticamente los eventos pasados",
+      "ruleHint": "Solo eventos que empiezan después de activarlo, una vez terminados.",
+      "ruleProject": "Proyecto para estos registros"
+    },
+    "help": {
+      "toggle": "¿Dónde encuentro la dirección?",
+      "google": "Configuración → tu calendario → Integrar el calendario → Dirección secreta en formato iCal.",
+      "outlook": "Configuración → Calendario → Calendarios compartidos → Publicar un calendario → enlace ICS.",
+      "apple": "iCloud.com → Calendario → compartir como calendario público → copiar el enlace.",
+      "privacy": "Quien tenga esta dirección puede leer el calendario. hinata lo obtiene de tu proveedor en tu nombre y solo guarda las semanas pasadas y próximas."
+    },
+    "color": {
+      "blue": "Azul",
+      "teal": "Verde azulado",
+      "orange": "Naranja",
+      "plum": "Ciruela",
+      "olive": "Oliva",
+      "red": "Rojo"
     }
   }
 }
