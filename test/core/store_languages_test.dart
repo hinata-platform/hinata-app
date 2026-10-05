@@ -51,6 +51,30 @@ void main() {
     expect(plistLocalizations('macos/Runner/Info.plist'), expected);
   });
 
+  // CFBundleLocalizations alone is not what App Store Connect reads: it still
+  // listed English only. The product page counts the .lproj folders inside the
+  // bundle, so each language needs one, registered in the Xcode project so it
+  // is actually copied in.
+  for (final platform in ['ios', 'macos']) {
+    test('the $platform bundle ships an .lproj folder per language', () {
+      final project = File(
+        '$platform/Runner.xcodeproj/project.pbxproj',
+      ).readAsStringSync();
+      for (final code in expected) {
+        expect(
+          File('$platform/Runner/$code.lproj/InfoPlist.strings').existsSync(),
+          isTrue,
+          reason: '$platform/Runner/$code.lproj/InfoPlist.strings is missing',
+        );
+        expect(
+          project,
+          contains('path = $code.lproj/InfoPlist.strings;'),
+          reason: '$code.lproj is not registered in the $platform project',
+        );
+      }
+    });
+  }
+
   // Play has no "languages" field to fix; this keeps the bundle's resource
   // filter honest with the app instead — see the note in build.gradle.kts.
   test('the Android bundle keeps the resources for all of them', () {

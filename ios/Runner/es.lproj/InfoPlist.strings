@@ -1,0 +1,4 @@
+/* Localised Info.plist values. The App Store reads the app's languages from
+   these .lproj folders, so every language the app speaks needs one. */
+CFBundleDisplayName = "Hinata";
+CFBundleName = "Hinata";
