@@ -168,7 +168,7 @@ class _AbsenceSheetState extends State<_AbsenceSheet> {
     final id = _request?.substituteId;
     if (id == null || id.isEmpty) return;
     try {
-      final found = await context.read<AbsenceSheetCubit>().people([id]);
+      final found = await context.read<AbsenceSheetCubit>().usersByIds([id]);
       if (!mounted || found.isEmpty) return;
       final person = found.first;
       setState(

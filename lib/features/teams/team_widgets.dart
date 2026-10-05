@@ -13,21 +13,9 @@ import '../../core/theme/app_type.dart';
 //  the lucide→Material icon map. Built from the Hive tokens (AppColors).
 // ════════════════════════════════════════════════════════════════════════
 
-/// One option in the team color picker. [hue] is the stored oklch hue.
-class TeamSwatch {
-  const TeamSwatch(this.hue, this.nameKey);
-  final int hue;
-  final String nameKey;
-}
-
-const teamSwatches = <TeamSwatch>[
-  TeamSwatch(70, 'teams.color.honey'),
-  TeamSwatch(250, 'teams.color.indigo'),
-  TeamSwatch(300, 'teams.color.violet'),
-  TeamSwatch(200, 'teams.color.teal'),
-  TeamSwatch(155, 'teams.color.green'),
-  TeamSwatch(20, 'teams.color.coral'),
-];
+/// The stored oklch hues the team color picker offers: the first six of the
+/// shared palette, named by `hueLabel`.
+const teamSwatches = <int>[70, 250, 300, 200, 155, 20];
 
 const teamIconNames = <String>[
   'hexagon',

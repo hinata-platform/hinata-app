@@ -118,7 +118,9 @@ class _OrgAbsenceManagementCardState extends State<_OrgAbsenceManagementBody> {
     if (missing.isEmpty || _loading) return;
     setState(() => _loading = true);
     try {
-      final found = await context.read<AbsenceManagersCubit>().people(missing);
+      final found = await context.read<AbsenceManagersCubit>().usersByIds(
+        missing,
+      );
       if (!mounted) return;
       setState(() {
         for (final person in found) {

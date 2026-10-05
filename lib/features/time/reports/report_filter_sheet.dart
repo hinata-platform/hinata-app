@@ -274,19 +274,25 @@ class _FilterSheetState extends State<_FilterSheet> {
                         ),
                         const SizedBox(height: 8),
                       ],
-                      // The section's caption is a plain Text; these tie it
-                      // to the field.
-                      Semantics(
-                        label: context.t('time.reports.sheet.activities'),
-                        textField: true,
-                        child: TextField(
-                          controller: _activity,
-                          maxLength: 60,
-                          textInputAction: TextInputAction.done,
-                          onSubmitted: (_) => _addActivity(),
-                          decoration: glassInputDecoration(
-                            hint: context.t('time.reports.sheet.activityHint'),
-                          ).copyWith(counterText: ''),
+                      // The chips above sit in this section too, so the
+                      // caption stays a heading for the group and the input
+                      // is named here; merged, so it is one text field and
+                      // not a labelled node wrapped around the real one.
+                      MergeSemantics(
+                        child: Semantics(
+                          label: context.t('time.reports.sheet.activities'),
+                          textField: true,
+                          child: TextField(
+                            controller: _activity,
+                            maxLength: 60,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _addActivity(),
+                            decoration: glassInputDecoration(
+                              hint: context.t(
+                                'time.reports.sheet.activityHint',
+                              ),
+                            ).copyWith(counterText: ''),
+                          ),
                         ),
                       ),
                     ],
@@ -294,16 +300,12 @@ class _FilterSheetState extends State<_FilterSheet> {
                 ),
                 _Section(
                   label: context.t('time.reports.sheet.text'),
-                  child: Semantics(
-                    label: context.t('time.reports.sheet.text'),
-                    textField: true,
-                    child: TextField(
-                      controller: _text,
-                      maxLength: 100,
-                      decoration: glassInputDecoration(
-                        hint: context.t('time.reports.sheet.textHint'),
-                      ).copyWith(counterText: ''),
-                    ),
+                  child: TextField(
+                    controller: _text,
+                    maxLength: 100,
+                    decoration: glassInputDecoration(
+                      hint: context.t('time.reports.sheet.textHint'),
+                    ).copyWith(counterText: ''),
                   ),
                 ),
                 if (widget.approvals)

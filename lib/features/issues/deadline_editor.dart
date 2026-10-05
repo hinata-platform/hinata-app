@@ -421,9 +421,10 @@ class _DeadlineEditorState extends State<_DeadlineEditor> {
       children: [
         GlassField(
           label: context.t('issues.deadline.fixedDate'),
+          // No label of its own: the caption above names it, and the date
+          // inside is what the button says.
           child: Semantics(
             button: true,
-            label: context.t('issues.deadline.fixedDate'),
             child: InkWell(
               onTap: _pickDate,
               borderRadius: BorderRadius.circular(AppTheme.radiusControl),

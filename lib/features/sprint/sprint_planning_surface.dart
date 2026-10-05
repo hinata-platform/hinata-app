@@ -884,7 +884,7 @@ class _Pager extends StatelessWidget {
         children: [
           _pageBtn(
             child: Icon(backChevron(context), size: 18),
-            label: context.t('sprint.pagination.previous'),
+            label: context.t('common.pagination.previous'),
             enabled: page > 0,
             onTap: () => onPage(page - 1),
           ),
@@ -893,7 +893,7 @@ class _Pager extends StatelessWidget {
             _pageBtn(
               child: Text('${i + 1}'),
               label: context.t(
-                'sprint.pagination.page',
+                'common.pagination.page',
                 variables: {'page': '${i + 1}'},
               ),
               selected: i == page,
@@ -915,7 +915,7 @@ class _Pager extends StatelessWidget {
           ),
           _pageBtn(
             child: Icon(forwardChevron(context), size: 18),
-            label: context.t('sprint.pagination.next'),
+            label: context.t('common.pagination.next'),
             enabled: page < pages - 1,
             onTap: () => onPage(page + 1),
           ),

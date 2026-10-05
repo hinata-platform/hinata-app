@@ -156,17 +156,13 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
                 const SizedBox(height: 16),
                 GlassField(
                   label: context.t('board.name'),
-                  child: Semantics(
-                    label: context.t('board.name'),
-                    textField: true,
-                    child: TextField(
-                      controller: _name,
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _save(),
-                      decoration: glassInputDecoration(),
-                    ),
+                  child: TextField(
+                    controller: _name,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _save(),
+                    decoration: glassInputDecoration(),
                   ),
                 ),
                 const SizedBox(height: 16),

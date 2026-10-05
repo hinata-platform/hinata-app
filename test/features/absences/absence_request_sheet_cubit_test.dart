@@ -3,11 +3,11 @@ import 'package:hinata/core/models/absence_request_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/features/absences/absence_request_sheet_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
-  late RecordingUsers users;
+  late FakeAbsenceRepository absences;
+  late FakeUserRepository users;
 
   final draft = AbsenceRequestDraft(
     typeId: 't1',
@@ -24,8 +24,8 @@ void main() {
   );
 
   setUp(() {
-    absences = RecordingAbsences();
-    users = RecordingUsers();
+    absences = FakeAbsenceRepository();
+    users = FakeUserRepository();
   });
 
   group('the request form', () {
@@ -40,13 +40,15 @@ void main() {
       ];
       users.answer<List<DirectoryUser>>(#usersByIds, found);
 
-      expect(await cubit.people(['s1']), same(found));
-      expectCall(
+      expect(await cubit.usersByIds(['s1']), same(found));
+      expect(
         users.only,
-        #usersByIds,
-        positional: [
-          ['s1'],
-        ],
+        invoked(
+          #usersByIds,
+          positional: [
+            ['s1'],
+          ],
+        ),
       );
     });
 
@@ -55,9 +57,9 @@ void main() {
       absences.answer<AbsencePreview>(#preview, preview);
 
       expect(await cubit.preview(draft), same(preview));
-      expectCall(absences.only, #preview, positional: [draft]);
+      expect(absences.only, invoked(#preview, positional: [draft]));
 
-      absences.fail<AbsencePreview>(#preview, failure);
+      absences.fail(#preview, failure);
       await expectLater(cubit.preview(draft), throwsA(same(failure)));
     });
 
@@ -65,14 +67,14 @@ void main() {
       absences.answer<AbsenceRequest>(#submit, filed);
 
       expect(await cubit.file(draft), same(filed));
-      expectCall(absences.only, #submit, positional: [draft]);
+      expect(absences.only, invoked(#submit, positional: [draft]));
     });
 
     test('file edits the request it names', () async {
       absences.answer<AbsenceRequest>(#edit, filed);
 
       expect(await cubit.file(draft, existingId: 'r1'), same(filed));
-      expectCall(absences.only, #edit, positional: ['r1', draft]);
+      expect(absences.only, invoked(#edit, positional: ['r1', draft]));
     });
   });
 
@@ -95,15 +97,17 @@ void main() {
       );
 
       expect(result, same(report));
-      expectCall(
+      expect(
         absences.only,
-        #reportSick,
-        named: {#from: day, #to: day, #halfDay: true, #typeId: 't-sick'},
+        invoked(
+          #reportSick,
+          named: {#from: day, #to: day, #halfDay: true, #typeId: 't-sick'},
+        ),
       );
     });
 
-    test('reportSick hands a refusal back unchanged', () async {
-      absences.fail<SickReport>(#reportSick, failure);
+    test('reportSick hands a failure back unchanged', () async {
+      absences.fail(#reportSick, failure);
 
       await expectLater(
         cubit.reportSick(from: DateTime(2026, 7, 6)),

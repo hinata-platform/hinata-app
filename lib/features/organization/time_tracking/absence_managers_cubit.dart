@@ -12,6 +12,6 @@ class AbsenceManagersCubit extends Cubit<void> {
 
   final UserRepository _users;
 
-  Future<List<DirectoryUser>> people(List<String> ids) =>
+  Future<List<DirectoryUser>> usersByIds(List<String> ids) =>
       _users.usersByIds(ids);
 }

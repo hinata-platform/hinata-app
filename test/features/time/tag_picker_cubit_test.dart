@@ -1,27 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/tag_picker_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The tag picker searches and grows the catalogue through this cubit: each
 /// call reaches the repository as asked and comes back as it answered.
 void main() {
   const tag = TimeTag(id: 't1', name: 'travel');
 
-  late _FakeTime time;
+  late FakeTimeRepository time;
   late TagPickerCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
+    time = FakeTimeRepository();
     cubit = TagPickerCubit(time);
     addTearDown(cubit.close);
   });
 
   test('searches the catalogue and coins a word', () async {
-    time.answers[#tags] = Future.value((items: [tag], total: 1));
-    time.answers[#createTag] = Future.value(tag);
+    time.answer(#tags, (items: [tag], total: 1));
+    time.answer(#createTag, tag);
 
     expect((await cubit.tags(query: 'tra', size: 30)).items, [tag]);
     expect(await cubit.createTag('travel'), tag);
@@ -31,15 +30,11 @@ void main() {
     ]);
   });
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
+  test('passes a failure through', () async {
+    time.fail(#tags, failure);
+    time.fail(#createTag, failure);
 
-    await expectLater(() => cubit.tags(size: 30), throwsRefusal);
-    await expectLater(() => cubit.createTag('travel'), throwsRefusal);
+    await expectLater(() => cubit.tags(size: 30), throwsFailure);
+    await expectLater(() => cubit.createTag('travel'), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

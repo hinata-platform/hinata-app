@@ -167,6 +167,32 @@ void main() {
       expect(moves, [('other', 'child')]);
     });
 
+    testWidgets('moving to a page in another place asks first', (tester) async {
+      late KnowledgeRepository repo;
+      await tester.runAsync(() async {
+        repo = (await loaded([
+          page('mine'),
+          page('shared', projectId: 'p1'),
+        ])).$1;
+      });
+      final moves = await pumpTree(tester, repo);
+
+      // Rows: mine, shared. The private page goes under the project page.
+      await tester.tap(find.byTooltip('knowledge.pageActions').at(0));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('knowledge.moveUnder'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Page shared').last);
+      await tester.pumpAndSettle();
+
+      // Its readers would change: nothing moves until that is confirmed.
+      expect(find.text('knowledge.moveUnderConfirm.title'), findsOneWidget);
+      expect(moves, isEmpty);
+      await tester.tap(find.text('knowledge.moveUnderConfirm.confirm'));
+      await tester.pumpAndSettle();
+      expect(moves, [('mine', 'shared')]);
+    });
+
     testWidgets('a page is not offered its own subpages or itself', (
       tester,
     ) async {

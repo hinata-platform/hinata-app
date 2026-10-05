@@ -156,6 +156,8 @@ void main() {
           'empty',
         ]),
       );
+      // Not in a tearDown: the binding checks for live handles before those
+      // run.
       handle.dispose();
     });
   }
@@ -166,8 +168,8 @@ void main() {
     await tester.pumpWidget(gallery(Brightness.light));
     await tester.pumpAndSettle();
     await expectLater(tester, meetsGuideline(labeledTapTargetGuideline));
-    // 44 pt, the iOS minimum; the glass pills sit in a docked row 36 pt
-    // tall and grow their hit area beyond what they draw.
+    // 44 pt, the iOS minimum: the glass pills draw at 36 pt inside a 44 pt
+    // docked row and answer on all of it.
     await expectLater(tester, meetsGuideline(iOSTapTargetGuideline));
     handle.dispose();
   });

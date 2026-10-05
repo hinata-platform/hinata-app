@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "输入时间",
       "typeDuration": "输入时长"
+    },
+    "hue": {
+      "default": "默认颜色",
+      "honey": "蜜色",
+      "indigo": "靛蓝",
+      "violet": "紫罗兰",
+      "teal": "青绿",
+      "green": "绿色",
+      "coral": "珊瑚",
+      "pink": "粉色",
+      "amber": "琥珀色",
+      "red": "红色",
+      "orange": "橙色",
+      "cyan": "青色",
+      "blue": "蓝色",
+      "custom": "自定义"
+    },
+    "pagination": {
+      "previous": "上一页",
+      "next": "下一页",
+      "page": "第 {{page}} 页"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "随最后一次工资折算",
       "done": "已记录",
       "confirmTitle": "{{what}}：{{days}}？"
-    },
-    "hue": {
-      "default": "默认颜色",
-      "red": "红色",
-      "orange": "橙色",
-      "amber": "琥珀色",
-      "green": "绿色",
-      "teal": "青绿色",
-      "cyan": "青色",
-      "blue": "蓝色",
-      "violet": "紫罗兰色",
-      "pink": "粉色"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "还有 {{count}} 张。请搜索或筛选来查找。"
   },
   "gantt": {
-    "title": "时间轴",
     "subtitle": "包含依赖关系、里程碑和关键路径的甘特图视图",
     "column": "事项",
     "empty": "没有已排期的事项。为事项设置开始和截止日期后即可在时间轴上看到。",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "页面太多，一个列表放不下，因此这里没有显示全部页面。子页面可能因此显示在顶层，尽管其上级页面存在。"
     },
-    "hue": {
-      "honey": "蜜色",
-      "indigo": "靛蓝",
-      "violet": "紫罗兰",
-      "teal": "青绿",
-      "green": "绿色",
-      "coral": "珊瑚",
-      "pink": "粉色",
-      "amber": "琥珀色"
-    },
     "spaceIconOption": "图标 {{n}}/{{count}}",
     "subpages": "子页面",
     "moveUnder": "移动到…下",
     "moveUnderTitle": "移动到哪个页面下？",
     "pageActions": "页面操作",
-    "resultCount": "结果：{{count}}"
+    "resultCount": "结果：{{count}}",
+    "moveUnderConfirm": {
+      "title": "更改可阅读的人？",
+      "message": "“{{page}}”及其子页面之后可由 {{place}} 阅读。",
+      "confirm": "移动"
+    }
   },
   "md": {
     "heading1": "标题 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "此角色需由管理团队中的其他人授予你。",
       "selectUser": "选择 {{name}}",
       "selectPage": "选择本页所有用户",
-      "previousPage": "上一页",
-      "nextPage": "下一页",
-      "pageNumber": "第 {{n}} 页",
       "removeEmail": "移除 {{email}}"
     },
     "iosStoreUrl": "iOS App Store URL",
@@ -3502,11 +3502,6 @@
     "selectedCount": "已选择 {{count}} 项",
     "collapse": "收起",
     "expand": "展开",
-    "pagination": {
-      "previous": "上一页",
-      "next": "下一页",
-      "page": "第 {{page}} 页"
-    },
     "selectIssue": "选择 {{issue}}"
   },
   "teams": {
@@ -3545,17 +3540,6 @@
     "iconLabel": "图标",
     "optional": "可选",
     "back": "返回",
-    "color": {
-      "honey": "蜜色",
-      "indigo": "靛蓝",
-      "violet": "紫罗兰",
-      "teal": "青绿",
-      "green": "绿色",
-      "coral": "珊瑚",
-      "custom": "自定义",
-      "pink": "粉色",
-      "amber": "琥珀"
-    },
     "role": {
       "admin": "团队管理员",
       "adminShort": "管理员",

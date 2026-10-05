@@ -17,7 +17,7 @@ class AbsenceRequestSheetCubit extends Cubit<void> {
   final UserRepository _users;
 
   /// The people behind [ids] — the stand-in a template named.
-  Future<List<DirectoryUser>> people(List<String> ids) =>
+  Future<List<DirectoryUser>> usersByIds(List<String> ids) =>
       _users.usersByIds(ids);
 
   Future<AbsencePreview> preview(AbsenceRequestDraft draft) =>

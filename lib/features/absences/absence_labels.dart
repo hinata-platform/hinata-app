@@ -59,7 +59,7 @@ Color absenceColor(BuildContext context, int? hue) {
 /// enough in light mode and light enough in dark mode to read on it (HIN-118).
 Color absenceInk(BuildContext context, int? hue) {
   final dark = Theme.of(context).brightness == Brightness.dark;
-  if (hue == null) return dark ? AppColors.accent : AppColors.accentText;
+  if (hue == null) return AppColors.accentInk;
   return HSLColor.fromAHSL(
     1,
     (hue % 360).toDouble(),

@@ -136,20 +136,16 @@ class _StartSprintBodyState extends State<_StartSprintBody> {
                 const SizedBox(height: 16),
                 GlassField(
                   label: context.t('sprint.goal'),
-                  child: Semantics(
-                    label: context.t('sprint.goal'),
-                    textField: true,
-                    child: TextField(
-                      controller: _goal,
-                      autofocus: true,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      textCapitalization: TextCapitalization.sentences,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: glassInputDecoration(
-                        hint: context.t('sprint.goalHint'),
-                      ),
+                  child: TextField(
+                    controller: _goal,
+                    autofocus: true,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textCapitalization: TextCapitalization.sentences,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: glassInputDecoration(
+                      hint: context.t('sprint.goalHint'),
                     ),
                   ),
                 ),

@@ -329,9 +329,7 @@ class AbsenceExpiryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final on = figures.expiringOn;
-    final ink = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.accent
-        : AppColors.accentText;
+    final ink = AppColors.accentInk;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(

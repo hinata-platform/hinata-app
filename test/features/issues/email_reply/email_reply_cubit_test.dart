@@ -2,7 +2,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/features/issues/email_reply/email_reply_cubit.dart';
 
-import '../recording_fakes.dart';
+import '../issue_fixtures.dart';
+import '../../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -54,7 +55,7 @@ void main() {
   });
 
   test('passes a refused reply on unchanged', () async {
-    await expectFailurePassedOn<void>(
+    await expectFailurePassedOn(
       issues,
       #replyEmail,
       () => cubit.send('i1', subject: 's', body: 'b'),

@@ -608,34 +608,40 @@ class _InviteModalState extends State<_InviteModal> {
                     ConstrainedBox(
                       constraints: const BoxConstraints(minWidth: 160),
                       child: IntrinsicWidth(
-                        // GlassField's caption is plain text; name the field
-                        // itself for screen readers.
-                        child: Semantics(
-                          label: context.t('admin.um.inviteEmails'),
-                          textField: true,
-                          child: TextField(
-                            controller: _controller,
-                            focusNode: _focus,
-                            keyboardType: TextInputType.emailAddress,
-                            autocorrect: false,
-                            onChanged: _onChanged,
-                            onSubmitted: (v) {
-                              _commit(v);
-                              _controller.clear();
-                              _focus.requestFocus();
-                            },
-                            decoration: InputDecoration(
-                              isDense: true,
-                              errorBorder: InputBorder.none,
-                              focusedErrorBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              disabledBorder: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              border: InputBorder.none,
-                              filled: false,
-                              hintText: context.t('admin.um.inviteEmailsHint'),
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 4,
+                        // The chips sit inside this field, so the caption above
+                        // stays a heading for the whole group and the input is
+                        // named here; merged, so it is one text field and not a
+                        // labelled node wrapped around the real one.
+                        child: MergeSemantics(
+                          child: Semantics(
+                            label: context.t('admin.um.inviteEmails'),
+                            textField: true,
+                            child: TextField(
+                              controller: _controller,
+                              focusNode: _focus,
+                              keyboardType: TextInputType.emailAddress,
+                              autocorrect: false,
+                              onChanged: _onChanged,
+                              onSubmitted: (v) {
+                                _commit(v);
+                                _controller.clear();
+                                _focus.requestFocus();
+                              },
+                              decoration: InputDecoration(
+                                isDense: true,
+                                errorBorder: InputBorder.none,
+                                focusedErrorBorder: InputBorder.none,
+                                focusedBorder: InputBorder.none,
+                                disabledBorder: InputBorder.none,
+                                enabledBorder: InputBorder.none,
+                                border: InputBorder.none,
+                                filled: false,
+                                hintText: context.t(
+                                  'admin.um.inviteEmailsHint',
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                ),
                               ),
                             ),
                           ),
@@ -663,18 +669,14 @@ class _InviteModalState extends State<_InviteModal> {
             const SizedBox(height: 16),
             GlassField(
               label: context.t('admin.um.inviteMessage'),
-              child: Semantics(
-                label: context.t('admin.um.inviteMessage'),
-                textField: true,
-                child: TextField(
-                  controller: _message,
-                  maxLines: 3,
-                  keyboardType: TextInputType.multiline,
-                  textCapitalization: TextCapitalization.sentences,
-                  textInputAction: TextInputAction.newline,
-                  decoration: glassInputDecoration(
-                    hint: context.t('admin.um.inviteMessageHint'),
-                  ),
+              child: TextField(
+                controller: _message,
+                maxLines: 3,
+                keyboardType: TextInputType.multiline,
+                textCapitalization: TextCapitalization.sentences,
+                textInputAction: TextInputAction.newline,
+                decoration: glassInputDecoration(
+                  hint: context.t('admin.um.inviteMessageHint'),
                 ),
               ),
             ),
@@ -818,28 +820,20 @@ class _EditModalState extends State<_EditModal> {
           children: [
             GlassField(
               label: context.t('admin.um.fieldName'),
-              child: Semantics(
-                label: context.t('admin.um.fieldName'),
-                textField: true,
-                child: TextField(
-                  controller: _name,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  decoration: glassInputDecoration(),
-                ),
+              child: TextField(
+                controller: _name,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                decoration: glassInputDecoration(),
               ),
             ),
             const SizedBox(height: 14),
             GlassField(
               label: context.t('admin.um.fieldTitle'),
-              child: Semantics(
-                label: context.t('admin.um.fieldTitle'),
-                textField: true,
-                child: TextField(
-                  controller: _title,
-                  textInputAction: TextInputAction.next,
-                  decoration: glassInputDecoration(),
-                ),
+              child: TextField(
+                controller: _title,
+                textInputAction: TextInputAction.next,
+                decoration: glassInputDecoration(),
               ),
             ),
             const SizedBox(height: 14),
@@ -848,18 +842,14 @@ class _EditModalState extends State<_EditModal> {
               trailing: sso
                   ? Icon(LucideIcons.lock, size: 12, color: AppColors.inkFaint)
                   : null,
-              child: Semantics(
-                label: context.t('admin.um.fieldEmail'),
-                textField: true,
-                child: TextField(
-                  controller: _email,
-                  enabled: !sso,
-                  keyboardType: TextInputType.emailAddress,
-                  autocorrect: false,
-                  textInputAction: TextInputAction.done,
-                  decoration: glassInputDecoration(
-                    hint: sso ? context.t('admin.um.emailLockedHint') : null,
-                  ),
+              child: TextField(
+                controller: _email,
+                enabled: !sso,
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
+                textInputAction: TextInputAction.done,
+                decoration: glassInputDecoration(
+                  hint: sso ? context.t('admin.um.emailLockedHint') : null,
                 ),
               ),
             ),

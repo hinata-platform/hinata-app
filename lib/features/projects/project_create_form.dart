@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'deadline_basis_field.dart';
-import 'project_hue_label.dart';
 import 'project_key.dart';
 import 'project_lead_cubit.dart';
 
@@ -15,6 +14,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
+import '../../core/theme/hue_labels.dart';
 import '../../core/util/keys.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../../core/widgets/person_picker.dart';
@@ -37,7 +37,7 @@ class ProjectDraft extends ChangeNotifier {
     int? hue,
     this.meId,
     this.deadlineDefault,
-  }) : hue = hue ?? kProjectHues.first.hue {
+  }) : hue = hue ?? kLabelHues.first {
     name.addListener(_onNameChanged);
     key.addListener(_onKeyChanged);
   }
@@ -254,21 +254,15 @@ class _ProjectCreateFieldsBodyState extends State<_ProjectCreateFieldsBody> {
         const SizedBox(height: 16),
         GlassField(
           label: context.t('projects.descriptionOptional'),
-          // The caption above is plain text; this ties it to the field for
-          // screen readers.
-          child: Semantics(
-            label: context.t('projects.descriptionOptional'),
-            textField: true,
-            child: TextField(
-              controller: widget.draft.description,
-              keyboardType: TextInputType.multiline,
-              textInputAction: TextInputAction.newline,
-              textCapitalization: TextCapitalization.sentences,
-              minLines: 2,
-              maxLines: 4,
-              decoration: glassInputDecoration(
-                hint: context.t('projectSettings.descHint'),
-              ),
+          child: TextField(
+            controller: widget.draft.description,
+            keyboardType: TextInputType.multiline,
+            textInputAction: TextInputAction.newline,
+            textCapitalization: TextCapitalization.sentences,
+            minLines: 2,
+            maxLines: 4,
+            decoration: glassInputDecoration(
+              hint: context.t('projectSettings.descHint'),
             ),
           ),
         ),
@@ -324,39 +318,34 @@ class _ProjectCreateFieldsBodyState extends State<_ProjectCreateFieldsBody> {
     );
     final nameField = GlassField(
       label: context.t('projects.name'),
-      child: Semantics(
-        label: context.t('projects.name'),
-        textField: true,
-        child: TextField(
-          controller: draft.name,
-          autofocus: widget.autofocus,
-          textCapitalization: TextCapitalization.words,
-          textInputAction: TextInputAction.next,
-          decoration: glassInputDecoration(
-            hint: context.t('projects.namePlaceholder'),
-          ),
+      child: TextField(
+        controller: draft.name,
+        autofocus: widget.autofocus,
+        textCapitalization: TextCapitalization.words,
+        textInputAction: TextInputAction.next,
+        decoration: glassInputDecoration(
+          hint: context.t('projects.namePlaceholder'),
         ),
       ),
     );
     final keyField = GlassField(
       label: context.t('projects.key'),
+      // The input with its error line under it: both read as one field, so
+      // a taken key is heard together with the key.
+      isTextInput: true,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Semantics(
-            label: context.t('projects.key'),
-            textField: true,
-            child: TextField(
-              controller: draft.key,
-              textCapitalization: TextCapitalization.characters,
-              autocorrect: false,
-              maxLength: 10,
-              style: const TextStyle(fontFamily: AppTheme.fontMono),
-              inputFormatters: const [ProjectKeyFormatter()],
-              decoration: glassInputDecoration(
-                hint: 'BILL',
-              ).copyWith(counterText: ''),
-            ),
+          TextField(
+            controller: draft.key,
+            textCapitalization: TextCapitalization.characters,
+            autocorrect: false,
+            maxLength: 10,
+            style: const TextStyle(fontFamily: AppTheme.fontMono),
+            inputFormatters: const [ProjectKeyFormatter()],
+            decoration: glassInputDecoration(
+              hint: 'BILL',
+            ).copyWith(counterText: ''),
           ),
           // Said here rather than after a round trip that fails.
           if (draft.keyTaken)
@@ -501,28 +490,28 @@ class _AccentSwatches extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        for (final c in kProjectHues)
+        for (final hue in kLabelHues)
           Semantics(
             button: true,
-            selected: c.hue == selected,
-            label: projectHueLabel(context, c.hue),
+            selected: hue == selected,
+            label: hueLabel(context, hue),
             // The fill sits under its own transparent Material so the press
             // ripple shows on top of the colour rather than under it.
             child: Container(
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: hueSwatch(c.hue),
+                color: hueSwatch(hue),
                 borderRadius: BorderRadius.circular(9),
                 border: Border.all(
-                  color: c.hue == selected ? AppColors.ink : Colors.transparent,
+                  color: hue == selected ? AppColors.ink : Colors.transparent,
                   width: 2,
                 ),
               ),
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  onTap: () => onPick(c.hue),
+                  onTap: () => onPick(hue),
                   borderRadius: BorderRadius.circular(9),
                 ),
               ),

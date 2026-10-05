@@ -188,7 +188,9 @@ class _RequestFormState extends State<_RequestForm> {
   /// request keeps only the id.
   Future<void> _loadSubstitute(String id) async {
     try {
-      final found = await context.read<AbsenceRequestSheetCubit>().people([id]);
+      final found = await context.read<AbsenceRequestSheetCubit>().usersByIds([
+        id,
+      ]);
       if (!mounted || found.isEmpty) return;
       setState(() => _substitute = found.first);
     } on ApiFailure {

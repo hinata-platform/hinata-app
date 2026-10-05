@@ -1,11 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/absence_request_models.dart';
 import 'package:hinata/core/models/availability_models.dart';
-import 'package:hinata/core/repositories/absence_repository.dart';
-import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/features/time/time_absences_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The absences view reads its lists and decides requests through this cubit:
 /// each call reaches the repository as asked and comes back as it answered.
@@ -25,19 +23,19 @@ void main() {
     status: AbsenceRequestStatus.submitted,
   );
 
-  late _FakeAvailability availability;
-  late _FakeAbsences absences;
+  late FakeAvailabilityRepository availability;
+  late FakeAbsenceRepository absences;
   late TimeAbsencesCubit cubit;
 
   setUp(() {
-    availability = _FakeAvailability();
-    absences = _FakeAbsences();
+    availability = FakeAvailabilityRepository();
+    absences = FakeAbsenceRepository();
     cubit = TimeAbsencesCubit(availability, absences);
     addTearDown(cubit.close);
   });
 
   test('reads the absences with every filter', () async {
-    availability.answers[#timeOff] = Future.value((items: [absence], total: 1));
+    availability.answer(#timeOff, (items: [absence], total: 1));
 
     final page = await cubit.timeOff(
       from: DateTime(2026, 8, 1),
@@ -70,8 +68,8 @@ void main() {
   });
 
   test('reads either side of the requests', () async {
-    absences.answers[#myRequests] = Future.value((items: [request], total: 1));
-    absences.answers[#inbox] = Future.value((items: [request], total: 1));
+    absences.answer(#myRequests, (items: [request], total: 1));
+    absences.answer(#inbox, (items: [request], total: 1));
 
     expect((await cubit.myRequests(page: 0, size: 25)).items, [request]);
     expect((await cubit.inbox(page: 2, size: 25)).items, [request]);
@@ -83,7 +81,7 @@ void main() {
 
   test('decides the request named, with the reason given', () async {
     for (final member in [#approve, #reject, #withdraw, #cancel]) {
-      absences.answers[member] = Future.value(request);
+      absences.answer(member, request);
     }
 
     expect(await cubit.approve('q1'), request);
@@ -99,28 +97,25 @@ void main() {
     ]);
   });
 
-  test('passes a refusal through', () async {
-    availability.failure = refusal;
-    absences.failure = refusal;
+  test('passes a failure through', () async {
+    availability.fail(#timeOff, failure);
+    for (final member in [
+      #myRequests,
+      #inbox,
+      #approve,
+      #reject,
+      #withdraw,
+      #cancel,
+    ]) {
+      absences.fail(member, failure);
+    }
 
-    await expectLater(() => cubit.timeOff(page: 0, size: 30), throwsRefusal);
-    await expectLater(() => cubit.myRequests(page: 0, size: 25), throwsRefusal);
-    await expectLater(() => cubit.inbox(page: 0, size: 25), throwsRefusal);
-    await expectLater(() => cubit.approve('q1'), throwsRefusal);
-    await expectLater(() => cubit.reject('q1', note: 'no'), throwsRefusal);
-    await expectLater(() => cubit.withdraw('q1'), throwsRefusal);
-    await expectLater(() => cubit.cancel('q1'), throwsRefusal);
+    await expectLater(() => cubit.timeOff(page: 0, size: 30), throwsFailure);
+    await expectLater(() => cubit.myRequests(page: 0, size: 25), throwsFailure);
+    await expectLater(() => cubit.inbox(page: 0, size: 25), throwsFailure);
+    await expectLater(() => cubit.approve('q1'), throwsFailure);
+    await expectLater(() => cubit.reject('q1', note: 'no'), throwsFailure);
+    await expectLater(() => cubit.withdraw('q1'), throwsFailure);
+    await expectLater(() => cubit.cancel('q1'), throwsFailure);
   });
-}
-
-class _FakeAvailability
-    with RecordingRepository
-    implements AvailabilityRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeAbsences with RecordingRepository implements AbsenceRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

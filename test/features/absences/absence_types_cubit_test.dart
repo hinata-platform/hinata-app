@@ -2,10 +2,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/absence_models.dart';
 import 'package:hinata/features/absences/absence_types_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
+  late FakeAbsenceRepository absences;
   late AbsenceTypesCubit cubit;
 
   const type = AbsenceType(
@@ -16,7 +16,7 @@ void main() {
   const draft = AbsenceTypeDraft(name: 'Training');
 
   setUp(() {
-    absences = RecordingAbsences();
+    absences = FakeAbsenceRepository();
     cubit = AbsenceTypesCubit(absences);
   });
 
@@ -27,27 +27,27 @@ void main() {
     absences.answer<List<AbsenceType>>(#types, types);
 
     expect(await cubit.types(), same(types));
-    expectCall(absences.only, #types, named: {#includeInactive: true});
+    expect(absences.only, invoked(#types, named: {#includeInactive: true}));
   });
 
   test('save creates a new type', () async {
     absences.answer<AbsenceType>(#createType, type);
 
     expect(await cubit.save(draft), same(type));
-    expectCall(absences.only, #createType, positional: [draft]);
+    expect(absences.only, invoked(#createType, positional: [draft]));
   });
 
   test('save updates the type it names', () async {
     absences.answer<AbsenceType>(#updateType, type);
 
     expect(await cubit.save(draft, existingId: 't1'), same(type));
-    expectCall(absences.only, #updateType, positional: ['t1', draft]);
+    expect(absences.only, invoked(#updateType, positional: ['t1', draft]));
   });
 
-  test('delete hands the server\'s refusal back unchanged', () async {
-    absences.fail<void>(#deleteType, failure);
+  test('delete hands the server\'s failure back unchanged', () async {
+    absences.fail(#deleteType, failure);
 
     await expectLater(cubit.delete('t1'), throwsA(same(failure)));
-    expectCall(absences.only, #deleteType, positional: ['t1']);
+    expect(absences.only, invoked(#deleteType, positional: ['t1']));
   });
 }

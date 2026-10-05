@@ -7,22 +7,22 @@ import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/projects/settings/project_settings_cubit.dart';
 
-import 'repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// The settings page's cubit: the load that opens the page, and each write the
 /// page makes, sent as the page asked and answered as the server answered.
 void main() {
-  late RecordingProjects projects;
-  late RecordingUsers users;
-  late RecordingTeams teams;
+  late FakeProjectRepository projects;
+  late FakeUserRepository users;
+  late FakeTeamRepository teams;
   late ProjectSettingsCubit cubit;
 
   const project = Project(id: 'p1', key: 'KULT', name: 'Kultur');
 
   setUp(() {
-    projects = RecordingProjects();
-    users = RecordingUsers();
-    teams = RecordingTeams();
+    projects = FakeProjectRepository();
+    users = FakeUserRepository();
+    teams = FakeTeamRepository();
     cubit = ProjectSettingsCubit(
       projectId: 'p1',
       projects: projects,
@@ -36,10 +36,10 @@ void main() {
     const uma = DirectoryUser(id: 'u1', username: 'uma', displayName: 'Uma');
     const team = Team(id: 't1', key: 'OPS', name: 'Ops');
     projects
-      ..answers[#project] = (() async => project)
-      ..answers[#projectStateUsage] = () async => const {'Done': 2};
-    users.answers[#users] = () async => const [uma];
-    teams.answers[#teams] = () async => const [team];
+      ..answer(#project, project)
+      ..answer(#projectStateUsage, const {'Done': 2});
+    users.answer(#users, const [uma]);
+    teams.answer(#teams, const [team]);
 
     final data = await cubit.load();
 
@@ -53,10 +53,10 @@ void main() {
 
   test('a failed load passes the failure on', () async {
     projects
-      ..answers[#project] = (() async => throw ApiFailure('errors.notFound'))
-      ..answers[#projectStateUsage] = () async => const <String, int>{};
-    users.answers[#users] = () async => const <DirectoryUser>[];
-    teams.answers[#teams] = () async => const <Team>[];
+      ..fail(#project, ApiFailure('errors.notFound'))
+      ..answer(#projectStateUsage, const <String, int>{});
+    users.answer(#users, const <DirectoryUser>[]);
+    teams.answer(#teams, const <Team>[]);
 
     await expectLater(cubit.load(), throwsA(isA<ApiFailure>()));
   });
@@ -65,8 +65,8 @@ void main() {
     'writes the patch and reads the usage of the project it names',
     () async {
       projects
-        ..answers[#updateProject] = (() async => project)
-        ..answers[#projectStateUsage] = () async => const {'Open': 1};
+        ..answer(#updateProject, project)
+        ..answer(#projectStateUsage, const {'Open': 1});
 
       expect(await cubit.update('p1', const {'name': 'Kultur'}), project);
       expect(await cubit.stateUsage('p1'), {'Open': 1});
@@ -82,8 +82,8 @@ void main() {
     const preview = SchedulePreview(moved: 3);
     const result = ScheduleResult(project: project, deadlinesMoved: 3);
     projects
-      ..answers[#previewSchedule] = (() async => preview)
-      ..answers[#applySchedule] = () async => result;
+      ..answer(#previewSchedule, preview)
+      ..answer(#applySchedule, result);
     final date = DateTime(2026, 11, 7);
 
     expect(
@@ -101,8 +101,7 @@ void main() {
   });
 
   test('clearing the date applies null', () async {
-    projects.answers[#applySchedule] = () async =>
-        const ScheduleResult(project: project);
+    projects.answer(#applySchedule, const ScheduleResult(project: project));
 
     await cubit.applySchedule('p1');
 
@@ -111,8 +110,8 @@ void main() {
 
   test('uploads and removes the picture of the route\'s project', () async {
     projects
-      ..answers[#uploadProjectAvatar] = (() async => 'https://x/p1.png?v=2')
-      ..answers[#deleteProjectAvatar] = () async {};
+      ..answer(#uploadProjectAvatar, 'https://x/p1.png?v=2')
+      ..answer<void>(#deleteProjectAvatar, null);
     final file = MultipartFile.fromBytes(const [1], filename: 'p.png');
 
     expect(await cubit.uploadAvatar(file), 'https://x/p1.png?v=2');

@@ -6,9 +6,9 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
+import '../../../core/theme/hue_labels.dart';
 import '../../../core/util/keys.dart';
 import '../../../core/widgets/entity_avatar_editor.dart';
-import '../project_hue_label.dart';
 import '../project_key.dart';
 import 'settings_common.dart';
 import '../../../core/widgets/folded_hint.dart';
@@ -355,21 +355,21 @@ class _Swatches extends StatelessWidget {
       children: [
         // 30×30 targets 8 points apart: above the 24-point floor of WCAG
         // 2.5.8. A 48-point ring would spread the row.
-        for (final c in kProjectHues)
+        for (final hue in kLabelHues)
           Semantics(
             button: true,
-            selected: c.hue == selectedHue,
-            label: projectHueLabel(context, c.hue),
+            selected: hue == selectedHue,
+            label: hueLabel(context, hue),
             // The fill sits under its own transparent Material so the press
             // ripple shows on top of the colour rather than under it.
             child: Container(
               width: 30,
               height: 30,
               decoration: BoxDecoration(
-                color: hueSwatch(c.hue),
+                color: hueSwatch(hue),
                 borderRadius: BorderRadius.circular(9),
                 border: Border.all(
-                  color: c.hue == selectedHue
+                  color: hue == selectedHue
                       ? AppColors.ink
                       : Colors.transparent,
                   width: 2,
@@ -378,7 +378,7 @@ class _Swatches extends StatelessWidget {
               child: Material(
                 type: MaterialType.transparency,
                 child: InkWell(
-                  onTap: () => onHue(c.hue),
+                  onTap: () => onHue(hue),
                   borderRadius: BorderRadius.circular(9),
                 ),
               ),
@@ -387,7 +387,7 @@ class _Swatches extends StatelessWidget {
         Padding(
           padding: const EdgeInsetsDirectional.only(start: 4),
           child: Text(
-            projectHueLabel(context, selectedHue),
+            hueLabel(context, selectedHue),
             style: TextStyle(
               fontSize: AppType.caption,
               fontWeight: FontWeight.w600,

@@ -253,41 +253,29 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
               children: [
                 GlassField(
                   label: context.t('projects.copy.name'),
-                  // The caption above is plain text; this ties it to the field
-                  // for screen readers.
-                  child: Semantics(
-                    label: context.t('projects.copy.name'),
-                    textField: true,
-                    child: TextField(
-                      controller: _name,
-                      autofocus: true,
-                      decoration: glassInputDecoration(),
-                      onChanged: (_) => setState(() {}),
-                    ),
+                  child: TextField(
+                    controller: _name,
+                    autofocus: true,
+                    decoration: glassInputDecoration(),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(height: 12),
                 GlassField(
                   label: context.t('projects.copy.key'),
-                  child: Semantics(
-                    label: context.t('projects.copy.key'),
-                    textField: true,
-                    child: TextField(
-                      controller: _key,
-                      textCapitalization: TextCapitalization.characters,
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(10),
-                        const ProjectKeyFormatter(),
-                      ],
-                      style: const TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      decoration: glassInputDecoration(
-                        hint: scope?.suggestedKey,
-                      ),
-                      onChanged: (_) => setState(() {}),
+                  child: TextField(
+                    controller: _key,
+                    textCapitalization: TextCapitalization.characters,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(10),
+                      const ProjectKeyFormatter(),
+                    ],
+                    style: const TextStyle(
+                      fontFamily: AppTheme.fontMono,
+                      fontWeight: FontWeight.w700,
                     ),
+                    decoration: glassInputDecoration(hint: scope?.suggestedKey),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(height: 12),

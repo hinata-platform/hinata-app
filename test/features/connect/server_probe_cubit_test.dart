@@ -1,20 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/core_models.dart' show ServerProbe;
-import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/features/connect/server_probe_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeMeta with RecordingFake implements MetaRepository {}
+import '../../support/recording_fake.dart';
 
 /// The server manager pings saved servers and tests a new one through this
 /// cubit; an unreachable server answers null, never an error.
 void main() {
-  late _FakeMeta meta;
+  late FakeMetaRepository meta;
   late ServerProbeCubit cubit;
 
   setUp(() {
-    meta = _FakeMeta();
+    meta = FakeMetaRepository();
     cubit = ServerProbeCubit(meta);
   });
   tearDown(() => cubit.close());
@@ -26,14 +23,14 @@ void main() {
       tls: true,
       setupCompleted: true,
     );
-    meta.answers[#probeServer] = () => Future<ServerProbe?>.value(probe);
+    meta.answer<ServerProbe?>(#probeServer, probe);
 
     expect(await cubit.probe('https://a.example'), same(probe));
     expect(meta.only.positionalArguments, ['https://a.example']);
   });
 
   test('an unreachable one answers null', () async {
-    meta.answers[#probeServer] = () => Future<ServerProbe?>.value(null);
+    meta.answer<ServerProbe?>(#probeServer, null);
 
     expect(await cubit.probe('https://b.example'), isNull);
   });

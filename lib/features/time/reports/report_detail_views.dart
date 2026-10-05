@@ -505,9 +505,7 @@ class _Badge extends StatelessWidget {
   Widget build(BuildContext context) {
     // Amber text on the amber wash: the deeper honey in the light theme, where
     // the brand's own is too light on its tint; the bright one on dark.
-    final ink = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.accent
-        : AppColors.accentText;
+    final ink = AppColors.accentInk;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(

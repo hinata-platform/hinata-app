@@ -98,16 +98,12 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
               children: [
                 GlassField(
                   label: context.t('sprint.name'),
-                  child: Semantics(
-                    label: context.t('sprint.name'),
-                    textField: true,
-                    child: TextField(
-                      controller: _name,
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.next,
-                      decoration: glassInputDecoration(),
-                    ),
+                  child: TextField(
+                    controller: _name,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.next,
+                    decoration: glassInputDecoration(),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -120,19 +116,15 @@ class _CreateSprintBodyState extends State<_CreateSprintBody> {
                       color: AppColors.inkFaint,
                     ),
                   ),
-                  child: Semantics(
-                    label: context.t('sprint.goal'),
-                    textField: true,
-                    child: TextField(
-                      controller: _goal,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
-                      textCapitalization: TextCapitalization.sentences,
-                      minLines: 2,
-                      maxLines: 4,
-                      decoration: glassInputDecoration(
-                        hint: context.t('sprint.goalHint'),
-                      ),
+                  child: TextField(
+                    controller: _goal,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
+                    textCapitalization: TextCapitalization.sentences,
+                    minLines: 2,
+                    maxLines: 4,
+                    decoration: glassInputDecoration(
+                      hint: context.t('sprint.goalHint'),
                     ),
                   ),
                 ),

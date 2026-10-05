@@ -3,12 +3,12 @@ import 'package:hinata/core/models/absence_request_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/features/absences/absence_sheet_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
-  late RecordingAvailability availability;
-  late RecordingUsers users;
+  late FakeAbsenceRepository absences;
+  late FakeAvailabilityRepository availability;
+  late FakeUserRepository users;
   late AbsenceSheetCubit cubit;
 
   final request = AbsenceRequest(
@@ -21,9 +21,9 @@ void main() {
   );
 
   setUp(() {
-    absences = RecordingAbsences();
-    availability = RecordingAvailability();
-    users = RecordingUsers();
+    absences = FakeAbsenceRepository();
+    availability = FakeAvailabilityRepository();
+    users = FakeUserRepository();
     cubit = AbsenceSheetCubit(
       absences: absences,
       availability: availability,
@@ -37,20 +37,22 @@ void main() {
     absences.answer<AbsenceRequest>(#request, request);
 
     expect(await cubit.request('r1'), same(request));
-    expectCall(absences.only, #request, positional: ['r1']);
+    expect(absences.only, invoked(#request, positional: ['r1']));
   });
 
   test('people reads the stand-in by id', () async {
     const found = [DirectoryUser(id: 's1', username: 'sam', displayName: '')];
     users.answer<List<DirectoryUser>>(#usersByIds, found);
 
-    expect(await cubit.people(['s1']), same(found));
-    expectCall(
+    expect(await cubit.usersByIds(['s1']), same(found));
+    expect(
       users.only,
-      #usersByIds,
-      positional: [
-        ['s1'],
-      ],
+      invoked(
+        #usersByIds,
+        positional: [
+          ['s1'],
+        ],
+      ),
     );
   });
 
@@ -66,30 +68,24 @@ void main() {
     expect(await cubit.approve('r1'), same(request));
     expect(await cubit.reject('r1', note: 'busy week'), same(request));
 
-    expectCall(absences.calls[0], #withdraw, positional: ['r1']);
-    expectCall(
+    expect(absences.calls[0], invoked(#withdraw, positional: ['r1']));
+    expect(
       absences.calls[1],
-      #cancel,
-      positional: ['r1'],
-      named: {#note: 'plans changed'},
+      invoked(#cancel, positional: ['r1'], named: {#note: 'plans changed'}),
     );
     // An approval without a note still sends the parameter, as null.
-    expectCall(
+    expect(
       absences.calls[2],
-      #approve,
-      positional: ['r1'],
-      named: {#note: null},
+      invoked(#approve, positional: ['r1'], named: {#note: null}),
     );
-    expectCall(
+    expect(
       absences.calls[3],
-      #reject,
-      positional: ['r1'],
-      named: {#note: 'busy week'},
+      invoked(#reject, positional: ['r1'], named: {#note: 'busy week'}),
     );
   });
 
   test('a refused step hands the failure back unchanged', () async {
-    absences.fail<AbsenceRequest>(#approve, failure);
+    absences.fail(#approve, failure);
 
     await expectLater(cubit.approve('r1'), throwsA(same(failure)));
   });
@@ -99,7 +95,7 @@ void main() {
 
     await cubit.deleteEntered('a1');
 
-    expectCall(availability.only, #deleteTimeOff, positional: ['a1']);
+    expect(availability.only, invoked(#deleteTimeOff, positional: ['a1']));
     expect(absences.calls, isEmpty);
   });
 }

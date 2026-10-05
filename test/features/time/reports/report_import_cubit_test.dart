@@ -2,10 +2,9 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_report_models.dart';
-import 'package:hinata/core/repositories/time_report_repository.dart';
 import 'package:hinata/features/time/reports/report_import_cubit.dart';
 
-import '../recording_repository.dart';
+import '../../../support/recording_fake.dart';
 
 /// The import wizard checks, pages, writes and discards through this cubit:
 /// each call reaches the repository as asked and comes back as it answered.
@@ -13,18 +12,18 @@ void main() {
   const preview = ImportPreview(importId: 'i1');
   const error = ImportRowError(line: 3, message: 'time.import.badDate');
 
-  late _FakeReports reports;
+  late FakeTimeReportRepository reports;
   late ReportImportCubit cubit;
 
   setUp(() {
-    reports = _FakeReports();
+    reports = FakeTimeReportRepository();
     cubit = ReportImportCubit(reports);
     addTearDown(cubit.close);
   });
 
   test('checks a file with its mapping and target', () async {
     final bytes = Uint8List.fromList([1, 2, 3]);
-    reports.answers[#previewImport] = Future.value(preview);
+    reports.answer(#previewImport, preview);
 
     expect(
       await cubit.previewImport(
@@ -51,9 +50,9 @@ void main() {
   });
 
   test('pages the failed rows, writes, and throws a check away', () async {
-    reports.answers[#importErrors] = Future.value((items: [error], total: 1));
-    reports.answers[#commitImport] = Future.value(12);
-    reports.answers[#discardImport] = Future<void>.value();
+    reports.answer(#importErrors, (items: [error], total: 1));
+    reports.answer(#commitImport, 12);
+    reports.answer<void>(#discardImport, null);
 
     expect((await cubit.importErrors('i1', page: 2)).items, [error]);
     expect(await cubit.commitImport('i1'), 12);
@@ -66,20 +65,18 @@ void main() {
     ]);
   });
 
-  test('passes a refusal through', () async {
-    reports.failure = refusal;
+  test('passes a failure through', () async {
+    reports.fail(#previewImport, failure);
+    reports.fail(#importErrors, failure);
+    reports.fail(#commitImport, failure);
+    reports.fail(#discardImport, failure);
 
     await expectLater(
       () => cubit.previewImport(fileName: 'hours.csv'),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.importErrors('i1', page: 0), throwsRefusal);
-    await expectLater(() => cubit.commitImport('i1'), throwsRefusal);
-    await expectLater(() => cubit.discardImport('i1'), throwsRefusal);
+    await expectLater(() => cubit.importErrors('i1', page: 0), throwsFailure);
+    await expectLater(() => cubit.commitImport('i1'), throwsFailure);
+    await expectLater(() => cubit.discardImport('i1'), throwsFailure);
   });
-}
-
-class _FakeReports with RecordingRepository implements TimeReportRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

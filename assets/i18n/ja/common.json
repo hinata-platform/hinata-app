@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "時刻を入力",
       "typeDuration": "時間の長さを入力"
+    },
+    "hue": {
+      "default": "既定の色",
+      "honey": "ハニー",
+      "indigo": "インディゴ",
+      "violet": "バイオレット",
+      "teal": "ティール",
+      "green": "グリーン",
+      "coral": "コーラル",
+      "pink": "ピンク",
+      "amber": "アンバー",
+      "red": "レッド",
+      "orange": "オレンジ",
+      "cyan": "シアン",
+      "blue": "ブルー",
+      "custom": "カスタム"
+    },
+    "pagination": {
+      "previous": "前のページ",
+      "next": "次のページ",
+      "page": "{{page}} ページ"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "最終給与で買い取り",
       "done": "記帳しました",
       "confirmTitle": "{{days}}の{{what}}？"
-    },
-    "hue": {
-      "default": "既定の色",
-      "red": "赤",
-      "orange": "オレンジ",
-      "amber": "琥珀色",
-      "green": "緑",
-      "teal": "ティール",
-      "cyan": "シアン",
-      "blue": "青",
-      "violet": "紫",
-      "pink": "ピンク"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "ほかに {{count}} 件あります。検索や絞り込みで見つけてください。"
   },
   "gantt": {
-    "title": "タイムライン",
     "subtitle": "依存関係、マイルストーン、クリティカルパスを表示するガントビュー",
     "column": "課題",
     "empty": "予定された課題がありません。課題に開始日と期限を設定すると、タイムラインに表示されます。",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "ページが多すぎて一覧に収まらないため、ここにはすべてのページが表示されていません。そのため、親ページがあってもサブページが最上位に表示されることがあります。"
     },
-    "hue": {
-      "honey": "ハニー",
-      "indigo": "インディゴ",
-      "violet": "バイオレット",
-      "teal": "ティール",
-      "green": "グリーン",
-      "coral": "コーラル",
-      "pink": "ピンク",
-      "amber": "アンバー"
-    },
     "spaceIconOption": "アイコン {{n}}/{{count}}",
     "subpages": "サブページ",
     "moveUnder": "…の下に移動",
     "moveUnderTitle": "どのページの下に移動しますか？",
     "pageActions": "ページの操作",
-    "resultCount": "結果：{{count}}"
+    "resultCount": "結果：{{count}}",
+    "moveUnderConfirm": {
+      "title": "閲覧できる人を変更しますか？",
+      "message": "「{{page}}」とそのサブページは {{place}} が閲覧できるようになります。",
+      "confirm": "移動"
+    }
   },
   "md": {
     "heading1": "見出し 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "この役割は、管理者の別の人があなたに付与します。",
       "selectUser": "{{name}} を選択",
       "selectPage": "このページのユーザーをすべて選択",
-      "previousPage": "前のページ",
-      "nextPage": "次のページ",
-      "pageNumber": "{{n}} ページ",
       "removeEmail": "{{email}} を削除"
     },
     "iosStoreUrl": "iOS App Store の URL",
@@ -3502,11 +3502,6 @@
     "selectedCount": "{{count}} 件選択中",
     "collapse": "折りたたむ",
     "expand": "展開",
-    "pagination": {
-      "previous": "前のページ",
-      "next": "次のページ",
-      "page": "{{page}} ページ"
-    },
     "selectIssue": "{{issue}} を選択"
   },
   "projectSettings": {
@@ -3647,17 +3642,6 @@
     "iconLabel": "アイコン",
     "optional": "任意",
     "back": "戻る",
-    "color": {
-      "honey": "ハニー",
-      "indigo": "インディゴ",
-      "violet": "バイオレット",
-      "teal": "ティール",
-      "green": "グリーン",
-      "coral": "コーラル",
-      "custom": "カスタム",
-      "pink": "ピンク",
-      "amber": "アンバー"
-    },
     "role": {
       "admin": "チーム管理者",
       "adminShort": "管理者",

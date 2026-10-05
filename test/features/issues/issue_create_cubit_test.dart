@@ -3,7 +3,8 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/issue_create_cubit.dart';
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -134,7 +135,7 @@ void main() {
   });
 
   test('passes a refused create on unchanged', () async {
-    await expectFailurePassedOn<Issue>(
+    await expectFailurePassedOn(
       issues,
       #createIssue,
       () => cubit.createIssue(const {}),
