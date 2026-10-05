@@ -420,7 +420,9 @@
     "awayMore": "and {{count}} more",
     "awayOpen": "Open the team calendar",
     "showCard": "Show card",
-    "hideCard": "Hide card"
+    "hideCard": "Hide card",
+    "focusTimeNone": "No focus time this week yet.",
+    "progressNone": "There are no issues here yet."
   },
   "comments": {
     "actionCamera": "Take photo or video",

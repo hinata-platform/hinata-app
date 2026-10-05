@@ -17,21 +17,16 @@ class _FocusCard extends StatelessWidget {
             actionLabel: context.t('dashboard.allIssues'),
             onAction: () => context.go('/issues'),
           ),
-          const SizedBox(height: 14),
           if (issues.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Text(
-                context.t('dashboard.noTasks'),
-                style: TextStyle(color: AppColors.inkSoft),
-              ),
-            )
-          else
+            _EmptyLine(context.t('dashboard.noTasks'))
+          else ...[
+            const SizedBox(height: 14),
             for (final issue in issues.take(5))
               Padding(
                 padding: const EdgeInsets.only(bottom: 9),
                 child: _FocusItem(issue: issue),
               ),
+          ],
         ],
       ),
     );
@@ -168,6 +163,14 @@ class _CompletionCard extends StatelessWidget {
     ];
     final total = completion.total;
     final donePct = (completion.donePercent * 100).round();
+    // No issues in scope: a donut of nothing and three times 0 % say less
+    // than one sentence does.
+    if (total == 0) {
+      return _EmptyPanel(
+        title: context.t('dashboard.projectProgress'),
+        message: context.t('dashboard.progressNone'),
+      );
+    }
     return _GlassCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -189,7 +192,7 @@ class _CompletionCard extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: total == 0 ? 0.0 : 1.0),
+                      tween: Tween(begin: 0, end: 1.0),
                       duration: const Duration(milliseconds: 1200),
                       curve: hiveEase,
                       builder: (_, t, _) => RepaintBoundary(
@@ -255,7 +258,7 @@ class _CompletionCard extends StatelessWidget {
                             ),
                           ),
                           Text(
-                            '${total == 0 ? 0 : (value / total * 100).round()}%',
+                            '${(value / total * 100).round()}%',
                             style: TextStyle(
                               fontSize: AppType.body,
                               fontWeight: FontWeight.w700,
@@ -342,20 +345,38 @@ class _DonutPainter extends CustomPainter {
 
 // ══════════════════════════ Focus-time tracker ═════════════════════════════
 
-class _TrackerCard extends StatefulWidget {
-  const _TrackerCard({required this.week, required this.month});
+/// Focus time this week by day, or the last weeks by week.
+///
+/// With nothing tracked in either it is its title and one sentence; with an
+/// empty week but a month that has some, the range switch stays so the month
+/// can still be opened, and the sentence stands where the bars would.
+class DashboardTrackerCard extends StatefulWidget {
+  const DashboardTrackerCard({
+    super.key,
+    required this.week,
+    required this.month,
+  });
   final List<TrackerDay> week;
   final List<TrackerWeek> month;
 
   @override
-  State<_TrackerCard> createState() => _TrackerCardState();
+  State<DashboardTrackerCard> createState() => _DashboardTrackerCardState();
 }
 
-class _TrackerCardState extends State<_TrackerCard> {
+class _DashboardTrackerCardState extends State<DashboardTrackerCard> {
   int _range = 0; // 0 = week, 1 = month
 
   @override
   Widget build(BuildContext context) {
+    final nothing =
+        widget.week.every((day) => day.focusMinutes == 0) &&
+        widget.month.every((week) => week.focusMinutes == 0);
+    if (nothing) {
+      return _EmptyPanel(
+        title: context.t('dashboard.focusTime'),
+        message: context.t('dashboard.focusTimeNone'),
+      );
+    }
     final monthly = _range == 1 && widget.month.isNotEmpty;
     final bars = <_BarData>[];
     if (monthly) {
@@ -430,8 +451,12 @@ class _TrackerCardState extends State<_TrackerCard> {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          SizedBox(height: 150, child: _Bars(bars: bars)),
+          if (totalMinutes == 0)
+            _EmptyLine(context.t('dashboard.focusTimeNone'))
+          else ...[
+            const SizedBox(height: 18),
+            SizedBox(height: 150, child: _Bars(bars: bars)),
+          ],
         ],
       ),
     );
@@ -471,69 +496,72 @@ class _Bars extends StatelessWidget {
       children: [
         for (final b in bars)
           Expanded(
-            child: LayoutBuilder(
-              builder: (context, c) {
-                final areaH = c.maxHeight - 24;
-                final frac = b.minutes / max;
-                final target = math.max(
-                  frac * areaH,
-                  b.minutes > 0 ? 8.0 : 3.0,
-                );
-                return Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: target),
-                      duration: const Duration(milliseconds: 900),
-                      curve: hiveEase,
-                      builder: (_, h, _) => Container(
-                        width: 20,
-                        height: h,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(6),
-                          gradient: b.today
-                              ? const LinearGradient(
-                                  begin: Alignment.topCenter,
-                                  end: Alignment.bottomCenter,
-                                  colors: [_cAmberHi, _cAmberLo],
-                                )
-                              : null,
-                          color: b.today
-                              ? null
-                              : (dark
-                                    ? Colors.white.withValues(alpha: .22)
-                                    : AppColors.navy.withValues(alpha: .75)),
-                          boxShadow: b.today
-                              ? [
-                                  BoxShadow(
-                                    color: AppColors.accent.withValues(
-                                      alpha: .4,
+            // The label takes the height its text needs and the bar the rest.
+            // A fixed allowance for the label let the tallest bar push the
+            // column past its box once the text was larger than guessed.
+            child: Column(
+              children: [
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, c) => Align(
+                      alignment: Alignment.bottomCenter,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(
+                          begin: 0,
+                          end: math.max(
+                            b.minutes / max * c.maxHeight,
+                            b.minutes > 0 ? 8.0 : 3.0,
+                          ),
+                        ),
+                        duration: const Duration(milliseconds: 900),
+                        curve: hiveEase,
+                        builder: (_, h, _) => Container(
+                          width: 20,
+                          height: h,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(6),
+                            gradient: b.today
+                                ? const LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [_cAmberHi, _cAmberLo],
+                                  )
+                                : null,
+                            color: b.today
+                                ? null
+                                : (dark
+                                      ? Colors.white.withValues(alpha: .22)
+                                      : AppColors.navy.withValues(alpha: .75)),
+                            boxShadow: b.today
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.accent.withValues(
+                                        alpha: .4,
+                                      ),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 3),
                                     ),
-                                    blurRadius: 12,
-                                    offset: const Offset(0, 3),
-                                  ),
-                                ]
-                              : null,
+                                  ]
+                                : null,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      b.label,
-                      maxLines: 1,
-                      overflow: TextOverflow.clip,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: AppType.caption,
-                        color: b.today
-                            ? AppColors.accentInk
-                            : AppColors.inkFaint,
-                        fontWeight: b.today ? FontWeight.w700 : FontWeight.w400,
-                      ),
-                    ),
-                  ],
-                );
-              },
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  b.label,
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontMono,
+                    fontSize: AppType.caption,
+                    color: b.today ? AppColors.accentInk : AppColors.inkFaint,
+                    fontWeight: b.today ? FontWeight.w700 : FontWeight.w400,
+                  ),
+                ),
+              ],
             ),
           ),
       ],
@@ -749,14 +777,7 @@ class _LeaderboardCard extends StatelessWidget {
             subLabel: context.t('dashboard.thisWeek'),
           ),
           const SizedBox(height: 6),
-          if (shown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 14),
-              child: Text(
-                context.t('dashboard.noRanking'),
-                style: TextStyle(color: AppColors.inkSoft),
-              ),
-            ),
+          if (shown.isEmpty) _EmptyLine(context.t('dashboard.noRanking')),
           for (final (i, entry) in shown.indexed)
             Container(
               padding: const EdgeInsets.symmetric(vertical: 9),

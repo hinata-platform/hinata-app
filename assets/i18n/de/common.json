@@ -420,7 +420,9 @@
     "awayMore": "und {{count}} weitere",
     "awayOpen": "Teamkalender öffnen",
     "showCard": "Karte einblenden",
-    "hideCard": "Karte ausblenden"
+    "hideCard": "Karte ausblenden",
+    "focusTimeNone": "Noch keine Fokuszeit diese Woche.",
+    "progressNone": "Hier gibt es noch keine Issues."
   },
   "comments": {
     "actionCamera": "Foto/Video aufnehmen",
