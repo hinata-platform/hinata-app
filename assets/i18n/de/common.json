@@ -3767,7 +3767,12 @@
     },
     "labelName": "Name des Stichworts",
     "removeLabel": "Stichwort entfernen",
-    "stateName": "Name des Status"
+    "stateName": "Name des Status",
+    "nav": {
+      "project": "Projekt",
+      "work": "Arbeitsweise",
+      "manage": "Verwaltung"
+    }
   },
   "account": {
     "title": "Mein Konto",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "{{label}} verringern",
       "increase": "{{label}} erhöhen"
+    },
+    "rail": {
+      "account": "Konto",
+      "preferences": "Präferenzen",
+      "privacy": "Datenschutz",
+      "administration": "Verwaltung"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "Protokoll",
       "hint": "Was in Zeiterfassung, Abwesenheiten und Zeitnachweisen passiert ist, und wer es getan hat.",
       "open": "Protokoll öffnen"
+    },
+    "nav": {
+      "corrections": "Ausnahmen und Korrekturen",
+      "deadlines": "Fristen"
     }
   }
 }

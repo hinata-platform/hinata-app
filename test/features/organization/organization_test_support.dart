@@ -23,9 +23,13 @@ class FakeOrgSettingsRepository implements OrgSettingsRepository {
     this.defaultDeadlineBasis,
     this.effectiveDeadlineBasis = 'CALENDAR',
     this.failWith,
+    this.advancedEnabled = false,
   });
 
   String? defaultDeadlineBasis;
+
+  /// Whether the time-tracking module is on, as the server resolves it.
+  final bool advancedEnabled;
   String effectiveDeadlineBasis;
 
   /// An error key every call answers with, when set.
@@ -39,7 +43,7 @@ class FakeOrgSettingsRepository implements OrgSettingsRepository {
     // ignore: prefer_const_literals_to_create_immutables
     'timeTracking': <String, dynamic>{
       // ignore: prefer_const_literals_to_create_immutables
-      'effective': <String, dynamic>{'advancedEnabled': false},
+      'effective': <String, dynamic>{'advancedEnabled': advancedEnabled},
     },
     'defaultDeadlineBasis': defaultDeadlineBasis,
     'effectiveDeadlineBasis': defaultDeadlineBasis ?? effectiveDeadlineBasis,

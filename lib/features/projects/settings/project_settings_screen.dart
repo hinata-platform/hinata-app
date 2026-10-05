@@ -21,6 +21,7 @@ import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/entity_avatar.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_loader.dart';
+import '../../../core/widgets/settings_split.dart';
 import '../../search/search_tokens.dart';
 import '../../deletion/delete_flows.dart';
 import '../../git/settings/git_integration_section.dart';
@@ -108,6 +109,11 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
   int _rev = 0; // forces label/workflow sections to rebuild their controllers
   int _tmpSeq = 0;
 
+  /// The section open on a wide window (HIN-110); a phone shows every card.
+  /// Seeded once from a `?section=` deep link, then the rail's.
+  ProjectSettingsCard _section = ProjectSettingsCard.general;
+  bool _sectionSeeded = false;
+
   @override
   void initState() {
     super.initState();
@@ -115,6 +121,17 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     _keyCtrl.addListener(() => _onTextChanged(key: _keyCtrl.text));
     _descCtrl.addListener(() => _onTextChanged(description: _descCtrl.text));
     _load();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_sectionSeeded) return;
+    _sectionSeeded = true;
+    final linked = projectSettingsSectionFromQuery(
+      GoRouter.maybeOf(context)?.state.uri.queryParameters['section'],
+    );
+    if (linked != null) _section = linked;
   }
 
   /// Syncs an identity text field into the draft. Guards against the listener
@@ -738,6 +755,31 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
       archived: draft.archived,
       onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
     );
+    if (!context.isCompact) {
+      return _buildWide(
+        context,
+        draft: draft,
+        sections: projectSettingsSections(
+          timeTracking: timeTracking != null,
+          templates: templates != null,
+          lead: _isLead,
+        ),
+        card: (card) => switch (card) {
+          ProjectSettingsCard.general => general,
+          ProjectSettingsCard.templates => templates!,
+          ProjectSettingsCard.members => members,
+          ProjectSettingsCard.labels => labels,
+          ProjectSettingsCard.workflow => workflow,
+          ProjectSettingsCard.git => git,
+          ProjectSettingsCard.timeTracking => timeTracking!,
+          ProjectSettingsCard.archive => archive,
+          ProjectSettingsCard.danger => DangerSection(
+            onDelete: _deleteProject,
+            flagged: true,
+          ),
+        },
+      );
+    }
     final danger = DangerSection(onDelete: _deleteProject);
 
     return LayoutBuilder(
@@ -821,53 +863,173 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
               ),
             ],
           ),
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 0,
-            // No SafeArea here: context.bottomGutter already carries the floating
-            // nav's footprint + device inset (injected by the shell), so wrapping
-            // in SafeArea would count that bottom inset twice and float the bar
-            // up into the middle of the screen. When the keyboard is open, ride
-            // above it instead of the nav.
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.pageGutter,
-                0,
-                context.pageGutter,
-                context.isCompact
-                    ? math.max(
-                            context.bottomGutter,
-                            MediaQuery.viewInsetsOf(context).bottom,
-                          ) -
-                          20
-                    : 12 +
-                          math.max(
-                            context.bottomGutter,
-                            MediaQuery.viewInsetsOf(context).bottom,
-                          ),
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  // Match the content column so the bar visually docks to it.
-                  constraints: BoxConstraints(
-                    maxWidth: math.min(contentMax, 880),
-                  ),
-                  child: _SaveBar(
-                    visible: _dirty,
-                    valid: _valid,
-                    saving: _saving,
-                    onDiscard: _discard,
-                    onSave: _save,
-                  ),
-                ),
-              ),
-            ),
-          ),
+          _saveBarOverlay(context, maxWidth: math.min(contentMax, 880)),
         ],
       ),
     );
   }
+
+  /// The floating save bar, pinned to the bottom of whatever holds it and
+  /// docked to a column [maxWidth] wide.
+  Widget _saveBarOverlay(BuildContext context, {required double maxWidth}) {
+    return Positioned(
+      left: 0,
+      right: 0,
+      bottom: 0,
+      // No SafeArea here: context.bottomGutter already carries the floating
+      // nav's footprint + device inset (injected by the shell), so wrapping
+      // in SafeArea would count that bottom inset twice and float the bar
+      // up into the middle of the screen. When the keyboard is open, ride
+      // above it instead of the nav.
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          context.pageGutter,
+          0,
+          context.pageGutter,
+          context.isCompact
+              // Never below the edge: without a shell (a test) there is no
+              // gutter to tuck the bar into.
+              ? math.max(
+                  0,
+                  math.max(
+                        context.bottomGutter,
+                        MediaQuery.viewInsetsOf(context).bottom,
+                      ) -
+                      20,
+                )
+              : 12 +
+                    math.max(
+                      context.bottomGutter,
+                      MediaQuery.viewInsetsOf(context).bottom,
+                    ),
+        ),
+        child: Center(
+          child: ConstrainedBox(
+            // Match the content column so the bar visually docks to it.
+            constraints: BoxConstraints(maxWidth: maxWidth),
+            child: _SaveBar(
+              visible: _dirty,
+              valid: _valid,
+              saving: _saving,
+              onDiscard: _discard,
+              onSave: _save,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// A wide window (HIN-110): the sections in a rail, one open beside it.
+  ///
+  /// Every card is still the one the phone stacks; the rail only decides which
+  /// is on screen. The draft and its save bar span the whole page as before, so
+  /// an edit in one section survives a look at another and one Save writes
+  /// them all; the git integration and the event date still write on their
+  /// own.
+  Widget _buildWide(
+    BuildContext context, {
+    required Project draft,
+    required List<ProjectSettingsCard> sections,
+    required Widget Function(ProjectSettingsCard) card,
+  }) {
+    final selected = sections.contains(_section) ? _section : sections.first;
+    final key = draft.key.isEmpty ? '—' : draft.key;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: SettingsSplitLayout<ProjectSettingsCard>(
+        header: SettingsRailHeader(
+          leading: _ProjectMark(draft: draft, size: 38, radius: 11),
+          title: draft.name.isEmpty
+              ? context.t('projectSettings.untitled')
+              : draft.name,
+          subtitle: [
+            '${context.t('projectSettings.title')} · $key',
+            if (draft.archived) context.t('projectSettings.archived'),
+          ].join(' · '),
+        ),
+        entries: [
+          for (final section in sections)
+            SettingsNavEntry(
+              id: section,
+              icon: _sectionIcon(section),
+              label: _sectionLabel(context, section),
+              group: _sectionGroup(context, section),
+            ),
+        ],
+        selected: selected,
+        onSelect: (section) => setState(() => _section = section),
+        bodyScrolls: false,
+        body: SizedBox.expand(
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              ListView(
+                // A fresh scroll position for every section.
+                key: ValueKey(selected),
+                physics: const AlwaysScrollableScrollPhysics(),
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: EdgeInsets.only(
+                  // Room for the last card to clear the floating save bar.
+                  bottom: (_dirty ? 96 : 24) + context.bottomGutter,
+                ),
+                children: [card(selected)],
+              ),
+              _saveBarOverlay(context, maxWidth: 880),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  static IconData _sectionIcon(ProjectSettingsCard section) =>
+      switch (section) {
+        ProjectSettingsCard.general => LucideIcons.slidersHorizontal,
+        ProjectSettingsCard.members => LucideIcons.users,
+        ProjectSettingsCard.templates => LucideIcons.layoutTemplate,
+        ProjectSettingsCard.labels => LucideIcons.tag,
+        ProjectSettingsCard.workflow => LucideIcons.listChecks,
+        ProjectSettingsCard.timeTracking => LucideIcons.timer,
+        ProjectSettingsCard.git => LucideIcons.gitBranch,
+        ProjectSettingsCard.archive => LucideIcons.archive,
+        ProjectSettingsCard.danger => LucideIcons.triangleAlert,
+      };
+
+  /// The card's own title, so the rail and the open card name it alike.
+  static String _sectionLabel(
+    BuildContext context,
+    ProjectSettingsCard section,
+  ) => context.t(switch (section) {
+    ProjectSettingsCard.general => 'projectSettings.general',
+    ProjectSettingsCard.members => 'projectSettings.leadsMembers',
+    ProjectSettingsCard.templates => 'projectSettings.templates.title',
+    ProjectSettingsCard.labels => 'projectSettings.labels',
+    ProjectSettingsCard.workflow => 'projectSettings.workflow',
+    ProjectSettingsCard.timeTracking => 'projectSettings.time.title',
+    ProjectSettingsCard.git => 'git.title',
+    ProjectSettingsCard.archive => 'projectSettings.archive',
+    ProjectSettingsCard.danger => 'projectSettings.dangerZone',
+  });
+
+  /// The rail's headings: the project itself, how its work runs, what it is
+  /// connected to, and its end. The danger zone sits alone under the last.
+  static String _sectionGroup(
+    BuildContext context,
+    ProjectSettingsCard section,
+  ) => context.t(switch (section) {
+    ProjectSettingsCard.general ||
+    ProjectSettingsCard.members ||
+    ProjectSettingsCard.templates => 'projectSettings.nav.project',
+    ProjectSettingsCard.labels ||
+    ProjectSettingsCard.workflow ||
+    ProjectSettingsCard.timeTracking => 'projectSettings.nav.work',
+    ProjectSettingsCard.git => 'admin.navIntegrations',
+    ProjectSettingsCard.archive ||
+    ProjectSettingsCard.danger => 'projectSettings.nav.manage',
+  });
 }
 
 class _Header extends StatelessWidget {
@@ -876,35 +1038,12 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hue = hueForHex(draft.color);
     return Row(
       children: [
         // The picture, when there is one — this is the page that edits it, so
         // the header would otherwise still show the key square while the field
         // below it already shows the new image.
-        EntityAvatar(
-          avatarUrl: draft.avatarUrl,
-          size: 54,
-          radius: 15,
-          fallback: Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: hueSoft(hue),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              draft.key.isEmpty ? '—' : draft.key,
-              style: TextStyle(
-                fontFamily: AppTheme.fontMono,
-                fontWeight: FontWeight.w700,
-                fontSize: AppType.body,
-                color: hueChipText(hue),
-              ),
-            ),
-          ),
-        ),
+        _ProjectMark(draft: draft, size: 54, radius: 15),
         const SizedBox(width: 16),
         Expanded(
           child: Column(
@@ -947,6 +1086,47 @@ class _Header extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// The project's picture, or its key on its colour when it has none.
+class _ProjectMark extends StatelessWidget {
+  const _ProjectMark({
+    required this.draft,
+    required this.size,
+    required this.radius,
+  });
+
+  final Project draft;
+  final double size;
+  final double radius;
+
+  @override
+  Widget build(BuildContext context) {
+    final hue = hueForHex(draft.color);
+    return EntityAvatar(
+      avatarUrl: draft.avatarUrl,
+      size: size,
+      radius: radius,
+      fallback: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: hueSoft(hue),
+          borderRadius: BorderRadius.circular(radius),
+        ),
+        alignment: Alignment.center,
+        child: Text(
+          draft.key.isEmpty ? '—' : draft.key,
+          style: TextStyle(
+            fontFamily: AppTheme.fontMono,
+            fontWeight: FontWeight.w700,
+            fontSize: size < 48 ? AppType.caption : AppType.body,
+            color: hueChipText(hue),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -13,7 +13,14 @@ import 'package:hinata/core/repositories/team_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
+import 'package:hinata/core/widgets/settings_split.dart';
+import 'package:hinata/features/projects/settings/danger_section.dart';
+import 'package:hinata/features/projects/settings/general_section.dart';
+import 'package:hinata/features/projects/settings/labels_section.dart';
+import 'package:hinata/features/projects/settings/members_section.dart';
+import 'package:hinata/features/projects/settings/project_settings_layout.dart';
 import 'package:hinata/features/projects/settings/project_settings_screen.dart';
+import 'package:hinata/features/projects/settings/workflow_section.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 
 /// Project settings (HIN-129): who gets the page, and the deadline basis on it.
@@ -24,6 +31,17 @@ import 'package:hinata/features/shell/page_chrome.dart';
 ///
 /// Nothing here asserts on translated copy: widget tests render raw i18n keys.
 void main() {
+  Future<void> openSection(WidgetTester tester, String label) async {
+    await tester.tap(
+      find.descendant(
+        of: find.byType(SettingsNavRail<ProjectSettingsCard>),
+        matching: find.text(label),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+  }
+
   const project = Project(
     id: 'p1',
     key: 'FEST',
@@ -60,15 +78,17 @@ void main() {
     bool templates = true,
     String orgBasis = 'WORKING',
     Project source = project,
+    double width = 1400,
+    String location = '/settings',
   }) async {
-    tester.view.physicalSize = const Size(1400, 3200);
+    tester.view.physicalSize = Size(width, 3200);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final projects = _FakeProjects(source);
     final router = GoRouter(
-      initialLocation: '/settings',
+      initialLocation: location,
       routes: [
         GoRoute(
           path: '/settings',
@@ -120,6 +140,7 @@ void main() {
     expect(find.text('issues'), findsNothing);
     expect(find.byType(ProjectSettingsScreen), findsOneWidget);
     // The event date is theirs to move.
+    await openSection(tester, 'projectSettings.templates.title');
     expect(find.text('projectSettings.templates.eventDate'), findsOneWidget);
     // Deletion stays with the leads.
     expect(find.text('projectSettings.dangerZone'), findsNothing);
@@ -129,7 +150,10 @@ void main() {
     await pump(tester, me: user('lead'));
 
     expect(find.text('issues'), findsNothing);
+    // The rail lists it; opening it shows the card.
     expect(find.text('projectSettings.dangerZone'), findsOneWidget);
+    await openSection(tester, 'projectSettings.dangerZone');
+    expect(find.byType(DangerSection), findsOneWidget);
   });
 
   testWidgets('a platform admin without membership is bounced', (tester) async {
@@ -161,6 +185,7 @@ void main() {
       tester,
     ) async {
       await pump(tester, me: user('lead'), orgBasis: 'WORKING');
+      await openSection(tester, 'projectSettings.templates.title');
 
       expect(find.text('projects.deadlineBasis.label'), findsOneWidget);
       expect(find.text('projects.deadlineBasis.followsOrg'), findsOneWidget);
@@ -179,6 +204,7 @@ void main() {
         orgBasis: 'WORKING',
         source: project.copyWith(deadlineBasis: RelativeDateBasis.calendar),
       );
+      await openSection(tester, 'projectSettings.templates.title');
 
       final calendar = tester.widget<GlassSwitchChip>(
         find.widgetWithText(GlassSwitchChip, 'projects.deadlineBasis.calendar'),
@@ -191,6 +217,90 @@ void main() {
       await pump(tester, me: user('lead'), templates: false);
 
       expect(find.text('projects.deadlineBasis.label'), findsNothing);
+      // Nor in the rail.
+      expect(find.text('projectSettings.templates.title'), findsNothing);
+    });
+  });
+
+  // HIN-110: a wide window shows one section at a time beside a rail; a phone
+  // keeps every card on one scrolling page.
+  group('sections on a wide window', () {
+    testWidgets('opens on General, alone', (tester) async {
+      await pump(tester, me: user('lead'));
+
+      expect(find.byType(SettingsNavRail<ProjectSettingsCard>), findsOneWidget);
+      expect(find.byType(GeneralSection), findsOneWidget);
+      expect(find.byType(MembersSection), findsNothing);
+      expect(find.byType(WorkflowSection), findsNothing);
+      expect(find.byType(DangerSection), findsNothing);
+    });
+
+    testWidgets('a rail entry swaps the open section', (tester) async {
+      await pump(tester, me: user('lead'));
+
+      await openSection(tester, 'projectSettings.workflow');
+
+      expect(find.byType(WorkflowSection), findsOneWidget);
+      expect(find.byType(GeneralSection), findsNothing);
+      expect(
+        tester.getSemantics(
+          find.descendant(
+            of: find.byType(SettingsNavRail<ProjectSettingsCard>),
+            matching: find.text('projectSettings.workflow'),
+          ),
+        ),
+        isSemantics(isButton: true, isSelected: true),
+      );
+    });
+
+    testWidgets('an edit in one section survives opening another', (
+      tester,
+    ) async {
+      await pump(tester, me: user('lead'));
+      await tester.enterText(find.byType(TextField).first, 'Winterfest');
+      await tester.pump();
+
+      await openSection(tester, 'projectSettings.labels');
+      await openSection(tester, 'projectSettings.general');
+
+      expect(find.text('Winterfest'), findsWidgets);
+      // The save bar still offers the change.
+      expect(find.text('projectSettings.saveChanges'), findsOneWidget);
+    });
+
+    testWidgets('?section= opens that section', (tester) async {
+      await pump(
+        tester,
+        me: user('lead'),
+        location: '/settings?section=labels',
+      );
+
+      expect(find.byType(LabelsSection), findsOneWidget);
+      expect(find.byType(GeneralSection), findsNothing);
+    });
+
+    testWidgets('a section the reader may not see falls back to General', (
+      tester,
+    ) async {
+      await pump(
+        tester,
+        me: user('ta'),
+        teams: [owningTeam('ta')],
+        location: '/settings?section=danger',
+      );
+
+      expect(find.byType(GeneralSection), findsOneWidget);
+      expect(find.byType(DangerSection), findsNothing);
+    });
+
+    testWidgets('a phone keeps every card on one page', (tester) async {
+      await pump(tester, me: user('lead'), width: 600);
+
+      expect(find.byType(SettingsNavRail<ProjectSettingsCard>), findsNothing);
+      expect(find.byType(GeneralSection), findsOneWidget);
+      expect(find.byType(MembersSection), findsOneWidget);
+      expect(find.byType(WorkflowSection), findsOneWidget);
+      expect(find.byType(DangerSection), findsOneWidget);
     });
   });
 

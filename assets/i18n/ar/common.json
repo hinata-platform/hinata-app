@@ -3767,7 +3767,12 @@
     },
     "labelName": "اسم الوسم",
     "removeLabel": "إزالة الوسم",
-    "stateName": "اسم الحالة"
+    "stateName": "اسم الحالة",
+    "nav": {
+      "project": "المشروع",
+      "work": "طريقة العمل",
+      "manage": "الإدارة"
+    }
   },
   "account": {
     "title": "حسابي",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "تقليل {{label}}",
       "increase": "زيادة {{label}}"
+    },
+    "rail": {
+      "account": "الحساب",
+      "preferences": "التفضيلات",
+      "privacy": "الخصوصية",
+      "administration": "الإدارة"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "السجل",
       "hint": "ما جرى في تتبع الوقت والغياب وجداول الساعات، ومن قام به.",
       "open": "فتح السجل"
+    },
+    "nav": {
+      "corrections": "الاستثناءات والتصحيحات",
+      "deadlines": "المواعيد النهائية"
     }
   }
 }
