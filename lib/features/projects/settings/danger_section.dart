@@ -11,14 +11,30 @@ import '../../../core/theme/app_type.dart';
 /// issues, etc.) runs in the streamed [showDeleteProjectFlow] modal; this card
 /// is just the entry point.
 class DangerSection extends StatelessWidget {
-  const DangerSection({super.key, required this.onDelete});
+  const DangerSection({
+    super.key,
+    required this.onDelete,
+    this.flagged = false,
+  });
 
   final VoidCallback onDelete;
+
+  /// Puts a warning glyph in the card's head. On a wide window the card stands
+  /// alone as the rail's last section (HIN-110), away from the archive that
+  /// marks it out on a phone, so it says what it is on its own.
+  final bool flagged;
 
   @override
   Widget build(BuildContext context) {
     return SettingsSection(
       title: context.t('projectSettings.dangerZone'),
+      trailing: flagged
+          ? const Icon(
+              LucideIcons.triangleAlert,
+              size: 18,
+              color: AppColors.danger,
+            )
+          : null,
       child: Row(
         children: [
           Expanded(

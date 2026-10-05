@@ -1,11 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/responsive/golden_columns.dart';
 import 'package:hinata/core/responsive/responsive.dart';
-import 'package:hinata/features/account/settings_layout.dart';
 import 'package:hinata/features/projects/settings/project_settings_layout.dart';
 
 /// Cards spread over golden columns: every card once, groups kept together,
-/// and the columns about level at every width, on both settings pages.
+/// and the columns about level at every width, on the project settings page.
 void main() {
   test(
     'one column below the medium breakpoint, three from the reading width',
@@ -70,17 +69,6 @@ void main() {
     }
   }
 
-  test('the account settings end about level in every combination', () {
-    for (final time in [true, false]) {
-      for (final extras in [true, false]) {
-        expectLevel(
-          settingsGroups(timeTracking: time, tokens: extras, admin: extras),
-          'account time=$time extras=$extras',
-        );
-      }
-    }
-  });
-
   test(
     'the project settings end about level with and without time tracking',
     () {
@@ -95,54 +83,21 @@ void main() {
     },
   );
 
-  test('the two heaviest cards never stand in the same column', () {
-    // This used to name time tracking and working hours, from a page where the
-    // two stood about equally tall and together towered over anything beside
-    // them. Working hours is now more than twice time tracking — the balances,
-    // the journal and the coming absences went into it — so the pair is no
-    // longer the load, and holding them apart was what left one column running
-    // a screenful past the other. What still has to hold is the general
-    // statement the old test was reaching for.
-    final groups = settingsGroups(
-      timeTracking: true,
-      tokens: true,
-      admin: true,
-    );
-    final heaviest = [...groups.where((group) => !group.lead)]
-      ..sort((a, b) => b.narrow.compareTo(a.narrow));
+  test('a page too short for three columns keeps two on a wide screen', () {
+    final groups = projectSettingsGroups(timeTracking: false, templates: false);
 
-    for (final count in [2, 3]) {
-      final columns = arrangeGolden(groups, count).columns;
-      int columnOf(SettingsCard card) =>
-          columns.indexWhere((column) => column.contains(card));
-
-      expect(
-        columnOf(heaviest[0].cards.first),
-        isNot(columnOf(heaviest[1].cards.first)),
-        reason: '$count columns',
-      );
-    }
+    // Three columns would leave the third half empty beside two long ones.
+    expect(spreadOf(arrangeGolden(groups, 3).loads), greaterThan(levelEnough));
+    expect(arrangeBalanced(groups, 3).columns, hasLength(2));
   });
 
-  test('export and deletion follow the admin entry, not another column', () {
-    final groups = settingsGroups(
-      timeTracking: true,
-      tokens: true,
-      admin: true,
+  test('the first column is the golden one', () {
+    final arrangement = arrangeGolden(
+      projectSettingsGroups(timeTracking: true, templates: false),
+      3,
     );
-    for (final count in [2, 3]) {
-      final columns = arrangeGolden(groups, count).columns;
-      final column = columns.firstWhere((c) => c.contains(SettingsCard.admin));
 
-      // Adjacent and in this order: the two cards that act on the account
-      // itself close the column somebody is already reading.
-      final at = column.indexOf(SettingsCard.admin);
-      expect(column.sublist(at), [
-        SettingsCard.admin,
-        SettingsCard.data,
-        SettingsCard.danger,
-      ], reason: '$count columns');
-    }
+    expect(arrangement.flex, [1618, 1000, 1000]);
   });
 
   test('two project columns: General opens the page, whatever else moves', () {
@@ -183,14 +138,6 @@ void main() {
     }
   });
 
-  test('a page too short for three columns keeps two on a wide screen', () {
-    final groups = projectSettingsGroups(timeTracking: false, templates: false);
-
-    // Three columns would leave the third half empty beside two long ones.
-    expect(spreadOf(arrangeGolden(groups, 3).loads), greaterThan(levelEnough));
-    expect(arrangeBalanced(groups, 3).columns, hasLength(2));
-  });
-
   test('the template card does not unseat General or unbalance the page', () {
     // It is short — a date, a switch and a button — so it rides with whichever
     // column has room. What it must not do is take the lead position or leave
@@ -214,14 +161,5 @@ void main() {
       projectSettingsGroups(timeTracking: true, templates: true),
       'project templates',
     );
-  });
-
-  test('the first column is the golden one', () {
-    final arrangement = arrangeGolden(
-      projectSettingsGroups(timeTracking: true, templates: false),
-      3,
-    );
-
-    expect(arrangement.flex, [1618, 1000, 1000]);
   });
 }

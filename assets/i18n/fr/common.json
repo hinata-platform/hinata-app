@@ -3767,7 +3767,12 @@
     },
     "labelName": "Nom de l’étiquette",
     "removeLabel": "Supprimer l’étiquette",
-    "stateName": "Nom du statut"
+    "stateName": "Nom du statut",
+    "nav": {
+      "project": "Projet",
+      "work": "Organisation du travail",
+      "manage": "Administration"
+    }
   },
   "account": {
     "title": "Mon compte",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "Diminuer {{label}}",
       "increase": "Augmenter {{label}}"
+    },
+    "rail": {
+      "account": "Compte",
+      "preferences": "Préférences",
+      "privacy": "Confidentialité",
+      "administration": "Administration"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "Journal",
       "hint": "Ce qui s’est passé dans le suivi du temps, les absences et les feuilles de temps, et qui l’a fait.",
       "open": "Ouvrir le journal"
+    },
+    "nav": {
+      "corrections": "Exceptions et corrections",
+      "deadlines": "Échéances"
     }
   }
 }

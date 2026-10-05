@@ -3767,7 +3767,12 @@
     },
     "labelName": "Nombre de la etiqueta",
     "removeLabel": "Quitar etiqueta",
-    "stateName": "Nombre del estado"
+    "stateName": "Nombre del estado",
+    "nav": {
+      "project": "Proyecto",
+      "work": "Forma de trabajo",
+      "manage": "Administración"
+    }
   },
   "account": {
     "title": "Mi cuenta",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "Reducir {{label}}",
       "increase": "Aumentar {{label}}"
+    },
+    "rail": {
+      "account": "Cuenta",
+      "preferences": "Preferencias",
+      "privacy": "Privacidad",
+      "administration": "Administración"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "Registro",
       "hint": "Qué pasó en el registro de tiempo, las ausencias y las hojas de horas, y quién lo hizo.",
       "open": "Abrir registro"
+    },
+    "nav": {
+      "corrections": "Excepciones y correcciones",
+      "deadlines": "Plazos"
     }
   }
 }
