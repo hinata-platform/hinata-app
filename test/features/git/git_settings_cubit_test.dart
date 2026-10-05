@@ -2,18 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/git_connection.dart';
 import 'package:hinata/core/models/git_dev_info.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/git_repository.dart';
 import 'package:hinata/features/git/settings/git_settings_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeGit with RecordingFake implements GitRepository {}
+import '../../support/recording_fake.dart';
 
 /// The connect wizard, the settings section and the issue rail reach the git
 /// endpoints through this cubit; each intent is one repository call with the
 /// same arguments, and its answer or failure comes back untouched.
 void main() {
-  late _FakeGit git;
+  late FakeGitRepository git;
   late GitSettingsCubit cubit;
   final project = Project.fromJson(const {
     'id': 'p1',
@@ -22,7 +19,7 @@ void main() {
   });
 
   setUp(() {
-    git = _FakeGit();
+    git = FakeGitRepository();
     cubit = GitSettingsCubit(git);
   });
   tearDown(() => cubit.close());
@@ -31,14 +28,13 @@ void main() {
     'the OAuth round trip forwards the project, provider and state',
     () async {
       const start = GitOAuthStart(available: true, state: 's1');
-      git.answers[#gitOAuthStart] = () => Future<GitOAuthStart>.value(start);
+      git.answer<GitOAuthStart>(#gitOAuthStart, start);
       expect(await cubit.oauthStart('p1', 'github'), same(start));
       expect(git.only.positionalArguments, ['p1', 'github']);
 
       git.calls.clear();
       const status = GitOAuthSessionStatus(status: 'AUTHORIZED');
-      git.answers[#gitOAuthSession] = () =>
-          Future<GitOAuthSessionStatus>.value(status);
+      git.answer<GitOAuthSessionStatus>(#gitOAuthSession, status);
       expect(await cubit.oauthSession('s1'), same(status));
       expect(git.only.positionalArguments, ['s1']);
     },
@@ -46,14 +42,14 @@ void main() {
 
   test('owners and repositories are read for the chosen provider', () async {
     final owners = <GitOwner>[];
-    git.answers[#gitOwners] = () => Future<List<GitOwner>>.value(owners);
+    git.answer<List<GitOwner>>(#gitOwners, owners);
     expect(await cubit.owners('p1', 'gitlab', state: 's1'), same(owners));
     expect(git.only.positionalArguments, ['p1', 'gitlab']);
     expect(git.only.namedArguments[#state], 's1');
 
     git.calls.clear();
     final repos = <GitRepo>[];
-    git.answers[#gitRepos] = () => Future<List<GitRepo>>.value(repos);
+    git.answer<List<GitRepo>>(#gitRepos, repos);
     expect(await cubit.repos('p1', 'gitlab', 'o1', state: 's1'), same(repos));
     expect(git.only.positionalArguments, ['p1', 'gitlab', 'o1']);
     expect(git.only.namedArguments[#state], 's1');
@@ -68,7 +64,7 @@ void main() {
       #gitSetAutomation,
       #gitSetBranchTemplate,
     ]) {
-      git.answers[member] = () => Future<Project>.value(project);
+      git.answer<Project>(member, project);
     }
     const automation = GitAutomation();
 
@@ -113,7 +109,7 @@ void main() {
   });
 
   test('a refused write comes back as the same failure', () async {
-    git.answers[#gitSetBranchTemplate] = () => Future<Project>.error(failure);
+    git.fail(#gitSetBranchTemplate, failure);
 
     await expectLater(
       cubit.setBranchTemplate('p1', '{key}'),

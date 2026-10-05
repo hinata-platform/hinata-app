@@ -1,19 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/issue_repository.dart';
-import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/features/knowledge/data/knowledge_models.dart';
-import 'package:hinata/features/knowledge/data/knowledge_repository.dart';
 import 'package:hinata/features/knowledge/knowledge_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeKnowledge with RecordingFake implements KnowledgeRepository {}
-
-class _FakeIssues with RecordingFake implements IssueRepository {}
-
-class _FakeUsers with RecordingFake implements UserRepository {}
+import '../../support/recording_fake.dart';
 
 Issue _issue(String key) => Issue(
   id: 'id-$key',
@@ -26,15 +17,15 @@ Issue _issue(String key) => Issue(
 /// The Knowledge Base screen writes pages and spaces through this cubit and
 /// resolves its smart links with it.
 void main() {
-  late _FakeKnowledge knowledge;
-  late _FakeIssues issues;
-  late _FakeUsers users;
+  late FakeKnowledgeRepository knowledge;
+  late FakeIssueRepository issues;
+  late FakeUserRepository users;
   late KnowledgeCubit cubit;
 
   setUp(() {
-    knowledge = _FakeKnowledge();
-    issues = _FakeIssues();
-    users = _FakeUsers();
+    knowledge = FakeKnowledgeRepository();
+    issues = FakeIssueRepository();
+    users = FakeUserRepository();
     cubit = KnowledgeCubit(knowledge, issues, users);
   });
   tearDown(() => cubit.close());
@@ -46,8 +37,8 @@ void main() {
   test('link targets are every issue, then the directory', () async {
     final all = [_issue('HIN-1')];
     final directory = <DirectoryUser>[];
-    issues.answers[#allIssues] = () => Future<List<Issue>>.value(all);
-    users.answers[#users] = () => Future<List<DirectoryUser>>.value(directory);
+    issues.answer<List<Issue>>(#allIssues, all);
+    users.answer<List<DirectoryUser>>(#users, directory);
 
     final targets = await cubit.linkTargets();
 
@@ -58,18 +49,17 @@ void main() {
   });
 
   test('without issues the directory is not asked', () async {
-    issues.answers[#allIssues] = () => Future<List<Issue>>.error(failure);
+    issues.fail(#allIssues, failure);
 
     await expectLater(cubit.linkTargets(), throwsA(same(failure)));
     expect(users.calls, isEmpty);
   });
 
   test('an issue is found by its exact key, not by a longer one', () async {
-    issues.answers[#issues] = () =>
-        Future<({List<Issue> issues, int total})>.value((
-          issues: [_issue('HIN-10'), _issue('HIN-1')],
-          total: 2,
-        ));
+    issues.answer<({List<Issue> issues, int total})>(#issues, (
+      issues: [_issue('HIN-10'), _issue('HIN-1')],
+      total: 2,
+    ));
 
     expect((await cubit.findIssue('HIN-1'))?.readableId, 'HIN-1');
     expect(issues.only.namedArguments[#query], 'HIN-1');
@@ -86,9 +76,9 @@ void main() {
       icon: 'book',
       desc: '',
     );
-    knowledge.answers[#deleteArticle] = () => Future<void>.value();
-    knowledge.answers[#deleteSpace] = () => Future<void>.value();
-    knowledge.answers[#createSpace] = () => Future<KbSpace>.value(space);
+    knowledge.answer<void>(#deleteArticle, null);
+    knowledge.answer<void>(#deleteSpace, null);
+    knowledge.answer<KbSpace>(#createSpace, space);
 
     await cubit.deleteArticle('a1');
     await cubit.deleteSpace('s1');
@@ -119,7 +109,7 @@ void main() {
       #createArticle,
       #saveEdit,
     ]) {
-      knowledge.answers[member] = () => Future<KbArticle>.error(failure);
+      knowledge.fail(member, failure);
     }
 
     await expectLater(
@@ -164,7 +154,7 @@ void main() {
   });
 
   test('init overlays the cache', () async {
-    knowledge.answers[#init] = () => Future<void>.value();
+    knowledge.answer<void>(#init, null);
 
     await cubit.init();
 

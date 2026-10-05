@@ -6,13 +6,13 @@ import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/teams/team_detail_cubit.dart';
 
-import '../projects/repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// One team's page: the bundle the tabs render, and the writes the tabs make.
 void main() {
-  late RecordingTeams teams;
-  late RecordingUsers users;
-  late RecordingProjects projects;
+  late FakeTeamRepository teams;
+  late FakeUserRepository users;
+  late FakeProjectRepository projects;
   late TeamDetailCubit cubit;
 
   const team = Team(id: 't1', key: 'OPS', name: 'Ops');
@@ -21,13 +21,11 @@ void main() {
   const created = TeamActivity(id: 'a1', verb: 'CREATED');
 
   setUp(() {
-    teams = RecordingTeams()
-      ..answers[#team] = (() async => team)
-      ..answers[#teamActivityPage] = () async =>
-          (items: const [created], total: 7);
-    users = RecordingUsers()..answers[#users] = () async => const [uma];
-    projects = RecordingProjects()
-      ..answers[#projects] = () async => const [project];
+    teams = FakeTeamRepository()
+      ..answer(#team, team)
+      ..answer(#teamActivityPage, (items: const [created], total: 7));
+    users = FakeUserRepository()..answer(#users, const [uma]);
+    projects = FakeProjectRepository()..answer(#projects, const [project]);
     cubit = TeamDetailCubit(
       teamId: 't1',
       teams: teams,
@@ -54,7 +52,7 @@ void main() {
   );
 
   test('a failed load keeps the server\'s message', () async {
-    teams.answers[#team] = () async => throw ApiFailure('errors.notFound');
+    teams.fail(#team, ApiFailure('errors.notFound'));
 
     await cubit.load();
 
@@ -73,15 +71,14 @@ void main() {
   });
 
   test('detaches a project', () async {
-    teams.answers[#detachTeamProject] = () async => team;
+    teams.answer(#detachTeamProject, team);
 
     expect(await cubit.detachProject('t1', 'p1'), team);
     expect(teams.callTo(#detachTeamProject).positionalArguments, ['t1', 'p1']);
   });
 
   test('passes a refused detach on', () async {
-    teams.answers[#detachTeamProject] = () async =>
-        throw ApiFailure('errors.forbidden');
+    teams.fail(#detachTeamProject, ApiFailure('errors.forbidden'));
 
     await expectLater(
       cubit.detachProject('t1', 'p1'),
@@ -91,8 +88,8 @@ void main() {
 
   test('uploads and removes the team picture', () async {
     teams
-      ..answers[#uploadTeamAvatar] = (() async => 'https://x/t1.png?v=3')
-      ..answers[#deleteTeamAvatar] = () async {};
+      ..answer(#uploadTeamAvatar, 'https://x/t1.png?v=3')
+      ..answer<void>(#deleteTeamAvatar, null);
     final file = MultipartFile.fromBytes(const [1], filename: 't.png');
 
     expect(await cubit.uploadAvatar('t1', file), 'https://x/t1.png?v=3');

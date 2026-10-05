@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "Escribir la hora",
       "typeDuration": "Escribir la duración"
+    },
+    "hue": {
+      "default": "Color predeterminado",
+      "honey": "Miel",
+      "indigo": "Índigo",
+      "violet": "Violeta",
+      "teal": "Turquesa",
+      "green": "Verde",
+      "coral": "Coral",
+      "pink": "Rosa",
+      "amber": "Ámbar",
+      "red": "Rojo",
+      "orange": "Naranja",
+      "cyan": "Cian",
+      "blue": "Azul",
+      "custom": "Personalizado"
+    },
+    "pagination": {
+      "previous": "Página anterior",
+      "next": "Página siguiente",
+      "page": "Página {{page}}"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "Compensado con la última nómina",
       "done": "Registrado",
       "confirmTitle": "¿{{what}} de {{days}}?"
-    },
-    "hue": {
-      "default": "Color predeterminado",
-      "red": "Rojo",
-      "orange": "Naranja",
-      "amber": "Ámbar",
-      "green": "Verde",
-      "teal": "Verde azulado",
-      "cyan": "Cian",
-      "blue": "Azul",
-      "violet": "Violeta",
-      "pink": "Rosa"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "{{count}} más. Busca o filtra para encontrarlas."
   },
   "gantt": {
-    "title": "Línea temporal",
     "subtitle": "Vista de Gantt con dependencias, hitos y camino crítico",
     "column": "Incidencia",
     "empty": "No hay incidencias planificadas. Define fechas de inicio y de vencimiento para verlas en la línea temporal.",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "Aquí no aparecen todas las páginas porque son demasiadas para una lista. Por eso una subpágina puede aparecer arriba aunque su página superior exista."
     },
-    "hue": {
-      "honey": "Miel",
-      "indigo": "Índigo",
-      "violet": "Violeta",
-      "teal": "Turquesa",
-      "green": "Verde",
-      "coral": "Coral",
-      "pink": "Rosa",
-      "amber": "Ámbar"
-    },
     "spaceIconOption": "Icono {{n}} de {{count}}",
     "subpages": "Subpáginas",
     "moveUnder": "Mover debajo de…",
     "moveUnderTitle": "¿Debajo de qué página?",
     "pageActions": "Acciones de la página",
-    "resultCount": "Resultados: {{count}}"
+    "resultCount": "Resultados: {{count}}",
+    "moveUnderConfirm": {
+      "title": "¿Cambiar quién puede leerla?",
+      "message": "«{{page}}» y sus subpáginas podrán leerlas entonces {{place}}.",
+      "confirm": "Mover"
+    }
   },
   "md": {
     "heading1": "Título 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "Este rol te lo da otra persona de la administración.",
       "selectUser": "Seleccionar a {{name}}",
       "selectPage": "Seleccionar todos los usuarios de esta página",
-      "previousPage": "Página anterior",
-      "nextPage": "Página siguiente",
-      "pageNumber": "Página {{n}}",
       "removeEmail": "Quitar {{email}}"
     },
     "iosStoreUrl": "URL de la App Store de iOS",
@@ -3502,11 +3502,6 @@
     "selectedCount": "{{count}} seleccionadas",
     "collapse": "Contraer",
     "expand": "Desplegar",
-    "pagination": {
-      "previous": "Página anterior",
-      "next": "Página siguiente",
-      "page": "Página {{page}}"
-    },
     "selectIssue": "Seleccionar {{issue}}"
   },
   "teams": {
@@ -3545,17 +3540,6 @@
     "iconLabel": "Icono",
     "optional": "opcional",
     "back": "Atrás",
-    "color": {
-      "honey": "Miel",
-      "indigo": "Índigo",
-      "violet": "Violeta",
-      "teal": "Turquesa",
-      "green": "Verde",
-      "coral": "Coral",
-      "custom": "Personalizado",
-      "pink": "Rosa",
-      "amber": "Ámbar"
-    },
     "role": {
       "admin": "Administrador del equipo",
       "adminShort": "Admin",

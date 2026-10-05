@@ -158,15 +158,24 @@ class _PillTapTargetState extends State<_PillTapTarget> {
           child: Center(
             widthFactor: 1,
             heightFactor: 1,
-            child: DecoratedBox(
-              position: DecorationPosition.foreground,
-              decoration: BoxDecoration(
-                color: _pressed
-                    ? AppColors.ink.withValues(alpha: 0.06)
-                    : Colors.transparent,
-                borderRadius: widget.radius,
-              ),
-              child: widget.child,
+            // The glass in a boundary of its own and the wash beside it, so a
+            // press repaints the wash and not the glass shader under it.
+            child: Stack(
+              children: [
+                RepaintBoundary(child: widget.child),
+                Positioned.fill(
+                  child: IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: _pressed
+                            ? AppColors.ink.withValues(alpha: 0.06)
+                            : Colors.transparent,
+                        borderRadius: widget.radius,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/hue_colors.dart';
+import '../../core/theme/hue_labels.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         GlassField,
@@ -13,18 +14,6 @@ import '../sprint/modals/glass_modal.dart'
 import 'data/knowledge_models.dart';
 import 'knowledge_tokens.dart';
 import '../../core/theme/app_type.dart';
-
-/// Screen-reader names for the [kLabelHues] swatches.
-const Map<int, String> _kHueNameKeys = {
-  70: 'knowledge.hue.honey',
-  250: 'knowledge.hue.indigo',
-  300: 'knowledge.hue.violet',
-  200: 'knowledge.hue.teal',
-  155: 'knowledge.hue.green',
-  20: 'knowledge.hue.coral',
-  330: 'knowledge.hue.pink',
-  45: 'knowledge.hue.amber',
-};
 
 /// Curated set of space-appropriate Lucide glyphs (all resolvable via
 /// [lucideIcon]) offered in the create-space picker.
@@ -142,37 +131,27 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
             children: [
               GlassField(
                 label: context.t('knowledge.spaceName'),
-                // The caption above is plain text; tie it to the field for
-                // screen readers.
-                child: Semantics(
-                  label: context.t('knowledge.spaceName'),
-                  textField: true,
-                  child: TextField(
-                    controller: _name,
-                    autofocus: true,
-                    textCapitalization: TextCapitalization.words,
-                    textInputAction: TextInputAction.next,
-                    decoration: glassInputDecoration(
-                      hint: context.t('knowledge.spaceNameHint'),
-                    ),
-                    onSubmitted: (_) => _submit(),
+                child: TextField(
+                  controller: _name,
+                  autofocus: true,
+                  textCapitalization: TextCapitalization.words,
+                  textInputAction: TextInputAction.next,
+                  decoration: glassInputDecoration(
+                    hint: context.t('knowledge.spaceNameHint'),
                   ),
+                  onSubmitted: (_) => _submit(),
                 ),
               ),
               const SizedBox(height: 16),
               GlassField(
                 label: context.t('knowledge.spaceDescription'),
-                child: Semantics(
-                  label: context.t('knowledge.spaceDescription'),
-                  textField: true,
-                  child: TextField(
-                    controller: _desc,
-                    keyboardType: TextInputType.multiline,
-                    textInputAction: TextInputAction.newline,
-                    textCapitalization: TextCapitalization.sentences,
-                    decoration: glassInputDecoration(
-                      hint: context.t('knowledge.spaceDescriptionHint'),
-                    ),
+                child: TextField(
+                  controller: _desc,
+                  keyboardType: TextInputType.multiline,
+                  textInputAction: TextInputAction.newline,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: glassInputDecoration(
+                    hint: context.t('knowledge.spaceDescriptionHint'),
                   ),
                 ),
               ),
@@ -256,7 +235,7 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
           Semantics(
             button: true,
             selected: _hue == h,
-            label: context.t(_kHueNameKeys[h] ?? 'knowledge.spaceColor'),
+            label: hueLabel(context, h),
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               excludeFromSemantics: true,

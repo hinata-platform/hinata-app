@@ -9,6 +9,7 @@ import '../../core/models/absence_models.dart';
 import '../../core/repositories/absence_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/theme/hue_labels.dart';
 import '../../core/widgets/field_button.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch;
 import '../account/account_widgets.dart';
@@ -712,7 +713,7 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
             Semantics(
               button: true,
               selected: _hue == hue,
-              label: context.t('absence.hue.${_hueNames[hue]}'),
+              label: hueLabel(context, hue),
               child: InkWell(
                 onTap: () => setState(() => _hue = hue),
                 borderRadius: BorderRadius.circular(AppTheme.radiusPill),
@@ -744,20 +745,6 @@ class _AbsenceTypeFormState extends State<_AbsenceTypeForm> {
       ),
     ],
   );
-
-  /// What a screen reader calls each swatch; the hues have no other name.
-  static const _hueNames = <int?, String>{
-    null: 'default',
-    5: 'red',
-    30: 'orange',
-    45: 'amber',
-    95: 'green',
-    160: 'teal',
-    195: 'cyan',
-    225: 'blue',
-    265: 'violet',
-    320: 'pink',
-  };
 
   /// A day of the year without the year: an anchor repeats every January.
   String _monthDayLabel(BuildContext context, DateTime day) =>

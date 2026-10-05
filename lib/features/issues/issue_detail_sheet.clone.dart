@@ -226,21 +226,17 @@ class _IssueCloneBodyState extends State<_IssueCloneBody> {
                       color: AppColors.accentInk,
                     ),
                   ),
-                  child: Semantics(
-                    label: context.t('issues.clone.summary'),
-                    textField: true,
-                    child: TextField(
-                      controller: _title,
-                      autofocus: true,
-                      enabled: !_busy,
-                      maxLines: 2,
-                      minLines: 1,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _canClone ? _clone() : null,
-                      inputFormatters: const [IssueTitleLengthLimit()],
-                      decoration: glassInputDecoration(
-                        hint: context.t('issues.clone.summaryHint'),
-                      ),
+                  child: TextField(
+                    controller: _title,
+                    autofocus: true,
+                    enabled: !_busy,
+                    maxLines: 2,
+                    minLines: 1,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _canClone ? _clone() : null,
+                    inputFormatters: const [IssueTitleLengthLimit()],
+                    decoration: glassInputDecoration(
+                      hint: context.t('issues.clone.summaryHint'),
                     ),
                   ),
                 ),

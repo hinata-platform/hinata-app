@@ -1,20 +1,39 @@
 part of 'glass_modal.dart';
 
 /// A labelled form field on the glass material.
+///
+/// Over a text input the caption is the input's accessible name: the visible
+/// caption leaves the semantics tree and the input carries it, so a screen
+/// reader says "Job title, text field" once instead of the caption and then
+/// the field. Over anything else (a segmented control, a picker, a row of
+/// chips) the caption stays a readable heading of its own and the child
+/// keeps its own role.
 class GlassField extends StatelessWidget {
   const GlassField({
     super.key,
     required this.label,
     required this.child,
     this.trailing,
+    this.isTextInput,
   });
 
   final String label;
   final Widget child;
   final Widget? trailing;
 
+  /// Whether [child] is a text input that should carry [label] as its name.
+  ///
+  /// Null decides by the child's type: a bare [TextField] or [TextFormField]
+  /// counts. Pass true when the input is wrapped (a column with a hint or an
+  /// error line under it), false to keep the caption separate regardless.
+  final bool? isTextInput;
+
+  bool get _labelsTextInput =>
+      isTextInput ?? (child is TextField || child is TextFormField);
+
   @override
   Widget build(BuildContext context) {
+    final labelsInput = _labelsTextInput;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -25,18 +44,28 @@ class GlassField extends StatelessWidget {
             // several languages, and a Text in a bare Row overflows rather
             // than shrinking.
             Flexible(
-              child: Text(
-                label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: GlassFieldStyle.caption,
+              child: ExcludeSemantics(
+                excluding: labelsInput,
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: GlassFieldStyle.caption,
+                ),
               ),
             ),
             if (trailing != null) ...[const SizedBox(width: 6), trailing!],
           ],
         ),
         const SizedBox(height: 7),
-        child,
+        if (labelsInput)
+          // Merged so the caption lands on the input's own node; a bare
+          // Semantics here would sit as a second text field around it.
+          MergeSemantics(
+            child: Semantics(label: label, textField: true, child: child),
+          )
+        else
+          child,
       ],
     );
   }

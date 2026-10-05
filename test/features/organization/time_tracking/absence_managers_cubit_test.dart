@@ -9,7 +9,7 @@ void main() {
     final users = _FakeUsers();
     final cubit = AbsenceManagersCubit(users);
 
-    final people = await cubit.people(['u1', 'u2']);
+    final people = await cubit.usersByIds(['u1', 'u2']);
 
     expect(users.asked.single, ['u1', 'u2']);
     expect(people.map((person) => person.id), ['u1', 'u2']);
@@ -19,7 +19,7 @@ void main() {
   test('a failed read passes through', () async {
     final cubit = AbsenceManagersCubit(_FakeUsers(fail: true));
 
-    await expectLater(cubit.people(['u1']), throwsA(isA<StateError>()));
+    await expectLater(cubit.usersByIds(['u1']), throwsA(isA<StateError>()));
     await cubit.close();
   });
 }

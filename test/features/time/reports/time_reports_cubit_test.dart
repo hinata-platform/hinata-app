@@ -3,11 +3,9 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_report_models.dart';
-import 'package:hinata/core/repositories/time_report_repository.dart';
-import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/features/time/reports/time_reports_cubit.dart';
 
-import '../recording_repository.dart';
+import '../../../support/recording_fake.dart';
 
 /// The report page's calls reach the repository as asked — the question, the
 /// page and the first day of the week included — and come back as it answered.
@@ -16,13 +14,13 @@ void main() {
   const kept = SavedReport(id: 's1', name: 'September', query: query);
   const ada = DirectoryUser(id: 'u1', username: 'ada', displayName: 'Ada');
 
-  late _FakeReports reports;
-  late _FakeUsers users;
+  late FakeTimeReportRepository reports;
+  late FakeUserRepository users;
   late TimeReportsCubit cubit;
 
   setUp(() {
-    reports = _FakeReports();
-    users = _FakeUsers();
+    reports = FakeTimeReportRepository();
+    users = FakeUserRepository();
     cubit = TimeReportsCubit(reports, users);
     addTearDown(cubit.close);
   });
@@ -30,12 +28,9 @@ void main() {
   test('reads the three reports with the week start', () async {
     const summary = ReportSummary();
     const workload = WorkloadPage();
-    reports.answers[#summary] = Future.value(summary);
-    reports.answers[#detailed] = Future.value((
-      items: <ReportEntry>[],
-      total: 0,
-    ));
-    reports.answers[#workload] = Future.value(workload);
+    reports.answer(#summary, summary);
+    reports.answer(#detailed, (items: <ReportEntry>[], total: 0));
+    reports.answer(#workload, workload);
 
     expect(
       await cubit.summary(query, page: 1, size: 50, weekStart: 7),
@@ -77,7 +72,7 @@ void main() {
 
   test('keeps, opens, shares, schedules and drops a report', () async {
     const schedule = ReportSchedule(cadence: ReportCadence.weekly);
-    reports.answers[#savedReports] = Future.value((items: [kept], total: 1));
+    reports.answer(#savedReports, (items: [kept], total: 1));
     for (final member in [
       #openShared,
       #openSaved,
@@ -86,11 +81,11 @@ void main() {
       #scheduleReport,
       #unscheduleReport,
     ]) {
-      reports.answers[member] = Future.value(kept);
+      reports.answer(member, kept);
     }
-    reports.answers[#shareReport] = Future.value('token');
-    reports.answers[#unshareReport] = Future<void>.value();
-    reports.answers[#deleteReport] = Future<void>.value();
+    reports.answer(#shareReport, 'token');
+    reports.answer<void>(#unshareReport, null);
+    reports.answer<void>(#deleteReport, null);
 
     expect((await cubit.savedReports(page: 0, size: 50)).items, [kept]);
     expect(await cubit.openShared('token'), kept);
@@ -123,8 +118,8 @@ void main() {
 
   test('takes the report out as a file, in memory or to disk', () async {
     final bytes = Uint8List.fromList([1, 2, 3]);
-    reports.answers[#export] = Future.value((bytes: bytes, truncated: false));
-    reports.answers[#exportTo] = Future.value(true);
+    reports.answer(#export, (bytes: bytes, truncated: false));
+    reports.answer(#exportTo, true);
 
     expect((await cubit.export(query, 'pdf', weekStart: 1)).bytes, bytes);
     expect(
@@ -143,7 +138,7 @@ void main() {
   });
 
   test('names the people a kept report mentions', () async {
-    users.answers[#usersByIds] = Future.value([ada]);
+    users.answer(#usersByIds, [ada]);
 
     expect(await cubit.usersByIds(['u1']), [ada]);
     expect(
@@ -157,31 +152,29 @@ void main() {
     );
   });
 
-  test('passes a refusal through', () async {
-    reports.failure = refusal;
-    users.failure = refusal;
+  test('passes a failure through', () async {
+    for (final member in [
+      #summary,
+      #openSaved,
+      #shareReport,
+      #deleteReport,
+      #export,
+    ]) {
+      reports.fail(member, failure);
+    }
+    users.fail(#usersByIds, failure);
 
     await expectLater(
       () => cubit.summary(query, page: 0, size: 50, weekStart: 1),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.openSaved('s1'), throwsRefusal);
-    await expectLater(() => cubit.shareReport('s1'), throwsRefusal);
-    await expectLater(() => cubit.deleteReport('s1'), throwsRefusal);
+    await expectLater(() => cubit.openSaved('s1'), throwsFailure);
+    await expectLater(() => cubit.shareReport('s1'), throwsFailure);
+    await expectLater(() => cubit.deleteReport('s1'), throwsFailure);
     await expectLater(
       () => cubit.export(query, 'pdf', weekStart: 1),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.usersByIds(['u1']), throwsRefusal);
+    await expectLater(() => cubit.usersByIds(['u1']), throwsFailure);
   });
-}
-
-class _FakeReports with RecordingRepository implements TimeReportRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeUsers with RecordingRepository implements UserRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

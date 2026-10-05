@@ -9,7 +9,8 @@ import '../sprint/modals/glass_modal.dart'
     show
         kGlassPopoverBreakpoint,
         showGlassAnchoredPopover,
-        showGlassBottomSheet;
+        showGlassBottomSheet,
+        showGlassConfirm;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_tokens.dart';
@@ -55,6 +56,13 @@ class KnowledgeTree extends StatelessWidget {
     // Includes pages whose parent this person cannot read: they are roots
     // here rather than lost.
     final roots = repo.rootsInSpace(spaceId);
+    // Each page's subpages, gathered once for the whole tree: every row
+    // reads its own and the move picker walks them, so a row never scans the
+    // space for them again.
+    final children = <String?, List<KbArticle>>{};
+    for (final a in inSpace) {
+      children.putIfAbsent(a.parentId, () => []).add(a);
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -113,6 +121,7 @@ class KnowledgeTree extends StatelessWidget {
             repo: repo,
             article: root,
             inSpace: inSpace,
+            children: children,
             depth: 0,
             selectedId: selectedId,
             onSelect: onSelect,
@@ -222,6 +231,7 @@ class _TreeBranch extends StatefulWidget {
     required this.repo,
     required this.article,
     required this.inSpace,
+    required this.children,
     required this.depth,
     required this.selectedId,
     required this.onSelect,
@@ -233,6 +243,9 @@ class _TreeBranch extends StatefulWidget {
   final KnowledgeRepository repo;
   final KbArticle article;
   final List<KbArticle> inSpace;
+
+  /// The subpages of each page in the space, by parent id.
+  final Map<String?, List<KbArticle>> children;
   final int depth;
   final String? selectedId;
   final ValueChanged<String> onSelect;
@@ -249,26 +262,50 @@ class _TreeBranchState extends State<_TreeBranch> {
 
   /// The pages [widget.article] may move under, in tree order: everything in
   /// its space except itself, its own subpages and its current parent.
+  ///
+  /// Worked out when the picker opens, not per row per build: one walk over
+  /// the space, which steps over the page's own subtree instead of asking of
+  /// every page whether it lies below this one.
   List<({KbArticle page, int depth})> _parentCandidates() {
     final article = widget.article;
-    final children = <String?, List<KbArticle>>{};
-    final ids = {for (final a in widget.inSpace) a.id};
-    for (final a in widget.inSpace) {
-      final parent = ids.contains(a.parentId) ? a.parentId : null;
-      children.putIfAbsent(parent, () => []).add(a);
-    }
     final out = <({KbArticle page, int depth})>[];
-    void walk(String? parent, int depth) {
-      for (final a in children[parent] ?? const <KbArticle>[]) {
+    void walk(Iterable<KbArticle> level, int depth) {
+      for (final a in level) {
         // A page's own subtree is no place for it, and so not offered.
-        if (widget.repo.isSelfOrAncestor(article.id, a.id)) continue;
+        if (a.id == article.id) continue;
         if (a.id != article.parentId) out.add((page: a, depth: depth));
-        walk(a.id, depth + 1);
+        walk(widget.children[a.id] ?? const [], depth + 1);
       }
     }
 
-    walk(null, 0);
+    walk(widget.repo.rootsInSpace(article.spaceId), 0);
     return out;
+  }
+
+  /// Moves [id] under [parent], first asking when that changes who can read
+  /// it: a subtree takes the place of the page it moves under, so a private
+  /// page moved under a project page is read by the whole project.
+  Future<void> _moveUnderConfirmed(String id, KbArticle parent) async {
+    final moving = widget.repo.articleById(id);
+    if (moving != null &&
+        (moving.projectId != parent.projectId ||
+            moving.teamId != parent.teamId)) {
+      final placeName =
+          widget.repo.placeName(parent.projectId ?? parent.teamId) ??
+          context.t(KbPlaceGlyph.labelKeyFor(parent.place));
+      final ok = await showGlassConfirm(
+        context,
+        icon: KbPlaceGlyph.iconFor(parent.place),
+        title: context.t('knowledge.moveUnderConfirm.title'),
+        message: context.t(
+          'knowledge.moveUnderConfirm.message',
+          variables: {'page': moving.title, 'place': placeName},
+        ),
+        confirmLabel: context.t('knowledge.moveUnderConfirm.confirm'),
+      );
+      if (ok != true || !mounted) return;
+    }
+    widget.onMove(id, parentId: parent.id, spaceId: parent.spaceId);
   }
 
   /// The tap alternative to dropping this page onto another one.
@@ -289,17 +326,16 @@ class _TreeBranchState extends State<_TreeBranch> {
             context,
             builder: (_) => SizedBox(height: 420, child: panel),
           );
-    if (parentId == null) return;
-    widget.onMove(
-      widget.article.id,
-      parentId: parentId,
-      spaceId: widget.article.spaceId,
-    );
+    final parent = parentId == null ? null : widget.repo.articleById(parentId);
+    if (parent == null || !context.mounted) return;
+    await _moveUnderConfirmed(widget.article.id, parent);
   }
 
   /// Glass action menu for a tree row: move-under, move-to-root + delete.
-  Widget _rowMenu(BuildContext context, bool canDelete) {
-    final canMoveUnder = _parentCandidates().isNotEmpty;
+  Widget _rowMenu(BuildContext context, bool canDelete, {required bool shown}) {
+    // Cheap on purpose, since every row builds its menu: another page in the
+    // space is enough to offer the move; the picker lists the actual choices.
+    final canMoveUnder = widget.inSpace.length > 1;
     return GlassPopupMenu<String>(
       value: '',
       width: 240,
@@ -359,7 +395,7 @@ class _TreeBranchState extends State<_TreeBranch> {
           child: Icon(
             lucideIcon('ellipsis'),
             size: 15,
-            color: AppColors.inkFaint,
+            color: shown ? AppColors.inkFaint : Colors.transparent,
           ),
         ),
       ),
@@ -374,9 +410,7 @@ class _TreeBranchState extends State<_TreeBranch> {
 
   @override
   Widget build(BuildContext context) {
-    final kids = widget.inSpace
-        .where((a) => a.parentId == widget.article.id)
-        .toList();
+    final kids = widget.children[widget.article.id] ?? const <KbArticle>[];
     final selected = widget.selectedId == widget.article.id;
 
     final row = MouseRegion(
@@ -452,20 +486,25 @@ class _TreeBranchState extends State<_TreeBranch> {
                   // mouse, always without one, since a finger cannot hover.
                   // Kept in the tree while hidden, so a screen reader and the
                   // keyboard reach them on every row.
-                  Opacity(
-                    opacity: _hover || selected || !_mouseConnected ? 1 : 0,
-                    alwaysIncludeSemantics: true,
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        _RowAction(
-                          icon: 'plus',
-                          tooltip: context.t('knowledge.addSubPage'),
-                          onTap: () => widget.onNewChild(widget.article.id),
-                        ),
-                        _rowMenu(context, kids.isEmpty),
-                      ],
-                    ),
+                  // Hidden by colour rather than an Opacity, which would give
+                  // every row a compositing layer of its own. A pointer that
+                  // could click them is over the row, and then they show.
+                  Builder(
+                    builder: (context) {
+                      final shown = _hover || selected || !_mouseConnected;
+                      return Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          _RowAction(
+                            icon: 'plus',
+                            tooltip: context.t('knowledge.addSubPage'),
+                            shown: shown,
+                            onTap: () => widget.onNewChild(widget.article.id),
+                          ),
+                          _rowMenu(context, kids.isEmpty, shown: shown),
+                        ],
+                      );
+                    },
                   ),
                 ],
               ),
@@ -496,11 +535,7 @@ class _TreeBranchState extends State<_TreeBranch> {
         onLeave: (_) => setState(() => _dropHover = false),
         onAcceptWithDetails: (d) {
           setState(() => _dropHover = false);
-          widget.onMove(
-            d.data,
-            parentId: widget.article.id,
-            spaceId: widget.article.spaceId,
-          );
+          _moveUnderConfirmed(d.data, widget.article);
         },
         builder: (context, _, _) => row,
       ),
@@ -516,6 +551,7 @@ class _TreeBranchState extends State<_TreeBranch> {
               repo: widget.repo,
               article: c,
               inSpace: widget.inSpace,
+              children: widget.children,
               depth: widget.depth + 1,
               selectedId: widget.selectedId,
               onSelect: widget.onSelect,
@@ -533,11 +569,16 @@ class _RowAction extends StatelessWidget {
     required this.icon,
     required this.tooltip,
     required this.onTap,
+    this.shown = true,
   });
 
   final String icon;
   final String tooltip;
   final VoidCallback onTap;
+
+  /// Whether the glyph is drawn; a hidden action stays in the tree for
+  /// screen readers and the keyboard.
+  final bool shown;
 
   @override
   Widget build(BuildContext context) {
@@ -550,7 +591,11 @@ class _RowAction extends StatelessWidget {
           borderRadius: BorderRadius.circular(6),
           child: Padding(
             padding: const EdgeInsets.all(4),
-            child: Icon(lucideIcon(icon), size: 15, color: AppColors.inkFaint),
+            child: Icon(
+              lucideIcon(icon),
+              size: 15,
+              color: shown ? AppColors.inkFaint : Colors.transparent,
+            ),
           ),
         ),
       ),
@@ -621,6 +666,9 @@ class _ParentPickerPanel extends StatelessWidget {
                               ),
                             ),
                           ),
+                          // Where the page lives: moving under it hands the
+                          // subtree that place, and with it its readers.
+                          KbPlaceGlyph(place: row.page.place),
                         ],
                       ),
                     ),

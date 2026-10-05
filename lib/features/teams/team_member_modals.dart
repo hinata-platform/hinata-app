@@ -663,27 +663,23 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Only a hint names this field, and a hint is gone once typing starts;
-    // the label keeps it named for screen readers.
-    return Semantics(
-      label: context.t('teams.searchPeople'),
-      textField: true,
-      child: TextField(
-        autofocus: true,
-        onChanged: onChanged,
-        textInputAction: TextInputAction.search,
-        decoration:
-            teamFieldDecoration(
-              context,
-              hint: context.t('teams.searchPeople'),
-            ).copyWith(
-              prefixIcon: Icon(
-                LucideIcons.search,
-                size: 18,
-                color: AppColors.inkFaint,
-              ),
+    // Named by its hint alone: a text field keeps the hint as its name after
+    // typing starts, and a second label read it twice.
+    return TextField(
+      autofocus: true,
+      onChanged: onChanged,
+      textInputAction: TextInputAction.search,
+      decoration:
+          teamFieldDecoration(
+            context,
+            hint: context.t('teams.searchPeople'),
+          ).copyWith(
+            prefixIcon: Icon(
+              LucideIcons.search,
+              size: 18,
+              color: AppColors.inkFaint,
             ),
-      ),
+          ),
     );
   }
 }

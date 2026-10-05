@@ -1,28 +1,25 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/git_dev_info.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/git_repository.dart';
 import 'package:hinata/features/git/widgets/development_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeGit with RecordingFake implements GitRepository {}
+import '../../support/recording_fake.dart';
 
 /// The issue's development panel reads its git activity and runs the pull
 /// request actions through this cubit, one repository call each.
 void main() {
-  late _FakeGit git;
+  late FakeGitRepository git;
   late DevelopmentCubit cubit;
 
   setUp(() {
-    git = _FakeGit();
+    git = FakeGitRepository();
     cubit = DevelopmentCubit(git);
   });
   tearDown(() => cubit.close());
 
   test('the activity is read for the issue key', () async {
     const info = DevInfo(connected: true);
-    git.answers[#gitDevInfo] = () => Future<DevInfo>.value(info);
+    git.answer<DevInfo>(#gitDevInfo, info);
 
     expect(await cubit.devInfo('HIN-1'), same(info));
     expect(git.only.positionalArguments, ['HIN-1']);
@@ -41,10 +38,8 @@ void main() {
           state: 'Open',
         ),
       );
-      git.answers[#gitMergePr] = () =>
-          Future<({DevInfo devInfo, Issue issue})>.value(result);
-      git.answers[#gitReadyPr] = () =>
-          Future<({DevInfo devInfo, Issue issue})>.value(result);
+      git.answer<({DevInfo devInfo, Issue issue})>(#gitMergePr, result);
+      git.answer<({DevInfo devInfo, Issue issue})>(#gitReadyPr, result);
 
       expect(await cubit.mergePr('HIN-1', 7), result);
       expect(await cubit.readyPr('HIN-1', 8), result);
@@ -55,8 +50,7 @@ void main() {
   );
 
   test('a refused merge comes back as the same failure', () async {
-    git.answers[#gitMergePr] = () =>
-        Future<({DevInfo devInfo, Issue issue})>.error(failure);
+    git.fail(#gitMergePr, failure);
 
     await expectLater(cubit.mergePr('HIN-1', 7), throwsA(same(failure)));
   });

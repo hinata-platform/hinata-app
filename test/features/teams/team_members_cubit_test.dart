@@ -4,27 +4,27 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/team_models.dart';
 import 'package:hinata/features/teams/team_members_cubit.dart';
 
-import '../projects/repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// The member modals' cubit: the directory search, adding people, and
 /// changing or ending one membership.
 void main() {
-  late RecordingTeams teams;
-  late RecordingUsers users;
+  late FakeTeamRepository teams;
+  late FakeUserRepository users;
   late TeamMembersCubit cubit;
 
   const team = Team(id: 't1', key: 'OPS', name: 'Ops');
 
   setUp(() {
-    teams = RecordingTeams();
-    users = RecordingUsers();
+    teams = FakeTeamRepository();
+    users = FakeUserRepository();
     cubit = TeamMembersCubit(teams: teams, users: users);
   });
   tearDown(() => cubit.close());
 
   test('searches the directory a page at a time', () async {
     const uma = DirectoryUser(id: 'u1', username: 'uma', displayName: 'Uma');
-    users.answers[#searchUsers] = () async => (items: const [uma], total: 1);
+    users.answer(#searchUsers, (items: const [uma], total: 1));
 
     final answer = await cubit.searchUsers('um', size: 25);
 
@@ -36,7 +36,7 @@ void main() {
   });
 
   test('adds people with one role and grant', () async {
-    teams.answers[#addTeamMembers] = () async => team;
+    teams.answer(#addTeamMembers, team);
     final knowledge = KnowledgeAccess.some(const ['a1']);
 
     final answer = await cubit.addMembers(
@@ -61,7 +61,7 @@ void main() {
   });
 
   test('changes a membership, leaving knowledge alone when asked', () async {
-    teams.answers[#updateTeamMembership] = () async => team;
+    teams.answer(#updateTeamMembership, team);
 
     await cubit.updateMembership(
       't1',
@@ -79,9 +79,8 @@ void main() {
     });
   });
 
-  test('removes a member and passes a refusal on', () async {
-    teams.answers[#removeTeamMember] = () async =>
-        throw ApiFailure('teams.lastAdmin');
+  test('removes a member and passes a failure on', () async {
+    teams.fail(#removeTeamMember, ApiFailure('teams.lastAdmin'));
 
     await expectLater(
       cubit.removeMember('t1', 'u1'),

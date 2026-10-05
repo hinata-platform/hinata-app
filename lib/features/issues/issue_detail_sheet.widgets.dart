@@ -1006,27 +1006,25 @@ class _PeoplePickerState extends State<_PeoplePicker> {
       padding: widget.anchored
           ? const EdgeInsets.fromLTRB(12, 12, 12, 8)
           : const EdgeInsets.fromLTRB(16, 14, 16, 10),
-      child: Semantics(
-        label: context.t('issues.searchPeople'),
-        textField: true,
-        child: TextField(
-          autofocus: true,
-          onChanged: (v) => setState(() => _query = v),
-          textInputAction: TextInputAction.search,
-          decoration: InputDecoration(
-            isDense: true,
-            prefixIcon: const Icon(LucideIcons.search, size: 18),
-            hintText: context.t('issues.searchPeople'),
-            filled: true,
-            fillColor: AppColors.surfaceMuted,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-              borderSide: BorderSide(color: AppColors.hairline),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-              borderSide: BorderSide(color: AppColors.hairline),
-            ),
+      // Named by its hint alone: a text field keeps the hint as its name
+      // after typing starts, and a second label read it twice.
+      child: TextField(
+        autofocus: true,
+        onChanged: (v) => setState(() => _query = v),
+        textInputAction: TextInputAction.search,
+        decoration: InputDecoration(
+          isDense: true,
+          prefixIcon: const Icon(LucideIcons.search, size: 18),
+          hintText: context.t('issues.searchPeople'),
+          filled: true,
+          fillColor: AppColors.surfaceMuted,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            borderSide: BorderSide(color: AppColors.hairline),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            borderSide: BorderSide(color: AppColors.hairline),
           ),
         ),
       ),

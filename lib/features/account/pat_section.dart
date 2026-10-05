@@ -396,17 +396,13 @@ class _CreatePatModalState extends State<_CreatePatModal> {
               children: [
                 GlassField(
                   label: context.t('pat.create.nameLabel'),
-                  child: Semantics(
-                    label: context.t('pat.create.nameLabel'),
-                    textField: true,
-                    child: TextField(
-                      controller: _name,
-                      autofocus: true,
-                      decoration: glassInputDecoration(
-                        hint: context.t('pat.create.nameHint'),
-                      ),
-                      onChanged: (_) => setState(() {}),
+                  child: TextField(
+                    controller: _name,
+                    autofocus: true,
+                    decoration: glassInputDecoration(
+                      hint: context.t('pat.create.nameHint'),
                     ),
+                    onChanged: (_) => setState(() {}),
                   ),
                 ),
                 const SizedBox(height: 16),

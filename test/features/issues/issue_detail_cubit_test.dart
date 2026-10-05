@@ -9,7 +9,8 @@ import 'package:hinata/features/issues/issue_detail_cubit.dart';
 import 'package:hinata/features/knowledge/data/knowledge_models.dart'
     show KbArticle;
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -159,7 +160,7 @@ void main() {
       () => cubit.searchIssues('HIN-1', size: 20),
       named: {#query: 'HIN-1', #size: 20},
     );
-    issues.answers[#apiBaseUrl] = (_) => 'https://track.example';
+    issues.answerWith(#apiBaseUrl, (_) => 'https://track.example');
     expect(cubit.apiBaseUrl, 'https://track.example');
   });
 
@@ -313,9 +314,8 @@ void main() {
   });
 
   test('documented-in seeds the article cache first', () async {
-    knowledge.answers[#init] = (_) => Future<void>.value();
-    knowledge.answers[#articlesReferencingIssue] = (_) =>
-        Future.value(const <KbArticle>[]);
+    knowledge.answer<void>(#init, null);
+    knowledge.answer(#articlesReferencingIssue, const <KbArticle>[]);
     expect(await cubit.documentedIn('HIN-1'), isEmpty);
     expect(knowledge.calls.map((c) => c.memberName), [
       #init,
@@ -326,18 +326,18 @@ void main() {
 
   test('exports through the repository', () async {
     final bytes = Uint8List.fromList(const [37, 80, 68, 70]);
-    issues.answers[#export] = (_) => Future.value(bytes);
+    issues.answer(#export, bytes);
     expect(await cubit.export('i1', 'pdf'), same(bytes));
     expect(issues.calls.single.positionalArguments, ['i1', 'pdf']);
   });
 
-  test('passes a refusal on unchanged', () async {
-    await expectFailurePassedOn<IssueComment>(
+  test('passes a failure on unchanged', () async {
+    await expectFailurePassedOn(
       comments,
       #addComment,
       () => cubit.addComment('i1', 'Hello'),
     );
-    await expectFailurePassedOn<Issue>(
+    await expectFailurePassedOn(
       issues,
       #updateIssue,
       () => cubit.updateIssue('i1', const {}),

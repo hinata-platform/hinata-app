@@ -31,8 +31,7 @@ class AbsenceExpiryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final ink = dark ? AppColors.accent : AppColors.accentText;
+    final ink = AppColors.accentInk;
     return MergeSemantics(
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),

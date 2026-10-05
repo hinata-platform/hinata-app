@@ -1,7 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/features/issues/work_items_cubit.dart';
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -15,8 +16,7 @@ void main() {
   tearDown(() => cubit.close());
 
   test('pages the issue\'s entries', () async {
-    issues.answers[#workItemsPage] = (_) =>
-        Future.value((items: [testWorkItem], total: 1));
+    issues.answer(#workItemsPage, (items: [testWorkItem], total: 1));
     await cubit.load();
     final call = issues.calls.single;
     expect(call.memberName, #workItemsPage);
@@ -37,7 +37,7 @@ void main() {
   });
 
   test('passes a refused delete on unchanged', () async {
-    await expectFailurePassedOn<void>(
+    await expectFailurePassedOn(
       issues,
       #deleteWorkItem,
       () => cubit.delete('w1'),

@@ -4,33 +4,33 @@ import 'package:hinata/core/models/project_template_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/projects/project_copy_cubit.dart';
 
-import 'repository_recorders.dart';
+import '../../support/recording_fake.dart';
 
 /// The copy sheet's cubit hands each request to the repository as the sheet
-/// filled it in, and hands back the answer or the refusal unchanged.
+/// filled it in, and hands back the answer or the failure unchanged.
 void main() {
-  late RecordingProjects projects;
+  late FakeProjectRepository projects;
   late ProjectCopyCubit cubit;
 
   const copy = Project(id: 'p2', key: 'BFQ2', name: 'Copy');
   const result = ProjectCopyResult(project: copy, issuesCopied: 3);
 
   setUp(() {
-    projects = RecordingProjects();
+    projects = FakeProjectRepository();
     cubit = ProjectCopyCubit(projects);
   });
   tearDown(() => cubit.close());
 
   test('asks the scope of the source', () async {
     const scope = ProjectCopyScope(issues: 4, suggestedKey: 'BFQ2');
-    projects.answers[#scopeOfCopy] = () async => scope;
+    projects.answer(#scopeOfCopy, scope);
 
     expect(await cubit.scopeOfCopy('p1'), scope);
     expect(projects.callTo(#scopeOfCopy).positionalArguments, ['p1']);
   });
 
   test('copies with every switch as set', () async {
-    projects.answers[#copyProject] = () async => result;
+    projects.answer(#copyProject, result);
     final date = DateTime(2026, 11, 7);
 
     final answer = await cubit.copy(
@@ -63,7 +63,7 @@ void main() {
   });
 
   test('instantiates a template', () async {
-    projects.answers[#instantiateTemplate] = () async => result;
+    projects.answer(#instantiateTemplate, result);
 
     final answer = await cubit.instantiate('t1', name: 'Fest', key: '');
 
@@ -76,9 +76,8 @@ void main() {
     expect(call.namedArguments[#deadlineBasis], isNull);
   });
 
-  test('passes a refusal on', () async {
-    projects.answers[#copyProject] = () async =>
-        throw ApiFailure('projects.copy.tooManyIssues');
+  test('passes a failure on', () async {
+    projects.fail(#copyProject, ApiFailure('projects.copy.tooManyIssues'));
 
     await expectLater(
       cubit.copy(

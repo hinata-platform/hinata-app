@@ -9,12 +9,12 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/hue_colors.dart';
+import '../../../core/theme/hue_labels.dart';
 import '../../../core/widgets/folded_hint.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/soft_card.dart';
 import '../../search/search_tokens.dart';
-import '../project_hue_label.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../../../core/theme/app_type.dart';
 
@@ -162,7 +162,7 @@ class GlassHuePicker extends StatelessWidget {
       builder: (dotContext) => Semantics(
         button: true,
         label: context.t('projectSettings.chooseColor'),
-        value: projectHueLabel(context, hue),
+        value: hueLabel(context, hue),
         child: SizedBox.square(
           dimension: side,
           child: Material(
@@ -325,7 +325,7 @@ class _GlassColorCard extends StatelessWidget {
                         Semantics(
                           button: true,
                           selected: h == current,
-                          label: projectHueLabel(context, h),
+                          label: hueLabel(context, h),
                           child: Container(
                             width: 34,
                             height: 34,

@@ -392,17 +392,13 @@ class _RenameBoardBodyState extends State<_RenameBoardBody> {
               children: [
                 GlassField(
                   label: context.t('board.name'),
-                  child: Semantics(
-                    label: context.t('board.name'),
-                    textField: true,
-                    child: TextField(
-                      controller: _name,
-                      autofocus: true,
-                      textCapitalization: TextCapitalization.words,
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _save(),
-                      decoration: glassInputDecoration(),
-                    ),
+                  child: TextField(
+                    controller: _name,
+                    autofocus: true,
+                    textCapitalization: TextCapitalization.words,
+                    textInputAction: TextInputAction.done,
+                    onSubmitted: (_) => _save(),
+                    decoration: glassInputDecoration(),
                   ),
                 ),
                 if (_error != null) ...[

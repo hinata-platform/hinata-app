@@ -6,8 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../core/widgets/glass_filter_bar.dart'
-    show GlassFilterPill, kGlassDockRow;
+import '../../core/widgets/glass_filter_bar.dart' show kGlassDockRow;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -37,6 +36,7 @@ import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/project_scope_pill.dart';
 
 /// Project insight dashboard: distribution reports (state / priority /
 /// assignee / time-per-activity) rendered as v2 bar cards, with CSV/JSON export.
@@ -357,7 +357,7 @@ class _ReportsViewState extends State<_ReportsView> {
     final compact = context.isCompact;
     final scope = _projects.isEmpty
         ? null
-        : _ProjectScopePill(
+        : ProjectScopePill(
             projects: _projects,
             selected: _projectId,
             onChanged: (value) {
@@ -932,46 +932,4 @@ class _ExportButton extends StatelessWidget {
       ),
     );
   }
-}
-
-/// The project the report covers, as a glass pill in the docked row (phone)
-/// or in the page head (wide).
-///
-/// Never washed amber: a report always covers exactly one project, so there is
-/// no unscoped state for the wash to tell apart from this one.
-class _ProjectScopePill extends StatelessWidget {
-  const _ProjectScopePill({
-    required this.projects,
-    required this.selected,
-    required this.onChanged,
-  });
-
-  final List<Project> projects;
-  final String? selected;
-  final ValueChanged<String> onChanged;
-
-  Project get _current =>
-      projects.where((p) => p.id == selected).firstOrNull ?? projects.first;
-
-  Future<void> _pick(BuildContext context, Rect? anchor) async {
-    // Null means the pill is no longer on screen: nothing to hang a menu off.
-    if (anchor == null) return;
-    final chosen = await showGlassMenu<String>(
-      context: context,
-      anchorRect: anchor,
-      value: _current.id,
-      items: [
-        for (final p in projects) GlassMenuItem(value: p.id, label: p.name),
-      ],
-    );
-    if (chosen != null && chosen != _current.id) onChanged(chosen);
-  }
-
-  @override
-  Widget build(BuildContext context) => GlassFilterPill(
-    icon: LucideIcons.folderKanban,
-    label: _current.name,
-    active: false,
-    onTap: (anchor) => unawaited(_pick(context, anchor)),
-  );
 }

@@ -1,21 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/absence_models.dart' show AbsenceType;
 import 'package:hinata/core/models/availability_models.dart';
-import 'package:hinata/core/repositories/absence_repository.dart';
-import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/features/account/time_off_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeAvailability with RecordingFake implements AvailabilityRepository {}
-
-class _FakeAbsences with RecordingFake implements AbsenceRepository {}
+import '../../support/recording_fake.dart';
 
 /// The form for an absence entered directly reads the operator's types and
 /// writes the absence through this cubit.
 void main() {
-  late _FakeAvailability availability;
-  late _FakeAbsences absences;
+  late FakeAvailabilityRepository availability;
+  late FakeAbsenceRepository absences;
   late TimeOffCubit cubit;
   final draft = TimeOffDraft(
     type: TimeOffType.vacation,
@@ -24,24 +18,24 @@ void main() {
   );
 
   setUp(() {
-    availability = _FakeAvailability();
-    absences = _FakeAbsences();
+    availability = FakeAvailabilityRepository();
+    absences = FakeAbsenceRepository();
     cubit = TimeOffCubit(availability, absences);
   });
   tearDown(() => cubit.close());
 
   test('the types come from the absence catalogue', () async {
     final types = <AbsenceType>[];
-    absences.answers[#types] = () => Future<List<AbsenceType>>.value(types);
+    absences.answer<List<AbsenceType>>(#types, types);
 
     expect(await cubit.types(), same(types));
     expect(availability.calls, isEmpty);
   });
 
   test('create, update and delete reach the availability endpoints', () async {
-    availability.answers[#createTimeOff] = () => Future<TimeOff?>.value(null);
-    availability.answers[#updateTimeOff] = () => Future<TimeOff?>.value(null);
-    availability.answers[#deleteTimeOff] = () => Future<void>.value();
+    availability.answer<TimeOff?>(#createTimeOff, null);
+    availability.answer<TimeOff?>(#updateTimeOff, null);
+    availability.answer<void>(#deleteTimeOff, null);
 
     await cubit.create(draft);
     await cubit.update('t1', draft);
@@ -58,8 +52,7 @@ void main() {
   });
 
   test('a refused save comes back as the same failure', () async {
-    availability.answers[#createTimeOff] = () =>
-        Future<TimeOff?>.error(failure);
+    availability.fail(#createTimeOff, failure);
 
     await expectLater(cubit.create(draft), throwsA(same(failure)));
   });

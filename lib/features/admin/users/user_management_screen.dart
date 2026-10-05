@@ -876,7 +876,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
             const SizedBox(width: 12),
             _PagerButton(
               icon: backChevron(context),
-              tooltip: context.t('admin.um.previousPage'),
+              tooltip: context.t('common.pagination.previous'),
               enabled: _pageNum > 1,
               onTap: () => _goToPage(_pageNum - 1),
             ),
@@ -893,7 +893,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
                     ),
             _PagerButton(
               icon: forwardChevron(context),
-              tooltip: context.t('admin.um.nextPage'),
+              tooltip: context.t('common.pagination.next'),
               enabled: _pageNum < pages,
               onTap: () => _goToPage(_pageNum + 1),
             ),

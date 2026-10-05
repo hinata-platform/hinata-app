@@ -163,7 +163,7 @@ class _EntitlementsViewState extends State<_EntitlementsView> {
         .toList(growable: false);
     if (missing.isEmpty) return;
     try {
-      final found = await context.read<AbsenceEntitlementsCubit>().people(
+      final found = await context.read<AbsenceEntitlementsCubit>().usersByIds(
         missing,
       );
       if (!mounted) return;

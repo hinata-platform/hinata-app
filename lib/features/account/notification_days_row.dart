@@ -228,9 +228,7 @@ class _DayToggle extends StatelessWidget {
                       fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                       // The deep honey ink in light mode: the amber of
                       // the ring is too pale for text this small.
-                      color: selected
-                          ? (dark ? AppColors.accent : AppColors.accentText)
-                          : AppColors.inkSoft,
+                      color: selected ? AppColors.accentInk : AppColors.inkSoft,
                     ),
                   ),
                 ),
