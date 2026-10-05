@@ -51,3 +51,38 @@ List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
   else
     const GoldenGroup([ProjectSettingsCard.archive], weight: 1.6),
 ];
+
+/// The sections of the project settings page on a wide window, in rail order
+/// (HIN-110). Each card is one section; the rail shows one at a time.
+///
+/// General opens the page: naming and describing the project is what people
+/// come here for most. The people and the template come next, then how work
+/// is shaped (labels, states, time), the git integration, and last the archive
+/// and the deletion, the danger zone on its own at the very end. The same
+/// cards as [projectSettingsGroups], so a phone and a desktop never disagree
+/// about what is on the page.
+List<ProjectSettingsCard> projectSettingsSections({
+  required bool timeTracking,
+  required bool templates,
+  bool lead = true,
+}) => [
+  ProjectSettingsCard.general,
+  ProjectSettingsCard.members,
+  if (templates) ProjectSettingsCard.templates,
+  ProjectSettingsCard.labels,
+  ProjectSettingsCard.workflow,
+  if (timeTracking) ProjectSettingsCard.timeTracking,
+  if (lead) ProjectSettingsCard.git,
+  ProjectSettingsCard.archive,
+  if (lead) ProjectSettingsCard.danger,
+];
+
+/// The section a `?section=` deep link names, by the card's name
+/// (`general`, `members`, `git`, …); null for anything else.
+ProjectSettingsCard? projectSettingsSectionFromQuery(String? value) {
+  if (value == null) return null;
+  for (final card in ProjectSettingsCard.values) {
+    if (card.name == value) return card;
+  }
+  return null;
+}

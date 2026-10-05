@@ -3767,7 +3767,12 @@
     },
     "labelName": "लेबल का नाम",
     "removeLabel": "लेबल हटाएँ",
-    "stateName": "स्थिति का नाम"
+    "stateName": "स्थिति का नाम",
+    "nav": {
+      "project": "प्रोजेक्ट",
+      "work": "काम का तरीका",
+      "manage": "प्रबंधन"
+    }
   },
   "account": {
     "title": "मेरा खाता",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "{{label}} घटाएँ",
       "increase": "{{label}} बढ़ाएँ"
+    },
+    "rail": {
+      "account": "खाता",
+      "preferences": "प्राथमिकताएँ",
+      "privacy": "गोपनीयता",
+      "administration": "प्रशासन"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "लॉग",
       "hint": "समय ट्रैकिंग, अनुपस्थिति और टाइमशीट में क्या हुआ, और किसने किया।",
       "open": "लॉग खोलें"
+    },
+    "nav": {
+      "corrections": "अपवाद और सुधार",
+      "deadlines": "समय-सीमाएँ"
     }
   }
 }

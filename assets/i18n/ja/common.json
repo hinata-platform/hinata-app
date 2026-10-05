@@ -3604,7 +3604,12 @@
     },
     "labelName": "ラベル名",
     "removeLabel": "ラベルを削除",
-    "stateName": "ステータス名"
+    "stateName": "ステータス名",
+    "nav": {
+      "project": "プロジェクト",
+      "work": "作業の進め方",
+      "manage": "管理"
+    }
   },
   "teams": {
     "avatar": {
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "{{label}}を減らす",
       "increase": "{{label}}を増やす"
+    },
+    "rail": {
+      "account": "アカウント",
+      "preferences": "環境設定",
+      "privacy": "プライバシー",
+      "administration": "管理"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "記録",
       "hint": "時間記録、不在、タイムシートで何が起きたか、誰が行ったか。",
       "open": "記録を開く"
+    },
+    "nav": {
+      "corrections": "例外と修正",
+      "deadlines": "期限"
     }
   }
 }

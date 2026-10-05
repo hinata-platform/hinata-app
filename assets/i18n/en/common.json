@@ -3767,7 +3767,12 @@
     },
     "labelName": "Label name",
     "removeLabel": "Remove label",
-    "stateName": "State name"
+    "stateName": "State name",
+    "nav": {
+      "project": "Project",
+      "work": "How work runs",
+      "manage": "Administration"
+    }
   },
   "account": {
     "title": "My account",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "Decrease {{label}}",
       "increase": "Increase {{label}}"
+    },
+    "rail": {
+      "account": "Account",
+      "preferences": "Preferences",
+      "privacy": "Privacy",
+      "administration": "Administration"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "Log",
       "hint": "What happened in time tracking, absences and timesheets, and who did it.",
       "open": "Open log"
+    },
+    "nav": {
+      "corrections": "Exceptions and corrections",
+      "deadlines": "Deadlines"
     }
   }
 }

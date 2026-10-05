@@ -6,9 +6,11 @@ import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/repositories/org_settings_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
+import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/organization/time_tracking/time_tracking_section.dart';
 import 'package:hinata/features/organization/org_deadline_basis_card.dart';
 import 'package:hinata/features/organization/org_link_card.dart';
+import 'package:hinata/features/organization/organization_cubit.dart';
 import 'package:hinata/features/organization/organization_screen.dart';
 
 import 'organization_test_support.dart';
@@ -18,10 +20,22 @@ import 'organization_test_support.dart';
 ///
 /// Nothing here asserts on translated copy: widget tests render raw i18n keys.
 void main() {
+  /// The window the page lays itself out for: a phone unless a test says
+  /// otherwise, since the breakpoint reads the window, not the box.
+  void window(WidgetTester tester, Size size) {
+    tester.view
+      ..physicalSize = size
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+  }
+
+  const phone = Size(400, 900);
+  const desktop = Size(1440, 900);
+
   Widget host(
     FakeOrgSettingsRepository repository, {
     bool projectTemplates = true,
-    double width = 1100,
+    String? initialSection,
   }) {
     final time = FakeTimeRepository();
     return MultiRepositoryProvider(
@@ -38,9 +52,7 @@ void main() {
         ],
         child: MaterialApp(
           home: Scaffold(
-            body: Center(
-              child: SizedBox(width: width, child: const OrganizationScreen()),
-            ),
+            body: OrganizationScreen(initialSection: initialSection),
           ),
         ),
       ),
@@ -48,6 +60,7 @@ void main() {
   }
 
   testWidgets('loads and shows the time-tracking settings', (tester) async {
+    window(tester, phone);
     await tester.pumpWidget(host(FakeOrgSettingsRepository()));
     await tester.pumpAndSettle();
 
@@ -67,6 +80,7 @@ void main() {
   testWidgets('shows the deadline card while project templates are on', (
     tester,
   ) async {
+    window(tester, phone);
     await tester.pumpWidget(host(FakeOrgSettingsRepository()));
     await tester.pumpAndSettle();
 
@@ -77,6 +91,7 @@ void main() {
   });
 
   testWidgets('and not while they are off', (tester) async {
+    window(tester, phone);
     await tester.pumpWidget(
       host(FakeOrgSettingsRepository(), projectTemplates: false),
     );
@@ -89,6 +104,7 @@ void main() {
   testWidgets('choosing a basis makes it the organisation\'s own', (
     tester,
   ) async {
+    window(tester, phone);
     await tester.pumpWidget(host(FakeOrgSettingsRepository()));
     await tester.pumpAndSettle();
 
@@ -104,6 +120,7 @@ void main() {
   testWidgets('a stored basis can be handed back to the platform', (
     tester,
   ) async {
+    window(tester, phone);
     await tester.pumpWidget(
       host(FakeOrgSettingsRepository(defaultDeadlineBasis: 'WORKING')),
     );
@@ -119,6 +136,7 @@ void main() {
   });
 
   testWidgets('a refused load says why and offers a retry', (tester) async {
+    window(tester, phone);
     await tester.pumpWidget(
       host(FakeOrgSettingsRepository(failWith: 'error.org.adminOnly')),
     );
@@ -129,11 +147,149 @@ void main() {
     expect(find.text('common.retry'), findsOneWidget);
   });
 
-  for (final width in <double>[320, 900]) {
+  for (final width in <double>[320, 900, 1440]) {
     testWidgets('renders without overflow at ${width}px', (tester) async {
-      await tester.pumpWidget(host(FakeOrgSettingsRepository(), width: width));
+      window(tester, Size(width, 900));
+      await tester.pumpWidget(host(FakeOrgSettingsRepository()));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
   }
+
+  group('on a wide window', () {
+    testWidgets('shows one section, the module first', (tester) async {
+      window(tester, desktop);
+      await tester.pumpWidget(host(FakeOrgSettingsRepository()));
+      await tester.pumpAndSettle();
+
+      // The module's switch is there; the cards of the other sections are not.
+      expect(find.text('admin.timeTracking.advancedTitle'), findsOneWidget);
+      expect(
+        find.text('admin.timeTracking.requiredProjectTitle'),
+        findsNothing,
+      );
+      expect(find.byType(OrgDeadlineBasisCard), findsNothing);
+      expect(find.byType(OrgLinkCard), findsNothing);
+      // The introduction stands once, in the rail's head.
+      expect(find.text('org.subtitle'), findsOneWidget);
+      expect(find.text('admin.timeTracking.hint'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a rail entry opens its section instead', (tester) async {
+      window(tester, desktop);
+      await tester.pumpWidget(host(FakeOrgSettingsRepository()));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('admin.timeTracking.captureTitle'));
+      await tester.pumpAndSettle();
+      expect(
+        find.text('admin.timeTracking.requiredProjectTitle'),
+        findsOneWidget,
+      );
+      expect(find.text('admin.timeTracking.advancedTitle'), findsNothing);
+
+      await tester.tap(find.text('org.nav.deadlines'));
+      await tester.pumpAndSettle();
+      expect(find.byType(OrgDeadlineBasisCard), findsOneWidget);
+      expect(
+        find.text('admin.timeTracking.requiredProjectTitle'),
+        findsNothing,
+      );
+      // Not a time-tracking section: the note about policies stays away.
+      expect(find.text('admin.timeTracking.hint'), findsNothing);
+    });
+
+    testWidgets('a change survives a trip to another section and is saved', (
+      tester,
+    ) async {
+      window(tester, desktop);
+      final repository = FakeOrgSettingsRepository();
+      await tester.pumpWidget(host(repository));
+      await tester.pumpAndSettle();
+
+      // Nothing stored: the module offers its environment default; tapping it
+      // makes the value the organisation's own.
+      await tester.tap(find.textContaining('admin.timeTracking.envDefault'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HiveSwitch), findsOneWidget);
+
+      await tester.tap(find.text('admin.timeTracking.captureTitle'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('admin.timeTracking.moduleTitle'));
+      await tester.pumpAndSettle();
+      expect(find.byType(HiveSwitch), findsOneWidget);
+
+      // What the bar's Save does; the bar itself belongs to the shell.
+      await tester
+          .element(find.byType(OrganizationView))
+          .read<OrganizationCubit>()
+          .save(templates: true);
+      await tester.pumpAndSettle();
+      expect(repository.updates, hasLength(1));
+      final sent = repository.updates.single.timeTracking!;
+      expect(sent.containsKey('advancedEnabled'), isTrue);
+      expect(sent['advancedEnabled'], isFalse);
+    });
+
+    testWidgets("the module's own sections are listed only while it is on", (
+      tester,
+    ) async {
+      window(tester, desktop);
+      await tester.pumpWidget(host(FakeOrgSettingsRepository()));
+      await tester.pumpAndSettle();
+      expect(find.text('org.nav.corrections'), findsNothing);
+      expect(find.text('admin.timeTracking.tagsTitle'), findsNothing);
+      expect(find.text('availability.admin.cardTitle'), findsNothing);
+
+      // A fresh page, so the page loads again from a server where it is on.
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+        host(FakeOrgSettingsRepository(advancedEnabled: true)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('org.nav.corrections'), findsOneWidget);
+      expect(find.text('admin.timeTracking.tagsTitle'), findsOneWidget);
+      expect(find.text('availability.admin.cardTitle'), findsOneWidget);
+    });
+
+    testWidgets('?section= opens that section', (tester) async {
+      window(tester, desktop);
+      await tester.pumpWidget(
+        host(FakeOrgSettingsRepository(), initialSection: 'capture'),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        find.text('admin.timeTracking.requiredProjectTitle'),
+        findsOneWidget,
+      );
+      expect(find.text('admin.timeTracking.advancedTitle'), findsNothing);
+    });
+
+    testWidgets('a section that went with the module gives way to the first', (
+      tester,
+    ) async {
+      window(tester, desktop);
+      await tester.pumpWidget(
+        host(FakeOrgSettingsRepository(), initialSection: 'tags'),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('admin.timeTracking.advancedTitle'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  testWidgets('a phone still shows every card', (tester) async {
+    window(tester, phone);
+    await tester.pumpWidget(host(FakeOrgSettingsRepository()));
+    await tester.pumpAndSettle();
+
+    expect(find.text('admin.timeTracking.advancedTitle'), findsOneWidget);
+    expect(
+      find.text('admin.timeTracking.requiredProjectTitle'),
+      findsOneWidget,
+    );
+    expect(find.byType(OrgDeadlineBasisCard), findsOneWidget);
+    expect(find.byType(OrgLinkCard), findsOneWidget);
+  });
 }
