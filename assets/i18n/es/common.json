@@ -1527,15 +1527,14 @@
       "takeOverHint": "Las horas vienen de tu calendario. Elige dónde va el registro.",
       "takeOver": "Pasar",
       "showLayer": "Mostrar eventos del calendario",
-      "alreadyTaken": "Este evento ya es un registro.",
       "notConvertible": "Los eventos de día completo o de más de un día no pueden ser un registro.",
       "takenOver": "Evento pasado a registro",
       "untitled": "Evento sin título",
-      "converted": "Pasado",
       "layer": "Calendario",
       "openToday": "{{count}} evento de hoy aún sin pasar",
       "openToday_plural": "{{count}} eventos de hoy aún sin pasar",
-      "dismissChip": "Ocultar por ahora"
+      "dismissChip": "Ocultar por ahora",
+      "fromCalendar": "De tu calendario"
     }
   },
   "availability": {

@@ -816,21 +816,11 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
 
   /// One of the reader's calendar events, tapped (HIN-94).
   ///
-  /// Not taken over yet: the entry sheet, with the event's times shown and its
-  /// title as the description, and the save is the takeover. Taken over: the
-  /// entry it became, when it is held. An all-day event, or one too long to be
-  /// one entry, says why it cannot be taken over instead of opening a form that
-  /// could only refuse.
+  /// The entry sheet, with the event's times shown and its title as the
+  /// description, and the save is the takeover. An all-day event, or one too
+  /// long to be one entry, says why it cannot be taken over instead of opening
+  /// a form that could only refuse.
   Future<void> _takeOver(CalendarEventSuggestion event) async {
-    if (event.converted) {
-      final entry = _heldEntry(event.convertedEntryId!);
-      if (entry != null) {
-        unawaited(_openEntry(_itemFor(entry, '')!));
-      } else {
-        showGlassToast(context, context.t('time.calendarEvents.alreadyTaken'));
-      }
-      return;
-    }
     if (!event.convertible) {
       showGlassToast(
         context,
@@ -847,16 +837,6 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
       kind: GlassToastKind.success,
     );
     unawaited(_reload());
-  }
-
-  WorkItem? _heldEntry(String id) {
-    for (final window in _months.values) {
-      for (final item in window.items) {
-        final entry = item.data;
-        if (entry is WorkItem && entry.id == id) return entry;
-      }
-    }
-    return null;
   }
 
   /// A block dropped somewhere else.
@@ -1638,28 +1618,31 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   }
 
   /// The events of the reader's calendars as grid items, each carrying its
-  /// [CalendarEventSuggestion] back to the tap. Marked when taken over, so a
-  /// week shows which suggestions are settled without opening each one.
+  /// [CalendarEventSuggestion] back to the tap.
+  ///
+  /// An event taken over is left out: its entry is drawn in the same hours, and
+  /// a suggestion under it would print both titles over each other. The entry
+  /// is how a settled event shows, and it says so in its history.
   List<TimeGridItem> _eventItemsOf(List<CalendarEventSuggestion> events) {
     if (events.isEmpty) return const [];
     final untitled = context.t('time.calendarEvents.untitled');
-    final taken = context.t('time.calendarEvents.converted');
     return [
       for (final event in events)
-        TimeGridItem(
-          id: 'event-${event.id}',
-          start: event.start,
-          end: event.allDay
-              ? event.end.subtract(const Duration(minutes: 1))
-              : event.end,
-          title: event.summary?.trim().isNotEmpty == true
-              ? event.summary!.trim()
-              : untitled,
-          subtitle: event.converted ? taken : event.location,
-          tint: event.swatch,
-          day: event.allDay ? DateUtils.dateOnly(event.start) : null,
-          data: event,
-        ),
+        if (!event.converted)
+          TimeGridItem(
+            id: 'event-${event.id}',
+            start: event.start,
+            end: event.allDay
+                ? event.end.subtract(const Duration(minutes: 1))
+                : event.end,
+            title: event.summary?.trim().isNotEmpty == true
+                ? event.summary!.trim()
+                : untitled,
+            subtitle: event.location,
+            tint: event.swatch,
+            day: event.allDay ? DateUtils.dateOnly(event.start) : null,
+            data: event,
+          ),
     ];
   }
 

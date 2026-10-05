@@ -667,7 +667,13 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 // Correcting it afterwards is what the entry's own editor is
                 // for, where the times can move without the stop having to.
                 if (_isTimer || _isFromEvent) ...[
-                  _MeasuredInterval(start: _start, end: _end),
+                  _MeasuredInterval(
+                    start: _start,
+                    end: _end,
+                    labelKey: _isFromEvent
+                        ? 'time.calendarEvents.fromCalendar'
+                        : 'time.entry.measured',
+                  ),
                 ] else ...[
                   _ModeToggle(
                     mode: _mode,
@@ -1095,10 +1101,17 @@ class _Summary extends StatelessWidget {
 /// person reading it — the stop carries the timer's own start, so a picker would
 /// be a control that closes and changes nothing.
 class _MeasuredInterval extends StatelessWidget {
-  const _MeasuredInterval({required this.start, required this.end});
+  const _MeasuredInterval({
+    required this.start,
+    required this.end,
+    this.labelKey = 'time.entry.measured',
+  });
 
   final DateTime start;
   final DateTime end;
+
+  /// What the interval is: measured by a timer, or taken from a calendar.
+  final String labelKey;
 
   @override
   Widget build(BuildContext context) {
@@ -1120,7 +1133,7 @@ class _MeasuredInterval extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  context.t('time.entry.measured'),
+                  context.t(labelKey),
                   style: GlassFieldStyle.caption,
                 ),
                 const SizedBox(height: 2),
