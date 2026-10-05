@@ -420,7 +420,9 @@
     "awayMore": "y {{count}} más",
     "awayOpen": "Abrir el calendario del equipo",
     "showCard": "Mostrar tarjeta",
-    "hideCard": "Ocultar tarjeta"
+    "hideCard": "Ocultar tarjeta",
+    "focusTimeNone": "Todavía no hay tiempo de concentración esta semana.",
+    "progressNone": "Todavía no hay incidencias aquí."
   },
   "comments": {
     "actionCamera": "Hacer foto o vídeo",

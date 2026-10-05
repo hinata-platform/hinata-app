@@ -420,7 +420,9 @@
     "awayMore": "और {{count}} अन्य",
     "awayOpen": "टीम कैलेंडर खोलें",
     "showCard": "कार्ड दिखाएँ",
-    "hideCard": "कार्ड छिपाएँ"
+    "hideCard": "कार्ड छिपाएँ",
+    "focusTimeNone": "इस सप्ताह अभी तक कोई फ़ोकस समय नहीं है।",
+    "progressNone": "यहाँ अभी तक कोई इश्यू नहीं है।"
   },
   "comments": {
     "actionCamera": "फ़ोटो या वीडियो लें",

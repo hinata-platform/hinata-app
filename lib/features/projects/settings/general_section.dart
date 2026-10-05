@@ -93,7 +93,9 @@ class GeneralSection extends StatelessWidget {
                 children: [
                   Expanded(child: nameField),
                   const SizedBox(width: 16),
-                  SizedBox(width: 160, child: keyField),
+                  // Room for its label, the required badge and the generate
+                  // button on one line; at 160 the label was cut to "Pr…".
+                  SizedBox(width: 220, child: keyField),
                 ],
               );
             },

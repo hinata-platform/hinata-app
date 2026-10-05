@@ -420,7 +420,9 @@
     "awayMore": "ほか{{count}}人",
     "awayOpen": "チームカレンダーを開く",
     "showCard": "カードを表示",
-    "hideCard": "カードを非表示"
+    "hideCard": "カードを非表示",
+    "focusTimeNone": "今週の集中した時間はまだありません。",
+    "progressNone": "ここにはまだ課題がありません。"
   },
   "comments": {
     "actionCamera": "写真または動画を撮影",
