@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/time_entry_sheet_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The entry sheet writes through this cubit: each write reaches the
 /// repository as asked and comes back as it answered.
@@ -14,19 +13,19 @@ void main() {
   );
   const draft = TimeEntryDraft(durationMinutes: 90, description: 'review');
 
-  late _FakeTime time;
+  late FakeTimeRepository time;
   late TimeEntrySheetCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
+    time = FakeTimeRepository();
     cubit = TimeEntrySheetCubit(time);
     addTearDown(cubit.close);
   });
 
   test('creates, edits and removes the entry named', () async {
-    time.answers[#create] = Future.value(saved);
-    time.answers[#update] = Future.value(saved);
-    time.answers[#delete] = Future<void>.value();
+    time.answer(#create, saved);
+    time.answer(#update, saved);
+    time.answer<void>(#delete, null);
 
     expect(await cubit.create(draft), saved);
     expect(await cubit.update('e1', draft), saved);
@@ -39,16 +38,13 @@ void main() {
     ]);
   });
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
+  test('passes a failure through', () async {
+    time.fail(#create, failure);
+    time.fail(#update, failure);
+    time.fail(#delete, failure);
 
-    await expectLater(() => cubit.create(draft), throwsRefusal);
-    await expectLater(() => cubit.update('e1', draft), throwsRefusal);
-    await expectLater(() => cubit.delete('e1'), throwsRefusal);
+    await expectLater(() => cubit.create(draft), throwsFailure);
+    await expectLater(() => cubit.update('e1', draft), throwsFailure);
+    await expectLater(() => cubit.delete('e1'), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

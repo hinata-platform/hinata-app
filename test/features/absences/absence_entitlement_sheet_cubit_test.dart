@@ -4,10 +4,10 @@ import 'package:hinata/core/models/absence_models.dart';
 import 'package:hinata/core/models/absence_report_models.dart';
 import 'package:hinata/features/absences/absence_entitlement_sheet_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
+  late FakeAbsenceRepository absences;
   late AbsenceEntitlementSheetCubit cubit;
 
   const entry = AbsenceLedgerEntry(
@@ -19,7 +19,7 @@ void main() {
   );
 
   setUp(() {
-    absences = RecordingAbsences();
+    absences = FakeAbsenceRepository();
     cubit = AbsenceEntitlementSheetCubit(absences);
   });
 
@@ -39,35 +39,39 @@ void main() {
       );
 
       expect(result, same(rows));
-      expectCall(
+      expect(
         absences.only,
-        #previewGrant,
-        named: {
-          #typeId: 't1',
-          #year: 2026,
-          #userIds: ['a', 'b'],
-          #allowanceMilliDays: 25000,
-        },
+        invoked(
+          #previewGrant,
+          named: {
+            #typeId: 't1',
+            #year: 2026,
+            #userIds: ['a', 'b'],
+            #allowanceMilliDays: 25000,
+          },
+        ),
       );
     },
   );
 
-  test('grantMany writes and hands a refusal back unchanged', () async {
-    absences.fail<List<AbsenceEntitlement>>(#grantMany, failure);
+  test('grantMany writes and hands a failure back unchanged', () async {
+    absences.fail(#grantMany, failure);
 
     await expectLater(
       cubit.grantMany(typeId: 't1', year: 2026, userIds: ['a']),
       throwsA(same(failure)),
     );
-    expectCall(
+    expect(
       absences.only,
-      #grantMany,
-      named: {
-        #typeId: 't1',
-        #year: 2026,
-        #userIds: ['a'],
-        #allowanceMilliDays: null,
-      },
+      invoked(
+        #grantMany,
+        named: {
+          #typeId: 't1',
+          #year: 2026,
+          #userIds: ['a'],
+          #allowanceMilliDays: null,
+        },
+      ),
     );
   });
 
@@ -85,17 +89,19 @@ void main() {
     );
 
     expect(result, same(entry));
-    expectCall(
+    expect(
       absences.only,
-      #adjust,
-      named: {
-        #userId: 'u1',
-        #typeId: 't1',
-        #year: 2026,
-        #milliDays: -500,
-        #reason: 'why',
-        #effectiveOn: on,
-      },
+      invoked(
+        #adjust,
+        named: {
+          #userId: 'u1',
+          #typeId: 't1',
+          #year: 2026,
+          #milliDays: -500,
+          #reason: 'why',
+          #effectiveOn: on,
+        },
+      ),
     );
   });
 
@@ -112,11 +118,13 @@ void main() {
       same(dates),
     );
 
-    expectCall(absences.calls.first, #employment, positional: ['u1']);
-    expectCall(
+    expect(absences.calls.first, invoked(#employment, positional: ['u1']));
+    expect(
       absences.calls.last,
-      #saveEmployment,
-      named: {#userId: 'u1', #hiredOn: hired, #leftOn: null, #note: 'n'},
+      invoked(
+        #saveEmployment,
+        named: {#userId: 'u1', #hiredOn: hired, #leftOn: null, #note: 'n'},
+      ),
     );
   });
 
@@ -131,8 +139,11 @@ void main() {
 
     expect(result.settlement, same(rows));
     expect(result.types, same(types));
-    expectCall(absences.calls.first, #settlement, positional: ['u1']);
-    expectCall(absences.calls.last, #types, named: {#includeInactive: true});
+    expect(absences.calls.first, invoked(#settlement, positional: ['u1']));
+    expect(
+      absences.calls.last,
+      invoked(#types, named: {#includeInactive: true}),
+    );
   });
 
   test('payout books the days as given', () async {
@@ -147,16 +158,18 @@ void main() {
     );
 
     expect(result, same(entry));
-    expectCall(
+    expect(
       absences.only,
-      #payout,
-      named: {
-        #userId: 'u1',
-        #typeId: 't1',
-        #year: 2025,
-        #milliDays: 2000,
-        #reason: 'paid',
-      },
+      invoked(
+        #payout,
+        named: {
+          #userId: 'u1',
+          #typeId: 't1',
+          #year: 2025,
+          #milliDays: 2000,
+          #reason: 'paid',
+        },
+      ),
     );
   });
 
@@ -173,10 +186,12 @@ void main() {
     );
 
     expect(result, page);
-    expectCall(
+    expect(
       absences.only,
-      #ledger,
-      named: {#userId: 'u1', #typeId: 't1', #year: 2026, #page: 0, #size: 50},
+      invoked(
+        #ledger,
+        named: {#userId: 'u1', #typeId: 't1', #year: 2026, #page: 0, #size: 50},
+      ),
     );
   });
 }

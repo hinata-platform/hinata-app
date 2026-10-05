@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "Type the time",
       "typeDuration": "Type the duration"
+    },
+    "hue": {
+      "default": "Default colour",
+      "honey": "Honey",
+      "indigo": "Indigo",
+      "violet": "Violet",
+      "teal": "Teal",
+      "green": "Green",
+      "coral": "Coral",
+      "pink": "Pink",
+      "amber": "Amber",
+      "red": "Red",
+      "orange": "Orange",
+      "cyan": "Cyan",
+      "blue": "Blue",
+      "custom": "Custom"
+    },
+    "pagination": {
+      "previous": "Previous page",
+      "next": "Next page",
+      "page": "Page {{page}}"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "Paid out with the final pay",
       "done": "Booked",
       "confirmTitle": "{{what}} of {{days}}?"
-    },
-    "hue": {
-      "default": "Default colour",
-      "red": "Red",
-      "orange": "Orange",
-      "amber": "Amber",
-      "green": "Green",
-      "teal": "Teal",
-      "cyan": "Cyan",
-      "blue": "Blue",
-      "violet": "Violet",
-      "pink": "Pink"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "{{count}} more. Search or filter to find them."
   },
   "gantt": {
-    "title": "Timeline",
     "subtitle": "Gantt view with dependencies, milestones and the critical path",
     "column": "Issue",
     "empty": "No scheduled issues. Set start and due dates on issues to see them on the timeline.",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "Not every page is listed here, as there are too many for one list. A subpage may therefore stand at the top even though its parent page exists."
     },
-    "hue": {
-      "honey": "Honey",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "teal": "Teal",
-      "green": "Green",
-      "coral": "Coral",
-      "pink": "Pink",
-      "amber": "Amber"
-    },
     "spaceIconOption": "Icon {{n}} of {{count}}",
     "subpages": "Subpages",
     "moveUnder": "Move under…",
     "moveUnderTitle": "Move under which page?",
     "pageActions": "Page actions",
-    "resultCount": "Results: {{count}}"
+    "resultCount": "Results: {{count}}",
+    "moveUnderConfirm": {
+      "title": "Change who can read it?",
+      "message": "“{{page}}” and its subpages will then be readable by {{place}}.",
+      "confirm": "Move"
+    }
   },
   "md": {
     "heading1": "Heading 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "Another person from the administration gives you this role.",
       "selectUser": "Select {{name}}",
       "selectPage": "Select all users on this page",
-      "previousPage": "Previous page",
-      "nextPage": "Next page",
-      "pageNumber": "Page {{n}}",
       "removeEmail": "Remove {{email}}"
     },
     "iosStoreUrl": "iOS App Store URL",
@@ -3502,11 +3502,6 @@
     "selectedCount": "{{count}} selected",
     "collapse": "Collapse",
     "expand": "Expand",
-    "pagination": {
-      "previous": "Previous page",
-      "next": "Next page",
-      "page": "Page {{page}}"
-    },
     "selectIssue": "Select {{issue}}"
   },
   "teams": {
@@ -3545,17 +3540,6 @@
     "iconLabel": "Icon",
     "optional": "optional",
     "back": "Back",
-    "color": {
-      "honey": "Honey",
-      "indigo": "Indigo",
-      "violet": "Violet",
-      "teal": "Teal",
-      "green": "Green",
-      "coral": "Coral",
-      "custom": "Custom",
-      "pink": "Pink",
-      "amber": "Amber"
-    },
     "role": {
       "admin": "Team-Admin",
       "adminShort": "Admin",

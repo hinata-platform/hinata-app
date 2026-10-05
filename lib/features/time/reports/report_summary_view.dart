@@ -289,9 +289,7 @@ class _ChartToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     // The deeper honey on the light wash, where the brand's own is too light
     // for an icon (2.75:1, measured); the bright one on dark.
-    final activeInk = Theme.of(context).brightness == Brightness.dark
-        ? AppColors.accent
-        : AppColors.accentText;
+    final activeInk = AppColors.accentInk;
     final icon = switch (kind) {
       ReportChart.bar => LucideIcons.chartColumn,
       ReportChart.pie => LucideIcons.chartPie,

@@ -1,23 +1,22 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/content_models.dart';
-import 'package:hinata/core/repositories/notification_repository.dart';
 import 'package:hinata/features/notifications/notifications_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeNotifications with RecordingFake implements NotificationRepository {}
+import '../../support/recording_fake.dart';
 
 typedef _Page = ({List<AppNotification> items, int total});
 
 /// The notifications page and the bell's popover read their lists and act on
 /// a notification through these cubits.
 void main() {
-  late _FakeNotifications notifications;
+  late FakeNotificationRepository notifications;
 
   setUp(() {
-    notifications = _FakeNotifications();
-    notifications.answers[#notificationsPage] = () =>
-        Future<_Page>.value((items: <AppNotification>[], total: 0));
+    notifications = FakeNotificationRepository();
+    notifications.answer<_Page>(#notificationsPage, (
+      items: <AppNotification>[],
+      total: 0,
+    ));
   });
 
   test('the page reads twenty-five at a time', () async {
@@ -49,7 +48,7 @@ void main() {
       #markNotificationUnread,
       #deleteNotification,
     ]) {
-      notifications.answers[member] = () => Future<void>.value();
+      notifications.answer<void>(member, null);
     }
 
     await cubit.markAllRead();
@@ -74,8 +73,7 @@ void main() {
   test('a failed action comes back as the same failure', () async {
     final cubit = NotificationPreviewCubit(notifications);
     addTearDown(cubit.close);
-    notifications.answers[#deleteNotification] = () =>
-        Future<void>.error(failure);
+    notifications.fail(#deleteNotification, failure);
 
     await expectLater(cubit.delete('n1'), throwsA(same(failure)));
   });

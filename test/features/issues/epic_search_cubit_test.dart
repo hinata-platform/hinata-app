@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/epic_search_cubit.dart';
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -32,7 +32,7 @@ void main() {
   });
 
   test('passes a failed search on', () async {
-    await expectFailurePassedOn<({List<Issue> issues, int total})>(
+    await expectFailurePassedOn(
       issues,
       #issues,
       () => cubit.search(page: 0, size: 25),

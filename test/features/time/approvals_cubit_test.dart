@@ -2,12 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_approval_models.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/project_repository.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
-import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/features/time/approvals_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The approvals page reads its submissions and their labels through this
 /// cubit: each read reaches the repository as asked and comes back as it
@@ -24,21 +21,21 @@ void main() {
   const alpha = Project(id: 'p1', key: 'ALP', name: 'Alpha');
   const ada = DirectoryUser(id: 'u1', username: 'ada', displayName: 'Ada');
 
-  late _FakeTime time;
-  late _FakeUsers users;
-  late _FakeProjects projects;
+  late FakeTimeRepository time;
+  late FakeUserRepository users;
+  late FakeProjectRepository projects;
   late ApprovalsCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
-    users = _FakeUsers();
-    projects = _FakeProjects();
+    time = FakeTimeRepository();
+    users = FakeUserRepository();
+    projects = FakeProjectRepository();
     cubit = ApprovalsCubit(time, users, projects);
     addTearDown(cubit.close);
   });
 
   test('reads a page of the scope asked for', () async {
-    time.answers[#approvals] = Future.value((items: [approval], total: 1));
+    time.answer(#approvals, (items: [approval], total: 1));
 
     final page = await cubit.approvals(scope: 'inbox', page: 1, size: 25);
 
@@ -50,8 +47,8 @@ void main() {
   });
 
   test('names the people and projects on screen', () async {
-    users.answers[#usersByIds] = Future.value([ada]);
-    projects.answers[#resolveProjects] = Future.value([alpha]);
+    users.answer(#usersByIds, [ada]);
+    projects.answer(#resolveProjects, [alpha]);
 
     expect(await cubit.usersByIds(['u1']), [ada]);
     expect(await cubit.resolveProjects(['p1']), [alpha]);
@@ -75,31 +72,16 @@ void main() {
     );
   });
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
-    users.failure = refusal;
-    projects.failure = refusal;
+  test('passes a failure through', () async {
+    time.fail(#approvals, failure);
+    users.fail(#usersByIds, failure);
+    projects.fail(#resolveProjects, failure);
 
     await expectLater(
       () => cubit.approvals(scope: 'mine', page: 0, size: 25),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.usersByIds(['u1']), throwsRefusal);
-    await expectLater(() => cubit.resolveProjects(['p1']), throwsRefusal);
+    await expectLater(() => cubit.usersByIds(['u1']), throwsFailure);
+    await expectLater(() => cubit.resolveProjects(['p1']), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeUsers with RecordingRepository implements UserRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
-}
-
-class _FakeProjects with RecordingRepository implements ProjectRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/work_models.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/time_calendar_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// The calendar reads its windows and moves an entry through this cubit: each
 /// call reaches the repository as asked and comes back as it answered.
@@ -17,18 +16,18 @@ void main() {
     entry: WorkItem(id: 'e1', durationMinutes: 60, activityType: 'WORK'),
   );
 
-  late _FakeTime time;
+  late FakeTimeRepository time;
   late TimeCalendarCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
+    time = FakeTimeRepository();
     cubit = TimeCalendarCubit(time);
     addTearDown(cubit.close);
   });
 
   test('reads the window asked for and moves the entry named', () async {
-    time.answers[#calendar] = Future.value(window);
-    time.answers[#update] = Future.value(saved);
+    time.answer(#calendar, window);
+    time.answer(#update, saved);
     final draft = TimeEntryDraft(
       startedAt: DateTime(2026, 9, 2, 9),
       endedAt: DateTime(2026, 9, 2, 10),
@@ -49,21 +48,17 @@ void main() {
     ]);
   });
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
+  test('passes a failure through', () async {
+    time.fail(#calendar, failure);
+    time.fail(#update, failure);
 
     await expectLater(
       () => cubit.calendar(DateTime(2026, 9, 1), DateTime(2026, 9, 30)),
-      throwsRefusal,
+      throwsFailure,
     );
     await expectLater(
       () => cubit.update('e1', const TimeEntryDraft()),
-      throwsRefusal,
+      throwsFailure,
     );
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

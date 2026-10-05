@@ -1,20 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/oauth_consent.dart';
-import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/features/oauth/oauth_consent_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeAuth with RecordingFake implements AuthRepository {}
+import '../../support/recording_fake.dart';
 
 /// The consent page reads the pending request and records the decision
 /// through this cubit.
 void main() {
-  late _FakeAuth auth;
+  late FakeAuthRepository auth;
   late OAuthConsentCubit cubit;
 
   setUp(() {
-    auth = _FakeAuth();
+    auth = FakeAuthRepository();
     cubit = OAuthConsentCubit(auth);
   });
   tearDown(() => cubit.close());
@@ -26,16 +23,14 @@ void main() {
       redirectHost: 'claude.ai',
       scopes: ['issues:read'],
     );
-    auth.answers[#oauthConsentInfo] = () =>
-        Future<OAuthConsentInfo>.value(info);
+    auth.answer<OAuthConsentInfo>(#oauthConsentInfo, info);
 
     expect(await cubit.info('r1'), same(info));
     expect(auth.only.positionalArguments, ['r1']);
   });
 
   test('the decision answers the redirect with what was granted', () async {
-    auth.answers[#oauthConsentDecision] = () =>
-        Future<String>.value('https://claude.ai/cb?code=x');
+    auth.answer<String>(#oauthConsentDecision, 'https://claude.ai/cb?code=x');
 
     expect(
       await cubit.decide('r1', approved: true, grantedScopes: ['issues:read']),
@@ -49,8 +44,7 @@ void main() {
   });
 
   test('an expired request comes back as the same failure', () async {
-    auth.answers[#oauthConsentInfo] = () =>
-        Future<OAuthConsentInfo>.error(failure);
+    auth.fail(#oauthConsentInfo, failure);
 
     await expectLater(cubit.info('r1'), throwsA(same(failure)));
   });

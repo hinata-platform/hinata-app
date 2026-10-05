@@ -13,10 +13,8 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/gantt_links.dart';
-import '../../core/widgets/glass_filter_bar.dart'
-    show GlassFilterPill, kGlassDockRow;
+import '../../core/widgets/glass_filter_bar.dart' show kGlassDockRow;
 import '../../core/widgets/glass_switch_chip.dart';
-import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -27,6 +25,7 @@ import '../shell/page_chrome.dart';
 import 'gantt_cubit.dart';
 import 'gantt_view_options.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/project_scope_pill.dart';
 
 /// Zoom levels for the timeline. [week] shows individual day ticks under a
 /// month band (Jira "Wochen"); [month] collapses to month columns only.
@@ -202,7 +201,7 @@ class _GanttState extends State<_Gantt> {
     final compact = context.isCompact;
     final scope = _projects.isEmpty
         ? null
-        : _ProjectScopePill(
+        : ProjectScopePill(
             projects: _projects,
             selected: _projectId,
             onChanged: (value) {
@@ -667,48 +666,6 @@ class _GanttState extends State<_Gantt> {
       _hBody.jumpTo(target);
     }
   }
-}
-
-/// The project the timeline shows, as a glass pill in the docked row (phone)
-/// or beside the page head (wide).
-///
-/// Never washed amber: a timeline always shows exactly one project, so there
-/// is no unscoped state for the wash to tell apart from this one.
-class _ProjectScopePill extends StatelessWidget {
-  const _ProjectScopePill({
-    required this.projects,
-    required this.selected,
-    required this.onChanged,
-  });
-
-  final List<Project> projects;
-  final String? selected;
-  final ValueChanged<String> onChanged;
-
-  Project get _current =>
-      projects.where((p) => p.id == selected).firstOrNull ?? projects.first;
-
-  Future<void> _pick(BuildContext context, Rect? anchor) async {
-    // Null means the pill is no longer on screen: nothing to hang a menu off.
-    if (anchor == null) return;
-    final chosen = await showGlassMenu<String>(
-      context: context,
-      anchorRect: anchor,
-      value: _current.id,
-      items: [
-        for (final p in projects) GlassMenuItem(value: p.id, label: p.name),
-      ],
-    );
-    if (chosen != null && chosen != _current.id) onChanged(chosen);
-  }
-
-  @override
-  Widget build(BuildContext context) => GlassFilterPill(
-    icon: LucideIcons.folderKanban,
-    label: _current.name,
-    active: false,
-    onTap: (anchor) => unawaited(_pick(context, anchor)),
-  );
 }
 
 /// Frozen left-column entry: readable id + title, tappable to open the issue.

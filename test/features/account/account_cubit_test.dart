@@ -2,22 +2,19 @@ import 'package:dio/dio.dart' show MultipartFile;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/account_models.dart';
 import 'package:hinata/core/models/personal_access_token.dart';
-import 'package:hinata/core/repositories/account_repository.dart';
 import 'package:hinata/features/account/account_cubit.dart';
 
-import '../recording_fake.dart';
-
-class _FakeAccount with RecordingFake implements AccountRepository {}
+import '../../support/recording_fake.dart';
 
 /// The account page, its modals, the token section and the shell's avatar
 /// menu reach `/me` through this cubit: one repository call per intent, with
 /// the same arguments, and its answer or failure handed back.
 void main() {
-  late _FakeAccount account;
+  late FakeAccountRepository account;
   late AccountCubit cubit;
 
   setUp(() {
-    account = _FakeAccount();
+    account = FakeAccountRepository();
     cubit = AccountCubit(account);
   });
   tearDown(() => cubit.close());
@@ -27,13 +24,13 @@ void main() {
     final projects = <AccessProject>[];
     final pats = <PersonalAccessToken>[];
     final page = (items: <DeviceSession>[], total: 0);
-    account.answers[#myTeams] = () => Future<List<AccessTeam>>.value(teams);
-    account.answers[#myProjects] = () =>
-        Future<List<AccessProject>>.value(projects);
-    account.answers[#listPats] = () =>
-        Future<List<PersonalAccessToken>>.value(pats);
-    account.answers[#sessionsPage] = () =>
-        Future<({List<DeviceSession> items, int total})>.value(page);
+    account.answer<List<AccessTeam>>(#myTeams, teams);
+    account.answer<List<AccessProject>>(#myProjects, projects);
+    account.answer<List<PersonalAccessToken>>(#listPats, pats);
+    account.answer<({List<DeviceSession> items, int total})>(
+      #sessionsPage,
+      page,
+    );
 
     expect(await cubit.myTeams(), same(teams));
     expect(await cubit.myProjects(), same(projects));
@@ -43,8 +40,8 @@ void main() {
   });
 
   test('the profile and the session reads pass a failure back', () async {
-    account.answers[#meAccount] = () => Future<Me>.error(failure);
-    account.answers[#updateMyProfile] = () => Future<Me>.error(failure);
+    account.fail(#meAccount, failure);
+    account.fail(#updateMyProfile, failure);
 
     await expectLater(cubit.me(), throwsA(same(failure)));
     await expectLater(
@@ -74,12 +71,11 @@ void main() {
       #revokePat,
       #deletePat,
     ]) {
-      account.answers[member] = () => Future<void>.value();
+      account.answer<void>(member, null);
     }
     final codes = <String>['c1'];
-    account.answers[#verifyTotpSetup] = () => Future<List<String>>.value(codes);
-    account.answers[#regenerateRecoveryCodes] = () =>
-        Future<List<String>>.value(codes);
+    account.answer<List<String>>(#verifyTotpSetup, codes);
+    account.answer<List<String>>(#regenerateRecoveryCodes, codes);
 
     await cubit.deleteAvatar();
     await cubit.requestEmailChange('new@example.org');
@@ -125,7 +121,7 @@ void main() {
   });
 
   test('a token is minted with its name, scopes and lifetime', () async {
-    account.answers[#createPat] = () => Future<CreatedPat>.error(failure);
+    account.fail(#createPat, failure);
 
     await expectLater(
       cubit.createPat(name: 'ci', scopes: ['read'], ttlDays: 30),
@@ -146,10 +142,9 @@ void main() {
       events: {},
     );
     final file = MultipartFile.fromBytes(const [1, 2, 3], filename: 'a.png');
-    account.answers[#saveNotificationPrefs] = () =>
-        Future<NotifPrefs>.error(failure);
-    account.answers[#uploadAvatar] = () => Future<String>.error(failure);
-    account.answers[#beginTotpSetup] = () => Future<TotpSetup>.error(failure);
+    account.fail(#saveNotificationPrefs, failure);
+    account.fail(#uploadAvatar, failure);
+    account.fail(#beginTotpSetup, failure);
 
     await expectLater(
       cubit.saveNotificationPrefs(prefs),

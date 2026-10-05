@@ -10,6 +10,7 @@ import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/golden_columns.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/hue_labels.dart';
 import '../../core/widgets/entity_avatar_editor.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/theme/app_theme.dart';

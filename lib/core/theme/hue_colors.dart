@@ -16,19 +16,8 @@ import 'dart:ui';
 
 import 'app_colors.dart';
 
-/// Named accent palette (hue + display name), in design swatch order.
-const List<({int hue, String name})> kProjectHues = [
-  (hue: 70, name: 'Honey'),
-  (hue: 250, name: 'Indigo'),
-  (hue: 300, name: 'Violet'),
-  (hue: 200, name: 'Teal'),
-  (hue: 155, name: 'Green'),
-  (hue: 20, name: 'Coral'),
-  (hue: 330, name: 'Pink'),
-  (hue: 45, name: 'Amber'),
-];
-
-/// Distinct, evenly-spread label hues (cycled when adding labels).
+/// The shared palette in design swatch order: the project accents and the
+/// label hues (cycled when adding labels). `hueLabel` names each of them.
 const List<int> kLabelHues = [70, 250, 300, 200, 155, 20, 330, 45];
 
 /// Default workflow-state hues by canonical name (Open…Done).
@@ -41,13 +30,6 @@ const Map<String, int> kDefaultStateHues = {
   'In Review': 300,
   'Done': 155,
 };
-
-String hueName(int hue) {
-  for (final c in kProjectHues) {
-    if (c.hue == hue) return c.name;
-  }
-  return 'Custom';
-}
 
 /// Core oklch → [Color] conversion (alpha forced opaque).
 Color oklch(double l, double c, double hueDeg) {
@@ -115,17 +97,17 @@ String hexForHue(int hue) {
 /// Nearest palette hue to a stored hex accent (round-trips [hexForHue]).
 int hueForHex(String hex) {
   final target = colorFromHex(hex);
-  int best = kProjectHues.first.hue;
+  int best = kLabelHues.first;
   double bestDist = double.infinity;
-  for (final c in kProjectHues) {
-    final s = hueSwatch(c.hue);
+  for (final hue in kLabelHues) {
+    final s = hueSwatch(hue);
     final dr = (s.r - target.r);
     final dg = (s.g - target.g);
     final db = (s.b - target.b);
     final dist = dr * dr + dg * dg + db * db;
     if (dist < bestDist) {
       bestDist = dist;
-      best = c.hue;
+      best = hue;
     }
   }
   return best;

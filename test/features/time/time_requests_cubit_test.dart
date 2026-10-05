@@ -1,25 +1,24 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
-import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/features/time/time_requests_cubit.dart';
 
-import 'recording_repository.dart';
+import '../../support/recording_fake.dart';
 
 /// What a person asks about their own frozen time reaches the repository as
-/// asked, and a refusal comes back for the dialog to say.
+/// asked, and a failure comes back for the dialog to say.
 void main() {
-  late _FakeTime time;
+  late FakeTimeRepository time;
   late TimeRequestsCubit cubit;
 
   setUp(() {
-    time = _FakeTime();
+    time = FakeTimeRepository();
     cubit = TimeRequestsCubit(time);
     addTearDown(cubit.close);
   });
 
   test('asks for a correction and for days, with the reason', () async {
-    time.answers[#requestCorrection] = Future<void>.value();
-    time.answers[#requestBackfill] = Future<void>.value();
+    time.answer<void>(#requestCorrection, null);
+    time.answer<void>(#requestBackfill, null);
 
     await cubit.requestCorrection('e1', 'wrong day');
     await cubit.requestBackfill(
@@ -43,7 +42,7 @@ void main() {
 
   test('reads the requests about one entry', () async {
     const request = TimeCorrectionRequest(id: 'r1');
-    time.answers[#entryCorrectionRequests] = Future.value([request]);
+    time.answer(#entryCorrectionRequests, [request]);
 
     expect(await cubit.entryCorrectionRequests('e1'), [request]);
     expect(
@@ -52,12 +51,14 @@ void main() {
     );
   });
 
-  test('passes a refusal through', () async {
-    time.failure = refusal;
+  test('passes a failure through', () async {
+    time.fail(#requestCorrection, failure);
+    time.fail(#requestBackfill, failure);
+    time.fail(#entryCorrectionRequests, failure);
 
     await expectLater(
       () => cubit.requestCorrection('e1', 'wrong day'),
-      throwsRefusal,
+      throwsFailure,
     );
     await expectLater(
       () => cubit.requestBackfill(
@@ -65,13 +66,8 @@ void main() {
         to: DateTime(2026, 1, 5),
         note: 'was ill',
       ),
-      throwsRefusal,
+      throwsFailure,
     );
-    await expectLater(() => cubit.entryCorrectionRequests('e1'), throwsRefusal);
+    await expectLater(() => cubit.entryCorrectionRequests('e1'), throwsFailure);
   });
-}
-
-class _FakeTime with RecordingRepository implements TimeRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) => record(invocation);
 }

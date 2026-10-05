@@ -4,16 +4,16 @@ import 'package:hinata/core/models/absence_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/features/absences/absence_entitlements_cubit.dart';
 
-import 'recording_repositories.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
-  late RecordingAbsences absences;
-  late RecordingUsers users;
+  late FakeAbsenceRepository absences;
+  late FakeUserRepository users;
   late AbsenceEntitlementsCubit cubit;
 
   setUp(() {
-    absences = RecordingAbsences();
-    users = RecordingUsers();
+    absences = FakeAbsenceRepository();
+    users = FakeUserRepository();
     cubit = AbsenceEntitlementsCubit(absences, users);
   });
 
@@ -24,7 +24,7 @@ void main() {
     absences.answer<List<AbsenceType>>(#types, types);
 
     expect(await cubit.types(), same(types));
-    expectCall(absences.only, #types, named: {#includeInactive: true});
+    expect(absences.only, invoked(#types, named: {#includeInactive: true}));
   });
 
   test(
@@ -42,13 +42,21 @@ void main() {
       );
 
       expect(result, page);
-      expectCall(
+      expect(
         absences.only,
-        #overview,
-        named: {#typeId: 't1', #year: 2026, #query: 'ann', #page: 1, #size: 25},
+        invoked(
+          #overview,
+          named: {
+            #typeId: 't1',
+            #year: 2026,
+            #query: 'ann',
+            #page: 1,
+            #size: 25,
+          },
+        ),
       );
 
-      absences.fail<PageResult<AbsenceStanding>>(#overview, failure);
+      absences.fail(#overview, failure);
       await expectLater(
         cubit.overview(typeId: 't1', year: 2026, query: '', page: 0, size: 25),
         throwsA(same(failure)),
@@ -60,13 +68,15 @@ void main() {
     const found = [DirectoryUser(id: 'a', username: 'ann', displayName: 'Ann')];
     users.answer<List<DirectoryUser>>(#usersByIds, found);
 
-    expect(await cubit.people(['a']), same(found));
-    expectCall(
+    expect(await cubit.usersByIds(['a']), same(found));
+    expect(
       users.only,
-      #usersByIds,
-      positional: [
-        ['a'],
-      ],
+      invoked(
+        #usersByIds,
+        positional: [
+          ['a'],
+        ],
+      ),
     );
     expect(absences.calls, isEmpty);
   });

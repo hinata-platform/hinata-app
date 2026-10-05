@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/work_log_cubit.dart';
 
-import 'recording_fakes.dart';
+import 'issue_fixtures.dart';
+import '../../support/recording_fake.dart';
 
 void main() {
   late FakeIssueRepository issues;
@@ -39,8 +39,8 @@ void main() {
     );
   });
 
-  test('passes a refusal on unchanged', () async {
-    await expectFailurePassedOn<WorkItem>(
+  test('passes a failure on unchanged', () async {
+    await expectFailurePassedOn(
       issues,
       #addWorkItem,
       () => cubit.log('i1', minutes: 30),

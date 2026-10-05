@@ -449,7 +449,7 @@ class _PageNumber extends StatelessWidget {
     return Semantics(
       button: true,
       selected: active,
-      label: context.t('admin.um.pageNumber', variables: {'n': '$n'}),
+      label: context.t('common.pagination.page', variables: {'page': '$n'}),
       excludeSemantics: true,
       child: Material(
         type: MaterialType.transparency,

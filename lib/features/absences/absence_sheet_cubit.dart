@@ -28,7 +28,7 @@ class AbsenceSheetCubit extends Cubit<void> {
 
   Future<AbsenceRequest> request(String id) => _absences.request(id);
 
-  Future<List<DirectoryUser>> people(List<String> ids) =>
+  Future<List<DirectoryUser>> usersByIds(List<String> ids) =>
       _users.usersByIds(ids);
 
   Future<AbsenceRequest> withdraw(String id) => _absences.withdraw(id);

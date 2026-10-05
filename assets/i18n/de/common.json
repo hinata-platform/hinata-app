@@ -35,6 +35,27 @@
     "picker": {
       "typeTime": "Uhrzeit eintippen",
       "typeDuration": "Dauer eintippen"
+    },
+    "hue": {
+      "default": "Standardfarbe",
+      "honey": "Honig",
+      "indigo": "Indigo",
+      "violet": "Violett",
+      "teal": "Türkis",
+      "green": "Grün",
+      "coral": "Koralle",
+      "pink": "Rosa",
+      "amber": "Bernstein",
+      "red": "Rot",
+      "orange": "Orange",
+      "cyan": "Cyan",
+      "blue": "Blau",
+      "custom": "Eigene"
+    },
+    "pagination": {
+      "previous": "Vorherige Seite",
+      "next": "Nächste Seite",
+      "page": "Seite {{page}}"
     }
   },
   "delete": {
@@ -2067,18 +2088,6 @@
       "payoutReason": "Abgeltung mit der letzten Abrechnung",
       "done": "Gebucht",
       "confirmTitle": "{{what}} über {{days}}?"
-    },
-    "hue": {
-      "default": "Standardfarbe",
-      "red": "Rot",
-      "orange": "Orange",
-      "amber": "Bernstein",
-      "green": "Grün",
-      "teal": "Blaugrün",
-      "cyan": "Cyan",
-      "blue": "Blau",
-      "violet": "Violett",
-      "pink": "Pink"
     }
   },
   "projects": {
@@ -2270,7 +2279,6 @@
     "laneLimit": "{{count}} weitere. Suche oder filtere, um sie zu finden."
   },
   "gantt": {
-    "title": "Zeitachse",
     "subtitle": "Gantt-Ansicht mit Abhängigkeiten, Meilensteinen und kritischem Pfad",
     "column": "Aufgabe",
     "empty": "Keine geplanten Aufgaben. Setze Start- und Fälligkeitsdatum, um sie auf der Zeitachse zu sehen.",
@@ -2435,22 +2443,17 @@
     "tree": {
       "truncated": "Hier stehen nicht alle Seiten, weil es zu viele für eine Liste sind. Eine Unterseite kann deshalb oben stehen, obwohl es ihre übergeordnete Seite gibt."
     },
-    "hue": {
-      "honey": "Honig",
-      "indigo": "Indigo",
-      "violet": "Violett",
-      "teal": "Türkis",
-      "green": "Grün",
-      "coral": "Koralle",
-      "pink": "Rosa",
-      "amber": "Bernstein"
-    },
     "spaceIconOption": "Symbol {{n}} von {{count}}",
     "subpages": "Unterseiten",
     "moveUnder": "Verschieben unter…",
     "moveUnderTitle": "Unter welche Seite verschieben?",
     "pageActions": "Seitenaktionen",
-    "resultCount": "Treffer: {{count}}"
+    "resultCount": "Treffer: {{count}}",
+    "moveUnderConfirm": {
+      "title": "Ändern, wer es lesen kann?",
+      "message": "„{{page}}“ und ihre Unterseiten sind danach für {{place}} lesbar.",
+      "confirm": "Verschieben"
+    }
   },
   "md": {
     "heading1": "Überschrift 1",
@@ -3100,9 +3103,6 @@
       "reasonOwnOrgRole": "Diese Rolle vergibt dir eine andere Person aus der Administration.",
       "selectUser": "{{name}} auswählen",
       "selectPage": "Alle Personen auf dieser Seite auswählen",
-      "previousPage": "Vorherige Seite",
-      "nextPage": "Nächste Seite",
-      "pageNumber": "Seite {{n}}",
       "removeEmail": "{{email}} entfernen"
     },
     "iosStoreUrl": "iOS App-Store-URL",
@@ -3502,11 +3502,6 @@
     "selectedCount": "{{count}} ausgewählt",
     "collapse": "Einklappen",
     "expand": "Ausklappen",
-    "pagination": {
-      "previous": "Vorherige Seite",
-      "next": "Nächste Seite",
-      "page": "Seite {{page}}"
-    },
     "selectIssue": "{{issue}} auswählen"
   },
   "teams": {
@@ -3545,17 +3540,6 @@
     "iconLabel": "Symbol",
     "optional": "optional",
     "back": "Zurück",
-    "color": {
-      "honey": "Honig",
-      "indigo": "Indigo",
-      "violet": "Violett",
-      "teal": "Türkis",
-      "green": "Grün",
-      "coral": "Koralle",
-      "custom": "Eigene",
-      "pink": "Rosa",
-      "amber": "Bernstein"
-    },
     "role": {
       "admin": "Team-Admin",
       "adminShort": "Admin",
