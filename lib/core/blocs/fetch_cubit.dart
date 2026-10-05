@@ -31,12 +31,19 @@ class FetchCubit<T> extends Cubit<FetchState<T>> {
 
   Future<void> load() async {
     emit(state.copyWith(isLoading: true));
+    // The page that asked may be gone by the time the answer is: leaving it
+    // closes the cubit, and an emit then throws instead of being dropped.
     try {
-      emit(FetchState<T>(data: await _loader()));
+      final data = await _loader();
+      if (!isClosed) emit(FetchState<T>(data: data));
     } on ApiFailure catch (failure) {
-      emit(state.copyWith(isLoading: false, errorKey: failure.message));
+      if (!isClosed) {
+        emit(state.copyWith(isLoading: false, errorKey: failure.message));
+      }
     } catch (_) {
-      emit(state.copyWith(isLoading: false, errorKey: 'errors.unexpected'));
+      if (!isClosed) {
+        emit(state.copyWith(isLoading: false, errorKey: 'errors.unexpected'));
+      }
     }
   }
 }
