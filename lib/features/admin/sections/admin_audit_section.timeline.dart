@@ -122,7 +122,7 @@ class _AuditTimelineTile extends StatelessWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        context.t('audit.action.${entry.action}'),
+                        context.auditAction(entry.action),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(

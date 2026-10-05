@@ -123,7 +123,7 @@ class _AuditDetailSheet extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              context.t('audit.action.${entry.action}'),
+                              context.auditAction(entry.action),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: TextStyle(

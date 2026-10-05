@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Plantillas de proyecto conmutadas",
       "PROJECT_SCHEDULE_SHIFTED": "Fecha del proyecto desplazada",
       "USER_EMAIL_CHANGED": "Correo cambiado por un administrador",
-      "ARTICLE_MOVED": "Página movida"
+      "ARTICLE_MOVED": "Página movida",
+      "TIME_REPORT_EXPORTED": "Informe de tiempo exportado",
+      "TIME_ENTRIES_IMPORTED": "Registros de tiempo importados",
+      "TIME_OFF_REQUEST_EDITED": "Solicitud de ausencia editada",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "Aviso de caducidad de vacaciones enviado",
+      "TIME_OFF_PROPOSAL_DECIDED": "Decisión sobre caducidad de vacaciones",
+      "TIME_OFF_REPORT_EXPORTED": "Informe de ausencias exportado",
+      "TIME_OFF_YEAR_RUN": "Proceso anual de ausencias",
+      "TIME_OFF_RETENTION_RUN": "Proceso de conservación de ausencias",
+      "PROJECT_COPIED": "Proyecto copiado",
+      "PROJECT_TEMPLATE_MARKED": "Proyecto marcado como plantilla",
+      "PROJECT_INSTANTIATED": "Proyecto creado desde plantilla"
     },
     "meta": {
       "oldRole": "Rol anterior",

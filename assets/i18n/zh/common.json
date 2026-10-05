@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "已切换项目模板",
       "PROJECT_SCHEDULE_SHIFTED": "已调整项目日期",
       "USER_EMAIL_CHANGED": "管理员更改了电子邮件",
-      "ARTICLE_MOVED": "页面已移动"
+      "ARTICLE_MOVED": "页面已移动",
+      "TIME_REPORT_EXPORTED": "已导出工时报告",
+      "TIME_ENTRIES_IMPORTED": "已导入工时记录",
+      "TIME_OFF_REQUEST_EDITED": "已编辑请假申请",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "已发送假期过期提醒",
+      "TIME_OFF_PROPOSAL_DECIDED": "已决定假期过期",
+      "TIME_OFF_REPORT_EXPORTED": "已导出请假报告",
+      "TIME_OFF_YEAR_RUN": "请假年度处理",
+      "TIME_OFF_RETENTION_RUN": "请假数据保留清理",
+      "PROJECT_COPIED": "已复制项目",
+      "PROJECT_TEMPLATE_MARKED": "已将项目标记为模板",
+      "PROJECT_INSTANTIATED": "已从模板创建项目"
     },
     "meta": {
       "oldRole": "原角色",

@@ -8,6 +8,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/i18n/audit_labels.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/audit_models.dart';
 import '../../../core/responsive/responsive.dart';

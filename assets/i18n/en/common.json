@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Project templates switched",
       "PROJECT_SCHEDULE_SHIFTED": "Project date moved",
       "USER_EMAIL_CHANGED": "E-mail changed by an admin",
-      "ARTICLE_MOVED": "Page moved"
+      "ARTICLE_MOVED": "Page moved",
+      "TIME_REPORT_EXPORTED": "Time report exported",
+      "TIME_ENTRIES_IMPORTED": "Time entries imported",
+      "TIME_OFF_REQUEST_EDITED": "Absence request edited",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "Leave expiry notice sent",
+      "TIME_OFF_PROPOSAL_DECIDED": "Leave lapse decided",
+      "TIME_OFF_REPORT_EXPORTED": "Absence report exported",
+      "TIME_OFF_YEAR_RUN": "Yearly absence run",
+      "TIME_OFF_RETENTION_RUN": "Absence retention run",
+      "PROJECT_COPIED": "Project copied",
+      "PROJECT_TEMPLATE_MARKED": "Project marked as template",
+      "PROJECT_INSTANTIATED": "Project created from template"
     },
     "meta": {
       "oldRole": "Previous role",

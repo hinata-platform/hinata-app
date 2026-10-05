@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "تم تبديل قوالب المشاريع",
       "PROJECT_SCHEDULE_SHIFTED": "تم نقل تاريخ المشروع",
       "USER_EMAIL_CHANGED": "غيّر مشرف البريد الإلكتروني",
-      "ARTICLE_MOVED": "نُقلت صفحة"
+      "ARTICLE_MOVED": "نُقلت صفحة",
+      "TIME_REPORT_EXPORTED": "تم تصدير تقرير الوقت",
+      "TIME_ENTRIES_IMPORTED": "تم استيراد قيود الوقت",
+      "TIME_OFF_REQUEST_EDITED": "تم تعديل طلب الغياب",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "أُرسل إشعار انتهاء الإجازة",
+      "TIME_OFF_PROPOSAL_DECIDED": "تم البت في انتهاء الإجازة",
+      "TIME_OFF_REPORT_EXPORTED": "تم تصدير تقرير الغياب",
+      "TIME_OFF_YEAR_RUN": "التشغيل السنوي للغياب",
+      "TIME_OFF_RETENTION_RUN": "تشغيل مهمة الاحتفاظ بالغياب",
+      "PROJECT_COPIED": "تم نسخ المشروع",
+      "PROJECT_TEMPLATE_MARKED": "تم تعليم المشروع كقالب",
+      "PROJECT_INSTANTIATED": "تم إنشاء مشروع من قالب"
     },
     "meta": {
       "oldRole": "الدور السابق",
