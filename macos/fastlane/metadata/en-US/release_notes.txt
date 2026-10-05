@@ -1,6 +1,6 @@
-• Organisations can turn on extended time tracking with timer, focus mode, timesheets, approvals and reports
-• With absences turned on, request leave, report sick days and see your team's absences at a glance
-• Start projects from templates, with deadlines that count from a date you pick
-• Choose when notifications reach you: always, or only on your days and hours
-• Tidier settings: longer explanations now wait behind an info button
-• Several smaller fixes and refinements
+• Better accessibility: stronger contrast, larger touch targets, screen reader labels
+• Text stays readable at twice the size, nothing gets cut off
+• Calmer type with one consistent scale across the app
+• Settings, organisation and admin pages share one layout and show one section at a time
+• Report sick days straight from the absences page
+• Smoother glass effects and several smaller fixes

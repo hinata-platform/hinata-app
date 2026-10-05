@@ -1,6 +1,6 @@
-• Die erweiterte Zeiterfassung lässt sich einschalten: Timer, Fokusmodus, Stundenzettel, Freigaben, Berichte
-• Mit Abwesenheiten Urlaub beantragen, Krankheit melden und das Team im Blick behalten
-• Projekte aus Vorlagen anlegen, mit Fristen ab einem gewählten Datum
-• Benachrichtigungen kommen immer oder nur an deinen Tagen und Uhrzeiten
-• Aufgeräumte Einstellungen: lange Erklärungen stecken hinter einem Info-Knopf
-• Mehrere kleinere Korrekturen und Verbesserungen
+• Bessere Barrierefreiheit: stärkere Kontraste, größere Tippflächen, Beschriftungen für Screenreader
+• Text bleibt auch in doppelter Größe lesbar und wird nicht abgeschnitten
+• Ruhigere Schrift mit einer einheitlichen Größenskala
+• Einstellungen, Organisation und Adminbereich haben ein gemeinsames Layout mit einem Abschnitt pro Ansicht
+• Krankmeldung direkt aus den Abwesenheiten
+• Flüssigere Glaseffekte und mehrere kleinere Korrekturen
