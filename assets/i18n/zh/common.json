@@ -420,7 +420,9 @@
     "awayMore": "以及另外 {{count}} 人",
     "awayOpen": "打开团队日历",
     "showCard": "显示卡片",
-    "hideCard": "隐藏卡片"
+    "hideCard": "隐藏卡片",
+    "focusTimeNone": "本周还没有专注时间。",
+    "progressNone": "这里还没有事项。"
   },
   "comments": {
     "actionCamera": "拍摄照片或视频",

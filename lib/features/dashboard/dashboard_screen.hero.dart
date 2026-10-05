@@ -678,8 +678,14 @@ class _RingPainter extends CustomPainter {
 
 // ══════════════════════════ KPIs ═══════════════════════════════════════════
 
-class _Kpis extends StatelessWidget {
-  const _Kpis({
+/// The four key figures: today's tasks, in progress, backlog and done.
+///
+/// One row once the page is wide enough for every label to stand on one line
+/// beside its icon, at the reader's text size and in their language; two by
+/// two below that, and always on a phone.
+class DashboardKpis extends StatelessWidget {
+  const DashboardKpis({
+    super.key,
     required this.today,
     required this.completion,
     this.projectIds = const [],
@@ -728,32 +734,71 @@ class _Kpis extends StatelessWidget {
         onTap: () => _open(context, 'done'),
       ),
     ];
-    // Two by two on every width. On a phone this was a sideways carousel that
-    // showed two tiles and a third cut off at the edge, cut their labels
-    // ("Heutige Aufg…") and kept the fourth out of sight behind a scroll that
-    // nothing announced. The grid shows all four at once, as the tablet does.
-    final gap = context.isCompact ? 12.0 : _gap;
-    // IntrinsicHeight: a label that needs a second line (a long language, a
-    // large text scale) makes its tile taller, and its neighbour follows so
-    // the pair stays level instead of the fixed height clipping the text.
-    Widget pair(Widget a, Widget b) => IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Expanded(child: a),
-          SizedBox(width: gap),
-          Expanded(child: b),
-        ],
-      ),
-    );
-    return Column(
-      children: [
-        pair(items[0], items[1]),
-        SizedBox(height: gap),
-        pair(items[2], items[3]),
-      ],
+    // On a phone two by two. It was a sideways carousel once that showed two
+    // tiles and a third cut off at the edge, cut their labels ("Heutige
+    // Aufg…") and kept the fourth out of sight behind a scroll that nothing
+    // announced. The grid shows all four at once.
+    if (context.isCompact) return _grid(items, 12);
+    // A LayoutBuilder is safe here: it reruns when the width changes, never
+    // per frame, since the counting figures sit in boxes of fixed size.
+    return LayoutBuilder(
+      builder: (context, box) => _labelsFitOneRow(context, items, box.maxWidth)
+          ? _row(items, _gap)
+          : _grid(items, _gap),
     );
   }
+
+  /// Whether four tiles side by side leave every label its full width on one
+  /// line. Measured rather than guessed from a breakpoint: "Heutige Aufgaben"
+  /// at 200 % needs twice the room it needs at 100 %, and a Russian label more
+  /// than either.
+  bool _labelsFitOneRow(
+    BuildContext context,
+    List<_KpiCard> items,
+    double width,
+  ) {
+    final tile = (width - _gap * (items.length - 1)) / items.length;
+    final room = tile - _KpiCard.labelInset;
+    if (room <= 0) return false;
+    final style = DefaultTextStyle.of(context).style.merge(_KpiCard.labelStyle);
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    for (final item in items) {
+      final painter = TextPainter(
+        text: TextSpan(text: item.label, style: style),
+        textDirection: direction,
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final fits = !painter.didExceedMaxLines && painter.width <= room;
+      painter.dispose();
+      if (!fits) return false;
+    }
+    return true;
+  }
+
+  // IntrinsicHeight: a label that needs a second line (a long language, a
+  // large text scale) makes its tile taller, and its neighbours follow so the
+  // row stays level instead of the fixed height clipping the text.
+  Widget _row(List<Widget> tiles, double gap) => IntrinsicHeight(
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final (i, tile) in tiles.indexed) ...[
+          if (i > 0) SizedBox(width: gap),
+          Expanded(child: tile),
+        ],
+      ],
+    ),
+  );
+
+  Widget _grid(List<Widget> tiles, double gap) => Column(
+    children: [
+      _row(tiles.sublist(0, 2), gap),
+      SizedBox(height: gap),
+      _row(tiles.sublist(2), gap),
+    ],
+  );
 }
 
 class _KpiCard extends StatelessWidget {
@@ -770,10 +815,23 @@ class _KpiCard extends StatelessWidget {
   final Color hue;
   final VoidCallback? onTap;
 
+  static const _padding = EdgeInsets.fromLTRB(16, 15, 16, 15);
+  static const _iconBox = 28.0;
+  static const _iconGap = 9.0;
+
+  /// How much of a tile's width is not the label's: the padding and the icon.
+  static double get labelInset => _padding.horizontal + _iconBox + _iconGap;
+
+  static TextStyle get labelStyle => TextStyle(
+    fontSize: AppType.caption,
+    fontWeight: FontWeight.w500,
+    color: AppColors.inkSoft,
+  );
+
   @override
   Widget build(BuildContext context) {
     return _GlassCard(
-      padding: const EdgeInsets.fromLTRB(16, 15, 16, 15),
+      padding: _padding,
       onTap: onTap,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -781,8 +839,8 @@ class _KpiCard extends StatelessWidget {
           Row(
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: _iconBox,
+                height: _iconBox,
                 decoration: BoxDecoration(
                   color: hue.withValues(alpha: .13),
                   borderRadius: BorderRadius.circular(9),
@@ -790,7 +848,7 @@ class _KpiCard extends StatelessWidget {
                 alignment: Alignment.center,
                 child: Icon(icon, size: 15, color: hue),
               ),
-              const SizedBox(width: 9),
+              const SizedBox(width: _iconGap),
               Flexible(
                 child: Text(
                   label,
@@ -798,11 +856,7 @@ class _KpiCard extends StatelessWidget {
                   // wide has room for “Heutige Aufgaben” only just.
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: AppType.caption,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.inkSoft,
-                  ),
+                  style: labelStyle,
                 ),
               ),
             ],
@@ -810,8 +864,8 @@ class _KpiCard extends StatelessWidget {
           const SizedBox(height: 12),
           // A box of fixed size around the counting figure: every frame of
           // the count changes its width, and without the box that change
-          // climbs to the IntrinsicHeight that levels the tiles and lays both
-          // pairs out again.
+          // climbs to the IntrinsicHeight that levels the tiles and lays the
+          // rows out again.
           SizedBox(
             width: double.infinity,
             height: MediaQuery.textScalerOf(context).scale(AppType.hero),

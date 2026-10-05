@@ -93,7 +93,9 @@ class SettingsSplitLayout<T> extends StatelessWidget {
           Padding(
             padding: EdgeInsetsDirectional.fromSTEB(0, top, 18, bottom),
             child: SizedBox(
-              width: 250,
+              // Wide enough for a long German compound
+              // ("Abwesenheitsmanagement") on one line beside its icon.
+              width: 272,
               child: SettingsNavRail<T>(
                 header: header,
                 entries: entries,
