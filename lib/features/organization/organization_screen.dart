@@ -9,7 +9,6 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/repositories/org_settings_repository.dart';
-import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_empty_state.dart';
@@ -17,6 +16,8 @@ import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/settings_split.dart';
 import '../admin/admin_cards.dart';
 import '../admin/admin_form_helpers.dart' show AdminNote;
+import '../admin/sections/admin_audit_section.dart';
+import '../admin/sections/audit_log_cubit.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
@@ -121,9 +122,9 @@ class _OrganizationViewState extends State<OrganizationView> {
           title: compact || settings == null
               ? context.t('org.title')
               : context.t(_section.labelKey),
-          contentMax: goldenContentMax,
           actions: [
-            if (settings != null)
+            // The log saves nothing; Save would only puzzle there.
+            if (settings != null && (compact || _section != OrgSection.audit))
               PageAction(
                 icon: LucideIcons.save,
                 label: context.t('common.save'),
@@ -346,9 +347,9 @@ enum OrgSection {
   deadlines('org.nav.deadlines', LucideIcons.calendarClock, _generalGroup, [
     'deadlines',
   ]),
-  audit('org.audit.title', LucideIcons.history, _generalGroup, [
-    'audit',
-  ], route: '/organization/audit');
+  // In the pane like every other section, as the admin area's log is; the
+  // phone opens it as a page of its own through the card.
+  audit('org.audit.title', LucideIcons.history, _generalGroup, ['audit']);
 
   const OrgSection(
     this.labelKey,
@@ -427,21 +428,34 @@ class _WideOrganization extends StatelessWidget {
       ],
       selected: open,
       onSelect: onSelect,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // What holds for every policy below: each may stay empty and then
-          // follows the server's environment.
-          if (open.isTimeTracking) ...[
-            AdminNote(text: context.t('admin.timeTracking.hint')),
-            const SizedBox(height: 16),
-          ],
-          for (final (i, card) in shown.indexed) ...[
-            if (i > 0) const SizedBox(height: 16),
-            card,
-          ],
-        ],
-      ),
+      // The log owns its scroll and pagination and takes the pane, as in the
+      // admin area.
+      bodyScrolls: open != OrgSection.audit,
+      bodyMaxWidth: open == OrgSection.audit
+          ? double.infinity
+          : SettingsSplitLayout.formWidth,
+      body: open == OrgSection.audit
+          ? BlocProvider(
+              create: (context) => AuditLogCubit.organization(
+                context.read<OrgSettingsRepository>(),
+              ),
+              child: const AdminAuditSection(titleKey: 'org.audit.title'),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // What holds for every policy below: each may stay empty and then
+                // follows the server's environment.
+                if (open.isTimeTracking) ...[
+                  AdminNote(text: context.t('admin.timeTracking.hint')),
+                  const SizedBox(height: 16),
+                ],
+                for (final (i, card) in shown.indexed) ...[
+                  if (i > 0) const SizedBox(height: 16),
+                  card,
+                ],
+              ],
+            ),
     );
   }
 }
