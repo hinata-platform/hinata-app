@@ -18,7 +18,6 @@ import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/responsive/golden_columns.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
@@ -325,10 +324,8 @@ class _AdminViewState extends State<_AdminView> {
           actions: _desktopSection == _AdminSection.users
               ? _inviteActions(context)
               : _saveActions(context, _desktopSection),
-          // The rail plus a pane of cards: wider than the reading width, and
-          // capped by the shell so the section title and Save in the bar line
-          // up with the rail and the pane below them.
-          contentMax: goldenContentMax,
+          // The reading width, as every settings page: rail, pane and Save
+          // sit in the same place on account, organisation and admin.
           child: _WideAdminShell(
             section: _desktopSection,
             settings: settings,
@@ -648,8 +645,11 @@ class _WideAdminShell extends StatelessWidget {
       selected: section,
       onSelect: onSectionChanged,
       bodyScrolls: !selfScrolling,
-      // No cap: an admin section spreads its cards over the pane it has.
-      bodyMaxWidth: double.infinity,
+      // Forms keep the settings width every page shares; the two lists
+      // (audit log, user directory) take the pane for their columns.
+      bodyMaxWidth: selfScrolling
+          ? double.infinity
+          : SettingsSplitLayout.formWidth,
       body: switch (section) {
         _AdminSection.auditLog => const AdminAuditSection(),
         _AdminSection.users => UserManagementScreen(

@@ -54,8 +54,12 @@ class SettingsSplitLayout<T> extends StatelessWidget {
     required this.onSelect,
     required this.body,
     this.bodyScrolls = true,
-    this.bodyMaxWidth = 980,
+    this.bodyMaxWidth = formWidth,
   });
+
+  /// The width every settings page gives its forms, so a section is as wide
+  /// on the account page as in the admin area or the organisation.
+  static const double formWidth = 980;
 
   /// The rail's head: the page's name and, optionally, a mark beside it.
   final Widget header;

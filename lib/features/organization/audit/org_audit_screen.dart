@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../../core/i18n/i18n.dart';
 import '../../../core/repositories/org_settings_repository.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../admin/sections/admin_audit_section.dart';
 import '../../admin/sections/audit_log_cubit.dart';
-import '../../shell/page_chrome.dart';
 
 /// Organisation → Protokoll (HIN-129): the organisation's own audit records.
 ///
@@ -33,13 +31,13 @@ class OrgAuditScreen extends StatelessWidget {
             onBack: () => context.go('/organization'),
           );
         }
-        return PageChrome(
-          title: context.t(_titleKey),
-          child: Padding(
-            padding: EdgeInsets.only(top: context.topGutter + 14),
-            child: const AdminAuditSection(titleKey: _titleKey),
-          ),
-        );
+        // Wide: the log is a section of the Organisation page, beside its
+        // rail. A deep link, or a window widened while it was open, lands
+        // there.
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (context.mounted) context.go('/organization?section=audit');
+        });
+        return const SizedBox.shrink();
       },
     ),
   );
