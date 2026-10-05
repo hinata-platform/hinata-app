@@ -7,6 +7,7 @@ import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/repositories/domain_providers.dart';
+import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/field_button.dart';
@@ -162,7 +163,9 @@ class _SubscriptionFormState extends State<_SubscriptionForm> {
             children: [
               TextField(
                 controller: _name,
-                autofocus: !_isEdit,
+                // Wide only: on a phone the keyboard would rise at once and
+                // cover the half of the form that says what the address is.
+                autofocus: !_isEdit && !context.isCompact,
                 maxLength: 80,
                 textInputAction: TextInputAction.next,
                 onChanged: (_) => setState(() {}),
