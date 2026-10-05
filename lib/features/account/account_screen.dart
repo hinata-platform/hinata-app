@@ -839,7 +839,7 @@ class _AccountScreenState extends State<_AccountBody> {
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontFamily: AppTheme.fontBrand,
-                        fontSize: compact ? 18 : 20,
+                        fontSize: compact ? AppType.heading : AppType.heading,
                         fontWeight: FontWeight.w800,
                         color: Colors.white,
                       ),
@@ -850,7 +850,7 @@ class _AccountScreenState extends State<_AccountBody> {
                     Text(
                       me.pronouns!.trim(),
                       style: TextStyle(
-                        fontSize: compact ? 12 : 13,
+                        fontSize: compact ? AppType.caption : AppType.label,
                         fontWeight: FontWeight.w600,
                         color: Colors.white.withValues(alpha: 0.7),
                       ),

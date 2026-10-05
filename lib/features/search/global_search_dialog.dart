@@ -445,7 +445,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                 cursorColor: tokens.ink,
                 onChanged: _c.setQuery,
                 style: TextStyle(
-                  fontSize: mobile ? 19 : 20,
+                  fontSize: mobile ? AppType.heading : AppType.heading,
                   fontWeight: FontWeight.w500,
                   letterSpacing: -0.2,
                   color: tokens.ink,
@@ -460,7 +460,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                   hoverColor: Colors.transparent,
                   hintText: context.t('search.placeholder'),
                   hintStyle: TextStyle(
-                    fontSize: mobile ? 19 : 20,
+                    fontSize: mobile ? AppType.heading : AppType.heading,
                     fontWeight: FontWeight.w400,
                     color: tokens.inkFaint,
                   ),

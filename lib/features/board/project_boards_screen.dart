@@ -236,7 +236,7 @@ class _ProjectBoardsState extends State<_ProjectBoards>
                           ),
                           mainAxisSpacing: 16,
                           crossAxisSpacing: 16,
-                          mainAxisExtent: 140,
+                          mainAxisExtent: context.tileExtent(140),
                         ),
                         delegate: SliverChildBuilderDelegate((context, index) {
                           final board = boardList[index];

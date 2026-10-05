@@ -178,6 +178,19 @@ extension ResponsiveContext on BuildContext {
         ? 1
         : (usable / minTileWidth).floor().clamp(1, 4);
   }
+
+  /// The height of a grid tile designed at [base] points, grown with the
+  /// reader's text size so its text is never clipped (HIN-110).
+  ///
+  /// A fixed `mainAxisExtent` held at twice the text size cut every card's
+  /// second half off. [textShare] is how much of [base] is text rather than
+  /// padding, avatars and bars, which do not grow: the text part scales, the
+  /// rest stays.
+  double tileExtent(double base, {double textShare = 0.6}) {
+    final factor = MediaQuery.textScalerOf(this).scale(100) / 100;
+    if (factor <= 1) return base;
+    return base * (1 + (factor - 1) * textShare);
+  }
 }
 
 /// Rebuilding helper for diverging compact/expanded subtrees.
