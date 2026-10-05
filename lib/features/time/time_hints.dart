@@ -7,6 +7,99 @@ import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtDuration;
 import '../../core/theme/app_type.dart';
 
+/// "3 events from today not taken over yet" at the top of the list (HIN-94).
+///
+/// The list's own grey, like the hints: a suggestion, not a debt. Tapping it
+/// goes to the calendar, where the events are; the cross puts it away for the
+/// session.
+class OpenCalendarEventsChip extends StatelessWidget {
+  const OpenCalendarEventsChip({
+    super.key,
+    required this.count,
+    required this.onOpen,
+    required this.onDismiss,
+  });
+
+  final int count;
+  final VoidCallback onOpen;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = context.t(
+      'time.calendarEvents.openToday',
+      count: count,
+      variables: {'count': '$count'},
+    );
+    return Padding(
+      padding: const EdgeInsets.only(top: 12, bottom: 4),
+      child: Align(
+        alignment: AlignmentDirectional.centerStart,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surfaceMuted,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: AppColors.hairline2),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Semantics(
+                  button: true,
+                  child: InkWell(
+                    onTap: onOpen,
+                    borderRadius: BorderRadius.circular(999),
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(minHeight: 48),
+                      child: Padding(
+                        padding: const EdgeInsetsDirectional.only(
+                          start: 14,
+                          end: 4,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              LucideIcons.calendarSync,
+                              size: 14,
+                              color: AppColors.textSecondary,
+                            ),
+                            const SizedBox(width: 8),
+                            Flexible(
+                              child: Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: AppType.caption,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: context.t('time.calendarEvents.dismissChip'),
+                onPressed: onDismiss,
+                icon: Icon(
+                  LucideIcons.x,
+                  size: 14,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// One self-hint as a small chip, with the whole sentence on its tooltip.
 ///
 /// Drawn in the list's own grey, the way the lock chip is, and never in a

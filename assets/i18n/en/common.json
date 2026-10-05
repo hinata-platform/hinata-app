@@ -1521,6 +1521,21 @@
         "billable": "Billable",
         "user": "Person"
       }
+    },
+    "calendarEvents": {
+      "takeOverTitle": "Take over as entry",
+      "takeOverHint": "The times come from your calendar. Choose where the entry belongs.",
+      "takeOver": "Take over",
+      "showLayer": "Show calendar events",
+      "alreadyTaken": "This event is already an entry.",
+      "notConvertible": "All-day events and events longer than a day cannot become an entry.",
+      "takenOver": "Event taken over as entry",
+      "untitled": "Event without title",
+      "converted": "Taken over",
+      "layer": "Calendar",
+      "openToday": "{{count}} event from today not taken over yet",
+      "openToday_plural": "{{count}} events from today not taken over yet",
+      "dismissChip": "Hide for now"
     }
   },
   "availability": {
@@ -4434,6 +4449,68 @@
     "nav": {
       "corrections": "Exceptions and corrections",
       "deadlines": "Deadlines"
+    }
+  },
+  "calendarSubscriptions": {
+    "title": "Calendar subscriptions",
+    "subtitle": "Show events from your own calendars in time tracking and take them over as entries. Only you see them.",
+    "add": "Add",
+    "added": "Calendar added. It is being read now.",
+    "deleted": "Calendar removed",
+    "empty": {
+      "title": "No calendar subscribed",
+      "message": "Add the private address of your Google, Outlook or Apple calendar to see your meetings beside your time."
+    },
+    "limit": "You can subscribe to at most {{count}} calendars.",
+    "ruleOn": "Ended events are taken over automatically",
+    "skipped": "{{count}} event not taken over: {{reason}}",
+    "skipped_plural": "{{count}} events not taken over: {{reason}}",
+    "status": {
+      "off": "Paused by you",
+      "pending": "Waiting for the first read",
+      "running": "Reading now",
+      "ok": "{{count}} event, read {{when}}",
+      "ok_plural": "{{count}} events, read {{when}}",
+      "paused": "Paused after five failed reads.",
+      "failed": "The calendar could not be read."
+    },
+    "refresh": "Refresh now",
+    "pause": "Pause",
+    "resume": "Resume",
+    "actions": "Actions for {{name}}",
+    "delete": {
+      "title": "Remove calendar?",
+      "message": "„{{name}}“ and its events disappear from time tracking. Entries you already took over stay."
+    },
+    "form": {
+      "addTitle": "Subscribe to a calendar",
+      "editTitle": "Edit calendar",
+      "subtitle": "hinata only reads the calendar. Nothing is written back.",
+      "name": "Name",
+      "nameHint": "For example Work",
+      "url": "Private address (ICS)",
+      "urlKeep": "Leave empty to keep the saved address",
+      "urlHint": "A private address. It is stored encrypted and never shown again.",
+      "subscribe": "Subscribe",
+      "color": "Colour",
+      "rule": "Take over ended events automatically",
+      "ruleHint": "Only events that start after you switch this on, once they are over.",
+      "ruleProject": "Project for these entries"
+    },
+    "help": {
+      "toggle": "Where do I find the address?",
+      "google": "Settings → your calendar → Integrate calendar → Secret address in iCal format.",
+      "outlook": "Settings → Calendar → Shared calendars → Publish a calendar → ICS link.",
+      "apple": "iCloud.com → Calendar → share the calendar as a public calendar → copy the link.",
+      "privacy": "Whoever has this address can read the calendar. hinata fetches it from your provider on your behalf and keeps only the coming and past weeks."
+    },
+    "color": {
+      "blue": "Blue",
+      "teal": "Teal",
+      "orange": "Orange",
+      "plum": "Plum",
+      "olive": "Olive",
+      "red": "Red"
     }
   }
 }

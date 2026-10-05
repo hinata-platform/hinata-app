@@ -91,12 +91,17 @@ Future<bool> confirmAndDeleteTimeEntry(
 /// [placement] files a new entry where the sheet was opened from, an issue's
 /// time card for instance, so the field starts on that issue instead of asking
 /// for it again. An [entry] or a [timer] brings its own.
+///
+/// [event] takes one of the reader's calendar events over (HIN-94): its times
+/// are shown and not edited, its title starts as the description, and the save
+/// is the takeover, so the entry remembers which event it came from.
 Future<SavedTimeEntry?> showTimeEntrySheet(
   BuildContext context, {
   WorkItem? entry,
   ({DateTime start, DateTime end})? span,
   RunningTimer? timer,
   TimePlacement? placement,
+  CalendarEventSuggestion? event,
   VoidCallback? onDeleted,
 }) {
   // The sheet rides the root navigator, outside the app's provider scope, so
@@ -135,6 +140,7 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
         span: span,
         timer: timer,
         placement: placement,
+        event: event,
         onDeleted: onDeleted,
       );
       return MultiRepositoryProvider(
@@ -171,10 +177,14 @@ class _TimeEntryForm extends StatefulWidget {
     this.span,
     this.timer,
     this.placement,
+    this.event,
     this.onDeleted,
   });
 
   final WorkItem? entry;
+
+  /// The calendar event this sheet takes over. See [showTimeEntrySheet].
+  final CalendarEventSuggestion? event;
 
   /// Where a new entry starts out filed. See [showTimeEntrySheet].
   final TimePlacement? placement;
@@ -205,7 +215,11 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   final _tagsKey = GlobalKey();
 
   late final TextEditingController _description = TextEditingController(
-    text: widget.entry?.description ?? widget.timer?.description ?? '',
+    text:
+        widget.entry?.description ??
+        widget.timer?.description ??
+        widget.event?.summary ??
+        '',
   );
   late final TextEditingController _duration = TextEditingController(
     text: formatDurationInput(widget.entry?.durationMinutes ?? 60),
@@ -213,6 +227,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
 
   late _EntryMode _mode =
       widget.span != null ||
+          widget.event != null ||
           (widget.entry?.startedAt != null && widget.entry?.endedAt != null)
       ? _EntryMode.interval
       : _EntryMode.duration;
@@ -225,8 +240,12 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         )
       : _dayOf(widget.entry);
   late DateTime _start =
-      widget.span?.start ?? widget.entry?.startedAt ?? _defaultStart();
+      widget.event?.start ??
+      widget.span?.start ??
+      widget.entry?.startedAt ??
+      _defaultStart();
   late DateTime _end =
+      widget.event?.end ??
       widget.span?.end ??
       widget.entry?.endedAt ??
       _defaultStart().add(const Duration(hours: 1));
@@ -263,6 +282,11 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// own. What differs: the interval is shown and not edited, the save is the
   /// stop, and cancelling leaves the timer running.
   bool get _isTimer => widget.timer != null;
+
+  /// Whether this sheet takes a calendar event over. Like a timer, its
+  /// interval is shown and not edited: the event says when, and the entry keeps
+  /// pointing at it.
+  bool get _isFromEvent => widget.event != null;
 
   TimePolicySnapshot get _policy => context.watch<TimePolicyCubit>().state;
 
@@ -437,6 +461,18 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     try {
       final saved = _isTimer
           ? await _stopTimer()
+          : _isFromEvent
+          ? SavedTimeEntry(
+              entry: await entries.convert(
+                widget.event!.id,
+                CalendarConversion(
+                  projectId: _placement.projectId,
+                  issueId: _placement.issueId,
+                  tags: _tags,
+                  description: _description.text.trim(),
+                ),
+              ),
+            )
           : _isEdit
           ? await entries.update(widget.entry!.id, draft)
           : await entries.create(draft);
@@ -515,16 +551,26 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       mainAxisSize: MainAxisSize.min,
       children: [
         GlassModalHeader(
-          icon: _isTimer ? LucideIcons.square : LucideIcons.clock,
+          icon: _isTimer
+              ? LucideIcons.square
+              : _isFromEvent
+              ? LucideIcons.calendarCheck
+              : LucideIcons.clock,
           title: context.t(
             _isTimer
                 ? 'time.timer.finish'
+                : _isFromEvent
+                ? 'time.calendarEvents.takeOverTitle'
                 : _isEdit
                 ? 'time.entry.edit'
                 : 'time.entry.new',
           ),
           subtitle: context.t(
-            _isTimer ? 'time.timer.finishHint' : 'time.entry.subtitle',
+            _isTimer
+                ? 'time.timer.finishHint'
+                : _isFromEvent
+                ? 'time.calendarEvents.takeOverHint'
+                : 'time.entry.subtitle',
           ),
           // Deleting lives in the header rather than beside Save.
           //
@@ -620,7 +666,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 // and typing hours — neither of which is what just happened.
                 // Correcting it afterwards is what the entry's own editor is
                 // for, where the times can move without the stop having to.
-                if (_isTimer) ...[
+                if (_isTimer || _isFromEvent) ...[
                   _MeasuredInterval(start: _start, end: _end),
                 ] else ...[
                   _ModeToggle(
@@ -724,7 +770,13 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
           ),
         ),
         GlassModalFooter(
-          confirmLabel: context.t(_isTimer ? 'time.timer.stop' : 'common.save'),
+          confirmLabel: context.t(
+            _isTimer
+                ? 'time.timer.stop'
+                : _isFromEvent
+                ? 'time.calendarEvents.takeOver'
+                : 'common.save',
+          ),
           busy: _saving,
           onConfirm: _saving || unmet != null || lock != null ? null : _save,
         ),

@@ -1521,6 +1521,21 @@
         "billable": "Abrechenbar",
         "user": "Person"
       }
+    },
+    "calendarEvents": {
+      "takeOverTitle": "Als Zeiteintrag übernehmen",
+      "takeOverHint": "Die Zeiten kommen aus deinem Kalender. Wähle, wohin der Eintrag gehört.",
+      "takeOver": "Übernehmen",
+      "showLayer": "Kalendertermine zeigen",
+      "alreadyTaken": "Dieser Termin ist schon ein Eintrag.",
+      "notConvertible": "Ganztägige Termine und Termine über mehr als einen Tag können kein Eintrag werden.",
+      "takenOver": "Termin als Eintrag übernommen",
+      "untitled": "Termin ohne Titel",
+      "converted": "Übernommen",
+      "layer": "Kalender",
+      "openToday": "{{count}} Termin von heute noch nicht übernommen",
+      "openToday_plural": "{{count}} Termine von heute noch nicht übernommen",
+      "dismissChip": "Vorerst ausblenden"
     }
   },
   "availability": {
@@ -4434,6 +4449,68 @@
     "nav": {
       "corrections": "Ausnahmen und Korrekturen",
       "deadlines": "Fristen"
+    }
+  },
+  "calendarSubscriptions": {
+    "title": "Kalender-Abos",
+    "subtitle": "Termine aus deinen eigenen Kalendern in der Zeiterfassung zeigen und als Einträge übernehmen. Nur du siehst sie.",
+    "add": "Hinzufügen",
+    "added": "Kalender hinzugefügt. Er wird jetzt gelesen.",
+    "deleted": "Kalender entfernt",
+    "empty": {
+      "title": "Noch kein Kalender abonniert",
+      "message": "Füge die private Adresse deines Google-, Outlook- oder Apple-Kalenders hinzu, um deine Termine neben deiner Zeit zu sehen."
+    },
+    "limit": "Du kannst höchstens {{count}} Kalender abonnieren.",
+    "ruleOn": "Vergangene Termine werden automatisch übernommen",
+    "skipped": "{{count}} Termin nicht übernommen: {{reason}}",
+    "skipped_plural": "{{count}} Termine nicht übernommen: {{reason}}",
+    "status": {
+      "off": "Von dir pausiert",
+      "pending": "Wartet auf den ersten Abruf",
+      "running": "Wird gerade gelesen",
+      "ok": "{{count}} Termin, gelesen {{when}}",
+      "ok_plural": "{{count}} Termine, gelesen {{when}}",
+      "paused": "Nach fünf Fehlversuchen pausiert.",
+      "failed": "Der Kalender konnte nicht gelesen werden."
+    },
+    "refresh": "Jetzt aktualisieren",
+    "pause": "Pausieren",
+    "resume": "Fortsetzen",
+    "actions": "Aktionen für {{name}}",
+    "delete": {
+      "title": "Kalender entfernen?",
+      "message": "„{{name}}“ und seine Termine verschwinden aus der Zeiterfassung. Bereits übernommene Einträge bleiben."
+    },
+    "form": {
+      "addTitle": "Kalender abonnieren",
+      "editTitle": "Kalender bearbeiten",
+      "subtitle": "hinata liest den Kalender nur. Es wird nichts zurückgeschrieben.",
+      "name": "Name",
+      "nameHint": "Zum Beispiel Arbeit",
+      "url": "Private Adresse (ICS)",
+      "urlKeep": "Leer lassen, um die gespeicherte Adresse zu behalten",
+      "urlHint": "Eine private Adresse. Sie wird verschlüsselt gespeichert und nie wieder angezeigt.",
+      "subscribe": "Abonnieren",
+      "color": "Farbe",
+      "rule": "Vergangene Termine automatisch übernehmen",
+      "ruleHint": "Nur Termine, die nach dem Einschalten beginnen, sobald sie vorbei sind.",
+      "ruleProject": "Projekt für diese Einträge"
+    },
+    "help": {
+      "toggle": "Wo finde ich die Adresse?",
+      "google": "Einstellungen → dein Kalender → Kalender integrieren → Privatadresse im iCal-Format.",
+      "outlook": "Einstellungen → Kalender → Freigegebene Kalender → Kalender veröffentlichen → ICS-Link.",
+      "apple": "iCloud.com → Kalender → Kalender als öffentlichen Kalender teilen → Link kopieren.",
+      "privacy": "Wer diese Adresse kennt, kann den Kalender lesen. hinata ruft ihn in deinem Auftrag bei deinem Anbieter ab und behält nur die kommenden und vergangenen Wochen."
+    },
+    "color": {
+      "blue": "Blau",
+      "teal": "Petrol",
+      "orange": "Orange",
+      "plum": "Pflaume",
+      "olive": "Oliv",
+      "red": "Rot"
     }
   }
 }

@@ -640,6 +640,92 @@ class TimeRepository {
       .map((e) => TimeLockException.fromJson(e as Map<String, dynamic>))
       .toList(growable: false);
 
+  // --- calendar subscriptions (HIN-94) -------------------------------------------
+
+  /// The reader's own subscriptions, at most ten, so there is no page. 404
+  /// `error.feature.disabled` while the organisation has the import off.
+  Future<List<CalendarSubscription>> calendarSubscriptions() async {
+    final data = await _api.get('/api/v1/me/calendar-subscriptions');
+    return [
+      for (final item in (data as List<dynamic>?) ?? const [])
+        CalendarSubscription.fromJson(item as Map<String, dynamic>),
+    ];
+  }
+
+  Future<CalendarSubscription> calendarSubscription(String id) async =>
+      CalendarSubscription.fromJson(
+        await _api.get(
+              '/api/v1/me/calendar-subscriptions/${Uri.encodeComponent(id)}',
+            )
+            as Map<String, dynamic>,
+      );
+
+  /// Adds a subscription. The server reads it right away; the answer usually
+  /// says [CalendarSubscriptionStatus.running].
+  Future<CalendarSubscription> createCalendarSubscription(
+    CalendarSubscriptionDraft draft,
+  ) async => CalendarSubscription.fromJson(
+    await _api.post('/api/v1/me/calendar-subscriptions', body: draft.toJson())
+        as Map<String, dynamic>,
+  );
+
+  Future<CalendarSubscription> updateCalendarSubscription(
+    String id,
+    CalendarSubscriptionDraft draft,
+  ) async => CalendarSubscription.fromJson(
+    await _api.patch(
+          '/api/v1/me/calendar-subscriptions/${Uri.encodeComponent(id)}',
+          body: draft.toJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Switches a subscription on or off without touching anything else.
+  Future<CalendarSubscription> setCalendarSubscriptionEnabled(
+    String id, {
+    required bool enabled,
+  }) async => CalendarSubscription.fromJson(
+    await _api.patch(
+          '/api/v1/me/calendar-subscriptions/${Uri.encodeComponent(id)}',
+          body: {'enabled': enabled},
+        )
+        as Map<String, dynamic>,
+  );
+
+  Future<void> deleteCalendarSubscription(String id) => _api.delete(
+    '/api/v1/me/calendar-subscriptions/${Uri.encodeComponent(id)}',
+  );
+
+  /// Reads the calendar now; once a minute at most (429
+  /// `error.calendar.refreshTooSoon`).
+  Future<CalendarSubscription> refreshCalendarSubscription(
+    String id,
+  ) async => CalendarSubscription.fromJson(
+    await _api.post(
+          '/api/v1/me/calendar-subscriptions/${Uri.encodeComponent(id)}/refresh',
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Takes one of the reader's events over as an entry with its own start and
+  /// end. A second call answers with the entry the first one made.
+  Future<WorkItem> convertCalendarEvent(
+    String eventId,
+    CalendarConversion conversion,
+  ) async => WorkItem.fromJson(
+    await _api.post(
+          '/api/v1/time/calendar/events/${Uri.encodeComponent(eventId)}/convert',
+          body: conversion.toJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// How many of today's events are over and not taken over yet.
+  Future<int> openCalendarEventsToday() async {
+    final data = await _api.get('/api/v1/time/calendar/events/open-today');
+    return ((data as Map<String, dynamic>?)?['count'] as num?)?.toInt() ?? 0;
+  }
+
   // --- the tag catalogue -------------------------------------------------------
 
   /// One page of the catalogue, narrowed by a prefix.

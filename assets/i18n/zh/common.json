@@ -1521,6 +1521,21 @@
         "billable": "可计费",
         "user": "人员"
       }
+    },
+    "calendarEvents": {
+      "takeOverTitle": "转为工时记录",
+      "takeOverHint": "时间来自你的日历。请选择记录归属。",
+      "takeOver": "转为记录",
+      "showLayer": "显示日历日程",
+      "alreadyTaken": "此日程已是一条记录。",
+      "notConvertible": "全天日程和超过一天的日程无法转为记录。",
+      "takenOver": "日程已转为记录",
+      "untitled": "无标题日程",
+      "converted": "已转为记录",
+      "layer": "日历",
+      "openToday": "今天有 {{count}} 个日程尚未转为记录",
+      "openToday_plural": "今天有 {{count}} 个日程尚未转为记录",
+      "dismissChip": "暂时隐藏"
     }
   },
   "availability": {
@@ -4434,6 +4449,68 @@
     "nav": {
       "corrections": "例外与更正",
       "deadlines": "截止日期"
+    }
+  },
+  "calendarSubscriptions": {
+    "title": "日历订阅",
+    "subtitle": "在工时记录中显示你自己日历里的日程，并将其转为记录。只有你能看到。",
+    "add": "添加",
+    "added": "日历已添加，正在读取。",
+    "deleted": "日历已移除",
+    "empty": {
+      "title": "尚未订阅日历",
+      "message": "添加你的 Google、Outlook 或 Apple 日历的私密地址，即可在工时旁看到你的会议。"
+    },
+    "limit": "最多可以订阅 {{count}} 个日历。",
+    "ruleOn": "已结束的日程会自动转为记录",
+    "skipped": "{{count}} 个日程未转为记录：{{reason}}",
+    "skipped_plural": "{{count}} 个日程未转为记录：{{reason}}",
+    "status": {
+      "off": "已由你暂停",
+      "pending": "等待首次读取",
+      "running": "正在读取",
+      "ok": "{{count}} 个日程，读取于 {{when}}",
+      "ok_plural": "{{count}} 个日程，读取于 {{when}}",
+      "paused": "连续五次读取失败后已暂停。",
+      "failed": "无法读取该日历。"
+    },
+    "refresh": "立即刷新",
+    "pause": "暂停",
+    "resume": "继续",
+    "actions": "{{name}} 的操作",
+    "delete": {
+      "title": "移除日历？",
+      "message": "“{{name}}”及其日程将从工时记录中消失。已转为记录的条目会保留。"
+    },
+    "form": {
+      "addTitle": "订阅日历",
+      "editTitle": "编辑日历",
+      "subtitle": "hinata 只读取日历，不会写回任何内容。",
+      "name": "名称",
+      "nameHint": "例如：工作",
+      "url": "私密地址（ICS）",
+      "urlKeep": "留空则保留已保存的地址",
+      "urlHint": "这是私密地址。它会加密保存，之后不再显示。",
+      "subscribe": "订阅",
+      "color": "颜色",
+      "rule": "自动将已结束的日程转为记录",
+      "ruleHint": "仅限开启后开始的日程，在其结束后转为记录。",
+      "ruleProject": "这些记录的项目"
+    },
+    "help": {
+      "toggle": "在哪里找到地址？",
+      "google": "设置 → 你的日历 → 集成日历 → iCal 格式的私密地址。",
+      "outlook": "设置 → 日历 → 共享日历 → 发布日历 → ICS 链接。",
+      "apple": "iCloud.com → 日历 → 作为公共日历共享 → 复制链接。",
+      "privacy": "任何拥有此地址的人都能读取该日历。hinata 代你从服务商处获取，并只保留过去和接下来的几周。"
+    },
+    "color": {
+      "blue": "蓝色",
+      "teal": "青色",
+      "orange": "橙色",
+      "plum": "梅紫",
+      "olive": "橄榄绿",
+      "red": "红色"
     }
   }
 }

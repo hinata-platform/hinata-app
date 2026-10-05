@@ -39,6 +39,7 @@ import 'account_cubit.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'availability_section.dart';
+import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
@@ -813,6 +814,8 @@ class _AccountScreenState extends State<_AccountBody> {
         TimePreferencesSection(),
         SizedBox(height: 16),
         AvailabilitySection(),
+        // Draws nothing, and no gap, where the organisation has the import off.
+        CalendarSubscriptionsSlot(),
       ],
     ),
     _SettingsSection.access => _accessSection(),

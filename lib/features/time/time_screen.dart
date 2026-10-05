@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -130,7 +131,9 @@ class _TimeViewState extends State<_TimeView> {
     // The hints depend on the rules, so they wait for them; the entries do not.
     unawaited(
       context.read<TimePolicyCubit>().ensureLoaded().then((_) {
-        if (mounted) unawaited(_loadHints());
+        if (!mounted) return;
+        unawaited(_loadHints());
+        unawaited(_loadOpenEvents());
       }),
     );
     offerTimePrivacyNotice(context);
@@ -174,6 +177,28 @@ class _TimeViewState extends State<_TimeView> {
     _hintWindows.clear();
     unawaited(_loadHints(fresh: true));
     unawaited(_loadMarks(fresh: true));
+    unawaited(_loadOpenEvents());
+  }
+
+  /// Today's calendar events nobody has taken over yet (HIN-94), for the chip
+  /// at the top of the list. 0 hides it.
+  int _openEvents = 0;
+
+  /// The chip was put away; for the session, so it does not come back on the
+  /// next visit to the page and ask the same question again.
+  static bool _openEventsDismissed = false;
+
+  Future<void> _loadOpenEvents() async {
+    if (_openEventsDismissed ||
+        !context.read<TimePolicyCubit>().state.icsImportEnabled) {
+      return;
+    }
+    try {
+      final open = await context.read<TimeScreenCubit>().openCalendarEvents();
+      if (mounted && open != _openEvents) setState(() => _openEvents = open);
+    } on ApiFailure {
+      // A courtesy: no chip is the answer to a question that could not be asked.
+    }
   }
 
   /// One reload for one stop.
@@ -784,8 +809,24 @@ class _TimeViewState extends State<_TimeView> {
               top: _bodyTopInset(context),
               bottom: context.bottomGutter + 24,
             ),
-            itemCount: groups.length + (state.isLoadingMore ? 1 : 0),
+            itemCount:
+                groups.length +
+                (state.isLoadingMore ? 1 : 0) +
+                (_showsOpenEvents ? 1 : 0),
             itemBuilder: (context, index) {
+              if (_showsOpenEvents) {
+                if (index == 0) {
+                  return OpenCalendarEventsChip(
+                    count: _openEvents,
+                    onOpen: () => context.go('/time/calendar'),
+                    onDismiss: () => setState(() {
+                      _openEventsDismissed = true;
+                      _openEvents = 0;
+                    }),
+                  );
+                }
+                index--;
+              }
               if (index >= groups.length) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 20),
@@ -818,6 +859,8 @@ class _TimeViewState extends State<_TimeView> {
       },
     );
   }
+
+  bool get _showsOpenEvents => _openEvents > 0 && !_openEventsDismissed;
 
   /// The loaded rows, cut into days.
   ///
