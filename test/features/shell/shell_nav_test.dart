@@ -263,7 +263,7 @@ void main() {
     // page lays itself out as something else and then jumps, which is the one
     // rearrangement the eye always catches.
     test('the card pages take more than the reading width', () {
-      for (final route in ['/', '/dashboard', '/admin']) {
+      for (final route in ['/', '/dashboard']) {
         expect(pageContentMax(route), goldenContentMax, reason: route);
       }
     });
@@ -282,6 +282,10 @@ void main() {
     test('everything else is a column to read', () {
       for (final route in [
         '/settings',
+        // Every settings page shares one frame, so the rail and Save never
+        // move between account, admin and organisation.
+        '/admin',
+        '/organization',
         '/projects',
         '/projects/7/settings',
         '/teams/3',

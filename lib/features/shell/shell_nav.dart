@@ -159,8 +159,6 @@ bool showsTimerBar(String location, {required bool immersive}) =>
 /// absent and keeps publishing for itself.
 double pageContentMax(String location) {
   if (location == '/' || location == '/dashboard') return goldenContentMax;
-  if (location == '/admin') return goldenContentMax;
-  if (location == '/organization') return goldenContentMax;
   // A week of a timesheet or a month of a calendar is a grid to scan across,
   // not a column to read: it takes the window.
   if (isTimeModuleRoute(location) || location == '/timesheet') {
