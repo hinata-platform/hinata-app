@@ -11,7 +11,9 @@ import '../models/server_profile.dart';
 import '../storage/app_storage.dart';
 
 /// Connection lifecycle: pick server -> verify -> (setup) -> ready.
-/// Also enforces the server's minimum app version on every start.
+/// Also enforces the server's minimum app version on every start, except on
+/// web: a browser loads the newest build on every reload, so there is nothing
+/// to update and a stale cached build must never lock colleagues out.
 sealed class AppConfigEvent extends Equatable {
   const AppConfigEvent();
 
@@ -98,8 +100,11 @@ class AppConfigState extends Equatable {
 }
 
 class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
-  AppConfigBloc({required this.repository, required this.storage})
-    : super(const AppConfigState()) {
+  AppConfigBloc({
+    required this.repository,
+    required this.storage,
+    this.enforceMinAppVersion = !kIsWeb,
+  }) : super(const AppConfigState()) {
     on<AppConfigStarted>(_onStarted, transformer: restartable());
     on<ServerUrlSubmitted>(_onServerUrlSubmitted, transformer: droppable());
     on<SetupFinished>(_onSetupFinished);
@@ -110,6 +115,15 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
 
   final MetaRepository repository;
   final AppStorage storage;
+
+  /// Whether `minAppVersion` from `/meta` can lock this client out. Only store
+  /// apps have a version to update; the web app fetches the current build on
+  /// reload, so it never shows the update screen.
+  final bool enforceMinAppVersion;
+
+  bool _mustUpdate(ServerMeta meta) =>
+      enforceMinAppVersion &&
+      isVersionBelow(state.appVersion, meta.minAppVersion);
 
   /// How long a successful `/meta` read stands before another is worth making.
   /// See [_onMetaRefresh]; also the ceiling on how stale a flag can be, so it
@@ -217,7 +231,7 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
       // The server can also raise its minimum version while we run; honour it
       // here exactly as the boot path does rather than letting a too-old client
       // keep talking to it.
-      if (isVersionBelow(state.appVersion, meta.minAppVersion)) {
+      if (_mustUpdate(meta)) {
         emit(
           state.copyWith(status: AppConfigStatus.updateRequired, meta: meta),
         );
@@ -240,7 +254,7 @@ class AppConfigBloc extends Bloc<AppConfigEvent, AppConfigState> {
           ServerProfile(url: url, label: meta.organizationName),
         );
       }
-      if (isVersionBelow(state.appVersion, meta.minAppVersion)) {
+      if (_mustUpdate(meta)) {
         emit(
           state.copyWith(status: AppConfigStatus.updateRequired, meta: meta),
         );

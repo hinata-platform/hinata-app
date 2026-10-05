@@ -163,6 +163,30 @@ void main() {
     expect(state.status, AppConfigStatus.updateRequired);
   });
 
+  test('web never locks out on a raised minimum version', () async {
+    // The browser loads the newest build on every reload, so the update gate
+    // is for store apps only. A cached web build below the minimum used to
+    // land colleagues on the update screen with no way forward.
+    final repository = _FakeMetaRepository(meta(minAppVersion: '99.0.0'));
+    final bloc = AppConfigBloc(
+      repository: repository,
+      storage: await storageWithServer(),
+      enforceMinAppVersion: false,
+    )..add(const AppConfigStarted());
+    addTearDown(bloc.close);
+
+    final booted = await bloc.stream.firstWhere(
+      (s) =>
+          s.status != AppConfigStatus.initial &&
+          s.status != AppConfigStatus.connecting,
+    );
+    expect(booted.status, AppConfigStatus.ready);
+
+    bloc.add(const MetaRefreshRequested(force: true));
+    await Future<void>.delayed(const Duration(milliseconds: 20));
+    expect(bloc.state.status, AppConfigStatus.ready);
+  });
+
   test('is ignored before the app is up — boot owns that flow', () async {
     final repository = _FakeMetaRepository(meta());
     final bloc = AppConfigBloc(
