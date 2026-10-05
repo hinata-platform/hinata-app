@@ -19,7 +19,6 @@ import '../../core/models/account_models.dart';
 import '../../core/models/core_models.dart' show PlatformFlags;
 import '../../core/notifications/fcm_service.dart'
     show pushSupportedOnThisPlatform;
-import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -31,6 +30,7 @@ import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch, forwardChevron;
 import '../../core/widgets/honeycomb_background.dart';
+import '../../core/widgets/settings_split.dart';
 import '../connect/server_switcher.dart';
 import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassToast, GlassToastKind;
@@ -42,7 +42,6 @@ import 'availability_section.dart';
 import 'notification_schedule_row.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
-import 'settings_layout.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
 import '../../core/theme/app_type.dart';
@@ -51,7 +50,7 @@ part 'account_screen.widgets.dart';
 
 /// The settings categories. On compact (phone) layouts each is its own
 /// in-page sub-screen reached from the index list; on medium/expanded layouts
-/// they all stack/column together on a single scroll.
+/// they are the entries of the settings rail, one open at a time.
 enum _SettingsSection {
   security,
   sessions,
@@ -67,6 +66,9 @@ enum _SettingsSection {
 /// Icon + section for each row of the compact settings index. Titles/subtitles
 /// are looked up per-section so the index row, the sub-page app bar and the
 /// section card header all stay in sync.
+/// Rail entries that leave the settings page for a page of their own.
+enum _RailLink { admin, organization }
+
 const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.security, icon: LucideIcons.shieldCheck),
   (section: _SettingsSection.sessions, icon: LucideIcons.monitorSmartphone),
@@ -164,17 +166,30 @@ class _AccountScreenState extends State<_AccountBody> {
   bool _accessTeams = true;
   bool _avatarBusy = false;
 
-  /// The open sub-page on compact layouts; `null` shows the index list. Always
-  /// `null` on medium/expanded, where every section renders on one scroll.
+  /// The open sub-page on compact layouts; `null` shows the index list.
   /// Derived from the route's `section` query parameter so the shell's
   /// settings button (`go('/settings')`) always returns to the index.
   _SettingsSection? get _section =>
       _SettingsSection.values.asNameMap()[widget.section];
 
+  /// The section open on medium/expanded layouts. A `?section=` link opens
+  /// that one; otherwise the page starts at the account itself.
+  late _SettingsSection _wideSection = _section ?? _SettingsSection.security;
+
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void didUpdateWidget(covariant _AccountBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // A link to a section while the page is already open opens it here too.
+    final next = _section;
+    if (widget.section != oldWidget.section && next != null) {
+      _wideSection = next;
+    }
   }
 
   @override
@@ -475,59 +490,116 @@ class _AccountScreenState extends State<_AccountBody> {
     }
 
     // Phone: an index list whose rows open one section at a time, so the
-    // surface never overloads. Desktop / tablet keep the single rich scroll.
+    // surface never overloads. Desktop / tablet: a rail of the same sections.
     if (context.isCompact) return _compactView();
     return _wideView();
   }
 
-  /// Desktop and tablet: every section on one scroll behind the account hero,
-  /// in as many golden columns as the width holds ([GoldenColumns]).
+  /// Desktop and tablet: the sections in a rail on the left and the one that
+  /// is open on the right (HIN-110), the same sections the phone's index
+  /// lists. A wall of every card at once made the reader scan a dozen of them
+  /// to find one switch.
   Widget _wideView() {
     final user = context.read<AuthBloc>().state.user;
-    // Resolved here, in build: the flag is watched, and a LayoutBuilder's
-    // builder runs during layout, where watching is not allowed.
-    final groups = settingsGroups(
-      timeTracking: _advancedTime,
-      tokens: _mcpEnabled,
-      // One card carries the admin area and Organisation (HIN-129), each for
-      // the role that opens it.
-      admin: (user?.isAdmin ?? false) || (user?.isOrgAdmin ?? false),
-    );
-    // The shell's reading width, which is what the team's settings take too:
-    // one width for every page of settings, so moving between them does not
-    // move the margins. The cards spread over as many columns as that holds.
+    final me = _me!;
+    final visible = _visibleSections();
+    final section = visible.contains(_wideSection)
+        ? _wideSection
+        : _SettingsSection.security;
+    String group(_SettingsSection s) => context.t(switch (s) {
+      _SettingsSection.security ||
+      _SettingsSection.sessions ||
+      _SettingsSection.access ||
+      _SettingsSection.tokens => 'account.rail.account',
+      _SettingsSection.notifications ||
+      _SettingsSection.time ||
+      _SettingsSection.appearance => 'account.rail.preferences',
+      _SettingsSection.data ||
+      _SettingsSection.danger => 'account.rail.privacy',
+    });
+    final adminGroup = context.t('account.rail.administration');
     return PageChrome(
       title: context.t('nav.settings'),
       child: RefreshIndicator(
         onRefresh: _load,
-        child: ListView(
-          padding: context.pagePadding,
-          children: [
-            // No in-page title: the shell's sub-page bar already shows
-            // back + "settings" for this route.
-            _profileHero(),
-            const SizedBox(height: 16),
-            GoldenColumns<SettingsCard>(groups: groups, card: _card),
+        child: SettingsSplitLayout<Object>(
+          header: SettingsRailHeader(
+            leading: AppAvatar(
+              name: me.displayName,
+              imageUrl: me.avatarUrl,
+              radius: 16,
+            ),
+            title: me.displayName,
+            subtitle: userHandle(me.username),
+          ),
+          entries: [
+            for (final item in _settingsMenu)
+              if (visible.contains(item.section))
+                SettingsNavEntry<Object>(
+                  id: item.section,
+                  icon: item.icon,
+                  label: _sectionTitle(item.section),
+                  group: group(item.section),
+                ),
+            // The admin area and Organisation (HIN-129) are pages of their own:
+            // the entries leave this one, as the glyph after them says.
+            if (user?.isAdmin ?? false)
+              SettingsNavEntry<Object>(
+                id: _RailLink.admin,
+                icon: LucideIcons.shieldUser,
+                label: context.t('settings.adminArea'),
+                group: adminGroup,
+                trailing: LucideIcons.externalLink,
+              ),
+            if (user?.isOrgAdmin ?? false)
+              SettingsNavEntry<Object>(
+                id: _RailLink.organization,
+                icon: LucideIcons.building2,
+                label: context.t('settings.organization'),
+                group: adminGroup,
+                trailing: LucideIcons.externalLink,
+              ),
           ],
+          selected: section,
+          onSelect: (id) {
+            switch (id) {
+              case _RailLink.admin:
+                context.go('/admin');
+              case _RailLink.organization:
+                context.go('/organization');
+              case final _SettingsSection s:
+                setState(() => _wideSection = s);
+            }
+          },
+          body: KeyedSubtree(
+            key: ValueKey(section),
+            child: section == _SettingsSection.security
+                // The profile heads the first section rather than standing
+                // above every one of them: name, roles, Profil bearbeiten and
+                // Abmelden are where the page opens.
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _profileHero(),
+                      const SizedBox(height: 16),
+                      _securitySection(),
+                    ],
+                  )
+                : _sectionCard(section),
+          ),
         ),
       ),
     );
   }
 
-  Widget _card(SettingsCard card) => switch (card) {
-    SettingsCard.security => _securitySection(),
-    SettingsCard.sessions => _sessionsSection(),
-    SettingsCard.notifications => _notificationsSection(),
-    SettingsCard.timeTracking => const TimePreferencesSection(),
-    SettingsCard.availability => const AvailabilitySection(),
-    SettingsCard.access => _accessSection(),
-    SettingsCard.appearance => _appearanceSection(),
-    SettingsCard.tokens => const PatSection(),
-    // The admin area is its own entry here, not buried in Appearance.
-    SettingsCard.admin => _adminSection(),
-    SettingsCard.data => _dataSection(),
-    SettingsCard.danger => _dangerSection(),
-  };
+  /// The sections this account has, in the phone index's order: tokens only
+  /// with the MCP server, time only with the extended time module.
+  List<_SettingsSection> _visibleSections() => [
+    for (final item in _settingsMenu)
+      if (!(item.section == _SettingsSection.tokens && !_mcpEnabled) &&
+          !(item.section == _SettingsSection.time && !_advancedTime))
+        item.section,
+  ];
 
   // --- compact (phone) master → detail --------------------------------------
 
@@ -633,7 +705,7 @@ class _AccountScreenState extends State<_AccountBody> {
   }
 
   /// A tappable navigation row: amber (or red) icon tile, title, subtitle and a
-  /// chevron. Shared by the compact index list and the desktop admin nav card.
+  /// chevron, as the compact index lists them.
   Widget _navTile({
     required IconData icon,
     required String title,
@@ -1817,47 +1889,6 @@ class _AccountScreenState extends State<_AccountBody> {
   );
 
   // --- admin (top-level nav, admins only) -----------------------------------
-
-  /// A standalone nav card on the wide layout that opens the Admin area —
-  /// promoted out of the Appearance section to its own top-level entry.
-  Widget _adminSection() {
-    // The admin area for admins, Organisation for organisation admins
-    // (HIN-129): two roles, one card, each row only for the role it opens.
-    final user = context.read<AuthBloc>().state.user;
-    final rows = [
-      if (user?.isAdmin ?? false)
-        _navTile(
-          icon: LucideIcons.shieldUser,
-          title: context.t('settings.adminArea'),
-          subtitle: context.t('settings.adminAreaDesc'),
-          onTap: () => context.go('/admin'),
-        ),
-      if (user?.isOrgAdmin ?? false)
-        _navTile(
-          icon: LucideIcons.building2,
-          title: context.t('settings.organization'),
-          subtitle: context.t('settings.organizationDesc'),
-          onTap: () => context.go('/organization'),
-        ),
-    ];
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i > 0)
-              Divider(height: 1, indent: 62, color: AppColors.hairline2),
-            rows[i],
-          ],
-        ],
-      ),
-    );
-  }
 
   // --- data & privacy -------------------------------------------------------
 

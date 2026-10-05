@@ -604,8 +604,12 @@ GoRouter buildRouter({
           GoRoute(
             path: '/organization',
             redirect: (_, _) => organizationGuard(auth.state.user),
-            pageBuilder: (_, state) =>
-                _transition(state, const OrganizationScreen()),
+            pageBuilder: (_, state) => _transition(
+              state,
+              OrganizationScreen(
+                initialSection: state.uri.queryParameters['section'],
+              ),
+            ),
           ),
           // Holiday calendars (HIN-91), a page of its own under Organisation.
           GoRoute(

@@ -3767,7 +3767,12 @@
     },
     "labelName": "标签名称",
     "removeLabel": "移除标签",
-    "stateName": "状态名称"
+    "stateName": "状态名称",
+    "nav": {
+      "project": "项目",
+      "work": "工作方式",
+      "manage": "管理"
+    }
   },
   "account": {
     "title": "我的账户",
@@ -4035,6 +4040,12 @@
     "stepper": {
       "decrease": "减少{{label}}",
       "increase": "增加{{label}}"
+    },
+    "rail": {
+      "account": "账户",
+      "preferences": "偏好设置",
+      "privacy": "隐私",
+      "administration": "管理"
     }
   },
   "twofa": {
@@ -4406,6 +4417,10 @@
       "title": "日志",
       "hint": "时间记录、缺勤和工时表中发生了什么，以及由谁操作。",
       "open": "打开日志"
+    },
+    "nav": {
+      "corrections": "例外与更正",
+      "deadlines": "截止日期"
     }
   }
 }

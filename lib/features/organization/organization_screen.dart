@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/app_config_bloc.dart';
@@ -13,6 +14,7 @@ import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/settings_split.dart';
 import '../admin/admin_cards.dart';
 import '../admin/admin_form_helpers.dart' show AdminNote;
 import '../shell/page_chrome.dart';
@@ -37,18 +39,49 @@ import '../../core/theme/app_type.dart';
 /// The router lets only organisation admins in; the server answers anyone else
 /// with 403 `error.org.adminOnly` all the same.
 class OrganizationScreen extends StatelessWidget {
-  const OrganizationScreen({super.key});
+  const OrganizationScreen({super.key, this.initialSection});
+
+  /// The section a wide window opens on, by its name (`?section=capture`).
+  /// Unknown names, and those of entries that lead to a page of their own,
+  /// fall back to the first section. A phone shows every card anyway.
+  final String? initialSection;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) =>
         OrganizationCubit(context.read<OrgSettingsRepository>())..load(),
-    child: const OrganizationView(),
+    child: OrganizationView(initialSection: initialSection),
   );
 }
 
-class OrganizationView extends StatelessWidget {
-  const OrganizationView({super.key});
+class OrganizationView extends StatefulWidget {
+  const OrganizationView({super.key, this.initialSection});
+
+  final String? initialSection;
+
+  @override
+  State<OrganizationView> createState() => _OrganizationViewState();
+}
+
+class _OrganizationViewState extends State<OrganizationView> {
+  /// The section open on a wide window. Held here, above the time-tracking
+  /// section, because a save rebuilds that one under a new key; the draft
+  /// itself lives in the cubit's settings, so moving between sections loses
+  /// nothing that was not saved yet.
+  late OrgSection _section = OrgSection.values.firstWhere(
+    (s) => s.name == widget.initialSection && s.route == null,
+    orElse: () => OrgSection.values.first,
+  );
+
+  void _select(OrgSection section) {
+    final route = section.route;
+    if (route != null) {
+      // A page of its own: pushed, so the draft here waits for the way back.
+      unawaited(context.push(route));
+      return;
+    }
+    setState(() => _section = section);
+  }
 
   Future<void> _save(BuildContext context, {required bool templates}) async {
     final error = await context.read<OrganizationCubit>().save(
@@ -79,27 +112,65 @@ class OrganizationView extends StatelessWidget {
     );
     final state = context.watch<OrganizationCubit>().state;
     final settings = state.settings;
-    return PageChrome(
-      title: context.t('org.title'),
-      contentMax: goldenContentMax,
-      actions: [
-        if (settings != null)
-          PageAction(
-            icon: LucideIcons.save,
-            label: context.t('common.save'),
-            onTap: (_) => unawaited(_save(context, templates: templates)),
-            primary: true,
-            busy: state.saving,
-          ),
-      ],
-      child: _body(context, state, templates: templates),
+    return ResponsiveBuilder(
+      builder: (context, size) {
+        final compact = size == LayoutSize.compact;
+        return PageChrome(
+          // On a wide window the bar names the open section, as in the admin
+          // area; the rail carries the page's name.
+          title: compact || settings == null
+              ? context.t('org.title')
+              : context.t(_section.labelKey),
+          contentMax: goldenContentMax,
+          actions: [
+            if (settings != null)
+              PageAction(
+                icon: LucideIcons.save,
+                label: context.t('common.save'),
+                onTap: (_) => unawaited(_save(context, templates: templates)),
+                primary: true,
+                busy: state.saving,
+              ),
+          ],
+          child: _body(context, state, templates: templates, compact: compact),
+        );
+      },
     );
+  }
+
+  /// The organisation's own cards, by the names the rail looks them up by.
+  Map<String, Widget> _ownCards(
+    BuildContext context,
+    OrganizationState state, {
+    required bool templates,
+  }) {
+    final settings = state.settings!;
+    return {
+      if (templates)
+        'deadlines': OrgDeadlineBasisCard(
+          value: state.basis,
+          // Known only while the organisation follows it: then what is in
+          // force is the platform's answer.
+          platformDefault: settings.defaultDeadlineBasis == null
+              ? settings.effectiveDeadlineBasis
+              : null,
+          onChanged: context.read<OrganizationCubit>().setBasis,
+        ),
+      'audit': const OrgLinkCard(
+        icon: LucideIcons.history,
+        titleKey: 'org.audit.title',
+        hintKey: 'org.audit.hint',
+        openKey: 'org.audit.open',
+        route: '/organization/audit',
+      ),
+    };
   }
 
   Widget _body(
     BuildContext context,
     OrganizationState state, {
     required bool templates,
+    required bool compact,
   }) {
     final settings = state.settings;
     if (settings == null) {
@@ -121,6 +192,41 @@ class OrganizationView extends StatelessWidget {
         ),
       );
     }
+    final own = _ownCards(context, state, templates: templates);
+    final section = OrgTimeTrackingSection(
+      // A save hands back a fresh block; a new key gives the controls that
+      // hold their own text the values the server kept.
+      key: ObjectKey(settings),
+      timeTracking: settings.timeTracking,
+      layout: compact
+          ? (context, cards) => _CompactCards(own: own, timeTracking: cards)
+          : (context, cards) {
+              final all = {...own, ...cards};
+              final available = [
+                for (final s in OrgSection.values)
+                  if (s.cards.any(all.containsKey)) s,
+              ];
+              // A section that went away with the module (or with project
+              // templates) gives way to the first one rather than an empty
+              // pane.
+              final open = available.contains(_section)
+                  ? _section
+                  : available.first;
+              if (open != _section) {
+                // The bar's title is read from the section held here.
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) setState(() => _section = open);
+                });
+              }
+              return _WideOrganization(
+                sections: available,
+                open: open,
+                cards: all,
+                onSelect: _select,
+              );
+            },
+    );
+    if (!compact) return section;
     // The iOS numeric keypad has no Done key: tap outside a field or drag the
     // page to put it away, as in the admin area these forms come from.
     return GestureDetector(
@@ -146,48 +252,195 @@ class OrganizationView extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            OrgTimeTrackingSection(
-              // A save hands back a fresh block; a new key gives the controls
-              // that hold their own text the values the server kept.
-              key: ObjectKey(settings),
-              timeTracking: settings.timeTracking,
-              // The page owns the columns. The organisation's own cards come
-              // first, then the time-tracking cards under the note that is
-              // about them alone.
-              layout: (context, cards) => Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  AdminCards(
-                    cards: {
-                      if (templates)
-                        'deadlines': OrgDeadlineBasisCard(
-                          value: state.basis,
-                          // Known only while the organisation follows it:
-                          // then what is in force is the platform's answer.
-                          platformDefault: settings.defaultDeadlineBasis == null
-                              ? settings.effectiveDeadlineBasis
-                              : null,
-                          onChanged: context.read<OrganizationCubit>().setBasis,
-                        ),
-                      'audit': const OrgLinkCard(
-                        icon: LucideIcons.history,
-                        titleKey: 'org.audit.title',
-                        hintKey: 'org.audit.hint',
-                        openKey: 'org.audit.open',
-                        route: '/organization/audit',
-                      ),
-                    },
-                  ),
-                  const SizedBox(height: 28),
-                  AdminCards(
-                    note: AdminNote(text: context.t('admin.timeTracking.hint')),
-                    cards: cards,
-                  ),
-                ],
-              ),
-            ),
+            section,
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The phone's page: every card, the organisation's own first, then the
+/// time-tracking ones under the note that is about them alone.
+class _CompactCards extends StatelessWidget {
+  const _CompactCards({required this.own, required this.timeTracking});
+
+  final Map<String, Widget> own;
+  final Map<String, Widget> timeTracking;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      AdminCards(cards: own),
+      const SizedBox(height: 28),
+      AdminCards(
+        note: AdminNote(text: context.t('admin.timeTracking.hint')),
+        cards: timeTracking,
+      ),
+    ],
+  );
+}
+
+/// The sections of the Organisation page on a wide window (HIN-110), in the
+/// rail's order. Each names the cards it shows; an entry with a [route] opens
+/// a page of its own instead.
+///
+/// The first is where the page opens: the module switch, which every other
+/// time-tracking section depends on.
+enum OrgSection {
+  module('admin.timeTracking.moduleTitle', LucideIcons.timer, _timeGroup, [
+    'module',
+  ]),
+  capture(
+    'admin.timeTracking.captureTitle',
+    LucideIcons.clipboardList,
+    _timeGroup,
+    ['capture'],
+  ),
+  // The spans and days opened after the fact, and the requests that ask for
+  // them: all part of the module, so they come and go with it.
+  corrections('org.nav.corrections', LucideIcons.lockOpen, _timeGroup, [
+    'lockExceptions',
+    'corrections',
+    'backfillGrants',
+  ]),
+  tags('admin.timeTracking.tagsTitle', LucideIcons.tag, _timeGroup, ['tags']),
+  visibility(
+    'admin.timeTracking.visibilityTitle',
+    LucideIcons.eye,
+    _timeGroup,
+    ['visibility'],
+  ),
+  reports(
+    'admin.timeTracking.reportsTitle',
+    LucideIcons.chartLine,
+    _timeGroup,
+    ['reports'],
+  ),
+  billing(
+    'admin.timeTracking.billingTitle',
+    LucideIcons.receiptText,
+    _timeGroup,
+    ['billing'],
+  ),
+  privacy(
+    'admin.timeTracking.privacyTitle',
+    LucideIcons.shieldCheck,
+    _timeGroup,
+    ['privacy'],
+  ),
+  absences(
+    'admin.absence.enabledTitle',
+    LucideIcons.calendarOff,
+    _absenceGroup,
+    ['absenceManagement'],
+  ),
+  holidays(
+    'availability.admin.cardTitle',
+    LucideIcons.calendarHeart,
+    _absenceGroup,
+    ['holidays'],
+    route: '/organization/holidays',
+  ),
+  deadlines('org.nav.deadlines', LucideIcons.calendarClock, _generalGroup, [
+    'deadlines',
+  ]),
+  audit('org.audit.title', LucideIcons.history, _generalGroup, [
+    'audit',
+  ], route: '/organization/audit');
+
+  const OrgSection(
+    this.labelKey,
+    this.icon,
+    this.groupKey,
+    this.cards, {
+    this.route,
+  });
+
+  final String labelKey;
+  final IconData icon;
+  final String groupKey;
+
+  /// The cards it shows, by the names the page and the time-tracking section
+  /// give them. A section none of whose cards is there is not listed.
+  final List<String> cards;
+
+  /// Set for an entry that opens a page of its own.
+  final String? route;
+
+  bool get isTimeTracking => groupKey != _generalGroup;
+}
+
+const String _timeGroup = 'nav.time';
+const String _absenceGroup = 'absence.view.title';
+const String _generalGroup = 'admin.navGeneral';
+
+/// The rail beside the one section that is open, in one readable column.
+class _WideOrganization extends StatelessWidget {
+  const _WideOrganization({
+    required this.sections,
+    required this.open,
+    required this.cards,
+    required this.onSelect,
+  });
+
+  final List<OrgSection> sections;
+  final OrgSection open;
+  final Map<String, Widget> cards;
+  final ValueChanged<OrgSection> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = [
+      for (final name in open.cards)
+        if (cards[name] != null) cards[name]!,
+    ];
+    return SettingsSplitLayout<OrgSection>(
+      header: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SettingsRailHeader(title: context.t('org.title')),
+          const SizedBox(height: 4),
+          // The page's introduction, once: it says what the role sees, which
+          // holds for every section. Folded to a line the reader can open.
+          FoldedHint(
+            context.t('org.subtitle'),
+            title: context.t('org.title'),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              height: 1.25,
+              color: AppColors.inkSoft,
+            ),
+          ),
+        ],
+      ),
+      entries: [
+        for (final s in sections)
+          SettingsNavEntry(
+            id: s,
+            icon: s.icon,
+            label: context.t(s.labelKey),
+            group: context.t(s.groupKey),
+            trailing: s.route != null ? LucideIcons.externalLink : null,
+          ),
+      ],
+      selected: open,
+      onSelect: onSelect,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // What holds for every policy below: each may stay empty and then
+          // follows the server's environment.
+          if (open.isTimeTracking) ...[
+            AdminNote(text: context.t('admin.timeTracking.hint')),
+            const SizedBox(height: 16),
+          ],
+          for (final (i, card) in shown.indexed) ...[
+            if (i > 0) const SizedBox(height: 16),
+            card,
+          ],
+        ],
       ),
     );
   }
