@@ -91,7 +91,7 @@ class _TimeCalendarView extends StatefulWidget {
 enum _Span { week, month }
 
 /// What the module menu can answer with, beyond the three views.
-enum _MenuAction { week, month, today }
+enum _MenuAction { week, month, today, events }
 
 /// One month of entries, as it came back.
 @immutable
@@ -100,9 +100,15 @@ class _MonthWindow {
     required this.items,
     required this.truncated,
     required this.marks,
+    this.events = const [],
   });
 
   final List<TimeGridItem> items;
+
+  /// The events of the reader's calendar subscriptions (HIN-94), as items that
+  /// carry their [CalendarEventSuggestion]. Never in [items]: a suggestion is
+  /// not recorded time and must not add to any day's total.
+  final List<TimeGridItem> events;
 
   /// Whether the server had to cut this month short of what it covers.
   final bool truncated;
@@ -113,6 +119,13 @@ class _MonthWindow {
 
 class _TimeCalendarViewState extends State<_TimeCalendarView> {
   _Span _span = _Span.week;
+
+  /// Whether the events of the reader's own calendars are drawn (HIN-94).
+  /// Static, so the choice holds for the session across visits to the page.
+  static bool _showEvents = true;
+
+  /// The held events by the days they touch, rebuilt with [_byDay].
+  Map<int, List<TimeGridItem>> _eventsByDay = const {};
 
   /// The day the week span is reading — the one the canvas draws and the strip
   /// marks.
@@ -432,6 +445,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
           items: _itemsOf(window.entries),
           truncated: window.truncated,
           marks: window.marks,
+          events: _eventItemsOf(window.events),
         ),
         errorKey: null,
       );
@@ -480,6 +494,9 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
     if (_daysMemo.length > _keepDayLists) _daysMemo.clear();
     _byDay = groupItemsByDay([
       for (final window in _months.values) ...window.items,
+    ]);
+    _eventsByDay = _groupEvents([
+      for (final window in _months.values) ...window.events,
     ]);
     _layerMemo.clear();
     _revision++;
@@ -656,6 +673,16 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
           icon: LucideIcons.locateFixed,
           first: true,
         ),
+        // Only where the organisation lets people subscribe at all: a switch
+        // for a layer that can never hold anything is a question with no answer.
+        if (context.read<TimePolicyCubit>().state.icsImportEnabled)
+          TimeMenuExtra(
+            value: _MenuAction.events,
+            label: context.t('time.calendarEvents.showLayer'),
+            icon: LucideIcons.calendarSync,
+            selected: _showEvents,
+            first: true,
+          ),
       ],
     );
     if (chosen == null || !mounted) return;
@@ -667,6 +694,11 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
         _setSpan(_Span.month);
       case _MenuAction.today:
         _goToday();
+      case _MenuAction.events:
+        setState(() {
+          _showEvents = !_showEvents;
+          _layerMemo.clear();
+        });
     }
   }
 
@@ -763,6 +795,10 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
       unawaited(openAbsence(context, AbsenceTarget.requested(entry)));
       return;
     }
+    if (entry is CalendarEventSuggestion) {
+      unawaited(_takeOver(entry));
+      return;
+    }
     if (entry is! WorkItem) return;
     // The grid has no row menu, so the sheet is the only way in — and until it
     // offered deleting, a block opened from here could be corrected in every
@@ -776,6 +812,51 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
     );
     if (saved == null || !mounted) return;
     unawaited(_reload());
+  }
+
+  /// One of the reader's calendar events, tapped (HIN-94).
+  ///
+  /// Not taken over yet: the entry sheet, with the event's times shown and its
+  /// title as the description, and the save is the takeover. Taken over: the
+  /// entry it became, when it is held. An all-day event, or one too long to be
+  /// one entry, says why it cannot be taken over instead of opening a form that
+  /// could only refuse.
+  Future<void> _takeOver(CalendarEventSuggestion event) async {
+    if (event.converted) {
+      final entry = _heldEntry(event.convertedEntryId!);
+      if (entry != null) {
+        unawaited(_openEntry(_itemFor(entry, '')!));
+      } else {
+        showGlassToast(context, context.t('time.calendarEvents.alreadyTaken'));
+      }
+      return;
+    }
+    if (!event.convertible) {
+      showGlassToast(
+        context,
+        context.t('time.calendarEvents.notConvertible'),
+        kind: GlassToastKind.warning,
+      );
+      return;
+    }
+    final saved = await showTimeEntrySheet(context, event: event);
+    if (saved == null || !mounted) return;
+    showGlassToast(
+      context,
+      context.t('time.calendarEvents.takenOver'),
+      kind: GlassToastKind.success,
+    );
+    unawaited(_reload());
+  }
+
+  WorkItem? _heldEntry(String id) {
+    for (final window in _months.values) {
+      for (final item in window.items) {
+        final entry = item.data;
+        if (entry is WorkItem && entry.id == id) return entry;
+      }
+    }
+    return null;
   }
 
   /// A block dropped somewhere else.
@@ -1285,6 +1366,9 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   /// week. An entry moved further than that is drawn in the month, in the list
   /// and in the timesheet, all of which file by the day the record names.
   List<TimeGridLayer> _layersFor(DateTime day) => _layerMemo[dayKey(day)] ??= [
+    // First, so the entries are drawn over a suggestion they share hours with
+    // and a tap on the two lands on the recorded one.
+    ..._eventLayers([addDays(day, -1), day, addDays(day, 1)]),
     ..._split([
       ..._itemsForDay(dayKey(addDays(day, -1))),
       ..._itemsForDay(dayKey(day)),
@@ -1301,6 +1385,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
     final key = -dayKey(days.first);
     final window = [addDays(days.first, -1), ...days, addDays(days.last, 1)];
     return _layerMemo[key] ??= [
+      ..._eventLayers(window),
       ..._split([for (final day in window) ..._itemsForDay(dayKey(day))]),
       ..._frozenWash(window),
       ..._markLayers(window),
@@ -1549,6 +1634,80 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
           tint: AppColors.inkFaint,
         ),
       TimeGridLayer(id: 'entries', items: timed, tint: AppColors.accent),
+    ];
+  }
+
+  /// The events of the reader's calendars as grid items, each carrying its
+  /// [CalendarEventSuggestion] back to the tap. Marked when taken over, so a
+  /// week shows which suggestions are settled without opening each one.
+  List<TimeGridItem> _eventItemsOf(List<CalendarEventSuggestion> events) {
+    if (events.isEmpty) return const [];
+    final untitled = context.t('time.calendarEvents.untitled');
+    final taken = context.t('time.calendarEvents.converted');
+    return [
+      for (final event in events)
+        TimeGridItem(
+          id: 'event-${event.id}',
+          start: event.start,
+          end: event.allDay
+              ? event.end.subtract(const Duration(minutes: 1))
+              : event.end,
+          title: event.summary?.trim().isNotEmpty == true
+              ? event.summary!.trim()
+              : untitled,
+          subtitle: event.converted ? taken : event.location,
+          tint: event.swatch,
+          day: event.allDay ? DateUtils.dateOnly(event.start) : null,
+          data: event,
+        ),
+    ];
+  }
+
+  /// [events] by every day they touch: an all-day event of three days is in
+  /// three lists, a timed one in the day it starts and, across midnight, the
+  /// day it ends.
+  static Map<int, List<TimeGridItem>> _groupEvents(List<TimeGridItem> events) {
+    final out = <int, List<TimeGridItem>>{};
+    for (final item in events) {
+      var day = DateUtils.dateOnly(item.start);
+      final last = DateUtils.dateOnly(item.end);
+      while (!day.isAfter(last)) {
+        (out[dayKey(day)] ??= []).add(item);
+        day = addDays(day, 1);
+      }
+    }
+    return out;
+  }
+
+  /// The reader's calendar events in [window] (HIN-94): timed ones as dashed
+  /// blocks in their calendar's colour, all-day ones as a band. Nothing while
+  /// the layer is switched off or the organisation has the import off.
+  List<TimeGridLayer> _eventLayers(List<DateTime> window) {
+    if (!_showEvents ||
+        !context.read<TimePolicyCubit>().state.icsImportEnabled) {
+      return const [];
+    }
+    final seen = <String>{};
+    final timed = <TimeGridItem>[];
+    final allDay = <TimeGridItem>[];
+    for (final day in window) {
+      for (final item in _eventsByDay[dayKey(day)] ?? const <TimeGridItem>[]) {
+        if (!seen.add(item.id)) continue;
+        final event = item.data! as CalendarEventSuggestion;
+        (event.allDay ? allDay : timed).add(item);
+      }
+    }
+    return [
+      if (allDay.isNotEmpty)
+        TimeGridLayer(
+          id: 'events-all-day',
+          placement: TimeGridPlacement.band,
+          items: allDay,
+          tint: AppColors.inkFaint,
+          label: context.t('time.calendarEvents.layer'),
+        ),
+      if (timed.isNotEmpty)
+        TimeGridLayer(id: 'events', items: timed, dashed: true),
     ];
   }
 

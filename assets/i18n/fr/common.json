@@ -1521,6 +1521,21 @@
         "billable": "Facturable",
         "user": "Personne"
       }
+    },
+    "calendarEvents": {
+      "takeOverTitle": "Reprendre comme entrée",
+      "takeOverHint": "Les horaires viennent de ton calendrier. Choisis où l’entrée doit aller.",
+      "takeOver": "Reprendre",
+      "showLayer": "Afficher les événements du calendrier",
+      "alreadyTaken": "Cet événement est déjà une entrée.",
+      "notConvertible": "Les événements sur la journée entière ou de plus d’un jour ne peuvent pas devenir une entrée.",
+      "takenOver": "Événement repris comme entrée",
+      "untitled": "Événement sans titre",
+      "converted": "Repris",
+      "layer": "Calendrier",
+      "openToday": "{{count}} événement d’aujourd’hui pas encore repris",
+      "openToday_plural": "{{count}} événements d’aujourd’hui pas encore repris",
+      "dismissChip": "Masquer pour l’instant"
     }
   },
   "availability": {
@@ -4434,6 +4449,68 @@
     "nav": {
       "corrections": "Exceptions et corrections",
       "deadlines": "Échéances"
+    }
+  },
+  "calendarSubscriptions": {
+    "title": "Abonnements aux calendriers",
+    "subtitle": "Affiche les événements de tes propres calendriers dans le suivi du temps et reprends-les comme entrées. Toi seul les vois.",
+    "add": "Ajouter",
+    "added": "Calendrier ajouté. Il est en cours de lecture.",
+    "deleted": "Calendrier supprimé",
+    "empty": {
+      "title": "Aucun calendrier abonné",
+      "message": "Ajoute l’adresse privée de ton calendrier Google, Outlook ou Apple pour voir tes rendez-vous à côté de ton temps."
+    },
+    "limit": "Tu peux t’abonner à {{count}} calendriers au maximum.",
+    "ruleOn": "Les événements passés sont repris automatiquement",
+    "skipped": "{{count}} événement non repris : {{reason}}",
+    "skipped_plural": "{{count}} événements non repris : {{reason}}",
+    "status": {
+      "off": "Mis en pause par toi",
+      "pending": "En attente de la première lecture",
+      "running": "Lecture en cours",
+      "ok": "{{count}} événement, lu {{when}}",
+      "ok_plural": "{{count}} événements, lu {{when}}",
+      "paused": "En pause après cinq lectures échouées.",
+      "failed": "Le calendrier n’a pas pu être lu."
+    },
+    "refresh": "Actualiser maintenant",
+    "pause": "Mettre en pause",
+    "resume": "Reprendre",
+    "actions": "Actions pour {{name}}",
+    "delete": {
+      "title": "Supprimer le calendrier ?",
+      "message": "« {{name}} » et ses événements disparaissent du suivi du temps. Les entrées déjà reprises restent."
+    },
+    "form": {
+      "addTitle": "S’abonner à un calendrier",
+      "editTitle": "Modifier le calendrier",
+      "subtitle": "hinata lit seulement le calendrier. Rien n’y est écrit.",
+      "name": "Nom",
+      "nameHint": "Par exemple Travail",
+      "url": "Adresse privée (ICS)",
+      "urlKeep": "Laisse vide pour garder l’adresse enregistrée",
+      "urlHint": "Une adresse privée. Elle est enregistrée chiffrée et n’est plus jamais affichée.",
+      "subscribe": "S’abonner",
+      "color": "Couleur",
+      "rule": "Reprendre automatiquement les événements passés",
+      "ruleHint": "Seulement les événements qui commencent après l’activation, une fois terminés.",
+      "ruleProject": "Projet pour ces entrées"
+    },
+    "help": {
+      "toggle": "Où trouver l’adresse ?",
+      "google": "Paramètres → ton agenda → Intégrer l’agenda → Adresse secrète au format iCal.",
+      "outlook": "Paramètres → Calendrier → Calendriers partagés → Publier un calendrier → lien ICS.",
+      "apple": "iCloud.com → Calendrier → partager comme calendrier public → copier le lien.",
+      "privacy": "Quiconque connaît cette adresse peut lire le calendrier. hinata le récupère pour toi chez ton fournisseur et ne garde que les semaines passées et à venir."
+    },
+    "color": {
+      "blue": "Bleu",
+      "teal": "Sarcelle",
+      "orange": "Orange",
+      "plum": "Prune",
+      "olive": "Olive",
+      "red": "Rouge"
     }
   }
 }

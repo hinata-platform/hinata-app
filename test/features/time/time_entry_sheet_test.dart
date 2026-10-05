@@ -32,6 +32,7 @@ void main() {
     WidgetTester tester, {
     WorkItem? entry,
     TimePlacement? placement,
+    CalendarEventSuggestion? event,
     Size size = const Size(900, 1200),
     TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) async {
@@ -63,6 +64,7 @@ void main() {
                       context,
                       entry: entry,
                       placement: placement,
+                      event: event,
                       onDeleted: () => deletions++,
                     ),
                     child: const Text('open'),
@@ -82,6 +84,33 @@ void main() {
     await tester.tap(find.text('common.save'));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('a calendar event is taken over with its own times: the save is '
+      'the takeover, never a new entry of its own', (tester) async {
+    final event = CalendarEventSuggestion(
+      id: 'e1',
+      subscriptionId: 's1',
+      start: DateTime(2026, 10, 5, 9),
+      end: DateTime(2026, 10, 5, 10, 30),
+      summary: 'Sprint review',
+    );
+    await open(tester, event: event);
+
+    expect(find.text('time.calendarEvents.takeOverTitle'), findsOneWidget);
+    // The title starts as the description; the times are shown, not asked.
+    expect(find.widgetWithText(TextField, 'Sprint review'), findsOneWidget);
+    expect(find.text('1h 30m · 90m · 1:30'), findsNothing);
+
+    await tester.tap(find.text('time.calendarEvents.takeOver'));
+    await tester.pumpAndSettle();
+
+    expect(repository.created, isEmpty);
+    expect(repository.converted, hasLength(1));
+    final (eventId, conversion) = repository.converted.single;
+    expect(eventId, 'e1');
+    expect(conversion.description, 'Sprint review');
+    expect(find.text('time.calendarEvents.takeOverTitle'), findsNothing);
+  });
 
   testWidgets('a new entry opens in duration mode and sends a duration', (
     tester,
@@ -531,6 +560,21 @@ class _FakeTimeRepository implements TimeRepository {
   ) async => requests;
 
   final List<TimeEntryDraft> created = [];
+  final List<(String, CalendarConversion)> converted = [];
+
+  @override
+  Future<WorkItem> convertCalendarEvent(
+    String eventId,
+    CalendarConversion conversion,
+  ) async {
+    converted.add((eventId, conversion));
+    return const WorkItem(
+      id: 'w2',
+      durationMinutes: 90,
+      activityType: 'Development',
+    );
+  }
+
   final List<(String, TimeEntryDraft)> updated = [];
   final List<String> deleted = [];
 

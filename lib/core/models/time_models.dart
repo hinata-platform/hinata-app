@@ -4,6 +4,9 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../util/dates.dart';
 import 'availability_models.dart';
+import 'calendar_subscription_models.dart';
+
+export 'calendar_subscription_models.dart';
 import 'work_models.dart';
 
 /// The extended time-tracking module's own shapes: the timer that is running
@@ -445,6 +448,7 @@ class CalendarWindow extends Equatable {
     this.absences = const [],
     this.holidays = const [],
     this.scheduledMinutes = const {},
+    this.events = const [],
   });
 
   final DateTime from;
@@ -463,6 +467,10 @@ class CalendarWindow extends Equatable {
 
   /// The planned minutes of every day of the window; 0 for a day without hours.
   final Map<DateTime, int> scheduledMinutes;
+
+  /// The events of the reader's own calendar subscriptions (HIN-94):
+  /// suggestions that become entries only when taken over.
+  final List<CalendarEventSuggestion> events;
 
   DayMarks get marks => DayMarks(
     holidays: holidays,
@@ -491,6 +499,10 @@ class CalendarWindow extends Equatable {
               .entries)
         ?parseDate(entry.key): (entry.value as num?)?.toInt() ?? 0,
     },
+    events: [
+      for (final item in (json['events'] as List<dynamic>?) ?? const [])
+        ?CalendarEventSuggestion.fromJson(item as Map<String, dynamic>),
+    ],
   );
 
   @override
@@ -502,5 +514,6 @@ class CalendarWindow extends Equatable {
     absences,
     holidays,
     scheduledMinutes,
+    events,
   ];
 }

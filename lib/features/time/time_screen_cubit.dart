@@ -41,4 +41,7 @@ class TimeScreenCubit extends Cubit<void> {
       _projects.resolveProjects(ids);
 
   Future<void> delete(String entryId) => _time.delete(entryId);
+
+  /// How many of today's calendar events are over and not taken over (HIN-94).
+  Future<int> openCalendarEvents() => _time.openCalendarEventsToday();
 }
