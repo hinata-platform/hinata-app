@@ -1527,15 +1527,14 @@
       "takeOverHint": "Les horaires viennent de ton calendrier. Choisis où l’entrée doit aller.",
       "takeOver": "Reprendre",
       "showLayer": "Afficher les événements du calendrier",
-      "alreadyTaken": "Cet événement est déjà une entrée.",
       "notConvertible": "Les événements sur la journée entière ou de plus d’un jour ne peuvent pas devenir une entrée.",
       "takenOver": "Événement repris comme entrée",
       "untitled": "Événement sans titre",
-      "converted": "Repris",
       "layer": "Calendrier",
       "openToday": "{{count}} événement d’aujourd’hui pas encore repris",
       "openToday_plural": "{{count}} événements d’aujourd’hui pas encore repris",
-      "dismissChip": "Masquer pour l’instant"
+      "dismissChip": "Masquer pour l’instant",
+      "fromCalendar": "De ton calendrier"
     }
   },
   "availability": {

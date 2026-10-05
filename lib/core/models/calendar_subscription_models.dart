@@ -278,21 +278,6 @@ class CalendarEventSuggestion extends Equatable {
     );
   }
 
-  CalendarEventSuggestion convertedTo(String entryId) =>
-      CalendarEventSuggestion(
-        id: id,
-        subscriptionId: subscriptionId,
-        start: start,
-        end: end,
-        color: color,
-        allDay: allDay,
-        free: free,
-        tentative: tentative,
-        summary: summary,
-        location: location,
-        convertedEntryId: entryId,
-      );
-
   @override
   List<Object?> get props => [
     id,

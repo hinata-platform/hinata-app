@@ -1527,15 +1527,14 @@
       "takeOverHint": "時間はカレンダーから取り込まれます。記録先を選んでください。",
       "takeOver": "取り込む",
       "showLayer": "カレンダーの予定を表示",
-      "alreadyTaken": "この予定はすでに記録になっています。",
       "notConvertible": "終日の予定や 1 日を超える予定は記録にできません。",
       "takenOver": "予定を記録として取り込みました",
       "untitled": "タイトルなしの予定",
-      "converted": "取り込み済み",
       "layer": "カレンダー",
       "openToday": "今日の予定のうち {{count}} 件がまだ取り込まれていません",
       "openToday_plural": "今日の予定のうち {{count}} 件がまだ取り込まれていません",
-      "dismissChip": "今は非表示にする"
+      "dismissChip": "今は非表示にする",
+      "fromCalendar": "カレンダーから"
     }
   },
   "availability": {
