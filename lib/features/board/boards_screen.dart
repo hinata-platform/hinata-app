@@ -354,47 +354,53 @@ class _BoardListCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              // Gives way before the manage button does on a narrow card.
-              Flexible(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.7),
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        board.isScrum ? LucideIcons.zap : LucideIcons.columns3,
-                        size: 13,
-                        color: AppColors.navy,
-                      ),
-                      const SizedBox(width: 4),
-                      Flexible(
-                        child: Text(
-                          context.t(
-                            board.isScrum
-                                ? 'board.typeScrum'
-                                : 'board.typeKanban',
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: AppType.caption,
-                            color: AppColors.navy,
+              // Gives way before the manage button does on a narrow card,
+              // and takes all the free room so the button keeps the end:
+              // a Flexible beside a Spacer would split the room in half.
+              Expanded(
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.7),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          board.isScrum
+                              ? LucideIcons.zap
+                              : LucideIcons.columns3,
+                          size: 13,
+                          color: AppColors.navy,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            context.t(
+                              board.isScrum
+                                  ? 'board.typeScrum'
+                                  : 'board.typeKanban',
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: AppType.caption,
+                              color: AppColors.navy,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
-              const Spacer(),
               if (canManage)
                 Builder(
                   builder: (btnContext) => IconButton(

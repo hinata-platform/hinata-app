@@ -11,7 +11,6 @@ import '../../features/absences/absence_year_run_screen.dart';
 import '../../features/absences/absence_types_screen.dart';
 import '../../features/organization/audit/org_audit_screen.dart';
 import '../../features/organization/holidays/holidays_screen.dart';
-import '../../features/admin/users/user_management_screen.dart';
 import '../../features/auth/accept_invite_screen.dart';
 import '../../features/auth/forgot_password_screen.dart';
 import '../../features/auth/login_screen.dart';
@@ -576,21 +575,17 @@ GoRouter buildRouter({
             path: '/admin',
             pageBuilder: (_, state) => _transition(
               state,
-              AdminScreen(initialSection: state.uri.queryParameters['section']),
-            ),
-          ),
-          GoRoute(
-            path: '/admin/users',
-            pageBuilder: (_, state) => _transition(
-              state,
-              UserManagementScreen(
-                // In-app links carry the focus user as `user`; the Connect relay
-                // (native email deep-link) delivers it as the relay `token`.
-                focusUserId:
-                    state.uri.queryParameters['user'] ??
-                    state.uri.queryParameters['token'],
+              AdminScreen(
+                initialSection: state.uri.queryParameters['section'],
+                focusUserId: state.uri.queryParameters['user'],
               ),
             ),
+          ),
+          // User management is a section of the admin area now, the way the
+          // audit log is one. Old links and approval mails still land on it.
+          GoRoute(
+            path: '/admin/users',
+            redirect: (_, state) => adminUsersRedirect(state.uri),
           ),
           // Where the holiday calendars lived before they became an
           // organisation duty (HIN-129). Old links still land on them.
@@ -661,6 +656,21 @@ GoRouter buildRouter({
       ),
     ],
   );
+}
+
+/// Where an old `/admin/users` link goes: the admin area with its user section
+/// open, carrying the user whose drawer it should open. In-app links name that
+/// user as `user`; the Connect relay (native email deep link) delivers it as
+/// the relay `token`.
+String adminUsersRedirect(Uri uri) {
+  final user = uri.queryParameters['user'] ?? uri.queryParameters['token'];
+  return Uri(
+    path: '/admin',
+    queryParameters: {
+      'section': 'users',
+      if (user != null && user.isNotEmpty) 'user': user,
+    },
+  ).toString();
 }
 
 /// Where somebody without the organisation role is sent from the Organisation

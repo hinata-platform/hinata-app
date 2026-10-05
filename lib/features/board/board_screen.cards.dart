@@ -418,35 +418,47 @@ class _BoardCard extends StatelessWidget {
                       ],
                       const SizedBox(height: 11),
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.end,
                         children: [
-                          if (issue.estimateMinutes != null &&
-                              issue.estimateMinutes! > 0)
-                            _MiniMeta(
-                              icon: LucideIcons.timer,
-                              text: fmtDuration(context, issue.spentMinutes),
+                          // The metas wrap under each other before they push
+                          // the avatar off a narrow column.
+                          Expanded(
+                            child: Wrap(
+                              spacing: 10,
+                              runSpacing: 4,
+                              children: [
+                                if (issue.estimateMinutes != null &&
+                                    issue.estimateMinutes! > 0)
+                                  _MiniMeta(
+                                    icon: LucideIcons.timer,
+                                    text: fmtDuration(
+                                      context,
+                                      issue.spentMinutes,
+                                    ),
+                                  ),
+                                if (due != null)
+                                  _MiniMeta(
+                                    // A deadline that follows the project's event date
+                                    // gets the clock glyph, so a card says the date
+                                    // will move without spending a second line on it.
+                                    icon: issue.dueOffset == null
+                                        ? LucideIcons.calendar
+                                        : LucideIcons.calendarClock,
+                                    text: due.text,
+                                    color: due.late ? AppColors.danger : null,
+                                  ),
+                              ],
                             ),
-                          if (due != null) ...[
-                            if (issue.estimateMinutes != null)
-                              const SizedBox(width: 10),
-                            _MiniMeta(
-                              // A deadline that follows the project's event date
-                              // gets the clock glyph, so a card says the date
-                              // will move without spending a second line on it.
-                              icon: issue.dueOffset == null
-                                  ? LucideIcons.calendar
-                                  : LucideIcons.calendarClock,
-                              text: due.text,
-                              color: due.late ? AppColors.danger : null,
-                            ),
-                          ],
-                          const Spacer(),
-                          if (issue.assigneeId != null)
+                          ),
+                          if (issue.assigneeId != null) ...[
+                            const SizedBox(width: 8),
                             HiveAvatar(
                               name: assigneeName ?? issue.assigneeId!,
                               imageUrl: assigneeAvatar,
                               pronouns: assigneePronouns,
                               size: 24,
                             ),
+                          ],
                         ],
                       ),
                     ],
@@ -481,12 +493,16 @@ class _MiniMeta extends StatelessWidget {
       children: [
         Icon(icon, size: 13, color: c),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(
-            fontFamily: AppTheme.fontMono,
-            fontSize: AppType.caption,
-            color: c,
+        Flexible(
+          child: Text(
+            text,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontFamily: AppTheme.fontMono,
+              fontSize: AppType.caption,
+              color: c,
+            ),
           ),
         ),
       ],

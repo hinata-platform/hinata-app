@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
+import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/features/time/time_views.dart';
 
 import 'fake_time_policy_cubit.dart';
@@ -228,6 +229,84 @@ void main() {
     expect(find.text('time.view.timesheet'), findsNothing);
     expect(find.byTooltip('time.view.timesheet'), findsOneWidget);
   });
+
+  // --- the wide head's one line (HIN-110) ------------------------------------
+
+  /// The head on a wide window with [actions] beside the switcher.
+  Widget head(List<Widget> actions) => MediaQuery(
+    data: const MediaQueryData(size: Size(1440, 900)),
+    child: BlocProvider<TimePolicyCubit>.value(
+      value: FakeTimePolicyCubit(TimePolicySnapshot.none, _NoTimeRepository()),
+      child: MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topCenter,
+            child: TimeHead(current: TimeView.calendar, actions: actions),
+          ),
+        ),
+      ),
+    ),
+  );
+
+  void expectFlushWithSwitcher(WidgetTester tester, Finder buttons) {
+    final bar = tester.getRect(find.byType(GlassSwitchBar));
+    expect(buttons, findsWidgets);
+    for (final element in buttons.evaluate()) {
+      final rect = tester.getRect(find.byWidget(element.widget));
+      expect(rect.top, moreOrLessEquals(bar.top), reason: 'top edges flush');
+      expect(
+        rect.bottom,
+        moreOrLessEquals(bar.bottom),
+        reason: 'bottom edges flush',
+      );
+    }
+  }
+
+  testWidgets(
+    'the add button and its arrow stand exactly as tall as the switcher',
+    (tester) async {
+      // A desktop's compact density made the button 36 points tall beside a
+      // 42-point pill, sitting on the pill's baseline.
+      tester.view
+        ..physicalSize = const Size(1440, 900)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(head([TimeAddButton(onNewEntry: () {})]));
+      await tester.pumpAndSettle();
+
+      expect(tester.getSize(find.byType(GlassSwitchBar)).height, 42);
+      expectFlushWithSwitcher(tester, find.byType(FilledButton));
+    },
+    variant: const TargetPlatformVariant(<TargetPlatform>{
+      TargetPlatform.macOS,
+      TargetPlatform.windows,
+      TargetPlatform.iOS,
+    }),
+  );
+
+  testWidgets(
+    'labelled buttons beside the switcher share its line too',
+    (tester) async {
+      tester.view
+        ..physicalSize = const Size(1440, 900)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        head([
+          FilledButton(onPressed: () {}, child: const Text('primary')),
+          OutlinedButton(onPressed: () {}, child: const Text('ghost')),
+        ]),
+      );
+      await tester.pumpAndSettle();
+
+      expectFlushWithSwitcher(tester, find.byType(FilledButton));
+      expectFlushWithSwitcher(tester, find.byType(OutlinedButton));
+    },
+    variant: const TargetPlatformVariant(<TargetPlatform>{
+      TargetPlatform.macOS,
+      TargetPlatform.iOS,
+    }),
+  );
 }
 
 /// A repository nothing asks anything of. The fake cubit already holds the
