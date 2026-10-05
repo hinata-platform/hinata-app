@@ -1527,15 +1527,14 @@
       "takeOverHint": "Die Zeiten kommen aus deinem Kalender. Wähle, wohin der Eintrag gehört.",
       "takeOver": "Übernehmen",
       "showLayer": "Kalendertermine zeigen",
-      "alreadyTaken": "Dieser Termin ist schon ein Eintrag.",
       "notConvertible": "Ganztägige Termine und Termine über mehr als einen Tag können kein Eintrag werden.",
       "takenOver": "Termin als Eintrag übernommen",
       "untitled": "Termin ohne Titel",
-      "converted": "Übernommen",
       "layer": "Kalender",
       "openToday": "{{count}} Termin von heute noch nicht übernommen",
       "openToday_plural": "{{count}} Termine von heute noch nicht übernommen",
-      "dismissChip": "Vorerst ausblenden"
+      "dismissChip": "Vorerst ausblenden",
+      "fromCalendar": "Aus deinem Kalender"
     }
   },
   "availability": {

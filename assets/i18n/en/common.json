@@ -1527,15 +1527,14 @@
       "takeOverHint": "The times come from your calendar. Choose where the entry belongs.",
       "takeOver": "Take over",
       "showLayer": "Show calendar events",
-      "alreadyTaken": "This event is already an entry.",
       "notConvertible": "All-day events and events longer than a day cannot become an entry.",
       "takenOver": "Event taken over as entry",
       "untitled": "Event without title",
-      "converted": "Taken over",
       "layer": "Calendar",
       "openToday": "{{count}} event from today not taken over yet",
       "openToday_plural": "{{count}} events from today not taken over yet",
-      "dismissChip": "Hide for now"
+      "dismissChip": "Hide for now",
+      "fromCalendar": "From your calendar"
     }
   },
   "availability": {

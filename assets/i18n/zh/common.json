@@ -1527,15 +1527,14 @@
       "takeOverHint": "时间来自你的日历。请选择记录归属。",
       "takeOver": "转为记录",
       "showLayer": "显示日历日程",
-      "alreadyTaken": "此日程已是一条记录。",
       "notConvertible": "全天日程和超过一天的日程无法转为记录。",
       "takenOver": "日程已转为记录",
       "untitled": "无标题日程",
-      "converted": "已转为记录",
       "layer": "日历",
       "openToday": "今天有 {{count}} 个日程尚未转为记录",
       "openToday_plural": "今天有 {{count}} 个日程尚未转为记录",
-      "dismissChip": "暂时隐藏"
+      "dismissChip": "暂时隐藏",
+      "fromCalendar": "来自你的日历"
     }
   },
   "availability": {
