@@ -145,20 +145,13 @@ class _Greeting extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          greeting.endsWith(',')
+        _GreetingLine(
+          text: greeting.endsWith(',')
               ? greeting.substring(0, greeting.length - 1)
               : greeting,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontFamily: AppTheme.fontBrand,
-            fontSize: context.isCompact ? AppType.hero : AppType.hero,
-            fontWeight: FontWeight.w800,
-            height: 1.05,
-            letterSpacing: -0.8,
-            color: AppColors.ink,
-          ),
+          sizes: context.isCompact
+              ? const [AppType.display, AppType.heading]
+              : const [AppType.hero, AppType.display],
         ),
         const SizedBox(height: 6),
         DefaultTextStyle(
@@ -196,6 +189,51 @@ class _Greeting extends StatelessWidget {
     } catch (_) {
       return DateFormat.MMMMEEEEd().format(DateTime.now());
     }
+  }
+}
+
+/// The greeting on one line where it fits: it steps down through [sizes]
+/// before it gives up the line, and then wraps instead of
+/// cutting the name off. Measured at the reader's text scale, so 200 % text
+/// still gets the larger letters it asked for.
+class _GreetingLine extends StatelessWidget {
+  const _GreetingLine({required this.text, required this.sizes});
+  final String text;
+  final List<double> sizes;
+
+  TextStyle _style(double size) => TextStyle(
+    fontFamily: AppTheme.fontBrand,
+    fontSize: size,
+    fontWeight: FontWeight.w800,
+    height: 1.05,
+    letterSpacing: -0.8,
+    color: AppColors.ink,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        var size = sizes.last;
+        for (final candidate in sizes) {
+          final painter = TextPainter(
+            text: TextSpan(text: text, style: _style(candidate)),
+            textDirection: direction,
+            textScaler: scaler,
+            maxLines: 1,
+          )..layout(maxWidth: constraints.maxWidth);
+          final fits = !painter.didExceedMaxLines;
+          painter.dispose();
+          if (fits) {
+            size = candidate;
+            break;
+          }
+        }
+        return Text(text, style: _style(size));
+      },
+    );
   }
 }
 
