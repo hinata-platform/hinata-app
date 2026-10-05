@@ -250,7 +250,9 @@ class _GlassWheelState extends State<_GlassWheel> {
                             child: AnimatedDefaultTextStyle(
                               duration: const Duration(milliseconds: 120),
                               style: TextStyle(
-                                fontSize: selected ? 26 : 20,
+                                fontSize: selected
+                                    ? AppType.display
+                                    : AppType.heading,
                                 fontWeight: selected
                                     ? FontWeight.w700
                                     : FontWeight.w500,

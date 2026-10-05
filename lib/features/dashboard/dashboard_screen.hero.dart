@@ -153,7 +153,7 @@ class _Greeting extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
             fontFamily: AppTheme.fontBrand,
-            fontSize: context.isCompact ? 27 : 34,
+            fontSize: context.isCompact ? AppType.hero : AppType.hero,
             fontWeight: FontWeight.w800,
             height: 1.05,
             letterSpacing: -0.8,
@@ -291,18 +291,20 @@ class _SprintHero extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 7),
-          Text(
-            context.t(
-              sprint.isSprint
-                  ? 'dashboard.activeSprint'
-                  : 'dashboard.kanbanBoard',
-            ),
-            style: const TextStyle(
-              fontFamily: AppTheme.fontMono,
-              fontSize: AppType.caption,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: Color(0xFFEBCF8F),
+          Flexible(
+            child: Text(
+              context.t(
+                sprint.isSprint
+                    ? 'dashboard.activeSprint'
+                    : 'dashboard.kanbanBoard',
+              ),
+              style: const TextStyle(
+                fontFamily: AppTheme.fontMono,
+                fontSize: AppType.caption,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: Color(0xFFEBCF8F),
+              ),
             ),
           ),
         ],
@@ -601,28 +603,39 @@ class _ProgressRing extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             CustomPaint(size: Size.square(size), painter: _RingPainter(v)),
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  '${(v * 100).round()}%',
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontBrand,
-                    fontSize: size < 120 ? 22 : 29,
-                    fontWeight: FontWeight.w700,
-                    height: 1,
-                    color: _heroInk,
-                  ),
+            // The ring is a drawing of fixed size; at a large text size the
+            // figure and its label shrink to fit inside it rather than
+            // spilling over the ring.
+            SizedBox.square(
+              dimension: size * 0.72,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      '${(v * 100).round()}%',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontBrand,
+                        fontSize: size < AppType.giant
+                            ? AppType.display
+                            : AppType.hero,
+                        fontWeight: FontWeight.w700,
+                        height: 1,
+                        color: _heroInk,
+                      ),
+                    ),
+                    const SizedBox(height: 3),
+                    Text(
+                      context.t('dashboard.sprintCompleted'),
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        color: Colors.white.withValues(alpha: .7),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  context.t('dashboard.sprintCompleted'),
-                  style: TextStyle(
-                    fontSize: AppType.caption,
-                    color: Colors.white.withValues(alpha: .7),
-                  ),
-                ),
-              ],
+              ),
             ),
           ],
         ),

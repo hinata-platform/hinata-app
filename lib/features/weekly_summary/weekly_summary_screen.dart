@@ -453,7 +453,7 @@ class _Hero extends StatelessWidget {
             TextSpan(
               text: '$completed',
               style: TextStyle(
-                fontSize: context.isCompact ? 40 : 48,
+                fontSize: context.isCompact ? AppType.numeral : AppType.numeral,
                 fontWeight: FontWeight.w800,
                 color: const Color(0xFFF0C464),
               ),
@@ -462,7 +462,7 @@ class _Hero extends StatelessWidget {
               text:
                   '  ${context.t('weeklySummary.heroCompleted', variables: {'count': '$completed'})}',
               style: TextStyle(
-                fontSize: context.isCompact ? 19 : 22,
+                fontSize: context.isCompact ? AppType.heading : AppType.display,
                 fontWeight: FontWeight.w700,
               ),
             ),

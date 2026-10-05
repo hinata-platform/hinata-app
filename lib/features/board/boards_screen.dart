@@ -299,7 +299,7 @@ class _BoardListState extends State<_BoardList> with LoadWhenShown<_BoardList> {
                   ),
                   mainAxisSpacing: 16,
                   crossAxisSpacing: 16,
-                  mainAxisExtent: 150,
+                  mainAxisExtent: context.tileExtent(150),
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) => _BoardListCard(

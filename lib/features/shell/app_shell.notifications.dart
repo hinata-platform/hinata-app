@@ -268,32 +268,39 @@ class _NotifPopoverCard extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
             child: Row(
               children: [
-                Text(
-                  context.t('notifications.title'),
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: AppType.label,
-                    color: AppColors.ink,
+                Expanded(
+                  child: Text(
+                    context.t('notifications.title'),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: AppType.label,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 8),
                 if (hasUnread)
-                  Semantics(
-                    button: true,
-                    child: InkWell(
-                      onTap: onMarkAllRead,
-                      borderRadius: BorderRadius.circular(6),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 2,
-                        ),
-                        child: Text(
-                          context.t('notifications.markAllRead'),
-                          style: TextStyle(
-                            fontSize: AppType.caption,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.accentInk,
+                  Flexible(
+                    child: Semantics(
+                      button: true,
+                      child: InkWell(
+                        onTap: onMarkAllRead,
+                        borderRadius: BorderRadius.circular(6),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
+                          child: Text(
+                            context.t('notifications.markAllRead'),
+                            textAlign: TextAlign.end,
+                            style: TextStyle(
+                              fontSize: AppType.caption,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.accentInk,
+                            ),
                           ),
                         ),
                       ),
@@ -350,12 +357,15 @@ class _NotifPopoverCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text(
-                      context.t('notifications.viewAll'),
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.inkSoft,
+                    Flexible(
+                      child: Text(
+                        context.t('notifications.viewAll'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 6),

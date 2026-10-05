@@ -16,7 +16,9 @@ void main() {
       'lib/features/onboarding/onboarding_screen.cards.dart', // miniatures
       'lib/features/onboarding/onboarding_screen.chrome.dart', // miniatures
     };
-    final literal = RegExp(r'fontSize:\s*\d');
+    // A digit anywhere in the size expression, conditions included
+    // (`compact ? 18 : 22`); a scale factor (`* scale`) is let through.
+    final literal = RegExp(r'fontSize:[^,;\n*/]*(?<![\w.])\d');
     final offenders = <String>[];
     for (final entity in Directory('lib').listSync(recursive: true)) {
       if (entity is! File || !entity.path.endsWith('.dart')) continue;

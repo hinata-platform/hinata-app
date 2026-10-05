@@ -83,11 +83,13 @@ class _FocusItem extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 3),
-                      Row(
+                      // Wraps rather than running off the card when the text is
+                      // large.
+                      Wrap(
+                        spacing: 8,
                         children: [
                           IdMono(issue.readableId),
                           if (due != null) ...[
-                            const SizedBox(width: 8),
                             Text(
                               due.text,
                               style: TextStyle(
