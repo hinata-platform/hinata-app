@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Projektvorlagen umgeschaltet",
       "PROJECT_SCHEDULE_SHIFTED": "Termin des Projekts verschoben",
       "USER_EMAIL_CHANGED": "E-Mail von einem Admin geändert",
-      "ARTICLE_MOVED": "Seite verschoben"
+      "ARTICLE_MOVED": "Seite verschoben",
+      "TIME_REPORT_EXPORTED": "Zeitbericht exportiert",
+      "TIME_ENTRIES_IMPORTED": "Zeiteinträge importiert",
+      "TIME_OFF_REQUEST_EDITED": "Abwesenheitsantrag bearbeitet",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "Hinweis auf Urlaubsverfall verschickt",
+      "TIME_OFF_PROPOSAL_DECIDED": "Über Urlaubsverfall entschieden",
+      "TIME_OFF_REPORT_EXPORTED": "Abwesenheitsbericht exportiert",
+      "TIME_OFF_YEAR_RUN": "Jahreslauf der Abwesenheiten",
+      "TIME_OFF_RETENTION_RUN": "Aufbewahrungslauf der Abwesenheiten",
+      "PROJECT_COPIED": "Projekt kopiert",
+      "PROJECT_TEMPLATE_MARKED": "Projekt als Vorlage markiert",
+      "PROJECT_INSTANTIATED": "Projekt aus Vorlage erstellt"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",

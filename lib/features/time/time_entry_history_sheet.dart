@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/paged_cubit.dart';
+import '../../core/i18n/audit_labels.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_policy_models.dart';
 import '../../core/models/work_models.dart';
@@ -216,7 +217,7 @@ class _HistoryRow extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  context.t('audit.action.${row.action}'),
+                  context.auditAction(row.action),
                   style: TextStyle(
                     fontSize: AppType.label,
                     fontWeight: FontWeight.w600,
