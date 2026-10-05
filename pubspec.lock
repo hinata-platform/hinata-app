@@ -1135,8 +1135,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: "perf/ios27-material"
-      resolved-ref: b694e313190b5d4ce37a71eb5605b69ba827921e
+      ref: "a11y/semantics-pass"
+      resolved-ref: "438a90caf0396b657477ae60f8d880df5dcf199c"
       url: "https://github.com/hinata-platform/liquid_glass_widgets.git"
     source: git
     version: "1.8.1"
