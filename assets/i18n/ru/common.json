@@ -3388,7 +3388,18 @@
       "PROJECT_TEMPLATES_POLICY_CHANGED": "Шаблоны проектов переключены",
       "PROJECT_SCHEDULE_SHIFTED": "Дата проекта перенесена",
       "USER_EMAIL_CHANGED": "Почта изменена администратором",
-      "ARTICLE_MOVED": "Страница перемещена"
+      "ARTICLE_MOVED": "Страница перемещена",
+      "TIME_REPORT_EXPORTED": "Отчёт о времени экспортирован",
+      "TIME_ENTRIES_IMPORTED": "Записи времени импортированы",
+      "TIME_OFF_REQUEST_EDITED": "Заявка на отсутствие изменена",
+      "TIME_OFF_EXPIRY_NOTICE_SENT": "Уведомление о сгорании отпуска отправлено",
+      "TIME_OFF_PROPOSAL_DECIDED": "Принято решение о сгорании отпуска",
+      "TIME_OFF_REPORT_EXPORTED": "Отчёт об отсутствиях экспортирован",
+      "TIME_OFF_YEAR_RUN": "Годовой расчёт отсутствий",
+      "TIME_OFF_RETENTION_RUN": "Очистка данных об отсутствиях",
+      "PROJECT_COPIED": "Проект скопирован",
+      "PROJECT_TEMPLATE_MARKED": "Проект отмечен как шаблон",
+      "PROJECT_INSTANTIATED": "Проект создан из шаблона"
     },
     "meta": {
       "oldRole": "Прежняя роль",

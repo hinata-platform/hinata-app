@@ -159,7 +159,8 @@ void main() {
         ],
       );
 
-      expect(find.text('audit.action.TIME_ENTRY_UPDATED'), findsOneWidget);
+      // Tests load no translations: the action reads as its own words.
+      expect(find.text('Time entry updated'), findsOneWidget);
       expect(find.text('Alex Lead'), findsOneWidget);
       expect(
         find.textContaining('time.history.field.minutes: 45'),
