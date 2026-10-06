@@ -150,19 +150,34 @@
   -->
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/fc38c648899202c09e71e83fb0199230078b0dae/docs/screenshots/linux/dashboard.png</image>
-      <caption>The dashboard, with the active sprint and today's work</caption>
-      <caption xml:lang="de">Das Dashboard mit dem laufenden Sprint und der Arbeit des Tages</caption>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/dashboard.png</image>
+      <caption>Your projects, on your server</caption>
+      <caption xml:lang="de">Deine Projekte, auf deinem Server</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/fc38c648899202c09e71e83fb0199230078b0dae/docs/screenshots/linux/sprint-planning.png</image>
-      <caption>Planning a sprint, with capacity and story points</caption>
-      <caption xml:lang="de">Sprint-Planung mit Kapazität und Story Points</caption>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/board.png</image>
+      <caption>One board for the whole sprint</caption>
+      <caption xml:lang="de">Ein Board für den ganzen Sprint</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/fc38c648899202c09e71e83fb0199230078b0dae/docs/screenshots/linux/boards.png</image>
-      <caption>Scrum and Kanban boards across projects</caption>
-      <caption xml:lang="de">Scrum- und Kanban-Boards über Projekte hinweg</caption>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/issues.png</image>
+      <caption>Find the issue you need</caption>
+      <caption xml:lang="de">Das richtige Ticket schnell gefunden</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/gantt.png</image>
+      <caption>Which task holds up the rest?</caption>
+      <caption xml:lang="de">Welche Aufgabe bremst den Rest?</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/reports.png</image>
+      <caption>Will the team finish the sprint?</caption>
+      <caption xml:lang="de">Schafft das Team den Sprint?</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/comments.png</image>
+      <caption>Sort it out on the issue</caption>
+      <caption xml:lang="de">Fragen klären, direkt am Ticket</caption>
     </screenshot>
   </screenshots>
 
