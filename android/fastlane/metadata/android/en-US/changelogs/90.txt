@@ -1,0 +1,3 @@
+• The store page now lists all nine languages the app speaks
+• New screenshots and a rewritten description
+• Smaller fixes
