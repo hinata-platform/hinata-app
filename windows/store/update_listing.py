@@ -125,21 +125,30 @@ def outcome(value):
 
 
 def load_shots():
+    """Screenshots in listing order. The images carry their headline as text,
+    so each language may have its own copy in screenshots/<lang>/; a file at
+    screenshots/ itself serves every language that has none."""
     with open(CAPTIONS, encoding="utf-8") as f:
         cfg = json.load(f)
     shots = cfg["screenshots"]
+    langs = {lang for s in shots for lang in s["captions"]}
     for s in shots:
-        path = os.path.join(SHOTS, s["file"])
-        if not os.path.exists(path):
-            die(f"missing screenshot {path}")
+        s["paths"], s["storeNames"] = {}, {}
+        for lang in langs:
+            path = os.path.join(SHOTS, lang, s["file"])
+            if not os.path.exists(path):
+                path = os.path.join(SHOTS, s["file"])
+            if not os.path.exists(path):
+                die(f"missing screenshot {s['file']} for {lang}")
+            # The Store name carries a content hash: repainting an image without
+            # renaming it would otherwise look "already applied" and never upload.
+            with open(path, "rb") as f:
+                digest = hashlib.sha256(f.read()).hexdigest()[:8]
+            s["paths"][lang] = path
+            s["storeNames"][lang] = f"{digest}_{s['file']}"
         for lang, cap in s["captions"].items():
             if len(cap) > 200:
                 die(f"caption for {s['file']} [{lang}] is {len(cap)} chars (max 200)")
-        # The Store name carries a content hash: repainting an image without
-        # renaming it would otherwise look "already applied" and never upload.
-        with open(path, "rb") as f:
-            digest = hashlib.sha256(f.read()).hexdigest()[:8]
-        s["storeName"] = f"{digest}_{s['file']}"
     return shots, cfg.get("notesForCertification", "")
 
 
@@ -152,13 +161,17 @@ def load_text():
     return {k.lower(): v for k, v in cfg.items() if not k.startswith("_")}
 
 
-def already_applied(listing, shots, text):
+def store_name(s, lang):
+    return s["storeNames"].get(lang) or s["storeNames"]["en-us"]
+
+
+def already_applied(listing, shots, text, lang):
     """True when this listing already carries these screenshots AND this text."""
     base = listing["baseListing"]
     live = {i["fileName"] for i in base.get("images", [])
             if i.get("imageType") == IMAGE_TYPE
             and i.get("fileStatus") != "PendingDelete"}
-    if live != {s["storeName"] for s in shots}:
+    if live != {store_name(s, lang) for s in shots}:
         return False
     return all(base.get(k) == v for k, v in (text or {}).items())
 
@@ -185,7 +198,7 @@ def swap_images(listing, shots, lang):
         kept.append(img)
     for s in shots:
         kept.append({
-            "fileName": s["storeName"],
+            "fileName": store_name(s, lang),
             "fileStatus": "PendingUpload",
             "imageType": IMAGE_TYPE,
             "description": s["captions"].get(lang, s["captions"]["en-us"]),
@@ -197,8 +210,13 @@ def swap_images(listing, shots, lang):
 def zip_images(shots):
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+        seen = set()
         for s in shots:
-            z.write(os.path.join(SHOTS, s["file"]), s["storeName"])
+            for lang, path in s["paths"].items():
+                name = s["storeNames"][lang]
+                if name not in seen:
+                    seen.add(name)
+                    z.write(path, name)
     return buf.getvalue()
 
 
@@ -285,7 +303,7 @@ def main(argv=None):
                       f"{i.get('fileName')}  |  {i.get('description', '')}")
         return outcome("dump")
 
-    if all(already_applied(listings[l], shots, text.get(l.lower()))
+    if all(already_applied(listings[l], shots, text.get(l.lower()), l.lower())
            for l in langs):
         print("listings already carry these screenshots — nothing to do")
         return outcome("already-applied")
