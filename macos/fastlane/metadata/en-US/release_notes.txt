@@ -1,6 +1,3 @@
-• Better accessibility: stronger contrast, larger touch targets, screen reader labels
-• Text stays readable at twice the size, nothing gets cut off
-• Calmer type with one consistent scale across the app
-• Settings, organisation and admin pages share one layout and show one section at a time
-• Report sick days straight from the absences page
-• Smoother glass effects and several smaller fixes
+• The store page now lists all nine languages the app speaks
+• New screenshots and a rewritten description
+• Smaller fixes

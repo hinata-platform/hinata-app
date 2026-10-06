@@ -1,6 +1,3 @@
-• Bessere Barrierefreiheit: stärkere Kontraste, größere Tippflächen, Beschriftungen für Screenreader
-• Text bleibt auch in doppelter Größe lesbar und wird nicht abgeschnitten
-• Ruhigere Schrift mit einer einheitlichen Größenskala
-• Einstellungen, Organisation und Adminbereich haben ein gemeinsames Layout mit einem Abschnitt pro Ansicht
-• Krankmeldung direkt aus den Abwesenheiten
-• Flüssigere Glaseffekte und mehrere kleinere Korrekturen
+• Die Store-Seite nennt jetzt alle neun Sprachen der App
+• Neue Screenshots und eine überarbeitete Beschreibung
+• Kleinere Korrekturen
