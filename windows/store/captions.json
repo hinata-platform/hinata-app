@@ -4,36 +4,43 @@
     {
       "file": "01_dashboard.png",
       "captions": {
-        "en-us": "Your work at a glance: sprint progress, today's focus and project health on one dashboard.",
-        "de-de": "Alles auf einen Blick: Sprint-Fortschritt, Tagesfokus und Projektstatus auf einem Dashboard."
+        "en-us": "Your projects, on your server. Boards, issues, Gantt and time tracking, hosted by you.",
+        "de-de": "Deine Projekte, auf deinem Server. Boards, Tickets, Gantt und Zeiterfassung, selbst gehostet."
       }
     },
     {
       "file": "02_board.png",
       "captions": {
-        "en-us": "Scrum and Kanban boards with drag & drop, WIP limits and live sprint progress.",
-        "de-de": "Scrum- und Kanban-Boards mit Drag & Drop, WIP-Limits und laufendem Sprint-Fortschritt."
+        "en-us": "One board for the whole sprint. Scrum or Kanban. A column warns you when its WIP limit is full.",
+        "de-de": "Ein Board für den ganzen Sprint. Scrum oder Kanban. Eine Spalte meldet sich, wenn ihr WIP-Limit voll ist."
       }
     },
     {
       "file": "03_issues.png",
       "captions": {
-        "en-us": "Every issue in its place: grouping, sorting, filters, priorities and assignees.",
-        "de-de": "Jeder Vorgang an seinem Platz: Gruppierung, Sortierung, Filter, Priorität und Zuständigkeit."
+        "en-us": "Find the issue you need. Filter by state, person or priority. Hold one to edit several.",
+        "de-de": "Das richtige Ticket schnell gefunden. Nach Status, Person oder Priorität filtern. Lange drücken, um mehrere zu bearbeiten."
       }
     },
     {
       "file": "04_gantt.png",
       "captions": {
-        "en-us": "Timeline and Gantt view with dependencies, milestones and live progress.",
-        "de-de": "Timeline- und Gantt-Ansicht mit Abhängigkeiten, Meilensteinen und Live-Fortschritt."
+        "en-us": "Which task holds up the rest? The Gantt chart draws dependencies and marks the critical path.",
+        "de-de": "Welche Aufgabe bremst den Rest? Das Gantt-Diagramm zeigt Abhängigkeiten und den kritischen Pfad."
       }
     },
     {
       "file": "05_reports.png",
       "captions": {
-        "en-us": "Reports that matter: burndown, velocity, cycle time and issue distribution.",
-        "de-de": "Aussagekräftige Reports: Burndown, Velocity, Cycle Time und Verteilung der Vorgänge."
+        "en-us": "Will the team finish the sprint? Burndown, velocity and a count of issues per state.",
+        "de-de": "Schafft das Team den Sprint? Burndown, Velocity und Tickets je Status."
+      }
+    },
+    {
+      "file": "06_comments.png",
+      "captions": {
+        "en-us": "Sort it out on the issue. Reply in threads, react, or record a voice note.",
+        "de-de": "Fragen klären, direkt am Ticket. Antworten im Thread, Reaktionen und Sprachnotizen."
       }
     }
   ],
