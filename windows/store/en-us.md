@@ -25,9 +25,9 @@ as if Windows were the only place Hinata exists.
 
     hinata
 
-## Short description  (≤ 270 characters — currently 233)
+## Short description  (≤ 270 characters — currently 232)
 
-    Open-source, self-hosted project and issue tracking. Connect Hinata to your own server and keep your team's work on infrastructure you control — agile boards, sprints, Gantt timelines, reports and a built-in wiki, with no per-user pricing.
+    Open-source project and issue tracking on your own Hinata Server. Plan work on Scrum and Kanban boards, run sprints, follow a Gantt chart, track time and absences, and keep a knowledge base for your team. There is no per-user price.
 
 ## Description
 
@@ -57,28 +57,33 @@ product."* Keeping a line is fine too — this one is accurate:
 
 ## Product features  (bulleted list, up to 20)
 
-    Agile boards with drag & drop and WIP limits
-    Sprint planning with capacity, story points and burndown
-    Epic → Story → Sub-task hierarchy with dependencies
-    Gantt and Timeline views with live progress
-    Reports: burndown, velocity, cycle time and distribution
-    Weekly timesheets by activity
-    Threaded comments with reactions and voice notes
-    Drag-and-drop file, photo and video attachments
-    Built-in hierarchical Markdown knowledge base
+    Scrum and Kanban boards with drag and drop and WIP limits
+    Sprints with capacity, story points, burndown and velocity
+    Issue hierarchy from epic to story to sub-task, with dependencies
+    Gantt chart with dependencies, milestones and the critical path
+    Project templates with deadlines relative to the project's date
+    Timer with stopwatch, countdown and Pomodoro modes
+    Time tracking in a list, a calendar or a weekly timesheet
+    Timesheet approval, time-off requests and a team absence calendar
+    Time reports with workload, plus CSV import and export
+    Comments with replies, emoji reactions and voice messages
+    File, photo and video attachments with a full-screen viewer
+    Knowledge base with spaces, sub-pages and Markdown articles
     Ctrl + K command palette with global search
+    Notifications at the times you choose
     Single sign-on: OpenID Connect, OAuth 2.0, SAML, LDAP
     Two-factor authentication (TOTP)
-    Multi-server support with separate secure sessions
+    Several servers, each with its own secure session
+    Nine languages, with a right-to-left layout for Arabic
     Light and dark theme
-    Self-hosted — your data never leaves your server
+    Self-hosted: your data stays on your server
 
 ## Keywords  (max 7, ≤ 40 chars each, ≤ 21 words total — this uses 12)
 
     project management
     issue tracker
     self-hosted
-    agile boards
+    time tracking
     sprint planning
     kanban
     open source

@@ -1,1 +1,1 @@
-project management,issue tracker,kanban,scrum,sprint,agile,gantt,backlog,self-hosted,tasks
+project management,issue tracker,kanban,scrum,sprint,gantt,time tracking,timesheet,self-hosted,wiki

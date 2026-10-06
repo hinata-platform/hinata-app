@@ -1,1 +1,1 @@
-Projekte & Vorgänge, selbst gehostet: Boards, Sprints, Gantt, Berichte & Wiki.
+Projekte planen, Sprints führen und Zeiten erfassen auf deinem Hinata-Server.

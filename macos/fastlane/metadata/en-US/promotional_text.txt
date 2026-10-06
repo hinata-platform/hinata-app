@@ -1,1 +1,1 @@
-Your own project HQ — boards, sprints, Gantt, reports, a wiki and threaded comments, all served by the Hinata Server you host. No user or board limits, ever.
+Boards, sprints, Gantt, time tracking, absences and a wiki for your team, on a Hinata Server you run yourself. There is no per-user price and no limit on boards.
