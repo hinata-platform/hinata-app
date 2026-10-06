@@ -1,1 +1,1 @@
-Self-hosted project tracker
+Self-hosted project tracking

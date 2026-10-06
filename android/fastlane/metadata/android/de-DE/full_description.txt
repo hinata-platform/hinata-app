@@ -1,33 +1,50 @@
-Hinata ist ein quelloffener, selbst gehosteter Client für Projekt- und Vorgangsverwaltung. Du verbindest ihn mit deinem eigenen Hinata-Server – so bleibt die Arbeit deines Teams auf einer Infrastruktur, die du kontrollierst: ohne Preis pro Nutzer und ohne Board-Limit.
+Hinata ist eine quelloffene App, mit der du Projekte planst und Vorgänge verfolgst. Sie verbindet sich mit einem Hinata-Server, den du oder deine Organisation betreibt. So bleibt die Arbeit deines Teams auf eurer eigenen Infrastruktur. Es gibt keinen Preis pro Nutzer und keine Grenze bei den Boards.
 
-Eine App für jeden Bildschirm: Smartphone, Tablet und Desktop teilen sich eine vollständig responsive Oberfläche, die sich über Breakpoints nach dem Goldenen Schnitt anpasst – im hellen oder dunklen Design.
+Die App läuft auf Smartphone, Tablet und Computer, im hellen oder dunklen Design. Sprachen: Deutsch, Englisch, Chinesisch, Hindi, Spanisch, Japanisch, Französisch, Russisch und Arabisch (von rechts nach links).
 
-DAS KANNST DU TUN
-• Agile Boards – Drag & Drop über Spalten, WIP-Limits sowie Board-, Backlog- und Timeline-Ansicht
-• Sprints – planen, durchführen und auswerten mit Kapazität, Story Points und Burndown
-• Vorgänge – Hierarchie aus Epic → Story → Unteraufgabe, Abhängigkeiten, Labels und Archivierung
-• Gantt & Timeline – Start-/Fälligkeitsdaten, Abhängigkeiten und Live-Fortschritt
-• Berichte – Burndown, Velocity, Durchlaufzeit und Verteilungen
-• Zeiterfassung – wöchentliche Zeiten je Aktivität
-• Kommentare – Antwort-Threads, Emoji-Reaktionen und Sprachnotizen, live aktualisiert
-• Anhänge – Dateien, Fotos und Videos per Drag & Drop mit Glass-Lightbox
-• Wissensdatenbank – ein integriertes, hierarchisches Markdown-Wiki mit Smart Links
-• Befehlspalette – ⌘K-Suche über alles
-• Benachrichtigungen – in der App, per E-Mail und Push für Zuweisungen, @Erwähnungen und Fälligkeiten
+PLANUNG UND BOARDS
+• Scrum- und Kanban-Boards: Karten zwischen Spalten ziehen, WIP-Limits setzen, nach Epic, zuständiger Person oder Projekt gruppieren
+• Board, Backlog und Zeitleiste als Ansichten derselben Arbeit
+• Sprints mit Kapazität, Story Points, Burndown und Velocity
+• Vorgänge in einer Hierarchie vom Epic über die Story bis zur Unteraufgabe, mit Abhängigkeiten und Labels. Beobachten, klonen, archivieren oder in ein anderes Projekt verschieben
+• Einen Vorgang drucken oder als PDF, Excel, Word oder XML exportieren
+• Gantt-Diagramm mit Abhängigkeiten, Meilensteinen und kritischem Pfad
+• Projektvorlagen: ein Projekt kopieren und Fristen relativ zum Projektdatum setzen, in Kalender- oder Arbeitstagen
 
-FÜR TEAMS GEMACHT
-• Projekte & Teams mit projektbezogenen Workflows, Schlüsseln und Mitgliedern
-• Anmeldung mit lokalen Zugangsdaten und optionaler Zwei-Faktor-Authentifizierung (TOTP) oder SSO (OpenID Connect, OAuth 2.0, SAML, LDAP)
-• Selbstregistrierung mit E-Mail-Bestätigung und Passwort-vergessen
-• Multi-Server: mehrere Server speichern und wechseln, jeder mit eigener sicherer Sitzung
+ZEIT UND ABWESENHEITEN
+• Ein Timer als Stoppuhr, Countdown oder Pomodoro
+• Zeiten in Liste, Kalender oder Stundenzettel erfassen und den Stundenzettel zur Freigabe einreichen
+• Urlaub beantragen, genehmigen lassen und im Teamkalender sehen, wer abwesend ist
+• Arbeitszeiten, Feiertage und Urlaubskonten an einem Ort
+• Zeitberichte mit Übersicht, Einträgen und Auslastung, Import und Export als CSV
 
-DEINE DATEN, DEIN SERVER
-Hinata sammelt selbst nichts. Alle Inhalte liegen auf dem Hinata-Server, mit dem du dich verbindest. Push-Benachrichtigungen werden über Firebase Cloud Messaging nur mit einem Geräte-Token zugestellt – kein Tracking, keine Analyse.
+ZUSAMMENARBEIT
+• Kommentare mit Antworten, Emoji-Reaktionen und Sprachnachrichten
+• Dateien, Fotos und Videos anhängen und im Vollbild ansehen
+• Eine Wissensdatenbank mit Bereichen, Unterseiten und Markdown-Artikeln. Mit @ verlinkst du einen Vorgang, einen Artikel oder eine Kollegin
+• Projektberichte mit Burndown und Auswertungen nach Status, Priorität und zuständiger Person, Export als PDF, CSV oder JSON
+• Ein Dashboard, das du selbst zusammenstellst, und eine Wochenübersicht
+• Eine Befehlspalette, die Projekte, Vorgänge, Personen und Artikel durchsucht
+• Benachrichtigungen in der App, per E-Mail und als Push für Zuweisungen, @Erwähnungen und Fälligkeiten. Du bestimmst, an welchen Tagen und zu welchen Zeiten E-Mails und Push kommen
+• Git-Anbindung an GitHub, GitLab und Bitbucket
 
-Zur Anmeldung wird ein Hinata-Server benötigt. Wie du selbst hostest, erfährst du auf hinata.ahmadre.com.
+FÜR ORGANISATIONEN
+• Projekte und Teams mit eigenen Workflows, Schlüsseln und Mitgliedern
+• Eine Rolle für Organisations-Admins: Arbeitszeiten, Freigaben, Abwesenheiten, Feiertage und Abrechnung
+• Anmeldung mit Passwort und optionaler Zwei-Faktor-Authentifizierung (TOTP) oder per SSO mit OpenID Connect, OAuth 2.0, SAML oder LDAP
+• Selbst registrieren mit E-Mail-Bestätigung, Passwort zurücksetzen
+• Mehrere Server speichern und wechseln, jeder mit eigener sicherer Sitzung
 
-BERECHTIGUNGEN & WARUM WIR SIE BENÖTIGEN
-• Benachrichtigungen – Zuweisungen, @Erwähnungen, Kommentar-Antworten und Fälligkeiten
-• Mikrofon – Sprachkommentare und Ton für Videos, die du anhängst
-• Kamera & Fotos – Fotos/Videos aufnehmen oder auswählen, um sie an Vorgänge anzuhängen
-Wir fragen jede Berechtigung erst ab, wenn du die zugehörige Funktion zum ersten Mal nutzt.
+BARRIEREFREIHEIT
+Textfarben erfüllen die WCAG-Kontrastwerte, Tippflächen sind groß und Bedienelemente haben Beschriftungen für Screenreader. Auch bei doppelter Schriftgröße wird nichts abgeschnitten.
+
+DEINE DATEN BLEIBEN AUF DEINEM SERVER
+Hinata sammelt selbst nichts. Alles, was du anlegst, liegt auf dem Hinata-Server, mit dem du dich verbindest. Push-Benachrichtigungen laufen über Firebase Cloud Messaging und nutzen nur ein Geräte-Token. Die App hat kein Tracking und keine Analyse.
+
+Zum Anmelden brauchst du einen Hinata-Server. Wie du selbst einen betreibst, steht auf hinata.ahmadre.com.
+
+BERECHTIGUNGEN UND WOFÜR HINATA SIE BRAUCHT
+• Benachrichtigungen: Zuweisungen, @Erwähnungen, Antworten auf deine Kommentare und Fälligkeiten
+• Mikrofon: Sprachkommentare und Ton in Videos, die du anhängst
+• Kamera und Fotos: Fotos und Videos aufnehmen oder auswählen, um sie an Vorgänge anzuhängen
+Hinata fragt jede Berechtigung erst, wenn du die Funktion zum ersten Mal nutzt.

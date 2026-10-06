@@ -27,9 +27,9 @@ geschrieben, als gäbe es Hinata nur für Windows.
 
     hinata
 
-## Kurzbeschreibung  (≤ 270 Zeichen — aktuell 246)
+## Kurzbeschreibung  (≤ 270 Zeichen — aktuell 266)
 
-    Quelloffene, selbst gehostete Projekt- und Vorgangsverwaltung. Verbinde Hinata mit deinem eigenen Server und behalte die Arbeit deines Teams auf eigener Infrastruktur — agile Boards, Sprints, Gantt, Berichte und ein integriertes Wiki, ohne Preis pro Nutzer.
+    Quelloffene Projekt- und Vorgangsverwaltung auf deinem eigenen Hinata-Server. Plane die Arbeit auf Scrum- und Kanban-Boards, führe Sprints, behalte das Gantt-Diagramm im Blick, erfasse Zeiten und Abwesenheiten und pflege eine Wissensdatenbank. Ohne Preis pro Nutzer.
 
 ## Beschreibung
 
@@ -61,28 +61,33 @@ Falls du etwas eintragen willst:
 
 ## Produktfeatures  (Aufzählung, max. 20)
 
-    Agile Boards mit Drag & Drop und WIP-Limits
-    Sprint-Planung mit Kapazität, Story Points und Burndown
-    Hierarchie aus Epic → Story → Unteraufgabe mit Abhängigkeiten
-    Gantt- und Timeline-Ansicht mit Live-Fortschritt
-    Berichte: Burndown, Velocity, Durchlaufzeit und Verteilungen
-    Wöchentliche Zeiterfassung je Aktivität
-    Kommentar-Threads mit Reaktionen und Sprachnotizen
-    Dateien, Fotos und Videos per Drag & Drop anhängen
-    Integriertes, hierarchisches Markdown-Wiki
+    Scrum- und Kanban-Boards mit Ziehen und Ablegen und WIP-Limits
+    Sprints mit Kapazität, Story Points, Burndown und Velocity
+    Hierarchie vom Epic über die Story bis zur Unteraufgabe, mit Abhängigkeiten
+    Gantt-Diagramm mit Abhängigkeiten, Meilensteinen und kritischem Pfad
+    Projektvorlagen mit Fristen relativ zum Projektdatum
+    Timer als Stoppuhr, Countdown oder Pomodoro
+    Zeiterfassung in Liste, Kalender oder Stundenzettel
+    Freigabe von Stundenzetteln, Urlaubsanträge und ein Teamkalender für Abwesenheiten
+    Zeitberichte mit Auslastung, dazu Import und Export als CSV
+    Kommentare mit Antworten, Emoji-Reaktionen und Sprachnachrichten
+    Dateien, Fotos und Videos anhängen und im Vollbild ansehen
+    Wissensdatenbank mit Bereichen, Unterseiten und Markdown-Artikeln
     Befehlspalette mit globaler Suche (Strg + K)
+    Benachrichtigungen zu den Zeiten, die du festlegst
     Single Sign-on: OpenID Connect, OAuth 2.0, SAML, LDAP
     Zwei-Faktor-Authentifizierung (TOTP)
-    Multi-Server mit getrennten sicheren Sitzungen
+    Mehrere Server, jeder mit eigener sicherer Sitzung
+    Neun Sprachen, Arabisch von rechts nach links
     Helles und dunkles Design
-    Selbst gehostet – deine Daten verlassen deinen Server nicht
+    Selbst gehostet: deine Daten bleiben auf deinem Server
 
 ## Keywords  (max. 7, ≤ 40 Zeichen, ≤ 21 Wörter gesamt — hier 9)
 
     Projektmanagement
     Aufgabenverwaltung
-    self-hosted
-    agile Boards
+    selbst gehostet
+    Zeiterfassung
     Sprint-Planung
     Kanban
     Open Source

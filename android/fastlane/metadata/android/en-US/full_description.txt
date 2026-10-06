@@ -1,33 +1,50 @@
-Hinata is an open-source, self-hosted project- and issue-tracking client. You connect it to your own Hinata Server, so your team's work stays on infrastructure you control — with no per-user pricing and no board limits.
+Hinata is an open-source app for planning projects and tracking issues. It connects to a Hinata Server that you or your organization run, so your team's work stays on your own infrastructure. There is no per-user price and no limit on boards.
 
-One app, every screen: phone, tablet and desktop share a single, fully responsive interface that adapts through golden-ratio breakpoints, in a light or dark theme.
+The same app runs on phones, tablets and computers, fits its layout to the screen and has a light and a dark theme. It speaks English, German, Chinese, Hindi, Spanish, Japanese, French, Russian and Arabic, and lays out right to left in Arabic.
 
-WHAT YOU CAN DO
-• Agile boards — drag & drop across columns, WIP limits, and Board, Backlog and Timeline views
-• Sprints — plan, run and review with capacity, story points and burndown
-• Issues — Epic → Story → Sub-task hierarchy, dependencies, labels and archiving
-• Gantt & Timeline — start/due dates, dependencies and live progress
-• Reports — burndown, velocity, cycle time and distribution charts
-• Timesheets — weekly time tracking by activity
-• Comments — threaded replies, emoji reactions and voice notes, updating live
-• Attachments — drag-and-drop files, photos and videos with a glass lightbox
-• Knowledge base — a built-in, hierarchical Markdown wiki with smart links
-• Command palette — ⌘K global search across everything
-• Notifications — in-app, e-mail and push for assignments, @mentions and due dates
+PLANNING AND BOARDS
+• Scrum and Kanban boards: drag cards between columns, set WIP limits, group the board by epic, assignee or project
+• Board, backlog and timeline views of the same work
+• Sprints with capacity, story points, burndown and velocity
+• Issues in a hierarchy from epic to story to sub-task, with dependencies and labels. You can watch, clone, archive or move them to another project
+• Print an issue, or export it as PDF, Excel, Word or XML
+• Gantt chart with dependencies, milestones and the critical path
+• Project templates: copy a project and set deadlines relative to the project's date, in calendar or working days
 
-BUILT FOR TEAMS
-• Projects & teams with per-project workflows, keys and members
-• Sign in with local credentials and optional two-factor (TOTP), or SSO (OpenID Connect, OAuth 2.0, SAML, LDAP)
-• Self-registration with e-mail verification, and forgot-password
-• Multi-server: save several servers and switch between them, each with its own secure session
+TIME AND ABSENCES
+• A timer that works as a stopwatch, a countdown or a Pomodoro
+• Log time in a list, a calendar or a weekly timesheet, and hand in your timesheet for approval
+• Request time off, have it approved and see who is away in a shared team calendar
+• Working hours, public holidays and leave balances in one place
+• Time reports with a summary, single entries and workload, plus CSV import and export
 
-YOUR DATA, YOUR SERVER
-Hinata collects nothing for itself. All content lives on the Hinata Server you connect to. Push notifications are delivered through Firebase Cloud Messaging using only a device token — no tracking, no analytics.
+WORKING TOGETHER
+• Comments with replies, emoji reactions and voice messages
+• Attach files, photos and videos and open them in a full-screen viewer
+• A knowledge base with spaces, sub-pages and Markdown articles. Type @ to link an issue, an article or a colleague
+• Project reports with burndown and breakdowns by state, priority and assignee, exported as PDF, CSV or JSON
+• A dashboard you arrange yourself, and a weekly summary of what your team finished
+• A command palette that searches projects, issues, people and articles
+• Notifications in the app, by e-mail and as push for assignments, @mentions and due dates. You choose the days and hours when e-mail and push may reach you
+• Git integration with GitHub, GitLab and Bitbucket
 
-Requires a Hinata Server to sign in. Learn how to self-host at hinata.ahmadre.com.
+FOR ORGANIZATIONS
+• Projects and teams with their own workflows, keys and members
+• An organization admin role for working hours, approvals, absences, holidays and billing
+• Sign in with a password and optional two-factor authentication (TOTP), or through SSO with OpenID Connect, OAuth 2.0, SAML or LDAP
+• Self-registration with e-mail verification, and password reset
+• Save several servers and switch between them. Each one keeps its own secure session
 
-PERMISSIONS & WHY WE NEED THEM
-• Notifications — assignments, @mentions, comment replies and due dates
-• Microphone — voice comments and sound for videos you attach
-• Camera & Photos — take or pick photos/videos to attach to issues
-We ask for each permission only when you first use the feature that needs it.
+ACCESSIBILITY
+Text colors meet WCAG contrast, touch targets are large and controls have labels for screen readers. Nothing gets cut off at twice the normal text size.
+
+YOUR DATA STAYS ON YOUR SERVER
+Hinata collects nothing for itself. Everything you create is stored on the Hinata Server you connect to. Push notifications go through Firebase Cloud Messaging and use only a device token. The app has no tracking and no analytics.
+
+You need a Hinata Server to sign in. hinata.ahmadre.com explains how to host one yourself.
+
+PERMISSIONS AND WHY HINATA ASKS FOR THEM
+• Notifications: assignments, @mentions, replies to your comments and due dates
+• Microphone: voice comments, and sound in videos you attach
+• Camera and photos: take or pick photos and videos to attach to issues
+Hinata asks for each permission the first time you use the feature that needs it.

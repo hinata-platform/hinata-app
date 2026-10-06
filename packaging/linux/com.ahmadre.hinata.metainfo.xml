@@ -19,8 +19,8 @@
   <project_license>GPL-3.0-only</project_license>
 
   <name>Hinata</name>
-  <summary>Open-source, self-hosted project and issue tracking</summary>
-  <summary xml:lang="de">Quelloffene, selbst gehostete Projekt- und Vorgangsverwaltung</summary>
+  <summary>Plan projects, run sprints and track time on your own server</summary>
+  <summary xml:lang="de">Projekte planen, Sprints führen und Zeiten erfassen auf deinem Server</summary>
 
   <developer id="com.ahmadre">
     <name>Rebar Ahmad</name>
@@ -35,43 +35,62 @@
   -->
   <description>
     <p>
-      Hinata is the desktop client for a self-hosted Hinata Server: projects and
-      teams, an issue hierarchy from epic down to sub-task, agile boards,
-      sprints, a Gantt timeline, timesheets, reports, a knowledge base and
-      threaded comments with reactions and voice notes.
+      Hinata is the desktop app for a self-hosted Hinata Server. It covers
+      projects and teams, issues from epic down to sub-task, Scrum and Kanban
+      boards, sprints and a Gantt chart with dependencies and the critical path.
     </p>
     <p xml:lang="de">
-      Hinata ist der Desktop-Client für einen selbst gehosteten Hinata-Server:
-      Projekte und Teams, eine Vorgangshierarchie vom Epic bis zur Teilaufgabe,
-      agile Boards, Sprints, eine Gantt-Zeitleiste, Zeiterfassung, Berichte,
-      eine Wissensdatenbank und verschachtelte Kommentare mit Reaktionen und
-      Sprachnachrichten.
+      Hinata ist die Desktop-App für einen selbst gehosteten Hinata-Server. Sie
+      umfasst Projekte und Teams, Vorgänge vom Epic bis zur Unteraufgabe, Scrum-
+      und Kanban-Boards, Sprints und ein Gantt-Diagramm mit Abhängigkeiten und
+      kritischem Pfad.
     </p>
     <p>
-      Nothing is hosted for you. On first start the app asks for your server URL
-      and keeps as many servers as you like side by side, each with its own
-      tokens, so one install can serve a work instance and a private one.
+      Time tracking has a timer, a calendar and weekly timesheets that you hand
+      in for approval. Time off is requested and approved in the app, and a team
+      calendar shows who is away. There are also project templates with relative
+      deadlines, reports, a knowledge base and comments with replies, reactions
+      and voice messages.
     </p>
     <p xml:lang="de">
-      Es wird nichts für Sie gehostet. Beim ersten Start fragt die App nach der
-      Adresse Ihres Servers und merkt sich beliebig viele davon nebeneinander,
-      jeden mit eigenen Zugangsdaten.
+      Zur Zeiterfassung gehören ein Timer, ein Kalender und Stundenzettel, die du
+      zur Freigabe einreichst. Urlaub beantragst und genehmigst du in der App, und
+      ein Teamkalender zeigt, wer abwesend ist. Dazu kommen Projektvorlagen mit
+      relativen Fristen, Berichte, eine Wissensdatenbank und Kommentare mit
+      Antworten, Reaktionen und Sprachnachrichten.
     </p>
-    <p>The interface is available in English and German.</p>
-    <p xml:lang="de">Die Oberfläche gibt es auf Deutsch und Englisch.</p>
-    <p>Some capabilities differ on Linux from the other desktops:</p>
-    <p xml:lang="de">Einige Funktionen verhalten sich unter Linux anders als auf den anderen Desktops:</p>
+    <p>
+      Nothing is hosted for you. On first start the app asks for your server
+      address. It can keep several servers side by side, each with its own
+      sign-in, so one install can serve a work instance and a private one.
+    </p>
+    <p xml:lang="de">
+      Es wird nichts für dich gehostet. Beim ersten Start fragt die App nach der
+      Adresse deines Servers. Sie kann mehrere Server nebeneinander speichern,
+      jeden mit eigener Anmeldung, sodass eine Installation für den Server bei
+      der Arbeit und einen privaten reicht.
+    </p>
+    <p>
+      The interface comes in English, German, Chinese, Hindi, Spanish, Japanese,
+      French, Russian and Arabic.
+    </p>
+    <p xml:lang="de">
+      Die Oberfläche gibt es auf Deutsch, Englisch, Chinesisch, Hindi, Spanisch,
+      Japanisch, Französisch, Russisch und Arabisch.
+    </p>
+    <p>On Linux, a few things work differently:</p>
+    <p xml:lang="de">Unter Linux funktionieren einige Dinge anders:</p>
     <!-- One list, with each item translated in place. A second <ul> carrying
          xml:lang is how one would translate a whole enumeration at once, and
          appstreamcli rejects exactly that (description-enum-group-translated):
          MetaInfo translates the <li/> elements, not the group around them. -->
     <ul>
-      <li>Push notifications are not available — Firebase has no Linux client, so notifications arrive by e-mail and in the app itself.</li>
-      <li xml:lang="de">Push-Benachrichtigungen gibt es nicht — Firebase hat keinen Linux-Client; Benachrichtigungen kommen per E-Mail und in der App an.</li>
-      <li>Capturing a photo or video from a webcam is not available; existing files can be attached as usual.</li>
-      <li xml:lang="de">Foto- und Videoaufnahmen über eine Webcam sind nicht möglich; vorhandene Dateien lassen sich wie gewohnt anhängen.</li>
-      <li>Recording a voice comment needs PulseAudio and FFmpeg on the system.</li>
-      <li xml:lang="de">Für Sprachnachrichten werden PulseAudio und FFmpeg auf dem System benötigt.</li>
+      <li>There are no push notifications, because Firebase has no Linux client. Notifications arrive by e-mail and in the app.</li>
+      <li xml:lang="de">Push-Benachrichtigungen gibt es nicht, weil Firebase keinen Linux-Client hat. Benachrichtigungen kommen per E-Mail und in der App an.</li>
+      <li>You cannot take a photo or record a video with a webcam. Existing files can be attached as usual.</li>
+      <li xml:lang="de">Fotos und Videos lassen sich nicht mit einer Webcam aufnehmen. Vorhandene Dateien kannst du wie gewohnt anhängen.</li>
+      <li>Recording a voice comment needs PulseAudio and FFmpeg on the system, and playing one needs the GStreamer base plugins.</li>
+      <li xml:lang="de">Für Sprachnachrichten brauchst du PulseAudio und FFmpeg zum Aufnehmen und die GStreamer-Basis-Plugins zum Abspielen.</li>
     </ul>
   </description>
 
