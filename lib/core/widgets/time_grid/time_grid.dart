@@ -689,13 +689,16 @@ class _TimeGridState extends State<TimeGrid> {
               alignment: AlignmentDirectional.topEnd,
               child: Padding(
                 padding: const EdgeInsets.only(top: 6),
-                // The gutter is narrower than most words for "untimed", so the
-                // label ellipsises and the tooltip carries the rest.
+                // The gutter is narrower than most words for "untimed". A band
+                // of two rows or more has the height to wrap it, so "Ohne
+                // Uhrzeit" reads whole there; a single row ellipsises and the
+                // tooltip carries the rest.
                 child: Tooltip(
                   message: layer.label ?? '',
                   child: Text(
                     layer.label ?? '',
-                    maxLines: 1,
+                    maxLines: _bandRows(layer) > 1 ? 2 : 1,
+                    textAlign: TextAlign.end,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: AppType.caption,

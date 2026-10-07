@@ -844,7 +844,12 @@ class _Cell extends StatelessWidget {
                     // `count:`, not a string in `variables` — i18next reads the
                     // plural form off an *int*, and a string silently selects the
                     // singular in all nine languages.
-                    context.t('time.calendar.more', count: hidden),
+                    // Narrow columns get the bare count: on a phone "+4 wei…"
+                    // was all that fit, and the number is the part that
+                    // carries the meaning.
+                    showTotal
+                        ? context.t('time.calendar.more', count: hidden)
+                        : '+$hidden',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
