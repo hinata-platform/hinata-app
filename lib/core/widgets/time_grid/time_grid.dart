@@ -22,6 +22,7 @@ import 'package:flutter/material.dart';
 import '../../i18n/i18n.dart';
 import '../../theme/app_colors.dart';
 import '../glass_popup_menu.dart';
+import 'dashed_outline.dart';
 import 'time_grid_geometry.dart';
 import 'time_grid_model.dart';
 import '../../theme/app_type.dart';
@@ -1390,49 +1391,12 @@ class _Block extends StatelessWidget {
       opacity: dimmed ? 0.35 : 1,
       child: dashed
           ? CustomPaint(
-              foregroundPainter: _DashedOutline(color: tint),
+              foregroundPainter: DashedOutline(color: tint),
               child: body,
             )
           : body,
     );
   }
-}
-
-/// The outline of a suggested block: a dashed rounded rectangle in the
-/// block's own colour, at full strength so it clears 3:1 against the canvas.
-class _DashedOutline extends CustomPainter {
-  const _DashedOutline({required this.color});
-
-  final Color color;
-
-  static const double _dash = 4;
-  static const double _gap = 3;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.25;
-    final outline = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(
-          (Offset.zero & size).deflate(0.75),
-          const Radius.circular(6),
-        ),
-      );
-    for (final metric in outline.computeMetrics()) {
-      for (var at = 0.0; at < metric.length; at += _dash + _gap) {
-        canvas.drawPath(
-          metric.extractPath(at, math.min(at + _dash, metric.length)),
-          paint,
-        );
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(_DashedOutline old) => old.color != color;
 }
 
 class _DragPreview extends StatelessWidget {

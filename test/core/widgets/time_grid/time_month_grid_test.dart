@@ -36,9 +36,11 @@ void main() {
     final needed = <int>{};
     final retried = <DateTime>[];
     var named = <DateTime>[];
+    TimeGridItem? opened;
 
     Future<void> pump({
       List<TimeGridItem> items = const [],
+      List<TimeGridItem>? events,
       Size size = const Size(400, 900),
       Key? key,
       Brightness brightness = Brightness.light,
@@ -53,7 +55,19 @@ void main() {
       retried.clear();
       needed.clear();
       named = [];
+      opened = null;
       final byDay = groupItemsByDay(items);
+      // Every day an event touches, the way the calendar page files them.
+      final eventsByDay = <int, List<TimeGridItem>>{};
+      for (final event in events ?? const <TimeGridItem>[]) {
+        for (
+          var day = DateUtils.dateOnly(event.start);
+          !day.isAfter(event.end);
+          day = DateTime(day.year, day.month, day.day + 1)
+        ) {
+          (eventsByDay[dayKey(day)] ??= []).add(event);
+        }
+      }
       // The app sets this once per frame from the resolved theme; the neutral
       // tokens are read off it as widgets build. A harness that only hands
       // `ThemeData` a brightness would leave every colour on its light value.
@@ -72,6 +86,10 @@ void main() {
               revision: 0,
               now: DateTime(2026, 9, 8, 10),
               itemsForDay: (key) => byDay[key] ?? const [],
+              eventsForDay: events == null
+                  ? null
+                  : (key) => eventsByDay[key] ?? const [],
+              onTap: (item) => opened = item,
               failureFor: failureFor,
               onNeedMonths: (months) => needed.addAll(months.map(monthKey)),
               onRetryMonth: (month) => retried.add(month),
@@ -313,6 +331,61 @@ void main() {
     await tester.tap(find.byIcon(LucideIcons.refreshCw));
     await tester.pump();
     expect(retried, [DateTime(2026, 9)]);
+    expect(tester.takeException(), isNull);
+
+    // ── The reader's calendar events sit after the entries (HIN-94) ──
+    // Timed ones say when they start, since a month cell has no hours to place
+    // them by; neither kind adds to what the day came to, and a tap hands the
+    // event over like any chip.
+    await pump(
+      key: const ValueKey('events'),
+      items: [entry('Standup', 7, 9, minutes: 90)],
+      events: [
+        TimeGridItem(
+          id: 'event-1',
+          start: DateTime(2026, 9, 7, 18, 30),
+          end: DateTime(2026, 9, 7, 20),
+          title: 'Konzert',
+          tint: const Color(0xFF27897C),
+        ),
+        TimeGridItem(
+          id: 'event-2',
+          start: DateTime(2026, 9, 7),
+          end: DateTime(2026, 9, 7, 23, 59),
+          title: 'Messe',
+          day: DateTime(2026, 9, 7),
+        ),
+        TimeGridItem(
+          id: 'event-3',
+          start: DateTime(2026, 9, 9, 9),
+          end: DateTime(2026, 9, 11, 17),
+          title: 'Tagung',
+        ),
+      ],
+    );
+    expect(find.text('18:30 Konzert'), findsOneWidget);
+    // Three days long: named with its time on the first, without on the rest.
+    expect(find.text('09:00 Tagung'), findsOneWidget);
+    expect(find.text('Tagung'), findsNWidgets(2));
+    expect(find.text('Messe'), findsOneWidget);
+    expect(find.text('1 h 30 min'), findsOneWidget);
+    final standup = tester.getRect(find.text('Standup'));
+    expect(
+      tester.getRect(find.text('18:30 Konzert')).top,
+      greaterThan(standup.top),
+      reason: 'recorded time first, the calendar after it',
+    );
+    await tester.tap(find.text('18:30 Konzert'));
+    await tester.pump();
+    expect(opened?.id, 'event-1');
+
+    // Switched off, the layer is gone without the entries changing.
+    await pump(
+      key: const ValueKey('events'),
+      items: [entry('Standup', 7, 9, minutes: 90)],
+    );
+    expect(find.text('18:30 Konzert'), findsNothing);
+    expect(find.text('Standup'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
