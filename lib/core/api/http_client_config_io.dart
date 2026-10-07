@@ -22,7 +22,7 @@ import 'package:dio/io.dart';
 /// SSE streams (an open, still-consuming response) are untouched. The
 /// `ApiClient`'s one-shot idempotent-GET retry covers anything that still slips
 /// through (e.g. a server with an even shorter keep-alive).
-void configureNativeHttpClient(Dio dio) {
+void configureHttpClient(Dio dio) {
   dio.httpClientAdapter = IOHttpClientAdapter(
     createHttpClient: () {
       final client = HttpClient();
