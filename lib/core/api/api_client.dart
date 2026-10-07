@@ -112,9 +112,10 @@ class ApiClient {
         },
       ),
     );
-    // Native only: drop idle keep-alive sockets before the server closes them,
-    // so a reused-but-dead socket can't throw a spurious app-wide error.
-    configureNativeHttpClient(_dio);
+    // Native: drop idle keep-alive sockets before the server closes them, so a
+    // reused-but-dead socket can't throw a spurious app-wide error. Web: no
+    // preflight warning per request.
+    configureHttpClient(_dio);
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
@@ -237,6 +238,7 @@ class ApiClient {
         },
       ),
     );
+    configureHttpClient(dio);
     final stopwatch = Stopwatch()..start();
     try {
       final response = await dio.get<dynamic>('$base/api/v1/meta');
