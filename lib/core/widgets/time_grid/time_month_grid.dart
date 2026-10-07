@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../i18n/i18n.dart';
 import '../../theme/app_colors.dart';
 import '../hive_widgets.dart' show fmtDuration;
+import 'dashed_outline.dart';
 import 'time_grid_model.dart';
 import 'time_month_layout.dart';
 import '../../theme/app_type.dart';
@@ -43,6 +44,7 @@ class TimeMonthScroller extends StatefulWidget {
     required this.jump,
     required this.revision,
     required this.itemsForDay,
+    this.eventsForDay,
     required this.onNeedMonths,
     required this.onMonthChanged,
     this.failureFor,
@@ -80,6 +82,15 @@ class TimeMonthScroller extends StatefulWidget {
   /// answer to the grid; the owner is the one that knows whether a month is
   /// empty or simply not here yet.
   final List<TimeGridItem> Function(int dayKey) itemsForDay;
+
+  /// Events of the reader's own calendars on a day, by [dayKey] (HIN-94), or
+  /// null where none are shown.
+  ///
+  /// Apart from [itemsForDay] because they are not time anybody recorded: they
+  /// are drawn after the entries with a dashed outline, the way the hour canvas
+  /// draws them, and never count towards what the day adds up to. A tap on one
+  /// goes to [onTap] like any chip; the owner tells them apart by their data.
+  final List<TimeGridItem> Function(int dayKey)? eventsForDay;
 
   /// Why a month could not be read, by [monthKey], or null where it could.
   ///
@@ -174,6 +185,7 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
   /// What [_blocks] was built for. Any of these changing throws the memo away.
   int? _blocksRevision;
   bool? _blocksTotals;
+  bool? _blocksEvents;
   int? _blocksToday;
 
   /// The brightness the held blocks were built at.
@@ -349,10 +361,14 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
     final todayKey = dayKey(today);
     if (_blocksRevision != widget.revision ||
         _blocksTotals != widget.showTotals ||
+        // Switching the calendar layer on or off changes no entry, so the
+        // owner has no reason to bump [revision] for it.
+        _blocksEvents != (widget.eventsForDay != null) ||
         _blocksToday != todayKey ||
         _blocksBrightness != brightness) {
       _blocksRevision = widget.revision;
       _blocksTotals = widget.showTotals;
+      _blocksEvents = widget.eventsForDay != null;
       _blocksToday = todayKey;
       _blocksBrightness = brightness;
       _blocks.clear();
@@ -377,6 +393,7 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
       month: month,
       firstDayOfWeekIndex: _firstDayOfWeekIndex,
       itemsForDay: widget.itemsForDay,
+      eventsForDay: widget.eventsForDay,
       today: today,
       showTotals: widget.showTotals,
       onTapDay: widget.onTapDay,
@@ -549,6 +566,7 @@ class _MonthBlock extends StatelessWidget {
     required this.month,
     required this.firstDayOfWeekIndex,
     required this.itemsForDay,
+    this.eventsForDay,
     required this.today,
     required this.showTotals,
     this.onTapDay,
@@ -561,6 +579,7 @@ class _MonthBlock extends StatelessWidget {
   final DateTime month;
   final int firstDayOfWeekIndex;
   final List<TimeGridItem> Function(int dayKey) itemsForDay;
+  final List<TimeGridItem> Function(int dayKey)? eventsForDay;
   final DateTime today;
   final bool showTotals;
 
@@ -607,6 +626,7 @@ class _MonthBlock extends StatelessWidget {
                         day: layout.dayAt(week, column),
                         today: today,
                         itemsForDay: itemsForDay,
+                        eventsForDay: eventsForDay,
                         weekend: _isWeekend(firstDayOfWeekIndex, column),
                         showTotal: showTotals,
                         onTapDay: onTapDay,
@@ -698,6 +718,7 @@ class _Cell extends StatelessWidget {
     required this.day,
     required this.today,
     required this.itemsForDay,
+    this.eventsForDay,
     required this.weekend,
     required this.showTotal,
     this.onTapDay,
@@ -711,6 +732,7 @@ class _Cell extends StatelessWidget {
   final DateTime? day;
   final DateTime today;
   final List<TimeGridItem> Function(int dayKey) itemsForDay;
+  final List<TimeGridItem> Function(int dayKey)? eventsForDay;
   final bool weekend;
   final bool showTotal;
 
@@ -746,9 +768,14 @@ class _Cell extends StatelessWidget {
     final at = day;
     if (at == null) return const SizedBox.shrink();
     final mark = markOn?.call(at);
-    final items = itemsForDay(dayKey(at));
+    final entries = itemsForDay(dayKey(at));
+    final events = eventsForDay?.call(dayKey(at)) ?? const <TimeGridItem>[];
+    // Recorded time first, then the calendar's: when the cell runs out of room
+    // it is the suggestions that fold into the overflow line, not the hours.
+    final items = events.isEmpty ? entries : [...entries, ...events];
     final isToday = DateUtils.isSameDay(at, today);
-    final minutes = items.fold<int>(
+    // Only what was recorded adds up; an event is time that could be.
+    final minutes = entries.fold<int>(
       0,
       (sum, item) => sum + item.accounted.inMinutes,
     );
@@ -800,8 +827,16 @@ class _Cell extends StatelessWidget {
                 minutes: showTotal ? minutes : 0,
                 mark: mark,
               ),
-              for (final item in items.take(shown))
-                _Chip(item: item, onTap: onTap),
+              for (final (i, item) in items.take(shown).indexed)
+                _Chip(
+                  item: item,
+                  onTap: onTap,
+                  suggestion: i >= entries.length,
+                  // The same width that has no room for the day's total has
+                  // none for a time either: on a phone "06:3…" would be all
+                  // the chip says.
+                  withTime: showTotal && DateUtils.isSameDay(item.start, at),
+                ),
               if (hidden > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 1),
@@ -932,14 +967,49 @@ class _DayLine extends StatelessWidget {
 
 /// One entry in a day cell: the layer's colour and as much of the title as fits.
 class _Chip extends StatelessWidget {
-  const _Chip({required this.item, this.onTap});
+  const _Chip({
+    required this.item,
+    this.onTap,
+    this.suggestion = false,
+    this.withTime = false,
+  });
 
   final TimeGridItem item;
   final void Function(TimeGridItem item)? onTap;
 
+  String _startOf(BuildContext context) =>
+      MaterialLocalizations.of(context).formatTimeOfDay(
+        TimeOfDay.fromDateTime(item.start),
+        alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context),
+      );
+
+  /// An event of the reader's calendar rather than recorded time: a dashed
+  /// outline over a faint fill, as on the hour canvas, and the start time in
+  /// front of the title where it has one — a month cell has no hours to place
+  /// it by.
+  final bool suggestion;
+
+  /// Whether a timed event names its start before its title: only on the day
+  /// it starts, since on a later day that time would be the day before's, and
+  /// only where the column is wide enough to leave room for the title.
+  final bool withTime;
+
   @override
   Widget build(BuildContext context) {
     final tint = item.tint ?? AppColors.accent;
+    final title = suggestion && item.day == null && withTime
+        ? '${_startOf(context)} ${item.title}'
+        : item.title;
+    final label = Text(
+      title,
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: AppType.caption,
+        fontWeight: FontWeight.w600,
+        color: AppColors.ink,
+      ),
+    );
     return Padding(
       padding: const EdgeInsets.only(top: _kChipGap),
       child: SizedBox(
@@ -950,27 +1020,31 @@ class _Chip extends StatelessWidget {
           child: InkWell(
             onTap: onTap == null ? null : () => onTap!(item),
             borderRadius: BorderRadius.circular(4),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              alignment: AlignmentDirectional.centerStart,
-              decoration: BoxDecoration(
-                color: tint.withValues(alpha: 0.20),
-                borderRadius: BorderRadius.circular(4),
-                border: BorderDirectional(
-                  start: BorderSide(color: tint, width: 2),
-                ),
-              ),
-              child: Text(
-                item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: AppType.caption,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                ),
-              ),
-            ),
+            child: suggestion
+                ? CustomPaint(
+                    foregroundPainter: DashedOutline(color: tint, radius: 4),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      alignment: AlignmentDirectional.centerStart,
+                      decoration: BoxDecoration(
+                        color: tint.withValues(alpha: 0.07),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: label,
+                    ),
+                  )
+                : Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    alignment: AlignmentDirectional.centerStart,
+                    decoration: BoxDecoration(
+                      color: tint.withValues(alpha: 0.20),
+                      borderRadius: BorderRadius.circular(4),
+                      border: BorderDirectional(
+                        start: BorderSide(color: tint, width: 2),
+                      ),
+                    ),
+                    child: label,
+                  ),
           ),
         ),
       ),
