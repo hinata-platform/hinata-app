@@ -1207,6 +1207,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
       jump: _jump,
       revision: _revision,
       itemsForDay: _itemsForDay,
+      eventsForDay: _eventsShown ? _eventsForDay : null,
       failureFor: (key) => _failed[key],
       onNeedMonths: _need,
       onMonthChanged: _onMonthScrolled,
@@ -1307,6 +1308,29 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   // --- the entries, as the grid wants them ---------------------------------
 
   List<TimeGridItem> _itemsForDay(int key) => _byDay[key] ?? const [];
+
+  /// Whether the reader's calendar events are drawn (HIN-94): their switch is
+  /// on and the organisation has the import on at all.
+  bool get _eventsShown =>
+      _showEvents && context.read<TimePolicyCubit>().state.icsImportEnabled;
+
+  /// A day's events as the month lists them: a timed one only on the day it
+  /// starts, unless it runs a whole day or more. The hour canvas draws the
+  /// part after midnight on the next day, where it has hours to stand on; a
+  /// month cell would list an event that ended at half past midnight as the
+  /// first thing of the morning after, with its start time from the evening
+  /// before.
+  List<TimeGridItem> _eventsForDay(int key) {
+    final all = _eventsByDay[key];
+    if (all == null) return const [];
+    return [
+      for (final item in all)
+        if (item.day != null ||
+            dayKey(item.start) == key ||
+            item.end.difference(item.start) >= const Duration(days: 1))
+          item,
+    ];
+  }
 
   /// The one-day list handed to [TimeGrid], remembered so the identical object
   /// comes back on the next build.
@@ -1666,10 +1690,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   /// blocks in their calendar's colour, all-day ones as a band. Nothing while
   /// the layer is switched off or the organisation has the import off.
   List<TimeGridLayer> _eventLayers(List<DateTime> window) {
-    if (!_showEvents ||
-        !context.read<TimePolicyCubit>().state.icsImportEnabled) {
-      return const [];
-    }
+    if (!_eventsShown) return const [];
     final seen = <String>{};
     final timed = <TimeGridItem>[];
     final allDay = <TimeGridItem>[];
