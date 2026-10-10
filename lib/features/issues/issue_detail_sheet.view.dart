@@ -1528,7 +1528,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (issue != null) await _confirmDelete(issue);
   }
 
-  /// Opens the export submenu at [anchor] and carries out what was chosen.
+  /// Exports the issue as [choice], chosen in the "…" menu at [anchor].
   ///
   /// Every format is rendered by the server, so all five entries are the same
   /// request with a different suffix — and printing is that request for the PDF
@@ -1538,11 +1538,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// The busy flag is the one the top bars already show a spinner for: laying
   /// out a Word document takes long enough to need saying, and this way it is
   /// said where the user is looking.
-  Future<void> exportIssue(Rect anchor) async {
+  Future<void> exportIssue(IssueExportChoice choice, Rect anchor) async {
     final issue = _issue;
     if (issue == null || _busy) return;
-    final choice = await showIssueExportMenu(context, anchorRect: anchor);
-    if (choice == null || !mounted) return;
     // The share sheet is anchored to the menu button that opened it, not to
     // this widget. That is nicer on an iPad — the popover grows out of the "…"
     // the user pressed — and on an iPhone it is the difference between an
