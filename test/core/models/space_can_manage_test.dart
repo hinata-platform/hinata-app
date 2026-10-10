@@ -5,7 +5,7 @@ import 'package:hinata/core/models/content_models.dart';
 /// only reads through one of its pages must not offer that.
 void main() {
   test('a space the server marks as not theirs is not manageable', () {
-    final space = Space.fromJson({
+    final space = Space.fromJson(const {
       'id': 's1',
       'name': 'Projektwissen',
       'canManage': false,
@@ -14,6 +14,6 @@ void main() {
   });
 
   test('a server from before the field keeps the old behaviour', () {
-    expect(Space.fromJson({'id': 's1', 'name': 'Alt'}).canManage, isTrue);
+    expect(Space.fromJson(const {'id': 's1', 'name': 'Alt'}).canManage, isTrue);
   });
 }
