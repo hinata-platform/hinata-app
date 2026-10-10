@@ -1535,6 +1535,58 @@
       "openToday_plural": "{{count}} Termine von heute noch nicht übernommen",
       "dismissChip": "Vorerst ausblenden",
       "fromCalendar": "Aus deinem Kalender"
+    },
+    "share": {
+      "pageTitle": "Geteilte Einträge",
+      "box": {
+        "inbox": "Eingang",
+        "sent": "Gesendet"
+      },
+      "accepted": "Kopie in deine Einträge übernommen",
+      "declined": "Einladung abgelehnt",
+      "revoked": "Einladung zurückgezogen",
+      "from": "Von {{name}}",
+      "to": "An {{name}}",
+      "revoke": "Zurückziehen",
+      "decline": "Ablehnen",
+      "adjust": "Anpassen",
+      "accept": "Annehmen",
+      "projectHidden": "Projekt für dich nicht sichtbar",
+      "noDescription": "Ohne Beschreibung",
+      "empty": {
+        "inbox": {
+          "title": "Keine offenen Einladungen",
+          "message": "Teilen Kolleginnen und Kollegen einen Zeiteintrag mit dir, erscheint er hier. Du entscheidest, ob eine Kopie in deine eigenen Einträge kommt."
+        },
+        "sent": {
+          "title": "Noch nichts geteilt",
+          "message": "Teile einen deiner Einträge über sein Blatt, oder erwähne jemanden mit + in der Beschreibung."
+        }
+      },
+      "status": {
+        "pending": "Offen",
+        "accepted": "Angenommen",
+        "declined": "Abgelehnt",
+        "revoked": "Zurückgezogen"
+      },
+      "adjustTitle": "Mit Änderungen annehmen",
+      "title": "Teilen mit…",
+      "subtitle": "Personen aus dem Projekt bekommen eine Einladung und entscheiden selbst, ob eine Kopie in ihre eigenen Einträge kommt.",
+      "people": "Personen",
+      "addPerson": "Person hinzufügen…",
+      "removePerson": "Entfernen",
+      "send": "Einladungen senden",
+      "asked": "Bereits gefragt",
+      "waiting": "{{count}} geteilter Eintrag wartet auf deine Antwort",
+      "waiting_plural": "{{count}} geteilte Einträge warten auf deine Antwort",
+      "open": "Ansehen",
+      "action": "Teilen mit…",
+      "sentToast": "Einladungen gesendet",
+      "sentCount": "Einladung an {{count}} Person gesendet",
+      "sentCount_plural": "Einladungen an {{count}} Personen gesendet",
+      "mentionHint": "Mit + teilst du den Eintrag mit jemandem aus dem Projekt.",
+      "mentionNeedsProject": "Wähle zuerst ein Projekt, dann kannst du Personen daraus mit + erwähnen.",
+      "mentioned": "Wird geteilt mit"
     }
   },
   "availability": {
@@ -3432,7 +3484,10 @@
       "TIME_OFF_RETENTION_RUN": "Aufbewahrungslauf der Abwesenheiten",
       "PROJECT_COPIED": "Projekt kopiert",
       "PROJECT_TEMPLATE_MARKED": "Projekt als Vorlage markiert",
-      "PROJECT_INSTANTIATED": "Projekt aus Vorlage erstellt"
+      "PROJECT_INSTANTIATED": "Projekt aus Vorlage erstellt",
+      "TIME_ENTRY_SHARED": "Zeiteintrag geteilt",
+      "TIME_SHARE_ACCEPTED": "Geteilten Eintrag angenommen",
+      "TIME_SHARE_REVOKED": "Geteilten Eintrag zurückgezogen"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",

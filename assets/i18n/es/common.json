@@ -1535,6 +1535,58 @@
       "openToday_plural": "{{count}} eventos de hoy aún sin pasar",
       "dismissChip": "Ocultar por ahora",
       "fromCalendar": "De tu calendario"
+    },
+    "share": {
+      "pageTitle": "Registros compartidos",
+      "box": {
+        "inbox": "Recibidos",
+        "sent": "Enviados"
+      },
+      "accepted": "Copia añadida a tus registros",
+      "declined": "Invitación rechazada",
+      "revoked": "Invitación retirada",
+      "from": "De {{name}}",
+      "to": "Para {{name}}",
+      "revoke": "Retirar",
+      "decline": "Rechazar",
+      "adjust": "Ajustar",
+      "accept": "Aceptar",
+      "projectHidden": "Proyecto no visible para ti",
+      "noDescription": "Sin descripción",
+      "empty": {
+        "inbox": {
+          "title": "No hay invitaciones pendientes",
+          "message": "Cuando alguien comparte contigo un registro de tiempo, aparece aquí. Tú decides si una copia pasa a tus propios registros."
+        },
+        "sent": {
+          "title": "Aún no has compartido nada",
+          "message": "Comparte uno de tus registros desde su ficha, o menciona a alguien con + en la descripción."
+        }
+      },
+      "status": {
+        "pending": "Pendiente",
+        "accepted": "Aceptada",
+        "declined": "Rechazada",
+        "revoked": "Retirada"
+      },
+      "adjustTitle": "Aceptar con cambios",
+      "title": "Compartir con…",
+      "subtitle": "Las personas del proyecto reciben una invitación y deciden si una copia pasa a sus propios registros.",
+      "people": "Personas",
+      "addPerson": "Añadir persona…",
+      "removePerson": "Quitar",
+      "send": "Enviar invitaciones",
+      "asked": "Ya invitadas",
+      "waiting": "{{count}} registro compartido espera tu respuesta",
+      "waiting_plural": "{{count}} registros compartidos esperan tu respuesta",
+      "open": "Ver",
+      "action": "Compartir con…",
+      "sentToast": "Invitaciones enviadas",
+      "sentCount": "Invitación enviada a {{count}} persona",
+      "sentCount_plural": "Invitaciones enviadas a {{count}} personas",
+      "mentionHint": "Escribe + para compartir el registro con alguien del proyecto.",
+      "mentionNeedsProject": "Elige primero un proyecto; después podrás mencionar a personas de él con +.",
+      "mentioned": "Se compartirá con"
     }
   },
   "availability": {
@@ -3432,7 +3484,10 @@
       "TIME_OFF_RETENTION_RUN": "Proceso de conservación de ausencias",
       "PROJECT_COPIED": "Proyecto copiado",
       "PROJECT_TEMPLATE_MARKED": "Proyecto marcado como plantilla",
-      "PROJECT_INSTANTIATED": "Proyecto creado desde plantilla"
+      "PROJECT_INSTANTIATED": "Proyecto creado desde plantilla",
+      "TIME_ENTRY_SHARED": "Registro de tiempo compartido",
+      "TIME_SHARE_ACCEPTED": "Registro compartido aceptado",
+      "TIME_SHARE_REVOKED": "Registro compartido retirado"
     },
     "meta": {
       "oldRole": "Rol anterior",

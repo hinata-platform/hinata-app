@@ -41,9 +41,11 @@ import '../../features/reports/reports_screen.dart';
 import '../../features/setup/setup_screen.dart';
 import '../../features/shell/app_shell.dart';
 import '../../features/shell/not_found_screen.dart';
+import '../../features/shell/shell_nav.dart' show sharedEntriesRoute;
 import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
 import '../../features/time/time_focus_screen.dart';
+import '../../features/time/shares/shared_entries_screen.dart';
 import '../../features/time/time_module_screen.dart';
 import '../../features/time/time_views.dart';
 import '../../features/timesheet/timesheet_screen.dart';
@@ -51,6 +53,7 @@ import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
 import '../blocs/auth_bloc.dart';
 import '../models/core_models.dart' show AuthUser;
+import '../models/time_share_models.dart' show TimeShareBox;
 import '../storage/app_storage.dart';
 import 'board_routes.dart';
 
@@ -530,6 +533,22 @@ GoRouter buildRouter({
                   _ => null,
                 },
               ),
+            ),
+          ),
+          // Shared entries (HIN-95): invitations to answer, and what the
+          // reader offered. `box=sent` is where the note that somebody accepted
+          // points.
+          GoRoute(
+            path: sharedEntriesRoute,
+            pageBuilder: (_, state) => _transition(
+              state,
+              (appConfig.state.meta?.advancedTimeTracking ?? false)
+                  ? SharedEntriesScreen(
+                      box: state.uri.queryParameters['box'] == 'sent'
+                          ? TimeShareBox.sent
+                          : TimeShareBox.inbox,
+                    )
+                  : const NotFoundScreen(standalone: false),
             ),
           ),
           GoRoute(

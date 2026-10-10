@@ -1535,6 +1535,58 @@
       "openToday_plural": "今日の予定のうち {{count}} 件がまだ取り込まれていません",
       "dismissChip": "今は非表示にする",
       "fromCalendar": "カレンダーから"
+    },
+    "share": {
+      "pageTitle": "共有エントリー",
+      "box": {
+        "inbox": "受信",
+        "sent": "送信済み"
+      },
+      "accepted": "コピーを自分のエントリーに追加しました",
+      "declined": "招待を辞退しました",
+      "revoked": "招待を取り消しました",
+      "from": "{{name}} さんから",
+      "to": "{{name}} さん宛て",
+      "revoke": "取り消す",
+      "decline": "辞退",
+      "adjust": "調整",
+      "accept": "承認",
+      "projectHidden": "このプロジェクトは表示できません",
+      "noDescription": "説明なし",
+      "empty": {
+        "inbox": {
+          "title": "保留中の招待はありません",
+          "message": "同僚が工数エントリーを共有すると、ここに表示されます。コピーを自分のエントリーに追加するかはあなたが決めます。"
+        },
+        "sent": {
+          "title": "まだ何も共有していません",
+          "message": "エントリーの詳細から共有するか、説明に + で人をメンションしてください。"
+        }
+      },
+      "status": {
+        "pending": "保留中",
+        "accepted": "承認済み",
+        "declined": "辞退",
+        "revoked": "取り消し済み"
+      },
+      "adjustTitle": "調整して承認",
+      "title": "共有先…",
+      "subtitle": "プロジェクトのメンバーに招待が届き、コピーを自分のエントリーに追加するかを各自で決めます。",
+      "people": "メンバー",
+      "addPerson": "メンバーを追加…",
+      "removePerson": "削除",
+      "send": "招待を送信",
+      "asked": "招待済み",
+      "waiting": "{{count}} 件の共有エントリーが回答を待っています",
+      "waiting_plural": "{{count}} 件の共有エントリーが回答を待っています",
+      "open": "開く",
+      "action": "共有先…",
+      "sentToast": "招待を送信しました",
+      "sentCount": "{{count}} 人に招待を送信しました",
+      "sentCount_plural": "{{count}} 人に招待を送信しました",
+      "mentionHint": "+ を入力すると、プロジェクトのメンバーとエントリーを共有できます。",
+      "mentionNeedsProject": "先にプロジェクトを選ぶと、+ でそのメンバーをメンションできます。",
+      "mentioned": "共有先"
     }
   },
   "availability": {
@@ -3432,7 +3484,10 @@
       "TIME_OFF_RETENTION_RUN": "休暇の保持期間処理",
       "PROJECT_COPIED": "プロジェクトをコピー",
       "PROJECT_TEMPLATE_MARKED": "プロジェクトをテンプレートに設定",
-      "PROJECT_INSTANTIATED": "テンプレートからプロジェクトを作成"
+      "PROJECT_INSTANTIATED": "テンプレートからプロジェクトを作成",
+      "TIME_ENTRY_SHARED": "工数エントリーを共有",
+      "TIME_SHARE_ACCEPTED": "共有エントリーを承認",
+      "TIME_SHARE_REVOKED": "共有エントリーを取り消し"
     },
     "meta": {
       "oldRole": "変更前のロール",
