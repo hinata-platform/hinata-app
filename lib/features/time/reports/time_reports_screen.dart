@@ -32,7 +32,10 @@ import '../../../core/widgets/project_picker.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../time_views.dart';
+import '../../../core/repositories/billing_repository.dart';
+import '../../billing/billing_access_cubit.dart';
 import 'absence_report_tab.dart';
+import 'billing_report_tab.dart';
 import 'report_absences_cubit.dart';
 import 'report_actions.dart';
 import 'report_controls.dart';
@@ -51,6 +54,10 @@ enum ReportTab {
   detailed('detailed', LucideIcons.list),
   workload('workload', LucideIcons.gauge),
   absences('absences', LucideIcons.calendarOff),
+
+  /// Revenue, profitability and utilization (HIN-96): with billing on, for
+  /// administrators and project leads.
+  billing('billing', LucideIcons.coins),
   saved('saved', LucideIcons.bookmark);
 
   const ReportTab(this.key, this.icon);
@@ -91,6 +98,15 @@ class TimeReportsScreen extends StatelessWidget {
       BlocProvider(
         create: (context) =>
             ReportAbsencesCubit(context.read<AbsenceRepository>()),
+      ),
+      // Asked only with billing on: who may see money, and which projects.
+      BlocProvider(
+        create: (context) {
+          final on = context.read<AppConfigBloc>().state.meta?.billing ?? false;
+          return BillingAccessCubit(
+            on ? context.read<BillingRepository>() : null,
+          )..load();
+        },
       ),
     ],
     child: _TimeReportsView(link: link),
@@ -243,8 +259,8 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
       ReportTab.summary => _groups.load(),
       ReportTab.detailed => _entries.load(),
       ReportTab.workload => _workload.load(),
-      // The absence report reads its own list, with its own question.
-      ReportTab.absences => Future<void>.value(),
+      // The absence and billing reports read their own lists.
+      ReportTab.absences || ReportTab.billing => Future<void>.value(),
       ReportTab.saved => _saved.load(),
     });
   }
@@ -310,10 +326,15 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
 
   // --- the head ------------------------------------------------------------------
 
-  List<GlassScope> _tabs({required bool workload, required bool absences}) => [
+  List<GlassScope> _tabs({
+    required bool workload,
+    required bool absences,
+    required bool billing,
+  }) => [
     for (final tab in ReportTab.values)
       if ((tab != ReportTab.workload || workload) &&
-          (tab != ReportTab.absences || absences))
+          (tab != ReportTab.absences || absences) &&
+          (tab != ReportTab.billing || billing))
         (
           key: tab.key,
           icon: tab.icon,
@@ -497,12 +518,19 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
       (bloc) => bloc.state.meta?.absenceManagement ?? false,
     );
     final absences = absenceReports && absenceModule;
+    final billingAccess = context.watch<BillingAccessCubit>().state;
+    final billing =
+        context.select<AppConfigBloc, bool>(
+          (bloc) => bloc.state.meta?.billing ?? false,
+        ) &&
+        (billingAccess?.reports ?? false);
     if (_tab == ReportTab.workload && !workload ||
-        _tab == ReportTab.absences && !absences) {
+        _tab == ReportTab.absences && !absences ||
+        _tab == ReportTab.billing && !billing) {
       _tab = ReportTab.summary;
     }
     final tabs = GlassScopeRow(
-      scopes: _tabs(workload: workload, absences: absences),
+      scopes: _tabs(workload: workload, absences: absences, billing: billing),
       active: _tab.key,
       onSelected: _switchTab,
     );
@@ -517,7 +545,7 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
             )
           : null,
       titleLeading: true,
-      actions: compact
+      actions: compact && _tab != ReportTab.billing
           ? [
               PageAction(
                 icon: LucideIcons.ellipsis,
@@ -547,7 +575,11 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
                     builder: (context, constraints) => TimeHead(
                       current: TimeView.reports,
                       actions: [
-                        if (_tab == ReportTab.absences)
+                        // The money report has its own ways out: invoices and
+                        // rates, in the tab. The time report's files are not it.
+                        if (_tab == ReportTab.billing)
+                          const SizedBox.shrink()
+                        else if (_tab == ReportTab.absences)
                           // The absence report has one way out: its files.
                           Builder(
                             builder: (anchor) => GhostButton(
@@ -627,6 +659,10 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
     if (_tab == ReportTab.absences) {
       return AbsenceReportTab(query: _absenceQuery, padding: padding);
     }
+    final billingAccess = context.read<BillingAccessCubit>().state;
+    if (_tab == ReportTab.billing && billingAccess != null) {
+      return BillingReportTab(access: billingAccess, padding: padding);
+    }
     return RefreshIndicator(
       edgeOffset: context.topGutter,
       onRefresh: () async {
@@ -638,7 +674,7 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
         ReportTab.detailed => _detailed(padding),
         ReportTab.workload => _workloadTab(padding),
         ReportTab.saved => _savedTab(padding),
-        ReportTab.absences => const SizedBox.shrink(),
+        ReportTab.absences || ReportTab.billing => const SizedBox.shrink(),
       },
     );
   }

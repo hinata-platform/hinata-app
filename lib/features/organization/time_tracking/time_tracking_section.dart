@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
+import '../../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../../core/models/account_models.dart' show TimePreferences;
 import '../../admin/admin_form_helpers.dart';
 import '../../admin/policy_controls.dart';
@@ -555,6 +557,21 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
         onChanged: (v) => _setQuietly('currency', v?.toUpperCase()),
         pending: true,
       ),
+      // The defaults and every other rate live on their own page, reached from
+      // here and from the reports (HIN-96). Only once billing is in force: the
+      // page answers 404 before.
+      if ((_effectiveValue<bool>('advancedEnabled') ?? false) &&
+          (_effectiveValue<bool>('billingEnabled') ?? false)) ...[
+        const SizedBox(height: 12),
+        Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: GhostButton(
+            icon: LucideIcons.badgePercent,
+            label: context.t('admin.timeTracking.ratesOpen'),
+            onPressed: () => context.push('/time/rates'),
+          ),
+        ),
+      ],
     ],
   );
 

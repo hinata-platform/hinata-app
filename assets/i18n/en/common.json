@@ -156,6 +156,13 @@
     },
     "article": {
       "moveNotAllowed": "Only the people who run this page's place can move it: the project's leads, the team's admins, or the author of a private page."
+    },
+    "billing": {
+      "forbidden": "Billing is for organization admins and project leads.",
+      "invoice": {
+        "project": "Choose the project to invoice.",
+        "tax": "Enter a VAT rate between 0 and 100 percent."
+      }
     }
   },
   "notFound": {
@@ -1310,7 +1317,8 @@
         "detailed": "Entries",
         "workload": "Workload",
         "saved": "Saved",
-        "absences": "Absences"
+        "absences": "Absences",
+        "billing": "Billing"
       },
       "group": {
         "project": "Project",
@@ -2966,7 +2974,8 @@
       "requestPurgeLabel": "Delete closed requests after",
       "requestPurgeHint": "Refused, withdrawn and cancelled requests. Approved ones stay as evidence. 0 keeps all.",
       "ledgerPurgeLabel": "Delete the leave journal after",
-      "ledgerPurgeHint": "0 keeps the journal. Otherwise at least 3 years (§§ 195, 199 BGB). Expiry notices are never deleted."
+      "ledgerPurgeHint": "0 keeps the journal. Otherwise at least 3 years (§§ 195, 199 BGB). Expiry notices are never deleted.",
+      "ratesOpen": "Manage rates"
     },
     "absence": {
       "title": "Absence management 2.0",
@@ -3487,7 +3496,15 @@
       "PROJECT_INSTANTIATED": "Project created from template",
       "TIME_ENTRY_SHARED": "Time entry shared",
       "TIME_SHARE_ACCEPTED": "Shared entry accepted",
-      "TIME_SHARE_REVOKED": "Shared entry withdrawn"
+      "TIME_SHARE_REVOKED": "Shared entry withdrawn",
+      "BILLING_RATE_CREATED": "Rate set",
+      "BILLING_RATE_UPDATED": "Rate changed",
+      "BILLING_RATE_DELETED": "Rate removed",
+      "INVOICE_CREATED": "Invoice drafted",
+      "INVOICE_DELETED": "Invoice draft deleted",
+      "INVOICE_ISSUED": "Invoice issued",
+      "INVOICE_CREDITED": "Invoice reversed",
+      "INVOICE_EXPORTED": "Invoice exported"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -3873,6 +3890,18 @@
       "project": "Project",
       "work": "How work runs",
       "manage": "Administration"
+    },
+    "billing": {
+      "title": "Billing",
+      "note": "What an hour on this project is billed at. Costs are set by organization admins.",
+      "projectRate": "Project rate",
+      "noRate": "No rate, the team or default rate applies",
+      "setRate": "Set",
+      "changeRate": "Change",
+      "memberRates": "Rates of members",
+      "noMemberRates": "No member has a rate of their own on this project.",
+      "addMember": "Rate for a member",
+      "notLead": "Only the project's leads set its rates."
     }
   },
   "account": {
@@ -4584,6 +4613,175 @@
       "plum": "Plum",
       "olive": "Olive",
       "red": "Red"
+    }
+  },
+  "billing": {
+    "issueRate": "Hourly rate for this issue",
+    "kind": {
+      "billable": "Revenue rate",
+      "cost": "Cost rate"
+    },
+    "scope": {
+      "issue": "Issue",
+      "projectMember": "Project member",
+      "user": "Person",
+      "project": "Project",
+      "team": "Team",
+      "instanceDefault": "Default"
+    },
+    "rateStatus": {
+      "active": "In force",
+      "planned": "Planned",
+      "ended": "Ended"
+    },
+    "rate": {
+      "amount": "Hourly rate",
+      "amountHint": "e.g. 95.00",
+      "amountInvalid": "Enter an hourly rate, for example 95 or 95.50.",
+      "changeFrom": "New rate from a date",
+      "changeHint": "The running rate ends the day before. Entries before that date keep their rate.",
+      "costOf": "Cost rate · {{target}}",
+      "revenueOf": "Revenue rate · {{target}}",
+      "from": "Valid from",
+      "none": "No rate set yet.",
+      "perHour": "{{amount}} / h",
+      "remove": "Remove rate",
+      "removeTitle": "Remove this rate?",
+      "removeMessage": "Reports value the days it covered with the next rate that applies. Issued invoices stay as they are.",
+      "saved": "Rate saved",
+      "set": "Set rate",
+      "since": "from {{from}}",
+      "span": "{{from}} to {{to}}"
+    },
+    "rates": {
+      "title": "Rates",
+      "new": "New rate",
+      "newFor": "Set a rate for",
+      "kind": "Kind",
+      "allKinds": "All kinds",
+      "scope": "Target",
+      "allScopes": "All targets",
+      "status": "Validity",
+      "allStatuses": "Any validity",
+      "pickProject": "Choose a project",
+      "pickTeam": "Choose a team",
+      "defaults": "Defaults",
+      "defaultsHint": "Apply wherever no issue, member, person, project or team rate does.",
+      "defaultRevenue": "Default revenue rate",
+      "defaultCost": "Default cost rate",
+      "emptyTitle": "No rates here",
+      "emptyMessage": "Set a rate for a project, a person or a team, or change the filters."
+    },
+    "report": {
+      "kind": {
+        "billing": "Billing",
+        "profitability": "Profitability",
+        "utilization": "Utilization"
+      },
+      "kindTitle": "Report",
+      "group": {
+        "project": "By project",
+        "issue": "By issue",
+        "user": "By person",
+        "team": "By team",
+        "day": "By day",
+        "week": "By week",
+        "month": "By month"
+      },
+      "none": {
+        "project": "Without project",
+        "issue": "Without issue",
+        "user": "Former member",
+        "team": "Without team",
+        "day": "Without date",
+        "week": "Without date",
+        "month": "Without date"
+      },
+      "previous": "Earlier period",
+      "next": "Later period",
+      "billableHours": "Billable hours",
+      "revenue": "Revenue",
+      "cost": "Labour cost",
+      "margin": "Margin",
+      "hours": "Hours",
+      "billableShare": "Billable share",
+      "ofCapacity": "Billable of capacity",
+      "unrated": "{{hours}} hours had no rate and count as zero. Set a rate to include them.",
+      "emptyTitle": "Nothing recorded in this period",
+      "emptyMessage": "Choose another period or check the filters."
+    },
+    "invoices": {
+      "title": "Invoices",
+      "shelf": {
+        "all": "All",
+        "drafts": "Drafts",
+        "issued": "Issued"
+      },
+      "emptyTitle": "No invoices yet",
+      "emptyMessage": "Draft one from a project's billable hours. Nothing is issued until you say so."
+    },
+    "invoice": {
+      "new": "Draft invoice",
+      "newTitle": "Draft an invoice",
+      "newSubtitle": "From the billable hours of one project that are not billed yet.",
+      "createDraft": "Create draft",
+      "project": "Project",
+      "pickProject": "Choose a project",
+      "period": "Service period",
+      "lineBy": "One line per",
+      "grouping": {
+        "issue": "Issue",
+        "project": "Project",
+        "user": "Person",
+        "day": "Day"
+      },
+      "recipient": "Bill to",
+      "recipientName": "Name",
+      "recipientAddress": "Address",
+      "vatId": "VAT ID",
+      "noRecipient": "No recipient yet",
+      "tax": "VAT rate",
+      "taxHint": "e.g. 19, empty for none",
+      "taxLine": "VAT {{rate}} %",
+      "notes": "Notes on the invoice",
+      "hours": "Hours",
+      "net": "Net",
+      "gross": "Total",
+      "draftTitle": "Invoice draft",
+      "number": "Invoice {{number}}",
+      "creditNoteNumber": "Credit note {{number}}",
+      "status": {
+        "draft": "Draft",
+        "issued": "Issued",
+        "credited": "Reversed by credit note",
+        "creditNote": "Credit note"
+      },
+      "reverses": "Reverses",
+      "reversedBy": "Reversed by",
+      "actions": "Invoice actions",
+      "edit": "Edit recipient and notes",
+      "refresh": "Rebuild lines",
+      "refreshed": "Lines rebuilt from the current entries",
+      "issue": "Issue",
+      "issueTitle": "Issue this invoice?",
+      "issueMessage": "It gets the next invoice number and can no longer be changed. Its entries are locked until a credit note releases them.",
+      "issued": "Invoice issued",
+      "delete": "Delete draft",
+      "deleteTitle": "Delete this draft?",
+      "deleteMessage": "Its entries stay as they are and can be billed in another draft.",
+      "deleted": "Draft deleted",
+      "creditNote": "Write credit note",
+      "creditTitle": "Reverse with a credit note?",
+      "creditMessage": "A credit note with the same lines, negated, gets its own number. The invoice stays on record, and its entries can be corrected and billed again.",
+      "creditReason": "Reason (on the credit note)",
+      "credited": "Credit note written",
+      "linesTitle": "Lines ({{count}})",
+      "lineDetail": "{{hours}} h × {{rate}} · {{entries}} entries",
+      "lineUnrated": "{{hours}} h without a rate",
+      "removeLine": "Remove line",
+      "lineRemoved": "Line removed",
+      "unratedHint": "{{count}} lines have no rate. Set a rate and rebuild the lines, or remove them, before issuing.",
+      "draftHint": "A draft locks nothing. If entries change before you issue, rebuild the lines."
     }
   }
 }

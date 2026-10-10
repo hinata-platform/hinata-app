@@ -35,6 +35,13 @@ class PlatformFlags {
   /// somebody enters that shapes capacity.
   static const absenceManagement = 'absence_management';
 
+  /// Expose billing (HIN-96): hourly rates, the money reports and invoices.
+  /// Switched on by an organisation admin under Zeiterfassung, and nested
+  /// under the extended module like absence management: the server only
+  /// reports it on while that module is on too. Off → no amount appears
+  /// anywhere and `/api/v1/billing/**` answers 404 `error.feature.disabled`.
+  static const billing = 'billing';
+
   /// Expose project templates and deadlines kept as an offset from a project's
   /// event date: copying a project, marking one as a template, creating a
   /// project from one, and moving an event date with a preview of the
@@ -156,6 +163,9 @@ class ServerMeta extends Equatable {
   /// while the extended module above is on too, so a screen may read it alone
   /// and does not have to check both.
   bool get absenceManagement => isFlagEnabled(PlatformFlags.absenceManagement);
+
+  /// Billing (default off); only ever on with the extended module.
+  bool get billing => isFlagEnabled(PlatformFlags.billing);
 
   /// Project templates and relative deadlines (default off). Decides whether
   /// the copy and template entries exist at all and whether a deadline can be

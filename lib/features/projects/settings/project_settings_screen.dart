@@ -36,6 +36,7 @@ import '../../../core/responsive/golden_columns.dart';
 import 'project_settings_cubit.dart';
 import 'project_settings_layout.dart';
 import 'template_section.dart';
+import 'billing_section.dart';
 import 'time_section.dart';
 import 'workflow_section.dart';
 import '../../../core/repositories/project_repository.dart';
@@ -731,6 +732,18 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
         )
         ? ProjectTimeSection(projectId: widget.projectId)
         : null;
+    // Only while billing is on, and only for the project's lead: the rates of a
+    // project and its invoices are its lead's (HIN-96).
+    final billing =
+        context.select<AppConfigBloc, bool>(
+              (bloc) => bloc.state.meta?.billing ?? false,
+            ) &&
+            _isLead
+        ? ProjectBillingSection(
+            projectId: widget.projectId,
+            projectName: (_saved ?? draft).name,
+          )
+        : null;
     // Only while project templates are on: without the module a project has no
     // marker, no event date and no way to be copied.
     final meta = context.select<AppConfigBloc, ServerMeta?>(
@@ -763,6 +776,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           timeTracking: timeTracking != null,
           templates: templates != null,
           lead: _isLead,
+          billing: billing != null,
         ),
         card: (card) => switch (card) {
           ProjectSettingsCard.general => general,
@@ -772,6 +786,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           ProjectSettingsCard.workflow => workflow,
           ProjectSettingsCard.git => git,
           ProjectSettingsCard.timeTracking => timeTracking!,
+          ProjectSettingsCard.billing => billing!,
           ProjectSettingsCard.archive => archive,
           ProjectSettingsCard.danger => DangerSection(
             onDelete: _deleteProject,
@@ -799,6 +814,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           workflow: workflow,
           git: git,
           timeTracking: timeTracking,
+          billing: billing,
           archive: archive,
           danger: danger,
         );
@@ -817,6 +833,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     required Widget workflow,
     required Widget git,
     required Widget? timeTracking,
+    required Widget? billing,
     required Widget archive,
     required Widget danger,
   }) {
@@ -848,6 +865,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
                   timeTracking: timeTracking != null,
                   templates: templates != null,
                   lead: _isLead,
+                  billing: billing != null,
                 ),
                 card: (card) => switch (card) {
                   ProjectSettingsCard.general => general,
@@ -857,6 +875,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
                   ProjectSettingsCard.workflow => workflow,
                   ProjectSettingsCard.git => git,
                   ProjectSettingsCard.timeTracking => timeTracking!,
+                  ProjectSettingsCard.billing => billing!,
                   ProjectSettingsCard.archive => archive,
                   ProjectSettingsCard.danger => danger,
                 },
@@ -993,6 +1012,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
         ProjectSettingsCard.labels => LucideIcons.tag,
         ProjectSettingsCard.workflow => LucideIcons.listChecks,
         ProjectSettingsCard.timeTracking => LucideIcons.timer,
+        ProjectSettingsCard.billing => LucideIcons.coins,
         ProjectSettingsCard.git => LucideIcons.gitBranch,
         ProjectSettingsCard.archive => LucideIcons.archive,
         ProjectSettingsCard.danger => LucideIcons.triangleAlert,
@@ -1009,6 +1029,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     ProjectSettingsCard.labels => 'projectSettings.labels',
     ProjectSettingsCard.workflow => 'projectSettings.workflow',
     ProjectSettingsCard.timeTracking => 'projectSettings.time.title',
+    ProjectSettingsCard.billing => 'projectSettings.billing.title',
     ProjectSettingsCard.git => 'git.title',
     ProjectSettingsCard.archive => 'projectSettings.archive',
     ProjectSettingsCard.danger => 'projectSettings.dangerZone',
@@ -1025,7 +1046,8 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     ProjectSettingsCard.templates => 'projectSettings.nav.project',
     ProjectSettingsCard.labels ||
     ProjectSettingsCard.workflow ||
-    ProjectSettingsCard.timeTracking => 'projectSettings.nav.work',
+    ProjectSettingsCard.timeTracking ||
+    ProjectSettingsCard.billing => 'projectSettings.nav.work',
     ProjectSettingsCard.git => 'admin.navIntegrations',
     ProjectSettingsCard.archive ||
     ProjectSettingsCard.danger => 'projectSettings.nav.manage',

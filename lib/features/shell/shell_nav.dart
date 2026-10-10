@@ -203,6 +203,13 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (location == sharedEntriesRoute) {
     return advancedTime ? 'time.share.pageTitle' : 'notFound.title';
   }
+  // Billing (HIN-96): pages of the module with a way back, like shared entries.
+  if (location == '/time/invoices' || location.startsWith('/time/invoices/')) {
+    return advancedTime ? 'billing.invoices.title' : 'notFound.title';
+  }
+  if (location == '/time/rates') {
+    return advancedTime ? 'billing.rates.title' : 'notFound.title';
+  }
   if (isTimeModuleRoute(location)) {
     return advancedTime ? null : 'notFound.title';
   }
@@ -234,6 +241,10 @@ String subPageBackRoute(String location) {
   if (location == '/absences/year-run') return '/absences/entitlements';
   if (location.startsWith('/absences/')) return '/settings';
   if (location == sharedEntriesRoute) return '/time';
+  if (location.startsWith('/time/invoices/')) return '/time/invoices';
+  if (location == '/time/invoices' || location == '/time/rates') {
+    return '/time/reports';
+  }
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';
   if (location.startsWith('/board/')) return '/board';
