@@ -544,6 +544,11 @@ GoRouter buildRouter({
               state,
               (appConfig.state.meta?.advancedTimeTracking ?? false)
                   ? SharedEntriesScreen(
+                      // Keyed by the side, which is read once: a link to the
+                      // sent list has to open it even with the inbox on screen.
+                      key: ValueKey(
+                        'shared-${state.uri.queryParameters['box']}',
+                      ),
                       box: state.uri.queryParameters['box'] == 'sent'
                           ? TimeShareBox.sent
                           : TimeShareBox.inbox,
