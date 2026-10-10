@@ -129,6 +129,7 @@ class Space extends Equatable {
     this.hue = 250,
     this.description = '',
     this.sortOrder = 0,
+    this.canManage = true,
     this.createdAt,
     this.updatedAt,
   });
@@ -139,6 +140,11 @@ class Space extends Equatable {
   final int hue;
   final String description;
   final int sortOrder;
+
+  /// Whether the reader may rename or delete the space: its author, or an admin
+  /// for a space from before spaces had one. A server that predates the field
+  /// enforces nothing narrower, so its absence keeps the old behaviour.
+  final bool canManage;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -149,12 +155,21 @@ class Space extends Equatable {
     hue: (json['hue'] as num?)?.toInt() ?? 250,
     description: json['description'] as String? ?? '',
     sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
+    canManage: json['canManage'] as bool? ?? true,
     createdAt: parseInstant(json['createdAt']),
     updatedAt: parseInstant(json['updatedAt']),
   );
 
   @override
-  List<Object?> get props => [id, name, icon, hue, description, sortOrder];
+  List<Object?> get props => [
+    id,
+    name,
+    icon,
+    hue,
+    description,
+    sortOrder,
+    canManage,
+  ];
 }
 
 class AppNotification extends Equatable {
