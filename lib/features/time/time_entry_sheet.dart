@@ -475,6 +475,10 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         ),
       );
     }
+    // A billed entry is frozen whatever its day (HIN-96).
+    if (entry != null && entry.isInvoiced) {
+      return TimeLockInfo(reason: 'invoice', entryId: entry.id);
+    }
     // Both sides of the change, the way the server's gate is: moving an entry
     // *off* a frozen day changes that day as surely as moving one onto it.
     for (final day in [_filedOn, if (_isEdit) entry?.date]) {

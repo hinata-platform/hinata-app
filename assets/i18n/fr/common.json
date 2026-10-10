@@ -156,6 +156,13 @@
     },
     "article": {
       "moveNotAllowed": "Seuls les responsables de son emplacement peuvent déplacer cette page : responsables du projet, administrateurs de l'équipe ou auteur d'une page privée."
+    },
+    "billing": {
+      "forbidden": "La facturation est réservée aux administrateurs de l'organisation et aux responsables de projet.",
+      "invoice": {
+        "project": "Choisissez le projet à facturer.",
+        "tax": "Saisissez un taux de TVA entre 0 et 100 pour cent."
+      }
     }
   },
   "notFound": {
@@ -1310,7 +1317,8 @@
         "detailed": "Entrées",
         "workload": "Charge",
         "saved": "Enregistrés",
-        "absences": "Absences"
+        "absences": "Absences",
+        "billing": "Facturation"
       },
       "group": {
         "project": "Projet",
@@ -2966,7 +2974,8 @@
       "requestPurgeLabel": "Supprimer les demandes closes après",
       "requestPurgeHint": "Demandes refusées, retirées et annulées. Les approuvées restent comme preuve. 0 conserve tout.",
       "ledgerPurgeLabel": "Supprimer le journal des congés après",
-      "ledgerPurgeHint": "0 conserve le journal. Sinon au moins 3 ans (§§ 195, 199 BGB). Les rappels d’expiration ne sont jamais supprimés."
+      "ledgerPurgeHint": "0 conserve le journal. Sinon au moins 3 ans (§§ 195, 199 BGB). Les rappels d’expiration ne sont jamais supprimés.",
+      "ratesOpen": "Gérer les taux"
     },
     "absence": {
       "title": "Gestion des absences 2.0",
@@ -3487,7 +3496,15 @@
       "PROJECT_INSTANTIATED": "Projet créé à partir d’un modèle",
       "TIME_ENTRY_SHARED": "Saisie de temps partagée",
       "TIME_SHARE_ACCEPTED": "Saisie partagée acceptée",
-      "TIME_SHARE_REVOKED": "Saisie partagée retirée"
+      "TIME_SHARE_REVOKED": "Saisie partagée retirée",
+      "BILLING_RATE_CREATED": "Taux défini",
+      "BILLING_RATE_UPDATED": "Taux modifié",
+      "BILLING_RATE_DELETED": "Taux supprimé",
+      "INVOICE_CREATED": "Facture préparée",
+      "INVOICE_DELETED": "Brouillon de facture supprimé",
+      "INVOICE_ISSUED": "Facture émise",
+      "INVOICE_CREDITED": "Facture annulée",
+      "INVOICE_EXPORTED": "Facture exportée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -3873,6 +3890,18 @@
       "project": "Projet",
       "work": "Organisation du travail",
       "manage": "Administration"
+    },
+    "billing": {
+      "title": "Facturation",
+      "note": "Le prix auquel une heure de ce projet est facturée. Les coûts sont définis par les administrateurs de l'organisation.",
+      "projectRate": "Taux du projet",
+      "noRate": "Aucun taux, le taux de l'équipe ou par défaut s'applique",
+      "setRate": "Définir",
+      "changeRate": "Modifier",
+      "memberRates": "Taux des membres",
+      "noMemberRates": "Aucun membre n'a de taux propre sur ce projet.",
+      "addMember": "Taux pour un membre",
+      "notLead": "Seuls les responsables du projet définissent ses taux."
     }
   },
   "account": {
@@ -4584,6 +4613,175 @@
       "plum": "Prune",
       "olive": "Olive",
       "red": "Rouge"
+    }
+  },
+  "billing": {
+    "issueRate": "Taux horaire de ce ticket",
+    "kind": {
+      "billable": "Taux de facturation",
+      "cost": "Taux de coût"
+    },
+    "scope": {
+      "issue": "Ticket",
+      "projectMember": "Membre du projet",
+      "user": "Personne",
+      "project": "Projet",
+      "team": "Équipe",
+      "instanceDefault": "Par défaut"
+    },
+    "rateStatus": {
+      "active": "En vigueur",
+      "planned": "Prévu",
+      "ended": "Terminé"
+    },
+    "rate": {
+      "amount": "Taux horaire",
+      "amountHint": "p. ex. 95.00",
+      "amountInvalid": "Saisissez un taux horaire, par exemple 95 ou 95.50.",
+      "changeFrom": "Nouveau taux à partir d'une date",
+      "changeHint": "Le taux en cours se termine la veille. Les saisies antérieures à cette date gardent leur taux.",
+      "costOf": "Taux de coût · {{target}}",
+      "revenueOf": "Taux de facturation · {{target}}",
+      "from": "Valable à partir du",
+      "none": "Aucun taux défini pour l'instant.",
+      "perHour": "{{amount}} / h",
+      "remove": "Supprimer le taux",
+      "removeTitle": "Supprimer ce taux ?",
+      "removeMessage": "Les rapports valorisent les jours concernés avec le taux applicable suivant. Les factures émises restent inchangées.",
+      "saved": "Taux enregistré",
+      "set": "Définir le taux",
+      "since": "à partir du {{from}}",
+      "span": "du {{from}} au {{to}}"
+    },
+    "rates": {
+      "title": "Taux",
+      "new": "Nouveau taux",
+      "newFor": "Définir un taux pour",
+      "kind": "Type",
+      "allKinds": "Tous les types",
+      "scope": "Cible",
+      "allScopes": "Toutes les cibles",
+      "status": "Validité",
+      "allStatuses": "Toute validité",
+      "pickProject": "Choisir un projet",
+      "pickTeam": "Choisir une équipe",
+      "defaults": "Taux par défaut",
+      "defaultsHint": "S'appliquent partout où aucun taux de ticket, de membre, de personne, de projet ou d'équipe ne s'applique.",
+      "defaultRevenue": "Taux de facturation par défaut",
+      "defaultCost": "Taux de coût par défaut",
+      "emptyTitle": "Aucun taux ici",
+      "emptyMessage": "Définissez un taux pour un projet, une personne ou une équipe, ou modifiez les filtres."
+    },
+    "report": {
+      "kind": {
+        "billing": "Facturation",
+        "profitability": "Rentabilité",
+        "utilization": "Taux d'occupation"
+      },
+      "kindTitle": "Rapport",
+      "group": {
+        "project": "Par projet",
+        "issue": "Par ticket",
+        "user": "Par personne",
+        "team": "Par équipe",
+        "day": "Par jour",
+        "week": "Par semaine",
+        "month": "Par mois"
+      },
+      "none": {
+        "project": "Sans projet",
+        "issue": "Sans ticket",
+        "user": "Ancien membre",
+        "team": "Sans équipe",
+        "day": "Sans date",
+        "week": "Sans date",
+        "month": "Sans date"
+      },
+      "previous": "Période précédente",
+      "next": "Période suivante",
+      "billableHours": "Heures facturables",
+      "revenue": "Chiffre d'affaires",
+      "cost": "Coût de main-d'œuvre",
+      "margin": "Marge",
+      "hours": "Heures",
+      "billableShare": "Part facturable",
+      "ofCapacity": "Facturable sur la capacité",
+      "unrated": "{{hours}} heures n'avaient pas de taux et comptent pour zéro. Définissez un taux pour les inclure.",
+      "emptyTitle": "Rien de saisi sur cette période",
+      "emptyMessage": "Choisissez une autre période ou vérifiez les filtres."
+    },
+    "invoices": {
+      "title": "Factures",
+      "shelf": {
+        "all": "Toutes",
+        "drafts": "Brouillons",
+        "issued": "Émises"
+      },
+      "emptyTitle": "Aucune facture pour l'instant",
+      "emptyMessage": "Créez un brouillon à partir des heures facturables d'un projet. Rien n'est émis sans votre accord."
+    },
+    "invoice": {
+      "new": "Préparer une facture",
+      "newTitle": "Préparer une facture",
+      "newSubtitle": "À partir des heures facturables d'un projet qui ne sont pas encore facturées.",
+      "createDraft": "Créer le brouillon",
+      "project": "Projet",
+      "pickProject": "Choisir un projet",
+      "period": "Période de prestation",
+      "lineBy": "Une ligne par",
+      "grouping": {
+        "issue": "Ticket",
+        "project": "Projet",
+        "user": "Personne",
+        "day": "Jour"
+      },
+      "recipient": "Facturer à",
+      "recipientName": "Nom",
+      "recipientAddress": "Adresse",
+      "vatId": "N° de TVA",
+      "noRecipient": "Pas encore de destinataire",
+      "tax": "Taux de TVA",
+      "taxHint": "p. ex. 20, vide si aucune",
+      "taxLine": "TVA {{rate}} %",
+      "notes": "Mentions sur la facture",
+      "hours": "Heures",
+      "net": "HT",
+      "gross": "Total",
+      "draftTitle": "Brouillon de facture",
+      "number": "Facture {{number}}",
+      "creditNoteNumber": "Avoir {{number}}",
+      "status": {
+        "draft": "Brouillon",
+        "issued": "Émise",
+        "credited": "Annulée par un avoir",
+        "creditNote": "Avoir"
+      },
+      "reverses": "Annule",
+      "reversedBy": "Annulée par",
+      "actions": "Actions sur la facture",
+      "edit": "Modifier le destinataire et les mentions",
+      "refresh": "Recalculer les lignes",
+      "refreshed": "Lignes recalculées à partir des saisies actuelles",
+      "issue": "Émettre",
+      "issueTitle": "Émettre cette facture ?",
+      "issueMessage": "Elle reçoit le prochain numéro de facture et ne peut plus être modifiée. Ses saisies sont verrouillées jusqu'à ce qu'un avoir les libère.",
+      "issued": "Facture émise",
+      "delete": "Supprimer le brouillon",
+      "deleteTitle": "Supprimer ce brouillon ?",
+      "deleteMessage": "Ses saisies restent inchangées et peuvent être facturées dans un autre brouillon.",
+      "deleted": "Brouillon supprimé",
+      "creditNote": "Établir un avoir",
+      "creditTitle": "Annuler par un avoir ?",
+      "creditMessage": "Un avoir reprenant les mêmes lignes en négatif reçoit son propre numéro. La facture reste archivée, et ses saisies peuvent être corrigées et refacturées.",
+      "creditReason": "Motif (figure sur l'avoir)",
+      "credited": "Avoir établi",
+      "linesTitle": "Lignes ({{count}})",
+      "lineDetail": "{{hours}} h × {{rate}} · {{entries}} saisies",
+      "lineUnrated": "{{hours}} h sans taux",
+      "removeLine": "Supprimer la ligne",
+      "lineRemoved": "Ligne supprimée",
+      "unratedHint": "{{count}} lignes n'ont pas de taux. Définissez un taux et recalculez les lignes, ou supprimez-les, avant d'émettre.",
+      "draftHint": "Un brouillon ne verrouille rien. Si des saisies changent avant l'émission, recalculez les lignes."
     }
   }
 }

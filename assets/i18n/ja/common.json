@@ -156,6 +156,13 @@
     },
     "article": {
       "moveNotAllowed": "このページを移動できるのは、その場所の責任者だけです。プロジェクトリード、チーム管理者、または非公開ページの作成者です。"
+    },
+    "billing": {
+      "forbidden": "請求は組織の管理者とプロジェクトリーダーのみ利用できます。",
+      "invoice": {
+        "project": "請求するプロジェクトを選択してください。",
+        "tax": "0〜100 % の消費税率を入力してください。"
+      }
     }
   },
   "notFound": {
@@ -1310,7 +1317,8 @@
         "detailed": "エントリー",
         "workload": "稼働状況",
         "saved": "保存済み",
-        "absences": "不在"
+        "absences": "不在",
+        "billing": "請求"
       },
       "group": {
         "project": "プロジェクト",
@@ -2966,7 +2974,8 @@
       "requestPurgeLabel": "終了した申請を削除するまで",
       "requestPurgeHint": "却下・取り下げ・取消の申請です。承認済みは証拠として残ります。0ですべて保持。",
       "ledgerPurgeLabel": "休暇台帳を削除するまで",
-      "ledgerPurgeHint": "0で台帳を保持。それ以外は最低3年（§§ 195, 199 BGB）。失効通知は削除されません。"
+      "ledgerPurgeHint": "0で台帳を保持。それ以外は最低3年（§§ 195, 199 BGB）。失効通知は削除されません。",
+      "ratesOpen": "単価を管理"
     },
     "absence": {
       "title": "休暇管理 2.0",
@@ -3487,7 +3496,15 @@
       "PROJECT_INSTANTIATED": "テンプレートからプロジェクトを作成",
       "TIME_ENTRY_SHARED": "工数エントリーを共有",
       "TIME_SHARE_ACCEPTED": "共有エントリーを承認",
-      "TIME_SHARE_REVOKED": "共有エントリーを取り消し"
+      "TIME_SHARE_REVOKED": "共有エントリーを取り消し",
+      "BILLING_RATE_CREATED": "単価を設定",
+      "BILLING_RATE_UPDATED": "単価を変更",
+      "BILLING_RATE_DELETED": "単価を削除",
+      "INVOICE_CREATED": "請求書の下書きを作成",
+      "INVOICE_DELETED": "請求書の下書きを削除",
+      "INVOICE_ISSUED": "請求書を発行",
+      "INVOICE_CREDITED": "請求書を取消",
+      "INVOICE_EXPORTED": "請求書をエクスポート"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -3710,6 +3727,18 @@
       "project": "プロジェクト",
       "work": "作業の進め方",
       "manage": "管理"
+    },
+    "billing": {
+      "title": "請求",
+      "note": "このプロジェクトの 1 時間あたりの請求額です。原価は組織の管理者が設定します。",
+      "projectRate": "プロジェクト単価",
+      "noRate": "単価なし。チームまたは既定の単価が適用されます",
+      "setRate": "設定",
+      "changeRate": "変更",
+      "memberRates": "メンバーの単価",
+      "noMemberRates": "このプロジェクトで個別の単価を持つメンバーはいません。",
+      "addMember": "メンバーの単価",
+      "notLead": "単価を設定できるのはプロジェクトリーダーだけです。"
     }
   },
   "teams": {
@@ -4584,6 +4613,175 @@
       "plum": "プラム",
       "olive": "オリーブ",
       "red": "赤"
+    }
+  },
+  "billing": {
+    "issueRate": "この課題の時間単価",
+    "kind": {
+      "billable": "請求単価",
+      "cost": "原価単価"
+    },
+    "scope": {
+      "issue": "課題",
+      "projectMember": "プロジェクトメンバー",
+      "user": "個人",
+      "project": "プロジェクト",
+      "team": "チーム",
+      "instanceDefault": "既定"
+    },
+    "rateStatus": {
+      "active": "適用中",
+      "planned": "予定",
+      "ended": "終了"
+    },
+    "rate": {
+      "amount": "時間単価",
+      "amountHint": "例: 95.00",
+      "amountInvalid": "時間単価を入力してください（例: 95 または 95.50）。",
+      "changeFrom": "指定日から新しい単価",
+      "changeHint": "現在の単価は前日で終了します。それより前の記録は元の単価のままです。",
+      "costOf": "原価単価 · {{target}}",
+      "revenueOf": "請求単価 · {{target}}",
+      "from": "適用開始日",
+      "none": "単価はまだ設定されていません。",
+      "perHour": "{{amount}} / h",
+      "remove": "単価を削除",
+      "removeTitle": "この単価を削除しますか？",
+      "removeMessage": "対象だった日は、次に適用される単価でレポートに計上されます。発行済みの請求書は変わりません。",
+      "saved": "単価を保存しました",
+      "set": "単価を設定",
+      "since": "{{from}} から",
+      "span": "{{from}} 〜 {{to}}"
+    },
+    "rates": {
+      "title": "単価",
+      "new": "新しい単価",
+      "newFor": "単価の設定対象",
+      "kind": "種類",
+      "allKinds": "すべての種類",
+      "scope": "対象",
+      "allScopes": "すべての対象",
+      "status": "有効期間",
+      "allStatuses": "すべての有効期間",
+      "pickProject": "プロジェクトを選択",
+      "pickTeam": "チームを選択",
+      "defaults": "既定の単価",
+      "defaultsHint": "課題、メンバー、個人、プロジェクト、チームの単価がない場合に適用されます。",
+      "defaultRevenue": "既定の請求単価",
+      "defaultCost": "既定の原価単価",
+      "emptyTitle": "単価がありません",
+      "emptyMessage": "プロジェクト、個人、チームに単価を設定するか、フィルターを変更してください。"
+    },
+    "report": {
+      "kind": {
+        "billing": "請求",
+        "profitability": "収益性",
+        "utilization": "稼働率"
+      },
+      "kindTitle": "レポート",
+      "group": {
+        "project": "プロジェクト別",
+        "issue": "課題別",
+        "user": "個人別",
+        "team": "チーム別",
+        "day": "日別",
+        "week": "週別",
+        "month": "月別"
+      },
+      "none": {
+        "project": "プロジェクトなし",
+        "issue": "課題なし",
+        "user": "元メンバー",
+        "team": "チームなし",
+        "day": "日付なし",
+        "week": "日付なし",
+        "month": "日付なし"
+      },
+      "previous": "前の期間",
+      "next": "次の期間",
+      "billableHours": "請求可能時間",
+      "revenue": "売上",
+      "cost": "人件費",
+      "margin": "利益",
+      "hours": "時間",
+      "billableShare": "請求可能な割合",
+      "ofCapacity": "キャパシティに対する請求可能時間",
+      "unrated": "{{hours}} 時間は単価がなく、ゼロとして計上されています。含めるには単価を設定してください。",
+      "emptyTitle": "この期間の記録はありません",
+      "emptyMessage": "別の期間を選ぶか、フィルターを確認してください。"
+    },
+    "invoices": {
+      "title": "請求書",
+      "shelf": {
+        "all": "すべて",
+        "drafts": "下書き",
+        "issued": "発行済み"
+      },
+      "emptyTitle": "請求書はまだありません",
+      "emptyMessage": "プロジェクトの請求可能時間から下書きを作成します。指示するまで発行はされません。"
+    },
+    "invoice": {
+      "new": "請求書の下書き",
+      "newTitle": "請求書の下書きを作成",
+      "newSubtitle": "1 つのプロジェクトの、まだ請求していない請求可能時間から作成します。",
+      "createDraft": "下書きを作成",
+      "project": "プロジェクト",
+      "pickProject": "プロジェクトを選択",
+      "period": "役務提供期間",
+      "lineBy": "明細の単位",
+      "grouping": {
+        "issue": "課題",
+        "project": "プロジェクト",
+        "user": "個人",
+        "day": "日"
+      },
+      "recipient": "請求先",
+      "recipientName": "名前",
+      "recipientAddress": "住所",
+      "vatId": "登録番号",
+      "noRecipient": "請求先はまだありません",
+      "tax": "消費税率",
+      "taxHint": "例: 10、なしの場合は空欄",
+      "taxLine": "消費税 {{rate}} %",
+      "notes": "請求書の備考",
+      "hours": "時間",
+      "net": "小計",
+      "gross": "合計",
+      "draftTitle": "請求書の下書き",
+      "number": "請求書 {{number}}",
+      "creditNoteNumber": "クレジットノート {{number}}",
+      "status": {
+        "draft": "下書き",
+        "issued": "発行済み",
+        "credited": "クレジットノートで取消済み",
+        "creditNote": "クレジットノート"
+      },
+      "reverses": "取消対象",
+      "reversedBy": "取消元",
+      "actions": "請求書の操作",
+      "edit": "請求先と備考を編集",
+      "refresh": "明細を再作成",
+      "refreshed": "現在の記録から明細を再作成しました",
+      "issue": "発行",
+      "issueTitle": "この請求書を発行しますか？",
+      "issueMessage": "次の請求書番号が付与され、以後は変更できません。記録はクレジットノートで解除されるまでロックされます。",
+      "issued": "請求書を発行しました",
+      "delete": "下書きを削除",
+      "deleteTitle": "この下書きを削除しますか？",
+      "deleteMessage": "記録はそのまま残り、別の下書きで請求できます。",
+      "deleted": "下書きを削除しました",
+      "creditNote": "クレジットノートを作成",
+      "creditTitle": "クレジットノートで取り消しますか？",
+      "creditMessage": "同じ明細をマイナスにしたクレジットノートに、独自の番号が付与されます。請求書は記録として残り、その記録は修正して再請求できます。",
+      "creditReason": "理由（クレジットノートに記載）",
+      "credited": "クレジットノートを作成しました",
+      "linesTitle": "明細 ({{count}})",
+      "lineDetail": "{{hours}} h × {{rate}} · {{entries}} 件の記録",
+      "lineUnrated": "{{hours}} h 単価なし",
+      "removeLine": "明細を削除",
+      "lineRemoved": "明細を削除しました",
+      "unratedHint": "{{count}} 件の明細に単価がありません。発行する前に単価を設定して明細を再作成するか、明細を削除してください。",
+      "draftHint": "下書きは何もロックしません。発行前に記録が変わった場合は、明細を再作成してください。"
     }
   }
 }

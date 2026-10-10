@@ -226,6 +226,7 @@ class WorkItem extends Equatable {
     this.updatedBy,
     this.sharedFromId,
     this.hidden = false,
+    this.invoiceId,
   });
 
   /// Logged by hand in the app — the default when a server sends no source.
@@ -264,6 +265,13 @@ class WorkItem extends Equatable {
   /// and what they wrote, so a missing [userId] here is never a deleted account.
   final bool hidden;
 
+  /// The issued invoice this entry is billed on (HIN-96), or null. While set,
+  /// the entry is part of a booking record and no write changes it; a credit
+  /// note releases it.
+  final String? invoiceId;
+
+  bool get isInvoiced => invoiceId != null;
+
   /// Whether this is the pre-2.0 remainder the migration credited to nobody.
   /// Rendered under its own label rather than a person, and never editable.
   bool get isLegacy => source == sourceLegacy;
@@ -289,6 +297,7 @@ class WorkItem extends Equatable {
     updatedBy: _optionalId(json['updatedBy']),
     sharedFromId: _optionalId(json['sharedFromId']),
     hidden: json['hidden'] as bool? ?? false,
+    invoiceId: _optionalId(json['invoiceId']),
   );
 
   @override
@@ -311,6 +320,7 @@ class WorkItem extends Equatable {
     updatedBy,
     sharedFromId,
     hidden,
+    invoiceId,
   ];
 }
 

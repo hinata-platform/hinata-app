@@ -8,6 +8,7 @@ import 'account_repository.dart';
 import 'admin_repository.dart';
 import 'article_repository.dart';
 import 'auth_repository.dart';
+import 'billing_repository.dart';
 import 'absence_repository.dart';
 import 'availability_repository.dart';
 import 'board_repository.dart';
@@ -35,6 +36,7 @@ export 'article_repository.dart';
 export 'auth_repository.dart';
 export 'absence_repository.dart';
 export 'availability_repository.dart';
+export 'billing_repository.dart';
 export 'board_repository.dart';
 export 'comment_repository.dart';
 export 'dashboard_repository.dart';
@@ -73,6 +75,7 @@ class HinataRepositories {
       timesheet: TimesheetRepository(api),
       time: TimeRepository(api),
       timeReports: TimeReportRepository(api),
+      billing: BillingRepository(api),
       availability: AvailabilityRepository(api),
       absences: AbsenceRepository(api),
       search: SearchRepository(api),
@@ -101,6 +104,7 @@ class HinataRepositories {
     required this.timesheet,
     required this.time,
     required this.timeReports,
+    required this.billing,
     required this.availability,
     required this.absences,
     required this.search,
@@ -130,6 +134,9 @@ class HinataRepositories {
   /// Summary, detailed and workload reports, their files, the CSV import and
   /// saved reports (HIN-93).
   final TimeReportRepository timeReports;
+
+  /// Rates, money reports and invoices (HIN-96).
+  final BillingRepository billing;
   final AvailabilityRepository availability;
 
   /// Absence types, entitlements and balances (HIN-116), behind their own flag.
