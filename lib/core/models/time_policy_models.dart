@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../util/dates.dart';
 import 'time_approval_models.dart';
+import 'work_models.dart' show WorkItem;
 
 /// What the operator's time-tracking policies currently demand, as the people
 /// they apply to are told them.
@@ -263,6 +264,15 @@ class TimePolicySnapshot extends Equatable {
   /// project A. An entry with no project is never frozen by an approval at all —
   /// those are private and are never handed in — and falls under the lock date like
   /// everything else.
+  /// Why [entry] cannot be changed, or null: an issued invoice first (HIN-96) —
+  /// it freezes the entry itself, whatever the day — then [lockFor] its day.
+  TimeLockInfo? lockOfEntry(WorkItem entry) {
+    if (entry.isInvoiced) {
+      return TimeLockInfo(reason: 'invoice', entryId: entry.id);
+    }
+    return lockFor(entry.date, projectId: entry.projectId, entryId: entry.id);
+  }
+
   TimeLockInfo? lockFor(DateTime? date, {String? projectId, String? entryId}) {
     if (date == null) return null;
     if (isLocked(date)) {

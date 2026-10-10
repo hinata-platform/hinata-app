@@ -156,6 +156,13 @@
     },
     "article": {
       "moveNotAllowed": "只有该页面所在位置的负责人才能移动它：项目负责人、团队管理员或私有页面的作者。"
+    },
+    "billing": {
+      "forbidden": "计费仅供组织管理员和项目负责人使用。",
+      "invoice": {
+        "project": "请选择要开票的项目。",
+        "tax": "请输入 0 到 100 之间的增值税率。"
+      }
     }
   },
   "notFound": {
@@ -1310,7 +1317,8 @@
         "detailed": "条目",
         "workload": "工作量",
         "saved": "已保存",
-        "absences": "缺勤"
+        "absences": "缺勤",
+        "billing": "计费"
       },
       "group": {
         "project": "项目",
@@ -2966,7 +2974,8 @@
       "requestPurgeLabel": "删除已结束申请的时间",
       "requestPurgeHint": "被拒绝、撤回和取消的申请。已批准的作为证据保留。0表示全部保留。",
       "ledgerPurgeLabel": "删除休假台账的时间",
-      "ledgerPurgeHint": "0表示保留台账。否则至少3年（§§ 195, 199 BGB）。失效通知永不删除。"
+      "ledgerPurgeHint": "0表示保留台账。否则至少3年（§§ 195, 199 BGB）。失效通知永不删除。",
+      "ratesOpen": "管理费率"
     },
     "absence": {
       "title": "缺勤管理 2.0",
@@ -3487,7 +3496,15 @@
       "PROJECT_INSTANTIATED": "已从模板创建项目",
       "TIME_ENTRY_SHARED": "已共享工时记录",
       "TIME_SHARE_ACCEPTED": "已接受共享记录",
-      "TIME_SHARE_REVOKED": "已撤回共享记录"
+      "TIME_SHARE_REVOKED": "已撤回共享记录",
+      "BILLING_RATE_CREATED": "已设置费率",
+      "BILLING_RATE_UPDATED": "已更改费率",
+      "BILLING_RATE_DELETED": "已移除费率",
+      "INVOICE_CREATED": "已起草发票",
+      "INVOICE_DELETED": "已删除发票草稿",
+      "INVOICE_ISSUED": "已开具发票",
+      "INVOICE_CREDITED": "已冲销发票",
+      "INVOICE_EXPORTED": "已导出发票"
     },
     "meta": {
       "oldRole": "原角色",
@@ -3873,6 +3890,18 @@
       "project": "项目",
       "work": "工作方式",
       "manage": "管理"
+    },
+    "billing": {
+      "title": "计费",
+      "note": "此项目每小时的收费标准。成本由组织管理员设置。",
+      "projectRate": "项目费率",
+      "noRate": "无费率，适用团队或默认费率",
+      "setRate": "设置",
+      "changeRate": "更改",
+      "memberRates": "成员费率",
+      "noMemberRates": "此项目中没有成员设置了自己的费率。",
+      "addMember": "为成员设置费率",
+      "notLead": "只有项目负责人可以设置项目费率。"
     }
   },
   "account": {
@@ -4584,6 +4613,175 @@
       "plum": "梅紫",
       "olive": "橄榄绿",
       "red": "红色"
+    }
+  },
+  "billing": {
+    "issueRate": "此事项的小时费率",
+    "kind": {
+      "billable": "收费费率",
+      "cost": "成本费率"
+    },
+    "scope": {
+      "issue": "事项",
+      "projectMember": "项目成员",
+      "user": "人员",
+      "project": "项目",
+      "team": "团队",
+      "instanceDefault": "默认"
+    },
+    "rateStatus": {
+      "active": "生效中",
+      "planned": "已计划",
+      "ended": "已结束"
+    },
+    "rate": {
+      "amount": "小时费率",
+      "amountHint": "例如 95.00",
+      "amountInvalid": "请输入小时费率，例如 95 或 95.50。",
+      "changeFrom": "从某日起的新费率",
+      "changeHint": "当前费率在前一天结束。该日期之前的记录保留原费率。",
+      "costOf": "成本费率 · {{target}}",
+      "revenueOf": "收费费率 · {{target}}",
+      "from": "生效日期",
+      "none": "尚未设置费率。",
+      "perHour": "{{amount}} / h",
+      "remove": "移除费率",
+      "removeTitle": "移除此费率？",
+      "removeMessage": "报表将按下一个适用的费率计算其覆盖的日期。已开具的发票保持不变。",
+      "saved": "费率已保存",
+      "set": "设置费率",
+      "since": "自 {{from}} 起",
+      "span": "{{from}} 至 {{to}}"
+    },
+    "rates": {
+      "title": "费率",
+      "new": "新费率",
+      "newFor": "设置费率的对象",
+      "kind": "类型",
+      "allKinds": "所有类型",
+      "scope": "对象",
+      "allScopes": "所有对象",
+      "status": "有效性",
+      "allStatuses": "任意有效性",
+      "pickProject": "选择项目",
+      "pickTeam": "选择团队",
+      "defaults": "默认费率",
+      "defaultsHint": "在没有事项、成员、人员、项目或团队费率时适用。",
+      "defaultRevenue": "默认收费费率",
+      "defaultCost": "默认成本费率",
+      "emptyTitle": "这里没有费率",
+      "emptyMessage": "为项目、人员或团队设置费率，或更改筛选条件。"
+    },
+    "report": {
+      "kind": {
+        "billing": "计费",
+        "profitability": "盈利能力",
+        "utilization": "利用率"
+      },
+      "kindTitle": "报表",
+      "group": {
+        "project": "按项目",
+        "issue": "按事项",
+        "user": "按人员",
+        "team": "按团队",
+        "day": "按天",
+        "week": "按周",
+        "month": "按月"
+      },
+      "none": {
+        "project": "无项目",
+        "issue": "无事项",
+        "user": "前成员",
+        "team": "无团队",
+        "day": "无日期",
+        "week": "无日期",
+        "month": "无日期"
+      },
+      "previous": "上一时段",
+      "next": "下一时段",
+      "billableHours": "可计费工时",
+      "revenue": "收入",
+      "cost": "人工成本",
+      "margin": "利润",
+      "hours": "工时",
+      "billableShare": "可计费占比",
+      "ofCapacity": "可计费工时占产能",
+      "unrated": "{{hours}} 小时没有费率，按零计算。设置费率即可计入。",
+      "emptyTitle": "此时段没有记录",
+      "emptyMessage": "请选择其他时段或检查筛选条件。"
+    },
+    "invoices": {
+      "title": "发票",
+      "shelf": {
+        "all": "全部",
+        "drafts": "草稿",
+        "issued": "已开具"
+      },
+      "emptyTitle": "还没有发票",
+      "emptyMessage": "根据项目的可计费工时创建草稿。在你确认之前不会开具任何发票。"
+    },
+    "invoice": {
+      "new": "起草发票",
+      "newTitle": "起草发票",
+      "newSubtitle": "基于一个项目中尚未计费的可计费工时。",
+      "createDraft": "创建草稿",
+      "project": "项目",
+      "pickProject": "选择项目",
+      "period": "服务期间",
+      "lineBy": "每行对应",
+      "grouping": {
+        "issue": "事项",
+        "project": "项目",
+        "user": "人员",
+        "day": "天"
+      },
+      "recipient": "付款方",
+      "recipientName": "名称",
+      "recipientAddress": "地址",
+      "vatId": "增值税号",
+      "noRecipient": "尚无付款方",
+      "tax": "增值税率",
+      "taxHint": "例如 13，无则留空",
+      "taxLine": "增值税 {{rate}} %",
+      "notes": "发票备注",
+      "hours": "工时",
+      "net": "净额",
+      "gross": "总计",
+      "draftTitle": "发票草稿",
+      "number": "发票 {{number}}",
+      "creditNoteNumber": "贷项通知单 {{number}}",
+      "status": {
+        "draft": "草稿",
+        "issued": "已开具",
+        "credited": "已由贷项通知单冲销",
+        "creditNote": "贷项通知单"
+      },
+      "reverses": "冲销",
+      "reversedBy": "冲销单据",
+      "actions": "发票操作",
+      "edit": "编辑付款方和备注",
+      "refresh": "重建明细行",
+      "refreshed": "已根据当前记录重建明细行",
+      "issue": "开具",
+      "issueTitle": "开具此发票？",
+      "issueMessage": "它将获得下一个发票号码，之后无法再修改。其记录将被锁定，直到贷项通知单将其释放。",
+      "issued": "发票已开具",
+      "delete": "删除草稿",
+      "deleteTitle": "删除此草稿？",
+      "deleteMessage": "其记录保持不变，可在其他草稿中计费。",
+      "deleted": "草稿已删除",
+      "creditNote": "开具贷项通知单",
+      "creditTitle": "用贷项通知单冲销？",
+      "creditMessage": "包含相同明细行（金额为负）的贷项通知单将获得独立编号。发票仍会保留，其记录可以更正后重新计费。",
+      "creditReason": "原因（显示在贷项通知单上）",
+      "credited": "贷项通知单已开具",
+      "linesTitle": "明细行 ({{count}})",
+      "lineDetail": "{{hours}} h × {{rate}} · {{entries}} 条记录",
+      "lineUnrated": "{{hours}} h 无费率",
+      "removeLine": "移除明细行",
+      "lineRemoved": "明细行已移除",
+      "unratedHint": "{{count}} 行没有费率。开具前请设置费率并重建明细行，或将其移除。",
+      "draftHint": "草稿不会锁定任何内容。如果开具前记录发生变化，请重建明细行。"
     }
   }
 }

@@ -46,6 +46,9 @@ import '../../features/teams/team_detail_screen.dart';
 import '../../features/teams/teams_screen.dart';
 import '../../features/time/time_focus_screen.dart';
 import '../../features/time/shares/shared_entries_screen.dart';
+import '../../features/billing/invoice_screen.dart';
+import '../../features/billing/invoices_screen.dart';
+import '../../features/billing/rates_screen.dart';
 import '../../features/time/time_module_screen.dart';
 import '../../features/time/time_views.dart';
 import '../../features/timesheet/timesheet_screen.dart';
@@ -553,6 +556,38 @@ GoRouter buildRouter({
                           ? TimeShareBox.sent
                           : TimeShareBox.inbox,
                     )
+                  : const NotFoundScreen(standalone: false),
+            ),
+          ),
+          // Billing (HIN-96): invoices, one invoice, and the rates. Only while
+          // the server reports billing on; the pages themselves ask who may.
+          GoRoute(
+            path: invoicesRoute,
+            pageBuilder: (_, state) => _transition(
+              state,
+              (appConfig.state.meta?.billing ?? false)
+                  ? const InvoicesScreen()
+                  : const NotFoundScreen(standalone: false),
+            ),
+          ),
+          GoRoute(
+            path: '$invoicesRoute/:id',
+            pageBuilder: (_, state) => _transition(
+              state,
+              (appConfig.state.meta?.billing ?? false)
+                  ? InvoiceScreen(
+                      key: ValueKey('invoice-${state.pathParameters['id']}'),
+                      id: state.pathParameters['id']!,
+                    )
+                  : const NotFoundScreen(standalone: false),
+            ),
+          ),
+          GoRoute(
+            path: ratesRoute,
+            pageBuilder: (_, state) => _transition(
+              state,
+              (appConfig.state.meta?.billing ?? false)
+                  ? const RatesScreen()
                   : const NotFoundScreen(standalone: false),
             ),
           ),
