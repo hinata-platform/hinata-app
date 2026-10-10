@@ -134,6 +134,7 @@ class AvailabilityRepository {
     required String name,
     String? region,
     String? icsUrl,
+    String? rules,
     bool defaultCalendar = false,
   }) async => HolidayCalendar.fromJson(
     await _api.post(
@@ -142,18 +143,21 @@ class AvailabilityRepository {
             'name': name,
             'region': ?region,
             'icsUrl': ?icsUrl,
+            'rules': ?rules,
             'defaultCalendar': defaultCalendar,
           },
         )
         as Map<String, dynamic>,
   );
 
-  /// An edit; a null field is left alone, an empty [icsUrl] removes the feed.
+  /// An edit; a null field is left alone, an empty [icsUrl] removes the feed
+  /// and empty [rules] the rules. A feed replaces rules and the other way round.
   Future<HolidayCalendar> updateCalendar(
     String id, {
     String? name,
     String? region,
     String? icsUrl,
+    String? rules,
     bool? defaultCalendar,
   }) async => HolidayCalendar.fromJson(
     await _api.patch(
@@ -162,11 +166,31 @@ class AvailabilityRepository {
             'name': ?name,
             'region': ?region,
             'icsUrl': ?icsUrl,
+            'rules': ?rules,
             'defaultCalendar': ?defaultCalendar,
           },
         )
         as Map<String, dynamic>,
   );
+
+  /// The regions a calendar can follow, named in [languageCode], which is the
+  /// language the server answers in. They change only with a server update, so
+  /// one answer per language serves the session.
+  Future<List<HolidayRegion>> regions(String languageCode) =>
+      _regions[languageCode] ??= _api
+          .get('/api/v1/availability/holidays/regions')
+          .then(
+            (json) => (json as List)
+                .whereType<Map<String, dynamic>>()
+                .map(HolidayRegion.fromJson)
+                .toList(growable: false),
+          )
+          .catchError((Object error) {
+            _regions.remove(languageCode);
+            throw error;
+          });
+
+  final Map<String, Future<List<HolidayRegion>>> _regions = {};
 
   Future<void> deleteCalendar(String id) =>
       _api.delete('/api/v1/availability/holidays/calendars/${_id(id)}');

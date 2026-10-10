@@ -7,7 +7,9 @@ import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/models/admin_user_models.dart';
 import 'package:hinata/core/models/audit_models.dart';
 import 'package:hinata/core/models/core_models.dart' show AuthUser;
+import 'package:hinata/core/models/availability_models.dart';
 import 'package:hinata/core/repositories/admin_repository.dart';
+import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/core/router/app_router.dart' show adminUsersRedirect;
 import 'package:hinata/core/widgets/settings_split.dart';
@@ -38,6 +40,7 @@ void main() {
     providers: [
       RepositoryProvider<AdminRepository>.value(value: _FakeAdmin()),
       RepositoryProvider<MetaRepository>.value(value: _UnusedMeta()),
+      RepositoryProvider<AvailabilityRepository>.value(value: _NoRegions()),
     ],
     child: MultiBlocProvider(
       providers: [
@@ -184,6 +187,15 @@ class _FakeAdmin implements AdminRepository {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// The holiday region field on the general page lists no regions here.
+class _NoRegions implements AvailabilityRepository {
+  @override
+  Future<List<HolidayRegion>> regions(String languageCode) async => const [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => null;
 }
 
 class _UnusedMeta implements MetaRepository {

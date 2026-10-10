@@ -66,23 +66,11 @@ class HolidayCalendarCard extends StatelessWidget {
                         ),
                       ),
                       if (calendar.defaultCalendar)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 7,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.accentSoft,
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Text(
-                            context.t('availability.admin.defaultBadge'),
-                            style: TextStyle(
-                              fontSize: AppType.caption,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.accentInk,
-                            ),
-                          ),
+                        _Badge(context.t('availability.admin.defaultBadge')),
+                      if (calendar.platformDefault)
+                        _Badge(
+                          context.t('availability.admin.platformBadge'),
+                          quiet: true,
                         ),
                     ],
                   ),
@@ -96,7 +84,14 @@ class HolidayCalendarCard extends StatelessWidget {
                     ),
                   const SizedBox(height: 4),
                   Text(
-                    calendar.feedHost == null
+                    calendar.hasRules
+                        ? context.t(
+                            'availability.admin.rulesFrom',
+                            variables: {
+                              'region': calendar.rulesName ?? calendar.rules!,
+                            },
+                          )
+                        : calendar.feedHost == null
                         ? context.t('availability.admin.byHand')
                         : context.t(
                             'availability.admin.feedFrom',
@@ -123,7 +118,7 @@ class HolidayCalendarCard extends StatelessWidget {
                 ],
               ),
             ),
-            if (calendar.hasFeed == true)
+            if (calendar.hasFeed == true || calendar.hasRules)
               calendar.importing
                   ? const Padding(
                       padding: EdgeInsets.all(12),
@@ -135,12 +130,16 @@ class HolidayCalendarCard extends StatelessWidget {
                     )
                   : IconButton(
                       tooltip: context.t(
-                        'availability.admin.importYear',
+                        calendar.hasRules
+                            ? 'availability.admin.refillYear'
+                            : 'availability.admin.importYear',
                         variables: {'year': '$year'},
                       ),
                       onPressed: onImport,
                       icon: Icon(
-                        LucideIcons.download,
+                        calendar.hasRules
+                            ? LucideIcons.refreshCw
+                            : LucideIcons.download,
                         size: 18,
                         color: AppColors.inkSoft,
                       ),
@@ -177,6 +176,9 @@ class HolidayCalendarCard extends StatelessWidget {
       return calendar.lastImportError ??
           context.t('availability.admin.importFailed');
     }
+    // The rules fill each year on their own; the numbers of the last fill
+    // would only say that again.
+    if (calendar.hasRules) return context.t('availability.admin.rulesAuto');
     final summary = calendar.lastImport;
     final at = calendar.lastImportedAt;
     if (summary == null || at == null) return null;
@@ -196,6 +198,34 @@ class HolidayCalendarCard extends StatelessWidget {
       'availability.admin.importDoneCapped',
       count: summary.capped,
       variables: {...variables, 'max': '${Holiday.perYearMax}'},
+    );
+  }
+}
+
+/// A small pill beside the calendar's name.
+class _Badge extends StatelessWidget {
+  const _Badge(this.label, {this.quiet = false});
+
+  final String label;
+  final bool quiet;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: quiet ? Colors.transparent : AppColors.accentSoft,
+        borderRadius: BorderRadius.circular(999),
+        border: quiet ? Border.all(color: AppColors.hairline) : null,
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: AppType.caption,
+          fontWeight: FontWeight.w700,
+          color: quiet ? AppColors.textSecondary : AppColors.accentInk,
+        ),
+      ),
     );
   }
 }
