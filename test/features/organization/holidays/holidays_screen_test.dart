@@ -76,6 +76,33 @@ void main() {
     // Gone before the next read is due, which takes its timer with it.
     await tester.pumpWidget(const SizedBox.shrink());
   });
+
+  testWidgets(
+    'a calendar that follows a region says so, and that the platform set it',
+    (tester) async {
+      await pump(
+        tester,
+        _FakeAvailability(
+          kept: const [
+            HolidayCalendar(
+              id: 'de',
+              name: 'Gesetzliche Feiertage',
+              defaultCalendar: true,
+              hasFeed: false,
+              rules: 'DE-BY',
+              rulesName: 'Bayern, Deutschland',
+              platformDefault: true,
+            ),
+          ],
+        ),
+      );
+
+      expect(find.text('availability.admin.rulesFrom'), findsOneWidget);
+      expect(find.text('availability.admin.rulesAuto'), findsOneWidget);
+      expect(find.text('availability.admin.platformBadge'), findsOneWidget);
+      expect(find.byTooltip('availability.admin.refillYear'), findsOneWidget);
+    },
+  );
 }
 
 class _FakeAvailability implements AvailabilityRepository {

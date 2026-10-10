@@ -37,12 +37,14 @@ void main() {
       defaultCalendar: true,
     );
     await cubit.updateCalendar('cal1', name: 'Hessen', icsUrl: '');
+    await cubit.updateCalendar('cal1', rules: 'DE-HE');
     await cubit.importHolidays('cal1', year: 2027);
     await cubit.deleteCalendar('cal1');
 
     expect(availability.calls, [
-      'createCalendar Hessen HE https://example.org/he.ics true',
-      'updateCalendar cal1 Hessen null  null',
+      'createCalendar Hessen HE https://example.org/he.ics null true',
+      'updateCalendar cal1 Hessen null  null null',
+      'updateCalendar cal1 null null null DE-HE null',
       'import cal1 2027',
       'deleteCalendar cal1',
     ]);
@@ -105,9 +107,10 @@ class _FakeAvailability implements AvailabilityRepository {
     required String name,
     String? region,
     String? icsUrl,
+    String? rules,
     bool defaultCalendar = false,
   }) async {
-    calls.add('createCalendar $name $region $icsUrl $defaultCalendar');
+    calls.add('createCalendar $name $region $icsUrl $rules $defaultCalendar');
     return _calendar;
   }
 
@@ -117,9 +120,12 @@ class _FakeAvailability implements AvailabilityRepository {
     String? name,
     String? region,
     String? icsUrl,
+    String? rules,
     bool? defaultCalendar,
   }) async {
-    calls.add('updateCalendar $id $name $region $icsUrl $defaultCalendar');
+    calls.add(
+      'updateCalendar $id $name $region $icsUrl $rules $defaultCalendar',
+    );
     return _calendar;
   }
 

@@ -197,6 +197,10 @@ class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
       ];
       _pollRounds = 0;
     });
+    // Rules fill the year before the answer comes; a feed is read meanwhile.
+    if (!updated.importing && updated.id == _selectedId) {
+      unawaited(_loadHolidays());
+    }
     _schedulePoll();
   });
 
@@ -432,6 +436,7 @@ class _HolidayRow extends StatelessWidget {
   });
 
   final Holiday holiday;
+
   final VoidCallback onEdit;
   final VoidCallback onDelete;
 
