@@ -141,8 +141,9 @@ class Space extends Equatable {
   final String description;
   final int sortOrder;
 
-  /// Whether the reader may rename or delete the space: its author, or an admin
-  /// for a space from before spaces had one. A server that predates the field
+  /// Whether the reader may rename or delete the space: its author, or, for a
+  /// space from before spaces had one, whoever reads every page in it. No role
+  /// widens this, platform admins included. A server that predates the field
   /// enforces nothing narrower, so its absence keeps the old behaviour.
   final bool canManage;
   final DateTime? createdAt;
