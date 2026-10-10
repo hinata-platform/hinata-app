@@ -1,5 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/blocs/paged_cubit.dart';
+import '../../core/models/core_models.dart' show DirectoryUser;
 import '../../core/models/time_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/time_repository.dart';
@@ -21,6 +23,18 @@ class TimeEntrySheetCubit extends Cubit<void> {
       _time.update(id, draft);
 
   Future<void> delete(String id) => _time.delete(id);
+
+  /// Offers the saved entry to the people mentioned with `+` (HIN-95).
+  Future<void> share(String entryId, List<String> userIds) =>
+      _time.shareEntry(entryId, userIds);
+
+  /// The people of [projectId] a `+` may name.
+  Future<PageResult<DirectoryUser>> shareCandidates(
+    String projectId,
+    String query,
+    int page,
+    int size,
+  ) => _time.shareCandidates(projectId, query: query, page: page, size: size);
 
   /// Takes a calendar event over as an entry (HIN-94).
   Future<WorkItem> convert(String eventId, CalendarConversion conversion) =>

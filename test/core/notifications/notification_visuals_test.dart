@@ -18,6 +18,8 @@ void main() {
     'TIME_CORRECTION_REQUESTED',
     'TIME_CORRECTION_ANSWERED',
     'TIME_BACKFILL_REQUESTED',
+    'TIME_ENTRY_SHARED',
+    'TIME_SHARE_ACCEPTED',
   ];
 
   test('every time notification has an icon of its own', () {

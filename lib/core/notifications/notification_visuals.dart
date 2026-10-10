@@ -39,6 +39,8 @@ import '../theme/app_colors.dart';
   'TIME_CORRECTION_REQUESTED' ||
   'TIME_CORRECTION_ANSWERED' ||
   'TIME_BACKFILL_REQUESTED' => (LucideIcons.fileClock, AppColors.accentTeal),
+  'TIME_ENTRY_SHARED' ||
+  'TIME_SHARE_ACCEPTED' => (LucideIcons.userPlus, AppColors.accentTeal),
   'ACCOUNT_ACTIVATED' ||
   'ACCOUNT_DEACTIVATED' ||
   'ACCOUNT_ROLE_CHANGED' ||

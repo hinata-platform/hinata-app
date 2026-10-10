@@ -1535,6 +1535,58 @@
       "openToday_plural": "{{count}} événements d’aujourd’hui pas encore repris",
       "dismissChip": "Masquer pour l’instant",
       "fromCalendar": "De ton calendrier"
+    },
+    "share": {
+      "pageTitle": "Saisies partagées",
+      "box": {
+        "inbox": "Reçues",
+        "sent": "Envoyées"
+      },
+      "accepted": "Copie ajoutée à vos saisies",
+      "declined": "Invitation refusée",
+      "revoked": "Invitation retirée",
+      "from": "De {{name}}",
+      "to": "À {{name}}",
+      "revoke": "Retirer",
+      "decline": "Refuser",
+      "adjust": "Modifier",
+      "accept": "Accepter",
+      "projectHidden": "Projet non visible pour vous",
+      "noDescription": "Sans description",
+      "empty": {
+        "inbox": {
+          "title": "Aucune invitation en attente",
+          "message": "Quand des collègues partagent une saisie de temps avec vous, elle apparaît ici. Vous décidez si une copie rejoint vos propres saisies."
+        },
+        "sent": {
+          "title": "Rien de partagé pour l’instant",
+          "message": "Partagez une de vos saisies depuis sa fiche, ou mentionnez quelqu’un avec + dans la description."
+        }
+      },
+      "status": {
+        "pending": "En attente",
+        "accepted": "Acceptée",
+        "declined": "Refusée",
+        "revoked": "Retirée"
+      },
+      "adjustTitle": "Accepter avec modifications",
+      "title": "Partager avec…",
+      "subtitle": "Les membres du projet reçoivent une invitation et décident eux-mêmes si une copie rejoint leurs propres saisies.",
+      "people": "Personnes",
+      "addPerson": "Ajouter une personne…",
+      "removePerson": "Retirer",
+      "send": "Envoyer les invitations",
+      "asked": "Déjà invitées",
+      "waiting": "{{count}} saisie partagée attend votre réponse",
+      "waiting_plural": "{{count}} saisies partagées attendent votre réponse",
+      "open": "Voir",
+      "action": "Partager avec…",
+      "sentToast": "Invitations envoyées",
+      "sentCount": "Invitation envoyée à {{count}} personne",
+      "sentCount_plural": "Invitations envoyées à {{count}} personnes",
+      "mentionHint": "Tapez + pour partager la saisie avec une personne du projet.",
+      "mentionNeedsProject": "Choisissez d’abord un projet, vous pourrez ensuite y mentionner des personnes avec +.",
+      "mentioned": "Sera partagée avec"
     }
   },
   "availability": {
@@ -3413,7 +3465,10 @@
       "TIME_OFF_RETENTION_RUN": "Purge de conservation des absences",
       "PROJECT_COPIED": "Projet copié",
       "PROJECT_TEMPLATE_MARKED": "Projet marqué comme modèle",
-      "PROJECT_INSTANTIATED": "Projet créé à partir d’un modèle"
+      "PROJECT_INSTANTIATED": "Projet créé à partir d’un modèle",
+      "TIME_ENTRY_SHARED": "Saisie de temps partagée",
+      "TIME_SHARE_ACCEPTED": "Saisie partagée acceptée",
+      "TIME_SHARE_REVOKED": "Saisie partagée retirée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
