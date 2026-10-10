@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hinata/core/responsive/golden_columns.dart';
 import 'package:hinata/core/responsive/responsive.dart';
 import 'package:hinata/features/shell/shell_nav.dart';
 
@@ -262,20 +261,17 @@ void main() {
     // whole of its first frame, and the whole of a load. Get it wrong and the
     // page lays itself out as something else and then jumps, which is the one
     // rearrangement the eye always catches.
-    test('the card pages take more than the reading width', () {
-      for (final route in ['/', '/dashboard']) {
-        expect(pageContentMax(route), goldenContentMax, reason: route);
-      }
-    });
-
-    test('a grid to scan across takes the window', () {
+    test('the dashboard and the time module stop where every page does', () {
       for (final route in [
+        '/',
+        '/dashboard',
         '/time',
         '/time/calendar',
-        '/time/timesheet',
+        '/time/absences',
+        '/time/reports',
         '/timesheet',
       ]) {
-        expect(pageContentMax(route), double.infinity, reason: route);
+        expect(pageContentMax(route), Breakpoints.readingWidth, reason: route);
       }
     });
 

@@ -17,7 +17,6 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
 import '../../core/models/team_models.dart' show Team;
 import '../../core/models/work_models.dart';
-import '../../core/responsive/golden_columns.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -221,7 +220,6 @@ class _DashboardViewState extends State<_DashboardView> {
       (cubit) => cubit.state.absenceCalendar.isOn,
     );
     return PageChrome(
-      contentMax: goldenContentMax,
       child: BlocBuilder<DashboardCubit, FetchState<DashboardData>>(
         builder: (context, state) {
           return RefreshIndicator(
