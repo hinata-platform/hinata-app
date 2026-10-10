@@ -126,6 +126,9 @@ bool isNavActive(
 /// Written out rather than a `startsWith('/time')`, which also catches
 /// `/timesheet` — the base route that exists on every server and is not the
 /// module's. That collision is the same one [isNavActive] guards against.
+/// The page of colleagues' invitations and one's own (HIN-95).
+const sharedEntriesRoute = '/time/shared';
+
 bool isTimeModuleRoute(String location) =>
     location == '/time' || location.startsWith('/time/');
 
@@ -161,6 +164,7 @@ double pageContentMax(String location) {
   if (location == '/' || location == '/dashboard') return goldenContentMax;
   // A week of a timesheet or a month of a calendar is a grid to scan across,
   // not a column to read: it takes the window.
+  if (location == sharedEntriesRoute) return Breakpoints.readingWidth;
   if (isTimeModuleRoute(location) || location == '/timesheet') {
     return double.infinity;
   }
@@ -199,6 +203,11 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   // redirects to `/time/timesheet`, and the module's three pages are one
   // destination seen three ways — they carry the module's own head, not a
   // sub-page bar with a back button to a page the switcher already reaches.
+  // Shared entries (HIN-95) are a page *of* the module rather than one of its
+  // views: reached from the list's notice or a notification, with a way back.
+  if (location == sharedEntriesRoute) {
+    return advancedTime ? 'time.share.pageTitle' : 'notFound.title';
+  }
   if (isTimeModuleRoute(location)) {
     return advancedTime ? null : 'notFound.title';
   }
@@ -229,6 +238,7 @@ String subPageBackRoute(String location) {
   // The yearly run is opened from the entitlements, and goes back there.
   if (location == '/absences/year-run') return '/absences/entitlements';
   if (location.startsWith('/absences/')) return '/settings';
+  if (location == sharedEntriesRoute) return '/time';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';
   if (location.startsWith('/board/')) return '/board';

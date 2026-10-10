@@ -36,6 +36,7 @@ import '../absences/absence_actions.dart';
 import 'day_marks.dart';
 import 'lock_notice.dart';
 import 'placement_picker.dart';
+import 'shares/shared_inbox_notice.dart';
 import 'time_entry_history_sheet.dart';
 import 'time_entry_sheet.dart';
 import 'time_hints.dart';
@@ -57,12 +58,20 @@ class TimeScreen extends StatelessWidget {
   const TimeScreen({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (context) => TimeScreenCubit(
-      context.read<TimeRepository>(),
-      context.read<AvailabilityRepository>(),
-      context.read<ProjectRepository>(),
-    ),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) => TimeScreenCubit(
+          context.read<TimeRepository>(),
+          context.read<AvailabilityRepository>(),
+          context.read<ProjectRepository>(),
+        ),
+      ),
+      // Colleagues' invitations waiting for an answer (HIN-95).
+      BlocProvider(
+        create: (context) => SharedInboxCubit(context.read<TimeRepository>()),
+      ),
+    ],
     child: const _TimeView(),
   );
 }
@@ -170,6 +179,7 @@ class _TimeViewState extends State<_TimeView> {
   }
 
   Future<void> _reload() async {
+    unawaited(context.read<SharedInboxCubit>().refresh());
     await _entries.load();
     if (!mounted) return;
     unawaited(_resolveProjects());
@@ -732,11 +742,13 @@ class _TimeViewState extends State<_TimeView> {
       physics: const AlwaysScrollableScrollPhysics(),
       padding: EdgeInsets.fromLTRB(
         0,
-        _bodyTopInset(context) + 24,
+        _bodyTopInset(context),
         0,
         context.bottomGutter + 24,
       ),
-      children: [child],
+      // The invitations come first even here: somebody with no entries of
+      // their own yet may well have colleagues' waiting.
+      children: [const SharedInboxNotice(), const SizedBox(height: 24), child],
     ),
   );
 
@@ -812,8 +824,12 @@ class _TimeViewState extends State<_TimeView> {
             itemCount:
                 groups.length +
                 (state.isLoadingMore ? 1 : 0) +
-                (_showsOpenEvents ? 1 : 0),
+                (_showsOpenEvents ? 1 : 0) +
+                1,
             itemBuilder: (context, index) {
+              // Invitations from colleagues (HIN-95); nothing while none wait.
+              if (index == 0) return const SharedInboxNotice();
+              index--;
               if (_showsOpenEvents) {
                 if (index == 0) {
                   return OpenCalendarEventsChip(

@@ -1535,6 +1535,58 @@
       "openToday_plural": "مواعيد اليوم غير المحوّلة: {{count}}",
       "dismissChip": "إخفاء الآن",
       "fromCalendar": "من تقويمك"
+    },
+    "share": {
+      "pageTitle": "الإدخالات المشتركة",
+      "box": {
+        "inbox": "الوارد",
+        "sent": "المرسل"
+      },
+      "accepted": "أُضيفت نسخة إلى إدخالاتك",
+      "declined": "تم رفض الدعوة",
+      "revoked": "تم سحب الدعوة",
+      "from": "من {{name}}",
+      "to": "إلى {{name}}",
+      "revoke": "سحب",
+      "decline": "رفض",
+      "adjust": "تعديل",
+      "accept": "قبول",
+      "projectHidden": "المشروع غير مرئي لك",
+      "noDescription": "بدون وصف",
+      "empty": {
+        "inbox": {
+          "title": "لا توجد دعوات بانتظارك",
+          "message": "عندما يشاركك زملاؤك إدخال وقت، يظهر هنا. أنت تقرر إن كانت نسخة منه تُضاف إلى إدخالاتك."
+        },
+        "sent": {
+          "title": "لم تشارك شيئًا بعد",
+          "message": "شارك أحد إدخالاتك من بطاقته، أو اذكر شخصًا بعلامة + في الوصف."
+        }
+      },
+      "status": {
+        "pending": "قيد الانتظار",
+        "accepted": "مقبولة",
+        "declined": "مرفوضة",
+        "revoked": "مسحوبة"
+      },
+      "adjustTitle": "القبول مع تعديلات",
+      "title": "مشاركة مع…",
+      "subtitle": "يتلقى أعضاء المشروع دعوة ويقررون بأنفسهم إن كانت نسخة تُضاف إلى إدخالاتهم.",
+      "people": "الأشخاص",
+      "addPerson": "إضافة شخص…",
+      "removePerson": "إزالة",
+      "send": "إرسال الدعوات",
+      "asked": "تمت دعوتهم",
+      "waiting": "إدخالات مشتركة بانتظار ردك: {{count}}",
+      "waiting_plural": "إدخالات مشتركة بانتظار ردك: {{count}}",
+      "open": "عرض",
+      "action": "مشاركة مع…",
+      "sentToast": "تم إرسال الدعوات",
+      "sentCount": "الدعوات المرسلة: {{count}}",
+      "sentCount_plural": "الدعوات المرسلة: {{count}}",
+      "mentionHint": "اكتب + لمشاركة الإدخال مع شخص من المشروع.",
+      "mentionNeedsProject": "اختر مشروعًا أولًا، ثم يمكنك ذكر أشخاص منه بعلامة +.",
+      "mentioned": "ستتم المشاركة مع"
     }
   },
   "availability": {
@@ -3432,7 +3484,10 @@
       "TIME_OFF_RETENTION_RUN": "تشغيل مهمة الاحتفاظ بالغياب",
       "PROJECT_COPIED": "تم نسخ المشروع",
       "PROJECT_TEMPLATE_MARKED": "تم تعليم المشروع كقالب",
-      "PROJECT_INSTANTIATED": "تم إنشاء مشروع من قالب"
+      "PROJECT_INSTANTIATED": "تم إنشاء مشروع من قالب",
+      "TIME_ENTRY_SHARED": "تمت مشاركة إدخال وقت",
+      "TIME_SHARE_ACCEPTED": "تم قبول إدخال مشترك",
+      "TIME_SHARE_REVOKED": "تم سحب إدخال مشترك"
     },
     "meta": {
       "oldRole": "الدور السابق",

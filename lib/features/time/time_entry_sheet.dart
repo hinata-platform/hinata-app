@@ -15,6 +15,9 @@ import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
+import '../../core/blocs/auth_bloc.dart';
+import '../../core/models/core_models.dart' show DirectoryUser;
+import '../../core/widgets/person_picker.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/glass_field.dart';
@@ -28,6 +31,7 @@ import 'lock_notice.dart';
 import 'placement_picker.dart';
 import 'tag_picker.dart';
 import 'time_entry_sheet_cubit.dart';
+import 'shares/share_entry_sheet.dart';
 import 'time_requests_cubit.dart';
 import '../../core/theme/app_type.dart';
 
@@ -121,6 +125,9 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
       value: context.read<IssueRepository>(),
     ),
   ];
+  // Who is reading, so only one's own entry offers to be shared: the server
+  // answers anyone else's with not-found.
+  final meId = _signedInId(context);
   // The policy travels the same way and for the same reason: the sheet marks
   // required fields and greys out a frozen day, and it is above the navigator
   // this modal rides on.
@@ -142,6 +149,7 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
         placement: placement,
         event: event,
         onDeleted: onDeleted,
+        meId: meId,
       );
       return MultiRepositoryProvider(
         providers: providers,
@@ -168,6 +176,16 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
   );
 }
 
+/// The signed-in person's id, or null where no session is in scope — a test,
+/// a preview — which then offers nothing to share.
+String? _signedInId(BuildContext context) {
+  try {
+    return context.read<AuthBloc>().state.user?.id;
+  } on ProviderNotFoundException {
+    return null;
+  }
+}
+
 /// Which of the two shapes the form is editing.
 enum _EntryMode { interval, duration }
 
@@ -179,9 +197,13 @@ class _TimeEntryForm extends StatefulWidget {
     this.placement,
     this.event,
     this.onDeleted,
+    this.meId,
   });
 
   final WorkItem? entry;
+
+  /// The signed-in person. See [showTimeEntrySheet].
+  final String? meId;
 
   /// The calendar event this sheet takes over. See [showTimeEntrySheet].
   final CalendarEventSuggestion? event;
@@ -287,6 +309,126 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// interval is shown and not edited: the event says when, and the entry keeps
   /// pointing at it.
   bool get _isFromEvent => widget.event != null;
+
+  // --- sharing (HIN-95) ------------------------------------------------------
+
+  /// The description field, so the `+` picker hangs off it.
+  final _descriptionKey = GlobalKey();
+
+  /// People named with `+`, offered the entry once it is saved.
+  final List<DirectoryUser> _mentioned = [];
+
+  /// A `+` was typed while the entry sat on no project, which is where the
+  /// people come from.
+  bool _mentionNeedsProject = false;
+
+  /// The description's length at the last change, so only typing a `+` opens
+  /// the picker — not deleting back to one.
+  late int _descriptionLength = _description.text.length;
+
+  /// Whether this sheet may offer the entry to anybody: a new one is the
+  /// reader's own, an edited one only when it is theirs.
+  bool get _mayShare =>
+      !_isEdit || (widget.meId != null && widget.entry!.userId == widget.meId);
+
+  /// The project the people are found in.
+  String? get _shareProjectId =>
+      _isEdit ? widget.entry!.projectId : _placement.projectId;
+
+  void _onDescriptionChanged(String value) {
+    if (context.read<TimePolicyCubit>().state.requiredDescription) {
+      _descriptionChanged(value);
+    }
+    final grew = value.length > _descriptionLength;
+    _descriptionLength = value.length;
+    final selection = _description.selection;
+    final caret = selection.isCollapsed ? selection.baseOffset : -1;
+    final typedPlus =
+        grew &&
+        caret >= 1 &&
+        caret <= value.length &&
+        value[caret - 1] == '+' &&
+        (caret == 1 || value[caret - 2].trim().isEmpty);
+    if (!typedPlus) {
+      if (_mentionNeedsProject) setState(() => _mentionNeedsProject = false);
+      return;
+    }
+    unawaited(_mention(caret - 1));
+  }
+
+  /// Opens the project's people for the `+` at [at], and puts the chosen
+  /// name where the `+` was.
+  Future<void> _mention(int at) async {
+    if (!_mayShare) return;
+    final projectId = _shareProjectId;
+    if (projectId == null) {
+      setState(() => _mentionNeedsProject = true);
+      return;
+    }
+    final entries = context.read<TimeEntrySheetCubit>();
+    final picked = await showPersonPicker(
+      context,
+      anchorRect: anchorRectOf(_descriptionKey) ?? Rect.zero,
+      search: (query, page, size) =>
+          entries.shareCandidates(projectId, query, page, size),
+    );
+    if (picked == null || !mounted) return;
+    final text = _description.text;
+    // Typed on while the picker was open: the `+` is not where it was.
+    if (at >= text.length || text[at] != '+') return;
+    final name = picked.displayName.isEmpty
+        ? picked.username
+        : picked.displayName;
+    final replaced = text.replaceRange(at, at + 1, '$name ');
+    _description.value = TextEditingValue(
+      text: replaced,
+      selection: TextSelection.collapsed(offset: at + name.length + 1),
+    );
+    _descriptionLength = replaced.length;
+    if (context.read<TimePolicyCubit>().state.requiredDescription) {
+      _descriptionChanged(replaced);
+    }
+    setState(() {
+      if (!_mentioned.any((person) => person.id == picked.id)) {
+        _mentioned.add(picked);
+      }
+    });
+  }
+
+  /// Offers the saved [entry] to the people named with `+`. The entry is saved
+  /// either way; a refusal here is said, and the sheet closes regardless.
+  Future<void> _shareMentioned(WorkItem entry) async {
+    if (_mentioned.isEmpty || entry.projectId == null) return;
+    final count = _mentioned.length;
+    try {
+      await context.read<TimeEntrySheetCubit>().share(entry.id, [
+        for (final person in _mentioned) person.id,
+      ]);
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t('time.share.sentCount', count: count),
+        kind: GlassToastKind.success,
+      );
+    } on ApiFailure catch (failure) {
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t(failure.message),
+        kind: GlassToastKind.error,
+      );
+    }
+  }
+
+  Future<void> _openShare() async {
+    final sent = await showShareEntrySheet(context, entry: widget.entry!);
+    if (sent != true || !mounted) return;
+    showGlassToast(
+      context,
+      context.t('time.share.sentToast'),
+      kind: GlassToastKind.success,
+    );
+  }
 
   TimePolicySnapshot get _policy => context.watch<TimePolicyCubit>().state;
 
@@ -480,6 +622,8 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       // A stop that the server refused answered null and said why in the cubit;
       // the sheet stays open with the sentence rather than closing on nothing.
       if (saved == null) return;
+      await _shareMentioned(saved.entry);
+      if (!mounted) return;
       Navigator.of(context).pop(saved);
     } catch (failure) {
       if (!mounted) return;
@@ -585,6 +729,21 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
           // Off entirely while a timer is being finished: there is no entry yet
           // to remove, and the way out of that sheet is Cancel.
           actions: [
+            // Sharing (HIN-95): one's own entry on a project, which is where
+            // the people it may go to come from.
+            if (_isEdit &&
+                !_isTimer &&
+                _mayShare &&
+                widget.entry!.projectId != null)
+              IconButton(
+                tooltip: context.t('time.share.action'),
+                icon: Icon(
+                  LucideIcons.userPlus,
+                  size: 19,
+                  color: _saving ? AppColors.inkFaint : AppColors.inkSoft,
+                ),
+                onPressed: _saving ? null : () => unawaited(_openShare()),
+              ),
             if (_isEdit && !_isTimer)
               IconButton(
                 tooltip: lock == null
@@ -613,28 +772,73 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                TextField(
-                  controller: _description,
-                  // Not for an event: its title is already here, and a keyboard
-                  // would cover the placement it is opened to choose.
-                  autofocus: !_isEdit && !_isFromEvent,
-                  maxLength: 2000,
-                  maxLines: 2,
-                  minLines: 1,
-                  // The save gate depends on whether this is empty — not on
-                  // what it says — so the form is rebuilt when that flips and
-                  // not once per keystroke.
-                  onChanged: policy.requiredDescription
-                      ? _descriptionChanged
-                      : null,
-                  decoration: InputDecoration(
-                    labelText: _required(
-                      context.t('time.entry.description'),
-                      policy.requiredDescription,
+                KeyedSubtree(
+                  key: _descriptionKey,
+                  child: TextField(
+                    controller: _description,
+                    // Not for an event: its title is already here, and a
+                    // keyboard would cover the placement it is opened to choose.
+                    autofocus: !_isEdit && !_isFromEvent,
+                    maxLength: 2000,
+                    maxLines: 2,
+                    minLines: 1,
+                    // The save gate depends on whether this is empty — not on
+                    // what it says — so the form is rebuilt when that flips and
+                    // not once per keystroke. A typed `+` opens the people of
+                    // the entry's project (HIN-95).
+                    onChanged: _onDescriptionChanged,
+                    decoration: InputDecoration(
+                      labelText: _required(
+                        context.t('time.entry.description'),
+                        policy.requiredDescription,
+                      ),
+                      // Said only where it works: one's own entry on a project.
+                      helperText: _mayShare && _shareProjectId != null
+                          ? context.t('time.share.mentionHint')
+                          : null,
+                      helperMaxLines: 2,
+                      counterText: '',
                     ),
-                    counterText: '',
                   ),
                 ),
+                if (_mentionNeedsProject) ...[
+                  const SizedBox(height: 8),
+                  _PolicyNote(
+                    text: context.t('time.share.mentionNeedsProject'),
+                  ),
+                ],
+                if (_mentioned.isNotEmpty) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    context.t('time.share.mentioned'),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      for (final person in _mentioned)
+                        InputChip(
+                          label: Text(
+                            person.displayName.isEmpty
+                                ? person.username
+                                : person.displayName,
+                          ),
+                          deleteButtonTooltipMessage: context.t(
+                            'time.share.removePerson',
+                          ),
+                          onDeleted: _saving
+                              ? null
+                              : () => setState(() => _mentioned.remove(person)),
+                        ),
+                    ],
+                  ),
+                ],
                 // Creating only. `PATCH /time/entries/{id}` carries no project
                 // or issue — the patch shape is shared with the 1.x route, where
                 // moving an entry between projects is a different act with
@@ -828,7 +1032,12 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       current: _placement,
     );
     if (picked == null || !mounted) return;
-    setState(() => _placement = picked);
+    setState(() {
+      // The people named with `+` were found in the project the entry had;
+      // another project may not have them.
+      if (picked.projectId != _placement.projectId) _mentioned.clear();
+      _placement = picked;
+    });
   }
 
   Future<void> _pickTags(TimePolicySnapshot policy) async {
