@@ -165,7 +165,7 @@ class _ShareEntryFormState extends State<_ShareEntryForm> {
         icon: LucideIcons.userPlus,
         title: context.t('time.share.title'),
         subtitle: context.t('time.share.subtitle'),
-        subtitleMaxLines: 3,
+        subtitleMaxLines: 4,
       ),
       Flexible(
         child: SingleChildScrollView(
