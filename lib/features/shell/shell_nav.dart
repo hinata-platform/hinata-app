@@ -19,7 +19,6 @@ library;
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/responsive/golden_columns.dart' show goldenContentMax;
 import '../../core/responsive/responsive.dart';
 
 /// One entry in the navigation: where it goes, what it is called, what it looks
@@ -161,13 +160,9 @@ bool showsTimerBar(String location, {required bool immersive}) =>
 /// board's does — it widens for a wall that would not otherwise fit — so it is
 /// absent and keeps publishing for itself.
 double pageContentMax(String location) {
-  if (location == '/' || location == '/dashboard') return goldenContentMax;
-  // A week of a timesheet or a month of a calendar is a grid to scan across,
-  // not a column to read: it takes the window.
-  if (location == sharedEntriesRoute) return Breakpoints.readingWidth;
-  if (isTimeModuleRoute(location) || location == '/timesheet') {
-    return double.infinity;
-  }
+  // Every destination in the navigation shares the reading width, the
+  // dashboard and the time module included: a page that grows with the window
+  // while its neighbours stop is the jump the eye notices when switching.
   return Breakpoints.readingWidth;
 }
 
