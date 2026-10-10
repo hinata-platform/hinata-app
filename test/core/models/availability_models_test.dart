@@ -158,4 +158,27 @@ void main() {
     expect(WorkingPattern.minutesOf([480, 480]), [480, 480, 0, 0, 0, 0, 0]);
     expect(WorkingPattern.minutesOf(null), [0, 0, 0, 0, 0, 0, 0]);
   });
+
+  test('a calendar carries the region it follows, and regions read nested', () {
+    final calendar = HolidayCalendar.fromJson(const {
+      'id': 'c',
+      'name': 'Gesetzliche Feiertage',
+      'rules': 'DE-BY',
+      'rulesName': 'Bayern, Deutschland',
+      'platformDefault': true,
+    });
+    expect(calendar.hasRules, isTrue);
+    expect(calendar.rulesName, 'Bayern, Deutschland');
+    expect(calendar.platformDefault, isTrue);
+    expect(HolidayCalendar.fromJson(const {'id': 'c'}).hasRules, isFalse);
+
+    final germany = HolidayRegion.fromJson(const {
+      'code': 'DE',
+      'name': 'Deutschland',
+      'subdivisions': [
+        {'code': 'DE-BY', 'name': 'Bayern', 'subdivisions': <Object>[]},
+      ],
+    });
+    expect(germany.subdivisions.single.code, 'DE-BY');
+  });
 }

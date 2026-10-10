@@ -13,6 +13,7 @@ import '../../../core/branding/org_logo_store.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/util/file_pick.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/widgets/holiday_region_picker.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
@@ -141,6 +142,15 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
     context.read<OrgLogoStore>().refresh(logoUrl);
     context.read<AppConfigBloc>().add(const AppConfigStarted());
   }
+
+  /// The platform's holiday block; null on the server means the country of
+  /// the time zone, so "automatic" is sent as null.
+  Map<String, dynamic> get _holidays =>
+      (widget.settings['holidays'] ??= <String, dynamic>{})
+          as Map<String, dynamic>;
+
+  static const _autoRegion = 'AUTO';
+  static const _noRegion = 'NONE';
 
   static const _timezones = [
     'Europe/Berlin',
@@ -381,6 +391,26 @@ class _AdminGeneralSectionState extends State<AdminGeneralSection> {
               value: (_general['defaultLocale'] as String?) ?? 'de',
               options: [for (final l in _locales) (value: l.$1, label: l.$2)],
               onChanged: (v) => setState(() => _general['defaultLocale'] = v),
+            ),
+            const SizedBox(height: 12),
+            HolidayRegionField(
+              label: context.t('admin.holidayRegion'),
+              helper: context.t('admin.holidayRegionHint'),
+              decoration: adminInputDecoration(
+                context,
+                label: context.t('admin.holidayRegion'),
+              ),
+              value: (_holidays['region'] as String?) ?? _autoRegion,
+              options: [
+                (
+                  value: _autoRegion,
+                  label: context.t('admin.holidayRegionAuto'),
+                ),
+                (value: _noRegion, label: context.t('admin.holidayRegionNone')),
+              ],
+              onChanged: (v) => setState(
+                () => _holidays['region'] = v == _autoRegion ? null : v,
+              ),
             ),
           ],
         ),

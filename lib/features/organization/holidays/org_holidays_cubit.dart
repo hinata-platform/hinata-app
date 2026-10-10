@@ -24,33 +24,38 @@ class OrgHolidaysCubit extends Cubit<void> {
     required String name,
     String? region,
     String? icsUrl,
+    String? rules,
     bool defaultCalendar = false,
   }) => _availability.createCalendar(
     name: name,
     region: region,
     icsUrl: icsUrl,
+    rules: rules,
     defaultCalendar: defaultCalendar,
   );
 
-  /// An edit; a null field is left alone, an empty [icsUrl] removes the feed.
+  /// An edit; a null field is left alone, an empty [icsUrl] removes the feed
+  /// and empty [rules] the rules.
   Future<HolidayCalendar> updateCalendar(
     String id, {
     String? name,
     String? region,
     String? icsUrl,
+    String? rules,
     bool? defaultCalendar,
   }) => _availability.updateCalendar(
     id,
     name: name,
     region: region,
     icsUrl: icsUrl,
+    rules: rules,
     defaultCalendar: defaultCalendar,
   );
 
   Future<void> deleteCalendar(String id) => _availability.deleteCalendar(id);
 
-  /// Starts importing a year of the calendar's feed; answers at once with the
-  /// calendar importing.
+  /// Starts importing a year of the calendar's feed, answering at once with the
+  /// calendar importing; a calendar with rules fills the year right away.
   Future<HolidayCalendar> importHolidays(String id, {int? year}) =>
       _availability.importHolidays(id, year: year);
 
