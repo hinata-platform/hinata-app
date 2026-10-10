@@ -941,7 +941,6 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
         if (revised) unawaited(_reload());
       },
       child: PageChrome(
-        contentMax: double.infinity,
         title: _title(),
         onTitleTap: compact ? _openModuleMenu : null,
         // On the leading edge, because the title is a month name that changes as

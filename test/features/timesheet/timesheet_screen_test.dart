@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/responsive/responsive.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
@@ -434,9 +435,8 @@ void main() {
       // live in the page's own head, and the test looks where a reader does.
       expect(find.text('timesheet.title'), findsOneWidget);
       expect(find.text('timesheet.today'), findsOneWidget);
-      // The grid is a layout to scan across, not prose to read — and that
-      // *is* the shell's business.
-      expect(chrome.contentMaxFor('/'), double.infinity);
+      // The week stops at the width every page in the navigation shares.
+      expect(chrome.contentMaxFor('/'), Breakpoints.readingWidth);
     });
 
     testWidgets('re-asks the server for the current week', (tester) async {

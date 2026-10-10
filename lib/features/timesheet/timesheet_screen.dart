@@ -695,19 +695,16 @@ class _TimesheetViewState extends State<_TimesheetView> {
   Widget build(BuildContext context) {
     final orgAdmin = _isOrgAdmin;
     final compact = context.isCompact;
-    // [PageChrome] carries two things the shell owns. `fullWidth`, because a
-    // seven-day grid wants the whole page rather than the reading column. And
-    // on a phone the controls themselves, docked into the glass app bar the way
-    // the audit log docks its filters: laid out down the page they cost a third
-    // of the screen before a single row of the week is visible, and the bar is
-    // already blurring that band.
+    // [PageChrome] carries what the shell owns: on a phone the controls,
+    // docked into the glass app bar the way the audit log docks its filters.
+    // Laid out down the page they cost a third of the screen before a single
+    // row of the week is visible, and the bar is already blurring that band.
     //
     // Its title and actions are deliberately not used. The shell draws those in
     // the sub-page bar, and a destination in the nav has no sub-page bar, so on
     // a wide window they would never appear at all — which is why a top-level
     // page wears its own head, the way Reports, Gantt and Board do.
     return PageChrome(
-      contentMax: double.infinity,
       // The module's three views live under the app bar's title on a phone —
       // the docked row below is the one line this page is allowed, and it is
       // spent on the week it is showing. Off the module (the plain

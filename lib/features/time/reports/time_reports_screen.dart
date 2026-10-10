@@ -507,7 +507,6 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
       onSelected: _switchTab,
     );
     return PageChrome(
-      contentMax: double.infinity,
       onTitleTap: compact
           ? (anchor) => unawaited(
               showTimeViewMenu<Never>(

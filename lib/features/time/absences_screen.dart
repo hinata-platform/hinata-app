@@ -434,7 +434,6 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
       listenWhen: (before, after) => before.revision != after.revision,
       listener: (context, state) => unawaited(_reload()),
       child: PageChrome(
-        contentMax: double.infinity,
         onTitleTap: compact
             ? (anchor) => unawaited(
                 showTimeViewMenu<Never>(
