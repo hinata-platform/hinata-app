@@ -3,6 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/models/availability_models.dart';
+import 'package:hinata/core/blocs/paged_cubit.dart';
+import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/org_settings_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
@@ -11,6 +14,7 @@ import 'package:hinata/features/organization/time_tracking/time_tracking_section
 import 'package:hinata/features/organization/org_deadline_basis_card.dart';
 import 'package:hinata/features/organization/org_link_card.dart';
 import 'package:hinata/features/organization/organization_cubit.dart';
+import 'package:hinata/features/organization/holidays/holidays_screen.dart';
 import 'package:hinata/features/organization/organization_screen.dart';
 
 import 'organization_test_support.dart';
@@ -42,6 +46,7 @@ void main() {
       providers: [
         RepositoryProvider<OrgSettingsRepository>.value(value: repository),
         RepositoryProvider<TimeRepository>.value(value: time),
+        RepositoryProvider<AvailabilityRepository>.value(value: _NoCalendars()),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -253,6 +258,26 @@ void main() {
       expect(find.text('availability.admin.cardTitle'), findsOneWidget);
     });
 
+    testWidgets('the holidays open in the pane, beside the rail', (
+      tester,
+    ) async {
+      window(tester, desktop);
+      await tester.pumpWidget(
+        host(FakeOrgSettingsRepository(advancedEnabled: true)),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('availability.admin.cardTitle'));
+      await tester.pumpAndSettle();
+
+      // The page's own content, not a page pushed over the rail.
+      expect(find.byType(OrgHolidaysScreen), findsOneWidget);
+      expect(find.text('org.nav.corrections'), findsOneWidget);
+      expect(find.text('availability.admin.noCalendars'), findsOneWidget);
+      expect(find.text('admin.timeTracking.hint'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('?section= opens that section', (tester) async {
       window(tester, desktop);
       await tester.pumpWidget(
@@ -292,4 +317,17 @@ void main() {
     expect(find.byType(OrgDeadlineBasisCard), findsOneWidget);
     expect(find.byType(OrgLinkCard), findsOneWidget);
   });
+}
+
+/// An instance without holiday calendars yet.
+class _NoCalendars implements AvailabilityRepository {
+  @override
+  Future<PageResult<HolidayCalendar>> calendars({
+    int page = 0,
+    int size = 50,
+  }) async => (items: const <HolidayCalendar>[], total: 0);
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
 }
