@@ -17,7 +17,6 @@ import 'package:hinata/core/events/issue_events.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/widgets/glass_popup_menu.dart';
-import 'package:hinata/core/widgets/hive_widgets.dart';
 import 'package:hinata/features/issues/watch/issue_watch_cubit.dart';
 import 'package:hinata/features/issues/watch/issue_watch_menu.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -271,8 +270,8 @@ void main() {
     });
   });
 
-  group('the watch popover', () {
-    testWidgets('opens from the "…" menu and flips its verb on tap', (
+  group('the watch submenu', () {
+    testWidgets('opens from the "…" menu and toggles from its card', (
       tester,
     ) async {
       final gate = Completer<void>();
@@ -296,46 +295,42 @@ void main() {
 
       await tester.tap(find.text('issues.watch.title'));
       await tester.pumpAndSettle();
-      // …which opens the panel with all three parts.
+      // …which opens the card with all three parts.
       expect(find.text('issues.watch.start'), findsOneWidget);
       expect(find.text('issues.watch.watchersTitle'), findsOneWidget);
       expect(find.text('Mia'), findsOneWidget);
 
       await tester.tap(find.text('issues.watch.start'));
-      await tester.pump();
-      // Optimistic, and the panel stays open to show it: the verb flips and
-      // the caller joins the roster.
-      expect(find.text('issues.watch.stop'), findsOneWidget);
-      expect(find.byIcon(LucideIcons.eye), findsOneWidget);
-      expect(find.textContaining('issues.watch.you'), findsOneWidget);
+      await tester.pumpAndSettle();
+      // Optimistic: subscribed before the server has answered.
+      expect(cubit.watching, isTrue);
 
       gate.complete();
       await tester.pumpAndSettle();
       expect(repo.watched, ['i1']);
+
+      // The next time it opens, the verb has flipped and the caller is on the
+      // roster.
+      await _openCard(tester);
       expect(find.text('issues.watch.stop'), findsOneWidget);
+      expect(find.textContaining('issues.watch.you'), findsOneWidget);
     });
 
     testWidgets('rolls the verb back when the server refuses', (tester) async {
-      final gate = Completer<void>();
-      final repo = _FakeIssueRepository(
-        failure: ApiFailure('Kein Zugriff'),
-        gate: gate,
-      );
+      final repo = _FakeIssueRepository(failure: ApiFailure('Kein Zugriff'));
       final cubit = _cubit(repo);
       addTearDown(cubit.close);
       await tester.pumpWidget(
-        _panelHost(cubit, _issue(watcherIds: const ['u2'])),
+        _menuHost(cubit, _issue(watcherIds: const ['u2'])),
       );
 
+      await _openCard(tester);
       await tester.tap(find.text('issues.watch.start'));
-      await tester.pump();
-      expect(cubit.watching, isTrue);
-      expect(find.text('issues.watch.stop'), findsOneWidget);
-
-      gate.complete();
       await tester.pumpAndSettle();
       expect(cubit.watching, isFalse);
       expect(cubit.state.errorKey, 'Kein Zugriff');
+
+      await _openCard(tester);
       expect(find.text('issues.watch.start'), findsOneWidget);
     });
 
@@ -345,7 +340,8 @@ void main() {
       final repo = _FakeIssueRepository();
       final cubit = _cubit(repo, watcherIds: const ['u2', 'u1']);
       addTearDown(cubit.close);
-      await tester.pumpWidget(_panelHost(cubit, _issue()));
+      await tester.pumpWidget(_menuHost(cubit, _issue()));
+      await _openCard(tester);
 
       // The caller's row carries the "you" marker on the same line as the name.
       expect(find.textContaining('Rebar'), findsOneWidget);
@@ -358,41 +354,44 @@ void main() {
       expect(find.text('issues.watch.noWatchers'), findsNothing);
     });
 
-    testWidgets('says so when nobody watches, and names an unknown one', (
-      tester,
-    ) async {
+    testWidgets('says so when nobody watches', (tester) async {
       final repo = _FakeIssueRepository();
       final empty = _cubit(repo, watcherIds: const []);
       addTearDown(empty.close);
-      await tester.pumpWidget(_panelHost(empty, _issue()));
+      await tester.pumpWidget(_menuHost(empty, _issue()));
+      await _openCard(tester);
       expect(find.text('issues.watch.noWatchers'), findsOneWidget);
+    });
 
-      // A watcher the directory never resolved (deactivated, or not hydrated
-      // yet) is named as unknown rather than shown as a raw id.
+    testWidgets('names a watcher the directory does not know', (tester) async {
+      // Deactivated, or not hydrated yet: named as unknown rather than shown
+      // as a raw id.
+      final repo = _FakeIssueRepository();
       final stranger = _cubit(repo, watcherIds: const ['u404']);
       addTearDown(stranger.close);
-      await tester.pumpWidget(_panelHost(stranger, _issue()));
+      await tester.pumpWidget(_menuHost(stranger, _issue()));
+      await _openCard(tester);
       expect(find.text('issues.watch.unknownWatcher'), findsOneWidget);
       expect(find.text('u404'), findsNothing);
     });
 
-    testWidgets('scrolls a long roster instead of growing', (tester) async {
+    testWidgets('fits a long roster on screen', (tester) async {
       final repo = _FakeIssueRepository();
       final crowd = _cubit(
         repo,
-        watcherIds: [for (var i = 0; i < 40; i++) 'u$i'],
+        watcherIds: [for (var i = 0; i < 40; i++) 'w$i'],
       );
       addTearDown(crowd.close);
-      await tester.pumpWidget(_panelHost(crowd, _issue()));
+      await tester.pumpWidget(_menuHost(crowd, _issue()));
+      await _openCard(tester);
 
-      // Lazily built: the roster is a ListView, so only the visible slice of
-      // those 40 rows exists.
-      expect(find.byType(HiveAvatar), findsWidgets);
-      expect(
-        tester.widgetList<HiveAvatar>(find.byType(HiveAvatar)).length,
-        lessThan(40),
-      );
+      // The card scrolls rather than running off the window: the action at
+      // its top stays reachable.
       expect(tester.takeException(), isNull);
+      final start = tester.getRect(find.text('issues.watch.start'));
+      final window = tester.view.physicalSize / tester.view.devicePixelRatio;
+      expect(start.top, greaterThanOrEqualTo(0));
+      expect(start.bottom, lessThanOrEqualTo(window.height));
     });
 
     testWidgets('explains that an assignee is already covered', (tester) async {
@@ -400,23 +399,29 @@ void main() {
       final cubit = _cubit(repo);
       addTearDown(cubit.close);
       await tester.pumpWidget(
-        _panelHost(cubit, _issue(assigneeIds: const ['u1'])),
+        _menuHost(cubit, _issue(assigneeIds: const ['u1'])),
       );
+      await _openCard(tester);
 
       expect(find.text('issues.watch.implicitAssignee'), findsOneWidget);
       expect(find.text('issues.watch.implicitReporter'), findsNothing);
     });
 
-    testWidgets('says the same for the reporter, and nothing for a bystander', (
-      tester,
-    ) async {
+    testWidgets('says the same for the reporter', (tester) async {
       final repo = _FakeIssueRepository();
       final cubit = _cubit(repo);
       addTearDown(cubit.close);
-      await tester.pumpWidget(_panelHost(cubit, _issue(reporterId: 'u1')));
+      await tester.pumpWidget(_menuHost(cubit, _issue(reporterId: 'u1')));
+      await _openCard(tester);
       expect(find.text('issues.watch.implicitReporter'), findsOneWidget);
+    });
 
-      await tester.pumpWidget(_panelHost(cubit, _issue(reporterId: 'u9')));
+    testWidgets('and nothing for a bystander', (tester) async {
+      final repo = _FakeIssueRepository();
+      final cubit = _cubit(repo);
+      addTearDown(cubit.close);
+      await tester.pumpWidget(_menuHost(cubit, _issue(reporterId: 'u9')));
+      await _openCard(tester);
       expect(find.text('issues.watch.implicitReporter'), findsNothing);
       expect(find.text('issues.watch.implicitAssignee'), findsNothing);
     });
@@ -468,26 +473,7 @@ IssueWatchMenuData _menuData(IssueWatchCubit cubit, Issue issue) =>
       pronounsFor: (id) => _pronouns[id],
     );
 
-/// The popover's body on its own, in a box the size the overlay gives it.
-Widget _panelHost(IssueWatchCubit cubit, Issue issue) => MaterialApp(
-  debugShowCheckedModeBanner: false,
-  home: Scaffold(
-    body: Center(
-      child: SizedBox(
-        width: 320,
-        height: 440,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Flexible(child: IssueWatchPanel(data: _menuData(cubit, issue))),
-          ],
-        ),
-      ),
-    ),
-  ),
-);
-
-/// The whole path the user takes: the "…" menu's watch row, and the popover it
+/// The whole path the user takes: the "…" menu's watch row and the card it
 /// opens — wired exactly as the issue top bars wire it.
 Widget _menuHost(IssueWatchCubit cubit, Issue issue) {
   final data = _menuData(cubit, issue);
@@ -500,24 +486,30 @@ Widget _menuHost(IssueWatchCubit cubit, Issue issue) {
           builder: (context, state) => GlassPopupMenu<String?>(
             value: null,
             items: [
-              issueWatchMenuItem(
+              issueWatchMenuItem<String?>(
                 context,
-                value: 'watch',
-                watching: state.isWatchedBy(data.meId),
-                enabled: data.meId != null,
+                toggleValue: 'toggle',
+                data: data,
+                state: state,
               ),
             ],
-            onSelected: (_) => showIssueWatchPopover(
-              context,
-              anchorRect: Rect.zero,
-              data: data,
-            ),
+            onSelected: (value) {
+              if (value == 'toggle') data.onToggle();
+            },
             child: const Text('menu'),
           ),
         ),
       ),
     ),
   );
+}
+
+/// Opens the "…" menu and, in it, the watch card.
+Future<void> _openCard(WidgetTester tester) async {
+  await tester.tap(find.text('menu'));
+  await tester.pumpAndSettle();
+  await tester.tap(find.text('issues.watch.title'));
+  await tester.pumpAndSettle();
 }
 
 /// Records the calls the toggle makes and can be told to refuse them.
