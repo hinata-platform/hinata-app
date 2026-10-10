@@ -34,19 +34,27 @@ import '../../../core/theme/app_type.dart';
 /// An import runs on the server and answers at once, so this page reads the
 /// calendars again every two seconds while one is importing, and stops after a
 /// minute whatever the state.
+///
+/// On a wide window it is a section of the Organisation page, [embedded] in
+/// its pane, which scrolls it and gives it its width; on a phone it is a page
+/// of its own.
 class OrgHolidaysScreen extends StatelessWidget {
-  const OrgHolidaysScreen({super.key});
+  const OrgHolidaysScreen({super.key, this.embedded = false});
+
+  final bool embedded;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) =>
         OrgHolidaysCubit(context.read<AvailabilityRepository>()),
-    child: const _OrgHolidaysView(),
+    child: _OrgHolidaysView(embedded: embedded),
   );
 }
 
 class _OrgHolidaysView extends StatefulWidget {
-  const _OrgHolidaysView();
+  const _OrgHolidaysView({required this.embedded});
+
+  final bool embedded;
 
   @override
   State<_OrgHolidaysView> createState() => _OrgHolidaysScreenState();
@@ -238,22 +246,21 @@ class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
   }
 
   @override
-  Widget build(BuildContext context) => PageChrome(
-    title: context.t('availability.admin.pageTitle'),
-    actions: [
-      PageAction(
-        icon: LucideIcons.plus,
-        label: context.t('availability.admin.newCalendar'),
-        primary: true,
-        onTap: (_) => unawaited(_editCalendar(null)),
-      ),
-    ],
-    child: _body(context),
-  );
+  Widget build(BuildContext context) {
+    if (widget.embedded) return _state(context) ?? _content(context);
+    return PageChrome(
+      title: context.t('availability.admin.pageTitle'),
+      child: _body(context),
+    );
+  }
 
-  Widget _body(BuildContext context) {
+  /// The loader or the failure, while there are no calendars to show.
+  Widget? _state(BuildContext context) {
     if (_loading && _calendars.isEmpty) {
-      return const Center(child: HiveLoader());
+      return const Padding(
+        padding: EdgeInsets.all(48),
+        child: Center(child: HiveLoader()),
+      );
     }
     if (_errorKey != null && _calendars.isEmpty) {
       return Center(
@@ -270,6 +277,12 @@ class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
         ),
       );
     }
+    return null;
+  }
+
+  Widget _body(BuildContext context) {
+    final state = _state(context);
+    if (state != null) return state;
     return RefreshIndicator(
       onRefresh: _load,
       edgeOffset: context.topGutter,
@@ -284,57 +297,75 @@ class _OrgHolidaysScreenState extends State<_OrgHolidaysView> {
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 820),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FoldedHint(
-                    context.t('availability.admin.intro'),
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      height: 1.45,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  if (_calendars.isEmpty)
-                    HiveEmptyState(
-                      title: context.t('availability.admin.noCalendars'),
-                      message: context.t(
-                        'availability.admin.noCalendarsMessage',
-                      ),
-                      action: FilledButton.icon(
-                        onPressed: () => unawaited(_editCalendar(null)),
-                        icon: const Icon(LucideIcons.plus, size: 16),
-                        label: Text(
-                          context.t('availability.admin.newCalendar'),
-                        ),
-                      ),
-                    )
-                  else ...[
-                    for (final calendar in _calendars) ...[
-                      HolidayCalendarCard(
-                        calendar: calendar,
-                        year: _year,
-                        selected: calendar.id == _selectedId,
-                        onSelect: () {
-                          setState(() => _selectedId = calendar.id);
-                          unawaited(_loadHolidays());
-                        },
-                        onImport: () => unawaited(_import(calendar)),
-                        onEdit: () => unawaited(_editCalendar(calendar)),
-                        onDelete: () => unawaited(_deleteCalendar(calendar)),
-                      ),
-                      const SizedBox(height: 10),
-                    ],
-                    const SizedBox(height: 14),
-                    _holidayList(context),
-                  ],
-                ],
-              ),
+              child: _content(context),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  /// The calendars and the days of the chosen one. The action that makes a
+  /// calendar sits on the content's first line, aligned with it, wherever the
+  /// page is shown.
+  Widget _content(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: FoldedHint(
+                context.t('availability.admin.intro'),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  height: 1.45,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            // Without calendars the empty state below offers the same.
+            if (_calendars.isNotEmpty) ...[
+              const SizedBox(width: 12),
+              FilledButton.tonalIcon(
+                onPressed: () => unawaited(_editCalendar(null)),
+                icon: const Icon(LucideIcons.plus, size: 15),
+                label: Text(context.t('availability.admin.newCalendar')),
+              ),
+            ],
+          ],
+        ),
+        const SizedBox(height: 16),
+        if (_calendars.isEmpty)
+          HiveEmptyState(
+            title: context.t('availability.admin.noCalendars'),
+            message: context.t('availability.admin.noCalendarsMessage'),
+            action: FilledButton.icon(
+              onPressed: () => unawaited(_editCalendar(null)),
+              icon: const Icon(LucideIcons.plus, size: 16),
+              label: Text(context.t('availability.admin.newCalendar')),
+            ),
+          )
+        else ...[
+          for (final calendar in _calendars) ...[
+            HolidayCalendarCard(
+              calendar: calendar,
+              year: _year,
+              selected: calendar.id == _selectedId,
+              onSelect: () {
+                setState(() => _selectedId = calendar.id);
+                unawaited(_loadHolidays());
+              },
+              onImport: () => unawaited(_import(calendar)),
+              onEdit: () => unawaited(_editCalendar(calendar)),
+              onDelete: () => unawaited(_deleteCalendar(calendar)),
+            ),
+            const SizedBox(height: 10),
+          ],
+          const SizedBox(height: 14),
+          _holidayList(context),
+        ],
+      ],
     );
   }
 
