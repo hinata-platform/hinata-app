@@ -508,6 +508,9 @@ class HolidayCalendar extends Equatable {
     this.lastImportedAt,
     this.lastImportError,
     this.lastImport,
+    this.rules,
+    this.rulesName,
+    this.platformDefault = false,
   });
 
   /// Longest name and region the server keeps (`HolidayCalendar.NAME_MAX`,
@@ -530,6 +533,14 @@ class HolidayCalendar extends Equatable {
   final String? lastImportError;
   final HolidayImportSummary? lastImport;
 
+  /// The region whose statutory holidays fill this calendar (`DE-BY`), its
+  /// name in the reader's language, and whether the platform made it.
+  final String? rules;
+  final String? rulesName;
+  final bool platformDefault;
+
+  bool get hasRules => rules != null;
+
   bool get importing => importState == 'RUNNING';
   bool get importFailed => importState == 'FAILED';
 
@@ -549,6 +560,9 @@ class HolidayCalendar extends Equatable {
                 json['lastImport'] as Map<String, dynamic>,
               )
             : null,
+        rules: json['rules'] as String?,
+        rulesName: json['rulesName'] as String?,
+        platformDefault: json['platformDefault'] as bool? ?? false,
       );
 
   @override
@@ -563,7 +577,36 @@ class HolidayCalendar extends Equatable {
     lastImportedAt,
     lastImportError,
     lastImport,
+    rules,
+    rulesName,
+    platformDefault,
   ];
+}
+
+/// A country or one of its regions a holiday calendar can follow: `DE`, or
+/// `DE-BY` with an empty [subdivisions].
+class HolidayRegion extends Equatable {
+  const HolidayRegion({
+    required this.code,
+    required this.name,
+    this.subdivisions = const [],
+  });
+
+  final String code;
+  final String name;
+  final List<HolidayRegion> subdivisions;
+
+  factory HolidayRegion.fromJson(Map<String, dynamic> json) => HolidayRegion(
+    code: json['code'] as String? ?? '',
+    name: json['name'] as String? ?? '',
+    subdivisions: (json['subdivisions'] as List? ?? const [])
+        .whereType<Map<String, dynamic>>()
+        .map(HolidayRegion.fromJson)
+        .toList(growable: false),
+  );
+
+  @override
+  List<Object?> get props => [code, name, subdivisions];
 }
 
 /// What one import did for one year.
