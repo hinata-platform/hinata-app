@@ -156,6 +156,13 @@
     },
     "article": {
       "moveNotAllowed": "Solo pueden mover esta página quienes gestionan su lugar: los responsables del proyecto, los administradores del equipo o la persona autora de una página privada."
+    },
+    "billing": {
+      "forbidden": "La facturación es para administradores de la organización y responsables de proyecto.",
+      "invoice": {
+        "project": "Elige el proyecto que quieres facturar.",
+        "tax": "Introduce un tipo de IVA entre 0 y 100 por ciento."
+      }
     }
   },
   "notFound": {
@@ -1310,7 +1317,8 @@
         "detailed": "Entradas",
         "workload": "Carga",
         "saved": "Guardados",
-        "absences": "Ausencias"
+        "absences": "Ausencias",
+        "billing": "Facturación"
       },
       "group": {
         "project": "Proyecto",
@@ -2966,7 +2974,8 @@
       "requestPurgeLabel": "Eliminar solicitudes cerradas tras",
       "requestPurgeHint": "Solicitudes rechazadas, retiradas y canceladas. Las aprobadas se conservan como prueba. 0 las conserva todas.",
       "ledgerPurgeLabel": "Eliminar el registro de vacaciones tras",
-      "ledgerPurgeHint": "0 conserva el registro. Si no, al menos 3 años (§§ 195, 199 BGB). Los avisos de caducidad nunca se eliminan."
+      "ledgerPurgeHint": "0 conserva el registro. Si no, al menos 3 años (§§ 195, 199 BGB). Los avisos de caducidad nunca se eliminan.",
+      "ratesOpen": "Gestionar tarifas"
     },
     "absence": {
       "title": "Gestión de ausencias 2.0",
@@ -3487,7 +3496,15 @@
       "PROJECT_INSTANTIATED": "Proyecto creado desde plantilla",
       "TIME_ENTRY_SHARED": "Registro de tiempo compartido",
       "TIME_SHARE_ACCEPTED": "Registro compartido aceptado",
-      "TIME_SHARE_REVOKED": "Registro compartido retirado"
+      "TIME_SHARE_REVOKED": "Registro compartido retirado",
+      "BILLING_RATE_CREATED": "Tarifa fijada",
+      "BILLING_RATE_UPDATED": "Tarifa cambiada",
+      "BILLING_RATE_DELETED": "Tarifa eliminada",
+      "INVOICE_CREATED": "Borrador de factura creado",
+      "INVOICE_DELETED": "Borrador de factura eliminado",
+      "INVOICE_ISSUED": "Factura emitida",
+      "INVOICE_CREDITED": "Factura anulada",
+      "INVOICE_EXPORTED": "Factura exportada"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -3873,6 +3890,18 @@
       "project": "Proyecto",
       "work": "Forma de trabajo",
       "manage": "Administración"
+    },
+    "billing": {
+      "title": "Facturación",
+      "note": "A qué precio se factura una hora en este proyecto. Los costes los fijan los administradores de la organización.",
+      "projectRate": "Tarifa del proyecto",
+      "noRate": "Sin tarifa, se aplica la del equipo o la predeterminada",
+      "setRate": "Fijar",
+      "changeRate": "Cambiar",
+      "memberRates": "Tarifas de miembros",
+      "noMemberRates": "Ningún miembro tiene una tarifa propia en este proyecto.",
+      "addMember": "Tarifa para un miembro",
+      "notLead": "Solo los responsables del proyecto fijan sus tarifas."
     }
   },
   "account": {
@@ -4584,6 +4613,175 @@
       "plum": "Ciruela",
       "olive": "Oliva",
       "red": "Rojo"
+    }
+  },
+  "billing": {
+    "issueRate": "Tarifa por hora de esta incidencia",
+    "kind": {
+      "billable": "Tarifa de facturación",
+      "cost": "Tarifa de coste"
+    },
+    "scope": {
+      "issue": "Incidencia",
+      "projectMember": "Miembro del proyecto",
+      "user": "Persona",
+      "project": "Proyecto",
+      "team": "Equipo",
+      "instanceDefault": "Predeterminada"
+    },
+    "rateStatus": {
+      "active": "Vigente",
+      "planned": "Prevista",
+      "ended": "Finalizada"
+    },
+    "rate": {
+      "amount": "Tarifa por hora",
+      "amountHint": "p. ej. 95.00",
+      "amountInvalid": "Introduce una tarifa por hora, por ejemplo 95 o 95.50.",
+      "changeFrom": "Nueva tarifa a partir de una fecha",
+      "changeHint": "La tarifa actual termina el día anterior. Las entradas anteriores a esa fecha conservan su tarifa.",
+      "costOf": "Tarifa de coste · {{target}}",
+      "revenueOf": "Tarifa de facturación · {{target}}",
+      "from": "Válida desde",
+      "none": "Aún no hay ninguna tarifa.",
+      "perHour": "{{amount}} / h",
+      "remove": "Eliminar tarifa",
+      "removeTitle": "¿Eliminar esta tarifa?",
+      "removeMessage": "Los informes valorarán los días que cubría con la siguiente tarifa aplicable. Las facturas emitidas no cambian.",
+      "saved": "Tarifa guardada",
+      "set": "Fijar tarifa",
+      "since": "desde el {{from}}",
+      "span": "{{from}} a {{to}}"
+    },
+    "rates": {
+      "title": "Tarifas",
+      "new": "Nueva tarifa",
+      "newFor": "Fijar una tarifa para",
+      "kind": "Tipo",
+      "allKinds": "Todos los tipos",
+      "scope": "Destino",
+      "allScopes": "Todos los destinos",
+      "status": "Vigencia",
+      "allStatuses": "Cualquier vigencia",
+      "pickProject": "Elige un proyecto",
+      "pickTeam": "Elige un equipo",
+      "defaults": "Predeterminadas",
+      "defaultsHint": "Se aplican donde no hay tarifa de incidencia, miembro, persona, proyecto o equipo.",
+      "defaultRevenue": "Tarifa de facturación predeterminada",
+      "defaultCost": "Tarifa de coste predeterminada",
+      "emptyTitle": "No hay tarifas aquí",
+      "emptyMessage": "Fija una tarifa para un proyecto, una persona o un equipo, o cambia los filtros."
+    },
+    "report": {
+      "kind": {
+        "billing": "Facturación",
+        "profitability": "Rentabilidad",
+        "utilization": "Utilización"
+      },
+      "kindTitle": "Informe",
+      "group": {
+        "project": "Por proyecto",
+        "issue": "Por incidencia",
+        "user": "Por persona",
+        "team": "Por equipo",
+        "day": "Por día",
+        "week": "Por semana",
+        "month": "Por mes"
+      },
+      "none": {
+        "project": "Sin proyecto",
+        "issue": "Sin incidencia",
+        "user": "Antiguo miembro",
+        "team": "Sin equipo",
+        "day": "Sin fecha",
+        "week": "Sin fecha",
+        "month": "Sin fecha"
+      },
+      "previous": "Periodo anterior",
+      "next": "Periodo siguiente",
+      "billableHours": "Horas facturables",
+      "revenue": "Ingresos",
+      "cost": "Coste laboral",
+      "margin": "Margen",
+      "hours": "Horas",
+      "billableShare": "Proporción facturable",
+      "ofCapacity": "Facturable sobre capacidad",
+      "unrated": "{{hours}} horas no tenían tarifa y cuentan como cero. Fija una tarifa para incluirlas.",
+      "emptyTitle": "No hay nada registrado en este periodo",
+      "emptyMessage": "Elige otro periodo o revisa los filtros."
+    },
+    "invoices": {
+      "title": "Facturas",
+      "shelf": {
+        "all": "Todas",
+        "drafts": "Borradores",
+        "issued": "Emitidas"
+      },
+      "emptyTitle": "Aún no hay facturas",
+      "emptyMessage": "Crea un borrador a partir de las horas facturables de un proyecto. No se emite nada hasta que tú lo decidas."
+    },
+    "invoice": {
+      "new": "Crear borrador de factura",
+      "newTitle": "Crear un borrador de factura",
+      "newSubtitle": "A partir de las horas facturables de un proyecto que aún no se han facturado.",
+      "createDraft": "Crear borrador",
+      "project": "Proyecto",
+      "pickProject": "Elige un proyecto",
+      "period": "Periodo de servicio",
+      "lineBy": "Una línea por",
+      "grouping": {
+        "issue": "Incidencia",
+        "project": "Proyecto",
+        "user": "Persona",
+        "day": "Día"
+      },
+      "recipient": "Facturar a",
+      "recipientName": "Nombre",
+      "recipientAddress": "Dirección",
+      "vatId": "NIF-IVA",
+      "noRecipient": "Aún no hay destinatario",
+      "tax": "Tipo de IVA",
+      "taxHint": "p. ej. 19, vacío si no hay",
+      "taxLine": "IVA {{rate}} %",
+      "notes": "Notas en la factura",
+      "hours": "Horas",
+      "net": "Neto",
+      "gross": "Total",
+      "draftTitle": "Borrador de factura",
+      "number": "Factura {{number}}",
+      "creditNoteNumber": "Nota de crédito {{number}}",
+      "status": {
+        "draft": "Borrador",
+        "issued": "Emitida",
+        "credited": "Anulada con nota de crédito",
+        "creditNote": "Nota de crédito"
+      },
+      "reverses": "Anula",
+      "reversedBy": "Anulada por",
+      "actions": "Acciones de la factura",
+      "edit": "Editar destinatario y notas",
+      "refresh": "Regenerar líneas",
+      "refreshed": "Líneas regeneradas a partir de las entradas actuales",
+      "issue": "Emitir",
+      "issueTitle": "¿Emitir esta factura?",
+      "issueMessage": "Recibe el siguiente número de factura y ya no se puede modificar. Sus entradas quedan bloqueadas hasta que una nota de crédito las libere.",
+      "issued": "Factura emitida",
+      "delete": "Eliminar borrador",
+      "deleteTitle": "¿Eliminar este borrador?",
+      "deleteMessage": "Sus entradas no cambian y se pueden facturar en otro borrador.",
+      "deleted": "Borrador eliminado",
+      "creditNote": "Emitir nota de crédito",
+      "creditTitle": "¿Anular con una nota de crédito?",
+      "creditMessage": "Una nota de crédito con las mismas líneas, en negativo, recibe su propio número. La factura se conserva y sus entradas se pueden corregir y volver a facturar.",
+      "creditReason": "Motivo (en la nota de crédito)",
+      "credited": "Nota de crédito emitida",
+      "linesTitle": "Líneas ({{count}})",
+      "lineDetail": "{{hours}} h × {{rate}} · {{entries}} entradas",
+      "lineUnrated": "{{hours}} h sin tarifa",
+      "removeLine": "Eliminar línea",
+      "lineRemoved": "Línea eliminada",
+      "unratedHint": "{{count}} líneas no tienen tarifa. Fija una tarifa y regenera las líneas, o elimínalas, antes de emitir.",
+      "draftHint": "Un borrador no bloquea nada. Si las entradas cambian antes de emitir, regenera las líneas."
     }
   }
 }

@@ -156,6 +156,13 @@
     },
     "article": {
       "moveNotAllowed": "Diese Seite dürfen nur die Verantwortlichen ihres Orts verschieben: die Projektleitung, die Team-Admins oder bei einer privaten Seite die Person, die sie geschrieben hat."
+    },
+    "billing": {
+      "forbidden": "Die Abrechnung ist für Organisations-Admins und Projektleitungen.",
+      "invoice": {
+        "project": "Wähle das Projekt, das abgerechnet wird.",
+        "tax": "Gib eine Umsatzsteuer zwischen 0 und 100 Prozent an."
+      }
     }
   },
   "notFound": {
@@ -1310,7 +1317,8 @@
         "detailed": "Einträge",
         "workload": "Auslastung",
         "saved": "Gespeichert",
-        "absences": "Abwesenheiten"
+        "absences": "Abwesenheiten",
+        "billing": "Abrechnung"
       },
       "group": {
         "project": "Projekt",
@@ -2966,7 +2974,8 @@
       "requestPurgeLabel": "Abgeschlossene Anträge löschen nach",
       "requestPurgeHint": "Abgelehnte, zurückgezogene und stornierte Anträge. Genehmigte bleiben als Nachweis. 0 behält alle.",
       "ledgerPurgeLabel": "Urlaubsjournal löschen nach",
-      "ledgerPurgeHint": "0 behält das Journal. Sonst mindestens 3 Jahre (§§ 195, 199 BGB). Hinweise auf Urlaubsverfall werden nie gelöscht."
+      "ledgerPurgeHint": "0 behält das Journal. Sonst mindestens 3 Jahre (§§ 195, 199 BGB). Hinweise auf Urlaubsverfall werden nie gelöscht.",
+      "ratesOpen": "Stundensätze verwalten"
     },
     "absence": {
       "title": "Abwesenheitsmanagement 2.0",
@@ -3487,7 +3496,15 @@
       "PROJECT_INSTANTIATED": "Projekt aus Vorlage erstellt",
       "TIME_ENTRY_SHARED": "Zeiteintrag geteilt",
       "TIME_SHARE_ACCEPTED": "Geteilten Eintrag angenommen",
-      "TIME_SHARE_REVOKED": "Geteilten Eintrag zurückgezogen"
+      "TIME_SHARE_REVOKED": "Geteilten Eintrag zurückgezogen",
+      "BILLING_RATE_CREATED": "Satz festgelegt",
+      "BILLING_RATE_UPDATED": "Satz geändert",
+      "BILLING_RATE_DELETED": "Satz entfernt",
+      "INVOICE_CREATED": "Rechnung entworfen",
+      "INVOICE_DELETED": "Rechnungsentwurf gelöscht",
+      "INVOICE_ISSUED": "Rechnung ausgestellt",
+      "INVOICE_CREDITED": "Rechnung storniert",
+      "INVOICE_EXPORTED": "Rechnung exportiert"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -3873,6 +3890,18 @@
       "project": "Projekt",
       "work": "Arbeitsweise",
       "manage": "Verwaltung"
+    },
+    "billing": {
+      "title": "Abrechnung",
+      "note": "Wozu eine Stunde in diesem Projekt abgerechnet wird. Kosten legen Organisations-Admins fest.",
+      "projectRate": "Projektsatz",
+      "noRate": "Kein Satz, es gilt der Team- oder Standardsatz",
+      "setRate": "Festlegen",
+      "changeRate": "Ändern",
+      "memberRates": "Sätze für Mitglieder",
+      "noMemberRates": "Kein Mitglied hat in diesem Projekt einen eigenen Satz.",
+      "addMember": "Satz für ein Mitglied",
+      "notLead": "Die Sätze eines Projekts legen seine Leitungen fest."
     }
   },
   "account": {
@@ -4584,6 +4613,175 @@
       "plum": "Pflaume",
       "olive": "Oliv",
       "red": "Rot"
+    }
+  },
+  "billing": {
+    "issueRate": "Stundensatz für diesen Vorgang",
+    "kind": {
+      "billable": "Erlössatz",
+      "cost": "Kostensatz"
+    },
+    "scope": {
+      "issue": "Vorgang",
+      "projectMember": "Projektmitglied",
+      "user": "Person",
+      "project": "Projekt",
+      "team": "Team",
+      "instanceDefault": "Standard"
+    },
+    "rateStatus": {
+      "active": "Gilt",
+      "planned": "Geplant",
+      "ended": "Beendet"
+    },
+    "rate": {
+      "amount": "Stundensatz",
+      "amountHint": "z. B. 95,00",
+      "amountInvalid": "Gib einen Stundensatz an, zum Beispiel 95 oder 95,50.",
+      "changeFrom": "Neuer Satz ab einem Datum",
+      "changeHint": "Der laufende Satz endet am Vortag. Einträge davor behalten ihren Satz.",
+      "costOf": "Kostensatz · {{target}}",
+      "revenueOf": "Erlössatz · {{target}}",
+      "from": "Gilt ab",
+      "none": "Noch kein Satz festgelegt.",
+      "perHour": "{{amount}} / h",
+      "remove": "Satz entfernen",
+      "removeTitle": "Diesen Satz entfernen?",
+      "removeMessage": "Berichte bewerten seine Tage dann mit dem nächsten passenden Satz. Ausgestellte Rechnungen bleiben, wie sie sind.",
+      "saved": "Satz gespeichert",
+      "set": "Satz festlegen",
+      "since": "ab {{from}}",
+      "span": "{{from}} bis {{to}}"
+    },
+    "rates": {
+      "title": "Stundensätze",
+      "new": "Neuer Satz",
+      "newFor": "Satz festlegen für",
+      "kind": "Art",
+      "allKinds": "Alle Arten",
+      "scope": "Ziel",
+      "allScopes": "Alle Ziele",
+      "status": "Gültigkeit",
+      "allStatuses": "Jede Gültigkeit",
+      "pickProject": "Projekt wählen",
+      "pickTeam": "Team wählen",
+      "defaults": "Standardsätze",
+      "defaultsHint": "Gelten überall, wo kein Satz für Vorgang, Mitglied, Person, Projekt oder Team greift.",
+      "defaultRevenue": "Standard-Erlössatz",
+      "defaultCost": "Standard-Kostensatz",
+      "emptyTitle": "Hier gibt es keine Sätze",
+      "emptyMessage": "Lege einen Satz für ein Projekt, eine Person oder ein Team fest, oder ändere die Filter."
+    },
+    "report": {
+      "kind": {
+        "billing": "Abrechnung",
+        "profitability": "Profitabilität",
+        "utilization": "Auslastung"
+      },
+      "kindTitle": "Bericht",
+      "group": {
+        "project": "Nach Projekt",
+        "issue": "Nach Vorgang",
+        "user": "Nach Person",
+        "team": "Nach Team",
+        "day": "Nach Tag",
+        "week": "Nach Woche",
+        "month": "Nach Monat"
+      },
+      "none": {
+        "project": "Ohne Projekt",
+        "issue": "Ohne Vorgang",
+        "user": "Ehemaliges Mitglied",
+        "team": "Ohne Team",
+        "day": "Ohne Datum",
+        "week": "Ohne Datum",
+        "month": "Ohne Datum"
+      },
+      "previous": "Früherer Zeitraum",
+      "next": "Späterer Zeitraum",
+      "billableHours": "Abrechenbare Stunden",
+      "revenue": "Erlös",
+      "cost": "Arbeitskosten",
+      "margin": "Marge",
+      "hours": "Stunden",
+      "billableShare": "Abrechenbarer Anteil",
+      "ofCapacity": "Abrechenbar von Kapazität",
+      "unrated": "{{hours}} Stunden hatten keinen Satz und zählen mit null. Lege einen Satz fest, damit sie mitzählen.",
+      "emptyTitle": "In diesem Zeitraum ist nichts erfasst",
+      "emptyMessage": "Wähle einen anderen Zeitraum oder prüfe die Filter."
+    },
+    "invoices": {
+      "title": "Rechnungen",
+      "shelf": {
+        "all": "Alle",
+        "drafts": "Entwürfe",
+        "issued": "Ausgestellt"
+      },
+      "emptyTitle": "Noch keine Rechnungen",
+      "emptyMessage": "Erstelle einen Entwurf aus den abrechenbaren Stunden eines Projekts. Ausgestellt wird erst, wenn du es sagst."
+    },
+    "invoice": {
+      "new": "Rechnung entwerfen",
+      "newTitle": "Rechnung entwerfen",
+      "newSubtitle": "Aus den abrechenbaren Stunden eines Projekts, die noch nicht abgerechnet sind.",
+      "createDraft": "Entwurf erstellen",
+      "project": "Projekt",
+      "pickProject": "Projekt wählen",
+      "period": "Leistungszeitraum",
+      "lineBy": "Eine Position je",
+      "grouping": {
+        "issue": "Vorgang",
+        "project": "Projekt",
+        "user": "Person",
+        "day": "Tag"
+      },
+      "recipient": "Rechnungsempfänger",
+      "recipientName": "Name",
+      "recipientAddress": "Anschrift",
+      "vatId": "USt-IdNr.",
+      "noRecipient": "Noch kein Empfänger",
+      "tax": "Umsatzsteuer",
+      "taxHint": "z. B. 19, leer für keine",
+      "taxLine": "USt. {{rate}} %",
+      "notes": "Hinweise auf der Rechnung",
+      "hours": "Stunden",
+      "net": "Netto",
+      "gross": "Gesamt",
+      "draftTitle": "Rechnungsentwurf",
+      "number": "Rechnung {{number}}",
+      "creditNoteNumber": "Gutschrift {{number}}",
+      "status": {
+        "draft": "Entwurf",
+        "issued": "Ausgestellt",
+        "credited": "Mit Gutschrift storniert",
+        "creditNote": "Gutschrift"
+      },
+      "reverses": "Storniert",
+      "reversedBy": "Storniert durch",
+      "actions": "Aktionen zur Rechnung",
+      "edit": "Empfänger und Hinweise bearbeiten",
+      "refresh": "Positionen neu aufbauen",
+      "refreshed": "Positionen aus den aktuellen Einträgen neu aufgebaut",
+      "issue": "Ausstellen",
+      "issueTitle": "Diese Rechnung ausstellen?",
+      "issueMessage": "Sie bekommt die nächste Rechnungsnummer und lässt sich danach nicht mehr ändern. Ihre Einträge sind gesperrt, bis eine Gutschrift sie freigibt.",
+      "issued": "Rechnung ausgestellt",
+      "delete": "Entwurf löschen",
+      "deleteTitle": "Diesen Entwurf löschen?",
+      "deleteMessage": "Seine Einträge bleiben, wie sie sind, und lassen sich in einem anderen Entwurf abrechnen.",
+      "deleted": "Entwurf gelöscht",
+      "creditNote": "Gutschrift schreiben",
+      "creditTitle": "Mit einer Gutschrift stornieren?",
+      "creditMessage": "Eine Gutschrift mit denselben Positionen, negativ, bekommt eine eigene Nummer. Die Rechnung bleibt erhalten, und ihre Einträge lassen sich korrigieren und neu abrechnen.",
+      "creditReason": "Grund (steht auf der Gutschrift)",
+      "credited": "Gutschrift geschrieben",
+      "linesTitle": "Positionen ({{count}})",
+      "lineDetail": "{{hours}} h × {{rate}} · {{entries}} Einträge",
+      "lineUnrated": "{{hours}} h ohne Satz",
+      "removeLine": "Position entfernen",
+      "lineRemoved": "Position entfernt",
+      "unratedHint": "{{count}} Positionen haben keinen Satz. Lege einen Satz fest und baue die Positionen neu auf, oder entferne sie, bevor du ausstellst.",
+      "draftHint": "Ein Entwurf sperrt nichts. Ändern sich Einträge vor dem Ausstellen, baue die Positionen neu auf."
     }
   }
 }

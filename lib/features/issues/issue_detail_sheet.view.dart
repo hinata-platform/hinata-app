@@ -2791,6 +2791,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             ),
             style: TextStyle(color: AppColors.inkSoft, fontSize: AppType.label),
           ),
+          // The issue's own rate (HIN-96), for whoever prices the project.
+          if (_pricesIssue)
+            IssueRateButton(
+              issueId: issue.id,
+              label: '${issue.readableId} ${issue.title}',
+            ),
           WorkItemList(
             items: _workItems,
             total: _workItemsTotal,
@@ -2804,6 +2810,18 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         ],
       ),
     );
+  }
+
+  /// Whether the reader sets this issue's rate: billing on, and the project's
+  /// lead or an organisation admin. The server decides again on the write.
+  bool get _pricesIssue {
+    if (!(context.read<AppConfigBloc>().state.meta?.billing ?? false)) {
+      return false;
+    }
+    final me = context.read<AuthBloc>().state.user;
+    final project = _project;
+    if (me == null) return false;
+    return me.isOrgAdmin || (project != null && isProjectLead(project, me));
   }
 
   /// Who may correct which entry: me for my own, plus everyone's for whoever

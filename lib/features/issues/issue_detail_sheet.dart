@@ -25,6 +25,7 @@ import '../../core/repositories/project_repository.dart';
 import 'deadline_editor.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../billing/issue_rate_button.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
