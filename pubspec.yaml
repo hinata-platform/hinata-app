@@ -60,7 +60,7 @@ dependencies:
   # GlassLensModel.paraxial), the iOS 27 performance work (#359, in 1.9.0) and
   # our accessibility pass (#382, merged as #387 into 1.10.0). Back on the
   # published package since 1.11.0.
-  liquid_glass_widgets: ^1.11.0
+  liquid_glass_widgets: ^1.11.1
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
   # and the renderer; there is no second markdown path any more. The bundle
