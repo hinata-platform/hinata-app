@@ -68,4 +68,50 @@ void main() {
     expect(events, [true, false]);
     expect(picked, 0);
   });
+
+  testWidgets('a submenu row opens a card whose rows report their value', (
+    tester,
+  ) async {
+    String? picked;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Center(
+            child: GlassPopupMenu<String>(
+              value: '',
+              onSelected: (value) => picked = value,
+              itemsBuilder: (_) => const [
+                GlassMenuItem<String>(
+                  value: '',
+                  label: 'Export',
+                  submenu: [
+                    GlassMenuItem<String>(value: 'pdf', label: 'PDF'),
+                    GlassMenuNote<String>(label: 'Nur lesen', caption: true),
+                  ],
+                ),
+                GlassMenuItem<String>(value: 'clone', label: 'Clone'),
+              ],
+              child: const Text('trigger'),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('trigger'));
+    await tester.pumpAndSettle();
+    expect(find.text('PDF'), findsNothing);
+
+    // Choosing the row opens its card instead of answering.
+    await tester.tap(find.text('Export'));
+    await tester.pumpAndSettle();
+    expect(picked, isNull);
+    expect(find.text('PDF'), findsOneWidget);
+    expect(find.text('Nur lesen'), findsOneWidget);
+
+    await tester.tap(find.text('PDF'));
+    await tester.pumpAndSettle();
+    expect(picked, 'pdf');
+    expect(find.text('PDF'), findsNothing);
+  });
 }

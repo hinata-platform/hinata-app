@@ -56,7 +56,8 @@
       "previous": "Предыдущая страница",
       "next": "Следующая страница",
       "page": "Страница {{page}}"
-    }
+    },
+    "selectedOption": "Выбрано"
   },
   "delete": {
     "cta": "Удалить",
@@ -796,8 +797,7 @@
     "moreActions": "Другие действия",
     "selectedCount": "Выбрано: {{count}}",
     "export": {
-      "action": "Экспорт…",
-      "title": "Экспорт задачи",
+      "action": "Экспорт",
       "print": "Печать",
       "pdf": "Экспорт в PDF",
       "xlsx": "Экспорт в Excel",
@@ -2528,8 +2528,7 @@
     },
     "spaceIconOption": "Значок {{n}} из {{count}}",
     "subpages": "Подстраницы",
-    "moveUnder": "Переместить в…",
-    "moveUnderTitle": "В какую страницу переместить?",
+    "moveUnder": "Переместить в",
     "pageActions": "Действия со страницей",
     "resultCount": "Результаты: {{count}}",
     "moveUnderConfirm": {

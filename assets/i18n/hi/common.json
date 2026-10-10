@@ -56,7 +56,8 @@
       "previous": "पिछला पृष्ठ",
       "next": "अगला पृष्ठ",
       "page": "पृष्ठ {{page}}"
-    }
+    },
+    "selectedOption": "चयनित"
   },
   "delete": {
     "cta": "हटाएँ",
@@ -796,8 +797,7 @@
     "moreActions": "और कार्रवाइयाँ",
     "selectedCount": "{{count}} चयनित",
     "export": {
-      "action": "निर्यात…",
-      "title": "इश्यू निर्यात करें",
+      "action": "निर्यात",
       "print": "प्रिंट करें",
       "pdf": "PDF के रूप में निर्यात करें",
       "xlsx": "Excel के रूप में निर्यात करें",
@@ -2528,8 +2528,7 @@
     },
     "spaceIconOption": "आइकन {{n}} / {{count}}",
     "subpages": "उप-पृष्ठ",
-    "moveUnder": "…के नीचे ले जाएँ",
-    "moveUnderTitle": "किस पेज के नीचे ले जाएँ?",
+    "moveUnder": "पेज के नीचे ले जाएँ",
     "pageActions": "पेज की कार्रवाइयाँ",
     "resultCount": "परिणाम: {{count}}",
     "moveUnderConfirm": {

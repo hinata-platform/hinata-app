@@ -56,7 +56,8 @@
       "previous": "Page précédente",
       "next": "Page suivante",
       "page": "Page {{page}}"
-    }
+    },
+    "selectedOption": "Sélectionné"
   },
   "delete": {
     "cta": "Supprimer",
@@ -796,8 +797,7 @@
     "moreActions": "Autres actions",
     "selectedCount": "{{count}} sélectionnés",
     "export": {
-      "action": "Exporter…",
-      "title": "Exporter le ticket",
+      "action": "Exporter",
       "print": "Imprimer",
       "pdf": "Exporter en PDF",
       "xlsx": "Exporter en Excel",
@@ -2528,8 +2528,7 @@
     },
     "spaceIconOption": "Icône {{n}} sur {{count}}",
     "subpages": "Sous-pages",
-    "moveUnder": "Déplacer sous…",
-    "moveUnderTitle": "Sous quelle page déplacer ?",
+    "moveUnder": "Déplacer sous",
     "pageActions": "Actions de la page",
     "resultCount": "Résultats : {{count}}",
     "moveUnderConfirm": {

@@ -56,7 +56,8 @@
       "previous": "上一页",
       "next": "下一页",
       "page": "第 {{page}} 页"
-    }
+    },
+    "selectedOption": "已选择"
   },
   "delete": {
     "cta": "删除",
@@ -796,8 +797,7 @@
     "moreActions": "更多操作",
     "selectedCount": "已选择 {{count}} 项",
     "export": {
-      "action": "导出…",
-      "title": "导出事项",
+      "action": "导出",
       "print": "打印",
       "pdf": "导出为 PDF",
       "xlsx": "导出为 Excel",
@@ -2528,8 +2528,7 @@
     },
     "spaceIconOption": "图标 {{n}}/{{count}}",
     "subpages": "子页面",
-    "moveUnder": "移动到…下",
-    "moveUnderTitle": "移动到哪个页面下？",
+    "moveUnder": "移动到页面下",
     "pageActions": "页面操作",
     "resultCount": "结果：{{count}}",
     "moveUnderConfirm": {

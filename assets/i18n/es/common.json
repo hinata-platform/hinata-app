@@ -56,7 +56,8 @@
       "previous": "Página anterior",
       "next": "Página siguiente",
       "page": "Página {{page}}"
-    }
+    },
+    "selectedOption": "Seleccionado"
   },
   "delete": {
     "cta": "Eliminar",
@@ -796,8 +797,7 @@
     "moreActions": "Más acciones",
     "selectedCount": "{{count}} seleccionadas",
     "export": {
-      "action": "Exportar…",
-      "title": "Exportar incidencia",
+      "action": "Exportar",
       "print": "Imprimir",
       "pdf": "Exportar como PDF",
       "xlsx": "Exportar como Excel",
@@ -2528,8 +2528,7 @@
     },
     "spaceIconOption": "Icono {{n}} de {{count}}",
     "subpages": "Subpáginas",
-    "moveUnder": "Mover debajo de…",
-    "moveUnderTitle": "¿Debajo de qué página?",
+    "moveUnder": "Mover debajo de",
     "pageActions": "Acciones de la página",
     "resultCount": "Resultados: {{count}}",
     "moveUnderConfirm": {
