@@ -6,6 +6,8 @@ import '../models/time_approval_models.dart';
 import '../models/time_models.dart';
 import '../models/time_policy_models.dart';
 import '../models/time_privacy_models.dart';
+import '../models/time_share_models.dart';
+import '../models/core_models.dart' show DirectoryUser;
 import '../models/work_models.dart';
 import '../util/dates.dart';
 
@@ -725,6 +727,99 @@ class TimeRepository {
     final data = await _api.get('/api/v1/time/calendar/events/open-today');
     return ((data as Map<String, dynamic>?)?['count'] as num?)?.toInt() ?? 0;
   }
+
+  // --- shared entries (HIN-95) ---------------------------------------------------
+
+  /// One page of the people an entry of [projectId] may be offered to: who can
+  /// see the project, not the reader, narrowed by name.
+  Future<PageResult<DirectoryUser>> shareCandidates(
+    String projectId, {
+    String query = '',
+    int page = 0,
+    int size = 20,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/share-candidates',
+              query: {
+                'projectId': projectId,
+                'q': query,
+                'page': page,
+                'size': size,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['content'] as List<dynamic>?) ?? const [])
+          .map((e) => DirectoryUser.fromJson(e as Map<String, dynamic>))
+          .toList(),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Offers the reader's own entry to [userIds]; answers with every invitation
+  /// of the entry.
+  Future<List<TimeEntryShare>> shareEntry(
+    String entryId,
+    List<String> userIds,
+  ) async => _shares(
+    await _api.post(
+      '/api/v1/time/entries/${Uri.encodeComponent(entryId)}/share',
+      body: {'userIds': userIds},
+    ),
+  );
+
+  /// Every invitation of the reader's own entry.
+  Future<List<TimeEntryShare>> entryShares(String entryId) async => _shares(
+    await _api.get(
+      '/api/v1/time/entries/${Uri.encodeComponent(entryId)}/shares',
+    ),
+  );
+
+  /// Takes an unanswered invitation back.
+  Future<void> revokeShare(String entryId, String userId) => _api.delete(
+    '/api/v1/time/entries/${Uri.encodeComponent(entryId)}/share/'
+    '${Uri.encodeComponent(userId)}',
+  );
+
+  /// One page of the reader's open invitations, or of what they offered.
+  Future<PageResult<TimeEntryShare>> shares(
+    TimeShareBox box, {
+    int page = 0,
+    int size = 20,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/shares',
+              query: {'box': box.wire, 'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: _shares(data['content']),
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// Files the copy in the reader's own record; idempotent.
+  Future<WorkItem> acceptShare(
+    String id, {
+    TimeShareAcceptance acceptance = const TimeShareAcceptance(),
+  }) async => WorkItem.fromJson(
+    await _api.post(
+          '/api/v1/time/shares/${Uri.encodeComponent(id)}/accept',
+          body: acceptance.toJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  /// Says no. Nobody is told.
+  Future<void> declineShare(String id) =>
+      _api.post('/api/v1/time/shares/${Uri.encodeComponent(id)}/decline');
+
+  static List<TimeEntryShare> _shares(Object? data) => [
+    for (final row in (data as List<dynamic>?) ?? const [])
+      TimeEntryShare.fromJson(row as Map<String, dynamic>),
+  ];
 
   // --- the tag catalogue -------------------------------------------------------
 

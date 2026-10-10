@@ -31,19 +31,21 @@ import '../theme/app_type.dart';
 /// a tap picks and closes; there is no confirm step.
 ///
 /// [selectedId] marks the current pick. [meId] gets the "(You)" suffix and is
-/// nothing more than a label — the row is picked like any other. Resolves to
-/// the chosen person, or null when dismissed.
+/// nothing more than a label — the row is picked like any other. [search]
+/// narrows the people to a list of the caller's choosing; the directory
+/// otherwise. Resolves to the chosen person, or null when dismissed.
 Future<DirectoryUser?> showPersonPicker(
   BuildContext context, {
   required Rect anchorRect,
   String? selectedId,
   String? meId,
+  PersonSearch? search,
 }) {
   // The popover is a root-navigator route and so inherits none of the caller's
   // providers — hand the repository across explicitly, to the picker's cubit.
-  final repo = context.read<UserRepository>();
+  final repo = search == null ? context.read<UserRepository>() : null;
   Widget panel(bool sheet) => BlocProvider<PersonPickerCubit>(
-    create: (_) => PersonPickerCubit(repo),
+    create: (_) => PersonPickerCubit(repo, source: search),
     child: _PersonPickerPanel(selectedId: selectedId, meId: meId),
   );
 

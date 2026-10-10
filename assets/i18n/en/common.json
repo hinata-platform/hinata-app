@@ -1535,6 +1535,58 @@
       "openToday_plural": "{{count}} events from today not taken over yet",
       "dismissChip": "Hide for now",
       "fromCalendar": "From your calendar"
+    },
+    "share": {
+      "pageTitle": "Shared entries",
+      "box": {
+        "inbox": "Inbox",
+        "sent": "Sent"
+      },
+      "accepted": "Copy added to your entries",
+      "declined": "Invitation declined",
+      "revoked": "Invitation withdrawn",
+      "from": "From {{name}}",
+      "to": "To {{name}}",
+      "revoke": "Withdraw",
+      "decline": "Decline",
+      "adjust": "Adjust",
+      "accept": "Accept",
+      "projectHidden": "Project not visible to you",
+      "noDescription": "No description",
+      "empty": {
+        "inbox": {
+          "title": "No invitations waiting",
+          "message": "When colleagues share a time entry with you, it shows up here. You decide whether a copy goes into your own entries."
+        },
+        "sent": {
+          "title": "Nothing shared yet",
+          "message": "Share one of your entries from its sheet, or mention someone with + in the description."
+        }
+      },
+      "status": {
+        "pending": "Waiting",
+        "accepted": "Accepted",
+        "declined": "Declined",
+        "revoked": "Withdrawn"
+      },
+      "adjustTitle": "Accept with changes",
+      "title": "Share with…",
+      "subtitle": "Colleagues from the project get an invitation and decide for themselves whether a copy goes into their own entries.",
+      "people": "People",
+      "addPerson": "Add a person…",
+      "removePerson": "Remove",
+      "send": "Send invitations",
+      "asked": "Already asked",
+      "waiting": "{{count}} shared entry is waiting for your answer",
+      "waiting_plural": "{{count}} shared entries are waiting for your answer",
+      "open": "Open",
+      "action": "Share with…",
+      "sentToast": "Invitations sent",
+      "sentCount": "Invitation sent to {{count}} person",
+      "sentCount_plural": "Invitations sent to {{count}} people",
+      "mentionHint": "Type + to share the entry with someone from the project.",
+      "mentionNeedsProject": "Choose a project first, then you can mention people from it with +.",
+      "mentioned": "Will be shared with"
     }
   },
   "availability": {
@@ -3413,7 +3465,10 @@
       "TIME_OFF_RETENTION_RUN": "Absence retention run",
       "PROJECT_COPIED": "Project copied",
       "PROJECT_TEMPLATE_MARKED": "Project marked as template",
-      "PROJECT_INSTANTIATED": "Project created from template"
+      "PROJECT_INSTANTIATED": "Project created from template",
+      "TIME_ENTRY_SHARED": "Time entry shared",
+      "TIME_SHARE_ACCEPTED": "Shared entry accepted",
+      "TIME_SHARE_REVOKED": "Shared entry withdrawn"
     },
     "meta": {
       "oldRole": "Previous role",

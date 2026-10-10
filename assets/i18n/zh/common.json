@@ -1535,6 +1535,58 @@
       "openToday_plural": "今天有 {{count}} 个日程尚未转为记录",
       "dismissChip": "暂时隐藏",
       "fromCalendar": "来自你的日历"
+    },
+    "share": {
+      "pageTitle": "共享的记录",
+      "box": {
+        "inbox": "收件箱",
+        "sent": "已发送"
+      },
+      "accepted": "副本已加入你的记录",
+      "declined": "已拒绝邀请",
+      "revoked": "邀请已撤回",
+      "from": "来自 {{name}}",
+      "to": "发给 {{name}}",
+      "revoke": "撤回",
+      "decline": "拒绝",
+      "adjust": "调整",
+      "accept": "接受",
+      "projectHidden": "你无法查看该项目",
+      "noDescription": "无描述",
+      "empty": {
+        "inbox": {
+          "title": "没有待处理的邀请",
+          "message": "同事与你共享工时记录时，会显示在这里。是否将副本加入自己的记录由你决定。"
+        },
+        "sent": {
+          "title": "尚未共享任何记录",
+          "message": "在记录的详情中共享，或在描述中用 + 提及某人。"
+        }
+      },
+      "status": {
+        "pending": "待处理",
+        "accepted": "已接受",
+        "declined": "已拒绝",
+        "revoked": "已撤回"
+      },
+      "adjustTitle": "调整后接受",
+      "title": "共享给…",
+      "subtitle": "项目成员会收到邀请，并自行决定是否将副本加入自己的记录。",
+      "people": "人员",
+      "addPerson": "添加人员…",
+      "removePerson": "移除",
+      "send": "发送邀请",
+      "asked": "已邀请",
+      "waiting": "有 {{count}} 条共享记录等待你的答复",
+      "waiting_plural": "有 {{count}} 条共享记录等待你的答复",
+      "open": "查看",
+      "action": "共享给…",
+      "sentToast": "邀请已发送",
+      "sentCount": "已向 {{count}} 人发送邀请",
+      "sentCount_plural": "已向 {{count}} 人发送邀请",
+      "mentionHint": "输入 + 可与项目中的人共享此记录。",
+      "mentionNeedsProject": "请先选择项目，然后才能用 + 提及其中的人。",
+      "mentioned": "将共享给"
     }
   },
   "availability": {
@@ -3413,7 +3465,10 @@
       "TIME_OFF_RETENTION_RUN": "请假数据保留清理",
       "PROJECT_COPIED": "已复制项目",
       "PROJECT_TEMPLATE_MARKED": "已将项目标记为模板",
-      "PROJECT_INSTANTIATED": "已从模板创建项目"
+      "PROJECT_INSTANTIATED": "已从模板创建项目",
+      "TIME_ENTRY_SHARED": "已共享工时记录",
+      "TIME_SHARE_ACCEPTED": "已接受共享记录",
+      "TIME_SHARE_REVOKED": "已撤回共享记录"
     },
     "meta": {
       "oldRole": "原角色",
