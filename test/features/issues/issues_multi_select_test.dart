@@ -239,7 +239,9 @@ void main() {
       expect(action(tester, 'issues.bulkDeadline.action').onPressed, isNotNull);
 
       await tester.tap(find.text('issues.sort.label'));
-      await settle(tester);
+      // The menu's glass grows out of the chip on a spring before its rows
+      // take a tap.
+      await settle(tester, 8);
       await tester.tap(find.text('issues.sort.createdAsc').last);
       await settle(tester);
 

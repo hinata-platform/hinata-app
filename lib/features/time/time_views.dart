@@ -672,7 +672,12 @@ Future<T?> showTimeViewMenu<T extends Object>(
           label: extra.label,
           leading: Icon(extra.icon, size: 16, color: AppColors.inkSoft),
           trailing: extra.selected
-              ? Icon(LucideIcons.check, size: 17, color: AppColors.accentInk)
+              ? Icon(
+                  LucideIcons.check,
+                  size: 17,
+                  color: AppColors.accentInk,
+                  semanticLabel: context.t('common.selectedOption'),
+                )
               : null,
           dividerAbove: extra.first,
         ),

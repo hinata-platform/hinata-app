@@ -1,30 +1,44 @@
+import 'dart:async';
 import 'dart:math' as math;
-import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
-    show GlassContainer, LiquidRoundedSuperellipse;
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 
+import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
 import '../../features/search/search_tokens.dart';
 import 'glass_panel.dart';
+import 'hive_widgets.dart' show forwardChevron;
 import '../theme/app_type.dart';
 
+/// One line in a [GlassPopupMenu]: an action ([GlassMenuItem]) or a line that
+/// only informs ([GlassMenuNote]).
+sealed class GlassMenuEntry<T> {
+  const GlassMenuEntry({this.dividerAbove = false});
+
+  /// When true, a hairline divider is drawn above this line to separate it
+  /// from the previous group (e.g. before a destructive action).
+  final bool dividerAbove;
+}
+
 /// One selectable row in a [GlassPopupMenu].
-class GlassMenuItem<T> {
+class GlassMenuItem<T> extends GlassMenuEntry<T> {
   const GlassMenuItem({
     required this.value,
     required this.label,
     this.leading,
     this.trailing,
     this.color,
-    this.dividerAbove = false,
+    super.dividerAbove,
     this.enabled = true,
     this.disabledReason,
+    this.submenu,
   });
 
   /// The value reported back through [GlassPopupMenu.onSelected] when tapped.
+  /// Unused on a row that opens a [submenu].
   final T value;
 
   /// The row's text.
@@ -33,64 +47,86 @@ class GlassMenuItem<T> {
   /// Optional leading glyph/avatar shown left of the label.
   final Widget? leading;
 
-  /// Optional trailing glyph — a chevron on a row that opens a further popover,
-  /// say. Yields to the check mark when the row is the selected value.
+  /// Optional trailing glyph. Yields to the check mark when the row is the
+  /// selected value, and to the chevron when it opens a [submenu].
   final Widget? trailing;
 
   /// Optional label colour — e.g. a danger tint for a destructive action.
   /// Falls back to the standard ink colour when null.
   final Color? color;
 
-  /// When true, a hairline divider is drawn above this row to separate it from
-  /// the previous group (e.g. before a destructive action).
-  final bool dividerAbove;
-
   /// When false the row is shown greyed-out and is not selectable — used for
   /// guarded actions (e.g. last-admin, SSO-managed) that should be visible but
   /// inert per the "disable, don't hide" rule.
   final bool enabled;
 
-  /// Optional reason shown beneath a disabled row's label (the tooltip text).
+  /// Optional reason shown beneath a disabled row's label.
   final String? disabledReason;
+
+  /// Rows of a card that opens over this menu when the row is chosen, instead
+  /// of a second popover of its own. The card's header repeats this row's
+  /// glyph and label and takes the card back down; a row chosen inside it
+  /// reports its value through the same [GlassPopupMenu.onSelected].
+  final List<GlassMenuEntry<T>>? submenu;
+}
+
+/// A line that says something and does nothing when tapped: a hint, a section
+/// caption, a person on a roster.
+class GlassMenuNote<T> extends GlassMenuEntry<T> {
+  const GlassMenuNote({
+    required this.label,
+    this.leading,
+    this.caption = false,
+    super.dividerAbove,
+  });
+
+  final String label;
+
+  /// Optional glyph or avatar, in the slot a row's leading glyph sits in.
+  final Widget? leading;
+
+  /// Small faint text (a hint or a section caption) instead of row text.
+  final bool caption;
 }
 
 /// A reusable liquid-glass replacement for [PopupMenuButton].
 ///
-/// Renders [child] as the tappable anchor and, on tap, opens a glass popover —
-/// the same iOS-26 lens material as the global-search palette and board filter
-/// (refraction + blur + specular rim, see [glass_panel.dart]). The currently
-/// [value]-matched row is highlighted with a check; tapping a row reports it
+/// Renders [child] as the tappable anchor and, on tap, opens the package's
+/// [lg.GlassMenu] at it: the glass grows out of the anchor and rows with a
+/// [GlassMenuItem.submenu] open as layered cards over their parent. The
+/// currently [value]-matched row carries a check; choosing a row reports it
 /// through [onSelected] and closes the menu.
 class GlassPopupMenu<T> extends StatefulWidget {
   const GlassPopupMenu({
     super.key,
-    required this.items,
+    this.items = const [],
+    this.itemsBuilder,
     required this.value,
     required this.onSelected,
     required this.child,
     this.width = 240,
-    this.offset = 8,
     this.onOpenChanged,
-    this.footerBuilder,
   });
 
   /// The rows to show.
-  final List<GlassMenuItem<T>> items;
+  final List<GlassMenuEntry<T>> items;
+
+  /// Builds the rows when the menu opens, in place of [items] — for a menu
+  /// whose rows cost something to work out and that every row of a list
+  /// carries, most of which are never opened.
+  final List<GlassMenuEntry<T>> Function(BuildContext context)? itemsBuilder;
 
   /// The currently selected value (highlighted in the list). May be `null`.
   final T value;
 
-  /// Called with the tapped row's value.
+  /// Called with the chosen row's value.
   final ValueChanged<T> onSelected;
 
   /// The tappable anchor (e.g. a chip or button).
   final Widget child;
 
-  /// Popover width.
+  /// Menu width.
   final double width;
-
-  /// Vertical gap between the anchor and the popover.
-  final double offset;
 
   /// Called with `true` when the menu opens and `false` when it closes.
   ///
@@ -100,18 +136,12 @@ class GlassPopupMenu<T> extends StatefulWidget {
   /// the menu is up; nothing else can know when that is.
   final ValueChanged<bool>? onOpenChanged;
 
-  /// Optional block rendered below the rows, inside the same panel and the same
-  /// scroll area — for context that belongs to the menu but isn't an action
-  /// (e.g. who is watching the issue the actions above act on). Built when the
-  /// menu opens, not when the anchor rebuilds, so it costs nothing until seen.
-  final WidgetBuilder? footerBuilder;
-
   @override
   State<GlassPopupMenu<T>> createState() => _GlassPopupMenuState<T>();
 }
 
-/// Opens the same glass popover [GlassPopupMenu] does, for an anchor that is
-/// not a widget this library wraps.
+/// Opens the same glass menu [GlassPopupMenu] does, for an anchor that is not
+/// a widget this library wraps.
 ///
 /// The wrapper covers the ordinary case — a chip or a button that *is* the
 /// menu. It cannot cover a control the app shell draws on a page's behalf: the
@@ -125,49 +155,52 @@ class GlassPopupMenu<T> extends StatefulWidget {
 Future<T?> showGlassMenu<T extends Object>({
   required BuildContext context,
   required Rect anchorRect,
-  required List<GlassMenuItem<T>> items,
+  required List<GlassMenuEntry<T>> items,
   required T value,
   double width = 240,
-  double gap = 8,
-  WidgetBuilder? footerBuilder,
 }) async {
-  final selected = await _showMenuDialog<T>(
+  final selected = await _showMenu<T>(
     context: context,
     anchorRect: anchorRect,
     items: items,
     value: value,
     width: width,
-    gap: gap,
-    footerBuilder: footerBuilder,
   );
   return selected?.value;
 }
 
-/// The popover itself, shared by the widget form and the imperative one.
-Future<_MenuResult<T>?> _showMenuDialog<T>({
+/// The menu itself, shared by the widget form and the imperative one.
+///
+/// It runs in a route of its own rather than under the anchor: an anchor in a
+/// hover-gated subtree (a tree row's action button) unmounts as soon as the
+/// menu covers it, and would take a menu it owned down with it. The future
+/// resolves as soon as a row is chosen or the menu starts to close; the route
+/// leaves once the closing morph has played.
+Future<_MenuResult<T>?> _showMenu<T>({
   required BuildContext context,
   required Rect anchorRect,
-  required List<GlassMenuItem<T>> items,
+  required List<GlassMenuEntry<T>> items,
   required T value,
   required double width,
-  required double gap,
-  required WidgetBuilder? footerBuilder,
-}) => showGeneralDialog<_MenuResult<T>>(
-  context: context,
-  barrierDismissible: true,
-  barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-  barrierColor: Colors.transparent,
-  transitionDuration: const Duration(milliseconds: 200),
-  pageBuilder: (_, _, _) => _GlassPopupMenuDialog<T>(
-    anchorRect: anchorRect,
-    items: items,
-    value: value,
-    width: width,
-    gap: gap,
-    footerBuilder: footerBuilder,
-  ),
-  transitionBuilder: (_, _, _, child) => child,
-);
+}) {
+  final result = Completer<_MenuResult<T>?>();
+  unawaited(
+    showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      barrierColor: Colors.transparent,
+      transitionDuration: Duration.zero,
+      pageBuilder: (_, _, _) => _GlassMenuHost<T>(
+        anchorRect: anchorRect,
+        items: items,
+        value: value,
+        width: width,
+        result: result,
+      ),
+    ),
+  );
+  return result.future;
+}
 
 class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
   final GlobalKey _anchorKey = GlobalKey();
@@ -180,28 +213,26 @@ class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
 
     // Capture the callback up-front: when this anchor lives inside a hover-gated
     // subtree (e.g. a tree row's action menu that only renders while hovered),
-    // opening the dialog moves the pointer off the row, which unmounts the
-    // anchor — and therefore this State — before the dialog returns. The owner
+    // opening the menu moves the pointer off the row, which unmounts the
+    // anchor — and therefore this State — before the menu returns. The owner
     // of [onSelected] (the parent screen) is still alive and guards its own
     // async work, so we must invoke it regardless of *our* mounted state; an
     // earlier `&& mounted` check here silently dropped the selection.
     final onSelected = widget.onSelected;
     // Captured for the same reason, and called in a `finally` for one more:
     // whatever was told to step aside has to be told to come back, including
-    // when the menu is dismissed by the barrier rather than by a choice.
+    // when the menu is dismissed rather than answered.
     final onOpenChanged = widget.onOpenChanged;
     onOpenChanged?.call(true);
 
     final _MenuResult<T>? selected;
     try {
-      selected = await _showMenuDialog<T>(
+      selected = await _showMenu<T>(
         context: context,
         anchorRect: anchorRect,
-        items: widget.items,
+        items: widget.itemsBuilder?.call(context) ?? widget.items,
         value: widget.value,
         width: widget.width,
-        gap: widget.offset,
-        footerBuilder: widget.footerBuilder,
       );
     } finally {
       onOpenChanged?.call(false);
@@ -230,337 +261,317 @@ class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
 }
 
 /// Wrapper so a `null` selection still distinguishes "picked null" from
-/// "dismissed" (which returns `null` from the dialog).
+/// "dismissed" (which resolves to `null`).
 class _MenuResult<T> {
   const _MenuResult(this.value);
   final T value;
 }
 
-class _GlassPopupMenuDialog<T> extends StatelessWidget {
-  const _GlassPopupMenuDialog({
+/// Places an invisible stand-in for the anchor where the anchor is, so the
+/// package menu grows out of the spot the user touched, opens it, and takes
+/// its route away again once the menu has closed.
+class _GlassMenuHost<T> extends StatefulWidget {
+  const _GlassMenuHost({
     required this.anchorRect,
     required this.items,
     required this.value,
     required this.width,
-    required this.gap,
-    this.footerBuilder,
+    required this.result,
   });
 
   final Rect anchorRect;
-  final List<GlassMenuItem<T>> items;
+  final List<GlassMenuEntry<T>> items;
   final T value;
   final double width;
-  final double gap;
-  final WidgetBuilder? footerBuilder;
+  final Completer<_MenuResult<T>?> result;
 
+  @override
+  State<_GlassMenuHost<T>> createState() => _GlassMenuHostState<T>();
+}
+
+class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>>
+    with SingleTickerProviderStateMixin {
   static const double _margin = 12;
-  static const double _radius = 18;
+  static const double _radius = 20;
+  static const double _rowHeight = 44;
+
+  final lg.GlassMenuController _controller = lg.GlassMenuController();
+
+  /// Runs from the moment the menu starts closing until its overlay is gone,
+  /// since the package reports the start of a close and not its end.
+  late final Ticker _closeWatch = createTicker(_watchClose);
+
+  @override
+  void initState() {
+    super.initState();
+    // The stand-in has to be laid out before the menu can measure it.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _controller.open();
+    });
+  }
+
+  @override
+  void dispose() {
+    // Taken away by something else (the back key, a route pushed over it):
+    // the caller still waits for an answer.
+    _finish(null);
+    _closeWatch.dispose();
+    super.dispose();
+  }
+
+  void _finish(_MenuResult<T>? result) {
+    if (!widget.result.isCompleted) widget.result.complete(result);
+  }
+
+  void _onClose() {
+    // A row chosen just before already answered; this only covers a dismiss.
+    _finish(null);
+    if (!_closeWatch.isActive) _closeWatch.start();
+  }
+
+  void _watchClose(Duration _) {
+    if (_controller.isOpen) return;
+    _closeWatch.stop();
+    final route = ModalRoute.of(context);
+    // Removed rather than popped: whatever the choice opened may already sit
+    // on top of this route, and a pop would close that instead.
+    if (route != null && route.isActive) {
+      Navigator.of(context).removeRoute(route);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = SearchTokens.of(Theme.of(context).brightness);
+    final dark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.sizeOf(context);
     final pad = MediaQuery.paddingOf(context);
-    final anim = ModalRoute.of(context)!.animation!;
-    final reduceMotion = MediaQuery.disableAnimationsOf(context);
-
-    final panelWidth = math.min(width, size.width - _margin * 2);
-
-    // Prefer aligning the popover's left edge to the anchor; clamp on-screen.
-    double left = anchorRect.left;
-    left = left.clamp(
-      _margin,
-      math.max(_margin, size.width - panelWidth - _margin),
-    );
-
-    final belowTop = anchorRect.bottom + gap;
-    final roomBelow = size.height - belowTop - _margin - pad.bottom;
-    final roomAbove = anchorRect.top - gap - _margin - pad.top;
-    final placeAbove = roomBelow < 200 && roomAbove > roomBelow;
-    final maxHeight = (placeAbove ? roomAbove : roomBelow).clamp(140.0, 480.0);
-    final top = placeAbove ? null : belowTop;
-    final bottom = placeAbove ? (size.height - anchorRect.top + gap) : null;
-
-    final panel = ConstrainedBox(
-      constraints: BoxConstraints(maxWidth: panelWidth, maxHeight: maxHeight),
-      child: GlassPanelShadow(
-        radius: BorderRadius.circular(_radius),
-        shadows: tokens.panelShadow,
-        child: _glassPanel(context, tokens),
-      ),
+    final width = math.min(widget.width, size.width - _margin * 2);
+    final rows = _MenuRows<T>(
+      context: context,
+      tokens: tokens,
+      value: widget.value,
+      width: width,
+      onPick: (value) => _finish(_MenuResult<T>(value)),
     );
 
     return Stack(
       children: [
-        Positioned.fill(
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => Navigator.of(context).pop(),
-            child: const SizedBox.expand(),
-          ),
-        ),
-        Positioned(
-          left: left,
-          top: top,
-          bottom: bottom,
-          width: panelWidth,
-          // Fade and scale run as transitions, so each frame only updates the
-          // compositor instead of rebuilding the panel.
-          child: reduceMotion
-              ? FadeTransition(opacity: anim, child: panel)
-              : FadeTransition(
-                  opacity: anim.drive(
-                    CurveTween(curve: const Interval(0, 0.6)),
-                  ),
-                  child: ScaleTransition(
-                    scale: anim
-                        .drive(
-                          CurveTween(curve: const Cubic(0.34, 1.3, 0.64, 1)),
-                        )
-                        .drive(Tween<double>(begin: 0.92, end: 1)),
-                    alignment: placeAbove
-                        ? Alignment.bottomLeft
-                        : Alignment.topLeft,
-                    child: panel,
-                  ),
-                ),
-        ),
-      ],
-    );
-  }
-
-  Widget _glassPanel(BuildContext context, SearchTokens tokens) {
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final content = Stack(
-      children: [
-        // The menu's own base, under its rows. The lens alone is a light wash,
-        // and a menu opens over whatever its button happens to sit on — see
-        // the same base in the anchored popover panel.
-        Positioned.fill(
-          child: IgnorePointer(child: ColoredBox(color: tokens.tint)),
-        ),
-        Material(
-          type: MaterialType.transparency,
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 6),
-            shrinkWrap: true,
-            // The footer rides in the same list rather than under it, so a long
-            // one scrolls with the rows instead of fighting them for the
-            // panel's height.
-            itemCount: items.length + (footerBuilder == null ? 0 : 1),
-            itemBuilder: (context, i) {
-              if (i == items.length) return footerBuilder!(context);
-              final item = items[i];
-              final row = _MenuRow<T>(
-                tokens: tokens,
-                item: item,
-                selected: item.value == value,
-                onTap: item.enabled
-                    ? () =>
-                          Navigator.of(context).pop(_MenuResult<T>(item.value))
-                    : null,
-              );
-              if (!item.dividerAbove) return row;
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    height: 1,
-                    margin: const EdgeInsets.symmetric(
-                      horizontal: 4,
-                      vertical: 5,
-                    ),
-                    color: tokens.hairline,
-                  ),
-                  row,
-                ],
-              );
-            },
-          ),
-        ),
-        Positioned.fill(
-          child: IgnorePointer(
-            child: CustomPaint(
-              painter: _RimPainter(
-                radius: _radius,
-                edge: tokens.edge,
-                edgeSoft: tokens.edgeSoft,
+        Positioned.fromRect(
+          rect: widget.anchorRect,
+          // The menu's overlay inherits from here: without a Material above
+          // it, its text falls back to the debug style (yellow underline).
+          child: Material(
+            type: MaterialType.transparency,
+            child: lg.GlassMenu(
+              controller: _controller,
+              trigger: const SizedBox.expand(),
+              items: rows.build(widget.items),
+              menuWidth: width,
+              menuBorderRadius: _radius,
+              itemBorderRadius: 12,
+              autoAdjustToScreen: true,
+              menuPadding: EdgeInsets.fromLTRB(
+                _margin,
+                _margin + pad.top,
+                _margin,
+                _margin + pad.bottom,
               ),
+              // Same fill as the app's other popovers carry under their rows: a
+              // menu opens over whatever its button happens to sit on.
+              settings: liquidGlassPanelSettings(
+                glassFill: tokens.tint,
+                dark: dark,
+              ),
+              quality: kPanelGlassQuality,
+              selectionColor: tokens.rowHover,
+              glowColor: tokens.glare.withValues(alpha: dark ? 0.12 : 0.3),
+              morphFromZero: widget.anchorRect.isEmpty,
+              morphSpeed: MediaQuery.disableAnimationsOf(context)
+                  ? lg.MorphSpeed.instant
+                  : lg.MorphSpeed.normal,
+              onClose: _onClose,
             ),
           ),
         ),
       ],
     );
-    return GlassContainer(
-      useOwnLayer: true,
-      quality: kPanelGlassQuality,
-      clipBehavior: Clip.antiAlias,
-      shape: const LiquidRoundedSuperellipse(borderRadius: _radius),
-      settings: liquidGlassPanelSettings(
-        glassFill: tokens.glassFill,
-        dark: dark,
+  }
+}
+
+/// Turns the app's menu entries into the package's rows.
+class _MenuRows<T> {
+  _MenuRows({
+    required this.context,
+    required this.tokens,
+    required this.value,
+    required this.width,
+    required this.onPick,
+  });
+
+  final BuildContext context;
+  final SearchTokens tokens;
+  final T value;
+  final double width;
+  final ValueChanged<T> onPick;
+
+  List<Widget> build(List<GlassMenuEntry<T>> entries) => [
+    for (final (i, entry) in entries.indexed) ...[
+      if (entry.dividerAbove && i > 0)
+        lg.GlassMenuDivider(color: tokens.hairline, indent: 12),
+      switch (entry) {
+        GlassMenuItem<T>() => _item(entry),
+        GlassMenuNote<T>() => _GlassMenuNoteRow(
+          note: entry,
+          tokens: tokens,
+          width: width,
+          textScaler: MediaQuery.textScalerOf(context),
+          baseStyle: DefaultTextStyle.of(context).style,
+          textDirection: Directionality.of(context),
+        ),
+      },
+    ],
+  ];
+
+  Widget _item(GlassMenuItem<T> item) {
+    final submenu = item.submenu;
+    // The value is only a value on a row that is chosen: a submenu row's
+    // placeholder must not tick it as the current one.
+    final selected = submenu == null && item.value == value;
+    final ink = item.color ?? tokens.ink;
+    return lg.GlassMenuItem(
+      // Labels can repeat (two teams of one name), and the package keys rows
+      // by label when they have no key of their own.
+      key: ObjectKey(item),
+      title: item.label,
+      icon: item.leading,
+      subtitle: !item.enabled ? item.disabledReason : null,
+      enabled: item.enabled,
+      height: _GlassMenuHostState._rowHeight,
+      titleStyle: TextStyle(
+        fontSize: AppType.body,
+        fontWeight: FontWeight.w600,
+        color: ink,
       ),
-      child: content,
+      subtitleStyle: TextStyle(
+        fontSize: AppType.caption,
+        color: tokens.inkSoft,
+      ),
+      iconColor: ink,
+      iconSize: 17,
+      trailing: selected
+          ? Icon(
+              LucideIcons.check,
+              size: 17,
+              color: AppColors.accentInk,
+              semanticLabel: context.t('common.selectedOption'),
+            )
+          : submenu != null
+          // The package draws a chevron that points right in every reading
+          // direction.
+          ? Icon(forwardChevron(context), size: 16, color: tokens.inkFaint)
+          : item.trailing,
+      submenu: submenu == null ? null : build(submenu),
+      onTap: () => onPick(item.value),
     );
   }
 }
 
-class _MenuRow<T> extends StatefulWidget {
-  const _MenuRow({
+/// A [GlassMenuNote], measured up front: the package lays rows out from the
+/// heights they declare.
+class _GlassMenuNoteRow extends StatelessWidget implements PreferredSizeWidget {
+  _GlassMenuNoteRow({
+    required this.note,
     required this.tokens,
-    required this.item,
-    required this.selected,
-    required this.onTap,
-  });
+    required double width,
+    required TextScaler textScaler,
+    required TextStyle baseStyle,
+    required TextDirection textDirection,
+  }) : preferredSize = Size.fromHeight(
+         _measure(
+           note,
+           baseStyle.merge(_style(note, tokens)),
+           width,
+           textScaler,
+           textDirection,
+         ),
+       );
 
+  final GlassMenuNote note;
   final SearchTokens tokens;
-  final GlassMenuItem<T> item;
-  final bool selected;
-  final VoidCallback? onTap;
 
   @override
-  State<_MenuRow<T>> createState() => _MenuRowState<T>();
-}
+  final Size preferredSize;
 
-class _MenuRowState<T> extends State<_MenuRow<T>> {
-  bool _hover = false;
+  static const double _hPad = 16;
 
-  /// Down on a touch screen, where there is no hover to show the row is live.
-  bool _pressed = false;
+  /// The package insets every row of the menu body by this much on each side.
+  static const double _bodyPad = 12;
+  static const double _leadingSlot = 26 + 12;
 
-  void _setPressed(bool value) {
-    if (_pressed != value) setState(() => _pressed = value);
+  static TextStyle _style(GlassMenuNote note, SearchTokens tokens) =>
+      note.caption
+      ? TextStyle(
+          fontSize: AppType.caption,
+          height: 1.35,
+          color: tokens.inkFaint,
+        )
+      : TextStyle(
+          fontSize: AppType.label,
+          fontWeight: FontWeight.w600,
+          color: tokens.ink,
+        );
+
+  static int _maxLines(GlassMenuNote note) => note.caption ? 4 : 1;
+
+  static double _measure(
+    GlassMenuNote note,
+    TextStyle style,
+    double width,
+    TextScaler textScaler,
+    TextDirection textDirection,
+  ) {
+    final textWidth =
+        width -
+        _bodyPad * 2 -
+        _hPad * 2 -
+        (note.leading != null ? _leadingSlot : 0);
+    final painter = TextPainter(
+      text: TextSpan(text: note.label, style: style),
+      maxLines: _maxLines(note),
+      ellipsis: '…',
+      textScaler: textScaler,
+      textDirection: textDirection,
+    )..layout(maxWidth: math.max(1, textWidth));
+    final text = painter.height;
+    painter.dispose();
+    final content = note.leading != null ? math.max(text, 26.0) : text;
+    return content + (note.caption ? 8 : 14);
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = widget.tokens;
-    final disabled = !widget.item.enabled;
-    final ink = disabled
-        ? (widget.item.color ?? t.ink).withValues(alpha: 0.4)
-        : (widget.item.color ?? t.ink);
-    final row = GestureDetector(
-      onTap: widget.onTap,
-      onTapDown: disabled ? null : (_) => _setPressed(true),
-      onTapUp: disabled ? null : (_) => _setPressed(false),
-      onTapCancel: disabled ? null : () => _setPressed(false),
-      behavior: HitTestBehavior.opaque,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 1),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
-        decoration: BoxDecoration(
-          color: widget.selected
-              ? t.selTint
-              : ((_hover || _pressed) && !disabled
-                    ? t.rowHover
-                    : Colors.transparent),
-          borderRadius: BorderRadius.circular(10),
-        ),
+    return SizedBox(
+      height: preferredSize.height,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: _hPad),
         child: Row(
           children: [
-            if (widget.item.leading != null) ...[
-              SizedBox(
-                width: 22,
-                child: Center(
-                  child: Opacity(
-                    opacity: disabled ? 0.4 : 1,
-                    child: widget.item.leading,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
+            if (note.leading != null) ...[
+              SizedBox(width: 26, child: Center(child: note.leading)),
+              const SizedBox(width: 12),
             ],
             Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.item.label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      fontWeight: FontWeight.w600,
-                      color: ink,
-                    ),
-                  ),
-                  if (disabled && widget.item.disabledReason != null)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 1),
-                      child: Text(
-                        widget.item.disabledReason!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: AppType.caption,
-                          color: t.ink.withValues(alpha: 0.4),
-                        ),
-                      ),
-                    ),
-                ],
+              child: Text(
+                note.label,
+                maxLines: _maxLines(note),
+                overflow: TextOverflow.ellipsis,
+                style: _style(note, tokens),
               ),
             ),
-            if (widget.selected) ...[
-              const SizedBox(width: 8),
-              Icon(LucideIcons.check, size: 17, color: AppColors.accentInk),
-            ] else if (widget.item.trailing != null) ...[
-              const SizedBox(width: 8),
-              Opacity(opacity: disabled ? 0.4 : 1, child: widget.item.trailing),
-            ],
           ],
         ),
       ),
     );
-    // A menu item: the label (and the reason, when disabled) merge in as its
-    // name; disabled rows stay readable but announce that they are inert.
-    final semantic = Semantics(
-      button: true,
-      enabled: !disabled,
-      selected: widget.selected,
-      child: row,
-    );
-    if (disabled) return semantic;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: semantic,
-    );
   }
-}
-
-/// 1px specular rim — matches the global-search / board-filter panels.
-class _RimPainter extends CustomPainter {
-  _RimPainter({
-    required this.radius,
-    required this.edge,
-    required this.edgeSoft,
-  });
-  final double radius;
-  final Color edge;
-  final Color edgeSoft;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(
-      rect.deflate(0.5),
-      Radius.circular(radius),
-    );
-    final paint = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1
-      ..shader = ui.Gradient.linear(
-        rect.topLeft,
-        rect.bottomRight,
-        [edge, edgeSoft, Colors.transparent, edgeSoft],
-        const [0.0, 0.28, 0.52, 1.0],
-      );
-    canvas.drawRRect(rrect, paint);
-  }
-
-  @override
-  bool shouldRepaint(_RimPainter old) =>
-      old.radius != radius || old.edge != edge || old.edgeSoft != edgeSoft;
 }
