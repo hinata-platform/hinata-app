@@ -56,7 +56,8 @@
       "previous": "Previous page",
       "next": "Next page",
       "page": "Page {{page}}"
-    }
+    },
+    "selectedOption": "Selected"
   },
   "delete": {
     "cta": "Delete",
@@ -796,8 +797,7 @@
     "moreActions": "More actions",
     "selectedCount": "{{count}} selected",
     "export": {
-      "action": "Export…",
-      "title": "Export issue",
+      "action": "Export",
       "print": "Print",
       "pdf": "Export as PDF",
       "xlsx": "Export as Excel",
@@ -2528,8 +2528,7 @@
     },
     "spaceIconOption": "Icon {{n}} of {{count}}",
     "subpages": "Subpages",
-    "moveUnder": "Move under…",
-    "moveUnderTitle": "Move under which page?",
+    "moveUnder": "Move under",
     "pageActions": "Page actions",
     "resultCount": "Results: {{count}}",
     "moveUnderConfirm": {

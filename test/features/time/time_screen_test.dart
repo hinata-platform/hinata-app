@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/my_absences_cubit.dart';
@@ -623,18 +624,20 @@ void main() {
       await tester.tap(button);
       await tester.pumpAndSettle();
 
-      final menu = tester.getRect(
-        find.ancestor(
-          of: find.text('time.mode.countdown'),
-          matching: find.byType(ListView),
-        ),
-      );
-      // Beneath the button and across it. Clamped to the window like every
-      // menu, so not necessarily flush with the button's left edge.
-      expect(menu.left, lessThanOrEqualTo(anchor.left));
-      expect(menu.right, greaterThanOrEqualTo(anchor.right));
-      expect(menu.top, greaterThan(anchor.bottom));
-      expect(menu.top, lessThan(anchor.bottom + 16));
+      // The menu grows out of the button it was opened from, as iOS pull-down
+      // menus do: its rows lie over the button and start at it.
+      final rows = find
+          .byType(lg.GlassMenuItem)
+          .evaluate()
+          .map((e) => tester.getRect(find.byWidget(e.widget)))
+          .reduce((a, b) => a.expandToInclude(b));
+      expect(find.text('time.mode.countdown'), findsOneWidget);
+      // Clamped to the window like every menu, so not necessarily flush with
+      // either of the button's edges.
+      expect(rows.left, lessThan(anchor.right));
+      expect(rows.right, greaterThan(anchor.left));
+      expect(rows.top, lessThan(anchor.bottom + 16));
+      expect(rows.bottom, greaterThan(anchor.top));
     });
 
     testWidgets('past an hour the readout carries the hour', (tester) async {

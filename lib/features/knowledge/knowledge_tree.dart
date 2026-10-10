@@ -5,12 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_popup_menu.dart';
-import '../sprint/modals/glass_modal.dart'
-    show
-        kGlassPopoverBreakpoint,
-        showGlassAnchoredPopover,
-        showGlassBottomSheet,
-        showGlassConfirm;
+import '../sprint/modals/glass_modal.dart' show showGlassConfirm;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_tokens.dart';
@@ -308,40 +303,23 @@ class _TreeBranchState extends State<_TreeBranch> {
     widget.onMove(id, parentId: parent.id, spaceId: parent.spaceId);
   }
 
-  /// The tap alternative to dropping this page onto another one.
-  Future<void> _moveUnder(BuildContext context) async {
-    final box = context.findRenderObject() as RenderBox?;
-    final anchor = box == null
-        ? Rect.zero
-        : box.localToGlobal(Offset.zero) & box.size;
-    final panel = _ParentPickerPanel(rows: _parentCandidates());
-    final parentId = MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint
-        ? await showGlassAnchoredPopover<String>(
-            context,
-            anchorRect: anchor,
-            width: 320,
-            builder: (_) => panel,
-          )
-        : await showGlassBottomSheet<String>(
-            context,
-            builder: (_) => SizedBox(height: 420, child: panel),
-          );
-    final parent = parentId == null ? null : widget.repo.articleById(parentId);
-    if (parent == null || !context.mounted) return;
-    await _moveUnderConfirmed(widget.article.id, parent);
-  }
-
   /// Glass action menu for a tree row: move-under, move-to-root + delete.
   Widget _rowMenu(BuildContext context, bool canDelete, {required bool shown}) {
     // Cheap on purpose, since every row builds its menu: another page in the
-    // space is enough to offer the move; the picker lists the actual choices.
+    // space is enough to offer the move; the submenu, built when the menu
+    // opens, lists the actual choices.
     final canMoveUnder = widget.inSpace.length > 1;
+    const underPrefix = 'under:';
     return GlassPopupMenu<String>(
       value: '',
-      width: 240,
+      width: 260,
       onSelected: (v) {
-        if (v == 'under') {
-          _moveUnder(context);
+        if (v.startsWith(underPrefix)) {
+          // The tap alternative to dropping this page onto another one.
+          final parent = widget.repo.articleById(
+            v.substring(underPrefix.length),
+          );
+          if (parent != null) _moveUnderConfirmed(widget.article.id, parent);
         } else if (v == 'root') {
           widget.onMove(
             widget.article.id,
@@ -352,16 +330,35 @@ class _TreeBranchState extends State<_TreeBranch> {
           widget.onDelete(widget.article.id);
         }
       },
-      items: [
+      itemsBuilder: (context) => [
         if (canMoveUnder)
           GlassMenuItem(
-            value: 'under',
+            value: '',
             label: context.t('knowledge.moveUnder'),
             leading: Icon(
               LucideIcons.cornerDownRight,
               size: 16,
               color: AppColors.inkSoft,
             ),
+            submenu: [
+              for (final row in _parentCandidates())
+                GlassMenuItem(
+                  value: '$underPrefix${row.page.id}',
+                  label: row.page.title,
+                  // Indented by depth, so the card reads as the tree it is.
+                  leading: Padding(
+                    padding: EdgeInsetsDirectional.only(start: row.depth * 14),
+                    child: Icon(
+                      lucideIcon(row.page.icon),
+                      size: 15,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                  // Where the page lives: moving under it hands the subtree
+                  // that place, and with it its readers.
+                  trailing: KbPlaceGlyph(place: row.page.place),
+                ),
+            ],
           ),
         if (widget.article.parentId != null)
           GlassMenuItem(
@@ -599,86 +596,6 @@ class _RowAction extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// The pages a page can move under, indented as in the tree. Tapping one
-/// closes the picker with its id.
-class _ParentPickerPanel extends StatelessWidget {
-  const _ParentPickerPanel({required this.rows});
-
-  final List<({KbArticle page, int depth})> rows;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-          child: Text(
-            context.t('knowledge.moveUnderTitle'),
-            style: const TextStyle(
-              fontFamily: 'Sora',
-              fontSize: AppType.body,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-        Flexible(
-          child: ListView.builder(
-            shrinkWrap: true,
-            padding: const EdgeInsets.fromLTRB(8, 0, 8, 12),
-            itemCount: rows.length,
-            itemBuilder: (context, i) {
-              final row = rows[i];
-              return Semantics(
-                button: true,
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => Navigator.of(context).pop(row.page.id),
-                  child: ConstrainedBox(
-                    constraints: const BoxConstraints(minHeight: 44),
-                    child: Padding(
-                      padding: EdgeInsetsDirectional.fromSTEB(
-                        8 + row.depth * 14,
-                        8,
-                        8,
-                        8,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            lucideIcon(row.page.icon),
-                            size: 15,
-                            color: AppColors.inkSoft,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              row.page.title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontSize: AppType.label,
-                                color: AppColors.ink,
-                              ),
-                            ),
-                          ),
-                          // Where the page lives: moving under it hands the
-                          // subtree that place, and with it its readers.
-                          KbPlaceGlyph(place: row.page.place),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-        ),
-      ],
     );
   }
 }

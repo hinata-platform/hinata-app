@@ -240,7 +240,8 @@ Future<void> showIssueDetailSheet(
               );
             },
             onDelete: () => bodyKey.currentState?.confirmDeleteIssue(),
-            onExport: (anchor) => bodyKey.currentState?.exportIssue(anchor),
+            onExport: (choice, anchor) =>
+                bodyKey.currentState?.exportIssue(choice, anchor),
             onClone: () => bodyKey.currentState?.cloneIssue(),
             onMove: () => bodyKey.currentState?.moveIssue(),
             onClose: () => Navigator.of(modalContext).maybePop(),
@@ -367,8 +368,8 @@ class _SheetActions extends StatelessWidget {
   final VoidCallback onMaximize;
   final VoidCallback onDelete;
 
-  /// Opens the export submenu, anchored where the "…" menu stood.
-  final void Function(Rect anchorRect) onExport;
+  /// Exports in the format chosen in the "…" menu's export submenu.
+  final void Function(IssueExportChoice choice, Rect anchorRect) onExport;
 
   /// Opens the clone dialog.
   final VoidCallback onClone;
