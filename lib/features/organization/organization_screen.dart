@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/app_config_bloc.dart';
@@ -21,6 +20,7 @@ import '../admin/sections/audit_log_cubit.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show showGlassToast, showGlassErrorToast, GlassToastKind;
+import 'holidays/holidays_screen.dart';
 import 'org_link_card.dart';
 import 'org_deadline_basis_card.dart';
 import 'organization_cubit.dart';
@@ -70,17 +70,11 @@ class _OrganizationViewState extends State<OrganizationView> {
   /// itself lives in the cubit's settings, so moving between sections loses
   /// nothing that was not saved yet.
   late OrgSection _section = OrgSection.values.firstWhere(
-    (s) => s.name == widget.initialSection && s.route == null,
+    (s) => s.name == widget.initialSection,
     orElse: () => OrgSection.values.first,
   );
 
   void _select(OrgSection section) {
-    final route = section.route;
-    if (route != null) {
-      // A page of its own: pushed, so the draft here waits for the way back.
-      unawaited(context.push(route));
-      return;
-    }
     setState(() => _section = section);
   }
 
@@ -124,7 +118,7 @@ class _OrganizationViewState extends State<OrganizationView> {
               : context.t(_section.labelKey),
           actions: [
             // The log saves nothing; Save would only puzzle there.
-            if (settings != null && (compact || _section != OrgSection.audit))
+            if (settings != null && (compact || _section.savable))
               PageAction(
                 icon: LucideIcons.save,
                 label: context.t('common.save'),
@@ -284,8 +278,7 @@ class _CompactCards extends StatelessWidget {
 }
 
 /// The sections of the Organisation page on a wide window (HIN-110), in the
-/// rail's order. Each names the cards it shows; an entry with a [route] opens
-/// a page of its own instead.
+/// rail's order. Each names the cards it shows.
 ///
 /// The first is where the page opens: the module switch, which every other
 /// time-tracking section depends on.
@@ -342,7 +335,6 @@ enum OrgSection {
     LucideIcons.calendarHeart,
     _absenceGroup,
     ['holidays'],
-    route: '/organization/holidays',
   ),
   deadlines('org.nav.deadlines', LucideIcons.calendarClock, _generalGroup, [
     'deadlines',
@@ -351,13 +343,7 @@ enum OrgSection {
   // phone opens it as a page of its own through the card.
   audit('org.audit.title', LucideIcons.history, _generalGroup, ['audit']);
 
-  const OrgSection(
-    this.labelKey,
-    this.icon,
-    this.groupKey,
-    this.cards, {
-    this.route,
-  });
+  const OrgSection(this.labelKey, this.icon, this.groupKey, this.cards);
 
   final String labelKey;
   final IconData icon;
@@ -367,10 +353,11 @@ enum OrgSection {
   /// give them. A section none of whose cards is there is not listed.
   final List<String> cards;
 
-  /// Set for an entry that opens a page of its own.
-  final String? route;
-
   bool get isTimeTracking => groupKey != _generalGroup;
+
+  /// Whether the page's Save means anything here. The log and the holidays
+  /// keep their own state and save each change as it is made.
+  bool get savable => this != audit && this != holidays;
 }
 
 const String _timeGroup = 'nav.time';
@@ -423,7 +410,6 @@ class _WideOrganization extends StatelessWidget {
             icon: s.icon,
             label: context.t(s.labelKey),
             group: context.t(s.groupKey),
-            trailing: s.route != null ? LucideIcons.externalLink : null,
           ),
       ],
       selected: open,
@@ -441,6 +427,9 @@ class _WideOrganization extends StatelessWidget {
               ),
               child: const AdminAuditSection(titleKey: 'org.audit.title'),
             )
+          // In the pane like the log, so the rail stays beside it.
+          : open == OrgSection.holidays
+          ? const OrgHolidaysScreen(embedded: true)
           : Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
