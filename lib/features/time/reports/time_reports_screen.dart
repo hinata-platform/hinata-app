@@ -434,12 +434,25 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
       width: 250,
       value: '',
       items: [
-        for (final file in ReportFile.forTime)
-          GlassMenuItem(
-            value: file,
-            label: context.t(file.labelKey),
-            leading: Icon(file.icon, size: 16, color: AppColors.inkSoft),
+        // The formats sit in a card of their own, as they do in the issue's
+        // "…" menu, so the menu's three actions read at a glance.
+        GlassMenuItem(
+          value: '',
+          label: context.t('time.reports.export.title'),
+          leading: Icon(
+            LucideIcons.download,
+            size: 16,
+            color: AppColors.inkSoft,
           ),
+          submenu: [
+            for (final file in ReportFile.forTime)
+              GlassMenuItem(
+                value: file,
+                label: context.t(file.labelKey),
+                leading: Icon(file.icon, size: 16, color: AppColors.inkSoft),
+              ),
+          ],
+        ),
         GlassMenuItem(
           value: import,
           label: context.t('time.import.action'),

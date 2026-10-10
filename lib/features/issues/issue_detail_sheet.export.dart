@@ -42,43 +42,15 @@ const Map<IssueExportChoice, IconData> _kExportIcons = {
   IssueExportChoice.xml: LucideIcons.braces,
 };
 
-/// Opens the export submenu where the "…" menu just stood.
-///
-/// A second popover rather than a nested menu: [GlassPopupMenu] closes on
-/// selection and has no submenu of its own, and this is the same shape the
-/// watch row already uses for the one other action that opens something
-/// further.
-Future<IssueExportChoice?> showIssueExportMenu(
-  BuildContext context, {
-  required Rect anchorRect,
-}) {
-  return showGlassOptions<IssueExportChoice>(
-    context,
-    title: context.t('issues.export.title'),
-    anchorRect: anchorRect,
-    options: [
-      for (final choice in IssueExportChoice.values)
-        (
-          value: choice,
-          child: Row(
-            children: [
-              Icon(_kExportIcons[choice], size: 16, color: AppColors.inkSoft),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  context.t(choice.labelKey),
-                  style: const TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-    ],
-  );
-}
+/// The rows of the "…" menu's export submenu, one per [IssueExportChoice].
+List<GlassMenuEntry<Object?>> issueExportMenuItems(BuildContext context) => [
+  for (final choice in IssueExportChoice.values)
+    GlassMenuItem<Object?>(
+      value: choice,
+      label: context.t(choice.labelKey),
+      leading: Icon(_kExportIcons[choice], size: 16, color: AppColors.inkSoft),
+    ),
+];
 
 /// Longest stem a saved export is named with, before the extension — the
 /// server's own ceiling, so both sides cut a long title at the same place.

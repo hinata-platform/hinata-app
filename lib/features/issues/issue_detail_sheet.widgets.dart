@@ -2,8 +2,9 @@ part of 'issue_detail_sheet.dart';
 
 // ─────────────────────────── Top bar ───────────────────────────────────────
 
-/// Actions collapsed into the "…" overflow menu of the issue top bars.
-enum _IssueMenuAction { watch, reply, export, clone, move, delete }
+/// Actions collapsed into the "…" overflow menu of the issue top bars. The
+/// export submenu reports an [IssueExportChoice] instead.
+enum _IssueMenuAction { toggleWatch, reply, clone, move, delete }
 
 /// The delete/archive/restore affordance shared by both top bars: label,
 /// icon and tint depend on the archived state and the delete permission.
@@ -26,9 +27,9 @@ enum _IssueMenuAction { watch, reply, export, clone, move, delete }
 /// Watching is a menu entry rather than a button of its own (or a card in the
 /// details column, where it used to sit and cost the narrow right column a
 /// whole block): it is a one-tap subscription, not a field of the issue. Its
-/// row opens a second glass popover — the subscription, why you may already be
+/// row opens a submenu card — the subscription, why you may already be
 /// notified, and the roster are a section of their own, not three more rows in
-/// a list of actions.
+/// a list of actions. Export opens one too, with the formats.
 class _IssueActionsMenu extends StatelessWidget {
   const _IssueActionsMenu({
     required this.onExport,
@@ -41,9 +42,9 @@ class _IssueActionsMenu extends StatelessWidget {
     this.watch,
   });
 
-  /// Opens the export submenu, which needs the anchor this menu stood at so it
-  /// can appear in the same place.
-  final void Function(Rect anchorRect) onExport;
+  /// Exports in the format chosen in the export submenu. Gets the rect this
+  /// menu's button stands at, which the share sheet grows out of.
+  final void Function(IssueExportChoice choice, Rect anchorRect) onExport;
 
   /// Opens the clone dialog. Available on archived issues too: the copy is a
   /// live issue whatever the original's state, and cloning is how a shelved
@@ -67,35 +68,34 @@ class _IssueActionsMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final watch = this.watch;
-    if (watch == null) return _menu(context, watching: false);
+    if (watch == null) return _menu(context, watchState: null);
     // Rebuilds this anchor whenever the roster changes, so the row's verb and
-    // the list under it are right the next time the menu opens — including
+    // the card under it are right the next time the menu opens — including
     // after a toggle made from the *other* top bar (sheet and route share one
     // cubit, and the sheet's bar is a subtree of its own).
     return BlocBuilder<IssueWatchCubit, IssueWatchState>(
       bloc: watch.cubit,
-      builder: (context, state) =>
-          _menu(context, watching: state.isWatchedBy(watch.meId)),
+      builder: (context, state) => _menu(context, watchState: state),
     );
   }
 
-  Widget _menu(BuildContext context, {required bool watching}) {
+  Widget _menu(BuildContext context, {required IssueWatchState? watchState}) {
     final watch = this.watch;
     final removal = _removalLook(archived: archived, canDelete: canDelete);
     // The watch row is a group of its own at the top, so whichever action
     // comes after it opens the next group.
     final afterWatch = watch != null;
 
-    return GlassPopupMenu<_IssueMenuAction?>(
+    return GlassPopupMenu<Object?>(
       value: null,
-      width: 260,
+      width: 290,
       items: [
-        if (watch != null)
-          issueWatchMenuItem(
+        if (watch != null && watchState != null)
+          issueWatchMenuItem<Object?>(
             context,
-            value: _IssueMenuAction.watch,
-            watching: watching,
-            enabled: watch.meId != null,
+            toggleValue: _IssueMenuAction.toggleWatch,
+            data: watch,
+            state: watchState,
           ),
         if (onReply != null)
           GlassMenuItem(
@@ -109,19 +109,15 @@ class _IssueActionsMenu extends StatelessWidget {
             dividerAbove: afterWatch,
           ),
         GlassMenuItem(
-          value: _IssueMenuAction.export,
+          value: null,
           label: context.t('issues.export.action'),
           leading: Icon(
             LucideIcons.download,
             size: 16,
             color: AppColors.inkSoft,
           ),
-          trailing: Icon(
-            forwardChevron(context),
-            size: 15,
-            color: AppColors.inkFaint,
-          ),
           dividerAbove: afterWatch && onReply == null,
+          submenu: issueExportMenuItems(context),
         ),
         GlassMenuItem(
           value: _IssueMenuAction.clone,
@@ -152,19 +148,19 @@ class _IssueActionsMenu extends StatelessWidget {
       ],
       onSelected: (action) {
         switch (action) {
-          case _IssueMenuAction.watch:
-            if (watch != null) _openWatchPopover(context, watch);
+          case _IssueMenuAction.toggleWatch:
+            watch?.onToggle();
           case _IssueMenuAction.reply:
             onReply?.call();
-          case _IssueMenuAction.export:
-            _openFromMenuAnchor(context, onExport);
+          case IssueExportChoice choice:
+            _exportFromMenuAnchor(context, choice, onExport);
           case _IssueMenuAction.clone:
             onClone();
           case _IssueMenuAction.move:
             onMove();
           case _IssueMenuAction.delete:
             onDelete();
-          case null:
+          default:
             break;
         }
       },
@@ -190,35 +186,26 @@ class _IssueActionsMenu extends StatelessWidget {
   }
 }
 
-/// Runs [open] with the rect the "…" menu just stood at.
+/// Runs [export] for [choice], with the rect the "…" menu's button stands at.
 ///
 /// [context] is the menu button's own element, still mounted: the menu closes
 /// before reporting a selection, but the top bar holding the anchor does not go
-/// anywhere. A Rect.zero fallback is harmless — the panel clamps itself
-/// on-screen — while a torn-down context is not, so that case bails out.
-void _openFromMenuAnchor(BuildContext context, void Function(Rect) open) {
+/// anywhere. A Rect.zero fallback is harmless — the share sheet falls back to
+/// an origin of its own — while a torn-down context is not, so that case bails
+/// out.
+void _exportFromMenuAnchor(
+  BuildContext context,
+  IssueExportChoice choice,
+  void Function(IssueExportChoice, Rect) export,
+) {
   if (!context.mounted) return;
   final box = context.findRenderObject() as RenderBox?;
-  open(
+  export(
+    choice,
     (box != null && box.hasSize)
         ? box.localToGlobal(Offset.zero) & box.size
         : Rect.zero,
   );
-}
-
-/// Opens the watch popover where the "…" menu just stood.
-///
-/// [context] is this button's own element, still mounted: the menu closes
-/// before reporting a selection, but the top bar holding the anchor does not go
-/// anywhere. A Rect.zero fallback is harmless — the panel clamps itself
-/// on-screen — while a torn-down context is not, so that case bails out.
-void _openWatchPopover(BuildContext context, IssueWatchMenuData watch) {
-  if (!context.mounted) return;
-  final box = context.findRenderObject() as RenderBox?;
-  final anchor = (box != null && box.hasSize)
-      ? box.localToGlobal(Offset.zero) & box.size
-      : Rect.zero;
-  showIssueWatchPopover(context, anchorRect: anchor, data: watch);
 }
 
 class _RouteTopBar extends StatelessWidget {
@@ -248,8 +235,8 @@ class _RouteTopBar extends StatelessWidget {
   final VoidCallback? onMinimize;
   final VoidCallback onDelete;
 
-  /// Opens the export submenu, anchored where the "…" menu stood.
-  final void Function(Rect anchorRect) onExport;
+  /// Exports in the format chosen in the "…" menu's export submenu.
+  final void Function(IssueExportChoice choice, Rect anchorRect) onExport;
 
   /// Opens the clone dialog.
   final VoidCallback onClone;
