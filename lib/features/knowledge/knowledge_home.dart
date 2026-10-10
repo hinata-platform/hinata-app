@@ -247,7 +247,7 @@ class _KnowledgeHomeState extends State<KnowledgeHome> {
                   count: repo.articleCountInSpace(s.id),
                   onTap: () => widget.onOpenSpace(s.id),
                   onDelete:
-                      repo.isPersistedSpace(s.id) &&
+                      repo.canManageSpace(s.id) &&
                           repo.articleCountInSpace(s.id) == 0
                       ? () => widget.onDeleteSpace(s.id)
                       : null,

@@ -501,9 +501,11 @@ class KnowledgeRepository {
     _rebuildSpaces();
   }
 
-  /// Whether [spaceId] is a persisted backend space (vs. one merely derived from
-  /// an article's `space` value) — only persisted spaces can be deleted.
-  bool isPersistedSpace(String spaceId) => _backendSpaces.containsKey(spaceId);
+  /// Whether the reader may delete [spaceId]: a persisted backend space (not one
+  /// merely derived from an article's `space` value) that the server says is
+  /// theirs to manage.
+  bool canManageSpace(String spaceId) =>
+      _backendSpaces[spaceId]?.canManage ?? false;
 
   /// Whether [maybeAncestorId] is [id] itself or one of its ancestors — used to
   /// reject moves that would create a cycle.
