@@ -377,20 +377,12 @@ class SharedEntryCard extends StatelessWidget {
         ),
       );
     }
+    // The answer most people give first, so on a narrow card it is the one
+    // that stays on the first line rather than the one left alone below.
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        GhostButton(
-          icon: LucideIcons.x,
-          label: context.t('time.share.decline'),
-          onPressed: busy ? null : onDecline,
-        ),
-        GhostButton(
-          icon: LucideIcons.slidersHorizontal,
-          label: context.t('time.share.adjust'),
-          onPressed: busy ? null : onAdjust,
-        ),
         FilledButton.icon(
           onPressed: busy ? null : onAccept,
           icon: busy
@@ -400,6 +392,16 @@ class SharedEntryCard extends StatelessWidget {
                 )
               : const Icon(LucideIcons.check, size: 16),
           label: Text(context.t('time.share.accept')),
+        ),
+        GhostButton(
+          icon: LucideIcons.slidersHorizontal,
+          label: context.t('time.share.adjust'),
+          onPressed: busy ? null : onAdjust,
+        ),
+        GhostButton(
+          icon: LucideIcons.x,
+          label: context.t('time.share.decline'),
+          onPressed: busy ? null : onDecline,
         ),
       ],
     );
