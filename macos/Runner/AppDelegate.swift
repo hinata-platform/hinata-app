@@ -34,7 +34,28 @@ class AppDelegate: FlutterAppDelegate {
     center.delegate = wrapper
   }
 
+  /// Set over "hinata/window" while a running timer keeps the app in the menu
+  /// bar (HIN-101). AppKit asks the question below also when the last window
+  /// is only *hidden*, and a plain `true` then quits the app the moment the
+  /// close button hides the window into the menu bar.
+  static var keepsRunningInMenuBar = false
+
   override func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    return !AppDelegate.keepsRunningInMenuBar
+  }
+
+  /// A click on the Dock icon brings the window back when "keep running when
+  /// closed" hid it into the menu bar (HIN-101). The app still quits when its
+  /// window really closes; a hidden window is not a closed one.
+  override func applicationShouldHandleReopen(
+    _ sender: NSApplication, hasVisibleWindows flag: Bool
+  ) -> Bool {
+    if !flag {
+      for window in sender.windows where window is MainFlutterWindow {
+        window.makeKeyAndOrderFront(self)
+      }
+      sender.activate(ignoringOtherApps: true)
+    }
     return true
   }
 

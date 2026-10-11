@@ -36,6 +36,12 @@
 #
 # Every one of those is present on a normal desktop install; see docs/LINUX.md
 # for what the user sees when one of them is missing.
+#
+# THE ONE EXCEPTION: libayatana-appindicator. tray_manager links it (HIN-101),
+# and unlike GTK it is *not* on every desktop: a host without it would refuse
+# to start the app at all, for the sake of a tray icon. So it travels with the
+# bundle, with the three libraries it pulls in that are just as often missing,
+# into lib/ next to the plugins, which find it through their $ORIGIN/lib RPATH.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -85,6 +91,18 @@ mkdir -p "$APPDIR/usr/bin" "$TOOLS_DIR"
 # libraries have an RPATH of $ORIGIN/lib. Separating the executable from its
 # neighbours is the one way to break both at once.
 cp -a "$BUNDLE_DIR/." "$APPDIR/usr/bin/"
+
+# The tray's libraries, from the build machine (see the note at the top).
+for soname in libayatana-appindicator3.so.1 libayatana-indicator3.so.7 \
+              libdbusmenu-glib.so.4 libdbusmenu-gtk3.so.4; do
+  found="$(ldconfig -p | awk -v name="$soname" '$1 == name { print $NF; exit }')"
+  if [ -z "$found" ]; then
+    echo "$soname is not installed on this machine; install" >&2
+    echo "libayatana-appindicator3-1 (and its dependencies) and run again." >&2
+    exit 1
+  fi
+  cp -L "$found" "$APPDIR/usr/bin/lib/$soname"
+done
 
 install -Dm644 "$PACKAGING_DIR/$APP_ID.desktop" \
   "$APPDIR/usr/share/applications/$APP_ID.desktop"

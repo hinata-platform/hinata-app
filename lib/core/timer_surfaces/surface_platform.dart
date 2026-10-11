@@ -42,15 +42,33 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
         phaseEndNotification: true,
         schedulesAhead: true,
       ),
-      // A desktop window title needs a plugin this app does not carry; the
-      // menu bar and the tray take that place in stage 19.
-      SurfacePlatform.macos ||
+      // The running timer is the menu bar's clock on a Mac and the tray icon
+      // with its tooltip on Windows and Linux; no window title on the desktop.
+      SurfacePlatform.macos => const TimerSurfaceCapabilities(
+        phaseEndNotification: true,
+        schedulesAhead: true,
+        runningSurface: true,
+        menuBar: true,
+        keepRunning: true,
+        globalHotkeys: true,
+      ),
       SurfacePlatform.windows => const TimerSurfaceCapabilities(
         phaseEndNotification: true,
         schedulesAhead: true,
+        runningSurface: true,
+        menuBar: true,
+        keepRunning: true,
+        globalHotkeys: true,
+        taskbar: true,
       ),
+      // The tray is best effort here (a desktop without a StatusNotifierItem
+      // host shows nothing), and system-wide shortcuts come with the portal in
+      // stage 25.
       SurfacePlatform.linux => const TimerSurfaceCapabilities(
         phaseEndNotification: true,
+        runningSurface: true,
+        menuBar: true,
+        keepRunning: true,
       ),
       // On the web the running timer is the app badge of an installed app.
       SurfacePlatform.web => const TimerSurfaceCapabilities(

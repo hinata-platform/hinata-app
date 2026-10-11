@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:system_hotkeys/system_hotkeys.dart';
+
+import 'surface_platform.dart';
 
 /// The person's own switches for the timer outside the app, on this device.
 ///
@@ -14,6 +17,10 @@ class TimerSurfacePrefs extends Equatable {
     this.surfaceDetails = false,
     this.lockScreenDetails = false,
     this.titleClock = false,
+    this.keepInTray = false,
+    this.globalHotkeys = false,
+    this.toggleHotkey,
+    this.focusHotkey,
   });
 
   /// What the introduction card offers, already chosen.
@@ -23,6 +30,33 @@ class TimerSurfacePrefs extends Equatable {
     phaseEndNotification: true,
     runningSurface: true,
   );
+
+  /// [suggested] for [platform]. A Mac keeps a timer in the menu bar when its
+  /// window closes, which is what a Mac app does; on Windows and Linux closing
+  /// the window still quits unless the person asks otherwise.
+  static TimerSurfacePrefs suggestedOn(SurfacePlatform platform) =>
+      suggested.copyWith(keepInTray: platform == SurfacePlatform.macos);
+
+  /// The shortcuts a first switch-on offers: the convention of toggl and
+  /// Clockify, ⌃⌥⌘S and ⌃⌥⌘F on a Mac, Ctrl+Alt+Shift+S and F elsewhere.
+  static HotKey defaultToggleHotkey(SurfacePlatform platform) => HotKey(
+    key: PhysicalKeyboardKey.keyS,
+    modifiers: _defaultModifiers(platform),
+  );
+
+  static HotKey defaultFocusHotkey(SurfacePlatform platform) => HotKey(
+    key: PhysicalKeyboardKey.keyF,
+    modifiers: _defaultModifiers(platform),
+  );
+
+  static Set<HotKeyModifier> _defaultModifiers(SurfacePlatform platform) =>
+      platform == SurfacePlatform.macos
+      ? const {HotKeyModifier.control, HotKeyModifier.alt, HotKeyModifier.meta}
+      : const {
+          HotKeyModifier.control,
+          HotKeyModifier.alt,
+          HotKeyModifier.shift,
+        };
 
   /// Whether the person confirmed the introduction. Until then nothing shows
   /// outside the app, whatever the switches below say.
@@ -47,6 +81,19 @@ class TimerSurfacePrefs extends Equatable {
   /// The running time in the window or tab title.
   final bool titleClock;
 
+  /// Closing the window leaves a running timer in the menu bar or tray.
+  final bool keepInTray;
+
+  /// The master switch of the system-wide shortcuts. Off, nothing is bound,
+  /// whatever combinations are stored.
+  final bool globalHotkeys;
+
+  /// Start or stop the timer from anywhere; null until one is chosen.
+  final HotKey? toggleHotkey;
+
+  /// Open the focus view from anywhere.
+  final HotKey? focusHotkey;
+
   TimerSurfacePrefs copyWith({
     bool? consented,
     bool? introSeen,
@@ -55,6 +102,10 @@ class TimerSurfacePrefs extends Equatable {
     bool? surfaceDetails,
     bool? lockScreenDetails,
     bool? titleClock,
+    bool? keepInTray,
+    bool? globalHotkeys,
+    HotKey? toggleHotkey,
+    HotKey? focusHotkey,
   }) => TimerSurfacePrefs(
     consented: consented ?? this.consented,
     introSeen: introSeen ?? this.introSeen,
@@ -63,6 +114,10 @@ class TimerSurfacePrefs extends Equatable {
     surfaceDetails: surfaceDetails ?? this.surfaceDetails,
     lockScreenDetails: lockScreenDetails ?? this.lockScreenDetails,
     titleClock: titleClock ?? this.titleClock,
+    keepInTray: keepInTray ?? this.keepInTray,
+    globalHotkeys: globalHotkeys ?? this.globalHotkeys,
+    toggleHotkey: toggleHotkey ?? this.toggleHotkey,
+    focusHotkey: focusHotkey ?? this.focusHotkey,
   );
 
   Map<String, dynamic> toJson() => {
@@ -73,6 +128,10 @@ class TimerSurfacePrefs extends Equatable {
     'surfaceDetails': surfaceDetails,
     'lockScreenDetails': lockScreenDetails,
     'titleClock': titleClock,
+    'keepInTray': keepInTray,
+    'globalHotkeys': globalHotkeys,
+    'toggleHotkey': toggleHotkey?.toMap(),
+    'focusHotkey': focusHotkey?.toMap(),
   };
 
   /// Anything that is not a `true` reads as off: a broken store must never
@@ -87,7 +146,22 @@ class TimerSurfacePrefs extends Equatable {
       surfaceDetails: on('surfaceDetails'),
       lockScreenDetails: on('lockScreenDetails'),
       titleClock: on('titleClock'),
+      keepInTray: on('keepInTray'),
+      globalHotkeys: on('globalHotkeys'),
+      toggleHotkey: _hotKey(json['toggleHotkey']),
+      focusHotkey: _hotKey(json['focusHotkey']),
     );
+  }
+
+  /// A stored combination, or null for anything that does not read as one.
+  static HotKey? _hotKey(Object? raw) {
+    if (raw is! Map) return null;
+    try {
+      final key = HotKey.fromMap(raw);
+      return key.hasModifier && HotKey.isSupportedKey(key.key) ? key : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   @override
@@ -99,6 +173,10 @@ class TimerSurfacePrefs extends Equatable {
     surfaceDetails,
     lockScreenDetails,
     titleClock,
+    keepInTray,
+    globalHotkeys,
+    toggleHotkey,
+    focusHotkey,
   ];
 }
 
