@@ -1,6 +1,10 @@
+import 'adapters/global_hotkeys_surface.dart';
+import 'adapters/keep_running_surface.dart';
 import 'adapters/local_notifications_surface.dart';
+import 'adapters/tray_surface.dart';
 import 'adapters/web_notification_surface.dart';
 import 'adapters/window_title_surface.dart';
+import 'adapters/windows_taskbar_surface.dart';
 import 'adapters/windows_toast_surface.dart';
 import 'surface_platform.dart';
 import 'timer_surface.dart';
@@ -16,12 +20,28 @@ List<TimerSurface> buildTimerSurfaces(
     appTitle: appTitle,
     flashText: flashText,
   );
+  // The menu bar or tray first: the close behaviour asks whether it is there.
+  TraySurface tray() => TraySurface(platform);
+  List<TimerSurface> desktop(TraySurface tray) => [
+    tray,
+    KeepRunningSurface(platform, trayAvailable: tray.available),
+    if (capabilitiesForPlatform(platform).globalHotkeys)
+      GlobalHotkeysSurface(platform),
+  ];
   return switch (platform) {
     SurfacePlatform.android ||
-    SurfacePlatform.ios ||
-    SurfacePlatform.macos ||
-    SurfacePlatform.linux => [LocalNotificationsSurface(platform), title],
-    SurfacePlatform.windows => [WindowsToastSurface(), title],
+    SurfacePlatform.ios => [LocalNotificationsSurface(platform), title],
+    SurfacePlatform.macos || SurfacePlatform.linux => [
+      LocalNotificationsSurface(platform),
+      ...desktop(tray()),
+      title,
+    ],
+    SurfacePlatform.windows => [
+      WindowsToastSurface(),
+      ...desktop(tray()),
+      WindowsTaskbarSurface(),
+      title,
+    ],
     SurfacePlatform.web => [WebNotificationSurface(), title],
     SurfacePlatform.other => [title],
   };

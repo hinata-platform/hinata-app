@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:system_hotkeys/system_hotkeys.dart';
 
 import '../models/time_models.dart';
 import 'timer_surface_prefs.dart';
@@ -20,6 +21,16 @@ class TimerSurfaceTexts extends Equatable {
     required this.stop,
     required this.takeBreak,
     required this.resume,
+    this.start = '',
+    this.nextPhase = '',
+    this.openFocus = '',
+    this.showWindow = '',
+    this.quit = '',
+    this.idle = '',
+    this.stopwatch = '',
+    this.countdown = '',
+    this.focusPhase = '',
+    this.breakPhase = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -49,6 +60,22 @@ class TimerSurfaceTexts extends Equatable {
   final String takeBreak;
   final String resume;
 
+  // The menu bar's and the tray's menu. The mode and the phase are words of
+  // the open menu only: the icon, the title and the tooltip say "running"
+  // and the time, the same for work and a break.
+  final String start;
+  final String nextPhase;
+  final String openFocus;
+  final String showWindow;
+  final String quit;
+
+  /// The tooltip with no timer running.
+  final String idle;
+  final String stopwatch;
+  final String countdown;
+  final String focusPhase;
+  final String breakPhase;
+
   @override
   List<Object?> get props => [
     appName,
@@ -60,6 +87,16 @@ class TimerSurfaceTexts extends Equatable {
     stop,
     takeBreak,
     resume,
+    start,
+    nextPhase,
+    openFocus,
+    showWindow,
+    quit,
+    idle,
+    stopwatch,
+    countdown,
+    focusPhase,
+    breakPhase,
   ];
 }
 
@@ -82,6 +119,9 @@ class TimerSurfaceState extends Equatable {
     this.phaseEndNotification = false,
     this.runningSurface = false,
     this.titleClock = false,
+    this.keepInTray = false,
+    this.toggleHotkey,
+    this.focusHotkey,
     this.texts = TimerSurfaceTexts.empty,
   });
 
@@ -111,6 +151,14 @@ class TimerSurfaceState extends Equatable {
   final bool phaseEndNotification;
   final bool runningSurface;
   final bool titleClock;
+
+  /// Closing the window leaves the timer in the menu bar or tray.
+  final bool keepInTray;
+
+  /// The system-wide shortcuts to bind; null when switched off.
+  final HotKey? toggleHotkey;
+  final HotKey? focusHotkey;
+
   final TimerSurfaceTexts texts;
 
   bool get isBreak => phase?.isBreak ?? false;
@@ -134,6 +182,9 @@ class TimerSurfaceState extends Equatable {
     phaseEndNotification,
     runningSurface,
     titleClock,
+    keepInTray,
+    toggleHotkey,
+    focusHotkey,
     texts,
   ];
 }
@@ -154,16 +205,28 @@ TimerSurfaceState deriveTimerSurfaceState(
   TimerSurfaceTexts texts = TimerSurfaceTexts.empty,
   DateTime? now,
 }) {
-  if (timer == null || gated) return TimerSurfaceState.idle;
+  if (gated) return TimerSurfaceState.idle;
+  final on = prefs.consented;
+  // What stays with no timer running: the menu bar's icon and its "Start",
+  // the close behaviour and the shortcuts, which start a timer too. Nothing
+  // that announces or counts.
+  final standing = TimerSurfaceState(
+    running: false,
+    runningSurface: on && prefs.runningSurface,
+    keepInTray: on && prefs.runningSurface && prefs.keepInTray,
+    toggleHotkey: on && prefs.globalHotkeys ? prefs.toggleHotkey : null,
+    focusHotkey: on && prefs.globalHotkeys ? prefs.focusHotkey : null,
+    texts: texts,
+  );
+  if (timer == null) return standing;
   final startedAt = timer.startedAt.toUtc();
   // A timer older than a day is no longer shown anywhere outside the app,
   // whatever the cached copy says; the server cuts such a timer anyway.
   if (!startedAt
       .add(timerSurfaceLifetime)
       .isAfter((now ?? DateTime.now()).toUtc())) {
-    return TimerSurfaceState.idle;
+    return standing;
   }
-  final on = prefs.consented;
   final target = timer.target;
   final description = timer.description?.trim();
   final hasDescription = description != null && description.isNotEmpty;
@@ -181,6 +244,9 @@ TimerSurfaceState deriveTimerSurfaceState(
     phaseEndNotification: on && prefs.phaseEndNotification,
     runningSurface: on && prefs.runningSurface,
     titleClock: on && prefs.titleClock,
+    keepInTray: standing.keepInTray,
+    toggleHotkey: standing.toggleHotkey,
+    focusHotkey: standing.focusHotkey,
     texts: texts,
   );
 }

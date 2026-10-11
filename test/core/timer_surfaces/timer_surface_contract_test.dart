@@ -43,4 +43,27 @@ void main() {
       }
     }
   });
+
+  test('the shortcuts never listen to the keyboard', () {
+    // System-wide shortcuts go through the OS registration API
+    // (system_hotkeys) and hear their two combinations only. Nothing in the
+    // surfaces may watch the keyboard itself.
+    final files = Directory('lib/core/timer_surfaces')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.dart'));
+    const forbidden = [
+      'HardwareKeyboard',
+      'RawKeyboard',
+      'KeyboardMonitor',
+      'keyboard_monitor',
+      'hotkey_manager',
+    ];
+    for (final file in files) {
+      final source = file.readAsStringSync();
+      for (final word in forbidden) {
+        expect(source.contains(word), isFalse, reason: '${file.path}: $word');
+      }
+    }
+  });
 }

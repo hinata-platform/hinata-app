@@ -57,12 +57,15 @@ class TimerSurfacesIntroBody extends StatefulWidget {
 }
 
 class _TimerSurfacesIntroBodyState extends State<TimerSurfacesIntroBody> {
-  late final List<TimerSurfaceOption> _options = TimerSurfaceOption.offeredOn(
-    widget.platform,
-  );
+  late final List<TimerSurfaceOption> _options = [
+    for (final option in TimerSurfaceOption.offeredOn(widget.platform))
+      if (option.inIntro) option,
+  ];
 
   /// The suggestion, cut to what this platform has.
-  late TimerSurfacePrefs _choices = _offered(TimerSurfacePrefs.suggested);
+  late TimerSurfacePrefs _choices = _offered(
+    TimerSurfacePrefs.suggestedOn(widget.platform),
+  );
 
   bool _busy = false;
 
@@ -128,7 +131,11 @@ class _TimerSurfacesIntroBodyState extends State<TimerSurfacesIntroBody> {
         ),
       if (caps.runningSurface && widget.platform != SurfacePlatform.web)
         context.t(
-          caps.lockScreen
+          caps.menuBar
+              ? widget.platform == SurfacePlatform.macos
+                    ? 'time.surface.intro.runningMenuBar'
+                    : 'time.surface.intro.runningTray'
+              : caps.lockScreen
               ? 'time.surface.intro.runningLocked'
               : 'time.surface.intro.running',
         ),

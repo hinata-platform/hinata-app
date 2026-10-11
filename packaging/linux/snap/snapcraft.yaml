@@ -451,6 +451,7 @@ parts:
     #   liblzma-dev, libjsoncpp-dev .. the Flutter tool's Linux toolchain
     #   libsecret-1-dev .............. flutter_secure_storage_linux
     #   libgstreamer*-dev ............ packages/just_audio_linux
+    #   libayatana-appindicator3-dev . tray_manager (the timer in the tray)
     #
     # The gnome SDK snap the extension pulls in also carries a GTK, and its
     # PKG_CONFIG_PATH comes first, so these are the floor rather than
@@ -464,6 +465,7 @@ parts:
       - libsecret-1-dev
       - libgstreamer1.0-dev
       - libgstreamer-plugins-base1.0-dev
+      - libayatana-appindicator3-dev
 
     stage-packages:
       # Read the `cleanup` part at the end of this file before adding anything
@@ -499,6 +501,13 @@ parts:
       # nothing.
       - pulseaudio-utils
       - ffmpeg
+
+      # tray_manager links libayatana-appindicator3 (HIN-101); without it the
+      # app does not start at all. Staged with its dbusmenu library, because
+      # gnome-46-2404 carries neither; should a later platform snap ship them,
+      # the cleanup part takes these copies out again like every other overlap.
+      - libayatana-appindicator3-1
+      - libdbusmenu-gtk3-4
 
       # Deliberately NOT staged: zenity. It was here because file_picker's only
       # Linux backend is a shell-out to it, and a confined app whose snap has

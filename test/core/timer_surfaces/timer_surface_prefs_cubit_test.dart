@@ -91,4 +91,54 @@ void main() {
       isTrue,
     );
   });
+
+  test('the desktop table: menu bar, close behaviour, shortcuts, taskbar', () {
+    final mac = capabilitiesForPlatform(SurfacePlatform.macos);
+    final windows = capabilitiesForPlatform(SurfacePlatform.windows);
+    final linux = capabilitiesForPlatform(SurfacePlatform.linux);
+    expect(
+      [mac.menuBar, mac.keepRunning, mac.globalHotkeys],
+      [true, true, true],
+    );
+    expect(mac.taskbar, isFalse);
+    expect(windows.taskbar, isTrue);
+    expect(windows.globalHotkeys, isTrue);
+    // Linux: the tray best effort, shortcuts with the portal in stage 25.
+    expect([linux.menuBar, linux.globalHotkeys], [true, false]);
+  });
+
+  test('a Mac keeps the timer in the menu bar by default, others quit', () {
+    expect(
+      TimerSurfacePrefs.suggestedOn(SurfacePlatform.macos).keepInTray,
+      isTrue,
+    );
+    expect(
+      TimerSurfacePrefs.suggestedOn(SurfacePlatform.windows).keepInTray,
+      isFalse,
+    );
+    expect(
+      TimerSurfacePrefs.suggestedOn(SurfacePlatform.macos).globalHotkeys,
+      isFalse,
+    );
+  });
+
+  test('the shortcuts survive the store, broken ones read as none', () {
+    final prefs = const TimerSurfacePrefs(consented: true, globalHotkeys: true)
+        .copyWith(
+          toggleHotkey: TimerSurfacePrefs.defaultToggleHotkey(
+            SurfacePlatform.windows,
+          ),
+        );
+    final back = TimerSurfacePrefs.fromJson(
+      Map<String, dynamic>.from(prefs.toJson()),
+    );
+    expect(back, prefs);
+    final broken = TimerSurfacePrefs.fromJson(const {
+      'globalHotkeys': true,
+      'toggleHotkey': {'usage': 0x00070004, 'modifiers': 0},
+      'focusHotkey': 'ctrl+f',
+    });
+    expect(broken.toggleHotkey, isNull);
+    expect(broken.focusHotkey, isNull);
+  });
 }

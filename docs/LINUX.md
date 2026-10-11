@@ -33,7 +33,9 @@ desktop it says so.
 | Drag & drop of files into the app | ⚠️ Flatpak/snap: from the XDG folders | ✅ | ✅ |
 | Rich clipboard (copy an image out of a comment) | ✅ | ✅ | ✅ |
 | Opening links in the browser | ✅ | ✅ | ✅ |
-| System tray icon | ❌ planned (time tracking, stage 19) | ❌ | ❌ |
+| Running timer in the tray / menu bar | ⚠️ needs a StatusNotifierItem host (KDE, or GNOME with the AppIndicator extension) | ✅ icon, tooltip, menu, taskbar progress | ✅ menu bar clock |
+| Keep the timer running when the window closes | ⚠️ only where the tray shows | ✅ switch, off by default | ✅ switch, on by default |
+| System-wide shortcuts (start/stop, focus view) | ❌ planned (GlobalShortcuts portal, stage 25) | ✅ | ✅ |
 
 ✅ works · ⚠️ works, with a condition on the system or the sandbox · ❌ not
 available
@@ -84,6 +86,32 @@ plug, which already covers `org.freedesktop.Notifications`, the Flatpak through
 
 A tray icon with the running timer is not there yet; it is planned as stage 19
 of the time-tracking work.
+
+### The timer in the tray
+
+While a timer runs, an icon in the tray shows it, with a menu to stop it, move
+a Pomodoro on, open the focus view, bring the window back or quit. It is a
+StatusNotifierItem (libayatana-appindicator), so it needs a panel that hosts
+those:
+
+| Desktop | Tray |
+| --- | --- |
+| KDE Plasma, Cinnamon, MATE, Xfce, Budgie | ✅ |
+| Ubuntu (GNOME with the AppIndicator extension, on by default) | ✅ |
+| Plain GNOME without the extension | ❌ nothing shows |
+
+Without a host there is no error and no icon. The app does not hide the
+window into a tray nobody can see: "keep running when closed" only takes
+effect while the icon is there, and everything the menu offers is in the app
+as well. The icon shows no text next to it (a StatusNotifierItem has no
+label), so the time is in the menu.
+
+The snap connects `unity7` on its own, which is what lets a confined app
+register the icon. The AppImage carries libayatana-appindicator and its
+dbusmenu libraries, so it starts on a host without them. A hand-built bundle
+needs `libayatana-appindicator3-1` installed (see Running below).
+
+System-wide shortcuts come with the GlobalShortcuts portal in a later stage.
 
 ### Camera capture — not available
 
@@ -499,6 +527,7 @@ Runtime dependencies beyond GTK itself, all present on a normal desktop:
 | Package (Debian/Ubuntu names) | Needed for | Without it |
 | --- | --- | --- |
 | `libgtk-3-0` | the app itself | does not start |
+| `libayatana-appindicator3-1` | the timer in the tray | does not start (the AppImage and the snap bring it along) |
 | `libsecret-1-0` + a keyring (`gnome-keyring`, KWallet) | staying signed in | signed out on next launch |
 | `pulseaudio-utils`, `ffmpeg` | recording a voice comment | recorder does not start |
 | `gstreamer1.0-plugins-base/good/bad`, `gstreamer1.0-libav` | playing a voice comment | base missing: an error naming the package. libav missing: recorded AAC will not decode |

@@ -1610,7 +1610,9 @@
         "private": "The texts stay generic and disappear on their own. Nothing goes to the server or your employer.",
         "switchOn": "Switch on",
         "later": "Later",
-        "denied": "Notifications are blocked. You can allow them in the system settings."
+        "denied": "Notifications are blocked. You can allow them in the system settings.",
+        "runningMenuBar": "While the timer runs, the menu bar shows the time, the same for work and breaks.",
+        "runningTray": "While the timer runs, an icon in the notification area shows it, the same for work and breaks."
       },
       "device": {
         "heading": "On this device",
@@ -1625,7 +1627,22 @@
         "copyDetails": "While a timer runs, this device keeps its start, end and description.",
         "vanish": "These copies disappear after 24 hours and when you sign out.",
         "stored": "Your switches stay on this device.",
-        "settings": "Change in settings"
+        "settings": "Change in settings",
+        "runningMenuBar": "The time in the menu bar or notification area while the timer runs.",
+        "keepRunning": "A closed window leaves the timer running there.",
+        "hotkeys": "Two system-wide shortcuts. The app hears only these, never other keys."
+      },
+      "menu": {
+        "start": "Start timer",
+        "nextPhase": "Next interval",
+        "openFocus": "Open focus view",
+        "showWindow": "Show window",
+        "quit": "Quit Hinata",
+        "idle": "No timer running",
+        "stopwatch": "Stopwatch running",
+        "countdown": "Countdown running",
+        "focusPhase": "Pomodoro, focus",
+        "breakPhase": "Pomodoro, break"
       }
     }
   },
@@ -4240,7 +4257,35 @@
       "cleared": "Local copies deleted.",
       "turnOff": "Switch everything off",
       "turnOffHint": "Nothing shows outside the app anymore. You can set it up again later.",
-      "turnOffButton": "Switch off"
+      "turnOffButton": "Switch off",
+      "runningMenuBar": "In the menu bar",
+      "runningMenuBarHint": "The menu bar shows the running time and a menu to stop it.",
+      "runningTray": "In the notification area",
+      "runningTrayHint": "An icon in the notification area shows that the timer runs and has a menu for it.",
+      "detailsMenu": "Description in the menu",
+      "detailsMenuHint": "The open menu also says what you work on. The icon and the time never do.",
+      "keepRunning": "Keep running when closed",
+      "keepRunningMenuBarHint": "Closing the window leaves a running timer in the menu bar. ⌘Q quits the app.",
+      "keepRunningTrayHint": "Closing the window leaves a running timer in the notification area. Quit from its menu.",
+      "hotkeys": "System-wide shortcuts",
+      "hotkeysHint": "Start, stop and open the focus view from any app. The app hears these two combinations and no other key.",
+      "hotkeyToggle": "Start or stop",
+      "hotkeyFocus": "Open the focus view",
+      "hotkeyBound": "Active",
+      "hotkeyConflict": "Another app or the system already uses this combination. Choose a different one.",
+      "hotkeyUnsupported": "Not available on this device.",
+      "hotkeyChoose": "Choose",
+      "keySpace": "Space",
+      "recordPrompt": "Press the new combination",
+      "recordHint": "Hold at least one of Ctrl, Alt, Shift or Command, for example {{example}}. Esc cancels.",
+      "recordNeedsModifier": "A shortcut needs Ctrl, Alt, Shift or Command, or it would take the key away from every other app.",
+      "recordUnsupportedKey": "Use a letter, a digit, F1 to F12 or the space bar.",
+      "test": "Check the shortcut",
+      "testHint": "Press it once, also with another app in front. Nothing starts or stops during the check.",
+      "testButton": "Check now",
+      "testWaiting": "Press {{combo}} now.",
+      "testWorked": "It works. The press arrived.",
+      "testSilent": "No press arrived. Another app may hold this combination; choose a different one."
     }
   },
   "twofa": {

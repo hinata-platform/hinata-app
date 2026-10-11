@@ -14,6 +14,10 @@ class TimerSurfaceCapabilities extends Equatable {
     this.lockScreen = false,
     this.titleClock = false,
     this.exactAlarms = false,
+    this.menuBar = false,
+    this.keepRunning = false,
+    this.globalHotkeys = false,
+    this.taskbar = false,
   });
 
   static const none = TimerSurfaceCapabilities();
@@ -37,6 +41,18 @@ class TimerSurfaceCapabilities extends Equatable {
   /// Asks the system for the exact moment (Android 12 and later).
   final bool exactAlarms;
 
+  /// Has an icon with a menu in the menu bar (macOS) or the tray.
+  final bool menuBar;
+
+  /// Can close the window while the timer goes on in the menu bar or tray.
+  final bool keepRunning;
+
+  /// Can bind system-wide keyboard shortcuts.
+  final bool globalHotkeys;
+
+  /// Draws progress and buttons on the taskbar button (Windows).
+  final bool taskbar;
+
   TimerSurfaceCapabilities operator |(TimerSurfaceCapabilities other) =>
       TimerSurfaceCapabilities(
         phaseEndNotification:
@@ -46,6 +62,10 @@ class TimerSurfaceCapabilities extends Equatable {
         lockScreen: lockScreen || other.lockScreen,
         titleClock: titleClock || other.titleClock,
         exactAlarms: exactAlarms || other.exactAlarms,
+        menuBar: menuBar || other.menuBar,
+        keepRunning: keepRunning || other.keepRunning,
+        globalHotkeys: globalHotkeys || other.globalHotkeys,
+        taskbar: taskbar || other.taskbar,
       );
 
   @override
@@ -56,6 +76,10 @@ class TimerSurfaceCapabilities extends Equatable {
     lockScreen,
     titleClock,
     exactAlarms,
+    menuBar,
+    keepRunning,
+    globalHotkeys,
+    taskbar,
   ];
 }
 
@@ -72,6 +96,9 @@ abstract class TimerSurfaceHost {
   /// Stops the timer, or ends the session during a break.
   Future<void> end();
 
+  /// Starts the plain stopwatch, the same start the timer bar's button makes.
+  Future<void> start();
+
   /// Turns a Pomodoro to its next phase.
   Future<void> advancePhase();
 
@@ -80,6 +107,12 @@ abstract class TimerSurfaceHost {
 
   /// Opens an in-app route.
   void openRoute(String route);
+
+  /// Brings the app's window back to the front (from the menu bar or tray).
+  Future<void> showWindow();
+
+  /// Quits the app, the menu bar's "Quit".
+  Future<void> quit();
 }
 
 /// One place outside the app the timer shows.

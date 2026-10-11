@@ -445,7 +445,8 @@ jobs:
           sudo apt-get install -y \
             clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libsecret-1-dev libjsoncpp-dev \
-            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+            libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev \
+            libayatana-appindicator3-dev
       # cargokit compiles super_native_extensions from source on Linux; the
       # runner image ships a toolchain, this only covers one that stops doing so.
       - name: Ensure a Rust toolchain (super_native_extensions)
