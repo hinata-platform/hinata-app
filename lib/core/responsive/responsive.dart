@@ -70,6 +70,36 @@ abstract final class ShellInsets {
   static ValueListenable<double> get bottom => _bottom;
   static final ValueNotifier<double> _bottom = ValueNotifier<double>(0);
 
+  /// How far chrome a page docked *under* the top bar reaches further down —
+  /// the unsaved-changes bar in a wide sub-page bar. Overlays anchored at the
+  /// top add it to [top], so a toast drops in below the bar instead of over
+  /// its Save button. Zero while nothing is docked.
+  static ValueListenable<double> get topDock => _topDock;
+  static final ValueNotifier<double> _topDock = ValueNotifier<double>(0);
+
+  /// Who docked the current [topDock], so a bar going away cannot clear the
+  /// one that replaced it.
+  static Object? _dockOwner;
+
+  /// Publishes [value] as [topDock] on behalf of [owner]. Deferred to the end
+  /// of the frame like [publishTop].
+  static void publishTopDock(Object owner, double value) {
+    if (identical(_dockOwner, owner) && _topDock.value == value) return;
+    _dockOwner = owner;
+    _afterFrame(() {
+      if (identical(_dockOwner, owner)) _topDock.value = value;
+    });
+  }
+
+  /// Withdraws [owner]'s [topDock]; ignored once another bar has docked.
+  static void withdrawTopDock(Object owner) {
+    if (!identical(_dockOwner, owner)) return;
+    _dockOwner = null;
+    _afterFrame(() {
+      if (_dockOwner == null) _topDock.value = 0;
+    });
+  }
+
   /// The shell that published the current values, so a departing shell cannot
   /// clear its successor's.
   static Object? _owner;
@@ -118,8 +148,10 @@ abstract final class ShellInsets {
   @visibleForTesting
   static void reset() {
     _owner = null;
+    _dockOwner = null;
     _top.value = 0;
     _bottom.value = 0;
+    _topDock.value = 0;
   }
 }
 
