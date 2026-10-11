@@ -84,13 +84,11 @@ The sandboxes allow exactly this one bus name: the snap through its `desktop`
 plug, which already covers `org.freedesktop.Notifications`, the Flatpak through
 `--talk-name=org.freedesktop.Notifications`.
 
-A tray icon with the running timer is not there yet; it is planned as stage 19
-of the time-tracking work.
-
 ### The timer in the tray
 
-While a timer runs, an icon in the tray shows it, with a menu to stop it, move
-a Pomodoro on, open the focus view, bring the window back or quit. It is a
+With "In the notification area" switched on, an icon in the tray offers to
+start a timer; while one runs, the icon says so, and its menu stops it, moves a
+Pomodoro on, opens the focus view, brings the window back or quits. It is a
 StatusNotifierItem (libayatana-appindicator), so it needs a panel that hosts
 those:
 
@@ -104,7 +102,9 @@ Without a host there is no error and no icon. The app does not hide the
 window into a tray nobody can see: "keep running when closed" only takes
 effect while the icon is there, and everything the menu offers is in the app
 as well. The icon shows no text next to it (a StatusNotifierItem has no
-label), so the time is in the menu.
+label) and no tooltip, so the running time itself is only in the app. Nor
+does its menu ever name what you work on: a StatusNotifierItem's menu sits on
+the session bus, where any program of the session can read it, open or not.
 
 The snap connects `unity7` on its own, which is what lets a confined app
 register the icon. The AppImage carries libayatana-appindicator and its

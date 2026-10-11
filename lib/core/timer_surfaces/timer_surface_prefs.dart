@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:system_hotkeys/system_hotkeys.dart';
 
+import 'hotkey_rules.dart';
 import 'surface_platform.dart';
 
 /// The person's own switches for the timer outside the app, on this device.
@@ -158,7 +159,7 @@ class TimerSurfacePrefs extends Equatable {
     if (raw is! Map) return null;
     try {
       final key = HotKey.fromMap(raw);
-      return key.hasModifier && HotKey.isSupportedKey(key.key) ? key : null;
+      return isSafeHotkey(key, SurfacePlatform.current) ? key : null;
     } catch (_) {
       return null;
     }

@@ -9,6 +9,7 @@ import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/router/app_router.dart' show rootNavigatorKey;
+import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import '../../core/timer_surfaces/adapters/keep_running_surface.dart';
 import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
 import '../../core/timer_surfaces/build_timer_surfaces.dart';
@@ -34,6 +35,7 @@ class TimerSurfacesHost extends StatefulWidget {
     required this.openRoute,
     required this.child,
     this.clearSignal,
+    this.hotkeys,
     this.surfaces,
   });
 
@@ -46,6 +48,9 @@ class TimerSurfacesHost extends StatefulWidget {
 
   /// "Delete local copies now" from the settings.
   final TimerSurfaceClearSignal? clearSignal;
+
+  /// What the settings see of the system-wide shortcuts.
+  final HotkeyStatus? hotkeys;
 
   /// The surfaces to drive; the platform's own when null (tests hand fakes).
   final List<TimerSurface>? surfaces;
@@ -63,6 +68,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
           SurfacePlatform.current,
           appTitle: () => _appTitle,
           flashText: () => _flashText,
+          hotkeys: widget.hotkeys ?? HotkeyStatus(),
         ),
   );
 

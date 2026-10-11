@@ -297,6 +297,10 @@ apps:
       # parallel install is told about itself — instead of the "install a
       # keyring" advice that would be a dead end here.
       - password-manager-service
+      # The timer in the tray (HIN-101): registering a StatusNotifierItem and
+      # its dbusmenu on the session bus is what unity7 allows, on the paths
+      # libayatana-appindicator uses. Auto-connected.
+      - unity7
 
       # Deliberately NOT declared:
       #   camera — `camera` has no Linux implementation, so webcam capture is

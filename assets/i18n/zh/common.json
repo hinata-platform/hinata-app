@@ -4277,15 +4277,23 @@
       "hotkeyChoose": "选择",
       "keySpace": "空格",
       "recordPrompt": "按下新的组合键",
-      "recordHint": "至少同时按住一个修饰键，例如 {{example}}。按 Esc 取消。",
-      "recordNeedsModifier": "快捷键需要修饰键，否则其他所有应用都将无法使用该键。",
+      "recordHint": "同时按住 Ctrl 或 Windows 键，例如 {{example}}。按 Esc 取消。",
+      "recordNeedsModifier": "快捷键需要 Ctrl 或 Windows 键，而单独的 Ctrl+Alt 就是用来输入字符的 AltGr。请再加上 Shift 或 Windows 键。",
       "recordUnsupportedKey": "请使用字母、数字、F1 至 F12 或空格键。",
       "test": "检查快捷键",
       "testHint": "按一次即可，其他应用在前台时也可以。检查期间不会开始或停止任何计时。",
       "testButton": "立即检查",
       "testWaiting": "现在按 {{combo}}。",
       "testWorked": "可以使用，按键已收到。",
-      "testSilent": "未收到按键。可能有其他应用占用了此组合，请换一个。"
+      "testSilent": "未收到按键。可能有其他应用占用了此组合，请换一个。",
+      "recordHintMac": "同时按住 Control 或 Command，例如 {{example}}。按 Esc 取消。",
+      "recordNeedsModifierMac": "快捷键需要 Control 或 Command。单独的 Shift 和 Option 会在任何应用中输入大写字母和特殊字符。",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Shift",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

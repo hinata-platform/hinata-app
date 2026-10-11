@@ -14,7 +14,7 @@ class TimerSurfaceCapabilities extends Equatable {
     this.lockScreen = false,
     this.titleClock = false,
     this.exactAlarms = false,
-    this.menuBar = false,
+    this.trayIcon = false,
     this.keepRunning = false,
     this.globalHotkeys = false,
     this.taskbar = false,
@@ -41,8 +41,9 @@ class TimerSurfaceCapabilities extends Equatable {
   /// Asks the system for the exact moment (Android 12 and later).
   final bool exactAlarms;
 
-  /// Has an icon with a menu in the menu bar (macOS) or the tray.
-  final bool menuBar;
+  /// Has an icon with a menu: in the menu bar on a Mac, in the tray (the
+  /// notification area) on Windows and Linux.
+  final bool trayIcon;
 
   /// Can close the window while the timer goes on in the menu bar or tray.
   final bool keepRunning;
@@ -62,7 +63,7 @@ class TimerSurfaceCapabilities extends Equatable {
         lockScreen: lockScreen || other.lockScreen,
         titleClock: titleClock || other.titleClock,
         exactAlarms: exactAlarms || other.exactAlarms,
-        menuBar: menuBar || other.menuBar,
+        trayIcon: trayIcon || other.trayIcon,
         keepRunning: keepRunning || other.keepRunning,
         globalHotkeys: globalHotkeys || other.globalHotkeys,
         taskbar: taskbar || other.taskbar,
@@ -76,7 +77,7 @@ class TimerSurfaceCapabilities extends Equatable {
     lockScreen,
     titleClock,
     exactAlarms,
-    menuBar,
+    trayIcon,
     keepRunning,
     globalHotkeys,
     taskbar,

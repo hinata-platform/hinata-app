@@ -114,6 +114,38 @@ void main() {
       expect(state.startedAt, isNull);
     });
 
+    test('the description reaches a surface only with details on', () {
+      expect(
+        deriveTimerSurfaceState(
+          timer(),
+          everything.copyWith(surfaceDetails: false),
+          gated: false,
+        ).label,
+        isNull,
+      );
+      expect(
+        deriveTimerSurfaceState(timer(), everything, gated: false).label,
+        'Quarterly report for the client',
+      );
+    });
+
+    test('the shortcuts are bound only with the tray icon showing', () {
+      final prefs = everything.copyWith(
+        globalHotkeys: true,
+        toggleHotkey: TimerSurfacePrefs.defaultToggleHotkey(
+          SurfacePlatform.macos,
+        ),
+      );
+      expect(
+        deriveTimerSurfaceState(
+          timer(),
+          prefs.copyWith(runningSurface: false),
+          gated: false,
+        ).toggleHotkey,
+        isNull,
+      );
+    });
+
     test('the shortcuts are bound only with their master switch on', () {
       final prefs = everything.copyWith(
         toggleHotkey: TimerSurfacePrefs.defaultToggleHotkey(

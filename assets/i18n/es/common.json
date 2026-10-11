@@ -4277,15 +4277,23 @@
       "hotkeyChoose": "Elegir",
       "keySpace": "Espacio",
       "recordPrompt": "Pulsa la nueva combinación",
-      "recordHint": "Mantén al menos una tecla modificadora, por ejemplo {{example}}. Esc cancela.",
-      "recordNeedsModifier": "Un atajo necesita una tecla modificadora; si no, la tecla dejaría de funcionar en las demás apps.",
+      "recordHint": "Mantén Ctrl o la tecla Windows, por ejemplo {{example}}. Esc cancela.",
+      "recordNeedsModifier": "Un atajo necesita Ctrl o la tecla Windows, y Ctrl+Alt solo es AltGr, que escribe caracteres. Añade Mayús o la tecla Windows.",
       "recordUnsupportedKey": "Usa una letra, un dígito, de F1 a F12 o la barra espaciadora.",
       "test": "Comprobar el atajo",
       "testHint": "Púlsalo una vez, también con otra app delante. Durante la prueba no se inicia ni se detiene nada.",
       "testButton": "Comprobar ahora",
       "testWaiting": "Pulsa {{combo}} ahora.",
       "testWorked": "Funciona. La pulsación llegó.",
-      "testSilent": "No llegó ninguna pulsación. Quizá otra app use esta combinación; elige otra."
+      "testSilent": "No llegó ninguna pulsación. Quizá otra app use esta combinación; elige otra.",
+      "recordHintMac": "Mantén Control o Comando, por ejemplo {{example}}. Esc cancela.",
+      "recordNeedsModifierMac": "Un atajo necesita Control o Comando. Mayúsculas y Opción solas escriben mayúsculas y caracteres especiales en cualquier app.",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Mayús",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

@@ -4277,15 +4277,23 @@
       "hotkeyChoose": "Wählen",
       "keySpace": "Leertaste",
       "recordPrompt": "Drücke die neue Kombination",
-      "recordHint": "Halte mindestens eine Sondertaste dazu, etwa {{example}}. Esc bricht ab.",
-      "recordNeedsModifier": "Ein Kürzel braucht eine Sondertaste, sonst fehlt die Taste in jeder anderen App.",
+      "recordHint": "Halte Strg oder die Windows-Taste dazu, etwa {{example}}. Esc bricht ab.",
+      "recordNeedsModifier": "Ein Kürzel braucht Strg oder die Windows-Taste. Strg+Alt allein ist AltGr und schreibt Zeichen, nimm Umschalt oder die Windows-Taste dazu.",
       "recordUnsupportedKey": "Nimm einen Buchstaben, eine Ziffer, F1 bis F12 oder die Leertaste.",
       "test": "Kürzel prüfen",
       "testHint": "Drück es einmal, gern mit einer anderen App im Vordergrund. Während der Prüfung startet und stoppt nichts.",
       "testButton": "Jetzt prüfen",
       "testWaiting": "Drück jetzt {{combo}}.",
       "testWorked": "Funktioniert. Der Tastendruck kam an.",
-      "testSilent": "Kein Tastendruck kam an. Vielleicht hält eine andere App die Kombination. Wähle eine andere."
+      "testSilent": "Kein Tastendruck kam an. Vielleicht hält eine andere App die Kombination. Wähle eine andere.",
+      "recordHintMac": "Halte Control oder Command dazu, etwa {{example}}. Esc bricht ab.",
+      "recordNeedsModifierMac": "Ein Kürzel braucht Control oder Command. Umschalt und Option allein schreiben in jeder App Großbuchstaben und Sonderzeichen.",
+      "key": {
+        "ctrl": "Strg",
+        "alt": "Alt",
+        "shift": "Umschalt",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

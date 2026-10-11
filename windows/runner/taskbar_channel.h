@@ -28,6 +28,10 @@ void RegisterTaskbarChannel(flutter::FlutterEngine* engine, HWND window);
 bool HandleTaskbarMessage(HWND window, UINT message, WPARAM wparam,
                           LPARAM lparam);
 
+// Releases the channel, the taskbar and the icons. Call from the window's
+// OnDestroy, before the engine goes, while COM is still initialised.
+void UnregisterTaskbarChannel();
+
 }  // namespace hinata
 
 #endif  // RUNNER_TASKBAR_CHANNEL_H_

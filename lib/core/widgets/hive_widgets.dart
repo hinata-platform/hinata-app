@@ -993,6 +993,12 @@ String fmtClock(Duration d) {
   return '${d.inHours}:$minutes:$seconds';
 }
 
+/// Hours and minutes, `1:05`, for something that changes once a minute.
+String fmtClockMinutes(Duration d) {
+  final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+  return '${d.inHours}:$minutes';
+}
+
 String fmtDuration(BuildContext context, int? minutes) {
   if (minutes == null) return context.t('time.fmt.none');
   final h = minutes ~/ 60;

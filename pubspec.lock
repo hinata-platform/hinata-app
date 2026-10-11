@@ -1813,10 +1813,10 @@ packages:
     dependency: "direct main"
     description:
       name: system_hotkeys_macos
-      sha256: "39f29256b19934d7e4513c34788193f5720368b67a6bbbd04a5786af962838a7"
+      sha256: "5d23bd3807da52784df7937d87f0e4882f3b53c023e3896dba5dcd0f751eb25c"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "0.1.2"
   system_hotkeys_platform_interface:
     dependency: transitive
     description:
@@ -1826,13 +1826,13 @@ packages:
     source: hosted
     version: "0.1.0"
   system_hotkeys_windows:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: system_hotkeys_windows
-      sha256: "980d49be22af67093dd5c69d64303d479c9359466a124b8aba827e64730995bb"
+      sha256: a14de66f876d23d6c0e6efed51f26a94eaab42047704cba885faea9ae049c53b
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.2"
   term_glyph:
     dependency: transitive
     description:

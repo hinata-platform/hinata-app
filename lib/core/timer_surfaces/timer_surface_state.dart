@@ -69,7 +69,7 @@ class TimerSurfaceTexts extends Equatable {
   final String showWindow;
   final String quit;
 
-  /// The tooltip with no timer running.
+  /// The tooltip and the menu's status line with no timer running.
   final String idle;
   final String stopwatch;
   final String countdown;
@@ -139,7 +139,8 @@ class TimerSurfaceState extends Equatable {
   /// When the current countdown or phase ends, in UTC; null for a stopwatch.
   final DateTime? endsAt;
 
-  /// The description, only with "details in the notification" switched on.
+  /// The description, only with the details switched on: in the running
+  /// timer's notification (Android) or the open tray menu (desktop).
   final String? label;
 
   /// The description for lock-screen surfaces, only with that switch on.
@@ -162,6 +163,14 @@ class TimerSurfaceState extends Equatable {
   final TimerSurfaceTexts texts;
 
   bool get isBreak => phase?.isBreak ?? false;
+
+  /// Whether a surface outside the app may print the time.
+  ///
+  /// Not for a Pomodoro: the time shown there is what is left of the current
+  /// interval, and a clock that jumps to 4:59 instead of 24:59 tells anyone
+  /// watching the menu bar or a shared screen that a break began. The running
+  /// mark says the same for work and a break; the time stays in the app.
+  bool get showsClock => running && mode != TimerMode.pomodoro;
 
   /// What the notification at the end of this stretch says.
   String get endText {
@@ -214,8 +223,14 @@ TimerSurfaceState deriveTimerSurfaceState(
     running: false,
     runningSurface: on && prefs.runningSurface,
     keepInTray: on && prefs.runningSurface && prefs.keepInTray,
-    toggleHotkey: on && prefs.globalHotkeys ? prefs.toggleHotkey : null,
-    focusHotkey: on && prefs.globalHotkeys ? prefs.focusHotkey : null,
+    // Only beside the menu bar or tray icon: a shortcut pressed by accident
+    // must never start a timer that nothing outside the app shows.
+    toggleHotkey: on && prefs.runningSurface && prefs.globalHotkeys
+        ? prefs.toggleHotkey
+        : null,
+    focusHotkey: on && prefs.runningSurface && prefs.globalHotkeys
+        ? prefs.focusHotkey
+        : null,
     texts: texts,
   );
   if (timer == null) return standing;

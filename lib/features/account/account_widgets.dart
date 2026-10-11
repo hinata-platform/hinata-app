@@ -258,7 +258,7 @@ class AccountPill extends StatelessWidget {
   }
 }
 
-/// A flat outline button used for in-section actions (Change, Reset…).
+/// A frosted glass capsule for in-section actions (Change, Reset…).
 class AccountActionButton extends StatelessWidget {
   const AccountActionButton({
     super.key,
