@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 
@@ -174,8 +173,7 @@ Future<T?> showGlassMenu<T extends Object>({
 /// It runs in a route of its own rather than under the anchor: an anchor in a
 /// hover-gated subtree (a tree row's action button) unmounts as soon as the
 /// menu covers it, and would take a menu it owned down with it. The future
-/// resolves as soon as a row is chosen or the menu starts to close; the route
-/// leaves once the closing morph has played.
+/// resolves as soon as a row is chosen or the menu starts to close.
 Future<_MenuResult<T>?> _showMenu<T>({
   required BuildContext context,
   required Rect anchorRect,
@@ -185,21 +183,75 @@ Future<_MenuResult<T>?> _showMenu<T>({
 }) {
   final result = Completer<_MenuResult<T>?>();
   unawaited(
-    showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      barrierColor: Colors.transparent,
-      transitionDuration: Duration.zero,
-      pageBuilder: (_, _, _) => _GlassMenuHost<T>(
-        anchorRect: anchorRect,
-        items: items,
-        value: value,
-        width: width,
-        result: result,
+    Navigator.of(context, rootNavigator: true).push(
+      _GlassMenuRoute(
+        builder: (_) => _GlassMenuHost<T>(
+          anchorRect: anchorRect,
+          items: items,
+          value: value,
+          width: width,
+          result: result,
+        ),
       ),
     ),
   );
   return result.future;
+}
+
+/// The menu's route: no barrier colour and no transitions.
+///
+/// Once the menu starts to close, its barrier lets taps through to the page,
+/// so the page answers while the glass is still folding back into the anchor;
+/// the route itself leaves [closeDuration] later, when the menu draws nothing
+/// more. It is not popped for that: the package dismisses a menu on the spot
+/// when its route animates out. The spring keeps ticking past the handoff,
+/// sub-pixel, for most of a second; waiting for it held the page hostage for
+/// all of that time.
+class _GlassMenuRoute extends PopupRoute<void> {
+  _GlassMenuRoute({required this.builder});
+
+  final WidgetBuilder builder;
+
+  /// From the start of the close until the menu hands off to its anchor and
+  /// draws nothing more: 266 ms on the package's closing spring, measured with
+  /// tools/glass-menu-bench, plus room to spare.
+  static const closeDuration = Duration(milliseconds: 320);
+
+  /// Set once the menu starts closing.
+  final ValueNotifier<bool> closing = ValueNotifier(false);
+
+  @override
+  Color? get barrierColor => null;
+
+  @override
+  bool get barrierDismissible => false;
+
+  @override
+  String? get barrierLabel => null;
+
+  @override
+  Duration get transitionDuration => Duration.zero;
+
+  @override
+  Widget buildModalBarrier() => ValueListenableBuilder<bool>(
+    valueListenable: closing,
+    builder: (_, closing, barrier) =>
+        IgnorePointer(ignoring: closing, child: barrier),
+    child: super.buildModalBarrier(),
+  );
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => builder(context);
+
+  @override
+  void dispose() {
+    closing.dispose();
+    super.dispose();
+  }
 }
 
 class _GlassPopupMenuState<T> extends State<GlassPopupMenu<T>> {
@@ -289,17 +341,13 @@ class _GlassMenuHost<T> extends StatefulWidget {
   State<_GlassMenuHost<T>> createState() => _GlassMenuHostState<T>();
 }
 
-class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>>
-    with SingleTickerProviderStateMixin {
+class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>> {
   static const double _margin = 12;
   static const double _radius = 20;
   static const double _rowHeight = 44;
 
   final lg.GlassMenuController _controller = lg.GlassMenuController();
-
-  /// Runs from the moment the menu starts closing until its overlay is gone,
-  /// since the package reports the start of a close and not its end.
-  late final Ticker _closeWatch = createTicker(_watchClose);
+  Timer? _leave;
 
   @override
   void initState() {
@@ -312,10 +360,10 @@ class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>>
 
   @override
   void dispose() {
+    _leave?.cancel();
     // Taken away by something else (the back key, a route pushed over it):
     // the caller still waits for an answer.
     _finish(null);
-    _closeWatch.dispose();
     super.dispose();
   }
 
@@ -326,18 +374,16 @@ class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>>
   void _onClose() {
     // A row chosen just before already answered; this only covers a dismiss.
     _finish(null);
-    if (!_closeWatch.isActive) _closeWatch.start();
-  }
-
-  void _watchClose(Duration _) {
-    if (_controller.isOpen) return;
-    _closeWatch.stop();
+    if (_leave != null) return;
     final route = ModalRoute.of(context);
-    // Removed rather than popped: whatever the choice opened may already sit
-    // on top of this route, and a pop would close that instead.
-    if (route != null && route.isActive) {
-      Navigator.of(context).removeRoute(route);
-    }
+    if (route is _GlassMenuRoute) route.closing.value = true;
+    _leave = Timer(_GlassMenuRoute.closeDuration, () {
+      // Removed rather than popped: whatever the choice opened may already
+      // sit on top of this route, and a pop would close that instead.
+      if (route != null && route.isActive) {
+        route.navigator?.removeRoute(route);
+      }
+    });
   }
 
   @override
