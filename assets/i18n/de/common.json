@@ -1610,7 +1610,9 @@
         "private": "Die Texte bleiben allgemein und verschwinden von selbst. Nichts geht an den Server oder an deinen Arbeitgeber.",
         "switchOn": "Einschalten",
         "later": "Später",
-        "denied": "Mitteilungen sind blockiert. Du kannst sie in den Systemeinstellungen erlauben."
+        "denied": "Mitteilungen sind blockiert. Du kannst sie in den Systemeinstellungen erlauben.",
+        "runningMenuBar": "Solange der Timer läuft, zeigt die Menüleiste die Zeit, gleich für Arbeit und Pause.",
+        "runningTray": "Solange der Timer läuft, zeigt ihn ein Symbol im Infobereich, gleich für Arbeit und Pause."
       },
       "device": {
         "heading": "Auf diesem Gerät",
@@ -1625,7 +1627,22 @@
         "copyDetails": "Solange ein Timer läuft, merkt sich dieses Gerät Start, Ende und Beschreibung.",
         "vanish": "Diese Kopien verschwinden nach 24 Stunden und beim Abmelden.",
         "stored": "Deine Schalter bleiben auf diesem Gerät.",
-        "settings": "In den Einstellungen ändern"
+        "settings": "In den Einstellungen ändern",
+        "runningMenuBar": "Die Zeit in der Menüleiste oder im Infobereich, solange der Timer läuft.",
+        "keepRunning": "Ein geschlossenes Fenster lässt den Timer dort weiterlaufen.",
+        "hotkeys": "Zwei systemweite Kürzel. Die App hört nur diese, nie andere Tasten."
+      },
+      "menu": {
+        "start": "Timer starten",
+        "nextPhase": "Nächstes Intervall",
+        "openFocus": "Fokusansicht öffnen",
+        "showWindow": "Fenster zeigen",
+        "quit": "Hinata beenden",
+        "idle": "Kein Timer läuft",
+        "stopwatch": "Stoppuhr läuft",
+        "countdown": "Countdown läuft",
+        "focusPhase": "Pomodoro, Fokus",
+        "breakPhase": "Pomodoro, Pause"
       }
     }
   },
@@ -4240,7 +4257,35 @@
       "cleared": "Lokale Kopien gelöscht.",
       "turnOff": "Alles ausschalten",
       "turnOffHint": "Außerhalb der App zeigt sich nichts mehr. Du kannst es später wieder einrichten.",
-      "turnOffButton": "Ausschalten"
+      "turnOffButton": "Ausschalten",
+      "runningMenuBar": "In der Menüleiste",
+      "runningMenuBarHint": "Die Menüleiste zeigt die laufende Zeit und ein Menü zum Anhalten.",
+      "runningTray": "Im Infobereich",
+      "runningTrayHint": "Ein Symbol im Infobereich zeigt, dass der Timer läuft, und hat ein Menü dazu.",
+      "detailsMenu": "Beschreibung im Menü",
+      "detailsMenuHint": "Das geöffnete Menü nennt auch, woran du arbeitest. Symbol und Zeit zeigen das nie.",
+      "keepRunning": "Beim Schließen weiterlaufen",
+      "keepRunningMenuBarHint": "Schließt du das Fenster, läuft der Timer in der Menüleiste weiter. ⌘Q beendet die App.",
+      "keepRunningTrayHint": "Schließt du das Fenster, läuft der Timer im Infobereich weiter. Beenden geht über sein Menü.",
+      "hotkeys": "Systemweite Kürzel",
+      "hotkeysHint": "Starten, stoppen und die Fokusansicht öffnen, aus jeder App. Die App hört nur diese zwei Kombinationen, keine andere Taste.",
+      "hotkeyToggle": "Starten oder stoppen",
+      "hotkeyFocus": "Fokusansicht öffnen",
+      "hotkeyBound": "Aktiv",
+      "hotkeyConflict": "Eine andere App oder das System nutzt diese Kombination schon. Wähle eine andere.",
+      "hotkeyUnsupported": "Auf diesem Gerät nicht verfügbar.",
+      "hotkeyChoose": "Wählen",
+      "keySpace": "Leertaste",
+      "recordPrompt": "Drücke die neue Kombination",
+      "recordHint": "Halte mindestens eine Sondertaste dazu, etwa {{example}}. Esc bricht ab.",
+      "recordNeedsModifier": "Ein Kürzel braucht eine Sondertaste, sonst fehlt die Taste in jeder anderen App.",
+      "recordUnsupportedKey": "Nimm einen Buchstaben, eine Ziffer, F1 bis F12 oder die Leertaste.",
+      "test": "Kürzel prüfen",
+      "testHint": "Drück es einmal, gern mit einer anderen App im Vordergrund. Während der Prüfung startet und stoppt nichts.",
+      "testButton": "Jetzt prüfen",
+      "testWaiting": "Drück jetzt {{combo}}.",
+      "testWorked": "Funktioniert. Der Tastendruck kam an.",
+      "testSilent": "Kein Tastendruck kam an. Vielleicht hält eine andere App die Kombination. Wähle eine andere."
     }
   },
   "twofa": {

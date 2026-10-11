@@ -226,7 +226,115 @@ def p(*a):
     return os.path.join(ROOT, *a)
 
 
+# ---- small shapes for the tray and the taskbar (HIN-101) ---------------------
+def dot(buf, size, cx, cy, r, color, ring=0.0, ring_color=None, aa=1.0):
+    """A filled disc at (cx, cy), optionally knocked out of what is under it
+    by a transparent ring of width `ring`, so it reads on any mark."""
+    for y in range(size):
+        for x in range(size):
+            d = math.hypot(x + 0.5 - cx, y + 0.5 - cy) - r
+            if ring and d < ring:
+                cut = min(1.0, max(0.0, (ring - d) / aa + 0.5))
+                i = (y * size + x) * 4
+                buf[i + 3] = int(buf[i + 3] * (1 - cut))
+            cov = 0.5 - d / aa
+            if cov > 0:
+                _over(buf, (y * size + x) * 4, color, min(cov, 1.0))
+    return buf
+
+
+def glyph(size, kind, color):
+    """A taskbar thumbnail button glyph: play, stop or focus (a target)."""
+    buf = bytearray(size * size * 4)
+    c = size / 2
+    for y in range(size):
+        for x in range(size):
+            px, py = x + 0.5, y + 0.5
+            if kind == "stop":
+                d = _rrect_sdf(px, py, c, c, size * 0.3, size * 0.3, size * 0.06)
+            elif kind == "play":
+                # triangle pointing right, as the max of three half-planes
+                a = (size * 0.32, size * 0.2); b = (size * 0.32, size * 0.8); t = (size * 0.8, c)
+                def half(p1, p2):
+                    nx, ny = p2[1] - p1[1], p1[0] - p2[0]
+                    ln = math.hypot(nx, ny)
+                    return ((px - p1[0]) * nx + (py - p1[1]) * ny) / ln
+                d = max(half(a, b), half(b, t), half(t, a))
+            else:  # focus: a ring with a centre dot
+                r = math.hypot(px - c, py - c)
+                d = min(abs(r - size * 0.3) - size * 0.07, r - size * 0.1)
+            cov = 0.5 - d
+            if cov > 0:
+                _over(buf, (y * size + x) * 4, color, min(cov, 1.0))
+    return buf
+
+
+def write_ico(path, images):
+    """A .ico of PNG-compressed entries (Windows Vista and later)."""
+    pngs = []
+    for size, buf in images:
+        tmp = path + f".{size}.tmp.png"
+        write_png(tmp, size, size, buf)
+        with open(tmp, "rb") as f:
+            pngs.append((size, f.read()))
+        os.remove(tmp)
+    header = struct.pack("<HHH", 0, 1, len(pngs))
+    offset = 6 + 16 * len(pngs)
+    entries = b""
+    data = b""
+    for size, png in pngs:
+        entries += struct.pack("<BBBBHHII", size % 256, size % 256, 0, 0, 1, 32,
+                               len(png), offset + len(data))
+        data += png
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "wb") as f:
+        f.write(header + entries + data)
+
+
+def tray_assets():
+    # ---- menu bar / tray / taskbar (HIN-101) ----
+    # macOS: template images, black on transparent, which the menu bar tints
+    # for light, dark and highlighted. The running one carries a dot; work and
+    # a break look the same.
+    print("tray/")
+    RUN = (0x2F, 0xA0, 0x5A)   # the "running" dot on coloured icons
+    tray = "assets/branding/tray"
+    for scale, px in ((1, 22), (2, 44)):
+        suffix = "" if scale == 1 else "@2x"
+        idle, _ = render(px, frac=0.86, bg=None, mark=(0, 0, 0))
+        write_png(p(tray, f"menubar_idle{suffix}.png"), px, px, idle)
+        run, _ = render(px, frac=0.86, bg=None, mark=(0, 0, 0))
+        dot(run, px, px * 0.78, px * 0.78, px * 0.17, (0, 0, 0), ring=px * 0.07)
+        write_png(p(tray, f"menubar_running{suffix}.png"), px, px, run)
+        print(f"  {px:>5}px  menubar_idle/running{suffix}")
+    # Windows and Linux: the coloured mark.
+    def coloured(px, running):
+        buf, _ = render(px, frac=0.9, bg=None)
+        if running:
+            dot(buf, px, px * 0.78, px * 0.78, px * 0.19, RUN, ring=px * 0.06)
+        return buf
+    for running in (False, True):
+        name = "running" if running else "idle"
+        write_ico(p(tray, f"tray_{name}.ico"),
+                  [(s, coloured(s, running)) for s in (16, 20, 24, 32, 48)])
+        write_png(p(tray, f"tray_{name}.png"), 64, 64, coloured(64, running))
+        print(f"  ico+png  tray_{name}")
+    # Windows taskbar: the 16 px "running" overlay and the thumbnail buttons.
+    res = "windows/runner/resources"
+    ov = bytearray(16 * 16 * 4)
+    dot(ov, 16, 8, 8, 6.2, RUN)
+    write_ico(p(res, "taskbar_running.ico"), [(16, ov)])
+    for kind in ("play", "stop", "focus"):
+        write_ico(p(res, f"thumb_{kind}.ico"),
+                  [(s, glyph(s, kind, (0xFF, 0xFF, 0xFF))) for s in (16, 20, 24, 32)])
+    print("  taskbar_running.ico, thumb_play/stop/focus.ico")
+
+
 def main():
+    import sys
+    if "--tray" in sys.argv:  # only the HIN-101 assets
+        tray_assets()
+        return
     # Master designs: (master_size, kwargs)
     designs = {}
 
@@ -321,6 +429,8 @@ def main():
     for s, tag in mac.items():
         emit("macos", p(mbase, f"app_icon_{tag}.png"), s)
 
+
+    tray_assets()
     print("done.")
 
 

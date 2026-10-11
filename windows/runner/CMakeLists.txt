@@ -14,6 +14,7 @@ add_executable(${BINARY_NAME} WIN32
   "flutter_window.cpp"
   "hinata_splash.cpp"
   "main.cpp"
+  "taskbar_channel.cpp"
   "utils.cpp"
   "win32_window.cpp"
   "wns_channel.cpp"

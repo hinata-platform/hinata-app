@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
+import 'package:hinata/core/timer_surfaces/surface_platform.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_state.dart';
 
@@ -87,9 +88,49 @@ void main() {
         deriveTimerSurfaceState(timer(), everything, gated: true),
         TimerSurfaceState.idle,
       );
+    });
+
+    test('with no timer only the standing surfaces stay, nothing counts', () {
+      final state = deriveTimerSurfaceState(
+        null,
+        everything.copyWith(
+          keepInTray: true,
+          globalHotkeys: true,
+          toggleHotkey: TimerSurfacePrefs.defaultToggleHotkey(
+            SurfacePlatform.macos,
+          ),
+        ),
+        gated: false,
+      );
+      expect(state.running, isFalse);
+      // The menu bar keeps its icon and its "Start", the shortcuts stay bound.
+      expect(state.runningSurface, isTrue);
+      expect(state.keepInTray, isTrue);
+      expect(state.toggleHotkey, isNotNull);
+      // Nothing that announces, counts or names anything.
+      expect(state.phaseEndNotification, isFalse);
+      expect(state.titleClock, isFalse);
+      expect(state.label, isNull);
+      expect(state.startedAt, isNull);
+    });
+
+    test('the shortcuts are bound only with their master switch on', () {
+      final prefs = everything.copyWith(
+        toggleHotkey: TimerSurfacePrefs.defaultToggleHotkey(
+          SurfacePlatform.windows,
+        ),
+      );
       expect(
-        deriveTimerSurfaceState(null, everything, gated: false),
-        TimerSurfaceState.idle,
+        deriveTimerSurfaceState(timer(), prefs, gated: false).toggleHotkey,
+        isNull,
+      );
+      expect(
+        deriveTimerSurfaceState(
+          timer(),
+          prefs.copyWith(globalHotkeys: true),
+          gated: false,
+        ).toggleHotkey,
+        prefs.toggleHotkey,
       );
     });
 
@@ -100,8 +141,8 @@ void main() {
           everything,
           gated: false,
           now: start.add(const Duration(hours: 24)),
-        ),
-        TimerSurfaceState.idle,
+        ).running,
+        isFalse,
       );
       expect(
         deriveTimerSurfaceState(

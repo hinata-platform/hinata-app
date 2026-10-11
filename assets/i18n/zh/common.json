@@ -1610,7 +1610,9 @@
         "private": "文字保持通用，并会自动消失。不会发送任何内容到服务器或你的雇主。",
         "switchOn": "开启",
         "later": "稍后",
-        "denied": "通知已被阻止。你可以在系统设置中允许。"
+        "denied": "通知已被阻止。你可以在系统设置中允许。",
+        "runningMenuBar": "计时器运行时，菜单栏显示时间，工作和休息时显示相同。",
+        "runningTray": "计时器运行时，通知区域的图标会显示它，工作和休息时显示相同。"
       },
       "device": {
         "heading": "在此设备上",
@@ -1625,7 +1627,22 @@
         "copyDetails": "计时器运行时，此设备会保存它的开始时间、结束时间和描述。",
         "vanish": "这些副本会在 24 小时后以及退出登录时消失。",
         "stored": "你的开关只保存在此设备上。",
-        "settings": "在设置中更改"
+        "settings": "在设置中更改",
+        "runningMenuBar": "计时器运行时，菜单栏或通知区域中的时间。",
+        "keepRunning": "关闭窗口后，计时器会在那里继续运行。",
+        "hotkeys": "两个全局快捷键。应用只接收这两个，从不接收其他按键。"
+      },
+      "menu": {
+        "start": "开始计时",
+        "nextPhase": "下一个时段",
+        "openFocus": "打开专注视图",
+        "showWindow": "显示窗口",
+        "quit": "退出 Hinata",
+        "idle": "没有正在运行的计时器",
+        "stopwatch": "秒表运行中",
+        "countdown": "倒计时运行中",
+        "focusPhase": "番茄钟，专注",
+        "breakPhase": "番茄钟，休息"
       }
     }
   },
@@ -4240,7 +4257,35 @@
       "cleared": "本地副本已删除。",
       "turnOff": "全部关闭",
       "turnOffHint": "应用外将不再显示任何内容。之后可以重新设置。",
-      "turnOffButton": "关闭"
+      "turnOffButton": "关闭",
+      "runningMenuBar": "在菜单栏中",
+      "runningMenuBarHint": "菜单栏显示正在计时的时间，以及停止它的菜单。",
+      "runningTray": "在通知区域中",
+      "runningTrayHint": "通知区域中的图标表示计时器正在运行，并提供菜单。",
+      "detailsMenu": "在菜单中显示描述",
+      "detailsMenuHint": "打开的菜单也会显示你在做什么。图标和时间从不显示。",
+      "keepRunning": "关闭时继续运行",
+      "keepRunningMenuBarHint": "关闭窗口后，计时器会在菜单栏中继续运行。⌘Q 退出应用。",
+      "keepRunningTrayHint": "关闭窗口后，计时器会在通知区域中继续运行。请从其菜单退出。",
+      "hotkeys": "全局快捷键",
+      "hotkeysHint": "在任何应用中开始、停止并打开专注视图。应用只接收这两个组合键，不接收其他按键。",
+      "hotkeyToggle": "开始或停止",
+      "hotkeyFocus": "打开专注视图",
+      "hotkeyBound": "已启用",
+      "hotkeyConflict": "其他应用或系统已在使用此组合键。请选择其他组合。",
+      "hotkeyUnsupported": "此设备上不可用。",
+      "hotkeyChoose": "选择",
+      "keySpace": "空格",
+      "recordPrompt": "按下新的组合键",
+      "recordHint": "至少同时按住一个修饰键，例如 {{example}}。按 Esc 取消。",
+      "recordNeedsModifier": "快捷键需要修饰键，否则其他所有应用都将无法使用该键。",
+      "recordUnsupportedKey": "请使用字母、数字、F1 至 F12 或空格键。",
+      "test": "检查快捷键",
+      "testHint": "按一次即可，其他应用在前台时也可以。检查期间不会开始或停止任何计时。",
+      "testButton": "立即检查",
+      "testWaiting": "现在按 {{combo}}。",
+      "testWorked": "可以使用，按键已收到。",
+      "testSilent": "未收到按键。可能有其他应用占用了此组合，请换一个。"
     }
   },
   "twofa": {

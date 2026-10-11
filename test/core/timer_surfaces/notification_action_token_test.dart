@@ -81,4 +81,13 @@ class _Host implements TimerSurfaceHost {
 
   @override
   void openRoute(String route) => calls.add('route $route');
+
+  @override
+  Future<void> start() async => calls.add('start');
+
+  @override
+  Future<void> showWindow() async => calls.add('show');
+
+  @override
+  Future<void> quit() async => calls.add('quit');
 }
