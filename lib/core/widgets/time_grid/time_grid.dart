@@ -1066,15 +1066,26 @@ class _HourAxis extends StatelessWidget {
         for (var hour = metrics.firstHour + 1; hour < metrics.lastHour; hour++)
           Positioned(
             top: (hour - metrics.firstHour) * metrics.hourExtent - 7,
+            // Both edges, so a long label ("10:00 AM") shrinks to the gutter
+            // instead of running out of its leading edge and being cut there.
+            left: 2,
             right: 6,
-            child: Text(
-              localizations.formatTimeOfDay(
-                TimeOfDay(hour: hour, minute: 0),
-                alwaysUse24HourFormat: use24,
-              ),
-              style: TextStyle(
-                fontSize: AppType.caption,
-                color: AppColors.inkFaint,
+            child: Align(
+              // Right, like the `right:` edge it replaces.
+              alignment: Alignment.centerRight,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  localizations.formatTimeOfDay(
+                    TimeOfDay(hour: hour, minute: 0),
+                    alwaysUse24HourFormat: use24,
+                  ),
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkFaint,
+                  ),
+                ),
               ),
             ),
           ),
