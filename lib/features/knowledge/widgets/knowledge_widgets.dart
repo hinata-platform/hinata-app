@@ -6,6 +6,8 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/glass_filter_bar.dart'
+    show GlassPill, kGlassPillHeight;
 import '../data/knowledge_models.dart';
 import '../knowledge_tokens.dart';
 
@@ -113,84 +115,41 @@ class KbSectionLabel extends StatelessWidget {
   );
 }
 
-/// A label on a page, as a quiet chip. Tappable when [onTap] is given (to
-/// filter by it), with a [selected] state for the active filter.
+/// A label on a page, as a quiet chip. Filtering by a label is
+/// [KbLabelPill]'s job.
 class KbLabelChip extends StatelessWidget {
-  const KbLabelChip({
-    super.key,
-    required this.label,
-    this.count,
-    this.onTap,
-    this.selected = false,
-  });
+  const KbLabelChip({super.key, required this.label});
 
   final String label;
-  final int? count;
-  final VoidCallback? onTap;
-  final bool selected;
 
   @override
-  Widget build(BuildContext context) {
-    final face = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-      decoration: BoxDecoration(
-        color: selected ? AppColors.accentSoft : AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        border: Border.all(
-          color: selected ? AppColors.accentStrong : AppColors.hairline2,
-        ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            selected ? LucideIcons.check : LucideIcons.tag,
-            size: 12,
-            color: selected ? AppColors.accentInk : AppColors.inkSoft,
-          ),
-          const SizedBox(width: 5),
-          Flexible(
-            child: Text(
-              label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: AppType.caption,
-                fontWeight: FontWeight.w600,
-                color: selected ? AppColors.accentInk : AppColors.inkSoft,
-              ),
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+    decoration: BoxDecoration(
+      color: AppColors.surfaceMuted,
+      borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+      border: Border.all(color: AppColors.hairline2),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(LucideIcons.tag, size: 12, color: AppColors.inkSoft),
+        const SizedBox(width: 5),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: AppType.caption,
+              fontWeight: FontWeight.w600,
+              color: AppColors.inkSoft,
             ),
           ),
-          if (count != null) ...[
-            const SizedBox(width: 6),
-            Text(
-              '$count',
-              style: TextStyle(
-                fontFamily: AppTheme.fontMono,
-                fontSize: AppType.caption,
-                color: selected ? AppColors.accentInk : AppColors.inkSoft,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-    final tap = onTap;
-    if (tap == null) return face;
-    // The chip is small on purpose; the band around it makes the target 48 tall.
-    return Semantics(
-      button: true,
-      selected: selected,
-      child: InkWell(
-        onTap: tap,
-        borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(minHeight: 48),
-          child: Align(widthFactor: 1, child: face),
         ),
-      ),
-    );
-  }
+      ],
+    ),
+  );
 }
 
 /// One page in a list: glyph, title, where it lives and when it changed.
@@ -284,73 +243,95 @@ class KbPageRow extends StatelessWidget {
   }
 }
 
-/// A bordered icon button of the knowledge views, 48×48 to the touch.
-class KbIconButton extends StatelessWidget {
-  const KbIconButton({
+/// A label as a glass filter pill: amber wash while it narrows the list, so
+/// a filtered list never looks like an empty one.
+class KbLabelPill extends StatelessWidget {
+  const KbLabelPill({
     super.key,
-    required this.icon,
-    required this.tooltip,
+    required this.label,
+    required this.count,
+    required this.selected,
     required this.onTap,
-    this.selected = false,
-    this.color,
   });
 
-  final IconData icon;
-  final String tooltip;
-  final void Function(Rect? anchor)? onTap;
+  final String label;
+  final int count;
   final bool selected;
-  final Color? color;
+  final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Semantics(
-        button: true,
-        selected: selected,
-        label: tooltip,
-        excludeSemantics: true,
-        onTap: onTap == null ? null : () => onTap!(_rectOf(context)),
-        child: Builder(
-          builder: (context) => InkResponse(
-            onTap: onTap == null ? null : () => onTap!(_rectOf(context)),
-            radius: 24,
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: Center(
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: selected ? AppColors.accentSoft : AppColors.surface,
-                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                    border: Border.all(
-                      color: selected
-                          ? AppColors.accentStrong
-                          : AppColors.hairline,
-                    ),
-                  ),
-                  alignment: Alignment.center,
-                  child: Icon(
-                    icon,
-                    size: 17,
-                    color:
-                        color ??
-                        (selected ? AppColors.accentInk : AppColors.inkSoft),
-                  ),
-                ),
+  Widget build(BuildContext context) => Semantics(
+    selected: selected,
+    child: GlassPill(
+      active: selected,
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              selected ? LucideIcons.check : LucideIcons.tag,
+              size: 15,
+              color: selected ? AppColors.accentInk : AppColors.inkSoft,
+            ),
+            const SizedBox(width: 7),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: AppType.label,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
               ),
             ),
+            const SizedBox(width: 7),
+            Text(
+              '$count',
+              style: TextStyle(
+                fontFamily: AppTheme.fontMono,
+                fontSize: AppType.caption,
+                color: AppColors.inkSoft,
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// The favourite toggle: a round glass pill, washed amber while the page is
+/// a favourite. The tooltip names it, `selected` says which way it stands.
+class KbStarPill extends StatelessWidget {
+  const KbStarPill({
+    super.key,
+    required this.starred,
+    required this.tooltip,
+    required this.onTap,
+  });
+
+  final bool starred;
+  final String tooltip;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: tooltip,
+    child: Semantics(
+      label: tooltip,
+      selected: starred,
+      child: GlassPill(
+        active: starred,
+        onTap: onTap,
+        child: SizedBox(
+          width: kGlassPillHeight,
+          child: Icon(
+            LucideIcons.star,
+            size: 18,
+            color: starred ? AppColors.accentInk : AppColors.inkSoft,
           ),
         ),
       ),
-    );
-  }
-
-  static Rect? _rectOf(BuildContext context) {
-    final box = context.findRenderObject();
-    if (box is! RenderBox || !box.hasSize) return null;
-    return box.localToGlobal(Offset.zero) & box.size;
-  }
+    ),
+  );
 }
