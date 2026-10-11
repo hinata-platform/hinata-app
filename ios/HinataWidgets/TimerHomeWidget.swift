@@ -91,10 +91,11 @@ struct TimerWidgetView: View {
   var body: some View {
     switch family {
     case .accessoryInline:
-      if running {
+      // One line: the time while it runs, the words once it is over.
+      if running && !entry.over {
         Label { clock } icon: { glyph }
       } else {
-        Label(heading, systemImage: "timer")
+        Label { Text(heading) } icon: { glyph }
       }
     case .accessoryCircular:
       ZStack {
@@ -114,8 +115,9 @@ struct TimerWidgetView: View {
       }
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 1) {
-        Label { Text(heading).font(.headline).lineLimit(1) } icon: { glyph }
-        if running {
+        // Over, the sentence takes the room of the clock that rests at zero.
+        Label { Text(heading).font(.headline).lineLimit(entry.over ? 3 : 1) } icon: { glyph }
+        if running && !entry.over {
           clock.font(.system(.title3, design: .rounded).monospacedDigit().weight(.semibold))
           if let label = record?.label {
             Text(label).font(.caption).lineLimit(1).foregroundStyle(.secondary)

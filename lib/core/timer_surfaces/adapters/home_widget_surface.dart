@@ -26,9 +26,13 @@ class TimerWidgetStore {
     await HomeWidget.setAppGroupId(timerWidgetAppGroup);
   }
 
-  /// Writes [record] (or removes it with null) and asks the widgets to draw.
+  /// Writes [record] (an empty one with null) and asks the widgets to draw.
+  ///
+  /// Never a null: home_widget 0.9.4 hands it to iOS as `NSNull`, and
+  /// `UserDefaults` throws on that, which takes the whole app down. Both
+  /// native readers take an empty record for none.
   Future<void> write(String? record) async {
-    await HomeWidget.saveWidgetData<String>(timerWidgetKey, record);
+    await HomeWidget.saveWidgetData<String>(timerWidgetKey, record ?? '');
     await HomeWidget.updateWidget(
       iOSName: timerWidgetIosKind,
       qualifiedAndroidName: timerWidgetAndroidProvider,
