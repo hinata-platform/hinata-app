@@ -369,58 +369,15 @@ void main() {
   });
 
   group('honesty about what is in force', () {
-    testWidgets('every policy the server does not enforce yet says so', (
-      tester,
-    ) async {
+    testWidgets('no policy claims to be stored but idle', (tester) async {
       await tester.pumpWidget(host(<String, dynamic>{}));
       await tester.pumpAndSettle();
 
-      // A screen that says "entries on this day can no longer be changed" while
-      // nothing stops them is how an administrator freezes a payroll period,
-      // sees a green toast, and finds out months later. So the note belongs on
-      // exactly the policies that are still idle, and comes off the moment the
-      // stage that enforces one lands.
-      for (final title in const [
-        // The request gate has read this since stage 2.
-        'admin.timeTracking.advancedTitle',
-        // Stage 6: the write gate refuses what these demand.
-        'admin.timeTracking.limitTagAccessTitle',
-        'admin.timeTracking.requiredProjectTitle',
-        // Stage 8 (HIN-89): the timesheet was the last reader of the first, and
-        // the self-hints and the retention sweep apply the others.
-        'admin.timeTracking.leadsSeeMemberEntriesTitle',
-        'admin.timeTracking.arbzgHintsTitle',
-        'admin.timeTracking.descriptionPurgeLabel',
-        'admin.timeTracking.entryPurgeLabel',
-        // Stage 11 (HIN-92): the reminder and alert jobs read these two.
-        'admin.timeTracking.alertsTitle',
-        'admin.timeTracking.targetRemindersTitle',
-        // Stage 12 (HIN-93): the workload tab and its endpoint read this one.
-        'admin.timeTracking.workloadReportsTitle',
-      ]) {
-        expect(
-          find.descendant(
-            of: policy(title),
-            matching: find.byType(PendingNote),
-          ),
-          findsNothing,
-          reason: title,
-        );
-      }
-      for (final title in const [
-        // Billing and the calendar import of the later stages.
-        'admin.timeTracking.billingEnabledTitle',
-        'admin.timeTracking.icsImportTitle',
-      ]) {
-        expect(
-          find.descendant(
-            of: policy(title),
-            matching: find.byType(PendingNote),
-          ),
-          findsOneWidget,
-          reason: title,
-        );
-      }
+      // A screen that says a rule is not applied yet, while the server applies
+      // it, makes an operator weigh a switch as harmless. Since billing
+      // (HIN-96) and the calendar import (HIN-94) every policy here is
+      // enforced, so no "not applied yet" note may appear on any of them.
+      expect(find.text('admin.timeTracking.notYetEnforced'), findsNothing);
     });
 
     testWidgets('the badge names what the environment answers', (tester) async {

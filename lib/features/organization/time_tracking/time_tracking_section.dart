@@ -289,7 +289,6 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
           'NEAREST': 'admin.timeTracking.roundingMode.nearest',
         },
         onChanged: (v) => _setNested('rounding', 'mode', v),
-        pending: true,
       ),
       PolicyChoice(
         label: context.t('admin.timeTracking.roundingIncrementLabel'),
@@ -310,7 +309,6 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
           'increment',
           v == null ? null : int.parse(v),
         ),
-        pending: true,
       ),
       PolicySwitch(
         title: context.t('admin.timeTracking.limitTagAccessTitle'),
@@ -336,7 +334,6 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
         effective: _effectiveValue<bool>('icsImportEnabled'),
         onChanged: (v) => _set('icsImportEnabled', v),
         monitoring: true,
-        pending: true,
       ),
     ],
   );
@@ -551,7 +548,6 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
         // Profitability per person is a performance figure, whatever it is
         // called on the report.
         monitoring: true,
-        pending: true,
       ),
       const SizedBox(height: 8),
       PolicyText(
@@ -561,7 +557,6 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
         maxLength: 3,
         value: _value<String>('currency'),
         onChanged: (v) => _setQuietly('currency', v?.toUpperCase()),
-        pending: true,
       ),
       // The defaults and every other rate live on their own page, reached from
       // here and from the reports (HIN-96). Only once billing is in force: the

@@ -2863,7 +2863,7 @@
       "lockBeforeLabel": "Gesperrt vor",
       "lockBeforeHint": "Einträge vor diesem Tag kann niemand mehr anlegen, ändern oder löschen, auch nicht über die API. Der Tag selbst bleibt offen. Das Datum darf nie in der Zukunft liegen, weil laufende Arbeitszeit immer erfassbar bleiben muss.",
       "roundingModeLabel": "Rundung",
-      "roundingModeHint": "Gilt nur für Berichte; die gespeicherten Minuten bleiben unverändert.",
+      "roundingModeHint": "Gilt für Berichte, Abrechnung und Rechnungen. Die gespeicherten Minuten bleiben unverändert.",
       "roundingMode": {
         "none": "Keine Rundung",
         "up": "Aufrunden",
@@ -2943,7 +2943,6 @@
       "monthsSuffix": "Monate",
       "privacyNoticeLabel": "Datenschutzhinweis",
       "privacyNoticeHint": "Markdown. Alle sehen den Text bei der ersten Nutzung der Zeiterfassung und unter Einstellungen → Zeiterfassung. Leer heißt: der eingebaute Text in der Sprache der Person.",
-      "notYetEnforced": "Wird gespeichert, aber noch nicht angewendet. Die Funktion dahinter kommt in einer späteren Stufe der Zeiterfassung.",
       "tagsTitle": "Tags",
       "tagsHint": "Das Vokabular, mit dem Einträge beschriftet werden. Ein Umbenennen zieht alle Einträge mit.",
       "tagsEmpty": "Noch keine Tags.",
