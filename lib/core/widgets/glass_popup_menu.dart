@@ -391,7 +391,6 @@ class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>> {
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     final dark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.sizeOf(context);
-    final pad = MediaQuery.paddingOf(context);
     final width = math.min(widget.width, size.width - _margin * 2);
     final rows = _MenuRows<T>(
       context: context,
@@ -417,12 +416,9 @@ class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>> {
               menuBorderRadius: _radius,
               itemBorderRadius: 12,
               autoAdjustToScreen: true,
-              menuPadding: EdgeInsets.fromLTRB(
-                _margin,
-                _margin + pad.top,
-                _margin,
-                _margin + pad.bottom,
-              ),
+              // The package adds the view's safe area to this itself; adding
+              // it here as well pushed every menu a notch below its anchor.
+              menuPadding: const EdgeInsets.all(_margin),
               // Same fill as the app's other popovers carry under their rows: a
               // menu opens over whatever its button happens to sit on.
               settings: liquidGlassPanelSettings(

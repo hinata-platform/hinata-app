@@ -165,4 +165,51 @@ void main() {
     expect(pageTaps, 1);
     await tester.pumpAndSettle();
   });
+
+  testWidgets('opens at its anchor under a notch, not a safe area lower', (
+    tester,
+  ) async {
+    // An iPhone with a Dynamic Island: 59 pt of top inset, 34 pt at the
+    // bottom. The package keeps the menu out of that inset itself; adding it
+    // again pushed every menu 59 pt below the control that opened it.
+    final dpr = tester.view.devicePixelRatio;
+    tester.view.padding = FakeViewPadding(top: 59 * dpr, bottom: 34 * dpr);
+    addTearDown(tester.view.resetPadding);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              Positioned(
+                right: 20,
+                top: 74,
+                child: GlassPopupMenu<String>(
+                  value: '',
+                  onSelected: (_) {},
+                  items: const [
+                    GlassMenuItem<String>(value: 'a', label: 'Eins'),
+                    GlassMenuItem<String>(value: 'b', label: 'Zwei'),
+                  ],
+                  child: const SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(child: Text('trigger')),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('trigger'));
+    await tester.pumpAndSettle();
+
+    // The menu lies over the control it came from: its first row starts at
+    // the anchor's top plus the menu's own inner padding.
+    final firstRow = tester.getRect(find.text('Eins'));
+    expect(firstRow.top, lessThan(74 + 40));
+  });
 }
