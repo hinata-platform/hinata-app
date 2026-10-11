@@ -204,8 +204,9 @@ std::optional<int64_t> IntArg(const flutter::EncodableMap& map,
   const EncodableValue* value = Lookup(map, key);
   if (value == nullptr) return std::nullopt;
   // Dart ints arrive as int32 or int64 depending on magnitude.
-  if (const auto* small = std::get_if<int32_t>(value)) return *small;
-  if (const auto* large = std::get_if<int64_t>(value)) return *large;
+  // Not "small"/"large": <rpcndr.h> defines `small` as a macro for char.
+  if (const auto* as32 = std::get_if<int32_t>(value)) return *as32;
+  if (const auto* as64 = std::get_if<int64_t>(value)) return *as64;
   return std::nullopt;
 }
 
