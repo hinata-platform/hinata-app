@@ -60,6 +60,7 @@ import 'comments/voice/voice_recorder.dart' show VoiceRecording;
 import 'issue_move_wizard.dart';
 import '../git/widgets/deployment_panel.dart';
 import '../git/widgets/development_summary.dart';
+import '../knowledge/knowledge_location.dart' show KnowledgePaths;
 import '../knowledge/data/knowledge_models.dart' show KbArticle, lucideIcon;
 import '../knowledge/data/knowledge_repository.dart';
 import '../knowledge/knowledge_tokens.dart';

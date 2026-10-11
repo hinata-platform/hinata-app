@@ -1,5 +1,8 @@
+import 'dart:convert';
+
 import '../../../core/access/project_permissions.dart';
 import '../../../core/api/api_client.dart';
+import '../../../core/blocs/paged_cubit.dart' show PageResult;
 import '../../../core/models/content_models.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/team_models.dart';
@@ -124,6 +127,7 @@ class KnowledgeRepository {
       ..clear()
       ..addEntries(articles.map((a) => MapEntry(a.id, _toKbArticle(a))));
     _rebuildSpaces();
+    await loadMarks();
     // Names follow the new list: a page may have moved to a place not known yet.
     _placesLoad = null;
     _loaded = true;
@@ -226,27 +230,23 @@ class KnowledgeRepository {
     hue: _hueFor(u.id),
   );
 
-  KbArticle _toKbArticle(Article a) {
-    final author = a.authorId ?? '';
-    return KbArticle(
-      id: a.id,
-      spaceId: a.space ?? 'Engineering',
-      parentId: a.parentId,
-      title: a.title,
-      icon: a.icon ?? 'file-text',
-      authorId: author,
-      contributorIds: author.isEmpty ? const [] : [author],
-      updated: _ago(a.updatedAt),
-      created: _dateLabel(a.createdAt),
-      reads: 0,
-      labels: a.tags,
-      status: 'published',
-      body: a.content ?? '',
-      doc: a.contentDoc,
-      projectId: a.projectId,
-      teamId: a.teamId,
-    );
-  }
+  KbArticle _toKbArticle(Article a) => KbArticle(
+    id: a.id,
+    spaceId: a.space ?? '',
+    parentId: a.parentId,
+    title: a.title,
+    icon: a.icon ?? 'file-text',
+    authorId: a.authorId ?? '',
+    labels: a.tags,
+    body: a.content ?? '',
+    doc: a.contentDoc,
+    projectId: a.projectId,
+    teamId: a.teamId,
+    sortOrder: a.sortOrder,
+    createdAt: a.createdAt,
+    updatedAt: a.updatedAt,
+    lastEditorId: a.lastEditorId,
+  );
 
   KbSpace _spaceFor(String name) {
     final backend = _backendSpaces[name];
@@ -265,40 +265,6 @@ class KnowledgeRepository {
 
   static int _hueFor(String id) => id.isEmpty ? 248 : (id.hashCode.abs() % 360);
 
-  static String _ago(DateTime? t) {
-    if (t == null) return 'just now';
-    final d = DateTime.now().difference(t);
-    if (d.inMinutes < 1) return 'just now';
-    if (d.inMinutes < 60) return '${d.inMinutes}m';
-    if (d.inHours < 24) return '${d.inHours}h';
-    if (d.inDays < 30) return '${d.inDays}d';
-    if (d.inDays < 365) return '${(d.inDays / 30).floor()}mo';
-    return '${(d.inDays / 365).floor()}y';
-  }
-
-  static String _dateLabel(DateTime? t) {
-    if (t == null) return 'Today';
-    final now = DateTime.now();
-    if (t.year == now.year && t.month == now.month && t.day == now.day) {
-      return 'Today';
-    }
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return '${months[t.month - 1]} ${t.day}, ${t.year}';
-  }
-
   // ── lookups ─────────────────────────────────────────────────────────────
 
   KbUser? userById(String id) => _users[id];
@@ -312,8 +278,71 @@ class KnowledgeRepository {
   List<KbSpace> get spaces => List.unmodifiable(_spaces);
   List<KbArticle> get articles => _articles.values.toList(growable: false);
 
+  /// The pages of [spaceId] in their sibling order.
   List<KbArticle> articlesInSpace(String spaceId) =>
-      articles.where((a) => a.spaceId == spaceId).toList();
+      articles.where((a) => a.spaceId == spaceId).toList()
+        ..sort(bySiblingOrder);
+
+  /// Sibling order: the stored position, then the title, so pages nobody has
+  /// arranged still come out the same way every time.
+  static int bySiblingOrder(KbArticle a, KbArticle b) {
+    final byOrder = a.sortOrder.compareTo(b.sortOrder);
+    return byOrder != 0
+        ? byOrder
+        : a.title.toLowerCase().compareTo(b.title.toLowerCase());
+  }
+
+  /// The direct subpages of [id] the reader can see, in sibling order.
+  List<KbArticle> childrenOf(String id) =>
+      articles.where((a) => a.parentId == id).toList()..sort(bySiblingOrder);
+
+  /// The pages above [id], from the top of its tree down to its parent. Stops
+  /// at the first parent the reader cannot see.
+  List<KbArticle> ancestorsOf(String id) {
+    final chain = <KbArticle>[];
+    final seen = <String>{id};
+    var parentId = _articles[id]?.parentId;
+    while (parentId != null && seen.add(parentId)) {
+      final parent = _articles[parentId];
+      if (parent == null) break;
+      chain.insert(0, parent);
+      parentId = parent.parentId;
+    }
+    return chain;
+  }
+
+  /// Every label on a page the reader sees, with how many pages carry it,
+  /// most used first. Taken from the readable pages only, never org-wide.
+  List<({String label, int count})> labels({String? spaceId}) {
+    final counts = <String, int>{};
+    for (final a in _articles.values) {
+      if (spaceId != null && a.spaceId != spaceId) continue;
+      for (final l in a.labels) {
+        counts[l] = (counts[l] ?? 0) + 1;
+      }
+    }
+    final out = [
+      for (final e in counts.entries) (label: e.key, count: e.value),
+    ];
+    out.sort((a, b) {
+      final byCount = b.count.compareTo(a.count);
+      return byCount != 0 ? byCount : a.label.compareTo(b.label);
+    });
+    return out;
+  }
+
+  /// Pages most recently changed, newest first.
+  List<KbArticle> recentlyUpdated({String? spaceId, int limit = 6}) {
+    final list = [
+      for (final a in _articles.values)
+        if (spaceId == null || a.spaceId == spaceId) a,
+    ];
+    list.sort(
+      (a, b) =>
+          (b.updatedAt ?? DateTime(0)).compareTo(a.updatedAt ?? DateTime(0)),
+    );
+    return list.take(limit).toList();
+  }
 
   /// The pages [spaceId]'s tree starts from: top-level pages, plus every page
   /// whose parent is not in this space's list.
@@ -350,19 +379,59 @@ class KnowledgeRepository {
     return refs.map(_toKbArticle).toList();
   }
 
-  /// Related articles referenced via `{{doc:…}}` tokens in [body].
-  List<KbArticle> relatedArticles(String body) {
-    final re = RegExp(r'\{\{doc:(\w+)\}\}');
-    final seen = <String>{};
-    final out = <KbArticle>[];
-    for (final m in re.allMatches(body)) {
-      final id = m.group(1)!;
-      if (seen.add(id)) {
-        final a = _articles[id];
-        if (a != null) out.add(a);
+  /// Pages [article] links to and pages that link to it, each once, as far
+  /// as the reader can see them. A link is a `smartlink` node of kind `doc`
+  /// in the stored document; the plain text the server derives drops its
+  /// target, so the document is what is read here.
+  List<KbArticle> relatedArticles(KbArticle article) {
+    final out = <String, KbArticle>{};
+    for (final id in linkedDocIds(article.doc)) {
+      final linked = _articles[id];
+      if (linked != null && linked.id != article.id) out[id] = linked;
+    }
+    final needle = '"targetId":"${article.id}"';
+    for (final other in _articles.values) {
+      if (other.id == article.id || out.containsKey(other.id)) continue;
+      final doc = other.doc;
+      if (doc != null &&
+          doc.contains(needle) &&
+          linkedDocIds(doc).contains(article.id)) {
+        out[other.id] = other;
       }
     }
-    return out;
+    return out.values.toList();
+  }
+
+  /// The article ids the document [doc] links to, in document order.
+  static List<String> linkedDocIds(String? doc) {
+    if (doc == null || !doc.contains('"smartlink"')) return const [];
+    final Object? root;
+    try {
+      root = jsonDecode(doc);
+    } on FormatException {
+      return const [];
+    }
+    final ids = <String>[];
+    void walk(Object? node) {
+      if (node is Map) {
+        if (node['type'] == 'smartlink' && node['kind'] == 'doc') {
+          final target = node['targetId'];
+          if (target is String && target.isNotEmpty && !ids.contains(target)) {
+            ids.add(target);
+          }
+        }
+        for (final value in node.values) {
+          if (value is Map || value is List) walk(value);
+        }
+      } else if (node is List) {
+        for (final child in node) {
+          walk(child);
+        }
+      }
+    }
+
+    walk(root);
+    return ids;
   }
 
   // ── mutations (write through to the backend) ──────────────────────────────
@@ -375,6 +444,7 @@ class KnowledgeRepository {
     required String title,
     required String doc,
     required String spaceId,
+    List<String>? labels,
   }) async {
     final existing = _articles[id];
     final saved = await _articleApi.saveArticle(
@@ -383,7 +453,7 @@ class KnowledgeRepository {
       contentDoc: doc,
       space: spaceId,
       icon: existing?.icon,
-      tags: existing?.labels,
+      tags: labels ?? existing?.labels,
     );
     final kb = _toKbArticle(saved);
     _articles[id] = kb;
@@ -401,6 +471,7 @@ class KnowledgeRepository {
     String? parentId,
     String? projectId,
     String? teamId,
+    List<String> labels = const [],
   }) async {
     final topLevel = parentId == null;
     final saved = await _articleApi.saveArticle(
@@ -411,6 +482,7 @@ class KnowledgeRepository {
       projectId: topLevel ? projectId : null,
       teamId: topLevel ? teamId : null,
       icon: 'file-text',
+      tags: labels,
     );
     final kb = _toKbArticle(saved);
     _articles[kb.id] = kb;
@@ -469,6 +541,8 @@ class KnowledgeRepository {
   Future<void> deleteArticle(String id) async {
     await _articleApi.deleteArticle(id);
     _articles.remove(id);
+    _starred.remove(id);
+    _recent.remove(id);
     _rebuildSpaces();
   }
 
@@ -499,6 +573,133 @@ class KnowledgeRepository {
     await _articleApi.deleteSpace(backend.id);
     _backendSpaces.remove(spaceId);
     _rebuildSpaces();
+  }
+
+  /// Renames or redresses the persisted space [spaceId]. A rename is carried
+  /// onto the cached pages too, as the server does with the stored ones.
+  Future<KbSpace> updateSpace(
+    String spaceId, {
+    required String name,
+    required String icon,
+    required int hue,
+    required String description,
+  }) async {
+    final backend = _backendSpaces[spaceId];
+    if (backend == null) return Future.error('unknown space');
+    final s = await _articleApi.updateSpace(
+      backend.id,
+      name: name,
+      icon: icon,
+      hue: hue,
+      description: description,
+    );
+    _backendSpaces.remove(spaceId);
+    _backendSpaces[s.name] = s;
+    if (s.name != spaceId) {
+      for (final a in _articles.values.toList()) {
+        if (a.spaceId == spaceId) _articles[a.id] = a.copyWith(spaceId: s.name);
+      }
+    }
+    _rebuildSpaces();
+    return _spaceFor(s.name);
+  }
+
+  // ── order ───────────────────────────────────────────────────────────────
+
+  /// Puts the sibling pages [ids] in this order, on the server and here.
+  Future<void> reorder(List<String> ids) async {
+    final before = {for (final id in ids) id: _articles[id]?.sortOrder};
+    for (var i = 0; i < ids.length; i++) {
+      final a = _articles[ids[i]];
+      if (a != null) _articles[a.id] = a.copyWith(sortOrder: i);
+    }
+    try {
+      await _articleApi.orderArticles(ids);
+    } catch (_) {
+      for (final e in before.entries) {
+        final a = _articles[e.key];
+        if (a != null && e.value != null) {
+          _articles[a.id] = a.copyWith(sortOrder: e.value);
+        }
+      }
+      rethrow;
+    }
+  }
+
+  // ── history ─────────────────────────────────────────────────────────────
+
+  Future<PageResult<ArticleVersion>> versions(
+    String id, {
+    int page = 0,
+    int size = 20,
+  }) => _articleApi.versions(id, page: page, size: size);
+
+  Future<ArticleVersion> version(String id, int number) =>
+      _articleApi.version(id, number);
+
+  Future<List<String>> contributors(String id) => _articleApi.contributors(id);
+
+  /// Brings back version [number] of [id] as its newest state.
+  Future<KbArticle> restoreVersion(String id, int number) async {
+    final kb = _toKbArticle(await _articleApi.restoreVersion(id, number));
+    _articles[id] = kb;
+    return kb;
+  }
+
+  // ── favourites and recently opened ──────────────────────────────────────
+
+  final List<String> _starred = [];
+  final List<String> _recent = [];
+
+  /// Favourite pages the reader still sees, newest first.
+  List<KbArticle> get starred => [for (final id in _starred) ?_articles[id]];
+
+  /// Recently opened pages the reader still sees, newest first.
+  List<KbArticle> get recent => [for (final id in _recent) ?_articles[id]];
+
+  bool isStarred(String id) => _starred.contains(id);
+
+  /// Loads the reader's favourites and recently opened pages. Best effort:
+  /// an older server without the endpoint leaves both lists empty.
+  Future<void> loadMarks() async {
+    try {
+      final marks = await _articleApi.marks();
+      _starred
+        ..clear()
+        ..addAll(marks.starred.map((m) => m.id));
+      _recent
+        ..clear()
+        ..addAll(marks.recent.map((m) => m.id));
+    } on ApiFailure {
+      // Keep what is there.
+    }
+  }
+
+  /// Stars or unstars [id]; the list changes at once and goes back when the
+  /// server refuses.
+  Future<void> setStarred(String id, {required bool starred}) async {
+    final was = _starred.contains(id);
+    if (was == starred) return;
+    starred ? _starred.insert(0, id) : _starred.remove(id);
+    try {
+      await _articleApi.star(id, starred: starred);
+    } catch (_) {
+      starred ? _starred.remove(id) : _starred.insert(0, id);
+      rethrow;
+    }
+  }
+
+  /// Notes that the reader opened [id]. Nothing breaks when the server does
+  /// not hear of it.
+  Future<void> recordView(String id) async {
+    _recent
+      ..remove(id)
+      ..insert(0, id);
+    try {
+      await _articleApi.viewed(id);
+    } on ApiFailure {
+      // The recent list is a convenience.
+    }
   }
 
   /// Whether the reader may delete [spaceId]: a persisted backend space (not one

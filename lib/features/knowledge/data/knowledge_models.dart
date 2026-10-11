@@ -71,9 +71,7 @@ KbPlace placeOf(String? projectId, String? teamId) => projectId != null
 /// null can mean "none".
 const Object _keep = Object();
 
-/// A knowledge article. [body] is markdown that may embed `{{…}}` smart-link
-/// tokens; the issue⇄article relationship is *derived* from those tokens, never
-/// stored separately.
+/// A knowledge page as the screens use it, mapped from the backend [Article].
 class KbArticle {
   const KbArticle({
     required this.id,
@@ -82,16 +80,15 @@ class KbArticle {
     required this.title,
     required this.icon,
     required this.authorId,
-    required this.contributorIds,
-    required this.updated,
-    required this.created,
-    required this.reads,
     required this.labels,
-    required this.status,
     required this.body,
     this.doc,
     this.projectId,
     this.teamId,
+    this.sortOrder = 0,
+    this.createdAt,
+    this.updatedAt,
+    this.lastEditorId,
   });
 
   final String id;
@@ -100,13 +97,9 @@ class KbArticle {
   final String title;
   final String icon;
   final String authorId;
-  final List<String> contributorIds;
-  final String updated;
-  final String created;
-  final int reads;
   final List<String> labels;
-  final String status; // published | draft
-  /// Plain text of [doc]. Excerpts and the search preview read this.
+
+  /// Plain text of [doc]. Excerpts and the search read this.
   final String body;
 
   /// The Lexical document — what the reader renders and the editor opens.
@@ -118,7 +111,19 @@ class KbArticle {
   /// The team the page lives in, if any.
   final String? teamId;
 
+  /// Position among its siblings; ties fall back to the title.
+  final int sortOrder;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  /// Who last changed title or text; the author on pages nobody has edited
+  /// since this was recorded.
+  final String? lastEditorId;
+
   KbPlace get place => placeOf(projectId, teamId);
+
+  /// Who the byline names as the last to change the page.
+  String get editorId => lastEditorId ?? authorId;
 
   /// A copy with the given fields replaced. [projectId] and [teamId] can be
   /// set back to null, so they are left alone only while not passed at all; a
@@ -129,7 +134,7 @@ class KbArticle {
     String? title,
     String? body,
     String? doc,
-    String? updated,
+    int? sortOrder,
     Object? projectId = _keep,
     Object? teamId = _keep,
   }) => KbArticle(
@@ -139,57 +144,17 @@ class KbArticle {
     title: title ?? this.title,
     icon: icon,
     authorId: authorId,
-    contributorIds: contributorIds,
-    updated: updated ?? this.updated,
-    created: created,
-    reads: reads,
     labels: labels,
-    status: status,
     body: body ?? this.body,
     doc: doc ?? this.doc,
     projectId: identical(projectId, _keep)
         ? this.projectId
         : projectId as String?,
     teamId: identical(teamId, _keep) ? this.teamId : teamId as String?,
-  );
-
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'spaceId': spaceId,
-    'parentId': parentId,
-    'title': title,
-    'icon': icon,
-    'authorId': authorId,
-    'contributorIds': contributorIds,
-    'updated': updated,
-    'created': created,
-    'reads': reads,
-    'labels': labels,
-    'status': status,
-    'body': body,
-    'doc': doc,
-    'projectId': projectId,
-    'teamId': teamId,
-  };
-
-  factory KbArticle.fromJson(Map<String, dynamic> json) => KbArticle(
-    id: json['id'] as String,
-    spaceId: json['spaceId'] as String,
-    parentId: json['parentId'] as String?,
-    title: json['title'] as String? ?? '',
-    icon: json['icon'] as String? ?? 'file-text',
-    authorId: json['authorId'] as String? ?? '',
-    contributorIds: ((json['contributorIds'] as List?) ?? const [])
-        .cast<String>(),
-    updated: json['updated'] as String? ?? 'just now',
-    created: json['created'] as String? ?? 'Today',
-    reads: (json['reads'] as num?)?.toInt() ?? 0,
-    labels: ((json['labels'] as List?) ?? const []).cast<String>(),
-    status: json['status'] as String? ?? 'published',
-    body: json['body'] as String? ?? '',
-    doc: json['doc'] as String?,
-    projectId: json['projectId'] as String?,
-    teamId: json['teamId'] as String?,
+    sortOrder: sortOrder ?? this.sortOrder,
+    createdAt: createdAt,
+    updatedAt: updatedAt,
+    lastEditorId: lastEditorId,
   );
 }
 

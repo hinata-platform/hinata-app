@@ -21,6 +21,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   late KnowledgeRepository repo;
+  late GlobalKey<KnowledgeEditorState> editor;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues(<String, Object>{});
@@ -49,6 +50,7 @@ void main() {
     addTearDown(tester.view.reset);
 
     final saved = <EditorResult>[];
+    editor = GlobalKey();
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -57,13 +59,13 @@ void main() {
             openArticle: (_) {},
             openUser: (_) {},
             child: KnowledgeEditor(
+              key: editor,
               isNew: false,
               initialTitle: 'Titel',
               initialDoc: initialDoc,
               initialBody: initialBody,
               spaceId: '',
               onSave: saved.add,
-              onCancel: () {},
             ),
           ),
         ),
@@ -83,7 +85,8 @@ void main() {
     );
 
     // No localization delegate: `context.t` echoes the raw key.
-    await tester.tap(find.text('common.save'));
+    // Save lives in the app bar, which reaches the editor through its state.
+    editor.currentState!.save();
     await tester.pumpAndSettle();
 
     expect(saved, hasLength(1));
@@ -102,7 +105,8 @@ void main() {
       initialBody: 'Inhalt, die es noch gibt.',
     );
 
-    await tester.tap(find.text('common.save'));
+    // Save lives in the app bar, which reaches the editor through its state.
+    editor.currentState!.save();
     await tester.pumpAndSettle();
 
     expect(saved, isEmpty);

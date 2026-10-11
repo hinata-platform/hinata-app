@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
-import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_avatar.dart';
@@ -16,6 +16,7 @@ import 'knowledge_place_field.dart';
 import 'knowledge_scope.dart';
 import 'knowledge_tokens.dart';
 import 'markdown/smart_link_resolver.dart';
+import 'widgets/knowledge_widgets.dart';
 import '../../core/theme/app_type.dart';
 
 enum AsideMode { side, below, none }
@@ -28,16 +29,26 @@ class KnowledgeReader extends StatefulWidget {
     super.key,
     required this.article,
     required this.asideMode,
-    required this.onEdit,
-    required this.onDelete,
+    required this.starred,
+    required this.onToggleStar,
+    required this.onOpenSpace,
+    required this.onOpenHistory,
+    this.contributors,
     this.onPlace,
     this.placeBusy = false,
   });
 
   final KbArticle article;
   final AsideMode asideMode;
-  final VoidCallback onEdit;
-  final VoidCallback onDelete;
+
+  /// Whether the reader keeps this page among their favourites.
+  final bool starred;
+  final VoidCallback onToggleStar;
+  final ValueChanged<String> onOpenSpace;
+  final VoidCallback onOpenHistory;
+
+  /// Who worked on the page, most recent first; null while it loads.
+  final List<String>? contributors;
 
   /// Moves the page (a top-level one; subpages follow their parent) into a
   /// project, a team or back to its author. Null hides the "visible to" row.
@@ -151,196 +162,80 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
   Widget _article(KnowledgeRepository repo) {
     final a = widget.article;
     final sp = repo.spaceById(a.spaceId);
-    final author = repo.userById(a.authorId);
-    final parent = a.parentId == null ? null : repo.articleById(a.parentId!);
+    final editor = repo.userById(a.editorId);
+    final ancestors = repo.ancestorsOf(a.id);
+    final children = repo.childrenOf(a.id);
     final linkedIds = _linkedIssueIds;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // breadcrumb
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 8,
-          runSpacing: 6,
-          children: [
-            if (sp != null)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: KbTokens.spaceChipBg(sp.hue),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      lucideIcon(sp.icon),
-                      size: 13,
-                      color: KbTokens.spaceChipText(sp.hue),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      sp.name,
-                      style: TextStyle(
-                        fontSize: AppType.caption,
-                        fontWeight: FontWeight.w600,
-                        color: KbTokens.spaceChipText(sp.hue),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            if (parent != null) ...[
-              Icon(
-                lucideIcon('chevron-right'),
-                size: 14,
-                color: AppColors.inkFaint,
-              ),
-              // A link to the parent page; the 4-point band above and below
-              // brings the target to the 24-point floor without growing the
-              // breadcrumb line past the space chip beside it.
-              Semantics(
-                link: true,
-                child: InkWell(
-                  onTap: () =>
-                      KnowledgeScope.of(context).openArticle(parent.id),
-                  borderRadius: BorderRadius.circular(6),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Text(
-                      parent.title,
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ],
+        _Breadcrumbs(
+          space: sp,
+          ancestors: ancestors,
+          onOpenSpace: widget.onOpenSpace,
+          onOpenArticle: KnowledgeScope.of(context).openArticle,
         ),
-        const SizedBox(height: 14),
-        // title
-        Text(
-          a.title,
-          style: const TextStyle(
-            fontFamily: AppTheme.fontBrand,
-            fontSize: AppType.hero,
-            fontWeight: FontWeight.w800,
-            height: 1.12,
-            letterSpacing: -0.7,
+        const SizedBox(height: 12),
+        Semantics(
+          header: true,
+          child: Text(
+            a.title,
+            style: TextStyle(
+              fontFamily: AppTheme.fontBrand,
+              fontSize: AppType.hero,
+              fontWeight: FontWeight.w800,
+              height: 1.15,
+              letterSpacing: -0.7,
+              color: AppColors.ink,
+            ),
           ),
         ),
-        const SizedBox(height: 16),
-        // byline — on a phone the read-count is dropped and the edit button
-        // collapses to an icon so the author line keeps room and doesn't crowd.
-        Builder(
-          builder: (context) {
-            final compact = context.isCompact;
-            return Row(
-              children: [
-                AvatarStack(
-                  names: a.contributorIds
-                      .map((id) => repo.userById(id)?.name ?? '?')
-                      .toList(),
-                  radius: 12,
-                  max: 4,
+        const SizedBox(height: 14),
+        Row(
+          children: [
+            AppAvatar(
+              name: editor?.name ?? '?',
+              pronouns: editor?.pronouns,
+              radius: 14,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                context.t(
+                  'knowledge.reader.lastEdited',
+                  variables: {
+                    'name':
+                        editor?.name ?? context.t('knowledge.reader.someone'),
+                    'when': kbWhen(context, a.updatedAt),
+                  },
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text.rich(
-                    TextSpan(
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        color: AppColors.inkSoft,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: author?.name ?? '',
-                          style: TextStyle(
-                            color: AppColors.ink,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        TextSpan(
-                          text:
-                              ' · ${context.t('knowledge.updatedAgo', variables: {'when': a.updated})}',
-                        ),
-                      ],
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  height: 1.4,
+                  color: AppColors.inkSoft,
                 ),
-                if (!compact) ...[
-                  const SizedBox(width: 10),
-                  Icon(lucideIcon('eye'), size: 14, color: AppColors.inkFaint),
-                  const SizedBox(width: 5),
-                  Text(
-                    '${a.reads}',
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: AppType.caption,
-                      color: AppColors.inkFaint,
-                    ),
-                  ),
-                ],
-                const SizedBox(width: 8),
-                if (compact)
-                  Tooltip(
-                    message: context.t('knowledge.editShort'),
-                    child: OutlinedButton(
-                      onPressed: widget.onEdit,
-                      style: OutlinedButton.styleFrom(
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                        minimumSize: const Size(38, 38),
-                      ),
-                      child: Icon(lucideIcon('pencil'), size: 16),
-                    ),
-                  )
-                else
-                  OutlinedButton.icon(
-                    onPressed: widget.onEdit,
-                    icon: Icon(lucideIcon('pencil'), size: 15),
-                    label: Text(context.t('knowledge.editShort')),
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                  ),
-                const SizedBox(width: 8),
-                Tooltip(
-                  message: context.t('knowledge.delete'),
-                  child: OutlinedButton(
-                    onPressed: widget.onDelete,
-                    style: OutlinedButton.styleFrom(
-                      visualDensity: VisualDensity.compact,
-                      padding: EdgeInsets.zero,
-                      minimumSize: const Size(38, 38),
-                      foregroundColor: AppColors.dangerInk,
-                    ),
-                    child: Icon(lucideIcon('trash-2'), size: 16),
-                  ),
-                ),
-              ],
-            );
-          },
+              ),
+            ),
+            const SizedBox(width: 8),
+            KbIconButton(
+              icon: LucideIcons.star,
+              tooltip: context.t(
+                widget.starred
+                    ? 'knowledge.reader.unstar'
+                    : 'knowledge.reader.star',
+              ),
+              selected: widget.starred,
+              onTap: (_) => widget.onToggleStar(),
+            ),
+          ],
         ),
         if (a.labels.isNotEmpty) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: 10),
           Wrap(
             spacing: 6,
             runSpacing: 6,
-            children: [for (final l in a.labels) _tag(l)],
+            children: [for (final l in a.labels) KbLabelChip(label: l)],
           ),
         ],
         if (widget.onPlace != null) ...[
@@ -359,10 +254,9 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
             onChanged: widget.onPlace!,
           ),
         ],
-        const SizedBox(height: 22),
+        const SizedBox(height: 20),
         Divider(height: 1, color: AppColors.hairline),
         const SizedBox(height: 8),
-        // body
         // The stored document, rendered. Not scrollable: the page around it
         // already scrolls, and the outline reveals blocks through that same
         // position.
@@ -373,9 +267,71 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
           registry: _blocks,
           onDocument: _onDocument,
         ),
-        // linked issues
+        if (children.isNotEmpty) _subpages(children),
         if (linkedIds.isNotEmpty) _linkedIssues(linkedIds),
       ],
+    );
+  }
+
+  /// The pages filed under this one, so a reader can go deeper without the tree.
+  Widget _subpages(List<KbArticle> children) {
+    return Container(
+      margin: const EdgeInsets.only(top: 38),
+      padding: const EdgeInsets.only(top: 22),
+      decoration: BoxDecoration(
+        border: Border(top: BorderSide(color: AppColors.hairline)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          KbSectionLabel(context.t('knowledge.subpages')),
+          const SizedBox(height: 6),
+          for (final c in children)
+            MergeSemantics(
+              child: Semantics(
+                link: true,
+                child: InkWell(
+                  onTap: () => KnowledgeScope.of(context).openArticle(c.id),
+                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 48),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 8,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            lucideIcon(c.icon),
+                            size: 17,
+                            color: KbTokens.accent,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              c.title,
+                              style: TextStyle(
+                                fontSize: AppType.body,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                          Icon(
+                            LucideIcons.chevronRight,
+                            size: 16,
+                            color: AppColors.inkSoft,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -446,31 +402,12 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
     );
   }
 
-  Widget _tag(String label) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-    decoration: BoxDecoration(
-      color: AppColors.surfaceMuted,
-      borderRadius: BorderRadius.circular(KbTokens.radiusChip),
-      border: Border.all(color: AppColors.hairline2),
-    ),
-    child: Text(
-      label,
-      style: TextStyle(
-        fontSize: AppType.caption,
-        fontWeight: FontWeight.w600,
-        color: AppColors.inkSoft,
-      ),
-    ),
-  );
-
   // ── aside ──
   Widget _aside(KnowledgeRepository repo, List<OutlineEntry> toc) {
     final a = widget.article;
     final sp = repo.spaceById(a.spaceId);
-    final related = repo.relatedArticles(a.body);
-    final contributors = a.contributorIds.isEmpty
-        ? [a.authorId]
-        : a.contributorIds;
+    final related = repo.relatedArticles(a);
+    final contributors = widget.contributors;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -489,77 +426,113 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
               children: [for (final t in toc) _tocRow(t)],
             ),
           ),
-          const SizedBox(height: 22),
+          const SizedBox(height: 24),
         ],
-        _asideHeader(context.t('knowledge.contributors')),
-        const SizedBox(height: 8),
-        for (final id in contributors)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              children: [
-                AppAvatar(
-                  name: repo.userById(id)?.name ?? '?',
-                  pronouns: repo.userById(id)?.pronouns,
-                  radius: 13,
-                ),
-                const SizedBox(width: 9),
-                Expanded(
-                  child: Text(
-                    repo.userById(id)?.name ?? '?',
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: AppType.label),
+        _asideHeader(context.t('knowledge.details')),
+        const SizedBox(height: 6),
+        _detail(context.t('knowledge.space'), sp?.name ?? '—'),
+        _detail(context.t('knowledge.created'), kbDate(context, a.createdAt)),
+        _detail(
+          context.t('knowledge.reader.changed'),
+          kbWhen(context, a.updatedAt),
+        ),
+        _detail(
+          context.t('knowledge.reader.author'),
+          repo.userById(a.authorId)?.name ?? '—',
+        ),
+        Semantics(
+          button: true,
+          child: InkWell(
+            onTap: widget.onOpenHistory,
+            borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.history, size: 15, color: KbTokens.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    context.t('knowledge.history.open'),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.accentInk,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+        ),
+        if (contributors != null && contributors.isNotEmpty) ...[
+          const SizedBox(height: 22),
+          _asideHeader(context.t('knowledge.contributors')),
+          const SizedBox(height: 8),
+          for (final id in contributors.take(8))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  AppAvatar(
+                    name: repo.userById(id)?.name ?? '?',
+                    pronouns: repo.userById(id)?.pronouns,
+                    radius: 13,
+                  ),
+                  const SizedBox(width: 9),
+                  Expanded(
+                    child: Text(
+                      repo.userById(id)?.name ??
+                          context.t('knowledge.reader.someone'),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
         if (related.isNotEmpty) ...[
           const SizedBox(height: 22),
           _asideHeader(context.t('knowledge.relatedArticles')),
           const SizedBox(height: 6),
           for (final d in related)
-            Semantics(
-              link: true,
-              child: InkWell(
-                onTap: () => KnowledgeScope.of(context).openArticle(d.id),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Row(
-                    children: [
-                      Icon(
-                        lucideIcon(d.icon),
-                        size: 15,
-                        color: KbTokens.accent,
-                      ),
-                      const SizedBox(width: 9),
-                      Expanded(
-                        child: Text(
-                          d.title,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: AppType.label,
-                            color: AppColors.inkSoft,
+            MergeSemantics(
+              child: Semantics(
+                link: true,
+                child: InkWell(
+                  onTap: () => KnowledgeScope.of(context).openArticle(d.id),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(minHeight: 40),
+                    child: Row(
+                      children: [
+                        Icon(
+                          lucideIcon(d.icon),
+                          size: 15,
+                          color: KbTokens.accent,
+                        ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: Text(
+                            d.title,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: AppType.label,
+                              color: AppColors.ink,
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
         ],
-        const SizedBox(height: 22),
-        _asideHeader(context.t('knowledge.details')),
-        const SizedBox(height: 6),
-        _detail(context.t('knowledge.created'), a.created),
-        _detail(context.t('knowledge.space'), sp?.name ?? '—'),
-        _detail(
-          context.t('knowledge.status'),
-          a.status[0].toUpperCase() + a.status.substring(1),
-        ),
       ],
     );
   }
@@ -750,4 +723,118 @@ class _IssueCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Where the page sits: its space, then every page above it. Each step opens.
+class _Breadcrumbs extends StatelessWidget {
+  const _Breadcrumbs({
+    required this.space,
+    required this.ancestors,
+    required this.onOpenSpace,
+    required this.onOpenArticle,
+  });
+
+  final KbSpace? space;
+  final List<KbArticle> ancestors;
+  final ValueChanged<String> onOpenSpace;
+  final ValueChanged<String> onOpenArticle;
+
+  @override
+  Widget build(BuildContext context) {
+    final sp = space;
+    final steps = <Widget>[
+      if (sp != null)
+        _Crumb(
+          label: sp.name,
+          leading: Icon(
+            lucideIcon(sp.icon),
+            size: 14,
+            color: KbTokens.spaceChipText(sp.hue),
+          ),
+          color: KbTokens.spaceChipText(sp.hue),
+          onTap: () => onOpenSpace(sp.id),
+        ),
+      for (final a in ancestors)
+        _Crumb(
+          label: a.title,
+          color: AppColors.inkSoft,
+          onTap: () => onOpenArticle(a.id),
+        ),
+    ];
+    return Semantics(
+      container: true,
+      label: context.t('knowledge.reader.breadcrumb'),
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          for (final (i, step) in steps.indexed) ...[
+            if (i > 0)
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 2),
+                child: Icon(
+                  LucideIcons.chevronRight,
+                  size: 14,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+            step,
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _Crumb extends StatelessWidget {
+  const _Crumb({
+    required this.label,
+    required this.color,
+    required this.onTap,
+    this.leading,
+  });
+
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+  final Widget? leading;
+
+  @override
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(
+      link: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(6),
+        child: ConstrainedBox(
+          // 24 is the floor for an inline link; the band keeps the line low.
+          constraints: const BoxConstraints(minHeight: 32),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (leading case final icon?) ...[
+                  icon,
+                  const SizedBox(width: 6),
+                ],
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 240),
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      fontWeight: FontWeight.w600,
+                      color: color,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

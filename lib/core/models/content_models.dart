@@ -58,6 +58,7 @@ class Article extends Equatable {
     this.sortOrder = 0,
     this.createdAt,
     this.updatedAt,
+    this.lastEditorId,
   });
 
   final String id;
@@ -90,6 +91,10 @@ class Article extends Equatable {
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
+  /// Who last changed the title or the text; null on pages nobody has edited
+  /// since the server started recording it.
+  final String? lastEditorId;
+
   factory Article.fromJson(Map<String, dynamic> json) => Article(
     id: json['id'] as String,
     title: json['title'] as String? ?? '',
@@ -105,6 +110,7 @@ class Article extends Equatable {
     sortOrder: (json['sortOrder'] as num?)?.toInt() ?? 0,
     createdAt: parseInstant(json['createdAt']),
     updatedAt: parseInstant(json['updatedAt']),
+    lastEditorId: json['lastEditorId'] as String?,
   );
 
   @override
@@ -115,9 +121,48 @@ class Article extends Equatable {
     projectId,
     teamId,
     space,
+    sortOrder,
     updatedAt,
   ];
 }
+
+/// One saved state of a knowledge page, as the history lists it. [doc] is
+/// only filled when a single version is read in full.
+class ArticleVersion extends Equatable {
+  const ArticleVersion({
+    required this.number,
+    required this.title,
+    this.editorId,
+    this.createdAt,
+    this.doc,
+  });
+
+  final int number;
+  final String title;
+  final String? editorId;
+  final DateTime? createdAt;
+
+  /// The Lexical document of this state.
+  final String? doc;
+
+  factory ArticleVersion.fromJson(Map<String, dynamic> json) => ArticleVersion(
+    number: (json['number'] as num).toInt(),
+    title: json['title'] as String? ?? '',
+    editorId: json['editorId'] as String?,
+    createdAt: parseInstant(json['createdAt']),
+    doc: json['contentDoc'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [number, title, editorId, createdAt, doc];
+}
+
+/// A page the signed-in person starred or opened, and when.
+typedef ArticleMark = ({String id, DateTime? at});
+
+/// The signed-in person's favourite pages and the pages they opened last,
+/// newest first, already narrowed by the server to pages they still read.
+typedef ArticleMarks = ({List<ArticleMark> starred, List<ArticleMark> recent});
 
 /// A knowledge-base space ("Bereich"). Its [name] is the key articles reference
 /// through [Article.space]; icon/hue/description carry the space's chrome.

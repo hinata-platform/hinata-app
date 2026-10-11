@@ -2490,7 +2490,7 @@
     "summary": "{{count}} artículos",
     "subtitle": "{{articles}} artículos · {{spaces}} espacios",
     "updated": "actualizado {{when}}",
-    "updatedAgo": "actualizado hace {{when}}",
+    "updatedAgo": "actualizado {{when}}",
     "new": "Nuevo artículo",
     "newArticle": "Nuevo artículo",
     "allSpaces": "Todos los espacios",
@@ -2548,7 +2548,7 @@
     "published": "Artículo publicado",
     "saved": "Cambios guardados",
     "deleted": "Artículo eliminado",
-    "articleCount": "{{count}} artículos",
+    "articleCount": "{{count}} página",
     "saveWouldBlank": "Guardar ahora sustituiría el artículo por una página vacía. Añade antes algo de contenido.",
     "place": {
       "label": "Visible para",
@@ -2564,7 +2564,9 @@
     "emptyTitle": "Todavía no hay páginas para ti",
     "emptyMessage": "Las páginas se comparten a través de proyectos y equipos. Una página nueva es privada hasta que la pongas en un proyecto o un equipo.",
     "tree": {
-      "truncated": "Aquí no aparecen todas las páginas porque son demasiadas para una lista. Por eso una subpágina puede aparecer arriba aunque su página superior exista."
+      "truncated": "Aquí no aparecen todas las páginas porque son demasiadas para una lista. Por eso una subpágina puede aparecer arriba aunque su página superior exista.",
+      "moveUp": "Subir",
+      "moveDown": "Bajar"
     },
     "spaceIconOption": "Icono {{n}} de {{count}}",
     "subpages": "Subpáginas",
@@ -2575,7 +2577,85 @@
       "title": "¿Cambiar quién puede leerla?",
       "message": "«{{page}}» y sus subpáginas podrán leerlas entonces {{place}}.",
       "confirm": "Mover"
-    }
+    },
+    "editSpace": "Editar espacio",
+    "spaceSaved": "Espacio guardado",
+    "issueNotFound": "Incidencia {{id}} no encontrada",
+    "loadFailedTitle": "No se pudo cargar la base de conocimiento",
+    "loadFailedMessage": "Comprueba la conexión e inténtalo de nuevo.",
+    "notFoundMessage": "Puede que se haya eliminado o que no esté compartida contigo.",
+    "pageNotFound": "Página no encontrada",
+    "spaceNotFound": "Espacio no encontrado",
+    "editor": {
+      "discard": "Descartar",
+      "discardTitle": "¿Descartar cambios?",
+      "discardMessage": "Lo que cambiaste en esta página no se ha guardado.",
+      "pickSpace": "Elegir espacio"
+    },
+    "history": {
+      "title": "Historial: {{title}}",
+      "open": "Historial de la página",
+      "versions": "Versiones: {{count}}",
+      "version": "Versión {{number}}",
+      "versionBy": "Versión {{number}} · {{name}} · {{when}}",
+      "current": "Actual",
+      "more": "Mostrar versiones anteriores",
+      "pickTitle": "Elige una versión",
+      "pickMessage": "La página aparece aquí tal como se guardó entonces.",
+      "emptyTitle": "Aún no hay versiones",
+      "emptyMessage": "Las versiones se registran a partir del próximo cambio.",
+      "loadFailedTitle": "No se pudo cargar el historial",
+      "loadFailedMessage": "Comprueba la conexión e inténtalo de nuevo.",
+      "restore": "Restaurar esta versión",
+      "restoreTitle": "¿Restaurar versión?",
+      "restoreMessage": "La versión {{number}} pasa a ser la más reciente. No se pierde nada de lo intermedio.",
+      "restored": "Versión restaurada"
+    },
+    "home": {
+      "continue": "Seguir leyendo",
+      "starred": "Favoritos",
+      "spaces": "Espacios"
+    },
+    "labels": {
+      "add": "Añadir etiquetas",
+      "edit": "Editar etiquetas",
+      "search": "Buscar o crear etiqueta",
+      "create": "Crear etiqueta «{{label}}»",
+      "none": "Aún no hay etiquetas. Escribe una para crearla.",
+      "done": "Listo"
+    },
+    "reader": {
+      "lastEdited": "Última edición de {{name}} · {{when}}",
+      "someone": "Antiguo miembro",
+      "star": "Añadir a favoritos",
+      "unstar": "Quitar de favoritos",
+      "breadcrumb": "Ubicación de la página",
+      "changed": "Modificada",
+      "author": "Creada por",
+      "copyLink": "Copiar enlace",
+      "linkCopied": "Enlace copiado",
+      "pages": "Páginas"
+    },
+    "spaceView": {
+      "actions": "Acciones del espacio",
+      "pages": "Páginas",
+      "emptyTitle": "Aún no hay páginas aquí",
+      "emptyMessage": "Escribe la primera página de este espacio. Será privada hasta que la compartas con un proyecto o equipo.",
+      "firstPage": "Crear la primera página",
+      "withLabel": "Con la etiqueta «{{label}}»: {{count}}",
+      "notYours": "Solo quien creó el espacio puede cambiarlo.",
+      "notEmpty": "Mueve o elimina primero sus páginas."
+    },
+    "time": {
+      "justNow": "justo ahora",
+      "minutes": "hace {{count}} min",
+      "minutes_plural": "hace {{count}} min",
+      "hours": "hace {{count}} h",
+      "hours_plural": "hace {{count}} h",
+      "days": "hace {{count}} día",
+      "days_plural": "hace {{count}} días"
+    },
+    "articleCount_plural": "{{count}} páginas"
   },
   "md": {
     "heading1": "Título 1",

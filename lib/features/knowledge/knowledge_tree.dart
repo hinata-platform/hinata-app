@@ -28,17 +28,23 @@ class KnowledgeTree extends StatelessWidget {
     required this.spaceId,
     required this.selectedId,
     required this.onSelect,
-    required this.onSpaceChange,
     required this.onNewChild,
     required this.onMove,
+    required this.onShift,
     required this.onDelete,
+    this.onOpenSpace,
   });
 
   final KnowledgeRepository repo;
   final String spaceId;
   final String? selectedId;
   final ValueChanged<String> onSelect;
-  final ValueChanged<String> onSpaceChange;
+
+  /// Opens the space's overview from the header; null draws no header.
+  final VoidCallback? onOpenSpace;
+
+  /// Moves a page one place up (−1) or down (+1) among its siblings.
+  final void Function(String id, int delta) onShift;
 
   /// Create a new sub-page under [parentId].
   final ValueChanged<String> onNewChild;
@@ -61,67 +67,24 @@ class KnowledgeTree extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: GlassPopupMenu<String>(
-            value: spaceId,
-            onSelected: onSpaceChange,
-            items: [
-              for (final s in repo.spaces)
-                GlassMenuItem(
-                  value: s.id,
-                  label: s.name,
-                  leading: Icon(
-                    lucideIcon(s.icon),
-                    size: 16,
-                    color: KbTokens.accent,
-                  ),
-                ),
-            ],
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                border: Border.all(color: AppColors.hairline),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      repo.spaceById(spaceId)?.name ?? '',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Sora',
-                        fontSize: AppType.label,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                  Icon(
-                    lucideIcon('chevron-down'),
-                    size: 16,
-                    color: AppColors.inkFaint,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
+        if (onOpenSpace case final open?)
+          _SpaceHeader(space: repo.spaceById(spaceId), onTap: open),
         // Root drop zone — drop a page here to move it to the top level.
         _RootDropZone(spaceId: spaceId, repo: repo, onMove: onMove),
-        for (final root in roots)
+        for (final (i, root) in roots.indexed)
           _TreeBranch(
             repo: repo,
             article: root,
             inSpace: inSpace,
             children: children,
             depth: 0,
+            index: i,
+            siblings: roots.length,
             selectedId: selectedId,
             onSelect: onSelect,
             onNewChild: onNewChild,
             onMove: onMove,
+            onShift: onShift,
             onDelete: onDelete,
           ),
         // The server stops at its cap. Said once, quietly, under the tree, so a
@@ -129,6 +92,74 @@ class KnowledgeTree extends StatelessWidget {
         // from me" when the parent is merely past the cut.
         if (repo.listTruncated) const _TruncatedNote(),
       ],
+    );
+  }
+}
+
+/// The tree's head: the space it belongs to, opening the space's overview.
+class _SpaceHeader extends StatelessWidget {
+  const _SpaceHeader({required this.space, required this.onTap});
+
+  final KbSpace? space;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final s = space;
+    if (s == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: MergeSemantics(
+        child: Semantics(
+          link: true,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        color: KbTokens.spaceChipBg(s.hue),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        lucideIcon(s.icon),
+                        size: 15,
+                        color: KbTokens.spaceChipText(s.hue),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        s.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      LucideIcons.layoutGrid,
+                      size: 15,
+                      color: AppColors.inkSoft,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -228,15 +259,22 @@ class _TreeBranch extends StatefulWidget {
     required this.inSpace,
     required this.children,
     required this.depth,
+    required this.index,
+    required this.siblings,
     required this.selectedId,
     required this.onSelect,
     required this.onNewChild,
     required this.onMove,
+    required this.onShift,
     required this.onDelete,
   });
 
   final KnowledgeRepository repo;
   final KbArticle article;
+
+  /// Where the page stands among its siblings, and how many there are.
+  final int index;
+  final int siblings;
   final List<KbArticle> inSpace;
 
   /// The subpages of each page in the space, by parent id.
@@ -246,6 +284,7 @@ class _TreeBranch extends StatefulWidget {
   final ValueChanged<String> onSelect;
   final ValueChanged<String> onNewChild;
   final ArticleMove onMove;
+  final void Function(String id, int delta) onShift;
   final ValueChanged<String> onDelete;
 
   @override
@@ -304,7 +343,13 @@ class _TreeBranchState extends State<_TreeBranch> {
   }
 
   /// Glass action menu for a tree row: move-under, move-to-root + delete.
-  Widget _rowMenu(BuildContext context, bool canDelete, {required bool shown}) {
+  Widget _rowMenu(
+    BuildContext context,
+    bool canDelete, {
+    required bool shown,
+    required int index,
+    required int siblings,
+  }) {
     // Cheap on purpose, since every row builds its menu: another page in the
     // space is enough to offer the move; the submenu, built when the menu
     // opens, lists the actual choices.
@@ -328,12 +373,48 @@ class _TreeBranchState extends State<_TreeBranch> {
           );
         } else if (v == 'delete' && canDelete) {
           widget.onDelete(widget.article.id);
+        } else if (v == 'child') {
+          widget.onNewChild(widget.article.id);
+        } else if (v == 'up') {
+          widget.onShift(widget.article.id, -1);
+        } else if (v == 'down') {
+          widget.onShift(widget.article.id, 1);
         }
       },
       itemsBuilder: (context) => [
+        GlassMenuItem(
+          value: 'child',
+          label: context.t('knowledge.addSubPage'),
+          leading: Icon(
+            LucideIcons.filePlus,
+            size: 16,
+            color: AppColors.inkSoft,
+          ),
+        ),
+        if (index > 0)
+          GlassMenuItem(
+            value: 'up',
+            label: context.t('knowledge.tree.moveUp'),
+            leading: Icon(
+              LucideIcons.arrowUp,
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
+          ),
+        if (index < siblings - 1)
+          GlassMenuItem(
+            value: 'down',
+            label: context.t('knowledge.tree.moveDown'),
+            leading: Icon(
+              LucideIcons.arrowDown,
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
+          ),
         if (canMoveUnder)
           GlassMenuItem(
             value: '',
+            dividerAbove: true,
             label: context.t('knowledge.moveUnder'),
             leading: Icon(
               LucideIcons.cornerDownRight,
@@ -387,12 +468,18 @@ class _TreeBranchState extends State<_TreeBranch> {
       ],
       child: Tooltip(
         message: context.t('knowledge.pageActions'),
-        child: Padding(
-          padding: const EdgeInsets.all(4),
-          child: Icon(
-            lucideIcon('ellipsis'),
-            size: 15,
-            color: shown ? AppColors.inkFaint : Colors.transparent,
+        child: Semantics(
+          button: true,
+          label: context.t('knowledge.pageActions'),
+          child: SizedBox(
+            // A finger needs the full 48; a pointer gets the row's height.
+            width: _mouseConnected ? 26 : 48,
+            height: _mouseConnected ? 26 : 48,
+            child: Icon(
+              lucideIcon('ellipsis'),
+              size: 16,
+              color: shown ? AppColors.inkSoft : Colors.transparent,
+            ),
           ),
         ),
       ),
@@ -434,7 +521,12 @@ class _TreeBranchState extends State<_TreeBranch> {
                       border: Border.all(color: AppColors.accentLine),
                     )
                   : null,
-              padding: EdgeInsets.fromLTRB(8 + widget.depth * 14, 5, 4, 5),
+              padding: EdgeInsetsDirectional.fromSTEB(
+                8 + widget.depth * 14,
+                _mouseConnected ? 5 : 0,
+                4,
+                _mouseConnected ? 5 : 0,
+              ),
               child: Row(
                 children: [
                   if (kids.isNotEmpty)
@@ -492,13 +584,23 @@ class _TreeBranchState extends State<_TreeBranch> {
                       return Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          _RowAction(
-                            icon: 'plus',
-                            tooltip: context.t('knowledge.addSubPage'),
+                          // With a pointer the quick "+" sits beside the menu;
+                          // on touch the menu carries it, and one 48-point
+                          // target per row is all a row has room for.
+                          if (_mouseConnected)
+                            _RowAction(
+                              icon: 'plus',
+                              tooltip: context.t('knowledge.addSubPage'),
+                              shown: shown,
+                              onTap: () => widget.onNewChild(widget.article.id),
+                            ),
+                          _rowMenu(
+                            context,
+                            kids.isEmpty,
                             shown: shown,
-                            onTap: () => widget.onNewChild(widget.article.id),
+                            index: widget.index,
+                            siblings: widget.siblings,
                           ),
-                          _rowMenu(context, kids.isEmpty, shown: shown),
                         ],
                       );
                     },
@@ -543,17 +645,20 @@ class _TreeBranchState extends State<_TreeBranch> {
       children: [
         draggable,
         if (_open)
-          for (final c in kids)
+          for (final (i, c) in kids.indexed)
             _TreeBranch(
               repo: widget.repo,
               article: c,
               inSpace: widget.inSpace,
               children: widget.children,
               depth: widget.depth + 1,
+              index: i,
+              siblings: kids.length,
               selectedId: widget.selectedId,
               onSelect: widget.onSelect,
               onNewChild: widget.onNewChild,
               onMove: widget.onMove,
+              onShift: widget.onShift,
               onDelete: widget.onDelete,
             ),
       ],
@@ -677,7 +782,7 @@ class KbPlaceGlyph extends StatelessWidget {
         label: label,
         child: Padding(
           padding: const EdgeInsetsDirectional.only(start: 6, end: 2),
-          child: Icon(iconFor(place), size: size, color: AppColors.inkFaint),
+          child: Icon(iconFor(place), size: size, color: AppColors.inkSoft),
         ),
       ),
     );
