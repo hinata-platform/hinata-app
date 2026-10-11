@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gallery name and description of the timer widget (HIN-102). Everything
+     the widget shows besides comes from the app. -->
+<resources>
+    <string name="timer_widget_name">计时器</string>
+    <string name="timer_widget_description">正在运行的计时器，无需打开应用即可走动。</string>
+</resources>
