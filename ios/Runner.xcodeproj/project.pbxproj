@@ -7,20 +7,33 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		33F541512BAB718FE29F1952 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 67974D91D13EB0DE6AC69D3B /* InfoPlist.strings */; };
+		0DCC9D7EFF9B63E98609E83F /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3036CF8364C2B225C4A96674 /* Localizable.strings */; };
+		13B44E58E25790FEA3CD273A /* TimerWidgetRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */; };
+		13EBA85209FE59AB995AF8BE /* HinataWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7C52D81665F8F14D86EC5F /* HinataWidgetsBundle.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
+		20757CC8DA0CA9F434D741BD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */; };
+		2472F3F772633A41BE50EBEC /* HinataLiveActivityChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */; };
+		2ADC41719F8D324A5F411CA0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD76350A3EA059258B881EE /* SwiftUI.framework */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
+		33F541512BAB718FE29F1952 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 67974D91D13EB0DE6AC69D3B /* InfoPlist.strings */; };
+		3AEC4F9E2098A00AC777C1E7 /* TimerLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 15C65A2FC959F60D3F6BF7A4 /* TimerLiveActivity.swift */; };
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
+		3D6F09D42A81E1BA9973B939 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */; };
 		471032818115EE975FADFDBE /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99E5DF113E8B60069A79FA82 /* Pods_Runner.framework */; };
 		4861D4CB2BAA09EFD0CF955B /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EB82E95D6FDCFBD40665874 /* Pods_RunnerTests.framework */; };
+		65D2F81EC34257767B40E31A /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
+		85F8D59CE916E79BCC9143CD /* TimerHomeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FC8AD56013B050DD9239BF /* TimerHomeWidget.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
+		980032F59A76AB606F94B1FF /* HinataWidgets.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = E824C2CA7AE157C0736A20B1 /* HinataWidgets.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A0F8102003B3E727A0C68524 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E59B219ABAF7F1E8AB6E52B7 /* Foundation.framework */; };
 		AB12CD34EF5600000000A002 /* HinataSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A001 /* HinataSplashView.swift */; };
-		AB12CD34EF5600000000A006 /* HinataPdfChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A005 /* HinataPdfChannel.swift */; };
 		AB12CD34EF5600000000A004 /* Sora-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A003 /* Sora-Variable.ttf */; };
+		AB12CD34EF5600000000A006 /* HinataPdfChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A005 /* HinataPdfChannel.swift */; };
+		C5952B62163FB9A89886828E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBA6EAFD3BD1FD11C29E3678 /* WidgetKit.framework */; };
 		E0A81A687E0FC2A3AD6AB93E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 96C9D9564928377F24C16406 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
@@ -31,6 +44,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = 97C146ED1CF9000F007C117D;
 			remoteInfo = Runner;
+		};
+		A0D0C412802328B51F5B329B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B609D53E08B9555148838F55;
+			remoteInfo = HinataWidgets;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -45,31 +65,47 @@
 			name = "Embed Frameworks";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		CA1D459E9BCD371940808A05 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				980032F59A76AB606F94B1FF /* HinataWidgets.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		024158F8003EE3546E45DA43 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		EC8FDD80CD7B651AB8728305 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		E274F5DCCEDE8121ED09DD89 /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		4B9ABD58DE13F415F78CA195 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		450CA13014EE39391B4A0D97 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		DC778FEBBC0B0E379B96DEE7 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		BE57FDB20BB0F71D000585F8 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		F32F5F308E2692286A7F702B /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
-		347DFBCCB9E3A19FD4C553F4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
+		15C65A2FC959F60D3F6BF7A4 /* TimerLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerLiveActivity.swift; sourceTree = "<group>"; };
+		23FC8AD56013B050DD9239BF /* TimerHomeWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerHomeWidget.swift; sourceTree = "<group>"; };
+		2C610EA3C9D83E901D27477B /* hi */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
+		32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerActivityAttributes.swift; sourceTree = "<group>"; };
 		331C807B294A618700263BE5 /* RunnerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunnerTests.swift; sourceTree = "<group>"; };
 		331C8081294A63A400263BE5 /* RunnerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RunnerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		347DFBCCB9E3A19FD4C553F4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		3EB82E95D6FDCFBD40665874 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		44DB317A51D5C72D0C7A2775 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		450CA13014EE39391B4A0D97 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		4B9ABD58DE13F415F78CA195 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4F4B465A67D4D192B67BA77D /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		5D552507177754D3285DBF6D /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
+		67410BB23F78FAB2E535E54E /* zh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/Localizable.strings; sourceTree = "<group>"; };
 		67F817F25D2552AFE4A2371E /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
+		6C7C52D81665F8F14D86EC5F /* HinataWidgetsBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataWidgetsBundle.swift; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		8851870F318299DDAC8F27AE /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
+		899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataLiveActivityChannel.swift; sourceTree = "<group>"; };
 		96C9D9564928377F24C16406 /* GoogleService-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; name = "GoogleService-Info.plist"; path = "Runner/GoogleService-Info.plist"; sourceTree = "<group>"; };
 		9737D57CD45CAA60CC249638 /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		9740EEB21CF90195004384FC /* Debug.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; name = Debug.xcconfig; path = Flutter/Debug.xcconfig; sourceTree = "<group>"; };
@@ -80,11 +116,29 @@
 		97C147001CF9000F007C117D /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		99E5DF113E8B60069A79FA82 /* Pods_Runner.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Runner.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		9E315CC38938C654405F4729 /* HinataWidgets.entitlements */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.entitlements; path = HinataWidgets.entitlements; sourceTree = "<group>"; };
+		A5A3F2597B0F95AE5BED3528 /* de */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
+		A9197CECCC8FD63A33C25A24 /* es */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/Localizable.strings; sourceTree = "<group>"; };
 		AB12CD34EF5600000000A001 /* HinataSplashView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HinataSplashView.swift; sourceTree = "<group>"; };
-		AB12CD34EF5600000000A005 /* HinataPdfChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HinataPdfChannel.swift; sourceTree = "<group>"; };
 		AB12CD34EF5600000000A003 /* Sora-Variable.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Fonts/Sora-Variable.ttf"; sourceTree = "<group>"; };
+		AB12CD34EF5600000000A005 /* HinataPdfChannel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HinataPdfChannel.swift; sourceTree = "<group>"; };
 		BB31FA6A2C58FF8D28867EC2 /* Pods-RunnerTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.release.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.release.xcconfig"; sourceTree = "<group>"; };
+		BE57FDB20BB0F71D000585F8 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		C381A86B03CF30DAB0B8123B /* ja */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/Localizable.strings; sourceTree = "<group>"; };
+		CBD76350A3EA059258B881EE /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		D9589A8E2D7B27FFC4308DFB /* en */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
+		DC778FEBBC0B0E379B96DEE7 /* ja */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		E274F5DCCEDE8121ED09DD89 /* zh */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		E4786854C0E1D7A87A249351 /* ar */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/Localizable.strings; sourceTree = "<group>"; };
+		E59B219ABAF7F1E8AB6E52B7 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
+		E824C2CA7AE157C0736A20B1 /* HinataWidgets.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; name = HinataWidgets.appex; path = HinataWidgets.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		EB6791953B46ECCB50D96C01 /* ru */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/Localizable.strings; sourceTree = "<group>"; };
+		EBA6EAFD3BD1FD11C29E3678 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		EC8FDD80CD7B651AB8728305 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		EEF10B0B7D7B6F70D78CEE54 /* HinataWidgets.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = HinataWidgets.xcconfig; sourceTree = "<group>"; };
+		F32F5F308E2692286A7F702B /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		F3D103E198B0971867E6939A /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerWidgetRecord.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -93,6 +147,16 @@
 			buildActionMask = 2147483647;
 			files = (
 				4861D4CB2BAA09EFD0CF955B /* Pods_RunnerTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		1EF4CA4DA0652A6BCD42E62C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0F8102003B3E727A0C68524 /* Foundation.framework in Frameworks */,
+				C5952B62163FB9A89886828E /* WidgetKit.framework in Frameworks */,
+				2ADC41719F8D324A5F411CA0 /* SwiftUI.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -107,12 +171,36 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		1D641BCE1E72613D8BFA124E /* HinataWidgets */ = {
+			isa = PBXGroup;
+			children = (
+				EEF10B0B7D7B6F70D78CEE54 /* HinataWidgets.xcconfig */,
+				6C7C52D81665F8F14D86EC5F /* HinataWidgetsBundle.swift */,
+				15C65A2FC959F60D3F6BF7A4 /* TimerLiveActivity.swift */,
+				23FC8AD56013B050DD9239BF /* TimerHomeWidget.swift */,
+				44DB317A51D5C72D0C7A2775 /* Info.plist */,
+				9E315CC38938C654405F4729 /* HinataWidgets.entitlements */,
+				899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */,
+				3036CF8364C2B225C4A96674 /* Localizable.strings */,
+			);
+			name = HinataWidgets;
+			path = HinataWidgets;
+			sourceTree = "<group>";
+		};
 		331C8082294A63A400263BE5 /* RunnerTests */ = {
 			isa = PBXGroup;
 			children = (
 				331C807B294A618700263BE5 /* RunnerTests.swift */,
 			);
 			path = RunnerTests;
+			sourceTree = "<group>";
+		};
+		7BBD4A8246AC70BF1917D6E2 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				E59B219ABAF7F1E8AB6E52B7 /* Foundation.framework */,
+			);
+			name = iOS;
 			sourceTree = "<group>";
 		};
 		9740EEB11CF90186004384FC /* Flutter */ = {
@@ -136,6 +224,8 @@
 				F9A0A53E7D595F94D417C7B0 /* Pods */,
 				E7843507244BEE198BF3E3CA /* Frameworks */,
 				96C9D9564928377F24C16406 /* GoogleService-Info.plist */,
+				1D641BCE1E72613D8BFA124E /* HinataWidgets */,
+				B567B371F236A8450A53E30D /* Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -144,6 +234,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
+				E824C2CA7AE157C0736A20B1 /* HinataWidgets.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -164,8 +255,19 @@
 				AB12CD34EF5600000000A005 /* HinataPdfChannel.swift */,
 				AB12CD34EF5600000000A003 /* Sora-Variable.ttf */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
+				8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */,
 			);
 			path = Runner;
+			sourceTree = "<group>";
+		};
+		B567B371F236A8450A53E30D /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */,
+				F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */,
+			);
+			name = Shared;
+			path = Shared;
 			sourceTree = "<group>";
 		};
 		E7843507244BEE198BF3E3CA /* Frameworks */ = {
@@ -173,6 +275,9 @@
 			children = (
 				99E5DF113E8B60069A79FA82 /* Pods_Runner.framework */,
 				3EB82E95D6FDCFBD40665874 /* Pods_RunnerTests.framework */,
+				7BBD4A8246AC70BF1917D6E2 /* iOS */,
+				EBA6EAFD3BD1FD11C29E3678 /* WidgetKit.framework */,
+				CBD76350A3EA059258B881EE /* SwiftUI.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -217,6 +322,7 @@
 			buildConfigurationList = 97C147051CF9000F007C117D /* Build configuration list for PBXNativeTarget "Runner" */;
 			buildPhases = (
 				1153596E9EE7B833A479CCE7 /* [CP] Check Pods Manifest.lock */,
+				CA1D459E9BCD371940808A05 /* Embed Foundation Extensions */,
 				9740EEB61CF901F6004384FC /* Run Script */,
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
@@ -229,11 +335,29 @@
 			buildRules = (
 			);
 			dependencies = (
+				04C28C858E5B5012491D04A2 /* PBXTargetDependency */,
 			);
 			name = Runner;
 			productName = Runner;
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
+		};
+		B609D53E08B9555148838F55 /* HinataWidgets */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = BF3DF0EBE3C42AAC37A5131D /* Build configuration list for PBXNativeTarget "HinataWidgets" */;
+			buildPhases = (
+				AFED3C67DE77B40F8D879A7A /* Sources */,
+				1EF4CA4DA0652A6BCD42E62C /* Frameworks */,
+				F339AABA79B41ED5A8376EB4 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = HinataWidgets;
+			productName = HinataWidgets;
+			productReference = E824C2CA7AE157C0736A20B1 /* HinataWidgets.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -278,6 +402,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
+				B609D53E08B9555148838F55 /* HinataWidgets */,
 			);
 		};
 /* End PBXProject section */
@@ -301,6 +426,15 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				E0A81A687E0FC2A3AD6AB93E /* GoogleService-Info.plist in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F339AABA79B41ED5A8376EB4 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				20757CC8DA0CA9F434D741BD /* PrivacyInfo.xcprivacy in Resources */,
+				0DCC9D7EFF9B63E98609E83F /* Localizable.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -436,12 +570,32 @@
 				7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */,
 				AB12CD34EF5600000000A002 /* HinataSplashView.swift in Sources */,
 				AB12CD34EF5600000000A006 /* HinataPdfChannel.swift in Sources */,
+				3D6F09D42A81E1BA9973B939 /* TimerActivityAttributes.swift in Sources */,
+				2472F3F772633A41BE50EBEC /* HinataLiveActivityChannel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AFED3C67DE77B40F8D879A7A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				13EBA85209FE59AB995AF8BE /* HinataWidgetsBundle.swift in Sources */,
+				3AEC4F9E2098A00AC777C1E7 /* TimerLiveActivity.swift in Sources */,
+				85F8D59CE916E79BCC9143CD /* TimerHomeWidget.swift in Sources */,
+				65D2F81EC34257767B40E31A /* TimerActivityAttributes.swift in Sources */,
+				13B44E58E25790FEA3CD273A /* TimerWidgetRecord.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		04C28C858E5B5012491D04A2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = HinataWidgets;
+			target = B609D53E08B9555148838F55 /* HinataWidgets */;
+			targetProxy = A0D0C412802328B51F5B329B /* PBXContainerItemProxy */;
+		};
 		331C8086294A63A400263BE5 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 97C146ED1CF9000F007C117D /* Runner */;
@@ -450,6 +604,22 @@
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
+		3036CF8364C2B225C4A96674 /* Localizable.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D9589A8E2D7B27FFC4308DFB /* en */,
+				A5A3F2597B0F95AE5BED3528 /* de */,
+				5D552507177754D3285DBF6D /* fr */,
+				A9197CECCC8FD63A33C25A24 /* es */,
+				EB6791953B46ECCB50D96C01 /* ru */,
+				C381A86B03CF30DAB0B8123B /* ja */,
+				67410BB23F78FAB2E535E54E /* zh */,
+				E4786854C0E1D7A87A249351 /* ar */,
+				2C610EA3C9D83E901D27477B /* hi */,
+			);
+			name = Localizable.strings;
+			sourceTree = "<group>";
+		};
 		67974D91D13EB0DE6AC69D3B /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -485,6 +655,37 @@
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
+		1F722E89F22EF3F872C80D4F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EEF10B0B7D7B6F70D78CEE54 /* HinataWidgets.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = "";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = HinataWidgets/HinataWidgets.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HinataWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ahmadre.hinata.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
 		249021D3217E4FDB00AE95B9 /* Profile */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -614,6 +815,38 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
 			};
 			name = Profile;
+		};
+		569C314B4C5BEFA5644073FD /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EEF10B0B7D7B6F70D78CEE54 /* HinataWidgets.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = "";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = HinataWidgets/HinataWidgets.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HinataWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ahmadre.hinata.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
 		};
 		97C147031CF9000F007C117D /* Debug */ = {
 			isa = XCBuildConfiguration;
@@ -784,6 +1017,38 @@
 			};
 			name = Release;
 		};
+		DC7EE698832590211A3D3761 /* Profile */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = EEF10B0B7D7B6F70D78CEE54 /* HinataWidgets.xcconfig */;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = "";
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = "";
+				CLANG_ENABLE_OBJC_WEAK = NO;
+				CODE_SIGN_ENTITLEMENTS = HinataWidgets/HinataWidgets.entitlements;
+				CODE_SIGN_STYLE = Manual;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = HinataWidgets/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.1;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.ahmadre.hinata.widgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Profile;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -813,6 +1078,16 @@
 				97C147061CF9000F007C117D /* Debug */,
 				97C147071CF9000F007C117D /* Release */,
 				249021D4217E4FDB00AE95B9 /* Profile */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		BF3DF0EBE3C42AAC37A5131D /* Build configuration list for PBXNativeTarget "HinataWidgets" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				569C314B4C5BEFA5644073FD /* Release */,
+				1F722E89F22EF3F872C80D4F /* Debug */,
+				DC7EE698832590211A3D3761 /* Profile */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

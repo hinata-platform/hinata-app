@@ -1,0 +1,4 @@
+/* Gallery name and description of the timer widget (HIN-102). Everything
+   the widget shows besides comes from the app, in the reader's language. */
+"widget.name" = "计时器";
+"widget.description" = "正在运行的计时器，无需打开应用即可走动。";

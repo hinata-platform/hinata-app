@@ -26,5 +26,8 @@ import UserNotifications
     // Hinata: PDF-Anhänge zeigen ihre Formularfelder erst, wenn wir die
     // Annotationen vorher in die Seiten zeichnen (siehe HinataPdfChannel).
     HinataPdfChannel.register(with: engineBridge.applicationRegistrar.messenger())
+
+    // Hinata: der laufende Timer als Live Activity (HIN-102).
+    HinataLiveActivityChannel.register(with: engineBridge.applicationRegistrar.messenger())
   }
 }

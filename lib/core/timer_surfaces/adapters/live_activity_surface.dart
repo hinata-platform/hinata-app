@@ -53,8 +53,10 @@ class LiveActivityChannel {
   Future<String?> start(Map<String, Object?> content) =>
       _channel.invokeMethod<String>('start', content);
 
-  Future<void> update(String ref, Map<String, Object?> content) =>
-      _channel.invokeMethod<void>('update', {'ref': ref, ...content});
+  /// False when the activity is gone (swiped away, ended by the system).
+  Future<bool> update(String ref, Map<String, Object?> content) async =>
+      await _channel.invokeMethod<bool>('update', {'ref': ref, ...content}) ??
+      false;
 
   /// Ends the activity at once.
   Future<void> end(String ref) =>
@@ -82,6 +84,12 @@ class LiveActivitySurface extends TimerSurface {
   /// The activity this run started or adopted.
   String? _ref;
 
+  /// The timer whose activity the person swiped away; a new one goes up only
+  /// for the next timer.
+  DateTime? _gone;
+
+  DateTime? _stretch(TimerSurfaceState state) => state.startedAt;
+
   @override
   String get id => 'live-activity';
 
@@ -101,9 +109,13 @@ class LiveActivitySurface extends TimerSurface {
     }
     final ref = _ref;
     if (ref != null) {
-      await _channel.update(ref, content);
+      // Swiped away by the person: not brought back for the same timer.
+      if (!await _channel.update(ref, content)) _gone = _stretch(state);
+      if (_gone != null) _ref = null;
       return;
     }
+    if (_gone == _stretch(state)) return;
+    _gone = null;
     // A timer read back from the cache may be one that ended elsewhere a
     // minute ago. Something new goes up only for what the server said in this
     // run; the next state after the refresh brings it.

@@ -134,5 +134,8 @@
 		     data already embedded in files you choose to attach. -->
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Hinata does not track your location. This is only needed so photos or videos you choose to attach to issues keep the location information already saved inside them.</string>
-	</dict>
+		<!-- HIN-102: the running timer as a Live Activity. -->
+	<key>NSSupportsLiveActivities</key>
+	<true/>
+</dict>
 </plist>
