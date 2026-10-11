@@ -152,7 +152,9 @@ class _LabelPanelState extends State<_LabelPanel> {
   @override
   Widget build(BuildContext context) {
     final q = _query.text.trim().toLowerCase();
+    // The page's own labels first, so what is set is seen before what could be.
     final options = {
+      ...widget.selected,
       ...widget.known,
       ..._selected,
     }.where((l) => q.isEmpty || l.toLowerCase().contains(q)).toList();
