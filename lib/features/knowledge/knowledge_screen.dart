@@ -39,6 +39,7 @@ import 'markdown/smart_link_resolver.dart';
 import 'views/knowledge_history_view.dart';
 import 'views/knowledge_home_view.dart';
 import 'views/knowledge_space_view.dart';
+import 'widgets/knowledge_widgets.dart' show KbLabelPill;
 
 /// The knowledge base: a start page, a page per space, pages to read, edit
 /// and look back through. What is on screen follows [location], which the
@@ -490,11 +491,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
 
   // ── menus ──
 
-  Future<void> _pageMenu(
-    KbArticle a,
-    Rect? anchor, {
-    required bool withHistory,
-  }) async {
+  Future<void> _pageMenu(KbArticle a, Rect? anchor) async {
     final rect = anchor ?? _fallbackAnchor();
     final canDelete = _store.childrenOf(a.id).isEmpty;
     final chosen = await showGlassMenu<String>(
@@ -502,16 +499,15 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
       anchorRect: rect,
       value: '',
       items: [
-        if (withHistory)
-          GlassMenuItem(
-            value: 'history',
-            label: context.t('knowledge.history.open'),
-            leading: Icon(
-              LucideIcons.history,
-              size: 16,
-              color: AppColors.inkSoft,
-            ),
+        GlassMenuItem(
+          value: 'history',
+          label: context.t('knowledge.history.open'),
+          leading: Icon(
+            LucideIcons.history,
+            size: 16,
+            color: AppColors.inkSoft,
           ),
+        ),
         GlassMenuItem(
           value: 'child',
           label: context.t('knowledge.addSubPage'),
@@ -835,6 +831,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
     final space = _store.spaceById(spaceId);
     if (space == null) return _missing(context, 'knowledge.spaceNotFound');
     final compact = context.isCompact;
+    final labels = _store.labels(spaceId: space.id);
     void newPage([Rect? _]) => _go(KnowledgeNewLocation(spaceId: space.id));
     return PageChrome(
       title: space.name,
@@ -854,6 +851,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
           onTap: newPage,
         ),
       ],
+      bottom: compact && labels.isNotEmpty
+          ? _dockedLabels(space, labels)
+          : null,
+      bottomHeight: compact && labels.isNotEmpty ? kGlassDockRow : 0,
       child: _scroll(
         KnowledgeSpaceView(
           repo: _store,
@@ -877,6 +878,39 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
     );
   }
 
+  /// A phone's one docked row on a space: its labels as glass pills, the
+  /// row scrolling sideways when they do not fit.
+  Widget _dockedLabels(
+    KbSpace space,
+    List<({String label, int count})> labels,
+  ) {
+    final current = _labelFilter[space.id];
+    return SizedBox(
+      height: kGlassDockRow,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+        itemCount: labels.length,
+        separatorBuilder: (_, _) => const SizedBox(width: 8),
+        itemBuilder: (context, i) {
+          final l = labels[i];
+          return Center(
+            child: KbLabelPill(
+              label: l.label,
+              count: l.count,
+              selected: l.label == current,
+              onTap: () => setState(() {
+                l.label == current
+                    ? _labelFilter.remove(space.id)
+                    : _labelFilter[space.id] = l.label;
+              }),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   // ── article ──
 
   Widget _article(BuildContext context, String id) {
@@ -887,22 +921,14 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
     return PageChrome(
       title: a.title,
       onBack: _back,
-      onTitleTap: compact
-          ? (rect) => _pageMenu(a, rect, withHistory: true)
-          : null,
+      onTitleTap: compact ? (rect) => _pageMenu(a, rect) : null,
       actions: [
-        if (!compact) ...[
-          PageAction(
-            icon: LucideIcons.history,
-            label: context.t('knowledge.history.open'),
-            onTap: (_) => _go(KnowledgeHistoryLocation(a.id)),
-          ),
+        if (!compact)
           PageAction(
             icon: LucideIcons.ellipsis,
             label: context.t('knowledge.more'),
-            onTap: (rect) => _pageMenu(a, rect, withHistory: false),
+            onTap: (rect) => _pageMenu(a, rect),
           ),
-        ],
         PageAction(
           icon: LucideIcons.pencil,
           label: context.t('knowledge.editShort'),
@@ -1165,7 +1191,8 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   }
 }
 
-/// Bordered icon button that hides or shows a reader panel.
+/// Hides or shows a reader panel: a round theme button, so it takes the
+/// app's glass capsule like every other secondary action.
 class _PanelToggle extends StatelessWidget {
   const _PanelToggle({
     required this.icon,
@@ -1178,35 +1205,6 @@ class _PanelToggle extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Semantics(
-        button: true,
-        label: tooltip,
-        excludeSemantics: true,
-        onTap: onTap,
-        child: InkResponse(
-          onTap: onTap,
-          radius: 24,
-          child: SizedBox(
-            width: 48,
-            height: 48,
-            child: Center(
-              child: Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                  border: Border.all(color: AppColors.hairline),
-                ),
-                child: Icon(icon, size: 17, color: AppColors.inkSoft),
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) =>
+      GhostButton(label: tooltip, icon: icon, iconOnly: true, onPressed: onTap);
 }
