@@ -2863,7 +2863,7 @@
       "lockBeforeLabel": "锁定此日之前",
       "lockBeforeHint": "此日之前的记录任何人都无法再新增、修改或删除，通过 API 也不行。这一天本身仍然开放。日期永远不能设在未来，因为正在发生的工作时间必须始终可以记录。",
       "roundingModeLabel": "取整",
-      "roundingModeHint": "仅用于报表；已保存的分钟数不会改变。",
+      "roundingModeHint": "适用于报告、计费和发票。已保存的分钟数不会改变。",
       "roundingMode": {
         "none": "不取整",
         "up": "向上取整",
@@ -2943,7 +2943,6 @@
       "monthsSuffix": "个月",
       "privacyNoticeLabel": "隐私说明",
       "privacyNoticeHint": "支持 Markdown。每个人第一次使用工时记录时，以及在“设置 → 工时记录”中，都会看到它。留空表示使用读者所用语言的内置文本。",
-      "notYetEnforced": "会保存，但尚未生效。该策略背后的功能将在工时记录的后续阶段推出。",
       "tagsTitle": "标签",
       "tagsHint": "用来标注记录的词汇。重命名会带动所有记录。",
       "tagsEmpty": "还没有标签。",

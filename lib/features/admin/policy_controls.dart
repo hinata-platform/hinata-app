@@ -73,38 +73,6 @@ class CodeterminationNote extends StatelessWidget {
   );
 }
 
-/// "Recorded, not yet acted on."
-///
-/// A policy screen that describes a rule in the present indicative is a promise.
-/// Most of these rules are stored by this stage and enforced by a later one, and
-/// an administrator who sets a lock date to freeze a closed payroll period —
-/// because an auditor or a works agreement asked for it — would otherwise get a
-/// green toast and no lock at all. Nothing about that failure is visible until
-/// somebody edits a frozen entry.
-///
-/// Each stage that implements a policy drops this from the controls it took
-/// over, and the note disappears on its own.
-class PendingNote extends StatelessWidget {
-  const PendingNote({super.key, this.textKey});
-
-  /// What to say instead of "nothing behind this yet".
-  ///
-  /// For the policy that is *partly* behind: saying a switch does nothing when
-  /// it already governs two reads is the wrong half of the truth to tell, and it
-  /// is wrong in the direction that matters — an operator who believes a
-  /// visibility switch is inert will set it without weighing what it opens.
-  final String? textKey;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(top: 8),
-    child: AdminNote(
-      icon: LucideIcons.hourglass,
-      text: context.t(textKey ?? 'admin.timeTracking.notYetEnforced'),
-    ),
-  );
-}
-
 /// The badge that stands where a control would be while the value is absent.
 ///
 /// It deliberately does not draw a switch in some arbitrary position — that
@@ -210,8 +178,6 @@ class _PolicyRow extends StatelessWidget {
     required this.onReset,
     required this.monitoring,
     this.codeterminationKey,
-    this.pending = false,
-    this.pendingKey,
   });
 
   final String title;
@@ -223,11 +189,6 @@ class _PolicyRow extends StatelessWidget {
 
   /// Which rule the note names — see [CodeterminationNote.textKey].
   final String? codeterminationKey;
-
-  final bool pending;
-
-  /// Overrides the pending note's wording — see [PendingNote.textKey].
-  final String? pendingKey;
 
   @override
   Widget build(BuildContext context) {
@@ -269,7 +230,6 @@ class _PolicyRow extends StatelessWidget {
             ],
           ),
           if (monitoring) CodeterminationNote(textKey: codeterminationKey),
-          if (pending) PendingNote(textKey: pendingKey),
           EnvDefaultAction(isDefault: isDefault, onReset: onReset),
         ],
       ),
@@ -287,8 +247,6 @@ class PolicySwitch extends StatelessWidget {
     required this.onChanged,
     this.monitoring = false,
     this.codeterminationKey,
-    this.pending = false,
-    this.pendingKey,
     this.effective,
   });
 
@@ -306,12 +264,6 @@ class PolicySwitch extends StatelessWidget {
   /// Which co-determination rule that note names — see [CodeterminationNote].
   final String? codeterminationKey;
 
-  /// Whether the policy is recorded but not yet acted on — see [PendingNote].
-  final bool pending;
-
-  /// Overrides the pending note's wording — see [PendingNote.textKey].
-  final String? pendingKey;
-
   /// What the environment resolves this policy to while nothing is stored.
   final bool? effective;
 
@@ -325,8 +277,6 @@ class PolicySwitch extends StatelessWidget {
       onReset: () => onChanged(null),
       monitoring: monitoring,
       codeterminationKey: codeterminationKey,
-      pending: pending,
-      pendingKey: pendingKey,
       control: current == null
           ? _EnvDefaultBadge(
               // Commits what is already in force, not its opposite. The tap
@@ -354,7 +304,6 @@ class PolicyChoice extends StatefulWidget {
     required this.options,
     required this.onChanged,
     this.helper,
-    this.pending = false,
     this.effective,
   });
 
@@ -367,9 +316,6 @@ class PolicyChoice extends StatefulWidget {
   final Map<String, String> options;
   final ValueChanged<String?> onChanged;
   final String? helper;
-
-  /// Recorded but not yet acted on — see [PendingNote].
-  final bool pending;
 
   /// The option the environment resolves to while nothing is stored, so the
   /// placeholder can name it instead of saying only "Env default".
@@ -447,7 +393,6 @@ class _PolicyChoiceState extends State<PolicyChoice> {
             muted: stored == null,
             icon: LucideIcons.chevronDown,
           ),
-          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: stored == null,
             onReset: () => widget.onChanged(null),
@@ -467,7 +412,6 @@ class PolicyDate extends StatefulWidget {
     required this.value,
     required this.onChanged,
     this.helper,
-    this.pending = false,
     this.notAfterToday = false,
   });
 
@@ -477,9 +421,6 @@ class PolicyDate extends StatefulWidget {
   final String? value;
   final ValueChanged<String?> onChanged;
   final String? helper;
-
-  /// Recorded but not yet acted on — see [PendingNote].
-  final bool pending;
 
   /// Caps the picker at today.
   ///
@@ -564,7 +505,6 @@ class _PolicyDateState extends State<PolicyDate> {
             muted: value == null,
             icon: LucideIcons.calendar,
           ),
-          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: value == null,
             onReset: () => widget.onChanged(null),
@@ -665,7 +605,6 @@ class PolicyNumber extends StatefulWidget {
     required this.onChanged,
     this.helper,
     this.suffix,
-    this.pending = false,
     this.maxValue,
   });
 
@@ -674,8 +613,6 @@ class PolicyNumber extends StatefulWidget {
   final ValueChanged<int?> onChanged;
   final String? helper;
 
-  /// Recorded but not yet acted on — see [PendingNote].
-  final bool pending;
   final String? suffix;
 
   /// The largest value the server will store. Clamped here so the operator
@@ -756,7 +693,6 @@ class _PolicyNumberState extends State<PolicyNumber> {
               setState(() {});
             },
           ),
-          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: _controller.text.trim().isEmpty,
             onReset: _reset,
@@ -779,8 +715,6 @@ class PolicyText extends StatefulWidget {
     this.hint,
     this.maxLines = 1,
     this.maxLength,
-    this.pending = false,
-    this.pendingKey,
   });
 
   final String label;
@@ -788,11 +722,6 @@ class PolicyText extends StatefulWidget {
   final ValueChanged<String?> onChanged;
   final String? helper;
 
-  /// Recorded but not yet acted on — see [PendingNote].
-  final bool pending;
-
-  /// Overrides the pending note's wording — see [PendingNote.textKey].
-  final String? pendingKey;
   final String? hint;
   final int maxLines;
   final int? maxLength;
@@ -842,7 +771,6 @@ class _PolicyTextState extends State<PolicyText> {
               setState(() {});
             },
           ),
-          if (widget.pending) const PendingNote(),
           EnvDefaultAction(
             isDefault: _controller.text.trim().isEmpty,
             onReset: _reset,
