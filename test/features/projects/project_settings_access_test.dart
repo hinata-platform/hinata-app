@@ -87,6 +87,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
 
     final projects = _FakeProjects(source);
+    final chrome = PageChromeController();
     final router = GoRouter(
       initialLocation: location,
       routes: [
@@ -94,8 +95,20 @@ void main() {
           path: '/settings',
           builder: (_, _) => Scaffold(
             body: PageChromeScope(
-              controller: PageChromeController(),
-              child: const ProjectSettingsScreen(projectId: 'p1'),
+              controller: chrome,
+              child: Column(
+                children: [
+                  // Stands in for the wide shell's sub-page bar, which draws
+                  // what the page docks there.
+                  ListenableBuilder(
+                    listenable: chrome,
+                    builder: (_, _) =>
+                        chrome.trailingFor('/settings') ??
+                        const SizedBox.shrink(),
+                  ),
+                  const Expanded(child: ProjectSettingsScreen(projectId: 'p1')),
+                ],
+              ),
             ),
           ),
         ),
@@ -266,6 +279,19 @@ void main() {
       expect(find.text('Winterfest'), findsWidgets);
       // The save bar still offers the change.
       expect(find.text('projectSettings.saveChanges'), findsOneWidget);
+    });
+
+    testWidgets('the save bar docks up top, not at the bottom', (tester) async {
+      await pump(tester, me: user('lead'));
+      expect(find.text('projectSettings.unsavedChanges'), findsNothing);
+
+      await tester.enterText(find.byType(TextField).first, 'Winterfest');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      final bar = tester.getRect(find.text('projectSettings.unsavedChanges'));
+      final form = tester.getRect(find.byType(GeneralSection));
+      expect(bar.bottom, lessThanOrEqualTo(form.top));
     });
 
     testWidgets('?section= opens that section', (tester) async {

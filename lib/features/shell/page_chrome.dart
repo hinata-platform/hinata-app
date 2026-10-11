@@ -72,6 +72,7 @@ class PageChromeData {
     this.bottom,
     this.bottomHeight = 0,
     this.actions = const [],
+    this.trailing,
     this.contentMax = Breakpoints.readingWidth,
   });
 
@@ -145,6 +146,18 @@ class PageChromeData {
   /// so pages no longer draw their own header/save chrome. Rendered by both the
   /// compact and wide shells (see [PageAction]).
   final List<PageAction> actions;
+
+  /// A widget the wide shell docks at the trailing end of the sub-page bar,
+  /// after [actions]. Wide shell only; the compact bar ignores it.
+  ///
+  /// It is for chrome that is more than a button: the settings pages put their
+  /// "unsaved changes" bar here, because on a wide window the bottom edge is
+  /// far from where anyone is looking and a bar there went unnoticed. The bar
+  /// row is where the eye already is, and docking into it moves no content —
+  /// a bar that slid in above the form would push the field being typed in
+  /// down under the cursor. Compared by identity, so a page should rebuild it
+  /// only when what it shows changes.
+  final Widget? trailing;
 }
 
 /// Carries the chrome published by sub-pages to the shell's top bar.
@@ -189,6 +202,8 @@ class PageChromeController extends ChangeNotifier {
 
   List<PageAction> actionsFor(String location) =>
       _dataFor(location)?.actions ?? const [];
+
+  Widget? trailingFor(String location) => _dataFor(location)?.trailing;
 
   /// Falls back to what the route itself says ([pageContentMax]) while the page
   /// has not published — which is the whole of its first frame, and, for a page
@@ -254,7 +269,8 @@ class PageChromeController extends ChangeNotifier {
       identical(a.bottom, b.bottom) &&
       a.bottomHeight == b.bottomHeight &&
       a.contentMax == b.contentMax &&
-      listEquals(a.actions, b.actions);
+      listEquals(a.actions, b.actions) &&
+      identical(a.trailing, b.trailing);
 }
 
 /// Provides a [PageChromeController] to the shell's top bar (which listens) and
@@ -323,6 +339,7 @@ class PageChrome extends StatefulWidget {
     this.bottom,
     this.bottomHeight = 0,
     this.actions = const [],
+    this.trailing,
     this.contentMax = Breakpoints.readingWidth,
     required this.child,
   });
@@ -345,6 +362,9 @@ class PageChrome extends StatefulWidget {
   /// Trailing primary actions rendered in the shell's glass app bar.
   /// See [PageChromeData.actions].
   final List<PageAction> actions;
+
+  /// Docked at the end of the wide sub-page bar. See [PageChromeData.trailing].
+  final Widget? trailing;
 
   /// The widest this page's body may grow. See [PageChromeData.contentMax].
   final double contentMax;
@@ -394,7 +414,8 @@ class _PageChromeState extends State<PageChrome> {
         !identical(oldWidget.bottom, widget.bottom) ||
         oldWidget.bottomHeight != widget.bottomHeight ||
         oldWidget.contentMax != widget.contentMax ||
-        !listEquals(oldWidget.actions, widget.actions)) {
+        !listEquals(oldWidget.actions, widget.actions) ||
+        !identical(oldWidget.trailing, widget.trailing)) {
       _schedulePublish();
     }
   }
@@ -417,6 +438,7 @@ class _PageChromeState extends State<PageChrome> {
           bottom: widget.bottom,
           bottomHeight: widget.bottomHeight,
           actions: widget.actions,
+          trailing: widget.trailing,
           contentMax: widget.contentMax,
         ),
       );
