@@ -4,7 +4,8 @@ import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_state.dart';
 
 void main() {
-  final start = DateTime.utc(2026, 10, 11, 9);
+  // Relative to now: a fixed day would read as older than a day tomorrow.
+  final start = DateTime.now().toUtc().subtract(const Duration(minutes: 5));
 
   RunningTimer timer({
     TimerMode mode = TimerMode.stopwatch,
@@ -92,8 +93,34 @@ void main() {
       );
     });
 
+    test('a timer older than a day is shown nowhere outside the app', () {
+      expect(
+        deriveTimerSurfaceState(
+          timer(),
+          everything,
+          gated: false,
+          now: start.add(const Duration(hours: 24)),
+        ),
+        TimerSurfaceState.idle,
+      );
+      expect(
+        deriveTimerSurfaceState(
+          timer(),
+          everything,
+          gated: false,
+          now: start.add(const Duration(hours: 23)),
+        ).running,
+        isTrue,
+      );
+    });
+
     test('a local copy is valid for a day at most', () {
-      final state = deriveTimerSurfaceState(timer(), everything, gated: false);
+      final state = deriveTimerSurfaceState(
+        timer(),
+        everything,
+        gated: false,
+        now: start,
+      );
 
       expect(state.validUntil, start.add(const Duration(hours: 24)));
     });

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/blocs/paged_cubit.dart';
+import '../../../core/blocs/time_policy_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/billing_models.dart';
 import '../../../core/repositories/billing_repository.dart';
@@ -144,14 +145,17 @@ class _BillingReportTabState extends State<BillingReportTab> {
     if (picked == null || picked == _kind) return;
     setState(() {
       _kind = picked;
-      final allowed = BillingGroupBy.forKind(
-        picked,
-        people: widget.access.admin,
-      );
+      final allowed = BillingGroupBy.forKind(picked, people: _seesPeople);
       if (!allowed.contains(_groupBy)) _groupBy = BillingGroupBy.project;
     });
     _reload();
   }
+
+  /// Whether this reader may group by person or team: administrators always,
+  /// leads only while the organization lets them see their members' entries.
+  bool get _seesPeople =>
+      widget.access.admin ||
+      context.read<TimePolicyCubit>().state.leadsSeeMemberEntries;
 
   Future<void> _pickGroup(Rect? anchor) async {
     final picked = await showGlassOptions<BillingGroupBy>(
@@ -159,10 +163,7 @@ class _BillingReportTabState extends State<BillingReportTab> {
       title: context.t('time.reports.groupBy'),
       anchorRect: anchor,
       options: [
-        for (final group in BillingGroupBy.forKind(
-          _kind,
-          people: widget.access.admin,
-        ))
+        for (final group in BillingGroupBy.forKind(_kind, people: _seesPeople))
           (
             value: group,
             child: Text(context.t('billing.report.group.${group.name}')),

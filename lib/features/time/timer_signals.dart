@@ -14,11 +14,10 @@ import '../sprint/modals/glass_modal.dart'
 
 /// Says, once, that an interval has ended.
 ///
-/// Three ways, because one is not enough and none of them is a notification:
-/// a toast where the app is, a short chime if the person asked for one, and the
-/// window title on the platforms that have one. The system notification and
-/// the title belong to [TimerSurfacesHost] (HIN-100), which listens to the same
-/// signal: it asks the person first, and it is the one writer of the title.
+/// Two ways inside the app: a toast where the app is, and a short chime if the
+/// person asked for one. The system notification and the window title belong to
+/// [TimerSurfacesHost] (HIN-100), which listens to the same signal: it asks the
+/// person first, and it is the one writer of the title.
 ///
 /// Mounted above the router rather than in the shell, because the focus screen
 /// is a route outside the shell and the whole point of it is being the place

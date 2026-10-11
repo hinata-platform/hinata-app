@@ -152,10 +152,18 @@ TimerSurfaceState deriveTimerSurfaceState(
   TimerSurfacePrefs prefs, {
   required bool gated,
   TimerSurfaceTexts texts = TimerSurfaceTexts.empty,
+  DateTime? now,
 }) {
   if (timer == null || gated) return TimerSurfaceState.idle;
-  final on = prefs.consented;
   final startedAt = timer.startedAt.toUtc();
+  // A timer older than a day is no longer shown anywhere outside the app,
+  // whatever the cached copy says; the server cuts such a timer anyway.
+  if (!startedAt
+      .add(timerSurfaceLifetime)
+      .isAfter((now ?? DateTime.now()).toUtc())) {
+    return TimerSurfaceState.idle;
+  }
+  final on = prefs.consented;
   final target = timer.target;
   final description = timer.description?.trim();
   final hasDescription = description != null && description.isNotEmpty;

@@ -85,9 +85,16 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     _enqueue(() => _coordinator.init(this));
   }
 
-  /// Clears every surface now. They come back with the next change of the
-  /// timer, which is what the person expects after deleting a copy of it.
-  void _clearNow() => _enqueue(_coordinator.clearAll);
+  /// Clears every surface now. They stay cleared, also after the app comes
+  /// back to the front, until the timer itself changes: that is what the
+  /// person expects after deleting a copy of it.
+  void _clearNow() {
+    _cleared = _derive();
+    _enqueue(_coordinator.clearAll);
+  }
+
+  /// The state "Delete now" took down; not drawn again while it holds.
+  TimerSurfaceState? _cleared;
 
   @override
   void didChangeDependencies() {
@@ -169,6 +176,8 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
       return;
     }
     final state = _derive();
+    if (state == _cleared) return;
+    _cleared = null;
     _enqueue(() => _coordinator.apply(state));
   }
 
@@ -180,9 +189,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     final texts = _texts();
     for (final surface in _coordinator.surfaces) {
       if (surface is! LocalNotificationsSurface) continue;
-      _enqueue(() async {
-        if (await surface.launchedFromNotification(texts)) openFocus();
-      });
+      _enqueue(() => surface.handleLaunch(texts));
     }
   }
 
@@ -204,8 +211,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     if (before != null || now == null || now.target == null || _gated) return;
     final prefs = context.read<TimerSurfacePrefsCubit>();
     if (prefs.state.introSeen || prefs.state.consented) return;
-    final capabilities = capabilitiesForPlatform(SurfacePlatform.current);
-    if (!capabilities.phaseEndNotification) return;
+    if (!_coordinator.capabilities.phaseEndNotification) return;
     final navigatorContext = rootNavigatorKey.currentContext;
     if (navigatorContext == null || !navigatorContext.mounted) return;
     unawaited(showTimerSurfacesIntro(navigatorContext, prefs: prefs));
@@ -213,9 +219,16 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
 
   // ── TimerSurfaceHost ─────────────────────────────────────────────────
 
+  /// From a notification that launched the app the timer may not be read yet;
+  /// then the focus screen opens, where the person stops it themselves.
   @override
   Future<void> end() async {
-    await context.read<TimerCubit>().end();
+    final timer = context.read<TimerCubit>();
+    if (timer.state.timer == null) {
+      openFocus();
+      return;
+    }
+    await timer.end();
   }
 
   @override
