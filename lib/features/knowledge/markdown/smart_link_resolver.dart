@@ -53,8 +53,7 @@ class SmartDoc {
     this.spaceName,
     this.spaceColor,
     this.authorName,
-    this.updated,
-    this.reads,
+    this.updatedAt,
     this.excerpt = '',
   });
 
@@ -64,8 +63,7 @@ class SmartDoc {
   final String? spaceName;
   final Color? spaceColor;
   final String? authorName;
-  final String? updated; // raw label; the preview appends " ago"
-  final int? reads;
+  final DateTime? updatedAt;
   final String excerpt;
 }
 

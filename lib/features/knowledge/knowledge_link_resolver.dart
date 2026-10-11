@@ -171,8 +171,7 @@ SmartDoc smartDocFromArticle(KnowledgeRepository repo, KbArticle a) {
     spaceName: sp?.name,
     spaceColor: sp == null ? null : KbTokens.spaceChipText(sp.hue),
     authorName: author?.name,
-    updated: a.updated,
-    reads: a.reads,
+    updatedAt: a.updatedAt,
     excerpt: kbExcerpt(a.body),
   );
 }

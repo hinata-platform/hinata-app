@@ -1,5 +1,7 @@
 import '../api/api_client.dart';
+import '../blocs/paged_cubit.dart' show PageResult;
 import '../models/content_models.dart';
+import '../util/dates.dart';
 
 /// Knowledge-base articles and spaces (the raw REST surface; the feature-level
 /// cache in `features/knowledge/data` builds on top of this).
@@ -175,4 +177,91 @@ class ArticleRepository {
 
   Future<void> deleteSpace(String id) async =>
       _api.delete('/api/v1/spaces/$id');
+
+  /// Renames or redresses a space. A new name is carried onto every page in
+  /// it by the server.
+  Future<Space> updateSpace(
+    String id, {
+    required String name,
+    String? icon,
+    int? hue,
+    String? description,
+  }) async {
+    final data = await _api.patch(
+      '/api/v1/spaces/$id',
+      body: {
+        'name': name,
+        'icon': ?icon,
+        'hue': ?hue,
+        'description': ?description,
+      },
+    );
+    return Space.fromJson(data as Map<String, dynamic>);
+  }
+
+  /// Puts sibling pages in the order of [ids].
+  Future<void> orderArticles(List<String> ids) async =>
+      _api.put('/api/v1/articles/order', body: {'ids': ids});
+
+  /// The page's versions, newest first.
+  Future<PageResult<ArticleVersion>> versions(
+    String id, {
+    int page = 0,
+    int size = 20,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/articles/$id/versions',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: [
+        for (final v in (data['content'] as List<dynamic>?) ?? const [])
+          ArticleVersion.fromJson(v as Map<String, dynamic>),
+      ],
+      total: (data['totalElements'] as num?)?.toInt() ?? 0,
+    );
+  }
+
+  /// One version with its document.
+  Future<ArticleVersion> version(String id, int number) async =>
+      ArticleVersion.fromJson(
+        await _api.get('/api/v1/articles/$id/versions/$number')
+            as Map<String, dynamic>,
+      );
+
+  /// Brings back the title and text of version [number] as the newest one.
+  Future<Article> restoreVersion(String id, int number) async =>
+      Article.fromJson(
+        await _api.post('/api/v1/articles/$id/versions/$number/restore')
+            as Map<String, dynamic>,
+      );
+
+  /// Everybody who saved a version of the page, most recent first.
+  Future<List<String>> contributors(String id) async =>
+      ((await _api.get('/api/v1/articles/$id/contributors')) as List<dynamic>)
+          .cast<String>();
+
+  /// The signed-in person's favourites and recently opened pages.
+  Future<ArticleMarks> marks() async {
+    final data =
+        await _api.get('/api/v1/articles/marks') as Map<String, dynamic>;
+    List<ArticleMark> read(Object? rows) => [
+      for (final r in (rows as List<dynamic>?) ?? const [])
+        (
+          id: (r as Map<String, dynamic>)['id'] as String,
+          at: parseInstant(r['at']),
+        ),
+    ];
+    return (starred: read(data['starred']), recent: read(data['recent']));
+  }
+
+  Future<void> star(String id, {required bool starred}) async => starred
+      ? _api.put('/api/v1/articles/$id/star')
+      : _api.delete('/api/v1/articles/$id/star');
+
+  /// Records that the signed-in person opened the page.
+  Future<void> viewed(String id) async =>
+      _api.post('/api/v1/articles/$id/view');
 }

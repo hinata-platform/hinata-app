@@ -1957,7 +1957,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     if (widget.header != null) {
       Navigator.of(context, rootNavigator: true).maybePop();
     }
-    router.push('/knowledge/$articleId');
+    router.go(KnowledgePaths.article(articleId));
   }
 
   /// "Documented in": KB articles that reference this issue, or null when none.
