@@ -37,6 +37,10 @@ import 'core/blocs/time_preferences_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/time/time_shortcuts.dart';
 import 'features/time/timer_signals.dart';
+import 'features/time/timer_surfaces_host.dart';
+import 'core/timer_surfaces/time_deep_link.dart';
+import 'core/timer_surfaces/timer_surface_clear_signal.dart';
+import 'core/timer_surfaces/timer_surface_prefs.dart';
 import 'features/sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToastIn;
 
@@ -104,6 +108,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// screen then, and providing one unconditionally is what lets the shell and
   /// the page read it without a null check that would be wrong exactly once.
   late TimerCubit _timer;
+
+  /// The person's switches for the timer outside the app, keyed like the timer
+  /// itself. Rebuilt with it, but never cleared: they are this device's
+  /// settings for that person, not data of the session.
+  late TimerSurfacePrefsCubit _surfacePrefs;
+
+  /// "Delete local copies now", from the settings to [TimerSurfacesHost].
+  final _surfaceClear = TimerSurfaceClearSignal();
 
   /// One registry for the whole application, so a shortcut works whatever is on
   /// screen — including the focus route, which is outside the shell.
@@ -245,6 +257,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // Before the first _syncAccountStream below, which replaces it as soon as
     // there is an account to key it to. There is always one to provide.
     _timer = TimerCubit(domains.time, storageId: 'anonymous');
+    _surfacePrefs = TimerSurfacePrefsCubit(storageId: 'surfaces#anonymous');
     // Record the server the boot-time AuthChecked above runs against, so the
     // listener below doesn't redundantly re-check it on the first `ready`.
     _authServer = widget.storage.serverUrl;
@@ -318,6 +331,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     if (identity == _timerIdentity) return;
     _timerIdentity = identity;
     final previous = _timer;
+    final previousPrefs = _surfacePrefs;
     // Reached only when the identity actually changed, which the boot-time
     // call cannot do: it runs with no account, and the cubit built above is
     // already the one for "no account".
@@ -326,7 +340,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         widget.repositories.time,
         storageId: identity ?? 'anonymous',
       );
+      _surfacePrefs = TimerSurfacePrefsCubit(
+        storageId: 'surfaces#${identity ?? 'anonymous'}',
+      );
     });
+    unawaited(previousPrefs.close());
     // The session that just ended leaves a persisted timer behind, and that
     // timer names what the person was working on in up to two thousand
     // characters of free text. Every path here matters, not only the sign-out
@@ -519,6 +537,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           _openTokenFlow(uri, '/reset-password');
         case 'verify-email':
           _openTokenFlow(uri, '/verify-email');
+        case 'time':
+          // From a notification or another app: a route, never an action.
+          final route = timeDeepLinkRoute(uri);
+          if (route != null) _router.go(route);
       }
       return;
     }
@@ -700,6 +722,8 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _configSub?.cancel();
     _accountEvents.stop();
     unawaited(_timer.close());
+    unawaited(_surfacePrefs.close());
+    _surfaceClear.dispose();
     _router.dispose();
     _appConfig.close();
     _auth.close();
@@ -753,6 +777,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         ),
         RepositoryProvider<TeamRepository>.value(value: domains.teams),
         RepositoryProvider<GitRepository>.value(value: domains.git),
+        RepositoryProvider<TimerSurfaceClearSignal>.value(value: _surfaceClear),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -761,6 +786,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _locale),
           BlocProvider.value(value: _orgLogo),
           BlocProvider.value(value: _timer),
+          BlocProvider.value(value: _surfacePrefs),
           BlocProvider.value(value: _timePreferences),
           BlocProvider.value(value: _timePolicy),
           BlocProvider.value(value: _myAbsences),
@@ -835,12 +861,19 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                         registry: _shortcuts,
                         navigatorKey: rootNavigatorKey,
                         child: _SignedInShortcuts(
-                          child: TimerSignals(
+                          // Beside the signals, above the router: the surfaces
+                          // outside the app follow the same timer and have to
+                          // be cleared on frames no route is on screen for.
+                          child: TimerSurfacesHost(
                             appTitle:
                                 (organization == null || organization.isEmpty)
                                 ? 'Hinata'
                                 : organization,
-                            child: child ?? const SizedBox.shrink(),
+                            openRoute: _router.go,
+                            clearSignal: _surfaceClear,
+                            child: TimerSignals(
+                              child: child ?? const SizedBox.shrink(),
+                            ),
                           ),
                         ),
                       ),

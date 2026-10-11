@@ -1,0 +1,62 @@
+import 'package:flutter/foundation.dart';
+
+import 'timer_surface.dart';
+
+/// The one place that decides which platform the timer surfaces are on.
+///
+/// `kIsWeb` first: on the web [defaultTargetPlatform] reports the browser's
+/// operating system, and a Safari on a Mac must not get the macOS surfaces.
+enum SurfacePlatform {
+  web,
+  android,
+  ios,
+  macos,
+  windows,
+  linux,
+  other;
+
+  static SurfacePlatform get current {
+    if (kIsWeb) return SurfacePlatform.web;
+    return switch (defaultTargetPlatform) {
+      TargetPlatform.android => SurfacePlatform.android,
+      TargetPlatform.iOS => SurfacePlatform.ios,
+      TargetPlatform.macOS => SurfacePlatform.macos,
+      TargetPlatform.windows => SurfacePlatform.windows,
+      TargetPlatform.linux => SurfacePlatform.linux,
+      TargetPlatform.fuchsia => SurfacePlatform.other,
+    };
+  }
+}
+
+/// What the surfaces of [platform] can do, without asking a plugin.
+TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
+    switch (platform) {
+      SurfacePlatform.android => const TimerSurfaceCapabilities(
+        phaseEndNotification: true,
+        schedulesAhead: true,
+        runningSurface: true,
+        lockScreen: true,
+        exactAlarms: true,
+      ),
+      SurfacePlatform.ios => const TimerSurfaceCapabilities(
+        phaseEndNotification: true,
+        schedulesAhead: true,
+      ),
+      // A desktop window title needs a plugin this app does not carry; the
+      // menu bar and the tray take that place in stage 19.
+      SurfacePlatform.macos ||
+      SurfacePlatform.windows => const TimerSurfaceCapabilities(
+        phaseEndNotification: true,
+        schedulesAhead: true,
+      ),
+      SurfacePlatform.linux => const TimerSurfaceCapabilities(
+        phaseEndNotification: true,
+      ),
+      // On the web the running timer is the app badge of an installed app.
+      SurfacePlatform.web => const TimerSurfaceCapabilities(
+        phaseEndNotification: true,
+        runningSurface: true,
+        titleClock: true,
+      ),
+      SurfacePlatform.other => TimerSurfaceCapabilities.none,
+    };

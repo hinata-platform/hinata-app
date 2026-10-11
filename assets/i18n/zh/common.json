@@ -1595,6 +1595,38 @@
       "mentionHint": "输入 + 可与项目中的人共享此记录。",
       "mentionNeedsProject": "请先选择项目，然后才能用 + 提及其中的人。",
       "mentioned": "将共享给"
+    },
+    "surface": {
+      "workOver": "你的间隔结束了。",
+      "running": "计时器运行中",
+      "onBreak": "休息",
+      "intro": {
+        "title": "应用外的计时器",
+        "subtitle": "选择此设备可以显示的内容。",
+        "endClosed": "间隔结束时，即使应用已关闭，设备也会提醒你。",
+        "endBackground": "间隔结束时，只要应用在后台运行，你就会收到通知。",
+        "running": "计时器运行时，会有一条安静的通知显示它。",
+        "runningLocked": "计时器运行时，会有一条安静的通知显示它。锁屏上只显示时间。",
+        "private": "文字保持通用，并会自动消失。不会发送任何内容到服务器或你的雇主。",
+        "switchOn": "开启",
+        "later": "稍后",
+        "denied": "通知已被阻止。你可以在系统设置中允许。"
+      },
+      "device": {
+        "heading": "在此设备上",
+        "off": "应用外不会显示你的计时器。",
+        "phaseEnd": "间隔结束时的通知。",
+        "running": "计时器运行时的安静通知。",
+        "runningWeb": "计时器运行时应用图标上的标记。",
+        "titleClock": "标签页标题中正在计的时间。",
+        "detailsOn": "详情已开启，描述可能会显示在应用外。",
+        "detailsOff": "详情已关闭。在应用外你只能看到时间。",
+        "copy": "计时器运行时，此设备会保存它的开始和结束时间。",
+        "copyDetails": "计时器运行时，此设备会保存它的开始时间、结束时间和描述。",
+        "vanish": "这些副本会在 24 小时后以及退出登录时消失。",
+        "stored": "你的开关只保存在此设备上。",
+        "settings": "在设置中更改"
+      }
     }
   },
   "availability": {
@@ -4179,6 +4211,37 @@
       "preferences": "偏好设置",
       "privacy": "隐私",
       "administration": "管理"
+    },
+    "timerSurfaces": {
+      "title": "应用外的计时器",
+      "off": "暂未开启",
+      "offHint": "应用外不会显示你的计时器。",
+      "setUp": "设置",
+      "phaseEnd": "间隔结束",
+      "phaseEndHint": "倒计时或番茄钟间隔结束时发出通知。",
+      "denied": "此应用的通知已被阻止。你可以在系统设置中允许。",
+      "openSettings": "打开设置",
+      "exact": "精确时间",
+      "exactOn": "通知准时到达。",
+      "exactOff": "不精确，有几分钟的余量。",
+      "exactAllow": "允许",
+      "running": "计时器运行时",
+      "runningHint": "一条安静的通知显示正在运行的计时器。",
+      "runningWeb": "应用图标标记",
+      "runningWebHint": "计时器运行时，已安装的应用会在图标上做标记。",
+      "details": "菜单和提示中的详情",
+      "detailsHint": "除了时间也显示描述。",
+      "lockDetails": "锁屏上的详情",
+      "lockDetailsHint": "拿着你设备的人都能读到描述。",
+      "titleClock": "标签页标题中的时间",
+      "titleClockHint": "浏览器标签页显示正在计的时间。",
+      "clear": "本地副本",
+      "clearHint": "立即清除计时器在此设备上留下的内容。",
+      "clearButton": "立即删除",
+      "cleared": "本地副本已删除。",
+      "turnOff": "全部关闭",
+      "turnOffHint": "应用外将不再显示任何内容。之后可以重新设置。",
+      "turnOffButton": "关闭"
     }
   },
   "twofa": {

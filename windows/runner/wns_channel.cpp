@@ -6,11 +6,16 @@
 #include <winrt/Microsoft.Windows.AppLifecycle.h>
 #include <winrt/Microsoft.Windows.AppNotifications.h>
 #include <winrt/Microsoft.Windows.PushNotifications.h>
+#include <winrt/Windows.Data.Xml.Dom.h>
 #include <winrt/Windows.Foundation.Collections.h>
 #include <winrt/Windows.Foundation.h>
+#include <winrt/Windows.UI.Notifications.h>
 
+#include <chrono>
+#include <cstdint>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <string>
 #include <utility>
@@ -155,6 +160,192 @@ void RegisterNotificationActivation() {
   }
 }
 
+// --- Local toasts (timer interval end, HIN-100) ------------------------------
+//
+// Scheduled through the classic Windows.UI.Notifications API, because the App
+// SDK's AppNotificationManager can show a toast but not schedule one. Both
+// post under the same package identity, and a click on either kind goes to the
+// toast activator declared in the package manifest — so it surfaces in
+// NotificationInvoked / ConsumeLaunchActivation above, with the toast's
+// `launch` attribute as Argument(), and reaches Dart as onDeepLink like a push.
+//
+// CreateToastNotifier() without an AUMID needs package identity: a plain
+// `flutter run` throws here, and the methods report false instead.
+
+namespace toast = winrt::Windows::UI::Notifications;
+
+// Every timer toast lives in one group, so a tag only has to be unique within
+// the timer's own notifications.
+constexpr wchar_t kToastGroup[] = L"timer";
+
+struct ToastRequest {
+  winrt::hstring tag;
+  winrt::hstring title;
+  winrt::hstring body;
+  winrt::hstring launch;
+  int64_t at_ms = 0;  // epoch milliseconds, UTC; 0 = show now
+  int64_t expire_minutes = 10;
+};
+
+const EncodableValue* Lookup(const flutter::EncodableMap& map, const char* key) {
+  auto it = map.find(EncodableValue(std::string(key)));
+  return it == map.end() ? nullptr : &it->second;
+}
+
+std::string StringArg(const flutter::EncodableMap& map, const char* key) {
+  const EncodableValue* value = Lookup(map, key);
+  if (value == nullptr) return {};
+  if (const auto* text = std::get_if<std::string>(value)) return *text;
+  return {};
+}
+
+std::optional<int64_t> IntArg(const flutter::EncodableMap& map,
+                              const char* key) {
+  const EncodableValue* value = Lookup(map, key);
+  if (value == nullptr) return std::nullopt;
+  // Dart ints arrive as int32 or int64 depending on magnitude.
+  if (const auto* small = std::get_if<int32_t>(value)) return *small;
+  if (const auto* large = std::get_if<int64_t>(value)) return *large;
+  return std::nullopt;
+}
+
+std::optional<ToastRequest> ParseToastRequest(const EncodableValue* arguments,
+                                              bool needs_time) {
+  if (arguments == nullptr) return std::nullopt;
+  const auto* map = std::get_if<flutter::EncodableMap>(arguments);
+  if (map == nullptr) return std::nullopt;
+  ToastRequest request;
+  std::string tag = StringArg(*map, "tag");
+  // The platform caps tags at 64 characters.
+  if (tag.empty() || tag.size() > 64) return std::nullopt;
+  request.tag = winrt::to_hstring(tag);
+  request.title = winrt::to_hstring(StringArg(*map, "title"));
+  request.body = winrt::to_hstring(StringArg(*map, "body"));
+  request.launch = winrt::to_hstring(StringArg(*map, "launch"));
+  if (needs_time) {
+    auto at = IntArg(*map, "at");
+    if (!at || *at <= 0) return std::nullopt;
+    request.at_ms = *at;
+  }
+  if (auto expire = IntArg(*map, "expireMinutes"); expire && *expire > 0) {
+    request.expire_minutes = *expire;
+  }
+  return request;
+}
+
+// WinRT DateTime counts 100 ns ticks since 1601-01-01 (FILETIME epoch).
+winrt::Windows::Foundation::DateTime FromEpochMs(int64_t epoch_ms) {
+  constexpr int64_t kTicksPerMs = 10'000;
+  constexpr int64_t kUnixEpochInTicks = 116'444'736'000'000'000;
+  return winrt::Windows::Foundation::DateTime{
+      winrt::Windows::Foundation::TimeSpan{kUnixEpochInTicks +
+                                           epoch_ms * kTicksPerMs}};
+}
+
+int64_t NowEpochMs() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
+}
+
+std::wstring XmlEscape(const winrt::hstring& value) {
+  std::wstring out;
+  out.reserve(value.size());
+  for (wchar_t c : value) {
+    switch (c) {
+      case L'&': out += L"&amp;"; break;
+      case L'<': out += L"&lt;"; break;
+      case L'>': out += L"&gt;"; break;
+      case L'"': out += L"&quot;"; break;
+      case L'\'': out += L"&apos;"; break;
+      default: out += c;
+    }
+  }
+  return out;
+}
+
+winrt::Windows::Data::Xml::Dom::XmlDocument BuildToastXml(
+    const ToastRequest& request) {
+  std::wstring xml = L"<toast launch=\"" + XmlEscape(request.launch) +
+                     L"\" activationType=\"foreground\"><visual>"
+                     L"<binding template=\"ToastGeneric\"><text>" +
+                     XmlEscape(request.title) + L"</text><text>" +
+                     XmlEscape(request.body) +
+                     L"</text></binding></visual></toast>";
+  winrt::Windows::Data::Xml::Dom::XmlDocument document;
+  document.LoadXml(winrt::hstring(xml));
+  return document;
+}
+
+// Removes pending scheduled toasts with |tag| from the timer group.
+void RemoveScheduled(const toast::ToastNotifier& notifier,
+                     const winrt::hstring& tag) {
+  for (auto const& scheduled : notifier.GetScheduledToastNotifications()) {
+    if (scheduled.Tag() == tag && scheduled.Group() == kToastGroup) {
+      notifier.RemoveFromSchedule(scheduled);
+    }
+  }
+}
+
+bool ShowToastNow(const ToastRequest& request) {
+  try {
+    auto notifier = toast::ToastNotificationManager::CreateToastNotifier();
+    RemoveScheduled(notifier, request.tag);
+    toast::ToastNotification notification(BuildToastXml(request));
+    notification.Tag(request.tag);
+    notification.Group(kToastGroup);
+    notification.ExpirationTime(
+        winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::DateTime>(
+            FromEpochMs(NowEpochMs() + request.expire_minutes * 60'000)));
+    // Same tag and group replace a toast that is already on screen.
+    notifier.Show(notification);
+    return true;
+  } catch (winrt::hresult_error const&) {
+    return false;
+  } catch (...) {
+    return false;
+  }
+}
+
+bool ScheduleToast(const ToastRequest& request) {
+  int64_t now = NowEpochMs();
+  int64_t expires = request.at_ms + request.expire_minutes * 60'000;
+  if (expires <= now) return false;
+  // AddToSchedule rejects a delivery time that is not in the future. An
+  // interval that already ended (the app was suspended, the clock jumped) is
+  // still worth telling about while the toast would not have expired yet.
+  if (request.at_ms <= now + 1'000) return ShowToastNow(request);
+  try {
+    auto notifier = toast::ToastNotificationManager::CreateToastNotifier();
+    RemoveScheduled(notifier, request.tag);
+    toast::ScheduledToastNotification scheduled(BuildToastXml(request),
+                                                FromEpochMs(request.at_ms));
+    scheduled.Tag(request.tag);
+    scheduled.Group(kToastGroup);
+    scheduled.ExpirationTime(
+        winrt::Windows::Foundation::IReference<winrt::Windows::Foundation::DateTime>(
+            FromEpochMs(expires)));
+    notifier.AddToSchedule(scheduled);
+    return true;
+  } catch (winrt::hresult_error const&) {
+    return false;
+  } catch (...) {
+    return false;
+  }
+}
+
+void CancelToast(const winrt::hstring& tag) {
+  try {
+    auto notifier = toast::ToastNotificationManager::CreateToastNotifier();
+    RemoveScheduled(notifier, tag);
+  } catch (...) {
+  }
+  try {
+    toast::ToastNotificationManager::History().Remove(tag, kToastGroup);
+  } catch (...) {
+  }
+}
+
 void RequestChannel(std::unique_ptr<MethodResult<EncodableValue>> result) {
   auto shared = std::make_shared<std::unique_ptr<MethodResult<EncodableValue>>>(
       std::move(result));
@@ -259,6 +450,25 @@ void RegisterWnsChannel(flutter::FlutterEngine* engine, HWND window) {
           } else {
             result->Success(EncodableValue(link));
           }
+          return;
+        }
+        if (call.method_name() == "scheduleToast" ||
+            call.method_name() == "showToast") {
+          bool schedule = call.method_name() == "scheduleToast";
+          auto request = ParseToastRequest(call.arguments(), schedule);
+          bool ok = request.has_value() &&
+                    (schedule ? ScheduleToast(*request) : ShowToastNow(*request));
+          result->Success(EncodableValue(ok));
+          return;
+        }
+        if (call.method_name() == "cancelToast") {
+          const auto* map =
+              call.arguments() == nullptr
+                  ? nullptr
+                  : std::get_if<flutter::EncodableMap>(call.arguments());
+          std::string tag = map == nullptr ? std::string() : StringArg(*map, "tag");
+          if (!tag.empty()) CancelToast(winrt::to_hstring(tag));
+          result->Success();
           return;
         }
         result->NotImplemented();

@@ -992,6 +992,18 @@ double chevronTurn(BuildContext context) =>
 /// The one duration formatter in the app: every board card, timeline row,
 /// timesheet cell and report line goes through here, which is what keeps them
 /// from drifting apart. Server-rendered documents format their own.
+/// A running clock: `h:mm:ss` above an hour, `m:ss` below it.
+///
+/// A leading `0:` for the first hour is three characters that say nothing, and
+/// on the compact bar they come out of the room the description needs. The
+/// timer bar, the focus screen and the timer outside the app all read this.
+String fmtClock(Duration d) {
+  final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
+  if (d.inHours == 0) return '${d.inMinutes}:$seconds';
+  final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
+  return '${d.inHours}:$minutes:$seconds';
+}
+
 String fmtDuration(BuildContext context, int? minutes) {
   if (minutes == null) return context.t('time.fmt.none');
   final h = minutes ~/ 60;

@@ -115,7 +115,9 @@ description: |
 
   Some capabilities differ from the other desktops. Push notifications are not
   available — Firebase has no Linux client, so notifications arrive by e-mail
-  and in the app's own notification centre. Capturing a photo or video from a
+  and in the app's own notification centre. The time tracker does show a
+  desktop notification when a focus or break interval ends, while the app is
+  running. Capturing a photo or video from a
   webcam is not offered; existing files attach as usual. Downloaded
   attachments land in your ~/Downloads folder, the same place every other
   packaging of this app puts them.
@@ -307,11 +309,13 @@ apps:
       #     needed if that turns out not to hold.
       #   browser-support — opening a link is url_launcher handing a URI to
       #     GTK, which routes it to the portal; the app never drives a browser.
-      #   any notification interface — the Linux build has no notification path
-      #     at all (firebase_messaging has no Linux implementation and no
-      #     local-notification plugin is used), so a permission for it would
-      #     sit in the app's list doing nothing. The same call the Flatpak
-      #     manifest makes about --talk-name=org.freedesktop.Notifications.
+      #   a separate notification interface — the one notification the Linux
+      #     build shows is the end of a timer interval: flutter_local_notifications
+      #     sends it as a desktop notification over the session bus to
+      #     org.freedesktop.Notifications (Notify, plus the ActionInvoked and
+      #     NotificationClosed signals back). The `desktop` plug above already
+      #     permits exactly that, so nothing extra is declared. Push stays
+      #     unavailable: firebase_messaging has no Linux implementation.
 
     slots:
       - dbus-hinata

@@ -1,8 +1,6 @@
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:just_audio/just_audio.dart';
 
@@ -18,21 +16,15 @@ import '../sprint/modals/glass_modal.dart'
 ///
 /// Three ways, because one is not enough and none of them is a notification:
 /// a toast where the app is, a short chime if the person asked for one, and the
-/// window title on the platforms that have one. Deliberately *not* a system
-/// notification — that needs a plugin the project does not carry, and a
-/// scheduler that would keep telling somebody about a timer after they closed
-/// the app is a different feature with a different consent question (stage 11).
+/// window title on the platforms that have one. The system notification and
+/// the title belong to [TimerSurfacesHost] (HIN-100), which listens to the same
+/// signal: it asks the person first, and it is the one writer of the title.
 ///
 /// Mounted above the router rather than in the shell, because the focus screen
 /// is a route outside the shell and the whole point of it is being the place
 /// where intervals end.
 class TimerSignals extends StatefulWidget {
-  const TimerSignals({super.key, required this.appTitle, required this.child});
-
-  /// What the window title goes back to after a flash. Handed in rather than
-  /// hard-coded: a self-hosted instance names itself, and that name must
-  /// survive.
-  final String appTitle;
+  const TimerSignals({super.key, required this.child});
 
   final Widget child;
 
@@ -45,7 +37,6 @@ class _TimerSignalsState extends State<TimerSignals> {
   static const String _chime = 'assets/sounds/interval_end.wav';
 
   AudioPlayer? _player;
-  Timer? _titleReset;
 
   /// How many times playing the chime has failed.
   ///
@@ -60,7 +51,6 @@ class _TimerSignalsState extends State<TimerSignals> {
 
   @override
   void dispose() {
-    _titleReset?.cancel();
     unawaited(_player?.dispose());
     super.dispose();
   }
@@ -138,12 +128,12 @@ class _TimerSignalsState extends State<TimerSignals> {
     _sound(context);
   }
 
-  /// The two halves that are not the toast.
+  /// The chime, if the person asked for one. The title flash is the title
+  /// surface's (see [TimerSurfacesHost]).
   void _sound(BuildContext context) {
     if (context.read<TimePreferencesCubit>().state.sound) {
       unawaited(_chimeOnce());
     }
-    _flashTitle(context);
   }
 
   /// What the person is told. It names the interval that *ended*, and for a
@@ -175,42 +165,6 @@ class _TimerSignalsState extends State<TimerSignals> {
     } catch (_) {
       // Silence is an acceptable outcome; the toast already said it.
       _chimeFailures++;
-    }
-  }
-
-  /// Marks the window title for a moment.
-  ///
-  /// For the person who alt-tabbed away: the browser tab and the task switcher
-  /// are the only place the app can reach without a notification permission.
-  /// It reverts on its own, because a title that stayed would be lying by the
-  /// time they came back.
-  ///
-  /// Deliberately *neutral* — "an interval ended", never which one. A browser
-  /// tab is read by whoever is looking at the screen, and during a screen share
-  /// "your break is over" tells a room full of colleagues that this person is
-  /// on a break. That is the one thing the module is built not to publish
-  /// (HIN-60 R7). What ended is in the toast, on their own screen.
-  ///
-  /// Platform-dependent by nature — the web sets the document title, Android the
-  /// task-switcher label, and the desktop embedders ignore it. That is why it is
-  /// an *addition* to the toast rather than a replacement for it.
-  void _flashTitle(BuildContext context) {
-    if (defaultTargetPlatform == TargetPlatform.iOS) return;
-    _titleReset?.cancel();
-    _setTitle('${context.t('time.signal.titleFlash')} · ${widget.appTitle}');
-    _titleReset = Timer(const Duration(seconds: 20), () => _setTitle(null));
-  }
-
-  void _setTitle(String? label) {
-    try {
-      SystemChrome.setApplicationSwitcherDescription(
-        ApplicationSwitcherDescription(
-          label: label ?? widget.appTitle,
-          primaryColor: 0xFF1B1A33,
-        ),
-      );
-    } catch (_) {
-      // A platform that does not implement the channel; nothing is lost.
     }
   }
 }
