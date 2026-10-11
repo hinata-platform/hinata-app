@@ -109,17 +109,25 @@ class _FilterBar extends StatelessWidget {
     }
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: gutter),
-      child: Row(
-        children: [
-          SizedBox(width: 320, child: search),
-          const SizedBox(width: 12),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: chipRow,
+      // The search keeps 320 where there is room for it and half the row
+      // where there is not: beside the organisation's menu on a mid-sized
+      // window the column is narrower than a fixed 320 plus the gap.
+      child: LayoutBuilder(
+        builder: (context, constraints) => Row(
+          children: [
+            SizedBox(
+              width: math.min(320, constraints.maxWidth / 2),
+              child: search,
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: chipRow,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

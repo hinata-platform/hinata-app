@@ -295,150 +295,167 @@ class _NavRail extends StatelessWidget {
             child: HoneycombBackground(),
           ),
           Positioned.fill(
-            child: SafeArea(
-              child: Column(
-                // Centre every item on the rail's vertical axis when collapsed;
-                // left-align them in the expanded view.
-                crossAxisAlignment: collapsed
-                    ? CrossAxisAlignment.center
-                    : CrossAxisAlignment.start,
-                children: [
-                  // Scrollable nav section so short viewports never overflow the
-                  // rail; the footer (toggle + account) below stays pinned.
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        crossAxisAlignment: collapsed
-                            ? CrossAxisAlignment.center
-                            : CrossAxisAlignment.start,
-                        children: [
-                          // Brand now lives in the floating topbar; the rail opens
-                          // straight into its actions.
-                          const SizedBox(height: 16),
+            // The items follow the width the rail actually has, not the one it
+            // is animating towards: expanding shows the labels only once the
+            // rail is wide enough for them, instead of laying a 244-point row
+            // into a 76-point rail for the length of the animation.
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final collapsed =
+                    this.collapsed || constraints.maxWidth < width - 4;
+                return SafeArea(
+                  child: Column(
+                    // Centre every item on the rail's vertical axis when collapsed;
+                    // left-align them in the expanded view.
+                    crossAxisAlignment: collapsed
+                        ? CrossAxisAlignment.center
+                        : CrossAxisAlignment.start,
+                    children: [
+                      // Scrollable nav section so short viewports never overflow the
+                      // rail; the footer (toggle + account) below stays pinned.
+                      Expanded(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: collapsed
+                                ? CrossAxisAlignment.center
+                                : CrossAxisAlignment.start,
+                            children: [
+                              // Brand now lives in the floating topbar; the rail opens
+                              // straight into its actions.
+                              const SizedBox(height: 16),
 
-                          // New issue CTA
-                          Padding(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: collapsed ? 12 : 16,
-                              vertical: 4,
-                            ),
-                            child: collapsed
-                                ? _RailIconButton(
-                                    icon: LucideIcons.plus,
-                                    active: false,
-                                    amber: true,
-                                    tooltip: context.t('issues.new'),
-                                    onTap: () => _createIssue(context),
-                                  )
-                                : DecoratedBox(
-                                    // Soft honey glow beneath the CTA (matches the web
-                                    // prototype's box-shadow: 0 6px 18px -8px amber/0.7).
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(
-                                        AppTheme.radiusControl,
-                                      ),
-                                      boxShadow: [
-                                        BoxShadow(
-                                          color: AppColors.accent.withValues(
-                                            alpha: 0.45,
+                              // New issue CTA
+                              Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: collapsed ? 12 : 16,
+                                  vertical: 4,
+                                ),
+                                child: collapsed
+                                    ? _RailIconButton(
+                                        icon: LucideIcons.plus,
+                                        active: false,
+                                        amber: true,
+                                        tooltip: context.t('issues.new'),
+                                        onTap: () => _createIssue(context),
+                                      )
+                                    : DecoratedBox(
+                                        // Soft honey glow beneath the CTA (matches the web
+                                        // prototype's box-shadow: 0 6px 18px -8px amber/0.7).
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(
+                                            AppTheme.radiusControl,
                                           ),
-                                          blurRadius: 18,
-                                          spreadRadius: -6,
-                                          offset: const Offset(0, 6),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: AppColors.accent
+                                                  .withValues(alpha: 0.45),
+                                              blurRadius: 18,
+                                              spreadRadius: -6,
+                                              offset: const Offset(0, 6),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
-                                    child: SizedBox(
-                                      width: double.infinity,
-                                      child: FilledButton.icon(
-                                        onPressed: () => _createIssue(context),
-                                        style: FilledButton.styleFrom(
-                                          backgroundColor: AppColors.accent,
-                                          foregroundColor: const Color(
-                                            0xFF2A2410,
-                                          ),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(
-                                              AppTheme.radiusControl,
+                                        child: SizedBox(
+                                          width: double.infinity,
+                                          child: FilledButton.icon(
+                                            onPressed: () =>
+                                                _createIssue(context),
+                                            style: FilledButton.styleFrom(
+                                              backgroundColor: AppColors.accent,
+                                              foregroundColor: const Color(
+                                                0xFF2A2410,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                      AppTheme.radiusControl,
+                                                    ),
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 12,
+                                                    vertical: 12,
+                                                  ),
+                                              textStyle: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: AppType.label,
+                                              ),
+                                            ),
+                                            icon: const Icon(
+                                              LucideIcons.plus,
+                                              size: 18,
+                                            ),
+                                            label: Text(
+                                              context.t('issues.new'),
                                             ),
                                           ),
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 12,
-                                          ),
-                                          textStyle: const TextStyle(
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: AppType.label,
-                                          ),
                                         ),
-                                        icon: const Icon(
-                                          LucideIcons.plus,
-                                          size: 18,
-                                        ),
-                                        label: Text(context.t('issues.new')),
                                       ),
-                                    ),
+                              ),
+
+                              const SizedBox(height: 16),
+
+                              // Primary group
+                              if (!collapsed) const _RailGroupLabel('WORK'),
+                              for (final dest in primaryDestinations)
+                                _RailItem(
+                                  destination: dest,
+                                  selected: isNavActive(
+                                    location,
+                                    dest.route,
+                                    advancedTime: advancedTime,
                                   ),
+                                  collapsed: collapsed,
+                                ),
+
+                              const SizedBox(height: 8),
+                              if (!collapsed) const _RailGroupLabel('PLAN'),
+                              for (final dest in secondaryDestinations(
+                                advancedTime: advancedTime,
+                              ))
+                                _RailItem(
+                                  destination: dest,
+                                  selected: isNavActive(
+                                    location,
+                                    dest.route,
+                                    advancedTime: advancedTime,
+                                  ),
+                                  collapsed: collapsed,
+                                ),
+                            ],
                           ),
+                        ),
+                      ),
 
-                          const SizedBox(height: 16),
+                      // Collapse / expand toggle — desktop only, sits above the user.
+                      if (canToggle && onToggle != null)
+                        _CollapseToggle(
+                          collapsed: collapsed,
+                          onToggle: onToggle!,
+                        ),
 
-                          // Primary group
-                          if (!collapsed) const _RailGroupLabel('WORK'),
-                          for (final dest in primaryDestinations)
-                            _RailItem(
-                              destination: dest,
-                              selected: isNavActive(
-                                location,
-                                dest.route,
-                                advancedTime: advancedTime,
-                              ),
-                              collapsed: collapsed,
-                            ),
-
-                          const SizedBox(height: 8),
-                          if (!collapsed) const _RailGroupLabel('PLAN'),
-                          for (final dest in secondaryDestinations(
+                      // Settings entry — a standard rail item so it matches the nav
+                      // above (icon + label expanded, icon-only collapsed).
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 8),
+                        child: _RailItem(
+                          destination: const NavDestination(
+                            '/settings',
+                            'nav.settings',
+                            LucideIcons.settings,
+                          ),
+                          selected: isNavActive(
+                            location,
+                            '/settings',
                             advancedTime: advancedTime,
-                          ))
-                            _RailItem(
-                              destination: dest,
-                              selected: isNavActive(
-                                location,
-                                dest.route,
-                                advancedTime: advancedTime,
-                              ),
-                              collapsed: collapsed,
-                            ),
-                        ],
+                          ),
+                          collapsed: collapsed,
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-
-                  // Collapse / expand toggle — desktop only, sits above the user.
-                  if (canToggle && onToggle != null)
-                    _CollapseToggle(collapsed: collapsed, onToggle: onToggle!),
-
-                  // Settings entry — a standard rail item so it matches the nav
-                  // above (icon + label expanded, icon-only collapsed).
-                  Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 8),
-                    child: _RailItem(
-                      destination: const NavDestination(
-                        '/settings',
-                        'nav.settings',
-                        LucideIcons.settings,
-                      ),
-                      selected: isNavActive(
-                        location,
-                        '/settings',
-                        advancedTime: advancedTime,
-                      ),
-                      collapsed: collapsed,
-                    ),
-                  ),
-                ],
-              ),
+                );
+              },
             ),
           ),
         ],
