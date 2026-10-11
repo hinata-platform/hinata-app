@@ -114,4 +114,55 @@ void main() {
     expect(picked, 'pdf');
     expect(find.text('PDF'), findsNothing);
   });
+
+  testWidgets('the page takes taps again as soon as the menu starts closing', (
+    tester,
+  ) async {
+    // The spring behind the menu runs on, sub-pixel, for most of a second
+    // after the glass has folded back. The page must not wait for it.
+    var pageTaps = 0;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            children: [
+              Positioned(
+                left: 0,
+                bottom: 0,
+                child: TextButton(
+                  onPressed: () => pageTaps++,
+                  child: const Text('page'),
+                ),
+              ),
+              Positioned(
+                right: 20,
+                top: 20,
+                child: GlassPopupMenu<String>(
+                  value: '',
+                  onSelected: (_) {},
+                  items: const [
+                    GlassMenuItem<String>(value: 'a', label: 'Eins'),
+                  ],
+                  child: const Text('trigger'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    await tester.tap(find.text('trigger'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Eins'));
+    // The spring starts on the next frame; 200 ms on, the glass has passed the
+    // point where the package drops its own dismiss barrier (about 150 ms),
+    // and is still folding back.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
+    await tester.tap(find.text('page'));
+    expect(pageTaps, 1);
+    await tester.pumpAndSettle();
+  });
 }
