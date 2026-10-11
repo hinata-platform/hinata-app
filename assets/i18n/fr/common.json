@@ -2490,7 +2490,7 @@
     "summary": "{{count}} articles",
     "subtitle": "{{articles}} articles · {{spaces}} espaces",
     "updated": "mis à jour {{when}}",
-    "updatedAgo": "mis à jour il y a {{when}}",
+    "updatedAgo": "mis à jour {{when}}",
     "new": "Nouvel article",
     "newArticle": "Nouvel article",
     "allSpaces": "Tous les espaces",
@@ -2548,7 +2548,7 @@
     "published": "Article publié",
     "saved": "Modifications enregistrées",
     "deleted": "Article supprimé",
-    "articleCount": "{{count}} articles",
+    "articleCount": "{{count}} page",
     "saveWouldBlank": "Enregistrer maintenant remplacerait l'article par une page vide. Ajoutez d'abord du contenu.",
     "place": {
       "label": "Visible par",
@@ -2564,7 +2564,9 @@
     "emptyTitle": "Aucune page pour toi pour l’instant",
     "emptyMessage": "Les pages se partagent via les projets et les équipes. Une nouvelle page reste privée jusqu’à ce que tu la places dans un projet ou une équipe.",
     "tree": {
-      "truncated": "Toutes les pages ne sont pas listées ici, car il y en a trop pour une seule liste. Une sous-page peut donc apparaître en haut alors que sa page parente existe."
+      "truncated": "Toutes les pages ne sont pas listées ici, car il y en a trop pour une seule liste. Une sous-page peut donc apparaître en haut alors que sa page parente existe.",
+      "moveUp": "Monter",
+      "moveDown": "Descendre"
     },
     "spaceIconOption": "Icône {{n}} sur {{count}}",
     "subpages": "Sous-pages",
@@ -2575,7 +2577,85 @@
       "title": "Changer qui peut la lire ?",
       "message": "« {{page}} » et ses sous-pages seront alors lisibles par {{place}}.",
       "confirm": "Déplacer"
-    }
+    },
+    "editSpace": "Modifier l'espace",
+    "spaceSaved": "Espace enregistré",
+    "issueNotFound": "Ticket {{id}} introuvable",
+    "loadFailedTitle": "Impossible de charger la base de connaissances",
+    "loadFailedMessage": "Vérifiez la connexion et réessayez.",
+    "notFoundMessage": "Elle a peut-être été supprimée ou n'est pas partagée avec vous.",
+    "pageNotFound": "Page introuvable",
+    "spaceNotFound": "Espace introuvable",
+    "editor": {
+      "discard": "Abandonner",
+      "discardTitle": "Abandonner les modifications ?",
+      "discardMessage": "Vos modifications sur cette page ne sont pas enregistrées.",
+      "pickSpace": "Choisir un espace"
+    },
+    "history": {
+      "title": "Historique : {{title}}",
+      "open": "Historique de la page",
+      "versions": "Versions : {{count}}",
+      "version": "Version {{number}}",
+      "versionBy": "Version {{number}} · {{name}} · {{when}}",
+      "current": "Actuelle",
+      "more": "Afficher les versions plus anciennes",
+      "pickTitle": "Choisissez une version",
+      "pickMessage": "La page s'affiche ici telle qu'elle était enregistrée.",
+      "emptyTitle": "Aucune version pour l'instant",
+      "emptyMessage": "Les versions sont enregistrées à partir de la prochaine modification.",
+      "loadFailedTitle": "Impossible de charger l'historique",
+      "loadFailedMessage": "Vérifiez la connexion et réessayez.",
+      "restore": "Restaurer cette version",
+      "restoreTitle": "Restaurer la version ?",
+      "restoreMessage": "La version {{number}} devient la plus récente. Rien de ce qui est entre les deux n'est perdu.",
+      "restored": "Version restaurée"
+    },
+    "home": {
+      "continue": "Reprendre la lecture",
+      "starred": "Favoris",
+      "spaces": "Espaces"
+    },
+    "labels": {
+      "add": "Ajouter des libellés",
+      "edit": "Modifier les libellés",
+      "search": "Rechercher ou créer un libellé",
+      "create": "Créer le libellé « {{label}} »",
+      "none": "Aucun libellé. Saisissez-en un pour le créer.",
+      "done": "Terminé"
+    },
+    "reader": {
+      "lastEdited": "Dernière modification par {{name}} · {{when}}",
+      "someone": "Ancien membre",
+      "star": "Ajouter aux favoris",
+      "unstar": "Retirer des favoris",
+      "breadcrumb": "Emplacement de la page",
+      "changed": "Modifiée",
+      "author": "Créée par",
+      "copyLink": "Copier le lien",
+      "linkCopied": "Lien copié",
+      "pages": "Pages"
+    },
+    "spaceView": {
+      "actions": "Actions de l'espace",
+      "pages": "Pages",
+      "emptyTitle": "Pas encore de pages ici",
+      "emptyMessage": "Rédigez la première page de cet espace. Elle reste privée jusqu'à ce que vous la partagiez avec un projet ou une équipe.",
+      "firstPage": "Créer la première page",
+      "withLabel": "Libellé « {{label}} » : {{count}}",
+      "notYours": "Seule la personne qui a créé l'espace peut le modifier.",
+      "notEmpty": "Déplacez ou supprimez d'abord ses pages."
+    },
+    "time": {
+      "justNow": "à l'instant",
+      "minutes": "il y a {{count}} min",
+      "minutes_plural": "il y a {{count}} min",
+      "hours": "il y a {{count}} h",
+      "hours_plural": "il y a {{count}} h",
+      "days": "il y a {{count}} jour",
+      "days_plural": "il y a {{count}} jours"
+    },
+    "articleCount_plural": "{{count}} pages"
   },
   "md": {
     "heading1": "Titre 1",

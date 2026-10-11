@@ -446,7 +446,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   /// Opens a KB article (doc smart-link) on the `/knowledge/:id` route. The
   /// create modal stays mounted underneath so the draft isn't lost.
   void _openArticle(String articleId) =>
-      GoRouter.of(context).push('/knowledge/$articleId');
+      GoRouter.of(context).go(KnowledgePaths.article(articleId));
 
   Widget _sectionLabel(String text) => Text(
     text.toUpperCase(),

@@ -2490,7 +2490,7 @@
     "summary": "{{count}} 篇文章",
     "subtitle": "{{articles}} 篇文章 · {{spaces}} 个空间",
     "updated": "更新于 {{when}}",
-    "updatedAgo": "更新于 {{when}}前",
+    "updatedAgo": "更新于 {{when}}",
     "new": "新建文章",
     "newArticle": "新建文章",
     "allSpaces": "全部空间",
@@ -2548,7 +2548,7 @@
     "published": "文章已发布",
     "saved": "更改已保存",
     "deleted": "文章已删除",
-    "articleCount": "{{count}} 篇文章",
+    "articleCount": "{{count}} 个页面",
     "saveWouldBlank": "现在保存会把文章替换成一个空白页面。请先添加内容。",
     "place": {
       "label": "可见范围",
@@ -2564,7 +2564,9 @@
     "emptyTitle": "暂时还没有你可见的页面",
     "emptyMessage": "页面通过项目和团队共享。新页面在放入项目或团队之前一直是私有的。",
     "tree": {
-      "truncated": "页面太多，一个列表放不下，因此这里没有显示全部页面。子页面可能因此显示在顶层，尽管其上级页面存在。"
+      "truncated": "页面太多，一个列表放不下，因此这里没有显示全部页面。子页面可能因此显示在顶层，尽管其上级页面存在。",
+      "moveUp": "上移",
+      "moveDown": "下移"
     },
     "spaceIconOption": "图标 {{n}}/{{count}}",
     "subpages": "子页面",
@@ -2575,7 +2577,85 @@
       "title": "更改可阅读的人？",
       "message": "“{{page}}”及其子页面之后可由 {{place}} 阅读。",
       "confirm": "移动"
-    }
+    },
+    "editSpace": "编辑空间",
+    "spaceSaved": "空间已保存",
+    "issueNotFound": "未找到事项 {{id}}",
+    "loadFailedTitle": "无法加载知识库",
+    "loadFailedMessage": "请检查连接后重试。",
+    "notFoundMessage": "它可能已被删除，或未与你共享。",
+    "pageNotFound": "未找到页面",
+    "spaceNotFound": "未找到空间",
+    "editor": {
+      "discard": "放弃",
+      "discardTitle": "放弃更改？",
+      "discardMessage": "你对此页面的更改尚未保存。",
+      "pickSpace": "选择空间"
+    },
+    "history": {
+      "title": "历史：{{title}}",
+      "open": "页面历史",
+      "versions": "版本：{{count}}",
+      "version": "版本 {{number}}",
+      "versionBy": "版本 {{number}} · {{name}} · {{when}}",
+      "current": "当前",
+      "more": "显示更早的版本",
+      "pickTitle": "选择一个版本",
+      "pickMessage": "页面将按当时保存的样子显示在此处。",
+      "emptyTitle": "尚无版本",
+      "emptyMessage": "从下一次更改开始记录版本。",
+      "loadFailedTitle": "无法加载历史",
+      "loadFailedMessage": "请检查连接后重试。",
+      "restore": "恢复此版本",
+      "restoreTitle": "恢复版本？",
+      "restoreMessage": "版本 {{number}} 将成为页面的最新版本，中间的内容不会丢失。",
+      "restored": "版本已恢复"
+    },
+    "home": {
+      "continue": "继续阅读",
+      "starred": "收藏",
+      "spaces": "空间"
+    },
+    "labels": {
+      "add": "添加标签",
+      "edit": "编辑标签",
+      "search": "查找或创建标签",
+      "create": "创建标签“{{label}}”",
+      "none": "尚无标签。输入即可创建。",
+      "done": "完成"
+    },
+    "reader": {
+      "lastEdited": "最后编辑：{{name}} · {{when}}",
+      "someone": "前成员",
+      "star": "加入收藏",
+      "unstar": "取消收藏",
+      "breadcrumb": "页面位置",
+      "changed": "修改于",
+      "author": "创建者",
+      "copyLink": "复制链接",
+      "linkCopied": "链接已复制",
+      "pages": "页面"
+    },
+    "spaceView": {
+      "actions": "空间操作",
+      "pages": "页面",
+      "emptyTitle": "这里还没有页面",
+      "emptyMessage": "撰写此空间的第一个页面。在你将其共享给项目或团队之前，它保持私密。",
+      "firstPage": "创建第一个页面",
+      "withLabel": "标签“{{label}}”：{{count}}",
+      "notYours": "只有创建此空间的人可以更改它。",
+      "notEmpty": "请先移动或删除其中的页面。"
+    },
+    "time": {
+      "justNow": "刚刚",
+      "minutes": "{{count}} 分钟前",
+      "minutes_plural": "{{count}} 分钟前",
+      "hours": "{{count}} 小时前",
+      "hours_plural": "{{count}} 小时前",
+      "days": "{{count}} 天前",
+      "days_plural": "{{count}} 天前"
+    },
+    "articleCount_plural": "{{count}} 个页面"
   },
   "md": {
     "heading1": "标题 1",

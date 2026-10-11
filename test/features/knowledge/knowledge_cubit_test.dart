@@ -3,6 +3,7 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/knowledge/data/knowledge_models.dart';
 import 'package:hinata/features/knowledge/knowledge_cubit.dart';
+import 'package:hinata/features/knowledge/knowledge_state.dart';
 
 import '../../support/recording_fake.dart';
 
@@ -34,25 +35,91 @@ void main() {
     expect(cubit.store, same(knowledge));
   });
 
-  test('link targets are every issue, then the directory', () async {
-    final all = [_issue('HIN-1')];
-    final directory = <DirectoryUser>[];
-    issues.answer<List<Issue>>(#allIssues, all);
-    users.answer<List<DirectoryUser>>(#users, directory);
+  test('loading opens the cache, then resolves issues and names', () async {
+    knowledge.answer<void>(#init, null);
+    issues.answer<List<Issue>>(#allIssues, [_issue('HIN-1')]);
+    users.answer<List<DirectoryUser>>(#users, const []);
 
-    final targets = await cubit.linkTargets();
+    await cubit.load();
 
-    expect(targets.issues, same(all));
-    expect(targets.users, same(directory));
-    expect(issues.only.memberName, #allIssues);
-    expect(users.only.memberName, #users);
+    expect(knowledge.only.memberName, #init);
+    expect(cubit.state.status, KnowledgeStatus.ready);
+    expect(cubit.state.issuesByReadable.keys, ['HIN-1']);
   });
 
-  test('without issues the directory is not asked', () async {
+  test(
+    'a cache that fails to load says so, and issues are not asked',
+    () async {
+      knowledge.fail(#init, failure);
+
+      await cubit.load();
+
+      expect(cubit.state.status, KnowledgeStatus.failure);
+      expect(issues.calls, isEmpty);
+    },
+  );
+
+  test('pages stay readable when the issues do not load', () async {
+    knowledge.answer<void>(#init, null);
     issues.fail(#allIssues, failure);
 
-    await expectLater(cubit.linkTargets(), throwsA(same(failure)));
+    await cubit.load();
+
+    expect(cubit.state.status, KnowledgeStatus.ready);
     expect(users.calls, isEmpty);
+  });
+
+  test('a write moves the revision on, so the views rebuild', () async {
+    knowledge.answer<void>(#deleteArticle, null);
+    final before = cubit.state.revision;
+
+    await cubit.deleteArticle('a1');
+
+    expect(cubit.state.revision, before + 1);
+  });
+
+  test('shifting a page reorders its siblings around it', () async {
+    KbArticle page(String id, int order) => KbArticle(
+      id: id,
+      spaceId: 's1',
+      parentId: 'p',
+      title: id,
+      icon: 'file-text',
+      authorId: 'me',
+      labels: const [],
+      body: '',
+      sortOrder: order,
+    );
+    final siblings = [page('a', 0), page('b', 1), page('c', 2)];
+    knowledge.answerWith(#articleById, (_) => siblings[2]);
+    knowledge.answerWith(#childrenOf, (_) => siblings);
+    knowledge.answer<void>(#reorder, null);
+
+    await cubit.shift('c', -1);
+
+    expect(knowledge.calls.last.memberName, #reorder);
+    expect(knowledge.calls.last.positionalArguments, [
+      ['a', 'c', 'b'],
+    ]);
+  });
+
+  test('the first page cannot move further up', () async {
+    const first = KbArticle(
+      id: 'a',
+      spaceId: 's1',
+      parentId: null,
+      title: 'a',
+      icon: 'file-text',
+      authorId: 'me',
+      labels: [],
+      body: '',
+    );
+    knowledge.answerWith(#articleById, (_) => first);
+    knowledge.answerWith(#rootsInSpace, (_) => [first]);
+
+    await cubit.shift('a', -1);
+
+    expect(knowledge.calls.map((c) => c.memberName), isNot(contains(#reorder)));
   });
 
   test('an issue is found by its exact key, not by a longer one', () async {
@@ -144,20 +211,14 @@ void main() {
       #parentId: null,
       #projectId: null,
       #teamId: 't1',
+      #labels: const <String>[],
     });
     expect(knowledge.calls[3].positionalArguments, ['a1']);
     expect(knowledge.calls[3].namedArguments, {
       #title: 't',
       #doc: '{}',
       #spaceId: 's1',
+      #labels: null,
     });
-  });
-
-  test('init overlays the cache', () async {
-    knowledge.answer<void>(#init, null);
-
-    await cubit.init();
-
-    expect(knowledge.only.memberName, #init);
   });
 }

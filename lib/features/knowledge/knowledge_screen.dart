@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/work_models.dart';
+import '../../core/models/content_models.dart' show ArticleVersion;
+import '../../core/repositories/issue_repository.dart';
+import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_filter_bar.dart'
     show GlassSearchButton, GlassSearchDock, kGlassControlHeight, kGlassDockRow;
+import '../../core/widgets/glass_popup_menu.dart';
+import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
@@ -20,29 +26,32 @@ import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_cubit.dart';
 import 'knowledge_editor.dart';
-import 'knowledge_home.dart';
-import 'knowledge_space_dialog.dart';
 import 'knowledge_link_resolver.dart';
+import 'knowledge_location.dart';
 import 'knowledge_place_field.dart';
 import 'knowledge_reader.dart';
 import 'knowledge_scope.dart';
+import 'knowledge_space_dialog.dart';
+import 'knowledge_state.dart';
 import 'knowledge_tokens.dart';
 import 'knowledge_tree.dart';
 import 'markdown/smart_link_resolver.dart';
-import '../../core/repositories/issue_repository.dart';
-import '../../core/repositories/user_repository.dart';
-import '../../core/theme/app_type.dart';
+import 'views/knowledge_history_view.dart';
+import 'views/knowledge_home_view.dart';
+import 'views/knowledge_space_view.dart';
 
-/// Confluence-style Knowledge Base shell: spaces home, nested article tree,
-/// reader with TOC/aside/linked-issues, and a full markdown editor with
-/// `@`-smart-links. Self-contained (seed data + local persistence); a 1:1 port
-/// of the design reference `view_knowledge.jsx`. Internal navigation between
-/// home/space/article/edit/new is managed here (not via the router).
+/// The knowledge base: a start page, a page per space, pages to read, edit
+/// and look back through. What is on screen follows [location], which the
+/// router reads from the address; moving around goes through the router too,
+/// so back, reload and a shared link all land where the reader was.
+///
+/// Every knowledge route is built with the same page key, so moving between
+/// them keeps this screen and its state — the open search, a collapsed tree —
+/// instead of building a new one per address.
 class KnowledgeScreen extends StatelessWidget {
-  const KnowledgeScreen({super.key, this.initialArticleId});
+  const KnowledgeScreen({super.key, required this.location});
 
-  /// Deep link from `/knowledge/:id` — open straight into this article.
-  final String? initialArticleId;
+  final KnowledgeLocation location;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
@@ -50,187 +59,248 @@ class KnowledgeScreen extends StatelessWidget {
       context.read<KnowledgeRepository>(),
       context.read<IssueRepository>(),
       context.read<UserRepository>(),
-    ),
-    child: _KnowledgeBody(initialArticleId: initialArticleId),
+    )..load(),
+    child: _KnowledgeBody(location: location),
   );
 }
 
 class _KnowledgeBody extends StatefulWidget {
-  const _KnowledgeBody({this.initialArticleId});
+  const _KnowledgeBody({required this.location});
 
-  final String? initialArticleId;
+  final KnowledgeLocation location;
 
   @override
-  State<_KnowledgeBody> createState() => _KnowledgeScreenState();
+  State<_KnowledgeBody> createState() => _KnowledgeBodyState();
 }
 
-enum _Mode { home, article, edit, newDoc }
+enum _Bp { narrow, mid, wide }
 
-class _KnowledgeScreenState extends State<_KnowledgeBody> {
+class _KnowledgeBodyState extends State<_KnowledgeBody> {
   late final KnowledgeCubit _knowledge = context.read<KnowledgeCubit>();
+  KnowledgeRepository get _store => _knowledge.store;
 
-  // Shared app-wide store (provided in app.dart), read synchronously while
-  // the page builds.
-  late final KnowledgeRepository _store = _knowledge.store;
-  bool _ready = false;
+  KnowledgeLocation get _at => widget.location;
 
-  // Real backend issues + member names so `{{issue:…}}` tokens and the `@`-menu
-  // resolve against genuine issues (keyed by readable id), not seed data.
-  Map<String, Issue> _issuesByReadable = const {};
-  Map<String, String> _userNames = const {};
-
-  _Mode _mode = _Mode.home;
-  String? _selectedId;
-  // Empty when the knowledge base has no spaces yet (fresh workspace); the
-  // create-space flow sets it once the first space exists.
-  late String _spaceId = _store.spaces.isNotEmpty ? _store.spaces.first.id : '';
-  final _scrollKey = GlobalKey();
-
-  // Reader panel collapse (desktop fullscreen reading) + pending parent for the
-  // "new sub-page" create flow.
-  bool _treeCollapsed = false;
-  bool _asideCollapsed = false;
-  String? _pendingParentId;
-
-  /// A place change of the open page is on its way to the server.
-  bool _placeBusy = false;
-
-  /// The home's search. Kept here rather than in [KnowledgeHome] because a
-  /// phone docks it in the app bar and a wide window draws it in the body, and
-  /// the query must survive a resize across that line.
+  // ── home search ──
+  /// Kept here rather than in the home view because a phone docks it in the
+  /// app bar and a wide window draws it in the body, and the query must survive
+  /// a resize across that line.
   final TextEditingController _search = TextEditingController();
   bool _searching = false;
   String _query = '';
 
-  @override
-  void dispose() {
-    _search.dispose();
-    super.dispose();
-  }
+  // ── reading ──
+  bool _treeCollapsed = false;
+  bool _asideCollapsed = false;
+  bool _placeBusy = false;
+
+  /// Who worked on each page opened this visit, by page id.
+  final Map<String, List<String>> _contributors = {};
+
+  /// The page whose opening was last recorded, so a rebuild records nothing.
+  String? _viewed;
+
+  // ── space ──
+  /// The label a space's list is narrowed to, by space.
+  final Map<String, String> _labelFilter = {};
+
+  // ── editing ──
+  /// The open editor; a new one per address, so "new under A" and "new
+  /// under B" are two drafts rather than one carried over.
+  GlobalKey<KnowledgeEditorState> _editor = GlobalKey();
+  bool _dirty = false;
+  bool _saving = false;
+
+  // ── history ──
+  PagedCubit<ArticleVersion>? _versions;
+  String? _versionsOf;
 
   @override
   void initState() {
     super.initState();
-    // The shared repo is init'd at app start; re-run is idempotent and ensures
-    // persisted edits are overlaid before we gate the first frame.
-    _knowledge.init().then((_) {
-      if (!mounted) return;
-      final initial = widget.initialArticleId;
-      if (initial != null && _store.articleById(initial) != null) {
-        final a = _store.articleById(initial)!;
-        _selectedId = initial;
-        _spaceId = a.spaceId;
-        _mode = _Mode.article;
-      }
-      setState(() => _ready = true);
-    });
-    _loadBackendIssues();
+    _arrived();
   }
 
-  /// Pulls real issues (across all visible projects) and member names so smart
-  /// links and the `@`-mention menu resolve to genuine backend issues.
-  Future<void> _loadBackendIssues() async {
-    try {
-      // allIssues pages through the whole backend result set so smart links and
-      // the `@`-mention menu resolve against every issue, not just the first 100.
-      final (:issues, :users) = await _knowledge.linkTargets();
-      if (!mounted) return;
-      setState(() {
-        // Keyed by every id an issue ever carried, so a KB article linking a
-        // moved issue under its old key keeps resolving.
-        _issuesByReadable = {
-          for (final i in issues)
-            for (final key in i.allReadableIds) key: i,
-        };
-        _userNames = {for (final u in users) u.id: u.displayName};
-      });
-    } catch (_) {
-      // Best-effort: the menu simply shows no issues until a retry/navigation.
+  @override
+  void didUpdateWidget(_KnowledgeBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.location != widget.location) {
+      _dirty = false;
+      _editor = GlobalKey();
+      _arrived();
     }
   }
 
-  SmartLinkResolver _buildResolver() => KnowledgeLinkResolver(
-    repo: _store,
-    issuesByReadable: _issuesByReadable,
-    stateColorFor: AppColors.stateColor,
-    nameFor: (id) => id == null ? null : _userNames[id],
-    onOpenArticle: _openArticle,
-    onOpenIssue: _openRealIssue,
-  );
+  @override
+  void dispose() {
+    _search.dispose();
+    _versions?.close();
+    super.dispose();
+  }
 
-  KbArticle? get _current =>
-      _selectedId == null ? null : _store.articleById(_selectedId!);
+  /// What a new address asks for beyond drawing it: noting the open page,
+  /// fetching who worked on it, the history's first page.
+  void _arrived() {
+    switch (_at) {
+      case KnowledgeArticleLocation(:final articleId):
+        _opened(articleId);
+      case KnowledgeHistoryLocation(:final articleId):
+        _historyOf(articleId);
+      default:
+        break;
+    }
+  }
+
+  void _opened(String id) {
+    if (_viewed == id) return;
+    // Wait for the pages: a deep link arrives before they are loaded.
+    if (_knowledge.state.status != KnowledgeStatus.ready) return;
+    if (_store.articleById(id) == null) return;
+    _viewed = id;
+    _knowledge.recordView(id);
+    _knowledge.contributors(id).then((ids) {
+      if (mounted) setState(() => _contributors[id] = ids);
+    }, onError: (_) {});
+  }
+
+  void _historyOf(String id) {
+    if (_versionsOf == id) return;
+    _versions?.close();
+    _versionsOf = id;
+    _versions = PagedCubit<ArticleVersion>(
+      (page, size) => _knowledge.versions(id, page: page, size: size),
+      pageSize: 20,
+      keyOf: (v) => '${v.number}',
+    )..load();
+  }
 
   // ── navigation ──
-  void _openArticle(String id) {
-    final a = _store.articleById(id);
-    if (a == null) return;
-    setState(() {
-      _selectedId = id;
-      _spaceId = a.spaceId;
-      _mode = _Mode.article;
-    });
-  }
 
-  void _openSpace(String id) {
-    // Roots include pages whose parent this person cannot read.
-    final first = _store.rootsInSpace(id);
-    setState(() {
-      _spaceId = id;
-      if (first.isNotEmpty) {
-        _selectedId = first.first.id;
-        _mode = _Mode.article;
-      }
-    });
-  }
+  void _go(KnowledgeLocation to) => context.go(to.path);
 
-  /// Resolves a readable id (e.g. `HIV-208`) to the backend issue and opens the
-  /// real issue sheet; toasts if there is no matching issue.
-  Future<void> _openRealIssue(String readableId) async {
-    try {
-      final match = await _knowledge.findIssue(readableId);
-      if (!mounted) return;
-      if (match == null) {
-        _toast('Issue $readableId not found', kind: GlassToastKind.error);
+  void _openArticle(String id) => _go(KnowledgeArticleLocation(id));
+  void _openSpace(String id) => _go(KnowledgeSpaceLocation(id));
+
+  /// Where back leads from here: up the page tree, then to the space, then
+  /// home. An editor with unsaved changes asks first.
+  Future<void> _back() async {
+    switch (_at) {
+      case KnowledgeHomeLocation():
         return;
-      }
-      await showIssueDetailSheet(context, issueId: match.id);
-    } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+      case KnowledgeSpaceLocation():
+        _go(const KnowledgeHomeLocation());
+      case KnowledgeArticleLocation(:final articleId):
+        final a = _store.articleById(articleId);
+        if (a?.parentId case final parent?
+            when _store.articleById(parent) != null) {
+          _openArticle(parent);
+        } else if (a != null && a.spaceId.isNotEmpty) {
+          _openSpace(a.spaceId);
+        } else {
+          _go(const KnowledgeHomeLocation());
+        }
+      case KnowledgeEditLocation(:final articleId):
+        if (await _mayLeaveEditor()) _openArticle(articleId);
+      case KnowledgeNewLocation(:final spaceId, :final parentId):
+        if (!await _mayLeaveEditor()) return;
+        if (parentId != null) {
+          _openArticle(parentId);
+        } else if (spaceId != null && _store.spaceById(spaceId) != null) {
+          _openSpace(spaceId);
+        } else {
+          _go(const KnowledgeHomeLocation());
+        }
+      case KnowledgeHistoryLocation(:final articleId, :final version):
+        // A phone shows one version at a time; back returns to the list.
+        if (version != null && context.isCompact) {
+          _go(KnowledgeHistoryLocation(articleId));
+        } else {
+          _openArticle(articleId);
+        }
     }
   }
 
-  void _home() => setState(() {
-    _mode = _Mode.home;
-    _selectedId = null;
-  });
-
-  // ── folder-style tree actions ─────────────────────────────────────────────
-
-  /// Start a new sub-page under [parentId] (Confluence-style nesting).
-  void _newChild(String parentId) {
-    setState(() {
-      _pendingParentId = parentId;
-      _spaceId = _store.articleById(parentId)?.spaceId ?? _spaceId;
-      _mode = _Mode.newDoc;
-    });
+  Future<bool> _mayLeaveEditor() async {
+    if (!_dirty) return true;
+    final ok = await showGlassConfirm(
+      context,
+      icon: LucideIcons.fileWarning,
+      title: context.t('knowledge.editor.discardTitle'),
+      message: context.t('knowledge.editor.discardMessage'),
+      confirmLabel: context.t('knowledge.editor.discard'),
+      destructive: true,
+    );
+    return ok == true;
   }
 
-  Future<void> _moveArticle(
-    String id, {
-    String? parentId,
-    required String spaceId,
-  }) async {
+  // ── writes ──
+
+  void _toast(String msg, {GlassToastKind kind = GlassToastKind.info}) =>
+      showGlassToast(context, context.t(msg), kind: kind);
+
+  Future<void> _attempt(Future<void> Function() write) async {
     try {
-      await _knowledge.moveArticle(id, parentId: parentId, spaceId: spaceId);
-      if (mounted) setState(() => _spaceId = spaceId);
+      await write();
     } on ApiFailure catch (failure) {
       if (mounted) _toast(failure.message, kind: GlassToastKind.error);
     }
   }
 
-  /// Moves the open top-level page, and everything below it, to [place].
-  Future<void> _placeArticle(String id, KbPlaceChoice place) async {
+  Future<void> _save(EditorResult r) async {
+    if (_saving) return;
+    final title = r.title.trim().isEmpty
+        ? context.t('knowledge.untitled')
+        : r.title.trim();
+    setState(() => _saving = true);
+    try {
+      switch (_at) {
+        case KnowledgeNewLocation(:final parentId):
+          final a = await _knowledge.createArticle(
+            title: title,
+            doc: r.doc,
+            spaceId: r.spaceId,
+            parentId: parentId,
+            projectId: r.projectId,
+            teamId: r.teamId,
+            labels: r.labels,
+          );
+          if (!mounted) return;
+          _dirty = false;
+          _toast('knowledge.published', kind: GlassToastKind.success);
+          _openArticle(a.id);
+        case KnowledgeEditLocation(:final articleId):
+          await _knowledge.saveEdit(
+            articleId,
+            title: title,
+            doc: r.doc,
+            spaceId: r.spaceId,
+            labels: r.labels,
+          );
+          if (!mounted) return;
+          _dirty = false;
+          _contributors.remove(articleId);
+          _viewed = null;
+          _toast('knowledge.saved', kind: GlassToastKind.success);
+          _openArticle(articleId);
+        default:
+          break;
+      }
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _move(String id, {String? parentId, required String spaceId}) =>
+      _attempt(
+        () => _knowledge.moveArticle(id, parentId: parentId, spaceId: spaceId),
+      );
+
+  Future<void> _shift(String id, int delta) =>
+      _attempt(() => _knowledge.shift(id, delta));
+
+  Future<void> _place(String id, KbPlaceChoice place) async {
     setState(() => _placeBusy = true);
     try {
       await _knowledge.placeArticle(
@@ -239,10 +309,7 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
         teamId: place.teamId,
       );
       if (mounted) {
-        _toast(
-          context.t('knowledge.place.saved'),
-          kind: GlassToastKind.success,
-        );
+        _toast('knowledge.place.saved', kind: GlassToastKind.success);
       }
     } on ApiFailure catch (failure) {
       if (mounted) _toast(failure.message, kind: GlassToastKind.error);
@@ -251,271 +318,494 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
     }
   }
 
-  /// Confirms, then deletes [id]. Used by both the tree row menu and the
-  /// reader's delete button so the destructive action always asks first.
-  Future<void> _confirmDeleteArticle(String id) async {
+  Future<void> _toggleStar(String id) async {
+    final starred = !_store.isStarred(id);
+    await _attempt(() => _knowledge.setStarred(id, starred: starred));
+  }
+
+  /// Confirms, then deletes [id]. The tree and the page menu both go here,
+  /// so the destructive action always asks first.
+  Future<void> _confirmDelete(String id) async {
     final article = _store.articleById(id);
+    if (article == null) return;
+    if (_store.childrenOf(id).isNotEmpty) {
+      _toast('knowledge.deleteHasChildren', kind: GlassToastKind.error);
+      return;
+    }
     final confirmed = await showGlassConfirm(
       context,
       icon: lucideIcon('trash-2'),
       title: context.t('knowledge.deleteArticleTitle'),
       message: context.t(
         'knowledge.deleteArticleConfirm',
-        variables: {'title': article?.title ?? ''},
+        variables: {'title': article.title},
       ),
       confirmLabel: context.t('knowledge.delete'),
       destructive: true,
       confirmIcon: lucideIcon('trash-2'),
     );
-    if (confirmed == true) await _deleteArticle(id);
-  }
-
-  Future<void> _deleteArticle(String id) async {
-    try {
+    if (confirmed != true || !mounted) return;
+    await _attempt(() async {
       await _knowledge.deleteArticle(id);
       if (!mounted) return;
-      setState(() {
-        if (_selectedId == id) {
-          _selectedId = null;
-          _mode = _Mode.home;
-        }
-      });
-      _toast(context.t('knowledge.deleted'), kind: GlassToastKind.success);
-    } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+      _toast('knowledge.deleted', kind: GlassToastKind.success);
+      final open = switch (_at) {
+        KnowledgeArticleLocation(:final articleId) => articleId,
+        _ => null,
+      };
+      if (open == id) {
+        article.parentId != null &&
+                _store.articleById(article.parentId!) != null
+            ? _openArticle(article.parentId!)
+            : _openSpace(article.spaceId);
+      }
+    });
+  }
+
+  Future<void> _restore(String id, int number) async {
+    final ok = await showGlassConfirm(
+      context,
+      icon: LucideIcons.history,
+      title: context.t('knowledge.history.restoreTitle'),
+      message: context.t(
+        'knowledge.history.restoreMessage',
+        variables: {'number': '$number'},
+      ),
+      confirmLabel: context.t('knowledge.history.restore'),
+    );
+    if (ok != true || !mounted) return;
+    await _attempt(() async {
+      await _knowledge.restoreVersion(id, number);
+      if (!mounted) return;
+      _contributors.remove(id);
+      _versionsOf = null;
+      _toast('knowledge.history.restored', kind: GlassToastKind.success);
+      _openArticle(id);
+    });
+  }
+
+  Future<void> _copyLink(String id) async {
+    final base = Uri.base;
+    final link =
+        base.hasAuthority && (base.scheme == 'http' || base.scheme == 'https')
+        ? base
+              .replace(
+                path: KnowledgePaths.article(id),
+                query: null,
+                fragment: null,
+              )
+              .toString()
+        : KnowledgePaths.article(id);
+    await Clipboard.setData(ClipboardData(text: link));
+    if (mounted) {
+      _toast('knowledge.reader.linkCopied', kind: GlassToastKind.success);
     }
   }
 
-  // ── space actions ─────────────────────────────────────────────────────────
+  // ── spaces ──
 
   Future<void> _createSpace() async {
+    String? createdId;
     final created = await showCreateSpaceDialog(
       context,
       onCreate:
           ({
-            required String name,
-            required String icon,
-            required int hue,
-            required String description,
+            required name,
+            required icon,
+            required hue,
+            required description,
           }) async {
             try {
-              final space = await _knowledge.createSpace(
+              createdId = (await _knowledge.createSpace(
                 name: name,
                 icon: icon,
                 hue: hue,
                 description: description,
-              );
-              if (mounted) _spaceId = space.id;
+              )).id;
               return null;
             } on ApiFailure catch (failure) {
               return failure.message;
             }
           },
     );
-    if (created != null && mounted) {
-      setState(() {});
-      _toast(context.t('knowledge.spaceCreated'), kind: GlassToastKind.success);
+    if (created != null && createdId != null && mounted) {
+      _toast('knowledge.spaceCreated', kind: GlassToastKind.success);
+      _openSpace(createdId!);
     }
   }
 
-  Future<void> _deleteSpace(String id) async {
+  Future<void> _editSpace(KbSpace space) async {
+    String? renamed;
+    final saved = await showCreateSpaceDialog(
+      context,
+      editing: space,
+      onCreate:
+          ({
+            required name,
+            required icon,
+            required hue,
+            required description,
+          }) async {
+            try {
+              renamed = (await _knowledge.updateSpace(
+                space.id,
+                name: name,
+                icon: icon,
+                hue: hue,
+                description: description,
+              )).id;
+              return null;
+            } on ApiFailure catch (failure) {
+              return failure.message;
+            }
+          },
+    );
+    if (saved != null && mounted) {
+      _toast('knowledge.spaceSaved', kind: GlassToastKind.success);
+      if (renamed != null && renamed != space.id) _openSpace(renamed!);
+    }
+  }
+
+  Future<void> _deleteSpace(KbSpace space) async {
     final confirmed = await showGlassConfirm(
       context,
       icon: lucideIcon('trash-2'),
       title: context.t('knowledge.deleteSpaceTitle'),
       message: context.t(
         'knowledge.deleteSpaceConfirm',
-        variables: {'name': id},
+        variables: {'name': space.name},
       ),
       confirmLabel: context.t('knowledge.delete'),
       destructive: true,
       confirmIcon: lucideIcon('trash-2'),
     );
-    if (confirmed != true) return;
-    try {
-      await _knowledge.deleteSpace(id);
+    if (confirmed != true || !mounted) return;
+    await _attempt(() async {
+      await _knowledge.deleteSpace(space.id);
       if (!mounted) return;
-      setState(() {});
-      _toast(context.t('knowledge.spaceDeleted'), kind: GlassToastKind.success);
-    } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+      _toast('knowledge.spaceDeleted', kind: GlassToastKind.success);
+      _go(const KnowledgeHomeLocation());
+    });
+  }
+
+  // ── menus ──
+
+  Future<void> _pageMenu(
+    KbArticle a,
+    Rect? anchor, {
+    required bool withHistory,
+  }) async {
+    final rect = anchor ?? _fallbackAnchor();
+    final canDelete = _store.childrenOf(a.id).isEmpty;
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: rect,
+      value: '',
+      items: [
+        if (withHistory)
+          GlassMenuItem(
+            value: 'history',
+            label: context.t('knowledge.history.open'),
+            leading: Icon(
+              LucideIcons.history,
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
+          ),
+        GlassMenuItem(
+          value: 'child',
+          label: context.t('knowledge.addSubPage'),
+          leading: Icon(
+            LucideIcons.filePlus,
+            size: 16,
+            color: AppColors.inkSoft,
+          ),
+        ),
+        GlassMenuItem(
+          value: 'link',
+          label: context.t('knowledge.reader.copyLink'),
+          leading: Icon(LucideIcons.link, size: 16, color: AppColors.inkSoft),
+        ),
+        GlassMenuItem(
+          value: 'delete',
+          dividerAbove: true,
+          enabled: canDelete,
+          label: context.t(
+            canDelete ? 'knowledge.delete' : 'knowledge.deleteHasChildren',
+          ),
+          color: AppColors.danger,
+          leading: Icon(
+            lucideIcon('trash-2'),
+            size: 16,
+            color: AppColors.danger,
+          ),
+        ),
+      ],
+    );
+    if (!mounted) return;
+    switch (chosen) {
+      case 'history':
+        _go(KnowledgeHistoryLocation(a.id));
+      case 'child':
+        _go(KnowledgeNewLocation(spaceId: a.spaceId, parentId: a.id));
+      case 'link':
+        await _copyLink(a.id);
+      case 'delete':
+        await _confirmDelete(a.id);
     }
   }
 
-  Future<void> _save(EditorResult r) async {
-    final title = r.title.trim().isEmpty
-        ? context.t('knowledge.untitled')
-        : r.title.trim();
-    try {
-      if (_mode == _Mode.newDoc) {
-        final parentId = _pendingParentId;
-        final a = await _knowledge.createArticle(
-          title: title,
-          doc: r.doc,
-          spaceId: r.spaceId,
-          parentId: parentId,
-          projectId: r.projectId,
-          teamId: r.teamId,
-        );
-        if (!mounted) return;
-        setState(() {
-          _pendingParentId = null;
-          _selectedId = a.id;
-          _spaceId = a.spaceId;
-          _mode = _Mode.article;
-        });
-        _toast(context.t('knowledge.published'), kind: GlassToastKind.success);
-      } else if (_current != null) {
-        await _knowledge.saveEdit(
-          _current!.id,
-          title: title,
-          doc: r.doc,
-          spaceId: r.spaceId,
-        );
-        if (!mounted) return;
-        setState(() => _mode = _Mode.article);
-        _toast(context.t('knowledge.saved'), kind: GlassToastKind.success);
-      }
-    } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+  Future<void> _spaceMenu(KbSpace space, Rect? anchor) async {
+    final manage = _store.canManageSpace(space.id);
+    final empty = _store.articleCountInSpace(space.id) == 0;
+    final chosen = await showGlassMenu<String>(
+      context: context,
+      anchorRect: anchor ?? _fallbackAnchor(),
+      value: '',
+      items: [
+        GlassMenuItem(
+          value: 'edit',
+          enabled: manage,
+          disabledReason: manage
+              ? null
+              : context.t('knowledge.spaceView.notYours'),
+          label: context.t('knowledge.editSpace'),
+          leading: Icon(LucideIcons.pencil, size: 16, color: AppColors.inkSoft),
+        ),
+        GlassMenuItem(
+          value: 'delete',
+          dividerAbove: true,
+          enabled: manage && empty,
+          disabledReason: !manage
+              ? context.t('knowledge.spaceView.notYours')
+              : empty
+              ? null
+              : context.t('knowledge.spaceView.notEmpty'),
+          label: context.t('knowledge.deleteSpace'),
+          color: AppColors.danger,
+          leading: Icon(
+            lucideIcon('trash-2'),
+            size: 16,
+            color: AppColors.danger,
+          ),
+        ),
+      ],
+    );
+    if (!mounted) return;
+    switch (chosen) {
+      case 'edit':
+        await _editSpace(space);
+      case 'delete':
+        await _deleteSpace(space);
     }
   }
 
-  void _toast(String msg, {GlassToastKind kind = GlassToastKind.info}) =>
-      showGlassToast(context, context.t(msg), kind: kind);
+  Rect _fallbackAnchor() {
+    final size = MediaQuery.sizeOf(context);
+    return Rect.fromLTWH(
+      size.width - 60,
+      MediaQuery.paddingOf(context).top + 8,
+      44,
+      44,
+    );
+  }
 
-  void _openTreeDrawer() {
+  void _openTreeSheet(KbArticle a) {
     showGlassBottomSheet<void>(
       context,
       builder: (sheetCtx) => SizedBox(
-        height: MediaQuery.sizeOf(sheetCtx).height * 0.7,
+        height: MediaQuery.sizeOf(sheetCtx).height * 0.72,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 16),
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
           child: KnowledgeTree(
             repo: _store,
-            spaceId: _spaceId,
-            selectedId: _selectedId,
+            spaceId: a.spaceId,
+            selectedId: a.id,
+            onOpenSpace: () {
+              Navigator.of(sheetCtx).pop();
+              _openSpace(a.spaceId);
+            },
             onSelect: (id) {
               Navigator.of(sheetCtx).pop();
               _openArticle(id);
             },
-            onSpaceChange: (id) {
-              Navigator.of(sheetCtx).pop();
-              _openSpace(id);
-            },
             onNewChild: (pid) {
               Navigator.of(sheetCtx).pop();
-              _newChild(pid);
+              _go(KnowledgeNewLocation(spaceId: a.spaceId, parentId: pid));
             },
-            onMove: _moveArticle,
-            onDelete: _confirmDeleteArticle,
+            onMove: _move,
+            onShift: _shift,
+            onDelete: _confirmDelete,
           ),
         ),
       ),
     );
   }
 
+  // ── build ──
+
+  SmartLinkResolver _resolver(KnowledgeState state) => KnowledgeLinkResolver(
+    repo: _store,
+    issuesByReadable: state.issuesByReadable,
+    stateColorFor: AppColors.stateColor,
+    nameFor: (id) => id == null ? null : state.userNames[id],
+    onOpenArticle: _openArticle,
+    onOpenIssue: _openIssue,
+  );
+
+  Future<void> _openIssue(String readableId) async {
+    try {
+      final match = await _knowledge.findIssue(readableId);
+      if (!mounted) return;
+      if (match == null) {
+        _toast(
+          context.t('knowledge.issueNotFound', variables: {'id': readableId}),
+          kind: GlassToastKind.error,
+        );
+        return;
+      }
+      await showIssueDetailSheet(context, issueId: match.id);
+    } on ApiFailure catch (failure) {
+      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (!_ready) {
-      return const Center(
-        child: Padding(padding: EdgeInsets.all(40), child: HiveLoader()),
-      );
-    }
-    // On the deep-link sub-route (/knowledge/:id) the shell paints a back +
-    // title bar; publish the open article's title so it doesn't just repeat
-    // the in-page "knowledge.title" head.
-    final chromeTitle = _mode == _Mode.article
-        ? (_current?.title ?? context.t('knowledge.title'))
-        : context.t('knowledge.title');
+    return BlocConsumer<KnowledgeCubit, KnowledgeState>(
+      listenWhen: (a, b) =>
+          a.status != b.status && b.status == KnowledgeStatus.ready,
+      // A deep link to a page arrives before the pages; note it once they are in.
+      listener: (context, _) => _arrived(),
+      builder: (context, state) {
+        switch (state.status) {
+          case KnowledgeStatus.loading when state.revision == 0:
+            return PageChrome(
+              title: context.t('knowledge.title'),
+              child: const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(40),
+                  child: HiveLoader(),
+                ),
+              ),
+            );
+          case KnowledgeStatus.failure:
+            return PageChrome(
+              title: context.t('knowledge.title'),
+              child: _scroll(
+                HiveEmptyState(
+                  title: context.t('knowledge.loadFailedTitle'),
+                  message: context.t('knowledge.loadFailedMessage'),
+                  action: PrimaryButton(
+                    label: context.t('common.retry'),
+                    icon: LucideIcons.refreshCw,
+                    onPressed: _knowledge.reload,
+                  ),
+                ),
+              ),
+            );
+          default:
+            return KnowledgeScope(
+              repo: _store,
+              openArticle: _openArticle,
+              openUser: (_) {},
+              child: SmartLinkScope(
+                resolver: _resolver(state),
+                child: _located(context),
+              ),
+            );
+        }
+      },
+    );
+  }
+
+  Widget _located(BuildContext context) => switch (_at) {
+    KnowledgeHomeLocation() => _home(context),
+    KnowledgeSpaceLocation(:final spaceId) => _space(context, spaceId),
+    KnowledgeArticleLocation(:final articleId) => _article(context, articleId),
+    KnowledgeEditLocation(:final articleId) => _edit(context, articleId),
+    KnowledgeNewLocation(:final spaceId, :final parentId) => _create(
+      context,
+      spaceId,
+      parentId,
+    ),
+    KnowledgeHistoryLocation(:final articleId, :final version) => _history(
+      context,
+      articleId,
+      version,
+    ),
+  };
+
+  /// The page's scroll: gutters inside it, so content runs under the glass bars.
+  Widget _scroll(Widget child, {double top = 24}) {
     final compact = context.isCompact;
-    final editing = _mode == _Mode.edit || _mode == _Mode.newDoc;
-    final dockSearch = compact && _mode == _Mode.home;
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: EdgeInsets.fromLTRB(
+        context.pageGutter,
+        (compact ? context.pageGutter : top) + context.topGutter,
+        context.pageGutter,
+        context.pageGutter + context.bottomGutter + 24,
+      ),
+      child: child,
+    );
+  }
+
+  Widget _missing(BuildContext context, String titleKey) => PageChrome(
+    title: context.t('knowledge.title'),
+    onBack: () => _go(const KnowledgeHomeLocation()),
+    child: _scroll(
+      HiveEmptyState(
+        title: context.t(titleKey),
+        message: context.t('knowledge.notFoundMessage'),
+        action: GhostButton(
+          label: context.t('knowledge.allSpaces'),
+          icon: LucideIcons.layoutGrid,
+          onPressed: () => _go(const KnowledgeHomeLocation()),
+        ),
+      ),
+    ),
+  );
+
+  // ── home ──
+
+  Widget _home(BuildContext context) {
+    final compact = context.isCompact;
     return PageChrome(
-      title: chromeTitle,
-      // A phone's bar has room for one action, and the page's one is a new
-      // article. The editor brings its own back and save, so it has none.
-      actions: compact && !editing
+      title: context.t('knowledge.title'),
+      actions: compact
           ? [
               PageAction(
                 icon: LucideIcons.plus,
                 label: context.t('knowledge.newArticle'),
                 primary: true,
-                onTap: _newArticle,
+                onTap: _newPageAction,
               ),
             ]
           : const [],
-      // The search rides in the bar's blur as a pill, the way it does on the
-      // projects page; as a full-width field down the page it was a third row
-      // under a title the bar already showed.
-      bottom: dockSearch ? _dockedSearch(context) : null,
-      bottomHeight: dockSearch ? kGlassDockRow : 0,
-      child: KnowledgeScope(
-        repo: _store,
-        openArticle: _openArticle,
-        openUser: (_) {},
-        child: SmartLinkScope(
-          resolver: _buildResolver(),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final w = constraints.maxWidth;
-              final bp = w < KbTokens.bpMid
-                  ? _Bp.narrow
-                  : w < KbTokens.bpWide
-                  ? _Bp.mid
-                  : _Bp.wide;
-              if (_mode == _Mode.edit || _mode == _Mode.newDoc) {
-                return _editorView(constraints.maxHeight);
-              }
-              return _mainView(bp);
-            },
-          ),
+      bottom: compact ? _dockedSearch(context) : null,
+      bottomHeight: compact ? kGlassDockRow : 0,
+      child: _scroll(
+        KnowledgeHomeView(
+          repo: _store,
+          search: _search,
+          query: _query,
+          onQueryChanged: (value) => setState(() => _query = value),
+          wide: !compact,
+          onOpenArticle: _openArticle,
+          onOpenSpace: _openSpace,
+          onNewSpace: _createSpace,
+          onNewPage: () => _newPageAction(null),
         ),
       ),
     );
   }
 
-  Widget _head() {
-    return PageHead(
-      title: context.t('knowledge.title'),
-      subtitle: context.t(
-        'knowledge.subtitle',
-        variables: {
-          'articles': '${_store.articles.length}',
-          'spaces': '${_store.spaces.length}',
-        },
-      ),
-      actions: [
-        if (_mode != _Mode.home)
-          GhostButton(
-            label: context.t('knowledge.allSpaces'),
-            icon: lucideIcon('layout-grid'),
-            onPressed: _home,
-            collapseToIcon: true,
-          ),
-        PrimaryButton(
-          label: context.t('knowledge.newArticle'),
-          icon: lucideIcon('plus'),
-          onPressed: () => _newArticle(null),
-          collapseToIcon: true,
-        ),
-      ],
-    );
-  }
+  /// A tear-off for the bar's action, so it compares equal between builds.
+  void _newPageAction(Rect? _) => _go(const KnowledgeNewLocation());
 
-  /// A tear-off for the bar's action, so it compares equal from one build to
-  /// the next and the chrome is not re-published every frame.
-  void _newArticle(Rect? _) => setState(() {
-    _pendingParentId = null;
-    _mode = _Mode.newDoc;
-  });
-
-  /// The phone's one docked row: the search pill, which takes the row over
-  /// while somebody types and hands it back on close.
   Widget _dockedSearch(BuildContext context) => Padding(
     padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-    // The bar hands the reserved height down as a tight constraint; the Align
-    // lets the pill come in under it.
     child: Align(
       alignment: AlignmentDirectional.centerStart,
       child: GlassSearchDock(
@@ -539,138 +829,137 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
     ),
   );
 
-  Widget _mainView(_Bp bp) {
-    final showTree = _mode == _Mode.article && bp != _Bp.narrow;
+  // ── space ──
+
+  Widget _space(BuildContext context, String spaceId) {
+    final space = _store.spaceById(spaceId);
+    if (space == null) return _missing(context, 'knowledge.spaceNotFound');
     final compact = context.isCompact;
-    return SingleChildScrollView(
-      key: _scrollKey,
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.fromLTRB(
-        context.pageGutter,
-        (compact ? context.pageGutter : 24) + context.topGutter,
-        context.pageGutter,
-        context.pageGutter + context.bottomGutter,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // On a phone the bar names the page and carries "New article", so
-          // the body does not say either again. Inside an article the way back
-          // to all spaces still needs a place, and the bar has no room for it.
-          if (!compact) ...[
-            _head(),
-            const SizedBox(height: 20),
-          ] else if (_mode != _Mode.home) ...[
-            Align(
-              alignment: AlignmentDirectional.centerStart,
-              child: GhostButton(
-                label: context.t('knowledge.allSpaces'),
-                icon: lucideIcon('layout-grid'),
-                onPressed: _home,
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          if (_mode == _Mode.home)
-            KnowledgeHome(
-              repo: _store,
-              search: _search,
-              query: _query,
-              onQueryChanged: (value) => setState(() => _query = value),
-              showSearchField: !compact,
-              onOpenArticle: _openArticle,
-              onOpenSpace: _openSpace,
-              onNewSpace: _createSpace,
-              onDeleteSpace: _deleteSpace,
-            )
-          else if (_current != null)
-            _articleLayout(bp, showTree),
-        ],
+    void newPage([Rect? _]) => _go(KnowledgeNewLocation(spaceId: space.id));
+    return PageChrome(
+      title: space.name,
+      onBack: _back,
+      onTitleTap: compact ? (rect) => _spaceMenu(space, rect) : null,
+      actions: [
+        if (!compact)
+          PageAction(
+            icon: LucideIcons.ellipsis,
+            label: context.t('knowledge.spaceView.actions'),
+            onTap: (rect) => _spaceMenu(space, rect),
+          ),
+        PageAction(
+          icon: LucideIcons.plus,
+          label: context.t('knowledge.newArticle'),
+          primary: true,
+          onTap: newPage,
+        ),
+      ],
+      child: _scroll(
+        KnowledgeSpaceView(
+          repo: _store,
+          space: space,
+          wide: !compact,
+          label: _labelFilter[space.id],
+          onLabel: (label) => setState(() {
+            label == null
+                ? _labelFilter.remove(space.id)
+                : _labelFilter[space.id] = label;
+          }),
+          onOpenArticle: _openArticle,
+          onNewPage: newPage,
+          onNewChild: (pid) =>
+              _go(KnowledgeNewLocation(spaceId: space.id, parentId: pid)),
+          onMove: _move,
+          onShift: _shift,
+          onDelete: _confirmDelete,
+        ),
       ),
     );
   }
 
-  Widget _articleLayout(_Bp bp, bool showTree) {
-    // Aside collapses to none when the user wants a wider/fullscreen read.
-    final asideMode = _asideCollapsed
-        ? AsideMode.none
-        : switch (bp) {
-            _Bp.wide => AsideMode.side,
-            _Bp.mid => AsideMode.below,
-            _Bp.narrow => AsideMode.none,
-          };
+  // ── article ──
+
+  Widget _article(BuildContext context, String id) {
+    final a = _store.articleById(id);
+    if (a == null) return _missing(context, 'knowledge.pageNotFound');
+    final compact = context.isCompact;
+    void edit([Rect? _]) => _go(KnowledgeEditLocation(a.id));
+    return PageChrome(
+      title: a.title,
+      onBack: _back,
+      onTitleTap: compact
+          ? (rect) => _pageMenu(a, rect, withHistory: true)
+          : null,
+      actions: [
+        if (!compact) ...[
+          PageAction(
+            icon: LucideIcons.history,
+            label: context.t('knowledge.history.open'),
+            onTap: (_) => _go(KnowledgeHistoryLocation(a.id)),
+          ),
+          PageAction(
+            icon: LucideIcons.ellipsis,
+            label: context.t('knowledge.more'),
+            onTap: (rect) => _pageMenu(a, rect, withHistory: false),
+          ),
+        ],
+        PageAction(
+          icon: LucideIcons.pencil,
+          label: context.t('knowledge.editShort'),
+          primary: true,
+          onTap: edit,
+        ),
+      ],
+      child: LayoutBuilder(
+        builder: (context, c) {
+          final bp = c.maxWidth < KbTokens.bpMid
+              ? _Bp.narrow
+              : c.maxWidth < KbTokens.bpWide
+              ? _Bp.mid
+              : _Bp.wide;
+          return _scroll(_articleLayout(a, bp), top: 16);
+        },
+      ),
+    );
+  }
+
+  Widget _articleLayout(KbArticle a, _Bp bp) {
     final reader = KnowledgeReader(
-      // Keyed by article: without it Flutter reuses the same State across a
-      // navigation, and everything the reader derived from the *previous*
-      // document — outline, linked issues, the active heading — starts out
-      // pointing at a document that is no longer on screen.
-      key: ValueKey(_current!.id),
-      article: _current!,
-      asideMode: asideMode,
-      onEdit: () => setState(() => _mode = _Mode.edit),
-      onDelete: () => _confirmDeleteArticle(_current!.id),
-      onPlace: (place) => _placeArticle(_current!.id, place),
+      // Keyed by page: everything the reader derived from the previous
+      // document — outline, linked issues, the active heading — must not
+      // carry over to the next one.
+      key: ValueKey(a.id),
+      article: a,
+      asideMode: _asideCollapsed && bp == _Bp.wide
+          ? AsideMode.none
+          : bp == _Bp.wide
+          ? AsideMode.side
+          : AsideMode.below,
+      starred: _store.isStarred(a.id),
+      onToggleStar: () => _toggleStar(a.id),
+      onOpenSpace: _openSpace,
+      onOpenHistory: () => _go(KnowledgeHistoryLocation(a.id)),
+      contributors: _contributors[a.id],
+      onPlace: (place) => _place(a.id, place),
       placeBusy: _placeBusy,
     );
-
-    if (!showTree) {
+    if (bp == _Bp.narrow) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // narrow bar with tree drawer trigger
-          Padding(
-            padding: const EdgeInsets.only(bottom: 14),
-            child: Align(
-              alignment: AlignmentDirectional.centerStart,
-              // The space name inside names the drawer trigger.
-              child: Semantics(
-                button: true,
-                child: Material(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                    onTap: _openTreeDrawer,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(
-                          KbTokens.radiusControl,
-                        ),
-                        border: Border.all(color: AppColors.hairline),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            lucideIcon('panel-left'),
-                            size: 16,
-                            color: AppColors.inkSoft,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            _store.spaceById(_spaceId)?.name ?? '',
-                            style: const TextStyle(
-                              fontSize: AppType.label,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: GhostButton(
+              label: context.t('knowledge.reader.pages'),
+              icon: LucideIcons.panelLeft,
+              onPressed: () => _openTreeSheet(a),
             ),
           ),
+          const SizedBox(height: 8),
           reader,
         ],
       );
     }
-
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -679,13 +968,15 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
             width: KbTokens.treeWidth,
             child: KnowledgeTree(
               repo: _store,
-              spaceId: _spaceId,
-              selectedId: _selectedId,
+              spaceId: a.spaceId,
+              selectedId: a.id,
+              onOpenSpace: () => _openSpace(a.spaceId),
               onSelect: _openArticle,
-              onSpaceChange: _openSpace,
-              onNewChild: _newChild,
-              onMove: _moveArticle,
-              onDelete: _confirmDeleteArticle,
+              onNewChild: (pid) =>
+                  _go(KnowledgeNewLocation(spaceId: a.spaceId, parentId: pid)),
+              onMove: _move,
+              onShift: _shift,
+              onDelete: _confirmDelete,
             ),
           ),
           const SizedBox(width: 28),
@@ -693,140 +984,188 @@ class _KnowledgeScreenState extends State<_KnowledgeBody> {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [_readerControls(bp), const SizedBox(height: 4), reader],
-          ),
-        ),
-      ],
-    );
-  }
-
-  /// Collapse/expand controls flanking the reader: the left "pages" toggle sits
-  /// on the left edge (next to the tree it hides), the right "details" toggle on
-  /// the right edge (next to the aside) — so an article can be read full-bleed.
-  Widget _readerControls(_Bp bp) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _PanelToggle(
-          icon: _treeCollapsed
-              ? LucideIcons.panelLeftOpen
-              : LucideIcons.panelLeftClose,
-          tooltip: context.t(
-            _treeCollapsed ? 'knowledge.showPages' : 'knowledge.hidePages',
-          ),
-          onTap: () => setState(() => _treeCollapsed = !_treeCollapsed),
-        ),
-        // Right edge: only the wide layout has a side aside to collapse.
-        if (bp == _Bp.wide)
-          _PanelToggle(
-            icon: _asideCollapsed
-                ? LucideIcons.panelRightOpen
-                : LucideIcons.panelRightClose,
-            tooltip: context.t(
-              _asideCollapsed
-                  ? 'knowledge.showDetails'
-                  : 'knowledge.hideDetails',
-            ),
-            onTap: () => setState(() => _asideCollapsed = !_asideCollapsed),
-          )
-        else
-          const SizedBox.shrink(),
-      ],
-    );
-  }
-
-  Widget _editorView(double maxHeight) {
-    final isNew = _mode == _Mode.newDoc;
-    final current = _current;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(
-        context.pageGutter,
-        16 + context.topGutter,
-        context.pageGutter,
-        context.pageGutter + context.bottomGutter,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
             children: [
-              Tooltip(
-                message: context.t('common.back'),
-                child: Semantics(
-                  button: true,
-                  child: Material(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(
-                        KbTokens.radiusControl,
-                      ),
-                      onTap: () => setState(() {
-                        _pendingParentId = null;
-                        _mode = isNew ? _Mode.home : _Mode.article;
-                      }),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(
-                            KbTokens.radiusControl,
-                          ),
-                          border: Border.all(color: AppColors.hairline),
-                        ),
-                        child: Icon(
-                          lucideIcon('arrow-left'),
-                          size: 18,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _PanelToggle(
+                    icon: _treeCollapsed
+                        ? LucideIcons.panelLeftOpen
+                        : LucideIcons.panelLeftClose,
+                    tooltip: context.t(
+                      _treeCollapsed
+                          ? 'knowledge.showPages'
+                          : 'knowledge.hidePages',
                     ),
+                    onTap: () =>
+                        setState(() => _treeCollapsed = !_treeCollapsed),
                   ),
-                ),
+                  if (bp == _Bp.wide)
+                    _PanelToggle(
+                      icon: _asideCollapsed
+                          ? LucideIcons.panelRightOpen
+                          : LucideIcons.panelRightClose,
+                      tooltip: context.t(
+                        _asideCollapsed
+                            ? 'knowledge.showDetails'
+                            : 'knowledge.hideDetails',
+                      ),
+                      onTap: () =>
+                          setState(() => _asideCollapsed = !_asideCollapsed),
+                    ),
+                ],
               ),
-              const SizedBox(width: 12),
-              Text(
-                isNew
-                    ? context.t('knowledge.newArticle')
-                    : context.t('knowledge.editing'),
-                style: const TextStyle(
-                  fontFamily: AppTheme.fontBrand,
-                  fontSize: AppType.title,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
-                ),
-              ),
+              const SizedBox(height: 4),
+              reader,
             ],
           ),
-          const SizedBox(height: 16),
-          Expanded(
-            child: KnowledgeEditor(
-              isNew: isNew,
-              initialTitle: isNew ? '' : current?.title ?? '',
-              initialDoc: isNew ? null : current?.doc,
-              // The legacy markdown, so a row the backfill skipped opens with
-              // its content rather than blank over it.
-              initialBody: isNew ? '' : current?.body ?? '',
-              spaceId: _spaceId,
-              // A new top-level page chooses where it lives (only its author
-              // by default); a subpage lives where its parent lives.
-              choosePlace: isNew && _pendingParentId == null,
-              onSave: _save,
-              onCancel: () => setState(() {
-                _pendingParentId = null;
-                _mode = isNew ? _Mode.home : _Mode.article;
-              }),
-            ),
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  // ── editing ──
+
+  Widget _edit(BuildContext context, String id) {
+    final a = _store.articleById(id);
+    if (a == null) return _missing(context, 'knowledge.pageNotFound');
+    return _editorPage(
+      context,
+      title: context.t('knowledge.edit'),
+      saveLabel: context.t('common.save'),
+      editor: KnowledgeEditor(
+        key: _editor,
+        isNew: false,
+        initialTitle: a.title,
+        initialDoc: a.doc,
+        // The legacy markdown, so a row the backfill skipped opens with its
+        // content rather than blank over it.
+        initialBody: a.body,
+        initialLabels: a.labels,
+        spaceId: a.spaceId,
+        onSave: _save,
+        onDirtyChanged: (dirty) => _dirty = dirty,
+        bottomPadding: 32 + context.bottomGutter,
       ),
+    );
+  }
+
+  Widget _create(BuildContext context, String? spaceId, String? parentId) {
+    final parent = parentId == null ? null : _store.articleById(parentId);
+    final space =
+        parent?.spaceId ??
+        (spaceId != null && _store.spaceById(spaceId) != null
+            ? spaceId
+            : null) ??
+        _store.spaces.firstOrNull?.id ??
+        '';
+    return _editorPage(
+      context,
+      title: context.t('knowledge.newArticle'),
+      saveLabel: context.t('knowledge.publish'),
+      editor: KnowledgeEditor(
+        key: _editor,
+        isNew: true,
+        initialTitle: '',
+        initialDoc: null,
+        spaceId: space,
+        // A new top-level page chooses where it lives (only its author by
+        // default); a subpage lives where its parent lives.
+        choosePlace: parent == null,
+        onSave: _save,
+        onDirtyChanged: (dirty) => _dirty = dirty,
+        bottomPadding: 32 + context.bottomGutter,
+      ),
+    );
+  }
+
+  Widget _editorPage(
+    BuildContext context, {
+    required String title,
+    required String saveLabel,
+    required Widget editor,
+  }) {
+    return PageChrome(
+      title: title,
+      onBack: _back,
+      actions: [
+        PageAction(
+          icon: LucideIcons.check,
+          label: saveLabel,
+          primary: true,
+          busy: _saving,
+          onTap: _saveAction,
+        ),
+      ],
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(
+          context.pageGutter,
+          (context.isCompact ? context.pageGutter : 16) + context.topGutter,
+          context.pageGutter,
+          0,
+        ),
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(
+              maxWidth: KbTokens.readerMaxWidth + 120,
+            ),
+            child: editor,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _saveAction(Rect? _) => _editor.currentState?.save();
+
+  // ── history ──
+
+  Widget _history(BuildContext context, String id, int? version) {
+    final a = _store.articleById(id);
+    if (a == null) return _missing(context, 'knowledge.pageNotFound');
+    _historyOf(id);
+    final versions = _versions!;
+    return BlocBuilder<PagedCubit<ArticleVersion>, PagedState<ArticleVersion>>(
+      bloc: versions,
+      builder: (context, state) {
+        final latest = state.items.firstOrNull?.number;
+        final canRestore =
+            version != null && latest != null && version != latest;
+        return PageChrome(
+          title: context.t(
+            'knowledge.history.title',
+            variables: {'title': a.title},
+          ),
+          onBack: _back,
+          actions: [
+            if (canRestore)
+              PageAction(
+                icon: LucideIcons.rotateCcw,
+                label: context.t('knowledge.history.restore'),
+                primary: true,
+                onTap: (_) => _restore(id, version),
+              ),
+          ],
+          child: _scroll(
+            KnowledgeHistoryView(
+              repo: _store,
+              article: a,
+              versions: versions,
+              loadVersion: (n) => _knowledge.version(id, n),
+              selected: version,
+              onSelect: (n) => _go(KnowledgeHistoryLocation(id, version: n)),
+              wide: !context.isCompact,
+            ),
+            top: 16,
+          ),
+        );
+      },
     );
   }
 }
 
-enum _Bp { narrow, mid, wide }
-
-/// Compact bordered icon button used by the reader's panel-collapse controls.
+/// Bordered icon button that hides or shows a reader panel.
 class _PanelToggle extends StatelessWidget {
   const _PanelToggle({
     required this.icon,
@@ -844,30 +1183,25 @@ class _PanelToggle extends StatelessWidget {
       message: tooltip,
       child: Semantics(
         button: true,
-        // The outer detector catches the 7-point ring around the 34-point
-        // face, which brings the target to 48×48; a tap on the face itself is
-        // won by the InkWell below, so it fires once and still ripples.
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          excludeFromSemantics: true,
+        label: tooltip,
+        excludeSemantics: true,
+        onTap: onTap,
+        child: InkResponse(
           onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(7),
-            child: Material(
-              color: AppColors.surface,
-              borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                child: Container(
-                  width: 34,
-                  height: 34,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(KbTokens.radiusControl),
-                    border: Border.all(color: AppColors.hairline),
-                  ),
-                  child: Icon(icon, size: 17, color: AppColors.inkSoft),
+          radius: 24,
+          child: SizedBox(
+            width: 48,
+            height: 48,
+            child: Center(
+              child: Container(
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(KbTokens.radiusControl),
+                  border: Border.all(color: AppColors.hairline),
                 ),
+                child: Icon(icon, size: 17, color: AppColors.inkSoft),
               ),
             ),
           ),
