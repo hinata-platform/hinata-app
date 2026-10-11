@@ -144,6 +144,23 @@ void main() {
     expect(surface.ended, [true]);
   });
 
+  testWidgets(
+    'a timer that ends while signed in is drawn as idle, not cleared',
+    (tester) async {
+      // A countdown stops itself the moment it ends; clearing then would wipe
+      // the title's flash that announces exactly that.
+      await pump(tester);
+      final clearsBefore = surface.clears;
+
+      timer.hold(const TimerState());
+      await tester.pump();
+      await tester.pump();
+
+      expect(surface.clears, clearsBefore);
+      expect(surface.applied.last.running, isFalse);
+    },
+  );
+
   testWidgets('deleting local copies clears the surfaces', (tester) async {
     await pump(tester);
     final before = surface.clears;

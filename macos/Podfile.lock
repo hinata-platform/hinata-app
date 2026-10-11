@@ -46,6 +46,8 @@ PODS:
     - GoogleUtilities/Reachability (~> 8.1)
     - GoogleUtilities/UserDefaults (~> 8.1)
     - nanopb (~> 3.30910.0)
+  - flutter_local_notifications (0.0.1):
+    - FlutterMacOS
   - flutter_secure_storage_darwin (10.0.0):
     - Flutter
     - FlutterMacOS
@@ -116,6 +118,7 @@ DEPENDENCIES:
   - file_selector_macos (from `Flutter/ephemeral/.symlinks/plugins/file_selector_macos/macos`)
   - firebase_core (from `Flutter/ephemeral/.symlinks/plugins/firebase_core/macos`)
   - firebase_messaging (from `Flutter/ephemeral/.symlinks/plugins/firebase_messaging/macos`)
+  - flutter_local_notifications (from `Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos`)
   - flutter_secure_storage_darwin (from `Flutter/ephemeral/.symlinks/plugins/flutter_secure_storage_darwin/darwin`)
   - flutter_timezone (from `Flutter/ephemeral/.symlinks/plugins/flutter_timezone/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
@@ -160,6 +163,8 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/firebase_core/macos
   firebase_messaging:
     :path: Flutter/ephemeral/.symlinks/plugins/firebase_messaging/macos
+  flutter_local_notifications:
+    :path: Flutter/ephemeral/.symlinks/plugins/flutter_local_notifications/macos
   flutter_secure_storage_darwin:
     :path: Flutter/ephemeral/.symlinks/plugins/flutter_secure_storage_darwin/darwin
   flutter_timezone:
@@ -200,6 +205,7 @@ SPEC CHECKSUMS:
   FirebaseCoreInternal: 6ab6a02c94446c026d2cf35cf5383842ebaa4992
   FirebaseInstallations: eb29ccbf64eaedf86fd5b2ccc7fabde567660b52
   FirebaseMessaging: 40017d7bc8457ee295b0f41d480a80fdabc9994e
+  flutter_local_notifications: 1fc7ffb10a83d6a2eeeeddb152d43f1944b0aad0
   flutter_secure_storage_darwin: acdb3f316ed05a3e68f856e0353b133eec373a23
   flutter_timezone: d272288c69082ad571630e0d17140b3d6b93dc0c
   FlutterMacOS: c232990155153907050900a2e175c7773903ba4e
