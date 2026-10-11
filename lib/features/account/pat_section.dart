@@ -500,27 +500,31 @@ class _SelectableScope extends StatelessWidget {
                 color: selected ? AppColors.accentInk : AppColors.inkFaint,
               ),
               const SizedBox(width: 7),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label == key ? scope : label,
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      fontWeight: FontWeight.w600,
-                      color: selected ? AppColors.accentInk : AppColors.ink,
+              // Flexible, so a label longer than the sheet is wide wraps
+              // inside the pill instead of running past its edge.
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      label == key ? scope : label,
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        fontWeight: FontWeight.w600,
+                        color: selected ? AppColors.accentInk : AppColors.ink,
+                      ),
                     ),
-                  ),
-                  Text(
-                    scope,
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: AppType.caption,
-                      color: AppColors.inkFaint,
+                    Text(
+                      scope,
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: AppType.caption,
+                        color: AppColors.inkFaint,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
