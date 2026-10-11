@@ -45,6 +45,8 @@ class InvoiceScreen extends StatefulWidget {
 }
 
 enum _Action {
+  /// No row: an action menu marks nothing as chosen.
+  none,
   edit,
   refresh,
   issue,
@@ -137,7 +139,7 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
       context: context,
       anchorRect: anchor,
       width: 260,
-      value: _Action.pdf,
+      value: _Action.none,
       items: [
         if (draft) ...[
           _item(_Action.edit, 'billing.invoice.edit', LucideIcons.pencil),
@@ -182,6 +184,8 @@ class _InvoiceScreenState extends State<InvoiceScreen> {
     );
     if (picked == null || !mounted) return;
     switch (picked) {
+      case _Action.none:
+        return;
       case _Action.edit:
         await _edit();
       case _Action.refresh:
