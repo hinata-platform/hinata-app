@@ -42,7 +42,11 @@ import 'workflow_section.dart';
 import '../../../core/repositories/project_repository.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show showGlassDatePicker, showGlassErrorToast, showGlassToast;
+    show
+        GlassToastKind,
+        showGlassDatePicker,
+        showGlassErrorToast,
+        showGlassToast;
 import '../project_copy_sheet.dart';
 import '../schedule_move_sheet.dart';
 import '../../../core/repositories/user_repository.dart';
@@ -113,6 +117,12 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
   /// The section open on a wide window (HIN-110); a phone shows every card.
   /// Seeded once from a `?section=` deep link, then the rail's.
   ProjectSettingsCard _section = ProjectSettingsCard.general;
+
+  /// The save bar docked into the wide sub-page bar, kept while what it shows
+  /// stays the same: the chrome compares it by identity, and a fresh instance
+  /// on every keystroke would rebuild the shell's bar with each one.
+  Widget? _dockedBar;
+  (bool, bool)? _dockedBarState;
   bool _sectionSeeded = false;
 
   @override
@@ -610,7 +620,11 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
         _saving = false;
         _rev++;
       });
-      settingsToast(context, context.t('projectSettings.toastSaved'));
+      settingsToast(
+        context,
+        context.t('projectSettings.toastSaved'),
+        kind: GlassToastKind.success,
+      );
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() => _saving = false);
@@ -657,6 +671,12 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     // lives only in the in-page _Header (avoids a doubled header).
     return PageChrome(
       title: context.t('projectSettings.title'),
+      // On a wide window the save bar docks into the bar row up top, where the
+      // eye is; the bottom edge of a desktop window is not. Phones keep it at
+      // the bottom, in thumb's reach.
+      trailing: draft != null && _dirty && !context.isCompact
+          ? _dockedSaveBar()
+          : null,
       // The shell's reading width — the same one the team's settings take, so
       // the two pages of settings are one page as far as the eye is concerned.
       child: _loading
@@ -670,6 +690,22 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
             )
           : _buildBody(context, draft!),
     );
+  }
+
+  Widget _dockedSaveBar() {
+    final state = (_valid, _saving);
+    if (_dockedBar == null || _dockedBarState != state) {
+      _dockedBarState = state;
+      _dockedBar = _SaveBar(
+        visible: true,
+        docked: true,
+        valid: _valid,
+        saving: _saving,
+        onDiscard: _discard,
+        onSave: _save,
+      );
+    }
+    return _dockedBar!;
   }
 
   Widget _buildBody(BuildContext context, Project draft) {
@@ -888,8 +924,8 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     );
   }
 
-  /// The floating save bar, pinned to the bottom of whatever holds it and
-  /// docked to a column [maxWidth] wide.
+  /// The floating save bar on a phone, pinned to the bottom of whatever holds
+  /// it and docked to a column [maxWidth] wide.
   Widget _saveBarOverlay(BuildContext context, {required double maxWidth}) {
     return Positioned(
       left: 0,
@@ -905,22 +941,16 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           context.pageGutter,
           0,
           context.pageGutter,
-          context.isCompact
-              // Never below the edge: without a shell (a test) there is no
-              // gutter to tuck the bar into.
-              ? math.max(
-                  0,
-                  math.max(
-                        context.bottomGutter,
-                        MediaQuery.viewInsetsOf(context).bottom,
-                      ) -
-                      20,
-                )
-              : 12 +
-                    math.max(
-                      context.bottomGutter,
-                      MediaQuery.viewInsetsOf(context).bottom,
-                    ),
+          // Never below the edge: without a shell (a test) there is no
+          // gutter to tuck the bar into.
+          math.max(
+            0,
+            math.max(
+                  context.bottomGutter,
+                  MediaQuery.viewInsetsOf(context).bottom,
+                ) -
+                20,
+          ),
         ),
         child: Center(
           child: ConstrainedBox(
@@ -945,7 +975,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
   /// is on screen. The draft and its save bar span the whole page as before, so
   /// an edit in one section survives a look at another and one Save writes
   /// them all; the git integration and the event date still write on their
-  /// own.
+  /// own. The save bar is docked into the sub-page bar ([PageChrome.trailing]).
   Widget _buildWide(
     BuildContext context, {
     required Project draft,
@@ -981,23 +1011,13 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
         onSelect: (section) => setState(() => _section = section),
         bodyScrolls: false,
         body: SizedBox.expand(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              ListView(
-                // A fresh scroll position for every section.
-                key: ValueKey(selected),
-                physics: const AlwaysScrollableScrollPhysics(),
-                keyboardDismissBehavior:
-                    ScrollViewKeyboardDismissBehavior.onDrag,
-                padding: EdgeInsets.only(
-                  // Room for the last card to clear the floating save bar.
-                  bottom: (_dirty ? 96 : 24) + context.bottomGutter,
-                ),
-                children: [card(selected)],
-              ),
-              _saveBarOverlay(context, maxWidth: 880),
-            ],
+          child: ListView(
+            // A fresh scroll position for every section.
+            key: ValueKey(selected),
+            physics: const AlwaysScrollableScrollPhysics(),
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+            padding: EdgeInsets.only(bottom: 24 + context.bottomGutter),
+            children: [card(selected)],
           ),
         ),
       ),
@@ -1190,7 +1210,13 @@ class _SaveBar extends StatelessWidget {
     required this.saving,
     required this.onDiscard,
     required this.onSave,
+    this.docked = false,
   });
+
+  /// Sits in the wide sub-page bar instead of floating at the bottom: as wide
+  /// as it needs and no wider, its label shortening first, and no transition
+  /// of its own — the bar row fades it in.
+  final bool docked;
 
   final bool visible;
   final bool valid;
@@ -1200,6 +1226,7 @@ class _SaveBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (docked) return _bar(context);
     // No SizeTransition here: it clips the child to its rectangular layout box,
     // which would cut the glass pill's soft shadow into a hard-edged rectangle.
     // A fade + slide keeps the shadow intact.
@@ -1237,62 +1264,103 @@ class _SaveBar extends StatelessWidget {
           dark: dark,
         ),
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(18, 10, 12, 10),
-          child: Row(
-            children: [
-              Icon(
-                valid ? LucideIcons.info : LucideIcons.triangleAlert,
-                size: 17,
-                color: valid ? AppColors.accentInk : AppColors.danger,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  valid
-                      ? context.t('projectSettings.unsavedChanges')
-                      : context.t('projectSettings.fixRequired'),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: FontWeight.w600,
-                    color: tokens.inkSoft,
+          padding: docked
+              ? const EdgeInsets.fromLTRB(16, 6, 6, 6)
+              : const EdgeInsets.fromLTRB(18, 10, 12, 10),
+          child: docked
+              ? LayoutBuilder(
+                  // Docked beside the page title, a narrow window has no room
+                  // for the words: "U…" says nothing, so they go and the
+                  // glyph carries them as its tooltip and its label.
+                  builder: (context, box) => _row(
+                    context,
+                    tokens,
+                    dark,
+                    label:
+                        box.maxWidth >=
+                        MediaQuery.textScalerOf(context).scale(_kLabelRoom),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              TextButton(
-                onPressed: saving ? null : onDiscard,
-                style: TextButton.styleFrom(foregroundColor: tokens.ink),
-                child: Text(context.t('projectSettings.discard')),
-              ),
-              const SizedBox(width: 4),
-              FilledButton.icon(
-                onPressed: (!valid || saving) ? null : onSave,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                  ),
-                ),
-                icon: saving
-                    ? const SizedBox(
-                        width: 16,
-                        height: 16,
-                        child: HiveLoader(strokeWidth: 2, color: Colors.white),
-                      )
-                    : const Icon(LucideIcons.check, size: 16),
-                label: Text(context.t('projectSettings.saveChanges')),
-              ),
-            ],
-          ),
+                )
+              : _row(context, tokens, dark, label: true),
         ),
       ),
+    );
+  }
+
+  /// How wide a docked bar must be to keep its label beside both buttons.
+  static const double _kLabelRoom = 520;
+
+  Widget _row(
+    BuildContext context,
+    SearchTokens tokens,
+    bool dark, {
+    required bool label,
+  }) {
+    final status = valid
+        ? context.t('projectSettings.unsavedChanges')
+        : context.t('projectSettings.fixRequired');
+    final glyph = Icon(
+      valid ? LucideIcons.info : LucideIcons.triangleAlert,
+      size: 17,
+      color: valid ? AppColors.accentInk : AppColors.danger,
+    );
+    return Row(
+      mainAxisSize: docked ? MainAxisSize.min : MainAxisSize.max,
+      children: [
+        if (label) ...[
+          glyph,
+          const SizedBox(width: 8),
+          Flexible(
+            fit: docked ? FlexFit.loose : FlexFit.tight,
+            child: Text(
+              status,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppType.label,
+                fontWeight: FontWeight.w600,
+                color: tokens.inkSoft,
+              ),
+            ),
+          ),
+        ] else
+          Tooltip(
+            message: status,
+            child: Semantics(label: status, child: glyph),
+          ),
+        const SizedBox(width: 8),
+        TextButton(
+          onPressed: saving ? null : onDiscard,
+          style: TextButton.styleFrom(foregroundColor: tokens.ink),
+          child: Text(context.t('projectSettings.discard')),
+        ),
+        const SizedBox(width: 4),
+        FilledButton.icon(
+          onPressed: (!valid || saving) ? null : onSave,
+          style: FilledButton.styleFrom(
+            // Navy on the dark glass, which is navy itself, stood at
+            // 1.2:1 and the one button that matters went missing. Dark
+            // takes the theme's dark primary, honey, as the bar's CTA.
+            backgroundColor: dark ? AppColors.accent : AppColors.navy,
+            foregroundColor: dark ? AppColors.navy : Colors.white,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+            ),
+          ),
+          icon: saving
+              ? SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: HiveLoader(
+                    strokeWidth: 2,
+                    color: dark ? AppColors.navy : Colors.white,
+                  ),
+                )
+              : const Icon(LucideIcons.check, size: 16),
+          label: Text(context.t('projectSettings.saveChanges')),
+        ),
+      ],
     );
   }
 }

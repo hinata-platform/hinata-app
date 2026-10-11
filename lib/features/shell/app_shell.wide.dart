@@ -931,6 +931,7 @@ class _SubPageBar extends StatelessWidget {
     final onTitleTap = chrome.onTitleTapFor(location);
     final override = chrome.onBackFor(location);
     final actions = chrome.actionsFor(location);
+    final trailing = chrome.trailingFor(location);
     // A page may dock a toolbar (search + filters) below the title row; on wide
     // this flows as a normal row above the content (no overlay blur to share).
     final bottom = chrome.bottomFor(location);
@@ -950,27 +951,31 @@ class _SubPageBar extends StatelessWidget {
             gutter,
             0,
           ),
-          child: Row(
-            children: [
-              IconButton(
-                onPressed: () => _handleBack(context, location, override),
-                visualDensity: VisualDensity.compact,
-                tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                icon: Icon(
-                  backArrow(context),
-                  size: 20,
-                  color: AppColors.inkSoft,
+          child: LayoutBuilder(
+            builder: (context, row) => Row(
+              children: [
+                IconButton(
+                  onPressed: () => _handleBack(context, location, override),
+                  visualDensity: VisualDensity.compact,
+                  tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                  icon: Icon(
+                    backArrow(context),
+                    size: 20,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              Expanded(
-                child: _SubPageTitle(text: title, onTap: onTitleTap),
-              ),
-              for (final action in actions) ...[
-                const SizedBox(width: 8),
-                _WidePageAction(action: action),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: _SubPageTitle(text: title, onTap: onTitleTap),
+                ),
+                for (final action in actions) ...[
+                  const SizedBox(width: 8),
+                  _WidePageAction(action: action),
+                ],
+                // At most this share of the row, so the title keeps a piece.
+                _DockedTrailing(maxWidth: row.maxWidth * 0.72, child: trailing),
               ],
-            ],
+            ),
           ),
         ),
         if (bottom != null)
@@ -979,6 +984,90 @@ class _SubPageBar extends StatelessWidget {
             child: bottom,
           ),
       ],
+    );
+  }
+}
+
+/// How far the docked trailing widget may stand over the bar row's own height
+/// on each side, so a bar with full-size buttons fits without the row (and the
+/// page under it) growing as it appears.
+const double _kDockOverhang = 6;
+
+/// The sub-page bar's [PageChromeData.trailing], faded in and out, and
+/// announced to the root overlay while it is there.
+///
+/// It is laid out in the row's height, the 40 points of the back button, and
+/// may overhang that by [_kDockOverhang]: appearing must not move the page,
+/// or the field someone is typing in jumps away under the cursor on the first
+/// keystroke. It is as wide as what it holds, up to [maxWidth] — told rather
+/// than squeezed, so a docked bar can drop its label before anything
+/// overflows. While it is shown it publishes how far the bar reaches below the
+/// top bar ([ShellInsets.topDock]), so a toast drops in under it instead of on
+/// top of its Save button.
+class _DockedTrailing extends StatefulWidget {
+  const _DockedTrailing({required this.maxWidth, required this.child});
+
+  final double maxWidth;
+  final Widget? child;
+
+  @override
+  State<_DockedTrailing> createState() => _DockedTrailingState();
+}
+
+class _DockedTrailingState extends State<_DockedTrailing> {
+  /// The bar row's top padding, its height and the overhang below it.
+  static const double _extent = 14 + 40 + _kDockOverhang;
+
+  @override
+  void dispose() {
+    ShellInsets.withdrawTopDock(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final child = widget.child;
+    if (child == null) {
+      ShellInsets.withdrawTopDock(this);
+    } else {
+      ShellInsets.publishTopDock(this, _extent);
+    }
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return SizedBox(
+      height: 40,
+      child: OverflowBox(
+        maxWidth: widget.maxWidth,
+        maxHeight: 40 + 2 * _kDockOverhang,
+        // Only as wide as what it holds — nothing at all while there is none.
+        fit: OverflowBoxFit.deferToChild,
+        alignment: AlignmentDirectional.centerEnd,
+        child: AnimatedSwitcher(
+          duration: reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 220),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          layoutBuilder: (current, previous) => Stack(
+            alignment: AlignmentDirectional.centerEnd,
+            children: [...previous, ?current],
+          ),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: SlideTransition(
+              position: Tween(
+                begin: const Offset(0, -0.3),
+                end: Offset.zero,
+              ).animate(animation),
+              child: child,
+            ),
+          ),
+          // One key for every state of the bar, so a change inside it (valid,
+          // saving) updates in place instead of cross-fading the whole bar.
+          child: child == null
+              ? const SizedBox.shrink(key: ValueKey('none'))
+              : KeyedSubtree(key: const ValueKey('docked'), child: child),
+        ),
+      ),
     );
   }
 }

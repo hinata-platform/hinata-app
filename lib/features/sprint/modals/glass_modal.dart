@@ -1969,13 +1969,20 @@ class _GlassToastState extends State<_GlassToast>
     // convention: bottom, in thumb's reach, riding above the keyboard so
     // field-validation notices stay visible.
     final atTop = !context.isCompact;
-    return ValueListenableBuilder<double>(
+    return ListenableBuilder(
       // Clears whatever chrome the mounted shell put on that edge — the wide
       // top bar, the floating nav — and hugs the edge itself where there is
       // none: an immersive page, or the screens with no shell at all (auth,
       // server picker), where this stays 0.
-      valueListenable: atTop ? ShellInsets.top : ShellInsets.bottom,
-      builder: (context, shellInset, child) {
+      listenable: atTop
+          ? Listenable.merge([ShellInsets.top, ShellInsets.topDock])
+          : ShellInsets.bottom,
+      builder: (context, child) {
+        // A bar a page docked under the top bar (unsaved changes) is chrome
+        // too: the toast drops in below it rather than over its Save button.
+        final shellInset = atTop
+            ? ShellInsets.top.value + ShellInsets.topDock.value
+            : ShellInsets.bottom.value;
         // Both system insets come from the overlay's own MediaQuery: the
         // status bar up top, and below either the safe area or — with the
         // keyboard up, which lifts the nav with it — the keyboard.

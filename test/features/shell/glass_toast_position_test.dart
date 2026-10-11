@@ -106,6 +106,30 @@ void main() {
     expect(anchorOf(tester).top, 72 + 16);
   });
 
+  testWidgets('drops in below a bar a page docked under the top bar', (
+    tester,
+  ) async {
+    // The unsaved-changes bar in a wide sub-page bar: the toast must not land
+    // on its Save button.
+    ShellInsets.publishTop(Object(), 72);
+    ShellInsets.publishTopDock(Object(), 60);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await showToast(tester, size: wide);
+
+    expect(anchorOf(tester).top, 72 + 60 + 16);
+  });
+
+  testWidgets('a docked bar does not lift a phone toast', (tester) async {
+    ShellInsets.publishTopDock(Object(), 60);
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pump();
+    await showToast(tester, size: phone);
+
+    expect(anchorOf(tester).top, isNull);
+    expect(anchorOf(tester).bottom, 16);
+  });
+
   group('ownership', () {
     // Publishing is deferred to the end of the frame (notifying a listener
     // mid-build throws), so these need a frame to run in.
