@@ -38,7 +38,7 @@ class TimerSurfacePrefs extends Equatable {
   /// The running timer as an ongoing notification (Android).
   final bool runningSurface;
 
-  /// The description in menus and tooltips of an unlocked session.
+  /// The description in the running timer's notification of an unlocked session.
   final bool surfaceDetails;
 
   /// The description on surfaces of a locked screen.
