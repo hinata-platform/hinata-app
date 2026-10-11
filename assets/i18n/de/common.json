@@ -1628,9 +1628,10 @@
         "vanish": "Diese Kopien verschwinden nach 24 Stunden und beim Abmelden.",
         "stored": "Deine Schalter bleiben auf diesem Gerät.",
         "settings": "In den Einstellungen ändern",
-        "runningMenuBar": "Die Zeit in der Menüleiste oder im Infobereich, solange der Timer läuft.",
+        "runningMenuBar": "Die Zeit in der Menüleiste, solange der Timer läuft.",
         "keepRunning": "Ein geschlossenes Fenster lässt den Timer dort weiterlaufen.",
-        "hotkeys": "Zwei systemweite Kürzel. Die App hört nur diese, nie andere Tasten."
+        "hotkeys": "Zwei systemweite Kürzel. Die App hört nur diese, nie andere Tasten.",
+        "runningTray": "Ein Symbol im Infobereich, solange der Timer läuft."
       },
       "menu": {
         "start": "Timer starten",
@@ -4358,7 +4359,7 @@
       "keySpace": "Leertaste",
       "recordPrompt": "Drücke die neue Kombination",
       "recordHint": "Halte Strg oder die Windows-Taste dazu, etwa {{example}}. Esc bricht ab.",
-      "recordNeedsModifier": "Ein Kürzel braucht Strg oder die Windows-Taste. Strg+Alt allein ist AltGr und schreibt Zeichen, nimm Umschalt oder die Windows-Taste dazu.",
+      "recordNeedsModifier": "Ein Kürzel braucht zwei Sondertasten, eine davon Strg oder die Windows-Taste: Strg allein gehört den Kürzeln jeder App, und Strg+Alt allein ist AltGr, das Zeichen schreibt.",
       "recordUnsupportedKey": "Nimm einen Buchstaben, eine Ziffer, F1 bis F12 oder die Leertaste.",
       "test": "Kürzel prüfen",
       "testHint": "Drück es einmal, gern mit einer anderen App im Vordergrund. Während der Prüfung startet und stoppt nichts.",
@@ -4367,7 +4368,7 @@
       "testWorked": "Funktioniert. Der Tastendruck kam an.",
       "testSilent": "Kein Tastendruck kam an. Vielleicht hält eine andere App die Kombination. Wähle eine andere.",
       "recordHintMac": "Halte Control oder Command dazu, etwa {{example}}. Esc bricht ab.",
-      "recordNeedsModifierMac": "Ein Kürzel braucht Control oder Command. Umschalt und Option allein schreiben in jeder App Großbuchstaben und Sonderzeichen.",
+      "recordNeedsModifierMac": "Ein Kürzel braucht zwei Sondertasten, eine davon Control oder Command: Command allein gehört den Kürzeln jeder App, und Umschalt und Option allein schreiben Zeichen.",
       "key": {
         "ctrl": "Strg",
         "alt": "Alt",

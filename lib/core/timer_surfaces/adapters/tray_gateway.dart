@@ -1,4 +1,4 @@
-import 'dart:io' show Platform;
+import 'dart:io' show Platform, pid;
 
 import 'package:dbus/dbus.dart';
 import 'package:flutter/foundation.dart';
@@ -110,17 +110,65 @@ class TrayManagerGateway with TrayListener implements TrayGateway {
     }
   }
 
+  /// Whether the host lists this process's icon (Linux), asked once after the
+  /// first icon. A watcher being there is not enough: a confined app whose
+  /// registration is refused shows nothing and hears nothing back.
+  Future<bool>? _registered;
+
+  /// Looks for an item of this process among the watcher's registered items
+  /// for up to two seconds. Where the bus does not answer at all, the icon is
+  /// taken as shown, as before this check existed: a desktop that will not
+  /// say must not lose a tray that works.
+  static Future<bool> _itemRegistered() async {
+    final client = DBusClient.session();
+    try {
+      final watcher = DBusRemoteObject(
+        client,
+        name: 'org.kde.StatusNotifierWatcher',
+        path: DBusObjectPath('/StatusNotifierWatcher'),
+      );
+      for (var attempt = 0; attempt < 10; attempt++) {
+        final items = await watcher.getProperty(
+          'org.kde.StatusNotifierWatcher',
+          'RegisteredStatusNotifierItems',
+          signature: DBusSignature('as'),
+        );
+        for (final item in items.asStringArray()) {
+          final owner = item.split('/').first;
+          if (owner.isEmpty) continue;
+          try {
+            if (await client.getConnectionUnixProcessId(owner) == pid) {
+              return true;
+            }
+          } catch (_) {
+            // An item whose owner went away meanwhile.
+          }
+        }
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      }
+      return false;
+    } catch (_) {
+      return true;
+    } finally {
+      await client.close();
+    }
+  }
+
   @override
   Future<void> setIcon({required bool running}) async {
-    if (platform == SurfacePlatform.linux &&
-        !await (_hosted ??= _statusNotifierHost())) {
+    final linux = platform == SurfacePlatform.linux;
+    if (linux && !await (_hosted ??= _statusNotifierHost())) {
       throw StateError('No StatusNotifierItem host on this desktop');
     }
     _listen();
+    final first = _registered == null;
     await trayManager.setIcon(
       _iconPath(running),
       isTemplate: platform == SurfacePlatform.macos,
     );
+    if (linux && first && !await (_registered = _itemRegistered())) {
+      throw StateError('The tray icon was not registered with the host');
+    }
     if (platform == SurfacePlatform.macos && !_monospaced) {
       _monospaced = true;
       await _runner.invokeMethod<void>('monospaceMenuBarDigits');
@@ -154,6 +202,7 @@ class TrayManagerGateway with TrayListener implements TrayGateway {
   @override
   Future<void> remove() async {
     _monospaced = false;
+    _registered = null;
     if (_listening) {
       trayManager.removeListener(this);
       _listening = false;
