@@ -338,57 +338,28 @@ class _NavRail extends StatelessWidget {
                                         tooltip: context.t('issues.new'),
                                         onTap: () => _createIssue(context),
                                       )
-                                    : DecoratedBox(
-                                        // Soft honey glow beneath the CTA (matches the web
-                                        // prototype's box-shadow: 0 6px 18px -8px amber/0.7).
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(
-                                            AppTheme.radiusControl,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: AppColors.accent
-                                                  .withValues(alpha: 0.45),
-                                              blurRadius: 18,
-                                              spreadRadius: -6,
-                                              offset: const Offset(0, 6),
+                                    // The app's honey capsule, glow and all
+                                    // ([GlassButtons.filled]), across the rail.
+                                    : SizedBox(
+                                        width: double.infinity,
+                                        child: FilledButton.icon(
+                                          onPressed: () =>
+                                              _createIssue(context),
+                                          style: FilledButton.styleFrom(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 12,
                                             ),
-                                          ],
-                                        ),
-                                        child: SizedBox(
-                                          width: double.infinity,
-                                          child: FilledButton.icon(
-                                            onPressed: () =>
-                                                _createIssue(context),
-                                            style: FilledButton.styleFrom(
-                                              backgroundColor: AppColors.accent,
-                                              foregroundColor: const Color(
-                                                0xFF2A2410,
-                                              ),
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(
-                                                      AppTheme.radiusControl,
-                                                    ),
-                                              ),
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 12,
-                                                    vertical: 12,
-                                                  ),
-                                              textStyle: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                fontSize: AppType.label,
-                                              ),
-                                            ),
-                                            icon: const Icon(
-                                              LucideIcons.plus,
-                                              size: 18,
-                                            ),
-                                            label: Text(
-                                              context.t('issues.new'),
+                                            textStyle: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: AppType.label,
                                             ),
                                           ),
+                                          icon: const Icon(
+                                            LucideIcons.plus,
+                                            size: 18,
+                                          ),
+                                          label: Text(context.t('issues.new')),
                                         ),
                                       ),
                               ),

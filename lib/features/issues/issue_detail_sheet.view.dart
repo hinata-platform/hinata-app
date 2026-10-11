@@ -2037,9 +2037,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 Row(
                   children: [
                     FilledButton(
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.navy,
-                      ),
+                      style: FilledButton.styleFrom(),
                       onPressed: _saveDesc,
                       child: Text(context.t('common.save')),
                     ),

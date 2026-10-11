@@ -318,7 +318,6 @@ class _AdminAuditSectionState extends State<AdminAuditSection> {
                       label: Text(context.t('audit.filter.reset')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.ink,
-                        side: BorderSide(color: AppColors.hairline),
                       ),
                     )
                   : null,

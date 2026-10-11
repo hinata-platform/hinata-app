@@ -117,12 +117,8 @@ class _RemoveIssueConfirm extends StatelessWidget {
                   style: FilledButton.styleFrom(
                     // Archiving is the primary (only) action for regular
                     // members; next to a red delete it steps back to tonal.
-                    backgroundColor: canDelete
-                        ? AppColors.accentSoft
-                        : AppColors.accentStrong,
-                    foregroundColor: canDelete
-                        ? AppColors.accentInk
-                        : Colors.white,
+                    backgroundColor: canDelete ? AppColors.accentSoft : null,
+                    foregroundColor: canDelete ? AppColors.accentInk : null,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 13,
@@ -130,11 +126,6 @@ class _RemoveIssueConfirm extends StatelessWidget {
                     textStyle: const TextStyle(
                       fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
-                      ),
                     ),
                   ),
                   icon: const Icon(LucideIcons.archive, size: 16),
@@ -155,11 +146,6 @@ class _RemoveIssueConfirm extends StatelessWidget {
                       textStyle: const TextStyle(
                         fontSize: AppType.label,
                         fontWeight: FontWeight.w600,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusControl,
-                        ),
                       ),
                     ),
                     icon: const Icon(LucideIcons.trash2, size: 16),
@@ -285,11 +271,6 @@ class _DeleteCommentConfirm extends StatelessWidget {
                     textStyle: const TextStyle(
                       fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
-                      ),
                     ),
                   ),
                   icon: const Icon(LucideIcons.trash2, size: 16),

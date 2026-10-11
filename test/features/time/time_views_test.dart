@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/widgets/glass_split_button.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
@@ -275,7 +276,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(tester.getSize(find.byType(GlassSwitchBar)).height, 42);
-      expectFlushWithSwitcher(tester, find.byType(FilledButton));
+      expectFlushWithSwitcher(tester, find.byType(GlassSplitButton));
     },
     variant: const TargetPlatformVariant(<TargetPlatform>{
       TargetPlatform.macOS,

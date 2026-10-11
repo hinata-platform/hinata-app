@@ -632,24 +632,20 @@ class _Footer extends StatelessWidget {
             FilledButton.icon(
               onPressed: busy ? null : onConfirm,
               style: FilledButton.styleFrom(
-                backgroundColor: danger ? AppColors.danger : AppColors.navy,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: AppColors.hairline,
+                backgroundColor: danger ? AppColors.danger : null,
+                foregroundColor: danger ? Colors.white : null,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
                   vertical: 13,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                ),
               ),
               icon: busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 15,
                       height: 15,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: danger ? Colors.white : AppColors.navy,
                       ),
                     )
                   : Icon(icon, size: 15),

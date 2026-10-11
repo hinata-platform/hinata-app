@@ -312,13 +312,7 @@ class _OrgAbsenceManagementCardState extends State<_OrgAbsenceManagementBody> {
     builder: (anchorContext) => OutlinedButton.icon(
       icon: const Icon(LucideIcons.userPlus, size: 16),
       label: Text(context.t('admin.absence.keepersAdd')),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.ink,
-        side: BorderSide(color: AppColors.hairline2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        ),
-      ),
+      style: OutlinedButton.styleFrom(foregroundColor: AppColors.ink),
       onPressed: () {
         final box = anchorContext.findRenderObject() as RenderBox?;
         if (box == null) return;
