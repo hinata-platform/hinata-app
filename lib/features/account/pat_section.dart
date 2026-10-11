@@ -597,14 +597,9 @@ Future<void> showPatReveal(BuildContext context, CreatedPat created) {
               FilledButton.icon(
                 onPressed: () => Navigator.of(modalContext).maybePop(),
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 13,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
                   ),
                 ),
                 icon: const Icon(LucideIcons.check, size: 15),

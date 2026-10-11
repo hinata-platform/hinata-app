@@ -108,7 +108,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                                     height: 22,
                                     child: HiveLoader(
                                       strokeWidth: 2,
-                                      color: Colors.white,
+                                      color: AppColors.navy,
                                     ),
                                   )
                                 : Text(context.t('connect.action')),

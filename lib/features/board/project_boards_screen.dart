@@ -155,8 +155,6 @@ class _ProjectBoardsState extends State<_ProjectBoards>
                         FilledButton.icon(
                           onPressed: _showCreate,
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.accent,
-                            foregroundColor: kOnAmber,
                             textStyle: const TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: AppType.label,
@@ -208,10 +206,7 @@ class _ProjectBoardsState extends State<_ProjectBoards>
                           message: context.t('board.emptyProject'),
                           action: FilledButton.icon(
                             onPressed: _showCreate,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.accent,
-                              foregroundColor: kOnAmber,
-                            ),
+                            style: FilledButton.styleFrom(),
                             icon: const Icon(LucideIcons.plus, size: 18),
                             label: Text(context.t('board.newBoard')),
                           ),
@@ -455,10 +450,7 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
             const SizedBox(height: 24),
             FilledButton(
               onPressed: _saving ? null : _save,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.accent,
-                foregroundColor: kOnAmber,
-              ),
+              style: FilledButton.styleFrom(),
               child: _saving
                   ? const SizedBox(
                       width: 22,

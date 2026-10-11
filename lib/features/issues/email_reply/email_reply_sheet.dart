@@ -864,15 +864,10 @@ class _EmailSendBar extends StatelessWidget {
           FilledButton.icon(
             onPressed: busy || !canSend ? null : onSend,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
             ),
             icon: busy
-                ? const HiveLoader(size: 15, color: Colors.white)
+                ? const HiveLoader(size: 15, color: AppColors.navy)
                 : const Icon(LucideIcons.send, size: 15),
             label: Text(context.t('issues.replyEmail.send')),
           ),

@@ -181,11 +181,6 @@ class TeamSettingsTab extends StatelessWidget {
                         horizontal: 16,
                         vertical: 13,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(
-                          AppTheme.radiusControl,
-                        ),
-                      ),
                     ),
                     icon: const Icon(LucideIcons.trash2, size: 16),
                     label: Text(context.t('teams.deleteCta')),

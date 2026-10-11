@@ -146,8 +146,6 @@ class _ConnectHintBody extends StatelessWidget {
               FilledButton.icon(
                 onPressed: onConnectNow,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(LucideIcons.zap, size: 17),
@@ -158,7 +156,6 @@ class _ConnectHintBody extends StatelessWidget {
                 onPressed: onHaveToken,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.ink,
-                  side: BorderSide(color: AppColors.hairline),
                   padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
                 icon: const Icon(LucideIcons.ticket, size: 17),

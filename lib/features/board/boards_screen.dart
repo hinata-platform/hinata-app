@@ -17,7 +17,6 @@ import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/glass_filter_bar.dart'
     show GlassFilterChip, kGlassDockRow;
 import '../../core/widgets/hive_empty_state.dart';
@@ -271,10 +270,7 @@ class _BoardListState extends State<_BoardList> with LoadWhenShown<_BoardList> {
                   message: context.t('board.empty'),
                   action: FilledButton.icon(
                     onPressed: _showCreate,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.accent,
-                      foregroundColor: kOnAmber,
-                    ),
+                    style: FilledButton.styleFrom(),
                     icon: const Icon(LucideIcons.plus, size: 18),
                     label: Text(context.t('board.newBoard')),
                   ),

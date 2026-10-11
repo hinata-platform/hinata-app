@@ -457,46 +457,10 @@ class _SprintHero extends StatelessWidget {
   }
 
   Widget _boardButton(BuildContext context) {
-    return Semantics(
-      button: true,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => context.go(boardLocation(sprint.boardId)),
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFE4AC3E), Color(0xFFCE9526)],
-              ),
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.accent.withValues(alpha: .35),
-                  blurRadius: 16,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(LucideIcons.columns3, size: 15, color: kOnAmber),
-                const SizedBox(width: 8),
-                Text(
-                  context.t('dashboard.toBoard'),
-                  style: const TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: FontWeight.w700,
-                    color: kOnAmber,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return FilledButton.icon(
+      onPressed: () => context.go(boardLocation(sprint.boardId)),
+      icon: const Icon(LucideIcons.columns3, size: 15),
+      label: Text(context.t('dashboard.toBoard')),
     );
   }
 }
@@ -537,10 +501,7 @@ class _SprintEmpty extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.accent,
-              foregroundColor: kOnAmber,
-            ),
+            style: FilledButton.styleFrom(),
             onPressed: () => context.go(boardsLocation),
             child: Text(context.t('dashboard.planSprint')),
           ),

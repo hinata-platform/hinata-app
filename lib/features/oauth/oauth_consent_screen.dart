@@ -285,12 +285,7 @@ class _ConsentCard extends StatelessWidget {
           FilledButton(
             onPressed: busy ? null : onAllow,
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 15),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
             ),
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
@@ -302,7 +297,7 @@ class _ConsentCard extends StatelessWidget {
                       child: HiveLoader(
                         size: 22,
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.navy,
                       ),
                     )
                   : Text(
