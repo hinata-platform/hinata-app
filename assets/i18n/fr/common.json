@@ -2863,7 +2863,7 @@
       "lockBeforeLabel": "Verrouillé avant",
       "lockBeforeHint": "Personne ne peut plus créer, modifier ni supprimer les entrées antérieures à ce jour, pas même via l’API. Le jour lui-même reste ouvert. La date ne peut jamais être dans le futur, car le temps de travail en cours doit toujours pouvoir être saisi.",
       "roundingModeLabel": "Arrondi",
-      "roundingModeHint": "Ne s'applique qu'aux rapports ; les minutes enregistrées ne changent jamais.",
+      "roundingModeHint": "S'applique aux rapports, à la facturation et aux factures. Les minutes enregistrées ne changent jamais.",
       "roundingMode": {
         "none": "Aucun arrondi",
         "up": "Arrondir au supérieur",
@@ -2943,7 +2943,6 @@
       "monthsSuffix": "mois",
       "privacyNoticeLabel": "Note de confidentialité",
       "privacyNoticeHint": "Markdown. Chacun la voit lors de sa première utilisation du suivi du temps et sous Paramètres → Suivi du temps. Vide signifie le texte intégré, dans la langue de la personne qui lit.",
-      "notYetEnforced": "Enregistré, mais pas encore appliqué. La fonction liée à cette règle arrivera à une étape ultérieure du suivi du temps.",
       "tagsTitle": "Étiquettes",
       "tagsHint": "Le vocabulaire qui sert à étiqueter les saisies. Renommer une étiquette entraîne toutes les saisies.",
       "tagsEmpty": "Pas encore d'étiquettes.",
