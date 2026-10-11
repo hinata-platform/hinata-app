@@ -26,10 +26,9 @@ void main() {
   WindowsTaskbarSurface surface() =>
       WindowsTaskbarSurface(channel: channel, now: () => now);
 
-  TimerSurfaceState countdown(TimerPhase phase) => TimerSurfaceState(
+  TimerSurfaceState countdown() => TimerSurfaceState(
     running: true,
-    mode: TimerMode.pomodoro,
-    phase: phase,
+    mode: TimerMode.countdown,
     startedAt: start,
     endsAt: start.add(const Duration(minutes: 25)),
     runningSurface: true,
@@ -38,9 +37,9 @@ void main() {
   test('the progress is the share of the interval behind', () {
     final s = surface();
     now = start.add(const Duration(minutes: 5));
-    expect(s.progressOf(countdown(TimerPhase.work)), 200);
+    expect(s.progressOf(countdown()), 200);
     now = start.add(const Duration(hours: 1));
-    expect(s.progressOf(countdown(TimerPhase.work)), 1000);
+    expect(s.progressOf(countdown()), 1000);
     expect(
       s.progressOf(
         TimerSurfaceState(
@@ -53,21 +52,58 @@ void main() {
     );
   });
 
-  test('work and a break draw the same overlay', () async {
+  TimerSurfaceState pomodoro(TimerPhase phase) => TimerSurfaceState(
+    running: true,
+    mode: TimerMode.pomodoro,
+    phase: phase,
+    startedAt: start,
+    endsAt: start.add(const Duration(minutes: 5)),
+    runningSurface: true,
+  );
+
+  test('work and a break draw the same overlay, tooltip and no bar', () async {
     final s = surface();
     await s.init(FakeHost());
-    await s.apply(countdown(TimerPhase.work));
-    final work = calls.where((c) => c.method == 'setOverlay').single.arguments;
+    await s.apply(pomodoro(TimerPhase.work));
+    final work = [for (final c in calls) '${c.method} ${c.arguments}'];
     calls.clear();
-    await s.apply(countdown(TimerPhase.shortBreak));
-    final rest = calls.where((c) => c.method == 'setOverlay').single.arguments;
-    expect(rest, work);
+    final b = surface();
+    await b.init(FakeHost());
+    await b.apply(pomodoro(TimerPhase.shortBreak));
+    b.tick(const Duration(minutes: 3));
+    expect([for (final c in calls) '${c.method} ${c.arguments}'], work);
+    expect(s.progressOf(pomodoro(TimerPhase.shortBreak)), isNull);
+  });
+
+  test('only a change reaches the runner', () async {
+    final s = surface();
+    await s.init(FakeHost());
+    await s.apply(countdown());
+    calls.clear();
+    await s.apply(countdown());
+    s.tick(const Duration(minutes: 1));
+    await pumpEventQueue();
+    expect(calls.map((c) => c.method), ['setTooltip']);
+  });
+
+  test('a click on buttons that are not shown starts nothing', () async {
+    final host = FakeHost();
+    final s = surface();
+    await s.init(host);
+    const codec = StandardMethodCodec();
+    await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .handlePlatformMessage(
+          'hinata/taskbar',
+          codec.encodeMethodCall(const MethodCall('thumbClicked', 'toggle')),
+          (_) {},
+        );
+    expect(host.calls, isEmpty);
   });
 
   test('switched off clears the button', () async {
     final s = surface();
     await s.init(FakeHost());
-    await s.apply(countdown(TimerPhase.work));
+    await s.apply(countdown());
     calls.clear();
     await s.apply(const TimerSurfaceState(running: false));
     expect(calls.map((c) => c.method), ['clear']);
@@ -77,7 +113,7 @@ void main() {
     final host = FakeHost();
     final s = surface();
     await s.init(host);
-    await s.apply(countdown(TimerPhase.work));
+    await s.apply(countdown());
     const codec = StandardMethodCodec();
     for (final id in ['toggle', 'focus']) {
       await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger

@@ -4357,15 +4357,23 @@
       "hotkeyChoose": "اختيار",
       "keySpace": "مسافة",
       "recordPrompt": "اضغط الاختصار الجديد",
-      "recordHint": "اضغط معه مفتاح تعديل واحدًا على الأقل، مثل {{example}}. Esc للإلغاء.",
-      "recordNeedsModifier": "يحتاج الاختصار إلى مفتاح تعديل، وإلا فقدت التطبيقات الأخرى هذا المفتاح.",
+      "recordHint": "اضغط معه Ctrl أو مفتاح Windows، مثل {{example}}. Esc للإلغاء.",
+      "recordNeedsModifier": "يحتاج الاختصار إلى Ctrl أو مفتاح Windows، وCtrl+Alt وحدهما هما AltGr الذي يكتب الرموز. أضف Shift أو مفتاح Windows.",
       "recordUnsupportedKey": "استخدم حرفًا أو رقمًا أو F1 حتى F12 أو مفتاح المسافة.",
       "test": "تحقّق من الاختصار",
       "testHint": "اضغطه مرة واحدة، ولو كان تطبيق آخر في المقدمة. لا يبدأ شيء ولا يتوقف أثناء الفحص.",
       "testButton": "تحقّق الآن",
       "testWaiting": "اضغط {{combo}} الآن.",
       "testWorked": "يعمل. وصل الضغط.",
-      "testSilent": "لم يصل أي ضغط. ربما يستخدم تطبيق آخر هذا الاختصار؛ اختر غيره."
+      "testSilent": "لم يصل أي ضغط. ربما يستخدم تطبيق آخر هذا الاختصار؛ اختر غيره.",
+      "recordHintMac": "اضغط معه Control أو Command، مثل {{example}}. Esc للإلغاء.",
+      "recordNeedsModifierMac": "يحتاج الاختصار إلى Control أو Command. أما Shift وOption وحدهما فيكتبان الأحرف الكبيرة والرموز في كل تطبيق.",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Shift",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

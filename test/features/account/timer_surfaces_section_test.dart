@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import 'package:hinata/core/timer_surfaces/surface_platform.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_clear_signal.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
@@ -37,8 +38,11 @@ void main() {
         data: const MediaQueryData(size: Size(1200, 1600)),
         child: MaterialApp(
           home: Scaffold(
-            body: RepositoryProvider<TimerSurfaceClearSignal>.value(
-              value: clear,
+            body: MultiRepositoryProvider(
+              providers: [
+                RepositoryProvider<TimerSurfaceClearSignal>.value(value: clear),
+                RepositoryProvider<HotkeyStatus>.value(value: HotkeyStatus()),
+              ],
               child: BlocProvider<TimerSurfacePrefsCubit>.value(
                 value: prefs,
                 child: SingleChildScrollView(

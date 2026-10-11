@@ -40,8 +40,9 @@
 # THE ONE EXCEPTION: libayatana-appindicator. tray_manager links it (HIN-101),
 # and unlike GTK it is *not* on every desktop: a host without it would refuse
 # to start the app at all, for the sake of a tray icon. So it travels with the
-# bundle, with the three libraries it pulls in that are just as often missing,
-# into lib/ next to the plugins, which find it through their $ORIGIN/lib RPATH.
+# bundle, with the four libraries it pulls in that are just as often missing,
+# into lib/. The plugin that links it lives there too and finds it next to
+# itself; the copies get an $ORIGIN RUNPATH so they find each other.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
@@ -92,16 +93,31 @@ mkdir -p "$APPDIR/usr/bin" "$TOOLS_DIR"
 # neighbours is the one way to break both at once.
 cp -a "$BUNDLE_DIR/." "$APPDIR/usr/bin/"
 
-# The tray's libraries, from the build machine (see the note at the top).
+# The tray's libraries, from the build machine (see the note at the top), for
+# the architecture being packaged: ldconfig lists a multiarch i386 copy too.
+case "$FLUTTER_ARCH" in
+  x64) LD_ARCH="x86-64" ;;
+  arm64) LD_ARCH="AArch64" ;;
+  *) echo "No library architecture known for $FLUTTER_ARCH." >&2; exit 1 ;;
+esac
+if ! command -v patchelf >/dev/null 2>&1; then
+  echo "patchelf is needed to make the bundled tray libraries find each other." >&2
+  exit 1
+fi
 for soname in libayatana-appindicator3.so.1 libayatana-indicator3.so.7 \
+              libayatana-ido3-0.4.so.0 \
               libdbusmenu-glib.so.4 libdbusmenu-gtk3.so.4; do
-  found="$(ldconfig -p | awk -v name="$soname" '$1 == name { print $NF; exit }')"
+  found="$(ldconfig -p | awk -v name="$soname" -v arch="$LD_ARCH" \
+    '$1 == name && index($0, arch) { print $NF; exit }')"
   if [ -z "$found" ]; then
-    echo "$soname is not installed on this machine; install" >&2
+    echo "$soname ($LD_ARCH) is not installed on this machine; install" >&2
     echo "libayatana-appindicator3-1 (and its dependencies) and run again." >&2
     exit 1
   fi
   cp -L "$found" "$APPDIR/usr/bin/lib/$soname"
+  # A RUNPATH is not inherited: each copied library looks for the others next
+  # to itself, or a host without them would not start the app after all.
+  patchelf --set-rpath '$ORIGIN' "$APPDIR/usr/bin/lib/$soname"
 done
 
 install -Dm644 "$PACKAGING_DIR/$APP_ID.desktop" \

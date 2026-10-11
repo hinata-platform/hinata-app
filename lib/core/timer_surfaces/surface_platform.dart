@@ -42,13 +42,14 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
         phaseEndNotification: true,
         schedulesAhead: true,
       ),
-      // The running timer is the menu bar's clock on a Mac and the tray icon
-      // with its tooltip on Windows and Linux; no window title on the desktop.
+      // The running timer is the menu bar's clock on a Mac, the tray icon with
+      // its tooltip on Windows and the bare tray icon on Linux; no window
+      // title on the desktop.
       SurfacePlatform.macos => const TimerSurfaceCapabilities(
         phaseEndNotification: true,
         schedulesAhead: true,
         runningSurface: true,
-        menuBar: true,
+        trayIcon: true,
         keepRunning: true,
         globalHotkeys: true,
       ),
@@ -56,7 +57,7 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
         phaseEndNotification: true,
         schedulesAhead: true,
         runningSurface: true,
-        menuBar: true,
+        trayIcon: true,
         keepRunning: true,
         globalHotkeys: true,
         taskbar: true,
@@ -67,7 +68,7 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
       SurfacePlatform.linux => const TimerSurfaceCapabilities(
         phaseEndNotification: true,
         runningSurface: true,
-        menuBar: true,
+        trayIcon: true,
         keepRunning: true,
       ),
       // On the web the running timer is the app badge of an installed app.

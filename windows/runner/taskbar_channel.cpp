@@ -86,45 +86,73 @@ HICON SmallIcon(int id) {
                                       size, LR_DEFAULTCOLOR));
 }
 
+// Loaded once and kept: the icons are drawn again on every change, and loading
+// and destroying them each time costs Explorer and us for nothing.
+struct Icons {
+  HICON running = nullptr;
+  HICON play = nullptr;
+  HICON stop = nullptr;
+  HICON focus = nullptr;
+
+  void Load() {
+    if (!running) running = SmallIcon(IDI_TASKBAR_RUNNING);
+    if (!play) play = SmallIcon(IDI_THUMB_PLAY);
+    if (!stop) stop = SmallIcon(IDI_THUMB_STOP);
+    if (!focus) focus = SmallIcon(IDI_THUMB_FOCUS);
+  }
+
+  void Free() {
+    for (HICON* icon : {&running, &play, &stop, &focus}) {
+      if (*icon) DestroyIcon(*icon);
+      *icon = nullptr;
+    }
+  }
+};
+Icons g_icons;
+
 void CopyTip(WCHAR* target, size_t capacity, const std::wstring& text) {
   wcsncpy_s(target, capacity, text.c_str(), _TRUNCATE);
 }
 
-THUMBBUTTON Button(UINT id, int icon, const std::wstring& tip, bool visible) {
+THUMBBUTTON Button(UINT id, HICON icon, const std::wstring& tip, bool visible) {
   THUMBBUTTON button = {};
   button.dwMask = THB_ICON | THB_TOOLTIP | THB_FLAGS;
   button.iId = id;
-  button.hIcon = SmallIcon(icon);
+  button.hIcon = icon;
   CopyTip(button.szTip, ARRAYSIZE(button.szTip), tip);
   button.dwFlags = visible ? THBF_ENABLED : THBF_HIDDEN;
   return button;
 }
 
-// Draws g_state. Called after every change and when Explorer (re)creates the
-// button; does nothing while the button does not exist yet.
-void Draw() {
-  if (!g_taskbar || !g_window) return;
+bool ButtonsShown() {
+  return g_buttons_added && g_state.drawn && g_state.buttons;
+}
+
+// Each part is drawn on its own, so a call from Dart touches only what it
+// changed; Draw() does all of them when the button is (re)created.
+void DrawProgress() {
   const auto& s = g_state;
-  const bool on = s.drawn;
+  const bool on = s.drawn && s.progress;
+  g_taskbar->SetProgressState(g_window, on ? TBPF_NORMAL : TBPF_NOPROGRESS);
+  if (on) g_taskbar->SetProgressValue(g_window, s.value, 1000);
+}
 
-  g_taskbar->SetProgressState(
-      g_window, on && s.progress ? TBPF_NORMAL : TBPF_NOPROGRESS);
-  if (on && s.progress) {
-    g_taskbar->SetProgressValue(g_window, s.value, 1000);
-  }
+void DrawOverlay() {
+  const auto& s = g_state;
+  const bool on = s.drawn && s.running;
+  g_taskbar->SetOverlayIcon(g_window, on ? g_icons.running : nullptr,
+                            on ? s.description.c_str() : L"");
+}
 
-  HICON overlay = on && s.running ? SmallIcon(IDI_TASKBAR_RUNNING) : nullptr;
-  g_taskbar->SetOverlayIcon(g_window, overlay,
-                            on && s.running ? s.description.c_str() : L"");
-  if (overlay) DestroyIcon(overlay);
-
+void DrawButtons() {
+  const auto& s = g_state;
   // The toolbar can be added only once per button; afterwards it is updated,
   // and hidden rather than removed.
-  const bool show = on && s.buttons;
+  const bool show = s.drawn && s.buttons;
   THUMBBUTTON buttons[2] = {
-      Button(kToggleButton, s.running ? IDI_THUMB_STOP : IDI_THUMB_PLAY,
+      Button(kToggleButton, s.running ? g_icons.stop : g_icons.play,
              s.toggle_tip, show),
-      Button(kFocusButton, IDI_THUMB_FOCUS, s.focus_tip, show),
+      Button(kFocusButton, g_icons.focus, s.focus_tip, show),
   };
   if (!g_buttons_added) {
     if (show && SUCCEEDED(g_taskbar->ThumbBarAddButtons(
@@ -134,12 +162,22 @@ void Draw() {
   } else {
     g_taskbar->ThumbBarUpdateButtons(g_window, ARRAYSIZE(buttons), buttons);
   }
-  for (auto& button : buttons) {
-    if (button.hIcon) DestroyIcon(button.hIcon);
-  }
+}
 
+void DrawTooltip() {
+  const auto& s = g_state;
   g_taskbar->SetThumbnailTooltip(
-      g_window, on && !s.tooltip.empty() ? s.tooltip.c_str() : nullptr);
+      g_window, s.drawn && !s.tooltip.empty() ? s.tooltip.c_str() : nullptr);
+}
+
+// Draws g_state in full, when Explorer (re)creates the button and on clear;
+// does nothing while the button does not exist yet.
+void Draw() {
+  if (!g_taskbar || !g_window) return;
+  DrawProgress();
+  DrawOverlay();
+  DrawButtons();
+  DrawTooltip();
 }
 
 void Handle(const flutter::MethodCall<EncodableValue>& call,
@@ -157,24 +195,29 @@ void Handle(const flutter::MethodCall<EncodableValue>& call,
     return;
   }
   g_state.drawn = true;
+  void (*draw)() = nullptr;
   if (method == "setProgress") {
     g_state.progress = String(*args, "state") == L"normal";
     g_state.value = Int(*args, "value");
+    draw = DrawProgress;
   } else if (method == "setOverlay") {
     g_state.running = Bool(*args, "running");
     g_state.description = String(*args, "description");
+    draw = DrawOverlay;
   } else if (method == "setButtons") {
     g_state.buttons = true;
     g_state.running = Bool(*args, "running");
     g_state.toggle_tip = String(*args, "toggle");
     g_state.focus_tip = String(*args, "focus");
+    draw = DrawButtons;
   } else if (method == "setTooltip") {
     g_state.tooltip = String(*args, "text");
+    draw = DrawTooltip;
   } else {
     result->NotImplemented();
     return;
   }
-  Draw();
+  if (g_taskbar && g_window) draw();
   result->Success();
 }
 
@@ -182,6 +225,7 @@ void Handle(const flutter::MethodCall<EncodableValue>& call,
 
 void RegisterTaskbarChannel(flutter::FlutterEngine* engine, HWND window) {
   g_window = window;
+  g_icons.Load();
   g_button_created = RegisterWindowMessage(L"TaskbarButtonCreated");
   g_channel = std::make_unique<flutter::MethodChannel<EncodableValue>>(
       engine->messenger(), "hinata/taskbar",
@@ -206,7 +250,10 @@ bool HandleTaskbarMessage(HWND /*window*/, UINT message, WPARAM wparam,
     }
     return true;
   }
-  if (message == WM_COMMAND && HIWORD(wparam) == THBN_CLICKED && g_channel) {
+  // Only a button on screen can have been clicked; another process posting
+  // the same message to this window starts nothing.
+  if (message == WM_COMMAND && HIWORD(wparam) == THBN_CLICKED && g_channel &&
+      ButtonsShown()) {
     const UINT id = LOWORD(wparam);
     if (id == kToggleButton || id == kFocusButton) {
       g_channel->InvokeMethod(
@@ -217,6 +264,18 @@ bool HandleTaskbarMessage(HWND /*window*/, UINT message, WPARAM wparam,
     }
   }
   return false;
+}
+
+void UnregisterTaskbarChannel() {
+  if (g_channel) g_channel->SetMethodCallHandler(nullptr);
+  g_channel.reset();
+  // Released while COM is still initialised, not by a static destructor after
+  // CoUninitialize.
+  g_taskbar.Reset();
+  g_icons.Free();
+  g_window = nullptr;
+  g_buttons_added = false;
+  g_state = TaskbarState();
 }
 
 }  // namespace hinata

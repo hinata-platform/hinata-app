@@ -34,15 +34,20 @@ void main() {
   late _FakeBinder binder;
   late FakeHost host;
   late GlobalHotkeysSurface surface;
+  late HotkeyStatus status;
   final toggle = TimerSurfacePrefs.defaultToggleHotkey(SurfacePlatform.macos);
   final focus = TimerSurfacePrefs.defaultFocusHotkey(SurfacePlatform.macos);
 
   setUp(() async {
     binder = _FakeBinder();
     host = FakeHost();
-    surface = GlobalHotkeysSurface(SurfacePlatform.macos, binder: binder);
+    status = HotkeyStatus();
+    surface = GlobalHotkeysSurface(
+      SurfacePlatform.macos,
+      status: status,
+      binder: binder,
+    );
     await surface.init(host);
-    GlobalHotkeysSurface.selfTest.value = false;
   });
 
   tearDown(() => surface.clear());
@@ -50,7 +55,7 @@ void main() {
   test('binds nothing while switched off', () async {
     await surface.apply(const TimerSurfaceState(running: false));
     expect(binder.bound, isEmpty);
-    expect(GlobalHotkeysSurface.results.value, isEmpty);
+    expect(status.results.value, isEmpty);
   });
 
   test('binds both and reports what the system said', () async {
@@ -62,7 +67,7 @@ void main() {
       ),
     );
     expect(binder.bound.values, [toggle, focus]);
-    expect(GlobalHotkeysSurface.results.value, {
+    expect(status.results.value, {
       GlobalHotkeysSurface.toggleId: HotKeyResult.bound,
       GlobalHotkeysSurface.focusId: HotKeyResult.bound,
     });
@@ -74,7 +79,7 @@ void main() {
       TimerSurfaceState(running: false, toggleHotkey: toggle),
     );
     expect(
-      GlobalHotkeysSurface.results.value[GlobalHotkeysSurface.toggleId],
+      status.results.value[GlobalHotkeysSurface.toggleId],
       HotKeyResult.conflict,
     );
   });
@@ -104,12 +109,12 @@ void main() {
 
   test('the settings check only counts a press', () async {
     await surface.apply(TimerSurfaceState(running: true, toggleHotkey: toggle));
-    GlobalHotkeysSurface.selfTest.value = true;
-    final before = GlobalHotkeysSurface.lastPress.value;
+    status.selfTest.value = true;
+    final before = status.lastPress.value;
     binder.presses.add(const HotKeyEvent(GlobalHotkeysSurface.toggleId));
     await pumpEventQueue();
     expect(host.calls, isEmpty);
-    expect(GlobalHotkeysSurface.lastPress.value, isNot(before));
+    expect(status.lastPress.value, isNot(before));
   });
 
   test('switching off releases everything', () async {
@@ -118,6 +123,84 @@ void main() {
     );
     await surface.apply(const TimerSurfaceState(running: false));
     expect(binder.bound, isEmpty);
-    expect(GlobalHotkeysSurface.results.value, isEmpty);
+    expect(status.results.value, isEmpty);
   });
+
+  test('changing one shortcut leaves the other bound', () async {
+    await surface.apply(
+      TimerSurfaceState(
+        running: false,
+        toggleHotkey: toggle,
+        focusHotkey: focus,
+      ),
+    );
+    final calls = <String>[];
+    final spy = _SpyBinder(binder, calls);
+    final second = GlobalHotkeysSurface(
+      SurfacePlatform.macos,
+      status: status,
+      binder: spy,
+    );
+    await second.init(host);
+    await second.apply(
+      TimerSurfaceState(
+        running: false,
+        toggleHotkey: toggle,
+        focusHotkey: focus,
+      ),
+    );
+    calls.clear();
+    final other = HotKey(
+      key: PhysicalKeyboardKey.keyG,
+      modifiers: focus.modifiers,
+    );
+    await second.apply(
+      TimerSurfaceState(
+        running: false,
+        toggleHotkey: toggle,
+        focusHotkey: other,
+      ),
+    );
+    expect(calls, ['register ${GlobalHotkeysSurface.focusId}']);
+  });
+
+  test('a combination people type is never bound', () async {
+    const shiftS = HotKey(
+      key: PhysicalKeyboardKey.keyS,
+      modifiers: {HotKeyModifier.shift},
+    );
+    await surface.apply(
+      const TimerSurfaceState(running: false, toggleHotkey: shiftS),
+    );
+    expect(binder.bound, isEmpty);
+    expect(
+      status.results.value[GlobalHotkeysSurface.toggleId],
+      HotKeyResult.unsupported,
+    );
+  });
+}
+
+class _SpyBinder implements HotkeyBinder {
+  _SpyBinder(this.inner, this.calls);
+
+  final HotkeyBinder inner;
+  final List<String> calls;
+
+  @override
+  Future<HotKeyResult> register(String id, HotKey hotKey) {
+    calls.add('register $id');
+    return inner.register(id, hotKey);
+  }
+
+  @override
+  Future<void> unregister(String id) {
+    calls.add('unregister $id');
+    return inner.unregister(id);
+  }
+
+  @override
+  Future<void> unregisterAll() => inner.unregisterAll();
+
+  @override
+  Stream<HotKeyEvent> get events => inner.events;
 }

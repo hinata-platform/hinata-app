@@ -14,6 +14,7 @@ List<TimerSurface> buildTimerSurfaces(
   SurfacePlatform platform, {
   required String Function() appTitle,
   required String Function() flashText,
+  required HotkeyStatus hotkeys,
 }) {
   final title = WindowTitleSurface(
     platform,
@@ -26,7 +27,7 @@ List<TimerSurface> buildTimerSurfaces(
     tray,
     KeepRunningSurface(platform, trayAvailable: tray.available),
     if (capabilitiesForPlatform(platform).globalHotkeys)
-      GlobalHotkeysSurface(platform),
+      GlobalHotkeysSurface(platform, status: hotkeys),
   ];
   return switch (platform) {
     SurfacePlatform.android ||
@@ -39,7 +40,7 @@ List<TimerSurface> buildTimerSurfaces(
     SurfacePlatform.windows => [
       WindowsToastSurface(),
       ...desktop(tray()),
-      WindowsTaskbarSurface(),
+      if (capabilitiesForPlatform(platform).taskbar) WindowsTaskbarSurface(),
       title,
     ],
     SurfacePlatform.web => [WebNotificationSurface(), title],
