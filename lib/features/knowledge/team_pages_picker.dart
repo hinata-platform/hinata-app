@@ -403,14 +403,7 @@ class _TeamPagesPickerPanelState extends State<TeamPagesPickerPanel> {
             onPressed: _loading
                 ? null
                 : () => Navigator.of(context).pop(_result()),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: Colors.white,
-              minimumSize: const Size(48, 44),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
-            ),
+            style: FilledButton.styleFrom(minimumSize: const Size(48, 44)),
             child: Text(context.t('teams.knowledge.apply')),
           ),
         ],

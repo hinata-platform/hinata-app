@@ -13,7 +13,6 @@ import '../../core/models/time_models.dart';
 import '../../core/shortcuts/app_shortcuts.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show fmtClock;
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
@@ -566,9 +565,6 @@ class _Primary extends StatelessWidget {
       backgroundColor: color,
       foregroundColor: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      ),
     ),
     icon: busy
         ? const SizedBox(

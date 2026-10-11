@@ -108,25 +108,17 @@ ButtonStyle get glassQuietActionStyle => TextButton.styleFrom(
     fontSize: AppType.label,
     fontWeight: FontWeight.w600,
   ),
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-  ),
 );
 
 /// The committing action in a popover footer. Deliberately smaller than
 /// [GlassModalFooter]'s: a sheet fills the screen and can carry a button that
 /// size, a 330-point popover cannot — there it reads as a slab.
 ButtonStyle get glassCompactPrimaryStyle => FilledButton.styleFrom(
-  backgroundColor: AppColors.navy,
-  foregroundColor: Colors.white,
   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
   minimumSize: const Size(0, 34),
   textStyle: const TextStyle(
     fontSize: AppType.label,
     fontWeight: FontWeight.w700,
-  ),
-  shape: RoundedRectangleBorder(
-    borderRadius: BorderRadius.circular(AppTheme.radiusControl),
   ),
 );
 
@@ -403,20 +395,17 @@ class GlassModalFooter extends StatelessWidget {
     final confirm = FilledButton.icon(
       onPressed: busy ? null : onConfirm,
       style: FilledButton.styleFrom(
-        backgroundColor: confirmColor ?? AppColors.navy,
-        foregroundColor: Colors.white,
+        backgroundColor: confirmColor,
+        foregroundColor: confirmColor == null ? null : Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
       ),
       icon: busy
-          ? const SizedBox(
+          ? SizedBox(
               width: 15,
               height: 15,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: confirmColor == null ? AppColors.navy : Colors.white,
               ),
             )
           : Icon(confirmIcon, size: 15),

@@ -284,12 +284,7 @@ class _PrimaryAction extends StatelessWidget {
     return FilledButton.icon(
       onPressed: onPressed,
       style: FilledButton.styleFrom(
-        backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
       ),
       icon: busy
           ? const SizedBox(
@@ -297,7 +292,7 @@ class _PrimaryAction extends StatelessWidget {
               height: 15,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Colors.white,
+                color: AppColors.navy,
               ),
             )
           : Icon(icon, size: 15),

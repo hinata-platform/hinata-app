@@ -420,13 +420,11 @@ class _LinkEditorState extends State<_LinkEditor> {
               );
               final confirm = FilledButton(
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.navy,
-                  disabledBackgroundColor: AppColors.surfaceMuted,
                   minimumSize: narrow ? const Size.fromHeight(44) : null,
                 ),
                 onPressed: _selected.isEmpty || _submitting ? null : _submit,
                 child: _submitting
-                    ? const HiveLoader(size: 16, color: Colors.white)
+                    ? const HiveLoader(size: 16, color: AppColors.navy)
                     : Text(context.t('issues.links.confirm')),
               );
               final cancel = TextButton(

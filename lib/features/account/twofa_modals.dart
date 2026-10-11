@@ -514,7 +514,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                       height: 15,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.navy,
                       ),
                     )
                   : Icon(forwardArrow(context), size: 15),
@@ -541,12 +541,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
   }
 
   ButtonStyle _primaryStyle() => FilledButton.styleFrom(
-    backgroundColor: AppColors.navy,
-    foregroundColor: Colors.white,
     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-    ),
   );
 }
 
@@ -693,27 +688,22 @@ class _CodeGatedActionState extends State<_CodeGatedAction> {
                 FilledButton.icon(
                   onPressed: _busy || _code.length < 6 ? null : _confirm,
                   style: FilledButton.styleFrom(
-                    backgroundColor: widget.danger
-                        ? AppColors.danger
-                        : AppColors.navy,
-                    foregroundColor: Colors.white,
+                    backgroundColor: widget.danger ? AppColors.danger : null,
+                    foregroundColor: widget.danger ? Colors.white : null,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 13,
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
-                      ),
-                    ),
                   ),
                   icon: _busy
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 15,
                           height: 15,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.white,
+                            color: widget.danger
+                                ? Colors.white
+                                : AppColors.navy,
                           ),
                         )
                       : Icon(

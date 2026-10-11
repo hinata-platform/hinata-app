@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 import 'field_border.dart';
+import 'glass_buttons.dart';
 import 'app_type.dart';
 
 /// Hinata "Hive" Material theme — redesign 2026.
@@ -99,40 +100,15 @@ abstract final class AppTheme {
         ),
         margin: EdgeInsets.zero,
       ),
+      // Capsules lit from above, one source for all three: [GlassButtons].
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.navy,
-          foregroundColor: Colors.white,
-          minimumSize: const Size(44, 44),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusControl),
-          ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: AppType.label,
-          ),
-        ),
+        style: GlassButtons.filled(brightness),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: ink,
-          backgroundColor: surface,
-          minimumSize: const Size(44, 44),
-          side: BorderSide(color: hairline),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(radiusControl),
-          ),
-          textStyle: const TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: AppType.label,
-          ),
-        ),
+        style: GlassButtons.outlined(brightness),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: dark ? AppColors.accent : AppColors.navy,
-        ),
+        style: GlassButtons.text(brightness),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,

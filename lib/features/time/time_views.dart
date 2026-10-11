@@ -11,10 +11,9 @@ import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/hive_widgets.dart' show GhostButton, PageHead;
 import '../../core/widgets/glass_popup_menu.dart';
+import '../../core/widgets/glass_split_button.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../absences/absence_actions.dart';
 import 'timer_bar.dart';
@@ -135,11 +134,16 @@ class TimeHead extends StatelessWidget {
           Expanded(
             child: FilledButtonTheme(
               data: FilledButtonThemeData(
-                style: FilledButton.styleFrom(visualDensity: density),
+                // Merged, not replaced: a bare theme here drops the app's capsule.
+                style: FilledButton.styleFrom(
+                  visualDensity: density,
+                ).merge(FilledButtonTheme.of(context).style),
               ),
               child: OutlinedButtonTheme(
                 data: OutlinedButtonThemeData(
-                  style: OutlinedButton.styleFrom(visualDensity: density),
+                  style: OutlinedButton.styleFrom(
+                    visualDensity: density,
+                  ).merge(OutlinedButtonTheme.of(context).style),
                 ),
                 child: SizedBox(
                   height: line,
@@ -472,60 +476,15 @@ class TimeAddButton extends StatelessWidget {
   final IconData icon;
 
   @override
-  Widget build(BuildContext context) {
-    ButtonStyle half(BorderRadius radius, EdgeInsets padding) =>
-        FilledButton.styleFrom(
-          backgroundColor: AppColors.accent,
-          foregroundColor: kOnAmber,
-          padding: padding,
-          minimumSize: const Size(40, 44),
-          textStyle: const TextStyle(
-            fontSize: AppType.label,
-            fontWeight: FontWeight.w600,
-          ),
-          shape: RoundedRectangleBorder(borderRadius: radius),
-        );
-    const radius = Radius.circular(AppTheme.radiusControl);
-    // Both halves at the height the row hands the button — [TimeHead] gives it
-    // the switcher's — so the arrow is never shorter than the label beside it.
-    return IntrinsicHeight(
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          FilledButton.icon(
-            onPressed: onNewEntry,
-            style: half(
-              const BorderRadius.horizontal(left: radius),
-              const EdgeInsets.fromLTRB(16, 13, 14, 13),
-            ),
-            icon: Icon(icon, size: 16),
-            label: Text(context.t(label)),
-          ),
-          const SizedBox(width: 1),
-          Builder(
-            builder: (anchorContext) => Tooltip(
-              message: context.t(menuTooltip),
-              child: FilledButton(
-                onPressed: () => unawaited(
-                  showAbsenceMenu(
-                    anchorContext,
-                    from: absenceFrom,
-                    to: absenceTo,
-                  ),
-                ),
-                style: half(
-                  const BorderRadius.horizontal(right: radius),
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 13),
-                ),
-                child: const Icon(LucideIcons.chevronDown, size: 16),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget build(BuildContext context) => GlassSplitButton(
+    label: context.t(label),
+    icon: icon,
+    onPressed: onNewEntry,
+    menuTooltip: context.t(menuTooltip),
+    onMenu: (arrowContext) => unawaited(
+      showAbsenceMenu(arrowContext, from: absenceFrom, to: absenceTo),
+    ),
+  );
 }
 
 /// The absence rows on their own, for a head without a "new entry" to hang
