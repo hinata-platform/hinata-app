@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../core/docs/docs_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -147,6 +148,11 @@ class _TimePrivacyBodyState extends State<TimePrivacyBody> {
                     HinataMarkdownPreview(
                       markdown: privacy.notice,
                       fontSize: AppType.label,
+                    ),
+                    const SizedBox(height: 10),
+                    const DocsLink(
+                      slug: DocsPage.timeTrackingPrivacy,
+                      labelKey: 'docs.timeTrackingPrivacy',
                     ),
                   ],
                 ),
