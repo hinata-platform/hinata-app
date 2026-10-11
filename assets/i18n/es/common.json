@@ -1810,7 +1810,7 @@
       "unlimitedHint": "No hay derecho anual ni saldo, como en la enfermedad.",
       "rules": "Reglas",
       "approval": "Necesita aprobación",
-      "approvalHint": "Las solicitudes y las aprobaciones llegan en la siguiente etapa; el ajuste ya se guarda.",
+      "approvalHint": "Las solicitudes de este tipo esperan a la persona indicada en Quién decide. Sin el interruptor se aprueban al momento.",
       "approvalSick": "La enfermedad se comunica, no se solicita (§ 5 EFZG). Por eso esta categoría no tiene aprobación.",
       "approver": "Quién decide",
       "halfDays": "Se permiten medios días",
@@ -2980,7 +2980,7 @@
       "title": "Gestión de ausencias 2.0",
       "hint": "Tipos de ausencia con sus propias reglas, derechos anuales y saldos. Un interruptor propio, apagado hasta que lo active.",
       "enabledTitle": "Gestión de ausencias",
-      "enabledHint": "Aporta tipos de ausencia, derechos anuales y saldos — y, desde la próxima etapa, solicitudes y aprobaciones. Los principios generales de vacaciones y el plan de vacaciones están sujetos a cogestión (§ 87 Abs. 1 Nr. 5 BetrVG); lo valoran las partes de la empresa.",
+      "enabledHint": "Aporta tipos de ausencia, derechos anuales, saldos, solicitudes y aprobaciones. Los principios generales de vacaciones y el plan de vacaciones están sujetos a codecisión según el § 87 Abs. 1 Nr. 5 BetrVG (LPVG en el sector público); las partes del centro deciden cómo se aplica aquí.",
       "needsAdvanced": "Solo surte efecto mientras el seguimiento de tiempo ampliado esté activo: cada día que cuenta aquí procede de un patrón de trabajo, un calendario de festivos y la capacidad que resulta de ellos. El interruptor conserva la posición en la que lo deje.",
       "codetermination": "Sujeto a codeterminación: § 87 Abs. 1 Nr. 5 BetrVG — principios generales de vacaciones, el plan de vacaciones y, en caso de conflicto, las fechas (LPVG en el sector público). Acuérdelo con el comité de empresa antes de activarlo.",
       "keepersTitle": "Quién gestiona las ausencias",
@@ -4786,5 +4786,15 @@
       "unratedHint": "{{count}} líneas no tienen tarifa. Fija una tarifa y regenera las líneas, o elimínalas, antes de emitir.",
       "draftHint": "Un borrador no bloquea nada. Si las entradas cambian antes de emitir, regenera las líneas."
     }
+  },
+  "docs": {
+    "readMore": "Más información en la documentación",
+    "open": "Abrir",
+    "timeGuide": "Guía del registro de tiempo",
+    "timeGuideHint": "Temporizador, vistas, aprobaciones, informes y más, explicados paso a paso.",
+    "timeTrackingAdmin": "Todas las políticas y su efecto en la documentación",
+    "absences": "Gestión de ausencias en la documentación",
+    "timeTrackingPrivacy": "Privacidad y derecho laboral en la documentación",
+    "codetermination": "Lista de comprobación para el acuerdo de empresa"
   }
 }

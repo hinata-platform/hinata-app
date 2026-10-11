@@ -1810,7 +1810,7 @@
       "unlimitedHint": "Il n'y a ni droit annuel ni solde, comme pour la maladie.",
       "rules": "Règles",
       "approval": "Doit être approuvé",
-      "approvalHint": "Les demandes et les approbations arrivent à l'étape suivante ; le réglage est déjà enregistré.",
+      "approvalHint": "Les demandes de ce type attendent la personne indiquée sous Qui décide. Sans l'interrupteur, elles sont approuvées tout de suite.",
       "approvalSick": "La maladie se déclare, elle ne se demande pas (§ 5 EFZG). Cette catégorie n'a donc pas d'approbation.",
       "approver": "Qui décide",
       "halfDays": "Demi-journées autorisées",
@@ -2980,7 +2980,7 @@
       "title": "Gestion des absences 2.0",
       "hint": "Types d'absence avec leurs propres règles, droits annuels et soldes. Son propre interrupteur, désactivé jusqu'à ce que vous l'activiez.",
       "enabledTitle": "Gestion des absences",
-      "enabledHint": "Apporte les types d'absence, les droits annuels et les soldes — et, dès la prochaine étape, les demandes et les approbations. Les principes généraux de congés et le plan de congés relèvent de la codétermination (§ 87 Abs. 1 Nr. 5 BetrVG) ; ce sont les parties de l'entreprise qui en décident.",
+      "enabledHint": "Apporte les types d'absence, les droits annuels, les soldes, les demandes et les approbations. Les principes généraux des congés et le plan des congés relèvent de la codécision selon le § 87 Abs. 1 Nr. 5 BetrVG (LPVG dans le secteur public) ; les partenaires de l'entreprise décident de leur application ici.",
       "needsAdvanced": "N'a d'effet que si le suivi du temps étendu est activé : chaque jour compté ici vient d'un rythme de travail, d'un calendrier de jours fériés et de la capacité qui en découle. L'interrupteur conserve la position que vous lui laissez.",
       "codetermination": "Soumis à la codétermination : § 87 Abs. 1 Nr. 5 BetrVG — principes généraux de congés, plan de congés et, en cas de litige, les dates (LPVG dans le secteur public). À convenir avec le comité d'entreprise avant activation.",
       "keepersTitle": "Qui gère les absences",
@@ -4786,5 +4786,15 @@
       "unratedHint": "{{count}} lignes n'ont pas de taux. Définissez un taux et recalculez les lignes, ou supprimez-les, avant d'émettre.",
       "draftHint": "Un brouillon ne verrouille rien. Si des saisies changent avant l'émission, recalculez les lignes."
     }
+  },
+  "docs": {
+    "readMore": "En savoir plus dans la documentation",
+    "open": "Ouvrir",
+    "timeGuide": "Guide du suivi du temps",
+    "timeGuideHint": "Minuteur, vues, validations, rapports et plus, expliqués pas à pas.",
+    "timeTrackingAdmin": "Toutes les règles et leur effet dans la documentation",
+    "absences": "Gestion des absences dans la documentation",
+    "timeTrackingPrivacy": "Protection des données et droit du travail dans la documentation",
+    "codetermination": "Liste de contrôle pour l'accord d'entreprise"
   }
 }
