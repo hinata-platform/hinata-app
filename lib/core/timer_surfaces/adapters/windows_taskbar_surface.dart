@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import '../surface_platform.dart';
 import '../timer_surface.dart';
 import '../timer_surface_state.dart';
-import 'tray_surface.dart' show fmtClockMinutes;
+import 'running_tooltip.dart';
 
 /// The timer on the Windows taskbar button: the progress of a countdown or a
 /// Pomodoro phase, a small "running" overlay, and two buttons in the window's
@@ -27,8 +27,17 @@ class WindowsTaskbarSurface extends TimerSurface {
   TimerSurfaceHost? _host;
   TimerSurfaceState _state = TimerSurfaceState.idle;
   bool _drawn = false;
-  int? _progress;
+
+  /// What the runner was last told, per call: only a change goes out. Explorer
+  /// keeps what it was given, and the runner draws it again by itself when
+  /// Explorer restarts, so a focus change or a second tick costs nothing.
+  final Map<String, Object?> _sent = {};
   int? _tooltipMinute;
+
+  /// Steps of the progress bar. The bar on a taskbar button is some forty
+  /// pixels wide; two hundred steps keep it smooth and spare Explorer a call
+  /// on most ticks.
+  static const int _steps = 200;
 
   @override
   String get id => 'windows-taskbar';
@@ -44,9 +53,10 @@ class WindowsTaskbarSurface extends TimerSurface {
   }
 
   Future<void> _handle(MethodCall call) async {
-    if (call.method != 'thumbClicked') return;
     final host = _host;
-    if (host == null) return;
+    // Buttons that are not on screen cannot have been clicked: a message
+    // claiming otherwise comes from somewhere else and starts nothing.
+    if (call.method != 'thumbClicked' || host == null || !_drawn) return;
     switch (call.arguments) {
       case 'toggle':
         await (_state.running ? host.end() : host.start());
@@ -56,50 +66,62 @@ class WindowsTaskbarSurface extends TimerSurface {
     }
   }
 
+  Future<void> _send(String method, Map<String, Object?> args) async {
+    if (mapEquals(_sent[method] as Map<String, Object?>?, args)) return;
+    _sent[method] = args;
+    await _channel.invokeMethod<void>(method, args);
+  }
+
   @override
   Future<void> apply(TimerSurfaceState state) async {
+    if (state.running != _state.running ||
+        state.startedAt != _state.startedAt) {
+      _tooltipMinute = null;
+    }
     _state = state;
     if (!state.runningSurface) {
       await clear();
       return;
     }
     final t = state.texts;
-    await _channel.invokeMethod<void>('setButtons', {
+    _drawn = true;
+    await _send('setButtons', {
       'running': state.running,
       'toggle': state.running ? t.stop : t.start,
       'focus': t.openFocus,
     });
-    await _channel.invokeMethod<void>('setOverlay', {
+    await _send('setOverlay', {
       'running': state.running,
       'description': state.running ? t.running : '',
     });
-    _drawn = true;
-    _progress = null;
-    _tooltipMinute = null;
     await _drawProgress();
     if (!state.running) {
-      await _channel.invokeMethod<void>('setTooltip', {'text': ''});
+      await _send('setTooltip', {'text': ''});
+    } else if (!state.showsClock) {
+      // A Pomodoro: "running" only, the same through work and breaks.
+      await _send('setTooltip', {'text': t.running});
     }
   }
 
-  /// The share of the interval behind, in thousandths; null for a stopwatch,
-  /// which has no end to be a share of.
+  /// The share of the interval behind, in thousandths, in [_steps] steps;
+  /// null where there is no bar to fill (a stopwatch, a Pomodoro).
   @visibleForTesting
   int? progressOf(TimerSurfaceState state) {
     final start = state.startedAt;
     final end = state.endsAt;
-    if (!state.running || start == null || end == null) return null;
+    // A Pomodoro's bar would restart and race through a break: no bar there
+    // (see [TimerSurfaceState.showsClock]).
+    if (!state.showsClock || start == null || end == null) return null;
     final total = end.difference(start).inMilliseconds;
     if (total <= 0) return 1000;
     final done = _now().toUtc().difference(start).inMilliseconds;
-    return (done * 1000 ~/ total).clamp(0, 1000);
+    final step = (done * _steps ~/ total).clamp(0, _steps);
+    return step * (1000 ~/ _steps);
   }
 
   Future<void> _drawProgress() async {
     final value = progressOf(_state);
-    if (value == _progress && _progress != null) return;
-    _progress = value;
-    await _channel.invokeMethod<void>('setProgress', {
+    await _send('setProgress', {
       'state': value == null ? 'none' : 'normal',
       'value': value ?? 0,
     });
@@ -107,14 +129,14 @@ class WindowsTaskbarSurface extends TimerSurface {
 
   @override
   void tick(Duration shown) {
-    if (!_drawn || !_state.running) return;
+    if (!_drawn || !_state.showsClock) return;
     unawaited(_drawProgress());
     final minute = shown.inMinutes;
     if (minute == _tooltipMinute) return;
     _tooltipMinute = minute;
     unawaited(
-      _channel.invokeMethod<void>('setTooltip', {
-        'text': '${fmtClockMinutes(shown)} · ${_state.texts.running}',
+      _send('setTooltip', {
+        'text': runningTooltip(_state.texts, shown, withApp: false),
       }),
     );
   }
@@ -129,7 +151,8 @@ class WindowsTaskbarSurface extends TimerSurface {
   Future<void> clear() async {
     if (!_drawn) return;
     _drawn = false;
-    _progress = null;
+    _sent.clear();
+    _tooltipMinute = null;
     await _channel.invokeMethod<void>('clear');
   }
 

@@ -4277,15 +4277,23 @@
       "hotkeyChoose": "選択",
       "keySpace": "スペース",
       "recordPrompt": "新しい組み合わせを押してください",
-      "recordHint": "修飾キーを1つ以上押したままにしてください（例：{{example}}）。Escでキャンセルします。",
-      "recordNeedsModifier": "ショートカットには修飾キーが必要です。そうしないと、他のすべてのアプリでそのキーが使えなくなります。",
+      "recordHint": "Ctrl または Windows キーを押したままにしてください（例：{{example}}）。Escでキャンセルします。",
+      "recordNeedsModifier": "ショートカットには Ctrl または Windows キーが必要です。Ctrl+Alt だけだと文字を入力する AltGr になるため、Shift か Windows キーを加えてください。",
       "recordUnsupportedKey": "文字、数字、F1〜F12、またはスペースキーを使ってください。",
       "test": "ショートカットを確認",
       "testHint": "他のアプリが前面にあっても、一度押してください。確認中は何も開始・停止しません。",
       "testButton": "今すぐ確認",
       "testWaiting": "今 {{combo}} を押してください。",
       "testWorked": "動作しています。キー入力が届きました。",
-      "testSilent": "キー入力が届きませんでした。他のアプリがこの組み合わせを使っているかもしれません。別のものを選んでください。"
+      "testSilent": "キー入力が届きませんでした。他のアプリがこの組み合わせを使っているかもしれません。別のものを選んでください。",
+      "recordHintMac": "Control または Command を押したままにしてください（例：{{example}}）。Escでキャンセルします。",
+      "recordNeedsModifierMac": "ショートカットには Control または Command が必要です。Shift や Option だけでは、どのアプリでも大文字や特殊文字の入力になります。",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Shift",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

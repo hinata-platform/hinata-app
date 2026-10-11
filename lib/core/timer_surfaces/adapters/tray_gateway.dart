@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 
 import 'package:dbus/dbus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:tray_manager/tray_manager.dart';
 
 import '../surface_platform.dart';
@@ -64,13 +65,19 @@ class TrayManagerGateway with TrayListener implements TrayGateway {
   final SurfacePlatform platform;
   void Function(String key)? _handler;
   bool _listening = false;
+  bool _monospaced = false;
+
+  /// The macOS runner's side of the menu bar (see MainFlutterWindow.swift).
+  static const _runner = MethodChannel('hinata/window');
 
   static const _dir = 'assets/branding/tray';
 
   String _iconPath(bool running) {
     final name = running ? 'running' : 'idle';
     return switch (platform) {
-      SurfacePlatform.macos => '$_dir/menubar_$name.png',
+      // The 44 px image for the 18 pt slot: tray_manager loads exactly the
+      // file it is given, so the sharp one is the one to give it.
+      SurfacePlatform.macos => '$_dir/menubar_$name@2x.png',
       SurfacePlatform.windows => '$_dir/tray_$name.ico',
       // tray_manager hands a sandboxed app's path on as an icon *name*; an
       // absolute path into the snap is one the panel outside can read.
@@ -114,6 +121,10 @@ class TrayManagerGateway with TrayListener implements TrayGateway {
       _iconPath(running),
       isTemplate: platform == SurfacePlatform.macos,
     );
+    if (platform == SurfacePlatform.macos && !_monospaced) {
+      _monospaced = true;
+      await _runner.invokeMethod<void>('monospaceMenuBarDigits');
+    }
   }
 
   @override
@@ -142,6 +153,7 @@ class TrayManagerGateway with TrayListener implements TrayGateway {
 
   @override
   Future<void> remove() async {
+    _monospaced = false;
     if (_listening) {
       trayManager.removeListener(this);
       _listening = false;

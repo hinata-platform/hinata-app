@@ -41,7 +41,7 @@ class KeepRunningSurface extends TimerSurface {
 
   @override
   Future<void> init(TimerSurfaceHost host) async {
-    _window.onCloseRequested(_hideToTray);
+    _window.onCloseRequested(_onCloseRequested);
     trayAvailable.addListener(_update);
   }
 
@@ -59,6 +59,12 @@ class KeepRunningSurface extends TimerSurface {
       _state.keepInTray && _state.running && trayAvailable.value;
 
   Future<void> _sync() async {
+    // A window hidden into a tray that is gone again (signed out, the module
+    // switched off, the icon put aside) comes back: an app with no window and
+    // no icon would be running where nobody can see or quit it.
+    if (_window.hidden && !(_state.keepInTray && trayAvailable.value)) {
+      await _window.show();
+    }
     final prevent = keepsRunning;
     // Never touches the window manager until the person has switched this on.
     if (prevent == (_preventing ?? false)) return;
@@ -66,7 +72,7 @@ class KeepRunningSurface extends TimerSurface {
     await _window.setPreventClose(prevent);
   }
 
-  void _hideToTray() {
+  void _onCloseRequested() {
     // The state may have moved on between the click and this callback: the
     // timer stopped, the tray went away. Then the close goes through after all.
     unawaited(keepsRunning ? _window.hide() : _window.close());
@@ -80,6 +86,7 @@ class KeepRunningSurface extends TimerSurface {
 
   @override
   Future<void> clear() async {
+    if (_window.hidden) await _window.show();
     if (_preventing != true) return;
     _preventing = false;
     await _window.setPreventClose(false);
@@ -94,6 +101,9 @@ class KeepRunningSurface extends TimerSurface {
 
 /// The app window, behind one seam so the tests need no plugin.
 abstract class WindowGateway {
+  /// Whether the window is hidden because a close hid it into the tray.
+  bool get hidden;
+
   Future<void> setPreventClose(bool prevent);
   Future<void> hide();
   Future<void> show();
@@ -114,6 +124,9 @@ class WindowManagerGateway with WindowListener implements WindowGateway {
 
   void Function()? _onClose;
   Future<void>? _ready;
+
+  @override
+  bool hidden = false;
 
   Future<void> _init() => _ready ??= () async {
     await windowManager.ensureInitialized();
@@ -138,10 +151,12 @@ class WindowManagerGateway with WindowListener implements WindowGateway {
   Future<void> hide() async {
     await _init();
     await windowManager.hide();
+    hidden = true;
   }
 
   @override
   Future<void> show() async {
+    hidden = false;
     await _init();
     await windowManager.show();
     await windowManager.focus();

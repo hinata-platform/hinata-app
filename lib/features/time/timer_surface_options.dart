@@ -34,8 +34,12 @@ enum TimerSurfaceOption {
       phaseEnd => caps.phaseEndNotification,
       running => caps.runningSurface,
       // Only a surface that carries a label can show a description; the web
-      // badge is a dot.
-      details => caps.runningSurface && platform != SurfacePlatform.web,
+      // badge is a dot, and a Linux tray menu is readable on the session bus
+      // by any process, open or not.
+      details =>
+        caps.runningSurface &&
+            platform != SurfacePlatform.web &&
+            platform != SurfacePlatform.linux,
       lockDetails => caps.lockScreen && caps.runningSurface,
       titleClock => caps.titleClock,
       keepRunning => caps.keepRunning,
@@ -56,9 +60,14 @@ enum TimerSurfaceOption {
     _ => false,
   };
 
-  /// The details only mean something while the running timer is shown.
+  /// Switches that only mean something while the running timer is shown: the
+  /// details, keeping it running when the window closes, and the shortcuts,
+  /// which must never start a timer nothing outside the app shows.
   bool get dependsOnRunning =>
-      this == details || this == lockDetails || this == keepRunning;
+      this == details ||
+      this == lockDetails ||
+      this == keepRunning ||
+      this == hotkeys;
 
   IconData get icon => switch (this) {
     phaseEnd => LucideIcons.bellRing,
@@ -82,7 +91,7 @@ enum TimerSurfaceOption {
     phaseEnd => 'account.timerSurfaces.phaseEnd',
     running => 'account.timerSurfaces.running${_where(platform)}',
     details =>
-      capabilitiesForPlatform(platform).menuBar
+      capabilitiesForPlatform(platform).trayIcon
           ? 'account.timerSurfaces.detailsMenu'
           : 'account.timerSurfaces.details',
     lockDetails => 'account.timerSurfaces.lockDetails',
@@ -95,7 +104,7 @@ enum TimerSurfaceOption {
     phaseEnd => 'account.timerSurfaces.phaseEndHint',
     running => 'account.timerSurfaces.running${_where(platform)}Hint',
     details =>
-      capabilitiesForPlatform(platform).menuBar
+      capabilitiesForPlatform(platform).trayIcon
           ? 'account.timerSurfaces.detailsMenuHint'
           : 'account.timerSurfaces.detailsHint',
     lockDetails => 'account.timerSurfaces.lockDetailsHint',
@@ -144,6 +153,7 @@ TimerSurfacePrefs withOption(
     surfaceDetails: false,
     lockScreenDetails: false,
     keepInTray: false,
+    globalHotkeys: false,
   );
 }
 

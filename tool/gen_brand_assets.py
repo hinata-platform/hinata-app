@@ -299,8 +299,8 @@ def tray_assets():
     print("tray/")
     RUN = (0x2F, 0xA0, 0x5A)   # the "running" dot on coloured icons
     tray = "assets/branding/tray"
-    for scale, px in ((1, 22), (2, 44)):
-        suffix = "" if scale == 1 else "@2x"
+    for scale, px in ((2, 44),):  # tray_manager loads one file: the sharp one
+        suffix = "@2x"
         idle, _ = render(px, frac=0.86, bg=None, mark=(0, 0, 0))
         write_png(p(tray, f"menubar_idle{suffix}.png"), px, px, idle)
         run, _ = render(px, frac=0.86, bg=None, mark=(0, 0, 0))

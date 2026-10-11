@@ -4277,15 +4277,23 @@
       "hotkeyChoose": "चुनें",
       "keySpace": "स्पेस",
       "recordPrompt": "नया संयोजन दबाओ",
-      "recordHint": "कम से कम एक मॉडिफ़ायर कुंजी साथ में दबाओ, जैसे {{example}}। Esc रद्द करता है।",
-      "recordNeedsModifier": "शॉर्टकट में मॉडिफ़ायर कुंजी चाहिए, वरना वह कुंजी बाकी हर ऐप से छिन जाएगी।",
+      "recordHint": "Ctrl या Windows कुंजी साथ में दबाओ, जैसे {{example}}। Esc रद्द करता है।",
+      "recordNeedsModifier": "शॉर्टकट में Ctrl या Windows कुंजी चाहिए, और अकेले Ctrl+Alt असल में AltGr है जो अक्षर लिखता है। Shift या Windows कुंजी जोड़ो।",
       "recordUnsupportedKey": "कोई अक्षर, अंक, F1 से F12 या स्पेस बार इस्तेमाल करो।",
       "test": "शॉर्टकट जाँचें",
       "testHint": "इसे एक बार दबाओ, चाहे सामने कोई दूसरा ऐप हो। जाँच के दौरान कुछ शुरू या बंद नहीं होता।",
       "testButton": "अभी जाँचें",
       "testWaiting": "अब {{combo}} दबाओ।",
       "testWorked": "काम करता है। कुंजी दबाना पहुँच गया।",
-      "testSilent": "कोई कुंजी दबाना नहीं पहुँचा। शायद कोई और ऐप यह संयोजन रखता है; दूसरा चुनो।"
+      "testSilent": "कोई कुंजी दबाना नहीं पहुँचा। शायद कोई और ऐप यह संयोजन रखता है; दूसरा चुनो।",
+      "recordHintMac": "Control या Command साथ में दबाओ, जैसे {{example}}। Esc रद्द करता है।",
+      "recordNeedsModifierMac": "शॉर्टकट में Control या Command चाहिए। अकेले Shift और Option हर ऐप में बड़े अक्षर और विशेष चिह्न लिखते हैं।",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Shift",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

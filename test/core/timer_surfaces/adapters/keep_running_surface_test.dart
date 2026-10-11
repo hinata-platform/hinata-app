@@ -8,6 +8,9 @@ import 'fake_host.dart';
 
 class _FakeWindow implements WindowGateway {
   final List<String> log = [];
+
+  @override
+  bool hidden = false;
   void Function()? requestClose;
 
   @override
@@ -15,10 +18,16 @@ class _FakeWindow implements WindowGateway {
       log.add('prevent $prevent');
 
   @override
-  Future<void> hide() async => log.add('hide');
+  Future<void> hide() async {
+    hidden = true;
+    log.add('hide');
+  }
 
   @override
-  Future<void> show() async => log.add('show');
+  Future<void> show() async {
+    hidden = false;
+    log.add('show');
+  }
 
   @override
   Future<void> close() async => log.add('close');
@@ -80,4 +89,36 @@ void main() {
     await pumpEventQueue();
     expect(window.log.last, 'close');
   });
+
+  test('a hidden window comes back when its tray goes away', () async {
+    await surface.apply(keep);
+    window.requestClose!();
+    await pumpEventQueue();
+    expect(window.hidden, isTrue);
+    tray.value = false;
+    await pumpEventQueue();
+    expect(window.log, contains('show'));
+    expect(window.hidden, isFalse);
+  });
+
+  test('signing out shows a window that was hidden into the tray', () async {
+    await surface.apply(keep);
+    window.requestClose!();
+    await pumpEventQueue();
+    await surface.clear();
+    expect(window.hidden, isFalse);
+  });
+
+  test(
+    'a stopped timer leaves the window in a tray that is still there',
+    () async {
+      await surface.apply(keep);
+      window.requestClose!();
+      await pumpEventQueue();
+      await surface.apply(
+        const TimerSurfaceState(running: false, keepInTray: true),
+      );
+      expect(window.hidden, isTrue);
+    },
+  );
 }

@@ -112,7 +112,7 @@ void main() {
 
   test('the Mac title ticks every second, only while a timer runs', () async {
     final s = await surface(SurfacePlatform.macos);
-    await s.apply(_running());
+    await s.apply(_running(mode: TimerMode.stopwatch));
     s.tick(const Duration(seconds: 61));
     await pumpEventQueue();
     expect(tray.title, ' 1:01');
@@ -123,20 +123,17 @@ void main() {
     expect(tray.title, '');
   });
 
-  test(
-    'the Windows tooltip changes once a minute, never with the phase',
-    () async {
-      final s = await surface(SurfacePlatform.windows);
-      await s.apply(_running(phase: TimerPhase.longBreak));
-      s.tick(const Duration(minutes: 3, seconds: 1));
-      await pumpEventQueue();
-      expect(tray.tooltip, 'Hinata · 0:03 · Timer running');
-      tray.tooltip = 'untouched';
-      s.tick(const Duration(minutes: 3, seconds: 40));
-      await pumpEventQueue();
-      expect(tray.tooltip, 'untouched');
-    },
-  );
+  test('the Windows tooltip changes once a minute', () async {
+    final s = await surface(SurfacePlatform.windows);
+    await s.apply(_running(mode: TimerMode.countdown));
+    s.tick(const Duration(minutes: 3, seconds: 1));
+    await pumpEventQueue();
+    expect(tray.tooltip, 'Hinata · 0:03 · Timer running');
+    tray.tooltip = 'untouched';
+    s.tick(const Duration(minutes: 3, seconds: 40));
+    await pumpEventQueue();
+    expect(tray.tooltip, 'untouched');
+  });
 
   test('the menu follows the timer and stays at six entries or fewer', () {
     final idle = trayMenu(_idle).where((e) => e.key != null);
@@ -160,7 +157,22 @@ void main() {
     expect(stopwatch.any((e) => e.key == 'next'), isFalse);
   });
 
-  test('the description is in the menu only when switched on', () {
+  test('a Pomodoro shows no clock outside the app, work or break', () async {
+    for (final phase in [TimerPhase.work, TimerPhase.shortBreak]) {
+      final s = await surface(SurfacePlatform.macos);
+      await s.apply(_running(phase: phase));
+      s.tick(const Duration(minutes: 4, seconds: 59));
+      await pumpEventQueue();
+      expect(tray.title, '', reason: '$phase');
+    }
+    final w = await surface(SurfacePlatform.windows);
+    await w.apply(_running(phase: TimerPhase.shortBreak));
+    w.tick(const Duration(minutes: 4));
+    await pumpEventQueue();
+    expect(tray.tooltip, 'Hinata · Timer running');
+  });
+
+  test('the menu shows the description the state carries', () {
     expect(
       trayMenu(_running()).where((e) => e.label == 'Quarterly report'),
       isEmpty,
@@ -170,6 +182,40 @@ void main() {
       contains(const TrayMenuEntry.label('Quarterly report')),
     );
   });
+
+  test('Linux writes no tooltip, which its tray has no call for', () async {
+    final s = await surface(SurfacePlatform.linux);
+    await s.apply(_running());
+    s.tick(const Duration(minutes: 2));
+    await s.apply(_idle);
+    await pumpEventQueue();
+    expect(tray.tooltip, '');
+    expect(tray.title, '');
+  });
+
+  test(
+    'a timer started in the minute the last stopped gets its tooltip',
+    () async {
+      final s = await surface(SurfacePlatform.windows);
+      await s.apply(_running());
+      s.tick(const Duration(seconds: 10));
+      await pumpEventQueue();
+      await s.apply(_idle);
+      expect(tray.tooltip, 'Hinata · No timer running');
+      await s.apply(
+        TimerSurfaceState(
+          running: true,
+          mode: TimerMode.stopwatch,
+          startedAt: DateTime.utc(2026, 10, 11, 10),
+          runningSurface: true,
+          texts: _texts,
+        ),
+      );
+      s.tick(const Duration(seconds: 3));
+      await pumpEventQueue();
+      expect(tray.tooltip, 'Hinata · 0:00 · Timer running');
+    },
+  );
 
   test('menu entries reach the app', () async {
     final s = await surface(SurfacePlatform.windows);

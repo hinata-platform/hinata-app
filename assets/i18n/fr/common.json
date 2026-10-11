@@ -4277,15 +4277,23 @@
       "hotkeyChoose": "Choisir",
       "keySpace": "Espace",
       "recordPrompt": "Appuie sur la nouvelle combinaison",
-      "recordHint": "Maintiens au moins une touche de modification, par exemple {{example}}. Échap annule.",
-      "recordNeedsModifier": "Un raccourci a besoin d’une touche de modification, sinon la touche manquerait à toutes les autres apps.",
+      "recordHint": "Maintiens Ctrl ou la touche Windows, par exemple {{example}}. Échap annule.",
+      "recordNeedsModifier": "Un raccourci a besoin de Ctrl ou de la touche Windows, et Ctrl+Alt seul est AltGr, qui tape des caractères. Ajoute Maj ou la touche Windows.",
       "recordUnsupportedKey": "Utilise une lettre, un chiffre, F1 à F12 ou la barre d’espace.",
       "test": "Vérifier le raccourci",
       "testHint": "Appuie une fois, même avec une autre app au premier plan. Rien ne démarre ni ne s’arrête pendant le test.",
       "testButton": "Vérifier",
       "testWaiting": "Appuie maintenant sur {{combo}}.",
       "testWorked": "Ça marche. L’appui est bien arrivé.",
-      "testSilent": "Aucun appui n’est arrivé. Une autre app utilise peut-être cette combinaison ; choisis-en une autre."
+      "testSilent": "Aucun appui n’est arrivé. Une autre app utilise peut-être cette combinaison ; choisis-en une autre.",
+      "recordHintMac": "Maintiens Contrôle ou Commande, par exemple {{example}}. Échap annule.",
+      "recordNeedsModifierMac": "Un raccourci a besoin de Contrôle ou Commande. Maj et Option seuls tapent des majuscules et des caractères spéciaux dans toute app.",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Maj",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

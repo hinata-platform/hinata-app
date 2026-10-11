@@ -131,7 +131,7 @@ class _TimerSurfacesIntroBodyState extends State<TimerSurfacesIntroBody> {
         ),
       if (caps.runningSurface && widget.platform != SurfacePlatform.web)
         context.t(
-          caps.menuBar
+          caps.trayIcon
               ? widget.platform == SurfacePlatform.macos
                     ? 'time.surface.intro.runningMenuBar'
                     : 'time.surface.intro.runningTray'
