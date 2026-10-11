@@ -1595,6 +1595,38 @@
       "mentionHint": "Escribe + para compartir el registro con alguien del proyecto.",
       "mentionNeedsProject": "Elige primero un proyecto; después podrás mencionar a personas de él con +.",
       "mentioned": "Se compartirá con"
+    },
+    "surface": {
+      "workOver": "Tu intervalo ha terminado.",
+      "running": "Temporizador en marcha",
+      "onBreak": "Pausa",
+      "intro": {
+        "title": "Temporizador fuera de la app",
+        "subtitle": "Elige qué puede mostrar este dispositivo.",
+        "endClosed": "Cuando termina un intervalo, tu dispositivo te avisa, también con la app cerrada.",
+        "endBackground": "Cuando termina un intervalo, recibes un aviso mientras la app sigue en segundo plano.",
+        "running": "Mientras el temporizador corre, una notificación discreta lo muestra.",
+        "runningLocked": "Mientras el temporizador corre, una notificación discreta lo muestra. En la pantalla de bloqueo solo se ve el tiempo.",
+        "private": "Los textos son genéricos y desaparecen solos. Nada se envía al servidor ni a tu empleador.",
+        "switchOn": "Activar",
+        "later": "Más tarde",
+        "denied": "Las notificaciones están bloqueadas. Puedes permitirlas en los ajustes del sistema."
+      },
+      "device": {
+        "heading": "En este dispositivo",
+        "off": "Fuera de la app no se ve nada de tu temporizador.",
+        "phaseEnd": "Un aviso cuando termina un intervalo.",
+        "running": "Una notificación discreta mientras el temporizador corre.",
+        "runningWeb": "Una marca en el icono de la app mientras el temporizador corre.",
+        "titleClock": "El tiempo en marcha en el título de la pestaña.",
+        "detailsOn": "Los detalles están activados, así que la descripción puede verse fuera de la app.",
+        "detailsOff": "Los detalles están desactivados. Fuera de la app solo ves el tiempo.",
+        "copy": "Mientras corre un temporizador, este dispositivo guarda su inicio y su fin.",
+        "copyDetails": "Mientras corre un temporizador, este dispositivo guarda su inicio, su fin y su descripción.",
+        "vanish": "Estas copias desaparecen a las 24 horas y al cerrar sesión.",
+        "stored": "Tus ajustes se quedan en este dispositivo.",
+        "settings": "Cambiar en ajustes"
+      }
     }
   },
   "availability": {
@@ -4179,6 +4211,37 @@
       "preferences": "Preferencias",
       "privacy": "Privacidad",
       "administration": "Administración"
+    },
+    "timerSurfaces": {
+      "title": "Temporizador fuera de la app",
+      "off": "Desactivado por ahora",
+      "offHint": "Fuera de la app no se ve nada de tu temporizador.",
+      "setUp": "Configurar",
+      "phaseEnd": "Fin del intervalo",
+      "phaseEndHint": "Un aviso cuando termina una cuenta atrás o un intervalo Pomodoro.",
+      "denied": "Las notificaciones están bloqueadas para esta app. Puedes permitirlas en los ajustes del sistema.",
+      "openSettings": "Abrir ajustes",
+      "exact": "Hora exacta",
+      "exactOn": "El aviso llega al minuto.",
+      "exactOff": "Inexacto, unos minutos de margen.",
+      "exactAllow": "Permitir",
+      "running": "Mientras el temporizador corre",
+      "runningHint": "Una notificación discreta muestra el temporizador en marcha.",
+      "runningWeb": "Marca en el icono de la app",
+      "runningWebHint": "La app instalada marca su icono mientras el temporizador corre.",
+      "details": "Detalles en menú y descripción emergente",
+      "detailsHint": "Muestra también la descripción, no solo el tiempo.",
+      "lockDetails": "Detalles en la pantalla de bloqueo",
+      "lockDetailsHint": "Quien tenga tu dispositivo en la mano puede leer la descripción.",
+      "titleClock": "Tiempo en el título de la pestaña",
+      "titleClockHint": "La pestaña del navegador muestra el tiempo en marcha.",
+      "clear": "Copias locales",
+      "clearHint": "Borra ahora lo que el temporizador dejó en este dispositivo.",
+      "clearButton": "Borrar ahora",
+      "cleared": "Copias locales borradas.",
+      "turnOff": "Desactivar todo",
+      "turnOffHint": "Fuera de la app ya no se ve nada. Puedes configurarlo de nuevo más tarde.",
+      "turnOffButton": "Desactivar"
     }
   },
   "twofa": {

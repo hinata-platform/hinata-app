@@ -53,10 +53,8 @@ void main() {
           child: MaterialApp.router(
             debugShowCheckedModeBanner: false,
             routerConfig: router,
-            builder: (context, child) => TimerSignals(
-              appTitle: 'Hinata',
-              child: child ?? const SizedBox.shrink(),
-            ),
+            builder: (context, child) =>
+                TimerSignals(child: child ?? const SizedBox.shrink()),
           ),
         ),
       ),
