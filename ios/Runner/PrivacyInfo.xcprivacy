@@ -53,6 +53,8 @@
 			<key>NSPrivacyAccessedAPITypeReasons</key>
 			<array>
 				<string>CA92.1</string>
+				<!-- HIN-102: the timer record in the App Group the widgets read. -->
+				<string>1C8F.1</string>
 			</array>
 		</dict>
 	</array>

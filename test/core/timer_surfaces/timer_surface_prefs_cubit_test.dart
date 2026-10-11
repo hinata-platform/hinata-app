@@ -74,10 +74,7 @@ void main() {
       isTrue,
     );
     // The Live Activity and the widgets (HIN-102), on the lock screen too.
-    expect(
-      capabilitiesForPlatform(SurfacePlatform.ios).runningSurface,
-      isTrue,
-    );
+    expect(capabilitiesForPlatform(SurfacePlatform.ios).runningSurface, isTrue);
     expect(capabilitiesForPlatform(SurfacePlatform.ios).lockScreen, isTrue);
     expect(
       capabilitiesForPlatform(SurfacePlatform.macos).runningSurface,
