@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The app's navy and honey (AppColors.navy, AppColors.accent). -->
+    <color name="widget_navy">#2D2B55</color>
+    <color name="widget_honey">#D9A032</color>
+</resources>

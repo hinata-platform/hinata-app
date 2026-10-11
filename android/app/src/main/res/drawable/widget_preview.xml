@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The picker's preview before API 31 (previewLayout takes over from then). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@drawable/widget_background" android:width="180dp" android:height="80dp" />
+    <item android:drawable="@drawable/widget_glyph_timer" android:gravity="center_vertical|start" android:left="24dp" android:width="28dp" android:height="28dp" />
+</layer-list>
