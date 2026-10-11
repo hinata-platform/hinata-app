@@ -5,6 +5,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/glass_filter_bar.dart' show WideToolbar;
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../data/knowledge_models.dart';
@@ -63,15 +64,14 @@ class KnowledgeSpaceView extends StatelessWidget {
               .recentlyUpdated(spaceId: space.id, limit: 1)
               .firstOrNull
               ?.updatedAt,
-          onNewPage: wide ? onNewPage : null,
         ),
-        if (labels.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 6,
-            children: [
+        // A phone docks the label pills in the app bar instead.
+        if (wide && labels.isNotEmpty) ...[
+          const SizedBox(height: 18),
+          WideToolbar(
+            leading: [
               for (final l in labels.take(12))
-                KbLabelChip(
+                KbLabelPill(
                   label: l.label,
                   count: l.count,
                   selected: l.label == label,
@@ -102,9 +102,11 @@ class KnowledgeSpaceView extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(flex: 5, child: _pagesPanel(context)),
-              const SizedBox(width: 32),
-              Expanded(flex: 4, child: _changesPanel(context)),
+              // The pages are the content; what changed is a narrow rail
+              // beside them, not a second column of equal weight.
+              Expanded(child: _pagesPanel(context)),
+              const SizedBox(width: 40),
+              SizedBox(width: 260, child: _changesPanel(context)),
             ],
           )
         else ...[
@@ -135,21 +137,17 @@ class KnowledgeSpaceView extends StatelessWidget {
   );
 
   Widget _changesPanel(BuildContext context) {
-    final changed = repo.recentlyUpdated(spaceId: space.id, limit: 8);
+    final changed = repo.recentlyUpdated(spaceId: space.id, limit: 6);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         KbSectionLabel(context.t('knowledge.recentlyUpdated')),
         const SizedBox(height: 6),
         for (final a in changed)
-          KbPageRow(
-            article: a,
-            space: space,
+          _ChangeRow(
+            title: a.title,
             meta: [
-              context.t(
-                'knowledge.updatedAgo',
-                variables: {'when': kbWhen(context, a.updatedAt)},
-              ),
+              kbWhen(context, a.updatedAt),
               ?repo.userById(a.editorId)?.name,
             ].join(' · '),
             onTap: () => onOpenArticle(a.id),
@@ -159,20 +157,72 @@ class KnowledgeSpaceView extends StatelessWidget {
   }
 }
 
+/// One change in the rail: the title and, under it, when and by whom.
+class _ChangeRow extends StatelessWidget {
+  const _ChangeRow({
+    required this.title,
+    required this.meta,
+    required this.onTap,
+  });
+
+  final String title;
+  final String meta;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(
+      link: true,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 48),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.ink,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  meta,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
 class _Header extends StatelessWidget {
   const _Header({
     required this.space,
     required this.count,
     required this.updatedAt,
-    required this.onNewPage,
   });
 
   final KbSpace space;
   final int count;
   final DateTime? updatedAt;
-
-  /// Drawn in the header on a wide window; a phone has it in the app bar.
-  final VoidCallback? onNewPage;
 
   @override
   Widget build(BuildContext context) {
@@ -232,15 +282,6 @@ class _Header extends StatelessWidget {
             ],
           ),
         ),
-        if (onNewPage case final tap?) ...[
-          const SizedBox(width: 16),
-          PrimaryButton(
-            label: context.t('knowledge.newArticle'),
-            icon: LucideIcons.plus,
-            onPressed: tap,
-            collapseToIcon: true,
-          ),
-        ],
       ],
     );
   }
