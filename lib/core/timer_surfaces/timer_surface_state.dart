@@ -99,7 +99,7 @@ class TimerSurfaceState extends Equatable {
   /// When the current countdown or phase ends, in UTC; null for a stopwatch.
   final DateTime? endsAt;
 
-  /// The description, only with "details in menu and tooltip" switched on.
+  /// The description, only with "details in the notification" switched on.
   final String? label;
 
   /// The description for lock-screen surfaces, only with that switch on.

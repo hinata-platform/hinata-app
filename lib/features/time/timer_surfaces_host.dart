@@ -232,7 +232,14 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   }
 
   @override
-  Future<void> advancePhase() => context.read<TimerCubit>().advancePhase();
+  Future<void> advancePhase() async {
+    final timer = context.read<TimerCubit>();
+    if (timer.state.timer == null) {
+      openFocus();
+      return;
+    }
+    await timer.advancePhase();
+  }
 
   @override
   void openFocus() => widget.openRoute(TimerNotificationAction.route);
