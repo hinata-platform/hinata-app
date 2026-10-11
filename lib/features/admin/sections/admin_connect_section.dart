@@ -337,10 +337,7 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
                 if (_enrolled && !_verified)
                   FilledButton.icon(
                     onPressed: _busy ? null : _refresh,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                      foregroundColor: Colors.white,
-                    ),
+                    style: FilledButton.styleFrom(),
                     icon: const Icon(LucideIcons.badgeCheck, size: 16),
                     label: Text(context.t('admin.connectCheckNow')),
                   ),
@@ -386,10 +383,7 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
                     if (_handshakePortalUrl != null)
                       FilledButton.icon(
                         onPressed: () => _openUrl(_handshakePortalUrl!),
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.navy,
-                          foregroundColor: Colors.white,
-                        ),
+                        style: FilledButton.styleFrom(),
                         icon: const Icon(LucideIcons.externalLink, size: 16),
                         label: Text(context.t('admin.connectReopenPortal')),
                       ),
@@ -411,10 +405,7 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
                         )
                       : FilledButton.icon(
                           onPressed: _startHandshake,
-                          style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.navy,
-                            foregroundColor: Colors.white,
-                          ),
+                          style: FilledButton.styleFrom(),
                           icon: const Icon(LucideIcons.zap, size: 16),
                           label: Text(context.t('admin.connectAutoAction')),
                         ),
@@ -450,10 +441,7 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
                       )
                     : FilledButton.icon(
                         onPressed: _enroll,
-                        style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.navy,
-                          foregroundColor: Colors.white,
-                        ),
+                        style: FilledButton.styleFrom(),
                         icon: const Icon(LucideIcons.plug, size: 16),
                         label: Text(context.t('admin.connectEnrollAction')),
                       ),

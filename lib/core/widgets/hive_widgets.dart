@@ -8,7 +8,7 @@ import '../api/api_client.dart';
 import '../i18n/i18n.dart';
 import '../responsive/responsive.dart';
 import '../theme/app_colors.dart';
-import '../theme/glass_chrome.dart' show GlassCircleButton, kOnAmber;
+import '../theme/glass_chrome.dart' show GlassCircleButton;
 import '../theme/app_theme.dart';
 import '../theme/hue_colors.dart';
 import 'preview_image.dart' show blurHashProviderFor;
@@ -627,15 +627,16 @@ class PageHead extends StatelessWidget {
         // same buttons in dialogs and forms keep their own height.
         FilledButtonTheme(
           data: FilledButtonThemeData(
+            // Merged, not replaced: a bare theme here drops the app's capsule.
             style: FilledButton.styleFrom(
               minimumSize: const Size(0, kHeadControlHeight),
-            ),
+            ).merge(FilledButtonTheme.of(context).style),
           ),
           child: OutlinedButtonTheme(
             data: OutlinedButtonThemeData(
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, kHeadControlHeight),
-              ),
+              ).merge(OutlinedButtonTheme.of(context).style),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -696,15 +697,10 @@ class PrimaryButton extends StatelessWidget {
       );
     }
     final style = FilledButton.styleFrom(
-      backgroundColor: AppColors.accent,
-      foregroundColor: kOnAmber,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       textStyle: const TextStyle(
         fontSize: AppType.label,
         fontWeight: FontWeight.w600,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
       ),
     );
     // Without an icon the label stands alone: a default glyph put a plus on
@@ -759,9 +755,7 @@ class GhostButton extends StatelessWidget {
         child: OutlinedButton(
           onPressed: onPressed,
           style: OutlinedButton.styleFrom(
-            backgroundColor: AppColors.surface,
             foregroundColor: AppColors.ink,
-            side: BorderSide(color: AppColors.hairline),
             padding: EdgeInsets.zero,
             minimumSize: const Size(46, 46),
             shape: const CircleBorder(),
@@ -774,16 +768,11 @@ class GhostButton extends StatelessWidget {
       );
     }
     final style = OutlinedButton.styleFrom(
-      backgroundColor: AppColors.surface,
       foregroundColor: AppColors.ink,
-      side: BorderSide(color: AppColors.hairline),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
       textStyle: const TextStyle(
         fontSize: AppType.label,
         fontWeight: FontWeight.w600,
-      ),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
       ),
     );
     // Without an icon the label stands alone: the filter glyph a default put

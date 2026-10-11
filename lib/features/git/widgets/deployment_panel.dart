@@ -10,7 +10,6 @@ import '../../../core/models/git_dev_info.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../../core/widgets/soft_card.dart';
 import '../settings/git_settings_cubit.dart';
 import '../../sprint/modals/glass_modal.dart'
@@ -383,15 +382,10 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
         action: FilledButton.icon(
           onPressed: widget.onConnectInSettings,
           style: FilledButton.styleFrom(
-            backgroundColor: AppColors.accent,
-            foregroundColor: kOnAmber,
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             textStyle: const TextStyle(
               fontSize: AppType.label,
               fontWeight: FontWeight.w600,
-            ),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
             ),
           ),
           icon: const Icon(LucideIcons.link, size: 14),

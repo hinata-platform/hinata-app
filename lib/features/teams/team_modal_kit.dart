@@ -228,8 +228,8 @@ class ModalFooter extends StatelessWidget {
             FilledButton.icon(
               onPressed: busy ? null : onPrimary,
               style: FilledButton.styleFrom(
-                backgroundColor: danger ? AppColors.danger : AppColors.navy,
-                foregroundColor: Colors.white,
+                backgroundColor: danger ? AppColors.danger : null,
+                foregroundColor: danger ? Colors.white : null,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 13,
@@ -238,17 +238,14 @@ class ModalFooter extends StatelessWidget {
                   fontSize: AppType.label,
                   fontWeight: FontWeight.w600,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                ),
               ),
               icon: busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 16,
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: danger ? Colors.white : AppColors.navy,
                       ),
                     )
                   : Icon(primaryIcon ?? LucideIcons.check, size: 16),

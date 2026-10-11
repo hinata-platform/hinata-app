@@ -295,10 +295,7 @@ class _ErrorView extends StatelessWidget {
               onPressed: onRetry,
               icon: const Icon(LucideIcons.refreshCw, size: 15),
               label: Text(context.t('audit.retry')),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.ink,
-                side: BorderSide(color: AppColors.hairline),
-              ),
+              style: OutlinedButton.styleFrom(foregroundColor: AppColors.ink),
             ),
           ],
         ),

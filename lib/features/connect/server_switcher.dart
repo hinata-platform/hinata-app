@@ -206,9 +206,6 @@ class ServerCard extends StatelessWidget {
                 side: BorderSide(
                   color: AppColors.accent.withValues(alpha: 0.4),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(13),
-                ),
               ),
               icon: const Icon(LucideIcons.settings2, size: 17),
               label: Text(context.t('server.manageAction')),

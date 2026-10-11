@@ -1001,13 +1001,10 @@ class _AddServerPageState extends State<_AddServerPage> {
   }
 
   ButtonStyle _ctaStyle() => FilledButton.styleFrom(
-    backgroundColor: AppColors.accent,
-    foregroundColor: const Color(0xFF211603),
     minimumSize: const Size.fromHeight(52),
     textStyle: const TextStyle(
       fontSize: AppType.body,
       fontWeight: FontWeight.w700,
     ),
-    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
   );
 }

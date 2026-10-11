@@ -477,7 +477,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
                     ? const HiveLoader(
                         size: 16,
                         strokeWidth: 2,
-                        color: Colors.white,
+                        color: AppColors.navy,
                       )
                     : const Icon(LucideIcons.check, size: 16),
                 label: Text(context.t('common.save')),

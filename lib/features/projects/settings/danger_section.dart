@@ -3,7 +3,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_theme.dart';
 import 'settings_common.dart';
 import '../../../core/theme/app_type.dart';
 
@@ -71,9 +70,6 @@ class DangerSection extends StatelessWidget {
               textStyle: const TextStyle(
                 fontSize: AppType.label,
                 fontWeight: FontWeight.w600,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
               ),
             ),
             icon: const Icon(LucideIcons.trash2, size: 16),

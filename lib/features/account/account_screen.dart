@@ -980,9 +980,6 @@ class _AccountScreenState extends State<_AccountBody> {
         backgroundColor: Colors.white,
         foregroundColor: AppColors.navy,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        ),
       ),
       icon: const Icon(LucideIcons.pencil, size: 15),
       label: Text(context.t('account.editProfile')),
@@ -1123,16 +1120,9 @@ class _AccountScreenState extends State<_AccountBody> {
               : FilledButton.icon(
                   onPressed: _enable2fa,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    foregroundColor: Colors.white,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 13,
                       vertical: 9,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppTheme.radiusControl,
-                      ),
                     ),
                   ),
                   icon: const Icon(LucideIcons.shieldCheck, size: 15),

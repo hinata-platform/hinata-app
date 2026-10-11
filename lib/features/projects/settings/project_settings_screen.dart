@@ -1344,98 +1344,24 @@ class _SaveBar extends StatelessWidget {
           child: Text(context.t('projectSettings.discard')),
         ),
         const SizedBox(width: 2),
-        _SaveCapsule(
-          label: context.t('projectSettings.saveChanges'),
-          saving: saving,
+        // The app's honey capsule ([GlassButtons.filled]), at the bar's
+        // height so its curve runs parallel to the bar's.
+        FilledButton.icon(
           onPressed: (!valid || saving) ? null : onSave,
+          style: FilledButton.styleFrom(
+            minimumSize: const Size(0, _kCapsule),
+            padding: const EdgeInsets.symmetric(horizontal: 18),
+          ),
+          icon: saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
+                )
+              : const Icon(LucideIcons.check, size: 16),
+          label: Text(context.t('projectSettings.saveChanges')),
         ),
       ],
-    );
-  }
-}
-
-/// The bar's Save button: a honey capsule lit from above, not a Material slab.
-///
-/// It sits *inside* the bar's glass, so it is no glass of its own — refraction
-/// within refraction doubles the distortion — but a jewel set into it: the
-/// app's accent with a soft highlight running down and a hairline of light on
-/// its rim, the way the glass catches light at its edge. Honey on both themes,
-/// navy ink on it (5.7:1); disabled, it fades to a wash with the soft ink.
-class _SaveCapsule extends StatelessWidget {
-  const _SaveCapsule({
-    required this.label,
-    required this.saving,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool saving;
-  final VoidCallback? onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = SearchTokens.of(Theme.of(context).brightness);
-    final enabled = onPressed != null;
-    final ink = enabled || saving ? AppColors.navy : tokens.inkSoft;
-    return FilledButton.icon(
-      onPressed: onPressed,
-      style: ButtonStyle(
-        minimumSize: const WidgetStatePropertyAll(Size(0, _SaveBar._kCapsule)),
-        padding: const WidgetStatePropertyAll(
-          EdgeInsets.symmetric(horizontal: 18),
-        ),
-        shape: const WidgetStatePropertyAll(StadiumBorder()),
-        backgroundColor: const WidgetStatePropertyAll(Colors.transparent),
-        foregroundColor: WidgetStatePropertyAll(ink),
-        overlayColor: WidgetStatePropertyAll(
-          AppColors.navy.withValues(alpha: 0.08),
-        ),
-        elevation: const WidgetStatePropertyAll(0),
-        textStyle: const WidgetStatePropertyAll(
-          TextStyle(fontWeight: FontWeight.w700, fontSize: AppType.label),
-        ),
-        backgroundBuilder: (context, states, child) => DecoratedBox(
-          decoration: ShapeDecoration(
-            shape: StadiumBorder(
-              side: BorderSide(
-                color: Colors.white.withValues(alpha: enabled ? 0.55 : 0.25),
-                width: 0.8,
-              ),
-            ),
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: enabled || saving
-                  ? [
-                      Color.lerp(AppColors.accent, Colors.white, 0.22)!,
-                      AppColors.accent,
-                    ]
-                  : [
-                      AppColors.accent.withValues(alpha: 0.28),
-                      AppColors.accent.withValues(alpha: 0.2),
-                    ],
-            ),
-            shadows: enabled
-                ? [
-                    BoxShadow(
-                      color: AppColors.accent.withValues(alpha: 0.35),
-                      blurRadius: 10,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: child,
-        ),
-      ),
-      icon: saving
-          ? const SizedBox(
-              width: 16,
-              height: 16,
-              child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
-            )
-          : const Icon(LucideIcons.check, size: 16),
-      label: Text(label),
     );
   }
 }

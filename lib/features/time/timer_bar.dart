@@ -597,9 +597,6 @@ class _PrimaryAction extends StatelessWidget {
           foregroundColor: Colors.white,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           minimumSize: const Size(44, 44),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          ),
         ),
         child: busy
             ? const SizedBox(
@@ -621,9 +618,6 @@ class _PrimaryAction extends StatelessWidget {
       backgroundColor: color,
       foregroundColor: Colors.white,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-      ),
     ),
     icon: busy
         ? const SizedBox(

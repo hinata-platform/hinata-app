@@ -127,12 +127,9 @@ class _Footer extends StatelessWidget {
           FilledButton.icon(
             onPressed: onConfirm,
             style: FilledButton.styleFrom(
-              backgroundColor: danger ? AppColors.danger : AppColors.navy,
-              foregroundColor: Colors.white,
+              backgroundColor: danger ? AppColors.danger : null,
+              foregroundColor: danger ? Colors.white : null,
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              ),
             ),
             icon: Icon(confirmIcon, size: 15),
             label: Text(confirmLabel),
