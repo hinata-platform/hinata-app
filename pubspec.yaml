@@ -158,8 +158,9 @@ dependencies:
   system_hotkeys: ^0.1.0
   # 0.1.1 or newer: before, super_native_extensions' Carbon handler swallowed
   # every hot-key press in this app (see its CHANGELOG). 0.1.2 refuses bare
-  # keys natively and, on Windows, owns its channels.
+  # keys natively.
   system_hotkeys_macos: ^0.1.2
+  # 0.1.2: owns its channels and reuses freed hot key numbers.
   system_hotkeys_windows: ^0.1.2
   # Linux: whether a StatusNotifierItem host is there at all. Without one
   # libayatana shows nothing and reports nothing, and a window must not hide

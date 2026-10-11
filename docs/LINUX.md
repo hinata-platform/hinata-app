@@ -98,7 +98,8 @@ those:
 | Ubuntu (GNOME with the AppIndicator extension, on by default) | ✅ |
 | Plain GNOME without the extension | ❌ nothing shows |
 
-Without a host there is no error and no icon. The app does not hide the
+Without a host there is no error and no icon, so the app asks the bus
+itself: the icon only counts as there once the host lists it. The app does not hide the
 window into a tray nobody can see: "keep running when closed" only takes
 effect while the icon is there, and everything the menu offers is in the app
 as well. The icon shows no text next to it (a StatusNotifierItem has no

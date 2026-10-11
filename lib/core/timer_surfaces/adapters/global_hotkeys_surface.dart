@@ -22,8 +22,15 @@ class GlobalHotkeysSurface extends TimerSurface {
   GlobalHotkeysSurface(
     this.platform, {
     required this.status,
+    this.trayAvailable,
     HotkeyBinder? binder,
   }) : _binder = binder ?? const SystemHotkeyBinder();
+
+  /// Whether the menu bar or tray icon is on screen. The shortcuts are
+  /// released while it is not: a press must never start a timer that nothing
+  /// outside the app shows.
+  final ValueListenable<bool>? trayAvailable;
+  TimerSurfaceState _state = TimerSurfaceState.idle;
 
   final SurfacePlatform platform;
   final HotkeyBinder _binder;
@@ -48,18 +55,25 @@ class GlobalHotkeysSurface extends TimerSurface {
       capabilitiesForPlatform(platform);
 
   @override
-  Future<void> init(TimerSurfaceHost host) async => _host = host;
+  Future<void> init(TimerSurfaceHost host) async {
+    _host = host;
+    trayAvailable?.addListener(_trayChanged);
+  }
+
+  void _trayChanged() => unawaited(apply(_state));
 
   @override
   Future<void> apply(TimerSurfaceState state) async {
+    _state = state;
     _running = state.running;
+    final shown = trayAvailable?.value ?? true;
     final next = Map<String, HotKeyResult>.of(status.results.value);
     var changed = false;
     // Only a combination that changed is bound again: releasing the other one
     // for a moment would hand it to whichever app asks first.
     for (final (id, hotKey, bound) in [
-      (toggleId, state.toggleHotkey, _toggle),
-      (focusId, state.focusHotkey, _focus),
+      (toggleId, shown ? state.toggleHotkey : null, _toggle),
+      (focusId, shown ? state.focusHotkey : null, _focus),
     ]) {
       if (hotKey == bound) continue;
       changed = true;
@@ -72,8 +86,8 @@ class GlobalHotkeysSurface extends TimerSurface {
             : HotKeyResult.unsupported;
       }
     }
-    _toggle = state.toggleHotkey;
-    _focus = state.focusHotkey;
+    _toggle = shown ? state.toggleHotkey : null;
+    _focus = shown ? state.focusHotkey : null;
     if (!changed) return;
     status.results.value = Map.unmodifiable(next);
     if (next.isEmpty) {
@@ -114,7 +128,10 @@ class GlobalHotkeysSurface extends TimerSurface {
   }
 
   @override
-  Future<void> dispose() => clear();
+  Future<void> dispose() async {
+    trayAvailable?.removeListener(_trayChanged);
+    await clear();
+  }
 }
 
 /// What the settings see of the system-wide shortcuts: what the system

@@ -18,7 +18,8 @@ import 'tray_gateway.dart';
 /// next to the icon, and tray_manager writes no tooltip there.
 ///
 /// Everything the icon, the title and the tooltip show is identical for work
-/// and a break — the time and "running" — because the menu bar is on every
+/// and a break — the time and "running", and for a Pomodoro "running" only
+/// (see [TimerSurfaceState.showsClock]) — because the menu bar is on every
 /// screen share. The mode and the phase are words of the open menu, and the
 /// description is there only with "details" switched on.
 class TraySurface extends TimerSurface {
@@ -133,13 +134,23 @@ class TraySurface extends TimerSurface {
   Future<void> _setTitle(String title) async {
     if (!_mac || title == _title) return;
     _title = title;
-    await _gateway.setTitle(title);
+    try {
+      await _gateway.setTitle(title);
+    } catch (_) {
+      _title = null;
+      rethrow;
+    }
   }
 
   Future<void> _setTooltip(String text) async {
     if (!_tooltips || text == _tooltip) return;
     _tooltip = text;
-    await _gateway.setTooltip(text);
+    try {
+      await _gateway.setTooltip(text);
+    } catch (_) {
+      _tooltip = null;
+      rethrow;
+    }
   }
 
   @override

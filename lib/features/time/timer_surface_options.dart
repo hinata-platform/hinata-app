@@ -79,17 +79,9 @@ enum TimerSurfaceOption {
     hotkeys => LucideIcons.keyboard,
   };
 
-  /// The suffix that names where the running timer is on [platform].
-  static String _where(SurfacePlatform platform) => switch (platform) {
-    SurfacePlatform.web => 'Web',
-    SurfacePlatform.macos => 'MenuBar',
-    SurfacePlatform.windows || SurfacePlatform.linux => 'Tray',
-    _ => '',
-  };
-
   String labelKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEnd',
-    running => 'account.timerSurfaces.running${_where(platform)}',
+    running => 'account.timerSurfaces.running${surfacePlace(platform)}',
     details =>
       capabilitiesForPlatform(platform).trayIcon
           ? 'account.timerSurfaces.detailsMenu'
@@ -102,14 +94,15 @@ enum TimerSurfaceOption {
 
   String hintKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEndHint',
-    running => 'account.timerSurfaces.running${_where(platform)}Hint',
+    running => 'account.timerSurfaces.running${surfacePlace(platform)}Hint',
     details =>
       capabilitiesForPlatform(platform).trayIcon
           ? 'account.timerSurfaces.detailsMenuHint'
           : 'account.timerSurfaces.detailsHint',
     lockDetails => 'account.timerSurfaces.lockDetailsHint',
     titleClock => 'account.timerSurfaces.titleClockHint',
-    keepRunning => 'account.timerSurfaces.keepRunning${_where(platform)}Hint',
+    keepRunning =>
+      'account.timerSurfaces.keepRunning${surfacePlace(platform)}Hint',
     hotkeys => 'account.timerSurfaces.hotkeysHint',
   };
 

@@ -31,6 +31,17 @@ void main() {
     }
   });
 
+  test('one modifier is every app\'s own shortcuts', () {
+    for (final p in [mac, windows]) {
+      expect(isSafeHotkey(combo({HotKeyModifier.control}), p), isFalse);
+      expect(isSafeHotkey(combo({HotKeyModifier.meta}), p), isFalse);
+    }
+    expect(
+      isSafeHotkey(combo({HotKeyModifier.meta, HotKeyModifier.shift}), mac),
+      isTrue,
+    );
+  });
+
   test('Ctrl+Alt is AltGr off the Mac', () {
     final altGr = combo({HotKeyModifier.control, HotKeyModifier.alt});
     expect(isSafeHotkey(altGr, windows), isFalse);

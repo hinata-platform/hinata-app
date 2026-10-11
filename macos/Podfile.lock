@@ -107,7 +107,7 @@ PODS:
     - FlutterMacOS
   - super_native_extensions (0.0.1):
     - FlutterMacOS
-  - system_hotkeys_macos (0.1.0):
+  - system_hotkeys_macos (0.1.2):
     - FlutterMacOS
   - tray_manager (0.0.1):
     - FlutterMacOS
@@ -242,7 +242,7 @@ SPEC CHECKSUMS:
   share_plus: 510bf0af1a42cd602274b4629920c9649c52f4cc
   shared_preferences_foundation: 7036424c3d8ec98dfe75ff1667cb0cd531ec82bb
   super_native_extensions: c2795d6d9aedf4a79fae25cb6160b71b50549189
-  system_hotkeys_macos: d3723a6f44139646bbfe99d9ebf47b18dc0db416
+  system_hotkeys_macos: f70da4b5221d408f30ffb796757220b52d600bf0
   tray_manager: 19c369010e59c073f13b82354d78a35f7972d609
   url_launcher_macos: f87a979182d112f911de6820aefddaf56ee9fbfd
   window_manager: b729e31d38fb04905235df9ea896128991cad99e

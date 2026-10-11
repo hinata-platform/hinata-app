@@ -27,7 +27,11 @@ List<TimerSurface> buildTimerSurfaces(
     tray,
     KeepRunningSurface(platform, trayAvailable: tray.available),
     if (capabilitiesForPlatform(platform).globalHotkeys)
-      GlobalHotkeysSurface(platform, status: hotkeys),
+      GlobalHotkeysSurface(
+        platform,
+        status: hotkeys,
+        trayAvailable: tray.available,
+      ),
   ];
   return switch (platform) {
     SurfacePlatform.android ||
