@@ -38,11 +38,10 @@ void main() {
       final strings = appleStrings(
         'ios/HinataWidgets/$language.lproj/Localizable.strings',
       );
-      expect(
-        strings.keys.toSet(),
-        {'widget.name', 'widget.description'},
-        reason: language,
-      );
+      expect(strings.keys.toSet(), {
+        'widget.name',
+        'widget.description',
+      }, reason: language);
       expect(strings.values.every((v) => v.trim().isNotEmpty), isTrue);
     }
   });
@@ -73,11 +72,10 @@ void main() {
       final strings = androidStrings(
         'android/app/src/main/res/$folder/widget_strings.xml',
       );
-      expect(
-        strings.keys.toSet(),
-        {'timer_widget_name', 'timer_widget_description'},
-        reason: language,
-      );
+      expect(strings.keys.toSet(), {
+        'timer_widget_name',
+        'timer_widget_description',
+      }, reason: language);
       expect(strings.values.every((v) => v.trim().isNotEmpty), isTrue);
     }
   });
