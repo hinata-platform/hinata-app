@@ -1810,7 +1810,7 @@
       "unlimitedHint": "There is no yearly entitlement and no balance, as with sickness.",
       "rules": "Rules",
       "approval": "Needs approval",
-      "approvalHint": "Requests and approvals arrive in the next stage; the setting is stored already.",
+      "approvalHint": "Requests of this type wait for the person named under Who decides. Without it they are approved straight away.",
       "approvalSick": "Sickness is reported, not applied for (§ 5 EFZG). This category therefore has no approval.",
       "approver": "Who decides",
       "halfDays": "Half days allowed",
@@ -2980,7 +2980,7 @@
       "title": "Absence management 2.0",
       "hint": "Absence types with their own rules, yearly entitlements and balances. Its own switch, off until you turn it on.",
       "enabledTitle": "Absence management",
-      "enabledHint": "Brings absence types, yearly entitlements and balances — and from the next stage, requests and approvals. General holiday principles and the holiday plan are subject to co-determination under § 87 Abs. 1 Nr. 5 BetrVG (LPVG in the public sector); the works parties decide how that applies here.",
+      "enabledHint": "Brings absence types, yearly entitlements, balances, requests and approvals. General holiday principles and the holiday plan are subject to co-determination under § 87 Abs. 1 Nr. 5 BetrVG (LPVG in the public sector); the works parties decide how that applies here.",
       "needsAdvanced": "Only takes effect while extended time tracking is on: every day this counts comes from a working pattern, a holiday calendar and the capacity built on them. The switch keeps the position you leave it in.",
       "codetermination": "Subject to co-determination: § 87 Abs. 1 Nr. 5 BetrVG — general holiday principles, the holiday plan and, in a dispute, the timing (LPVG in the public sector). Agree it with the works council before switching it on.",
       "keepersTitle": "Who keeps absences",
@@ -4786,5 +4786,15 @@
       "unratedHint": "{{count}} lines have no rate. Set a rate and rebuild the lines, or remove them, before issuing.",
       "draftHint": "A draft locks nothing. If entries change before you issue, rebuild the lines."
     }
+  },
+  "docs": {
+    "readMore": "Read more in the documentation",
+    "open": "Open",
+    "timeGuide": "Guide to time tracking",
+    "timeGuideHint": "Timer, views, approvals, reports and more, explained step by step.",
+    "timeTrackingAdmin": "Every policy and its effect in the documentation",
+    "absences": "Absence management in the documentation",
+    "timeTrackingPrivacy": "Privacy and labour law in the documentation",
+    "codetermination": "Checklist for the works agreement"
   }
 }
