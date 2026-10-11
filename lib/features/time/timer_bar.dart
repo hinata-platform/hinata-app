@@ -10,6 +10,7 @@ import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/hive_widgets.dart' show fmtClock;
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/glass_popup_menu.dart';
@@ -490,17 +491,8 @@ class _ElapsedReadout extends StatelessWidget {
 
   final bool running;
 
-  /// `m:ss` under an hour, `h:mm:ss` above it — the way a stopwatch reads.
-  ///
-  /// A leading `0:` for the first hour is three characters that say nothing,
-  /// and on the compact bar those characters come straight out of the room the
-  /// description has to say what the timer is for.
-  static String format(Duration d) {
-    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    if (d.inHours == 0) return '${d.inMinutes}:$seconds';
-    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    return '${d.inHours}:$minutes:$seconds';
-  }
+  /// See [fmtClock].
+  static String format(Duration d) => fmtClock(d);
 
   @override
   Widget build(BuildContext context) {

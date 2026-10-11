@@ -27,6 +27,9 @@ import '../sprint/modals/glass_modal.dart'
         showGlassToast;
 import '../time/lock_notice.dart' show requestOlderDays;
 import '../time/time_privacy_sheet.dart';
+import '../time/timer_surface_options.dart';
+import '../../core/timer_surfaces/surface_platform.dart';
+import 'timer_surfaces_section.dart';
 import 'account_widgets.dart';
 import 'time_export_cubit.dart';
 import '../time/time_requests_cubit.dart';
@@ -150,6 +153,13 @@ class _TimePreferencesBody extends StatelessWidget {
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),
+        // HIN-100: right below the lengths, because what happens when one of
+        // them runs out is the question these switches answer.
+        if (_showsTimerSurfaces(context)) ...[
+          _GroupLabel(text: context.t('account.timerSurfaces.title')),
+          TimerSurfacesSection(stack: stack),
+          Divider(height: 1, color: AppColors.hairline2),
+        ],
         _Reminders(prefs: prefs, stack: stack, onSave: save),
         _GroupLabel(text: context.t('account.timeTracking.privacy')),
         SettingRow(
@@ -212,6 +222,10 @@ class _TimePreferencesBody extends StatelessWidget {
       ],
     );
   }
+
+  static bool _showsTimerSurfaces(BuildContext context) =>
+      maybeTimerSurfacePrefs(context) != null &&
+      hasTimerSurfaces(SurfacePlatform.current);
 
   /// Downloads the person's own entries as CSV.
   ///

@@ -9,9 +9,20 @@
 // Firebase Cloud Messaging has no Windows implementation, so the Windows build
 // registers a WNS *channel URI* where the other platforms register an FCM
 // token. This exposes that URI to Dart over the method channel
-// "hinata/wns" with a single method:
+// "hinata/wns":
 //
 //   getChannelUri() -> String?   (null when unavailable, never throws)
+//   getInitialDeepLink() -> String?
+//
+// The same channel also carries the timer's local toasts (HIN-100), since a
+// click on them takes the same activation path as a push:
+//
+//   scheduleToast({tag, at (epoch ms UTC), title, body, launch, expireMinutes})
+//       -> bool   replaces a pending toast with the same tag
+//   showToast({tag, title, body, launch, expireMinutes}) -> bool
+//   cancelToast({tag})   removes it from the schedule and from Action Center
+//
+// and calls Dart with onDeepLink(link) when a notification is clicked.
 //
 // Availability depends on the app running with package identity: WNS is only
 // reachable from the MSIX build. A plain `flutter run` has no identity and gets

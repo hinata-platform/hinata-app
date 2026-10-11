@@ -1595,6 +1595,38 @@
       "mentionHint": "Tapez + pour partager la saisie avec une personne du projet.",
       "mentionNeedsProject": "Choisissez d’abord un projet, vous pourrez ensuite y mentionner des personnes avec +.",
       "mentioned": "Sera partagée avec"
+    },
+    "surface": {
+      "workOver": "Ton intervalle est terminé.",
+      "running": "Minuteur en cours",
+      "onBreak": "Pause",
+      "intro": {
+        "title": "Minuteur hors de l'app",
+        "subtitle": "Choisis ce que cet appareil peut afficher.",
+        "endClosed": "Quand un intervalle se termine, ton appareil te prévient, même app fermée.",
+        "endBackground": "Quand un intervalle se termine, tu reçois une notification tant que l'app tourne en arrière-plan.",
+        "running": "Pendant que le minuteur tourne, une notification discrète l'affiche.",
+        "runningLocked": "Pendant que le minuteur tourne, une notification discrète l'affiche. L'écran verrouillé ne montre que le temps.",
+        "private": "Les textes restent génériques et disparaissent d'eux-mêmes. Rien ne part vers le serveur ni vers ton employeur.",
+        "switchOn": "Activer",
+        "later": "Plus tard",
+        "denied": "Les notifications sont bloquées. Tu peux les autoriser dans les réglages du système."
+      },
+      "device": {
+        "heading": "Sur cet appareil",
+        "off": "Rien de ton minuteur n'apparaît hors de l'app.",
+        "phaseEnd": "Une notification quand un intervalle se termine.",
+        "running": "Une notification discrète pendant que le minuteur tourne.",
+        "runningWeb": "Une pastille sur l'icône de l'app pendant que le minuteur tourne.",
+        "titleClock": "Le temps en cours dans le titre de l'onglet.",
+        "detailsOn": "Les détails sont activés, la description peut donc apparaître hors de l'app.",
+        "detailsOff": "Les détails sont désactivés. Hors de l'app, tu ne vois que le temps.",
+        "copy": "Pendant qu'un minuteur tourne, cet appareil garde son début et sa fin.",
+        "copyDetails": "Pendant qu'un minuteur tourne, cet appareil garde son début, sa fin et sa description.",
+        "vanish": "Ces copies disparaissent après 24 heures et à la déconnexion.",
+        "stored": "Tes réglages restent sur cet appareil.",
+        "settings": "Modifier dans les réglages"
+      }
     }
   },
   "availability": {
@@ -4179,6 +4211,37 @@
       "preferences": "Préférences",
       "privacy": "Confidentialité",
       "administration": "Administration"
+    },
+    "timerSurfaces": {
+      "title": "Minuteur hors de l'app",
+      "off": "Désactivé pour l'instant",
+      "offHint": "Rien de ton minuteur n'apparaît hors de l'app.",
+      "setUp": "Configurer",
+      "phaseEnd": "Fin d'intervalle",
+      "phaseEndHint": "Une notification quand un compte à rebours ou un intervalle Pomodoro se termine.",
+      "denied": "Les notifications sont bloquées pour cette app. Tu peux les autoriser dans les réglages du système.",
+      "openSettings": "Ouvrir les réglages",
+      "exact": "Heure exacte",
+      "exactOn": "La notification arrive à la minute près.",
+      "exactOff": "Inexact, quelques minutes de marge.",
+      "exactAllow": "Autoriser",
+      "running": "Pendant que le minuteur tourne",
+      "runningHint": "Une notification discrète affiche le minuteur en cours.",
+      "runningWeb": "Pastille sur l'icône",
+      "runningWebHint": "L'app installée marque son icône pendant que le minuteur tourne.",
+      "details": "Détails dans le menu et l'info-bulle",
+      "detailsHint": "Affiche aussi la description, pas seulement le temps.",
+      "lockDetails": "Détails sur l'écran verrouillé",
+      "lockDetailsHint": "Quiconque tient ton appareil peut lire la description.",
+      "titleClock": "Temps dans le titre de l'onglet",
+      "titleClockHint": "L'onglet du navigateur affiche le temps en cours.",
+      "clear": "Copies locales",
+      "clearHint": "Supprime tout de suite ce que le minuteur a laissé sur cet appareil.",
+      "clearButton": "Supprimer maintenant",
+      "cleared": "Copies locales supprimées.",
+      "turnOff": "Tout désactiver",
+      "turnOffHint": "Plus rien n'apparaît hors de l'app. Tu peux le reconfigurer plus tard.",
+      "turnOffButton": "Désactiver"
     }
   },
   "twofa": {

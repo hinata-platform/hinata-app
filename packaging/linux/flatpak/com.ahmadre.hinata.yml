@@ -67,6 +67,9 @@ finish-args:
   # screen. (The Secret portal is not an alternative here — libsecret uses the
   # service directly.)
   - --talk-name=org.freedesktop.secrets
+  # The end of a timer interval is a desktop notification, sent by
+  # flutter_local_notifications straight to the host's notification server.
+  - --talk-name=org.freedesktop.Notifications
   # The file PICKER needs no filesystem grant at all. The three read-only
   # directories below are for DRAG & DROP, which is a different mechanism with
   # a different answer — and keeping those two apart is what this comment is

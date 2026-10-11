@@ -12,6 +12,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/shortcuts/app_shortcuts.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/hive_widgets.dart' show fmtClock;
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/ambient_background.dart';
 import '../../core/widgets/glass_switch_chip.dart';
@@ -197,12 +198,7 @@ class _Readout extends StatelessWidget {
   const _Readout();
 
   /// `h:mm:ss` above an hour, `m:ss` below it.
-  static String format(Duration d) {
-    final seconds = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    if (d.inHours == 0) return '${d.inMinutes}:$seconds';
-    final minutes = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    return '${d.inHours}:$minutes:$seconds';
-  }
+  static String format(Duration d) => fmtClock(d);
 
   @override
   Widget build(BuildContext context) {

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The notification icon is looked up by name at runtime (flutter_local_notifications
+     resolves "ic_stat_timer" via getIdentifier), so R8's resource shrinker sees no
+     reference and would strip it from release builds; the notification would then
+     fail silently. -->
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:keep="@drawable/ic_stat_timer" />
