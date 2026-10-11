@@ -674,7 +674,15 @@ class GlassStepperPill extends StatelessWidget {
   final double height;
 
   @override
-  Widget build(BuildContext context) => GlassPill(
+  Widget build(BuildContext context) => ConstrainedBox(
+    // The same footprint a tappable [GlassPill] takes: those reserve the
+    // minimum target around the glass, and in a row aligned to the top this
+    // pill would otherwise sit higher than the ones beside it.
+    constraints: const BoxConstraints(minHeight: kGlassMinTarget),
+    child: Center(widthFactor: 1, heightFactor: 1, child: _pill(context)),
+  );
+
+  Widget _pill(BuildContext context) => GlassPill(
     height: height,
     child: Row(
       mainAxisSize: MainAxisSize.min,
