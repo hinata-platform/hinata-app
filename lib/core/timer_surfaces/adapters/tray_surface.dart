@@ -7,13 +7,15 @@ import '../../widgets/hive_widgets.dart' show fmtClock;
 import '../surface_platform.dart';
 import '../timer_surface.dart';
 import '../timer_surface_state.dart';
+import 'running_tooltip.dart';
 import 'tray_gateway.dart';
 
 /// The timer in the macOS menu bar and in the Windows and Linux tray.
 ///
 /// On a Mac the title next to the icon ticks once a second while a timer
 /// runs; on Windows the tooltip carries the time and changes once a minute;
-/// Linux has the icon and the menu only (a StatusNotifierItem draws no text).
+/// Linux has the icon and the menu only: a StatusNotifierItem draws no text
+/// next to the icon, and tray_manager writes no tooltip there.
 ///
 /// Everything the icon, the title and the tooltip show is identical for work
 /// and a break — the time and "running" — because the menu bar is on every
@@ -41,6 +43,10 @@ class TraySurface extends TimerSurface {
 
   bool get _mac => platform == SurfacePlatform.macos;
 
+  /// Only the Windows tray has a tooltip to write: tray_manager's Linux side
+  /// has no such call, and every attempt there would throw.
+  bool get _tooltips => platform == SurfacePlatform.windows;
+
   @override
   String get id => 'tray';
 
@@ -56,6 +62,13 @@ class TraySurface extends TimerSurface {
 
   @override
   Future<void> apply(TimerSurfaceState state) async {
+    // A new or stopped timer starts its tooltip minute afresh; otherwise a
+    // timer started in the minute the last one stopped would keep "no timer
+    // running" for up to a minute.
+    if (state.running != _state.running ||
+        state.startedAt != _state.startedAt) {
+      _tooltipMinute = null;
+    }
     _state = state;
     if (!state.runningSurface) {
       await clear();
@@ -67,10 +80,20 @@ class TraySurface extends TimerSurface {
         await _gateway.setIcon(running: state.running);
         _icon = icon;
       }
-      final menu = trayMenu(state);
+      // On Linux the menu sits on the session bus for any process to read, open
+      // or not: no description there.
+      final menu = trayMenu(
+        state,
+        withLabel: platform != SurfacePlatform.linux,
+      );
       if (!listEquals(menu, _menu)) {
         await _gateway.setMenu(menu);
         _menu = menu;
+      }
+      if (state.running && !state.showsClock) {
+        // A Pomodoro: the mark only, the same through work and breaks.
+        await _setTitle('');
+        await _setTooltip('${state.texts.appName} · ${state.texts.running}');
       }
       if (!state.running) {
         await _setTitle('');
@@ -92,18 +115,19 @@ class TraySurface extends TimerSurface {
 
   @override
   void tick(Duration shown) {
-    if (!_state.running || !_state.runningSurface || _icon == null) return;
+    if (!_state.showsClock || !_state.runningSurface || _icon == null) return;
     final clock = fmtClock(shown);
     if (_mac) {
       unawaited(_setTitle(' $clock'));
       return;
     }
+    if (!_tooltips) return;
     // A tooltip is read when hovered, not watched; once a minute is plenty and
     // spares the shell a repaint every second.
     final minute = shown.inMinutes;
     if (minute == _tooltipMinute) return;
     _tooltipMinute = minute;
-    unawaited(_setTooltip(trayTooltip(_state.texts, fmtClockMinutes(shown))));
+    unawaited(_setTooltip(runningTooltip(_state.texts, shown)));
   }
 
   Future<void> _setTitle(String title) async {
@@ -113,7 +137,7 @@ class TraySurface extends TimerSurface {
   }
 
   Future<void> _setTooltip(String text) async {
-    if (_mac || text == _tooltip) return;
+    if (!_tooltips || text == _tooltip) return;
     _tooltip = text;
     await _gateway.setTooltip(text);
   }
@@ -160,22 +184,10 @@ class TraySurface extends TimerSurface {
   }
 }
 
-/// The tooltip of a running timer: the time and "running", for work and a
-/// break alike.
-String trayTooltip(TimerSurfaceTexts texts, String time) =>
-    '${texts.appName} · $time · ${texts.running}';
-
-/// Hours and minutes, for a tooltip that changes once a minute.
-String fmtClockMinutes(Duration d) {
-  final h = d.inHours;
-  final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-  return '$h:$m';
-}
-
 /// The menu for [state]: what the timer is (a line that cannot be clicked),
 /// what can be done with it, and the window. At most six entries, fixed — no
 /// list that grows.
-List<TrayMenuEntry> trayMenu(TimerSurfaceState state) {
+List<TrayMenuEntry> trayMenu(TimerSurfaceState state, {bool withLabel = true}) {
   final t = state.texts;
   final status = !state.running
       ? t.idle
@@ -187,7 +199,8 @@ List<TrayMenuEntry> trayMenu(TimerSurfaceState state) {
         };
   return [
     if (status.isNotEmpty) TrayMenuEntry.label(status),
-    if (state.running && state.label != null) TrayMenuEntry.label(state.label!),
+    if (withLabel && state.running && state.label != null)
+      TrayMenuEntry.label(state.label!),
     const TrayMenuEntry.separator(),
     TrayMenuEntry(TrayMenuEntry.toggle, state.running ? t.stop : t.start),
     if (state.running && state.mode == TimerMode.pomodoro)

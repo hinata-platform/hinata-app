@@ -4357,15 +4357,23 @@
       "hotkeyChoose": "Choose",
       "keySpace": "Space",
       "recordPrompt": "Press the new combination",
-      "recordHint": "Hold at least one of Ctrl, Alt, Shift or Command, for example {{example}}. Esc cancels.",
-      "recordNeedsModifier": "A shortcut needs Ctrl, Alt, Shift or Command, or it would take the key away from every other app.",
+      "recordHint": "Hold Ctrl or the Windows key, for example {{example}}. Esc cancels.",
+      "recordNeedsModifier": "A shortcut needs Ctrl or the Windows key, and Ctrl+Alt alone is AltGr, which types characters. Add Shift or the Windows key.",
       "recordUnsupportedKey": "Use a letter, a digit, F1 to F12 or the space bar.",
       "test": "Check the shortcut",
       "testHint": "Press it once, also with another app in front. Nothing starts or stops during the check.",
       "testButton": "Check now",
       "testWaiting": "Press {{combo}} now.",
       "testWorked": "It works. The press arrived.",
-      "testSilent": "No press arrived. Another app may hold this combination; choose a different one."
+      "testSilent": "No press arrived. Another app may hold this combination; choose a different one.",
+      "recordHintMac": "Hold Control or Command, for example {{example}}. Esc cancels.",
+      "recordNeedsModifierMac": "A shortcut needs Control or Command. Shift and Option alone type capitals and special characters in every app.",
+      "key": {
+        "ctrl": "Ctrl",
+        "alt": "Alt",
+        "shift": "Shift",
+        "win": "Win"
+      }
     }
   },
   "twofa": {

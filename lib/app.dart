@@ -38,6 +38,7 @@ import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/time/time_shortcuts.dart';
 import 'features/time/timer_signals.dart';
 import 'features/time/timer_surfaces_host.dart';
+import 'core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import 'core/timer_surfaces/time_deep_link.dart';
 import 'core/timer_surfaces/timer_surface_clear_signal.dart';
 import 'core/timer_surfaces/timer_surface_prefs.dart';
@@ -116,6 +117,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
 
   /// "Delete local copies now", from the settings to [TimerSurfacesHost].
   final _surfaceClear = TimerSurfaceClearSignal();
+
+  /// The system-wide shortcuts' answers and check, between the surface that
+  /// binds them and the settings that show them.
+  final _hotkeys = HotkeyStatus();
 
   /// One registry for the whole application, so a shortcut works whatever is on
   /// screen — including the focus route, which is outside the shell.
@@ -724,6 +729,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     unawaited(_timer.close());
     unawaited(_surfacePrefs.close());
     _surfaceClear.dispose();
+    _hotkeys.dispose();
     _router.dispose();
     _appConfig.close();
     _auth.close();
@@ -778,6 +784,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         RepositoryProvider<TeamRepository>.value(value: domains.teams),
         RepositoryProvider<GitRepository>.value(value: domains.git),
         RepositoryProvider<TimerSurfaceClearSignal>.value(value: _surfaceClear),
+        RepositoryProvider<HotkeyStatus>.value(value: _hotkeys),
       ],
       child: MultiBlocProvider(
         providers: [
@@ -871,6 +878,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                                 : organization,
                             openRoute: _router.go,
                             clearSignal: _surfaceClear,
+                            hotkeys: _hotkeys,
                             child: TimerSignals(
                               child: child ?? const SizedBox.shrink(),
                             ),

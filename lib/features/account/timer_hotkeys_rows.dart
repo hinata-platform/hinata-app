@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:system_hotkeys/system_hotkeys.dart';
 
@@ -9,6 +10,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
+import '../../core/timer_surfaces/hotkey_rules.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
 import '../../core/timer_surfaces/timer_surface_prefs.dart';
 import '../sprint/modals/glass_modal.dart'
@@ -20,9 +22,10 @@ import 'account_widgets.dart';
 /// combination, what the system answered for it, and a way to change it; and
 /// a check that a press really arrives.
 ///
-/// The system's answer is shown as it is: a combination another app holds is
-/// a conflict the person can fix here, not a shortcut that silently does
-/// nothing.
+/// The system's answer is shown as it is: a conflict the person can fix here
+/// rather than a shortcut that silently does nothing. Windows reports any
+/// combination another app holds; a Mac only the system's own, which is what
+/// the check below is for.
 class TimerHotkeysRows extends StatelessWidget {
   const TimerHotkeysRows({
     super.key,
@@ -38,9 +41,10 @@ class TimerHotkeysRows extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final state = prefs.state;
+    final status = context.read<HotkeyStatus>();
     final divider = Divider(height: 1, color: AppColors.hairline2);
     return ValueListenableBuilder<Map<String, HotKeyResult>>(
-      valueListenable: GlobalHotkeysSurface.results,
+      valueListenable: status.results,
       builder: (context, results, _) => Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -67,7 +71,8 @@ class TimerHotkeysRows extends StatelessWidget {
           ),
           divider,
           _SelfTestRow(
-            hotKey: state.toggleHotkey,
+            status: status,
+            hotKeys: [?state.toggleHotkey, ?state.focusHotkey],
             platform: platform,
             stack: stack,
           ),
@@ -119,11 +124,7 @@ class _HotkeyRow extends StatelessWidget {
             builder: (buttonContext) => AccountActionButton(
               label: combo == null
                   ? context.t('account.timerSurfaces.hotkeyChoose')
-                  : hotkeyLabel(
-                      combo,
-                      platform,
-                      space: context.t('account.timerSurfaces.keySpace'),
-                    ),
+                  : hotkeyLabel(combo, platform, names: keyNames(context)),
               icon: LucideIcons.keyboard,
               onPressed: () => unawaited(_record(buttonContext)),
             ),
@@ -173,6 +174,8 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
   final FocusNode _focus = FocusNode(debugLabel: 'hotkey-recorder');
   String? _problem;
 
+  bool get _mac => widget.platform == SurfacePlatform.macos;
+
   static final _modifierKeys = {
     PhysicalKeyboardKey.controlLeft,
     PhysicalKeyboardKey.controlRight,
@@ -208,10 +211,12 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
       return KeyEventResult.handled;
     }
     final hotKey = HotKey(key: key, modifiers: modifiers);
-    final problem = !hotKey.hasModifier
-        ? 'account.timerSurfaces.recordNeedsModifier'
-        : !HotKey.isSupportedKey(key)
+    final problem = !HotKey.isSupportedKey(key)
         ? 'account.timerSurfaces.recordUnsupportedKey'
+        : !isSafeHotkey(hotKey, widget.platform)
+        ? _mac
+              ? 'account.timerSurfaces.recordNeedsModifierMac'
+              : 'account.timerSurfaces.recordNeedsModifier'
         : null;
     if (problem != null) {
       setState(() => _problem = problem);
@@ -227,6 +232,7 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
     final example = hotkeyLabel(
       TimerSurfacePrefs.defaultToggleHotkey(widget.platform),
       widget.platform,
+      names: keyNames(context),
     );
     return Focus(
       focusNode: _focus,
@@ -253,7 +259,9 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
             Text(
               problem == null
                   ? context.t(
-                      'account.timerSurfaces.recordHint',
+                      _mac
+                          ? 'account.timerSurfaces.recordHintMac'
+                          : 'account.timerSurfaces.recordHint',
                       variables: {'example': example},
                     )
                   : context.t(problem),
@@ -279,15 +287,18 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
 
 /// "Press it now": the one proof that a shortcut arrives, also from another
 /// app in front. On a Mac the system cannot say whether another app holds a
-/// combination; this can.
+/// combination; this can. Either shortcut counts, and the check names nothing
+/// more than that one arrived.
 class _SelfTestRow extends StatefulWidget {
   const _SelfTestRow({
-    required this.hotKey,
+    required this.status,
+    required this.hotKeys,
     required this.platform,
     required this.stack,
   });
 
-  final HotKey? hotKey;
+  final HotkeyStatus status;
+  final List<HotKey> hotKeys;
   final SurfacePlatform platform;
   final bool stack;
 
@@ -304,54 +315,53 @@ class _SelfTestRowState extends State<_SelfTestRow> {
 
   static const _window = Duration(seconds: 15);
 
+  HotkeyStatus get _status => widget.status;
+
   void _start() {
-    _before = GlobalHotkeysSurface.lastPress.value;
-    GlobalHotkeysSurface.selfTest.value = true;
-    GlobalHotkeysSurface.lastPress.addListener(_pressed);
+    _before = _status.lastPress.value;
+    _status.selfTest.value = true;
+    _status.lastPress.addListener(_pressed);
     _timeout?.cancel();
     _timeout = Timer(_window, () => _finish(_Test.silent));
     setState(() => _test = _Test.waiting);
   }
 
   void _pressed() {
-    final press = GlobalHotkeysSurface.lastPress.value;
-    if (press == null || press == _before) return;
-    if (press.id == GlobalHotkeysSurface.toggleId) _finish(_Test.worked);
+    final press = _status.lastPress.value;
+    if (press != null && press != _before) _finish(_Test.worked);
+  }
+
+  /// Stops listening and lets presses act again; shared by the end of the
+  /// check and by leaving the page in the middle of it.
+  void _stopListening() {
+    _timeout?.cancel();
+    _status.lastPress.removeListener(_pressed);
+    _status.selfTest.value = false;
   }
 
   void _finish(_Test result) {
-    _timeout?.cancel();
-    GlobalHotkeysSurface.lastPress.removeListener(_pressed);
-    GlobalHotkeysSurface.selfTest.value = false;
+    _stopListening();
     if (mounted) setState(() => _test = result);
   }
 
   @override
   void dispose() {
-    if (_test == _Test.waiting) {
-      _timeout?.cancel();
-      GlobalHotkeysSurface.lastPress.removeListener(_pressed);
-      GlobalHotkeysSurface.selfTest.value = false;
-    }
+    if (_test == _Test.waiting) _stopListening();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final hotKey = widget.hotKey;
-    final combo = hotKey == null
-        ? ''
-        : hotkeyLabel(
-            hotKey,
-            widget.platform,
-            space: context.t('account.timerSurfaces.keySpace'),
-          );
+    final names = keyNames(context);
+    final combos = widget.hotKeys
+        .map((k) => hotkeyLabel(k, widget.platform, names: names))
+        .join(' / ');
     final note = switch (_test) {
       _Test.idle => null,
       _Test.waiting => (
         context.t(
           'account.timerSurfaces.testWaiting',
-          variables: {'combo': combo},
+          variables: {'combo': combos},
         ),
         LucideIcons.keyboard,
         AccountNoteTone.info,
@@ -378,7 +388,9 @@ class _SelfTestRowState extends State<_SelfTestRow> {
           trailing: AccountActionButton(
             label: context.t('account.timerSurfaces.testButton'),
             icon: LucideIcons.play,
-            onPressed: hotKey == null || _test == _Test.waiting ? null : _start,
+            onPressed: widget.hotKeys.isEmpty || _test == _Test.waiting
+                ? null
+                : _start,
           ),
         ),
         if (note != null)
@@ -393,3 +405,12 @@ class _SelfTestRowState extends State<_SelfTestRow> {
     );
   }
 }
+
+/// The modifier names in the reader's language.
+KeyNames keyNames(BuildContext context) => KeyNames(
+  ctrl: context.t('account.timerSurfaces.key.ctrl'),
+  alt: context.t('account.timerSurfaces.key.alt'),
+  shift: context.t('account.timerSurfaces.key.shift'),
+  win: context.t('account.timerSurfaces.key.win'),
+  space: context.t('account.timerSurfaces.keySpace'),
+);

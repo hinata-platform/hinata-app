@@ -97,14 +97,14 @@ void main() {
     final windows = capabilitiesForPlatform(SurfacePlatform.windows);
     final linux = capabilitiesForPlatform(SurfacePlatform.linux);
     expect(
-      [mac.menuBar, mac.keepRunning, mac.globalHotkeys],
+      [mac.trayIcon, mac.keepRunning, mac.globalHotkeys],
       [true, true, true],
     );
     expect(mac.taskbar, isFalse);
     expect(windows.taskbar, isTrue);
     expect(windows.globalHotkeys, isTrue);
     // Linux: the tray best effort, shortcuts with the portal in stage 25.
-    expect([linux.menuBar, linux.globalHotkeys], [true, false]);
+    expect([linux.trayIcon, linux.globalHotkeys], [true, false]);
   });
 
   test('a Mac keeps the timer in the menu bar by default, others quit', () {
