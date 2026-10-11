@@ -266,13 +266,28 @@ enum BillingGroupBy {
       project,
       issue,
       if (people) user,
-      team,
+      // A team of one is one person's figures, so a team needs the same right
+      // as a person (the server refuses it otherwise).
+      if (people) team,
       day,
       week,
       month,
     ],
-    BillingReportKind.profitability => [project, issue, team, day, week, month],
-    BillingReportKind.utilization => [project, team, day, week, month],
+    BillingReportKind.profitability => [
+      project,
+      issue,
+      if (people) team,
+      day,
+      week,
+      month,
+    ],
+    BillingReportKind.utilization => [
+      project,
+      if (people) team,
+      day,
+      week,
+      month,
+    ],
   };
 }
 

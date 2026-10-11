@@ -26,10 +26,12 @@ void main() {
   late TimerSurfaceClearSignal clear;
   final routes = <String>[];
 
+  // Relative to now: the host shows nothing of a timer older than a day.
+  final startedAt = DateTime.now().toUtc().subtract(const Duration(minutes: 5));
   final running = TimerState(
     timer: RunningTimer(
       id: 'timer-1',
-      startedAt: DateTime.utc(2026, 10, 11, 9),
+      startedAt: startedAt,
       description: 'Client report',
       mode: TimerMode.countdown,
       plannedMinutes: 25,
@@ -80,7 +82,7 @@ void main() {
       expect(state.running, isTrue);
       expect(state.phaseEndNotification, isTrue);
       expect(state.label, isNull);
-      expect(state.endsAt, DateTime.utc(2026, 10, 11, 9, 25));
+      expect(state.endsAt, startedAt.add(const Duration(minutes: 25)));
     },
   );
 
@@ -170,6 +172,22 @@ void main() {
     await tester.pump();
 
     expect(surface.clears, before + 1);
+  });
+
+  testWidgets('deleted copies stay deleted when the app comes back', (
+    tester,
+  ) async {
+    await pump(tester);
+    clear.request();
+    await tester.pump();
+    final applied = surface.applied.length;
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.paused);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+    await tester.pump();
+
+    expect(surface.applied.length, applied);
   });
 
   testWidgets('a surface opens the focus screen as a route', (tester) async {

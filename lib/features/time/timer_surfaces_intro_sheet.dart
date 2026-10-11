@@ -97,6 +97,9 @@ class _TimerSurfacesIntroBodyState extends State<TimerSurfacesIntroBody> {
         }
       }
     }
+    // Signed out while the system asked: the switches belong to a session that
+    // is gone.
+    if (widget.prefs.isClosed) return;
     widget.prefs.consent(choices);
     if (!mounted) return;
     if (refused) {
