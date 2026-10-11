@@ -1810,7 +1810,7 @@
       "unlimitedHint": "Es gibt keinen Jahresanspruch und keinen Saldo, so wie bei Krankheit.",
       "rules": "Regeln",
       "approval": "Muss genehmigt werden",
-      "approvalHint": "Anträge und Genehmigungen kommen in der nächsten Stufe. Die Einstellung wird schon gespeichert.",
+      "approvalHint": "Anträge dieser Art warten auf die Person unter „Wer entscheidet“. Ohne den Schalter sind sie sofort genehmigt.",
       "approvalSick": "Krankheit wird gemeldet, nicht beantragt (§ 5 EFZG). Für diese Gattung gibt es deshalb keine Genehmigung.",
       "approver": "Wer entscheidet",
       "halfDays": "Halbe Tage erlaubt",
@@ -2980,7 +2980,7 @@
       "title": "Abwesenheitsmanagement 2.0",
       "hint": "Abwesenheitsarten mit eigenen Regeln, Jahresansprüche und Salden. Ein eigener Schalter, aus, bis Sie ihn einschalten.",
       "enabledTitle": "Abwesenheitsmanagement",
-      "enabledHint": "Bringt Abwesenheitsarten, Jahresansprüche und Salden — und ab der nächsten Stufe Anträge und Genehmigungen. Allgemeine Urlaubsgrundsätze und der Urlaubsplan sind nach § 87 Abs. 1 Nr. 5 BetrVG mitbestimmt (im öffentlichen Bereich das LPVG); wie das hier zu bewerten ist, entscheiden die Betriebsparteien.",
+      "enabledHint": "Bringt Abwesenheitsarten, Jahresansprüche, Salden, Anträge und Genehmigungen. Allgemeine Urlaubsgrundsätze und der Urlaubsplan sind nach § 87 Abs. 1 Nr. 5 BetrVG mitbestimmt (im öffentlichen Bereich das LPVG); wie das hier zu bewerten ist, entscheiden die Betriebsparteien.",
       "needsAdvanced": "Wirkt nur, solange das erweiterte Time-Tracking an ist: Jeder Tag, den dieses Modul zählt, kommt aus einem Arbeitszeitmuster, einem Feiertagskalender und der Kapazität darauf. Der Schalter behält die Stellung, in der Sie ihn lassen.",
       "codetermination": "Mitbestimmungspflichtig: § 87 Abs. 1 Nr. 5 BetrVG — allgemeine Urlaubsgrundsätze, der Urlaubsplan und im Streitfall die zeitliche Lage (im öffentlichen Dienst das LPVG). Vor dem Einschalten mit dem Betriebsrat oder Personalrat vereinbaren.",
       "keepersTitle": "Wer Abwesenheiten verwaltet",
@@ -4786,5 +4786,15 @@
       "unratedHint": "{{count}} Positionen haben keinen Satz. Lege einen Satz fest und baue die Positionen neu auf, oder entferne sie, bevor du ausstellst.",
       "draftHint": "Ein Entwurf sperrt nichts. Ändern sich Einträge vor dem Ausstellen, baue die Positionen neu auf."
     }
+  },
+  "docs": {
+    "readMore": "Mehr dazu in der Dokumentation",
+    "open": "Öffnen",
+    "timeGuide": "Anleitung zur Zeiterfassung",
+    "timeGuideHint": "Timer, Ansichten, Freigaben, Berichte und mehr, Schritt für Schritt erklärt.",
+    "timeTrackingAdmin": "Alle Richtlinien und ihre Wirkung in der Dokumentation",
+    "absences": "Abwesenheitsverwaltung in der Dokumentation",
+    "timeTrackingPrivacy": "Datenschutz und Arbeitsrecht in der Dokumentation",
+    "codetermination": "Checkliste für die Betriebsvereinbarung"
   }
 }

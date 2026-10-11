@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/docs/docs_links.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -206,6 +207,11 @@ class _OrgTimeTrackingSectionState extends State<OrgTimeTrackingSection> {
         effective: _effectiveValue<bool>('advancedEnabled'),
         onChanged: (v) => _set('advancedEnabled', v),
         monitoring: true,
+      ),
+      const SizedBox(height: 4),
+      const DocsLink(
+        slug: DocsPage.timeTrackingAdmin,
+        labelKey: 'docs.timeTrackingAdmin',
       ),
     ],
   );

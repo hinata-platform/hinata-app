@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../../core/docs/docs_links.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -193,6 +194,19 @@ class _TimePreferencesBody extends StatelessWidget {
                     .requestBackfill,
               ),
             ),
+          ),
+        ),
+        Divider(height: 1, color: AppColors.hairline2),
+        SettingRow(
+          label: context.t('docs.timeGuide'),
+          description: context.t('docs.timeGuideHint'),
+          icon: LucideIcons.bookOpen,
+          stack: stack,
+          trailing: AccountActionButton(
+            label: context.t('docs.open'),
+            icon: LucideIcons.externalLink,
+            onPressed: () =>
+                unawaited(openDocs(context, DocsPage.timeTrackingAdvanced)),
           ),
         ),
       ],

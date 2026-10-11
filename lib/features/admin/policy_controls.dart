@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/docs/docs_links.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -53,10 +54,21 @@ class CodeterminationNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(top: 8),
-    child: AdminNote(
-      icon: LucideIcons.scale,
-      tone: AdminNoteTone.warning,
-      text: context.t(textKey ?? 'admin.timeTracking.codetermination'),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AdminNote(
+          icon: LucideIcons.scale,
+          tone: AdminNoteTone.warning,
+          text: context.t(textKey ?? 'admin.timeTracking.codetermination'),
+        ),
+        // Where the agreement checklist and the policy matrix are: the note
+        // says co-determination applies, the page says what to agree on.
+        const DocsLink(
+          slug: DocsPage.timeTrackingPrivacy,
+          labelKey: 'docs.codetermination',
+        ),
+      ],
     ),
   );
 }

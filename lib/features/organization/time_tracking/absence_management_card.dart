@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/docs/docs_links.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -165,6 +166,7 @@ class _OrgAbsenceManagementCardState extends State<_OrgAbsenceManagementBody> {
           monitoring: true,
           codeterminationKey: 'admin.absence.codetermination',
         ),
+        const DocsLink(slug: DocsPage.absences, labelKey: 'docs.absences'),
         if (!widget.card.advancedOn)
           Padding(
             padding: const EdgeInsets.only(top: 4, bottom: 4),
