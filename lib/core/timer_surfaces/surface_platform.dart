@@ -38,9 +38,12 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
         lockScreen: true,
         exactAlarms: true,
       ),
+      // The running timer is the Live Activity and the widgets (HIN-102).
       SurfacePlatform.ios => const TimerSurfaceCapabilities(
         phaseEndNotification: true,
         schedulesAhead: true,
+        runningSurface: true,
+        lockScreen: true,
       ),
       // The running timer is the menu bar's clock on a Mac, the tray icon with
       // its tooltip on Windows and the bare tray icon on Linux; no window
@@ -82,9 +85,11 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
 
 /// Where the running timer sits on [platform], as the suffix of its texts:
 /// `MenuBar` on a Mac, `Tray` (the notification area) on Windows and Linux,
-/// `Web` for the app badge, empty for a phone's notification.
+/// `Web` for the app badge, `Ios` for the Live Activity and the widgets,
+/// empty for Android's notification.
 String surfacePlace(SurfacePlatform platform) => switch (platform) {
   SurfacePlatform.web => 'Web',
+  SurfacePlatform.ios => 'Ios',
   SurfacePlatform.macos => 'MenuBar',
   SurfacePlatform.windows || SurfacePlatform.linux => 'Tray',
   _ => '',

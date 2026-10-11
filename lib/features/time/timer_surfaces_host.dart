@@ -180,12 +180,16 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     breakPhase: context.t('time.surface.menu.breakPhase'),
   );
 
-  TimerSurfaceState _derive() => deriveTimerSurfaceState(
-    context.read<TimerCubit>().state.timer,
-    context.read<TimerSurfacePrefsCubit>().state,
-    gated: _gated,
-    texts: _texts(),
-  );
+  TimerSurfaceState _derive() {
+    final timer = context.read<TimerCubit>().state;
+    return deriveTimerSurfaceState(
+      timer.timer,
+      context.read<TimerSurfacePrefsCubit>().state,
+      gated: _gated,
+      texts: _texts(),
+      confirmed: timer.confirmed,
+    );
+  }
 
   /// Gated (signed out, module off) every surface is cleared. Otherwise even
   /// "no timer" is a state the surfaces draw: a countdown stops itself the
@@ -221,7 +225,8 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
       final state = _derive();
       _enqueue(() => _coordinator.phaseEnded(state, foreground: _foreground));
     }
-    if (previous.timer != current.timer) {
+    if (previous.timer != current.timer ||
+        previous.confirmed != current.confirmed) {
       _sync();
       _offerIntro(previous.timer, current.timer);
     }

@@ -4,10 +4,17 @@ import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 /// A permission gate that answers from fields, so no test reaches a plugin.
 class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
-  FakeTimerSurfaceGate({this.grants = true, this.exact = false});
+  FakeTimerSurfaceGate({
+    this.grants = true,
+    this.exact = false,
+    this.activities = true,
+  });
 
   bool grants;
   bool exact;
+
+  /// What the system says about Live Activities (iOS).
+  bool activities;
   int requests = 0;
   int exactRequests = 0;
 
@@ -16,6 +23,9 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
     requests++;
     return grants;
   }
+
+  @override
+  Future<bool> activitiesEnabled(SurfacePlatform platform) async => activities;
 
   @override
   Future<bool> canScheduleExact(SurfacePlatform platform) async => exact;
