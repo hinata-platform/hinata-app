@@ -158,13 +158,17 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     texts: _texts(),
   );
 
+  /// Gated (signed out, module off) every surface is cleared. Otherwise even
+  /// "no timer" is a state the surfaces draw: a countdown stops itself the
+  /// moment it ends, and clearing then would also wipe the title's short flash
+  /// that says so.
   void _sync() {
     if (!mounted) return;
-    final state = _derive();
-    if (!state.running) {
+    if (_gated) {
       _enqueue(_coordinator.clearAll);
       return;
     }
+    final state = _derive();
     _enqueue(() => _coordinator.apply(state));
   }
 

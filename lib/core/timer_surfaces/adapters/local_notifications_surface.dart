@@ -144,10 +144,26 @@ class LocalNotificationsSurface extends TimerSurface {
   }
 
   @override
-  Future<void> apply(TimerSurfaceState state) async {
+  Future<void> apply(TimerSurfaceState state) => _quietly(() async {
     await _ensureReady(state.texts);
     await _applyPhaseEnd(state);
     if (_android) await _applyRunning(state);
+  });
+
+  /// The system says no (notifications not allowed, a plugin missing on this
+  /// desktop): nothing of that reaches the person, and nothing is held against
+  /// this surface either. The plan is forgotten, so the next state tries again
+  /// once the person allows notifications in the system settings.
+  Future<void> _quietly(Future<void> Function() run) async {
+    try {
+      await run();
+    } on PlatformException catch (error) {
+      _planner.reset();
+      _showsRunning = false;
+      debugPrint('Timer notification not possible: ${error.code}');
+    } on MissingPluginException {
+      _planner.reset();
+    }
   }
 
   Future<void> _applyPhaseEnd(TimerSurfaceState state) async {
@@ -282,6 +298,11 @@ class LocalNotificationsSurface extends TimerSurface {
   Future<void> phaseEnded(
     TimerSurfaceState state, {
     required bool foreground,
+  }) => _quietly(() => _phaseEnded(state, foreground: foreground));
+
+  Future<void> _phaseEnded(
+    TimerSurfaceState state, {
+    required bool foreground,
   }) async {
     if (!_ready) return;
     if (foreground) {
@@ -302,7 +323,9 @@ class LocalNotificationsSurface extends TimerSurface {
   }
 
   @override
-  Future<void> clear() async {
+  Future<void> clear() => _quietly(_clear);
+
+  Future<void> _clear() async {
     // Also before anything was applied: a cold start signed out is exactly the
     // run in which an earlier one's notification is still planned.
     await _ensureReady(_readyWith ?? TimerSurfaceTexts.empty);
