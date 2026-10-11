@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gallery name and description of the timer widget (HIN-102). Everything
+     the widget shows besides comes from the app. -->
+<resources>
+    <string name="timer_widget_name">Temporizador</string>
+    <string name="timer_widget_description">El temporizador en curso, que avanza sin abrir la app.</string>
+</resources>
