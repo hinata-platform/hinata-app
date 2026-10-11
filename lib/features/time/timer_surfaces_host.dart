@@ -68,9 +68,12 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
           SurfacePlatform.current,
           appTitle: () => _appTitle,
           flashText: () => _flashText,
-          hotkeys: widget.hotkeys ?? HotkeyStatus(),
+          hotkeys: widget.hotkeys ?? (_ownHotkeys = HotkeyStatus()),
         ),
   );
+
+  /// A status of our own where nobody handed one in (a test); disposed here.
+  HotkeyStatus? _ownHotkeys;
 
   late String _appTitle = widget.appTitle;
   String _flashText = '';
@@ -137,7 +140,9 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.clearSignal?.removeListener(_clearNow);
-    unawaited(_coordinator.dispose());
+    unawaited(
+      _coordinator.dispose().whenComplete(() => _ownHotkeys?.dispose()),
+    );
     super.dispose();
   }
 

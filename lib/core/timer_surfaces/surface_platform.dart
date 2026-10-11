@@ -79,3 +79,13 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
       ),
       SurfacePlatform.other => TimerSurfaceCapabilities.none,
     };
+
+/// Where the running timer sits on [platform], as the suffix of its texts:
+/// `MenuBar` on a Mac, `Tray` (the notification area) on Windows and Linux,
+/// `Web` for the app badge, empty for a phone's notification.
+String surfacePlace(SurfacePlatform platform) => switch (platform) {
+  SurfacePlatform.web => 'Web',
+  SurfacePlatform.macos => 'MenuBar',
+  SurfacePlatform.windows || SurfacePlatform.linux => 'Tray',
+  _ => '',
+};
