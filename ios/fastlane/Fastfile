@@ -19,6 +19,12 @@ ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] ||= "120"
 ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] ||= "6"
 
 APP_IDENTIFIER = "com.ahmadre.hinata".freeze
+# The WidgetKit extension (HIN-102): Live Activity and timer widgets. Signed
+# with its own profile; App Groups on both ids, push only on the app.
+WIDGETS_IDENTIFIER = "com.ahmadre.hinata.widgets".freeze
+APP_IDENTIFIERS = [APP_IDENTIFIER, WIDGETS_IDENTIFIER].freeze
+APP_GROUP = "group.com.ahmadre.hinata".freeze
+TEAM_ID = "T852K29HWS".freeze
 WORKSPACE = "Runner.xcworkspace".freeze
 SCHEME = "Runner".freeze
 IPA_DIR = "../build/ios/ipa".freeze
@@ -105,9 +111,47 @@ platform :ios do
     # create/fetch the certificates + provisioning profiles and push them
     # (encrypted) to the certificates repo. Run `asc_app` only if you ever need
     # to (re)create the App Store Connect record.
-    match(type: "development", app_identifier: APP_IDENTIFIER, readonly: false)
-    match(type: "appstore", app_identifier: APP_IDENTIFIER, readonly: false)
+    match(type: "development", app_identifier: APP_IDENTIFIERS, readonly: false)
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS, readonly: false)
     UI.success("iOS signing assets are in the match repo. CI can now run read-only.")
+  end
+
+  desc "One-time (HIN-102): widget App ID, App Group on both ids, fresh iOS profiles"
+  # Changes the Apple Developer account and invalidates the iOS profiles that
+  # releases are built with, so it runs by hand on a maintainer's machine:
+  #
+  #   bundle exec fastlane ios widgets_bootstrap apple_id:<Apple ID>
+  #
+  # App Groups have no App Store Connect API endpoint, hence the Apple ID
+  # (two-factor prompt) instead of the API key. macOS profiles and all
+  # certificates stay as they are; only iOS profiles are regenerated.
+  lane :widgets_bootstrap do |options|
+    apple_id = options[:apple_id] || ENV["FASTLANE_USER"]
+    UI.user_error!("Pass apple_id:<Apple ID> (App Groups need an Apple ID login).") if apple_id.to_s.empty?
+    produce(
+      username: apple_id,
+      team_id: TEAM_ID,
+      app_identifier: WIDGETS_IDENTIFIER,
+      app_name: "Hinata Widgets",
+      skip_itc: true,
+      enable_services: { app_group: "on" }
+    )
+    modify_services(
+      username: apple_id,
+      team_id: TEAM_ID,
+      app_identifier: APP_IDENTIFIER,
+      services: { app_group: "on" }
+    )
+    sh("fastlane", "produce", "group", "-g", APP_GROUP, "-n", "Hinata", "-u", apple_id,
+       "-b", TEAM_ID, error_callback: ->(_) { UI.important("#{APP_GROUP} exists already") })
+    APP_IDENTIFIERS.each do |id|
+      sh("fastlane", "produce", "associate_group", "-a", id, "-u", apple_id, "-b", TEAM_ID, APP_GROUP)
+    end
+    auth!
+    # The capability change invalidates the existing iOS profiles: regenerate.
+    match(type: "development", app_identifier: APP_IDENTIFIERS, readonly: false, force: true)
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS, readonly: false, force: true)
+    UI.success("Widget App ID, App Group and fresh iOS profiles are in the match repo.")
   end
 
   desc "Create the App Store Connect app record (name must be globally unique)"
@@ -124,27 +168,30 @@ platform :ios do
   desc "Fetch signing certificates & profiles (read-only on CI)"
   lane :signing do
     auth!
-    match(type: "development", app_identifier: APP_IDENTIFIER, readonly: ci?)
-    match(type: "appstore", app_identifier: APP_IDENTIFIER, readonly: ci?)
+    match(type: "development", app_identifier: APP_IDENTIFIERS, readonly: ci?)
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS, readonly: ci?)
   end
 
   desc "Build a signed App Store IPA"
   lane :build do
     auth!
-    match(type: "appstore", app_identifier: APP_IDENTIFIER, readonly: ci?)
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS, readonly: ci?)
 
     # Pin the Runner target to the App Store profile match just installed, by its
     # actual name (the project otherwise hardcodes a profile name whose ID drifts
     # on every regeneration). This makes the archive use the App Store profile
     # directly, so no development profile is needed.
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path: "Runner.xcodeproj",
-      team_id: "T852K29HWS",
-      targets: ["Runner"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING][APP_IDENTIFIER]
-    )
+    profiles = lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+    { "Runner" => APP_IDENTIFIER, "HinataWidgets" => WIDGETS_IDENTIFIER }.each do |target, id|
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "Runner.xcodeproj",
+        team_id: TEAM_ID,
+        targets: [target],
+        code_sign_identity: "Apple Distribution",
+        profile_name: profiles[id]
+      )
+    end
 
     # Bake the Dart/asset bundle + the resolved build number into the Xcode
     # config; gym then archives, signs and exports the IPA.

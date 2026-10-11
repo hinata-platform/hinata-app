@@ -77,6 +77,25 @@ jobs:
           name: hinata-web
           path: build/web
 
+  # The iOS app with its widget extension (HIN-102), unsigned. Proves the
+  # HinataWidgets target builds and lands in PlugIns/ on every pull request;
+  # signing and the store stay with the release workflow.
+  build-ios:
+    name: Build iOS (no codesign)
+    needs: quality
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build ios --release --no-codesign
+      - name: The widget extension is embedded
+        run: test -x build/ios/iphoneos/Runner.app/PlugIns/HinataWidgets.appex/HinataWidgets
+
   build-linux:
     name: Build Linux
     needs: quality
