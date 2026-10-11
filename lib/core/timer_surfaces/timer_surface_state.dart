@@ -122,6 +122,7 @@ class TimerSurfaceState extends Equatable {
     this.keepInTray = false,
     this.toggleHotkey,
     this.focusHotkey,
+    this.confirmed = true,
     this.texts = TimerSurfaceTexts.empty,
   });
 
@@ -160,6 +161,9 @@ class TimerSurfaceState extends Equatable {
   final HotKey? toggleHotkey;
   final HotKey? focusHotkey;
 
+  /// Whether the server confirmed this timer in this run; false for one read
+  /// back from the cache. Surfaces that put up something new wait for it.
+  final bool confirmed;
   final TimerSurfaceTexts texts;
 
   bool get isBreak => phase?.isBreak ?? false;
@@ -194,6 +198,7 @@ class TimerSurfaceState extends Equatable {
     keepInTray,
     toggleHotkey,
     focusHotkey,
+    confirmed,
     texts,
   ];
 }
@@ -212,6 +217,7 @@ TimerSurfaceState deriveTimerSurfaceState(
   TimerSurfacePrefs prefs, {
   required bool gated,
   TimerSurfaceTexts texts = TimerSurfaceTexts.empty,
+  bool confirmed = true,
   DateTime? now,
 }) {
   if (gated) return TimerSurfaceState.idle;
@@ -262,6 +268,7 @@ TimerSurfaceState deriveTimerSurfaceState(
     keepInTray: standing.keepInTray,
     toggleHotkey: standing.toggleHotkey,
     focusHotkey: standing.focusHotkey,
+    confirmed: confirmed,
     texts: texts,
   );
 }

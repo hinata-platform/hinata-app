@@ -66,6 +66,7 @@ class TimerState extends Equatable {
     this.isBusy = false,
     this.errorMessage,
     this.signal,
+    this.confirmed = true,
   });
 
   /// The timer the server last told us about, or null when none runs.
@@ -87,6 +88,11 @@ class TimerState extends Equatable {
 
   /// The interval that just ran out, for one state only.
   final TimerSignal? signal;
+
+  /// Whether the server said this in this run. False only for a timer
+  /// restored from the cache, until the first [TimerCubit.refresh] answers: a
+  /// surface that puts up something new (a Live Activity) waits for that.
+  final bool confirmed;
 
   bool get isRunning => timer != null;
 
@@ -119,10 +125,18 @@ class TimerState extends Equatable {
     errorMessage: errorMessage,
     // And so does a signal — it is said once, by the state that carries it.
     signal: signal,
+    confirmed: confirmed,
   );
 
   @override
-  List<Object?> get props => [timer, elapsed, isBusy, errorMessage, signal];
+  List<Object?> get props => [
+    timer,
+    elapsed,
+    isBusy,
+    errorMessage,
+    signal,
+    confirmed,
+  ];
 }
 
 class TimerCubit extends HydratedCubit<TimerState> {
@@ -428,6 +442,7 @@ class TimerCubit extends HydratedCubit<TimerState> {
       return TimerState(
         timer: restored,
         elapsed: restored.elapsed(DateTime.now()),
+        confirmed: false,
       );
     } catch (_) {
       // A blob written by an older shape is not worth crashing the app over;

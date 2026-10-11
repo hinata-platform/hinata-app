@@ -1,5 +1,7 @@
 import 'adapters/global_hotkeys_surface.dart';
+import 'adapters/home_widget_surface.dart';
 import 'adapters/keep_running_surface.dart';
+import 'adapters/live_activity_surface.dart';
 import 'adapters/local_notifications_surface.dart';
 import 'adapters/tray_surface.dart';
 import 'adapters/web_notification_surface.dart';
@@ -34,8 +36,17 @@ List<TimerSurface> buildTimerSurfaces(
       ),
   ];
   return switch (platform) {
-    SurfacePlatform.android ||
-    SurfacePlatform.ios => [LocalNotificationsSurface(platform), title],
+    SurfacePlatform.ios => [
+      LocalNotificationsSurface(platform),
+      LiveActivitySurface(),
+      HomeWidgetSurface(platform),
+      title,
+    ],
+    SurfacePlatform.android => [
+      LocalNotificationsSurface(platform),
+      HomeWidgetSurface(platform),
+      title,
+    ],
     SurfacePlatform.macos || SurfacePlatform.linux => [
       LocalNotificationsSurface(platform),
       ...desktop(tray()),

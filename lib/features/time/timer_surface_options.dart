@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/timer_surfaces/adapters/live_activity_surface.dart';
 import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
 import '../../core/timer_surfaces/adapters/web_notification_surface.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
@@ -34,12 +35,14 @@ enum TimerSurfaceOption {
       phaseEnd => caps.phaseEndNotification,
       running => caps.runningSurface,
       // Only a surface that carries a label can show a description; the web
-      // badge is a dot, and a Linux tray menu is readable on the session bus
-      // by any process, open or not.
+      // badge is a dot, a Linux tray menu is readable on the session bus by
+      // any process, open or not, and on iOS everything that shows the
+      // running timer is on the lock screen too (its own switch).
       details =>
         caps.runningSurface &&
             platform != SurfacePlatform.web &&
-            platform != SurfacePlatform.linux,
+            platform != SurfacePlatform.linux &&
+            platform != SurfacePlatform.ios,
       lockDetails => caps.lockScreen && caps.runningSurface,
       titleClock => caps.titleClock,
       keepRunning => caps.keepRunning,
@@ -52,6 +55,7 @@ enum TimerSurfaceOption {
   bool get inIntro => this != hotkeys;
 
   /// Whether turning this on needs the system's permission for notifications.
+  /// A Live Activity and the widgets ask for none.
   bool needsPermission(SurfacePlatform platform) => switch (this) {
     phaseEnd => true,
     // Only Android's ongoing notification; the menu bar, the tray and the
@@ -180,6 +184,17 @@ class TimerSurfacePermissionGate {
       platform == SurfacePlatform.web
       ? WebNotificationPermission.request()
       : LocalNotificationPermissions(platform).request();
+
+  /// Whether Live Activities are allowed for this app (iOS); true elsewhere,
+  /// where nothing could switch them off.
+  Future<bool> activitiesEnabled(SurfacePlatform platform) async {
+    if (platform != SurfacePlatform.ios) return true;
+    try {
+      return await const LiveActivityChannel().areActivitiesEnabled();
+    } catch (_) {
+      return true;
+    }
+  }
 
   /// Whether the system delivers on the minute (Android 12 and later).
   Future<bool> canScheduleExact(SurfacePlatform platform) =>
