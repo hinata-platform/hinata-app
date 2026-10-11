@@ -6,7 +6,8 @@ storage_mode("git")
 # Defaults; the Fastfile lanes pass an explicit `type:` per call (development /
 # appstore), so these only apply to a bare `fastlane match` invocation.
 type("development")
-app_identifier(["com.ahmadre.hinata"])
+# The app and its widget extension (HIN-102); both carry the App Group.
+app_identifier(["com.ahmadre.hinata", "com.ahmadre.hinata.widgets"])
 platform("ios")
 
 # Never create/modify certs on CI — only on a maintainer's machine via `bootstrap`.
