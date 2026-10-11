@@ -1628,9 +1628,10 @@
         "vanish": "Ces copies disparaissent après 24 heures et à la déconnexion.",
         "stored": "Tes réglages restent sur cet appareil.",
         "settings": "Modifier dans les réglages",
-        "runningMenuBar": "Le temps dans la barre des menus ou la zone de notification tant que le minuteur tourne.",
+        "runningMenuBar": "Le temps dans la barre des menus tant que le minuteur tourne.",
         "keepRunning": "Une fenêtre fermée laisse le minuteur y tourner.",
-        "hotkeys": "Deux raccourcis système. L’app n’entend que ceux-là, jamais d’autres touches."
+        "hotkeys": "Deux raccourcis système. L’app n’entend que ceux-là, jamais d’autres touches.",
+        "runningTray": "Une icône dans la zone de notification tant que le minuteur tourne."
       },
       "menu": {
         "start": "Démarrer le minuteur",
@@ -4278,7 +4279,7 @@
       "keySpace": "Espace",
       "recordPrompt": "Appuie sur la nouvelle combinaison",
       "recordHint": "Maintiens Ctrl ou la touche Windows, par exemple {{example}}. Échap annule.",
-      "recordNeedsModifier": "Un raccourci a besoin de Ctrl ou de la touche Windows, et Ctrl+Alt seul est AltGr, qui tape des caractères. Ajoute Maj ou la touche Windows.",
+      "recordNeedsModifier": "Un raccourci a besoin de deux touches de modification, dont Ctrl ou la touche Windows : Ctrl seul sert aux raccourcis de chaque app, et Ctrl+Alt seul est AltGr, qui tape des caractères.",
       "recordUnsupportedKey": "Utilise une lettre, un chiffre, F1 à F12 ou la barre d’espace.",
       "test": "Vérifier le raccourci",
       "testHint": "Appuie une fois, même avec une autre app au premier plan. Rien ne démarre ni ne s’arrête pendant le test.",
@@ -4287,7 +4288,7 @@
       "testWorked": "Ça marche. L’appui est bien arrivé.",
       "testSilent": "Aucun appui n’est arrivé. Une autre app utilise peut-être cette combinaison ; choisis-en une autre.",
       "recordHintMac": "Maintiens Contrôle ou Commande, par exemple {{example}}. Échap annule.",
-      "recordNeedsModifierMac": "Un raccourci a besoin de Contrôle ou Commande. Maj et Option seuls tapent des majuscules et des caractères spéciaux dans toute app.",
+      "recordNeedsModifierMac": "Un raccourci a besoin de deux touches de modification, dont Contrôle ou Commande : Commande seule sert aux raccourcis de chaque app, et Maj et Option seules tapent des caractères.",
       "key": {
         "ctrl": "Ctrl",
         "alt": "Alt",

@@ -1628,9 +1628,10 @@
         "vanish": "这些副本会在 24 小时后以及退出登录时消失。",
         "stored": "你的开关只保存在此设备上。",
         "settings": "在设置中更改",
-        "runningMenuBar": "计时器运行时，菜单栏或通知区域中的时间。",
+        "runningMenuBar": "计时器运行时，菜单栏中的时间。",
         "keepRunning": "关闭窗口后，计时器会在那里继续运行。",
-        "hotkeys": "两个全局快捷键。应用只接收这两个，从不接收其他按键。"
+        "hotkeys": "两个全局快捷键。应用只接收这两个，从不接收其他按键。",
+        "runningTray": "计时器运行时，通知区域中的图标。"
       },
       "menu": {
         "start": "开始计时",
@@ -4278,7 +4279,7 @@
       "keySpace": "空格",
       "recordPrompt": "按下新的组合键",
       "recordHint": "同时按住 Ctrl 或 Windows 键，例如 {{example}}。按 Esc 取消。",
-      "recordNeedsModifier": "快捷键需要 Ctrl 或 Windows 键，而单独的 Ctrl+Alt 就是用来输入字符的 AltGr。请再加上 Shift 或 Windows 键。",
+      "recordNeedsModifier": "快捷键需要两个修饰键，其中一个是 Ctrl 或 Windows 键：单独的 Ctrl 属于各应用自己的快捷键，单独的 Ctrl+Alt 则是用来输入字符的 AltGr。",
       "recordUnsupportedKey": "请使用字母、数字、F1 至 F12 或空格键。",
       "test": "检查快捷键",
       "testHint": "按一次即可，其他应用在前台时也可以。检查期间不会开始或停止任何计时。",
@@ -4287,7 +4288,7 @@
       "testWorked": "可以使用，按键已收到。",
       "testSilent": "未收到按键。可能有其他应用占用了此组合，请换一个。",
       "recordHintMac": "同时按住 Control 或 Command，例如 {{example}}。按 Esc 取消。",
-      "recordNeedsModifierMac": "快捷键需要 Control 或 Command。单独的 Shift 和 Option 会在任何应用中输入大写字母和特殊字符。",
+      "recordNeedsModifierMac": "快捷键需要两个修饰键，其中一个是 Control 或 Command：单独的 Command 属于各应用自己的快捷键，单独的 Shift 和 Option 会输入字符。",
       "key": {
         "ctrl": "Ctrl",
         "alt": "Alt",

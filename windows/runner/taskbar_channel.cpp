@@ -250,6 +250,13 @@ bool HandleTaskbarMessage(HWND /*window*/, UINT message, WPARAM wparam,
     }
     return true;
   }
+  // The icons are sized for the monitor's DPI; a new one gets new icons.
+  if (message == WM_DPICHANGED && g_window) {
+    g_icons.Free();
+    g_icons.Load();
+    if (g_taskbar) Draw();
+    return false;
+  }
   // Only a button on screen can have been clicked; another process posting
   // the same message to this window starts nothing.
   if (message == WM_COMMAND && HIWORD(wparam) == THBN_CLICKED && g_channel &&

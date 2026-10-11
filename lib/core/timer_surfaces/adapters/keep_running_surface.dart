@@ -125,8 +125,12 @@ class WindowManagerGateway with WindowListener implements WindowGateway {
   void Function()? _onClose;
   Future<void>? _ready;
 
+  /// Set by [hide], cleared by [show] and whenever the window comes back some
+  /// other way (a Dock click goes straight to AppKit), so a window already
+  /// on screen is never pulled to the front again.
   @override
-  bool hidden = false;
+  bool get hidden => _hidden;
+  bool _hidden = false;
 
   Future<void> _init() => _ready ??= () async {
     await windowManager.ensureInitialized();
@@ -151,12 +155,12 @@ class WindowManagerGateway with WindowListener implements WindowGateway {
   Future<void> hide() async {
     await _init();
     await windowManager.hide();
-    hidden = true;
+    _hidden = true;
   }
 
   @override
   Future<void> show() async {
-    hidden = false;
+    _hidden = false;
     await _init();
     await windowManager.show();
     await windowManager.focus();
@@ -177,4 +181,10 @@ class WindowManagerGateway with WindowListener implements WindowGateway {
 
   @override
   void onWindowClose() => _onClose?.call();
+
+  @override
+  void onWindowFocus() => _hidden = false;
+
+  @override
+  void onWindowRestore() => _hidden = false;
 }

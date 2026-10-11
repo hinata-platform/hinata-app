@@ -1628,9 +1628,10 @@
         "vanish": "Estas copias desaparecen a las 24 horas y al cerrar sesión.",
         "stored": "Tus ajustes se quedan en este dispositivo.",
         "settings": "Cambiar en ajustes",
-        "runningMenuBar": "El tiempo en la barra de menús o el área de notificación mientras corre el temporizador.",
+        "runningMenuBar": "El tiempo en la barra de menús mientras corre el temporizador.",
         "keepRunning": "Al cerrar la ventana, el temporizador sigue ahí.",
-        "hotkeys": "Dos atajos en todo el sistema. La app solo oye estos, nunca otras teclas."
+        "hotkeys": "Dos atajos en todo el sistema. La app solo oye estos, nunca otras teclas.",
+        "runningTray": "Un icono en el área de notificación mientras corre el temporizador."
       },
       "menu": {
         "start": "Iniciar temporizador",
@@ -4278,7 +4279,7 @@
       "keySpace": "Espacio",
       "recordPrompt": "Pulsa la nueva combinación",
       "recordHint": "Mantén Ctrl o la tecla Windows, por ejemplo {{example}}. Esc cancela.",
-      "recordNeedsModifier": "Un atajo necesita Ctrl o la tecla Windows, y Ctrl+Alt solo es AltGr, que escribe caracteres. Añade Mayús o la tecla Windows.",
+      "recordNeedsModifier": "Un atajo necesita dos teclas modificadoras, una de ellas Ctrl o la tecla Windows: Ctrl solo es para los atajos de cada app, y Ctrl+Alt solo es AltGr, que escribe caracteres.",
       "recordUnsupportedKey": "Usa una letra, un dígito, de F1 a F12 o la barra espaciadora.",
       "test": "Comprobar el atajo",
       "testHint": "Púlsalo una vez, también con otra app delante. Durante la prueba no se inicia ni se detiene nada.",
@@ -4287,7 +4288,7 @@
       "testWorked": "Funciona. La pulsación llegó.",
       "testSilent": "No llegó ninguna pulsación. Quizá otra app use esta combinación; elige otra.",
       "recordHintMac": "Mantén Control o Comando, por ejemplo {{example}}. Esc cancela.",
-      "recordNeedsModifierMac": "Un atajo necesita Control o Comando. Mayúsculas y Opción solas escriben mayúsculas y caracteres especiales en cualquier app.",
+      "recordNeedsModifierMac": "Un atajo necesita dos teclas modificadoras, una de ellas Control o Comando: Comando solo es para los atajos de cada app, y Mayúsculas y Opción solas escriben caracteres.",
       "key": {
         "ctrl": "Ctrl",
         "alt": "Alt",

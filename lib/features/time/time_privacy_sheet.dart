@@ -422,7 +422,7 @@ class TimerSurfacesDevicePanel extends StatelessWidget {
               option.availableOn(platform) &&
               option.read(state);
           final web = platform == SurfacePlatform.web;
-          final menuBar = capabilitiesForPlatform(platform).trayIcon;
+          final trayIcon = capabilitiesForPlatform(platform).trayIcon;
           final active = <(IconData, String)>[
             if (on(TimerSurfaceOption.phaseEnd))
               (LucideIcons.bellRing, 'time.surface.device.phaseEnd'),
@@ -431,8 +431,8 @@ class TimerSurfacesDevicePanel extends StatelessWidget {
                 LucideIcons.timer,
                 web
                     ? 'time.surface.device.runningWeb'
-                    : menuBar
-                    ? 'time.surface.device.runningMenuBar'
+                    : trayIcon
+                    ? 'time.surface.device.running${surfacePlace(platform)}'
                     : 'time.surface.device.running',
               ),
             if (on(TimerSurfaceOption.titleClock))

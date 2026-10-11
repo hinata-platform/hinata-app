@@ -8,14 +8,15 @@ import '../timer_surface.dart';
 import '../timer_surface_state.dart';
 import 'running_tooltip.dart';
 
-/// The timer on the Windows taskbar button: the progress of a countdown or a
-/// Pomodoro phase, a small "running" overlay, and two buttons in the window's
-/// thumbnail — start or stop, and the focus view.
+/// The timer on the Windows taskbar button: the progress of a countdown, a
+/// small "running" overlay, and two buttons in the window's thumbnail — start
+/// or stop, and the focus view.
 ///
 /// Drawn by the runner itself (`windows/runner/taskbar_channel.cpp`, on
 /// `ITaskbarList3`), not by a package. Like the tray, it looks the same for
-/// work and a break: the overlay says "running", the thumbnail tooltip says
-/// the time, and the progress is the share of the interval behind.
+/// work and a break: the overlay says "running", the thumbnail tooltip the
+/// time and "running", and a Pomodoro gets no bar and no time at all (see
+/// [TimerSurfaceState.showsClock]).
 class WindowsTaskbarSurface extends TimerSurface {
   WindowsTaskbarSurface({MethodChannel? channel, DateTime Function()? now})
     : _channel = channel ?? const MethodChannel('hinata/taskbar'),
@@ -68,8 +69,15 @@ class WindowsTaskbarSurface extends TimerSurface {
 
   Future<void> _send(String method, Map<String, Object?> args) async {
     if (mapEquals(_sent[method] as Map<String, Object?>?, args)) return;
+    // Noted before the call, so a tick during it does not send it twice; a
+    // failed call forgets it again, so the next one tries once more.
     _sent[method] = args;
-    await _channel.invokeMethod<void>(method, args);
+    try {
+      await _channel.invokeMethod<void>(method, args);
+    } catch (_) {
+      _sent.remove(method);
+      rethrow;
+    }
   }
 
   @override
