@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import '../teams/team_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -242,20 +243,18 @@ class _RatesViewState extends State<_RatesView> {
       case RateScope.team:
         final teams = await context.read<TeamRepository>().teams();
         if (!mounted) return null;
-        final team = await showGlassOptions<String>(
+        final team = await showTeamPicker(
           context,
-          title: context.t('billing.rates.pickTeam'),
+          teams: teams,
+          titleKey: 'billing.rates.pickTeam',
           anchorRect: anchor,
-          options: [
-            for (final team in teams) (value: team.id, child: Text(team.name)),
-          ],
         );
         if (team == null) return null;
         return RateTarget(
           kind: kind,
           scope: scope,
-          scopeId: team,
-          label: teams.firstWhere((candidate) => candidate.id == team).name,
+          scopeId: team.id,
+          label: team.name,
         );
       case RateScope.issue:
         return null;

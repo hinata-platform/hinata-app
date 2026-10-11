@@ -142,7 +142,6 @@ class _TimeViewState extends State<_TimeView> {
       context.read<TimePolicyCubit>().ensureLoaded().then((_) {
         if (!mounted) return;
         unawaited(_loadHints());
-        unawaited(_loadOpenEvents());
       }),
     );
     offerTimePrivacyNotice(context);
@@ -187,7 +186,14 @@ class _TimeViewState extends State<_TimeView> {
     _hintWindows.clear();
     unawaited(_loadHints(fresh: true));
     unawaited(_loadMarks(fresh: true));
-    unawaited(_loadOpenEvents());
+    // After the rules, which say whether the import is on at all. The one ask
+    // per load: the first visit used to send it twice.
+    final policy = context.read<TimePolicyCubit>().ensureLoaded();
+    unawaited(
+      policy.then((_) {
+        if (mounted) unawaited(_loadOpenEvents());
+      }),
+    );
   }
 
   /// Today's calendar events nobody has taken over yet (HIN-94), for the chip
