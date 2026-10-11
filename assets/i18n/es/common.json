@@ -2863,7 +2863,7 @@
       "lockBeforeLabel": "Bloqueado antes de",
       "lockBeforeHint": "Nadie puede ya crear, cambiar ni borrar entradas anteriores a este día, tampoco a través de la API. El día en sí sigue abierto. La fecha nunca puede estar en el futuro, porque el tiempo de trabajo actual siempre tiene que poder registrarse.",
       "roundingModeLabel": "Redondeo",
-      "roundingModeHint": "Solo se aplica a los informes; los minutos guardados nunca cambian.",
+      "roundingModeHint": "Se aplica a informes, facturación y facturas. Los minutos guardados no cambian nunca.",
       "roundingMode": {
         "none": "Sin redondeo",
         "up": "Redondear hacia arriba",
@@ -2943,7 +2943,6 @@
       "monthsSuffix": "meses",
       "privacyNoticeLabel": "Aviso de privacidad",
       "privacyNoticeHint": "Markdown. Todos lo ven la primera vez que usan el registro de tiempo y en Ajustes → Control de tiempo. Vacío significa el texto integrado en el idioma de quien lo lee.",
-      "notYetEnforced": "Se guarda, pero aún no se aplica: la función detrás de esta política llegará en una fase posterior del registro de tiempo.",
       "tagsTitle": "Etiquetas",
       "tagsHint": "El vocabulario con el que se etiquetan las entradas. Renombrar una arrastra todas las entradas.",
       "tagsEmpty": "Todavía no hay etiquetas.",

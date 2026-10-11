@@ -2863,7 +2863,7 @@
       "lockBeforeLabel": "Locked before",
       "lockBeforeHint": "Entries before this day can no longer be created, changed or deleted by anyone, the API included. The day itself stays open. The date can never lie in the future, because working time that is happening now always has to be recordable.",
       "roundingModeLabel": "Rounding",
-      "roundingModeHint": "Applies to reports only; the stored minutes are never changed.",
+      "roundingModeHint": "Applies to reports, billing and invoices. The stored minutes are never changed.",
       "roundingMode": {
         "none": "No rounding",
         "up": "Round up",
@@ -2943,7 +2943,6 @@
       "monthsSuffix": "months",
       "privacyNoticeLabel": "Privacy notice",
       "privacyNoticeHint": "Markdown. Everyone sees it the first time they use time tracking and under Settings → Time tracking. Empty means the built-in text in the reader's language.",
-      "notYetEnforced": "Saved, but not applied yet. The function behind this policy comes in a later stage of time tracking.",
       "tagsTitle": "Tags",
       "tagsHint": "The vocabulary entries are labelled with. Renaming one carries every entry with it.",
       "tagsEmpty": "No tags yet.",
