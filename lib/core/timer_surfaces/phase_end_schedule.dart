@@ -58,10 +58,18 @@ class PhaseEndPlanner {
   PhaseEndAction next(TimerSurfaceState state, DateTime now) {
     final at = PhaseEndSchedule.fireAt(state, now);
     if (at == _planned) return const PhaseEndKeep();
-    final hadOne = _planned != null;
+    final previous = _planned;
     _planned = at;
     if (at == null) {
-      return hadOne ? const PhaseEndCancel() : const PhaseEndKeep();
+      if (previous == null) return const PhaseEndKeep();
+      // A countdown stops itself the moment it ends, a grace period before its
+      // notification fires. Withdrawing it then would mean an app running in
+      // the background never says the interval is over; a notification that
+      // is due stays. In front, [TimerSurface.phaseEnded] withdraws it.
+      final due = !previous.isAfter(
+        now.toUtc().add(PhaseEndSchedule.grace + const Duration(seconds: 1)),
+      );
+      return due ? const PhaseEndKeep() : const PhaseEndCancel();
     }
     return PhaseEndPlan(at);
   }
