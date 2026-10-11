@@ -1,3 +1,6 @@
-• The store page now lists all nine languages the app speaks
-• New screenshots and a rewritten description
-• Smaller fixes
+• A notification when a countdown or Pomodoro interval ends, even with the app closed
+• Subscribe to your own calendars and turn events into time entries
+• Share a time entry with colleagues
+• Rates, billing reports and invoices for time tracking
+• Holiday calendars that follow your region
+• Smoother menus and many smaller fixes

@@ -1,3 +1,6 @@
-• Die Store-Seite nennt jetzt alle neun Sprachen der App
-• Neue Screenshots und eine überarbeitete Beschreibung
-• Kleinere Korrekturen
+• Eine Mitteilung, wenn ein Countdown oder ein Pomodoro-Intervall endet, auch bei geschlossener App
+• Eigene Kalender abonnieren und Termine als Zeiteinträge übernehmen
+• Zeiteinträge mit Kolleginnen und Kollegen teilen
+• Stundensätze, Abrechnungsberichte und Rechnungen in der Zeiterfassung
+• Feiertagskalender, die deiner Region folgen
+• Ruhigere Menüs und viele kleinere Korrekturen
