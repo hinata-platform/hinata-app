@@ -218,15 +218,14 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
               ),
             ),
             const SizedBox(width: 8),
-            KbIconButton(
-              icon: LucideIcons.star,
+            KbStarPill(
+              starred: widget.starred,
               tooltip: context.t(
                 widget.starred
                     ? 'knowledge.reader.unstar'
                     : 'knowledge.reader.star',
               ),
-              selected: widget.starred,
-              onTap: (_) => widget.onToggleStar(),
+              onTap: widget.onToggleStar,
             ),
           ],
         ),

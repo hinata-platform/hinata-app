@@ -5,6 +5,8 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/glass_filter_bar.dart'
+    show GlassSearchField, WideToolbar;
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../data/knowledge_models.dart';
@@ -78,10 +80,17 @@ class KnowledgeHomeView extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 20),
-          _SearchField(
-            controller: search,
-            query: query,
-            onChanged: onQueryChanged,
+          WideToolbar(
+            leading: [
+              SizedBox(
+                width: 420,
+                child: GlassSearchField(
+                  controller: search,
+                  hint: context.t('knowledge.searchHint'),
+                  onChanged: onQueryChanged,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 28),
         ],
@@ -147,63 +156,6 @@ class KnowledgeHomeView extends StatelessWidget {
         ?editor,
       ].join(' · '),
       onTap: () => onOpenArticle(a.id),
-    );
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  const _SearchField({
-    required this.controller,
-    required this.query,
-    required this.onChanged,
-  });
-
-  final TextEditingController controller;
-  final String query;
-  final ValueChanged<String> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsetsDirectional.only(start: 16, end: 4),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(KbTokens.radiusCard),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: Row(
-        children: [
-          Icon(LucideIcons.search, size: 19, color: AppColors.inkSoft),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextField(
-              controller: controller,
-              textInputAction: TextInputAction.search,
-              onChanged: onChanged,
-              style: const TextStyle(fontSize: AppType.body),
-              decoration: InputDecoration(
-                isCollapsed: true,
-                border: InputBorder.none,
-                enabledBorder: InputBorder.none,
-                focusedBorder: InputBorder.none,
-                filled: false,
-                contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                hintText: context.t('knowledge.searchHint'),
-                hintStyle: TextStyle(color: AppColors.inkSoft),
-              ),
-            ),
-          ),
-          if (query.isNotEmpty)
-            IconButton(
-              tooltip: context.t('common.clear'),
-              onPressed: () {
-                controller.clear();
-                onChanged('');
-              },
-              icon: Icon(LucideIcons.x, size: 16, color: AppColors.inkSoft),
-            ),
-        ],
-      ),
     );
   }
 }
