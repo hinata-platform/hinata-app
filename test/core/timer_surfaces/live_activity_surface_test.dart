@@ -124,6 +124,24 @@ void main() {
     expect(channel.calls, ['start', 'start']);
   });
 
+  test(
+    'an activity swiped away stays away for this timer, not the next',
+    () async {
+      await surface.apply(state(timer()));
+      channel.alive = false;
+      await surface.apply(state(timer(mode: TimerMode.countdown, planned: 25)));
+      await surface.apply(state(timer(mode: TimerMode.countdown, planned: 30)));
+      expect(channel.calls, ['start', 'update']);
+
+      final next = RunningTimer(
+        id: 'timer-2',
+        startedAt: start.add(const Duration(minutes: 1)),
+      );
+      await surface.apply(state(next));
+      expect(channel.calls, ['start', 'update', 'start']);
+    },
+  );
+
   group('content', () {
     test('a stopwatch counts up and goes away a day after its start', () {
       final content = liveActivityContent(state(timer()))!;
@@ -238,10 +256,14 @@ class FakeLiveActivityChannel extends LiveActivityChannel {
     return 'ref-${++_next}';
   }
 
+  /// Whether the activity is still there; false once swiped away.
+  bool alive = true;
+
   @override
-  Future<void> update(String ref, Map<String, Object?> content) async {
+  Future<bool> update(String ref, Map<String, Object?> content) async {
     calls.add('update');
     last = content;
+    return alive;
   }
 
   @override

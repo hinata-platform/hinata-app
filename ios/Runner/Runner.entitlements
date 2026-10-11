@@ -18,6 +18,13 @@
 	     https://connect.hinata.ahmadre.com/.well-known/apple-app-site-association and
 	     matches it against this app's appID. The matching provisioning profile must
 	     have the Associated Domains capability enabled (fastlane match). -->
+	<!-- HIN-102: the one record the timer widgets read, shared with the
+	     HinataWidgets extension only. The profile needs the App Groups
+	     capability with group.com.ahmadre.hinata (fastlane match). -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.ahmadre.hinata</string>
+	</array>
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:connect.hinata.ahmadre.com</string>

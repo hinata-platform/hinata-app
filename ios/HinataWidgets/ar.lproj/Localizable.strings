@@ -1,0 +1,4 @@
+/* Gallery name and description of the timer widget (HIN-102). Everything
+   the widget shows besides comes from the app, in the reader's language. */
+"widget.name" = "المؤقت";
+"widget.description" = "المؤقت الجاري، يعدّ دون فتح التطبيق.";
