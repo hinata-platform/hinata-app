@@ -42,7 +42,18 @@ class LocalNotificationsSurface extends TimerSurface {
 
   static const String _endChannel = 'timer_end';
   static const String _runningChannel = 'timer_running';
-  static const String _category = 'timer';
+
+  /// One set of buttons per kind of stretch, because a notification's
+  /// buttons are its category's: a countdown only stops, a work interval offers
+  /// the break, a break offers going back to work.
+  static const String _countdownCategory = 'timer_countdown';
+  static const String _workCategory = 'timer_work';
+  static const String _breakCategory = 'timer_break';
+
+  static String _categoryOf(TimerSurfaceState state) {
+    if (state.mode != TimerMode.pomodoro) return _countdownCategory;
+    return state.isBreak ? _breakCategory : _workCategory;
+  }
 
   TimerSurfaceHost? _host;
   bool _showsRunning = false;
@@ -80,18 +91,21 @@ class LocalNotificationsSurface extends TimerSurface {
       requestSoundPermission: false,
       notificationCategories: [
         DarwinNotificationCategory(
-          _category,
+          _countdownCategory,
+          actions: [_darwinAction(TimerNotificationAction.stop, texts.stop)],
+        ),
+        DarwinNotificationCategory(
+          _workCategory,
           actions: [
-            DarwinNotificationAction.plain(
-              TimerNotificationAction.stop,
-              texts.stop,
-              options: {DarwinNotificationActionOption.foreground},
-            ),
-            DarwinNotificationAction.plain(
-              TimerNotificationAction.advance,
-              texts.takeBreak,
-              options: {DarwinNotificationActionOption.foreground},
-            ),
+            _darwinAction(TimerNotificationAction.stop, texts.stop),
+            _darwinAction(TimerNotificationAction.advance, texts.takeBreak),
+          ],
+        ),
+        DarwinNotificationCategory(
+          _breakCategory,
+          actions: [
+            _darwinAction(TimerNotificationAction.stop, texts.stop),
+            _darwinAction(TimerNotificationAction.advance, texts.resume),
           ],
         ),
       ],
@@ -116,6 +130,13 @@ class LocalNotificationsSurface extends TimerSurface {
     }
   }
 
+  static DarwinNotificationAction _darwinAction(String id, String title) =>
+      DarwinNotificationAction.plain(
+        id,
+        title,
+        options: {DarwinNotificationActionOption.foreground},
+      );
+
   /// A tap or an action from a notification, in the running app.
   void _onResponse(NotificationResponse response) {
     final host = _host;
@@ -130,17 +151,17 @@ class LocalNotificationsSurface extends TimerSurface {
     }
   }
 
-  /// Whether a tap on one of ours launched the app; the host routes it once
-  /// the app is ready, like a push tap.
-  Future<bool> launchedFromNotification(TimerSurfaceTexts texts) async {
+  /// Acts on a tap or an action of ours that launched the app, the way the
+  /// running app would have: "Stop" stops, "Take a break" turns the phase, a
+  /// tap opens the focus screen (the router parks it until the app is ready).
+  Future<void> handleLaunch(TimerSurfaceTexts texts) async {
     await _ensureReady(texts);
     final details = await _plugin.getNotificationAppLaunchDetails();
     final response = details?.notificationResponse;
-    if (details?.didNotificationLaunchApp != true || response == null) {
-      return false;
-    }
+    if (details?.didNotificationLaunchApp != true || response == null) return;
     final id = response.id;
-    return id == PhaseEndSchedule.notificationId || id == runningId;
+    if (id != PhaseEndSchedule.notificationId && id != runningId) return;
+    _onResponse(response);
   }
 
   @override
@@ -227,8 +248,8 @@ class LocalNotificationsSurface extends TimerSurface {
             ),
         ],
       ),
-      iOS: const DarwinNotificationDetails(categoryIdentifier: _category),
-      macOS: const DarwinNotificationDetails(categoryIdentifier: _category),
+      iOS: DarwinNotificationDetails(categoryIdentifier: _categoryOf(state)),
+      macOS: DarwinNotificationDetails(categoryIdentifier: _categoryOf(state)),
       linux: LinuxNotificationDetails(
         timeout: LinuxNotificationTimeout.fromDuration(PhaseEndSchedule.expiry),
         category: LinuxNotificationCategory.presence,
@@ -240,7 +261,13 @@ class LocalNotificationsSurface extends TimerSurface {
   /// runs (`usesChronometer`), so nothing here posts once a second.
   Future<void> _applyRunning(TimerSurfaceState state) async {
     final startedAt = state.startedAt;
-    if (!state.running || !state.runningSurface || startedAt == null) {
+    // The copy ends by itself at [TimerSurfaceState.validUntil], even if this
+    // process never runs again to take it down.
+    final left = state.validUntil?.difference(_clock().toUtc());
+    if (!state.running ||
+        !state.runningSurface ||
+        startedAt == null ||
+        (left != null && left <= Duration.zero)) {
       if (_showsRunning) await _plugin.cancel(id: runningId);
       _showsRunning = false;
       return;
@@ -268,6 +295,7 @@ class LocalNotificationsSurface extends TimerSurface {
           autoCancel: false,
           onlyAlertOnce: true,
           showWhen: true,
+          timeoutAfter: left?.inMilliseconds,
           usesChronometer: true,
           chronometerCountDown: countsDown,
           when: (countsDown ? state.endsAt! : startedAt).millisecondsSinceEpoch,
@@ -376,7 +404,9 @@ class LocalNotificationPermissions {
                   >()
                   ?.requestPermissions(alert: true, sound: true) ??
               false;
-        case SurfacePlatform.linux:
+        // Neither asks: Windows toasts and Linux desktop notifications are
+        // switched off in the system's own settings, not granted to an app.
+        case SurfacePlatform.linux || SurfacePlatform.windows:
           return true;
         default:
           return false;

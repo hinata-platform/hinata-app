@@ -47,6 +47,14 @@ void main() {
         BillingGroupBy.forKind(BillingReportKind.billing, people: false),
         isNot(contains(BillingGroupBy.user)),
       );
+      // A team is people too.
+      for (final kind in BillingReportKind.values) {
+        expect(
+          BillingGroupBy.forKind(kind, people: false),
+          isNot(contains(BillingGroupBy.team)),
+          reason: kind.name,
+        );
+      }
       expect(
         BillingGroupBy.forKind(BillingReportKind.profitability, people: true),
         isNot(contains(BillingGroupBy.user)),
