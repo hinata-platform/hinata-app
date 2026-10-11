@@ -8,6 +8,18 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <!-- Voice comments: capture audio from the microphone. -->
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
+    <!-- Time tracking (HIN-100): the end of a focus/break interval is a
+         notification scheduled ahead with flutter_local_notifications.
+         BOOT_COMPLETED lets the plugin re-arm it after a reboot; VIBRATE is
+         the notification's buzz. SCHEDULE_EXACT_ALARM (user-grantable, asked
+         for in-app) keeps the alert on the minute; without the grant the app
+         schedules an inexact alarm instead. Deliberately no
+         USE_EXACT_ALARM (reserved for alarm/calendar apps by Play policy) and
+         no foreground service: the timer runs on wall-clock timestamps, so
+         nothing has to stay alive in the background. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.VIBRATE"/>
     <application
         android:label="Hinata"
         android:name="${applicationName}"
@@ -45,7 +57,8 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep links: hinata://auth-callback (SSO) and hinata://invite (email invitation) -->
+            <!-- Deep links: hinata://auth-callback (SSO), hinata://invite (email invitation),
+                 hinata://time (timer notifications and widgets, e.g. hinata://time/focus) -->
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>
@@ -53,6 +66,7 @@
                 <data android:scheme="hinata" android:host="auth-callback"/>
                 <data android:scheme="hinata" android:host="invite"/>
                 <data android:scheme="hinata" android:host="reset-password"/>
+                <data android:scheme="hinata" android:host="time"/>
             </intent-filter>
             <!-- Android App Links (Option B): Hinata Connect is the ONE verified
                  domain for the published client app, so invite/reset links from ANY
@@ -67,6 +81,20 @@
                 <data android:pathPrefix="/l/"/>
             </intent-filter>
         </activity>
+        <!-- flutter_local_notifications (v22): fires scheduled notifications,
+             re-arms them after a reboot or an app update, and delivers taps on
+             notification actions. Not exported: only the system's alarm and
+             boot broadcasts and the plugin's own PendingIntents reach them. -->
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver" />
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
+            </intent-filter>
+        </receiver>
+        <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

@@ -54,6 +54,72 @@ class WnsChannel {
     }
   }
 
+  /// Schedules a local toast for [at] (the end of a timer interval, HIN-100).
+  ///
+  /// Replaces a pending toast with the same [tag]. Clicking it routes [launch]
+  /// (an in-app path such as `/time/focus`) through [listenForDeepLinks] like a
+  /// push. The toast leaves Action Center [expireMinutes] after [at]. Returns
+  /// false off Windows, without package identity, or when the runner refused.
+  Future<bool> scheduleToast({
+    required String tag,
+    required DateTime at,
+    required String title,
+    required String body,
+    required String launch,
+    int expireMinutes = 10,
+  }) {
+    return _invokeToast('scheduleToast', {
+      'tag': tag,
+      'at': at.toUtc().millisecondsSinceEpoch,
+      'title': title,
+      'body': body,
+      'launch': launch,
+      'expireMinutes': expireMinutes,
+    });
+  }
+
+  /// Shows a local toast right away; same contract as [scheduleToast].
+  Future<bool> showToast({
+    required String tag,
+    required String title,
+    required String body,
+    required String launch,
+    int expireMinutes = 10,
+  }) {
+    return _invokeToast('showToast', {
+      'tag': tag,
+      'title': title,
+      'body': body,
+      'launch': launch,
+      'expireMinutes': expireMinutes,
+    });
+  }
+
+  /// Removes the toast [tag], whether still scheduled or already shown.
+  Future<void> cancelToast(String tag) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.windows) return;
+    try {
+      await _channel.invokeMethod<void>('cancelToast', {'tag': tag});
+    } on MissingPluginException {
+      return;
+    } on PlatformException catch (e) {
+      debugPrint('WNS cancelToast failed: ${e.code}');
+    }
+  }
+
+  Future<bool> _invokeToast(String method, Map<String, Object> args) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.windows) return false;
+    try {
+      return await _channel.invokeMethod<bool>(method, args) ?? false;
+    } on MissingPluginException {
+      // Runner from before the toast methods existed.
+      return false;
+    } on PlatformException catch (e) {
+      debugPrint('WNS $method failed: ${e.code}');
+      return false;
+    }
+  }
+
   /// The device's channel URI, or null when unavailable.
   ///
   /// Microsoft rotates these and they expire after 30 days, so the app asks for

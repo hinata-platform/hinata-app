@@ -1,0 +1,178 @@
+import 'package:equatable/equatable.dart';
+
+import '../models/time_models.dart';
+import 'timer_surface_prefs.dart';
+
+/// The words a surface may show, resolved in the reader's language.
+///
+/// Generic on purpose. A notification history outlives the moment on a shared
+/// computer, so no text here ever names what the person works on; the
+/// description travels separately in [TimerSurfaceState.label], and only when
+/// the person switched it on.
+class TimerSurfaceTexts extends Equatable {
+  const TimerSurfaceTexts({
+    required this.appName,
+    required this.countdownOver,
+    required this.workOver,
+    required this.breakOver,
+    required this.running,
+    required this.onBreak,
+    required this.stop,
+    required this.takeBreak,
+    required this.resume,
+  });
+
+  /// Empty texts: a surface that is handed these has nothing to show yet.
+  static const empty = TimerSurfaceTexts(
+    appName: '',
+    countdownOver: '',
+    workOver: '',
+    breakOver: '',
+    running: '',
+    onBreak: '',
+    stop: '',
+    takeBreak: '',
+    resume: '',
+  );
+
+  final String appName;
+  final String countdownOver;
+  final String workOver;
+  final String breakOver;
+
+  /// Title of the ongoing notification while work is being timed.
+  final String running;
+
+  /// Title of the ongoing notification during a break.
+  final String onBreak;
+  final String stop;
+  final String takeBreak;
+  final String resume;
+
+  @override
+  List<Object?> get props => [
+    appName,
+    countdownOver,
+    workOver,
+    breakOver,
+    running,
+    onBreak,
+    stop,
+    takeBreak,
+    resume,
+  ];
+}
+
+/// What every surface outside the app draws, and nothing more.
+///
+/// It carries no project, issue, tag or billable flag, and no timer id: a
+/// surface is a display of the server's timer and never needs to know which
+/// record it is. Everything a surface would need to act on the timer goes back
+/// through the running app ([TimerSurfaceHost]).
+class TimerSurfaceState extends Equatable {
+  const TimerSurfaceState({
+    required this.running,
+    this.mode,
+    this.phase,
+    this.startedAt,
+    this.endsAt,
+    this.label,
+    this.lockScreenLabel,
+    this.validUntil,
+    this.phaseEndNotification = false,
+    this.runningSurface = false,
+    this.titleClock = false,
+    this.texts = TimerSurfaceTexts.empty,
+  });
+
+  /// Nothing to show, and every surface clears.
+  static const idle = TimerSurfaceState(running: false);
+
+  final bool running;
+  final TimerMode? mode;
+  final TimerPhase? phase;
+
+  /// When the timed stretch began, in UTC. For a Pomodoro that is the start of
+  /// the current phase, which is what the server keeps for each phase.
+  final DateTime? startedAt;
+
+  /// When the current countdown or phase ends, in UTC; null for a stopwatch.
+  final DateTime? endsAt;
+
+  /// The description, only with "details in menu and tooltip" switched on.
+  final String? label;
+
+  /// The description for lock-screen surfaces, only with that switch on.
+  final String? lockScreenLabel;
+
+  /// A local copy never outlives this moment, even if nothing clears it.
+  final DateTime? validUntil;
+
+  final bool phaseEndNotification;
+  final bool runningSurface;
+  final bool titleClock;
+  final TimerSurfaceTexts texts;
+
+  bool get isBreak => phase?.isBreak ?? false;
+
+  /// What the notification at the end of this stretch says.
+  String get endText {
+    if (mode == TimerMode.countdown) return texts.countdownOver;
+    return isBreak ? texts.breakOver : texts.workOver;
+  }
+
+  @override
+  List<Object?> get props => [
+    running,
+    mode,
+    phase,
+    startedAt,
+    endsAt,
+    label,
+    lockScreenLabel,
+    validUntil,
+    phaseEndNotification,
+    runningSurface,
+    titleClock,
+    texts,
+  ];
+}
+
+/// How long a local copy of a timer may live at most.
+const Duration timerSurfaceLifetime = Duration(hours: 24);
+
+/// The state the surfaces draw for [timer] under [prefs].
+///
+/// Nothing leaves the app before the person has confirmed the introduction:
+/// without [TimerSurfacePrefs.consented] every switch reads as off, whatever
+/// is stored. [gated] is the host's verdict on everything else that has to
+/// hold (signed in, module on); a gated state is [TimerSurfaceState.idle].
+TimerSurfaceState deriveTimerSurfaceState(
+  RunningTimer? timer,
+  TimerSurfacePrefs prefs, {
+  required bool gated,
+  TimerSurfaceTexts texts = TimerSurfaceTexts.empty,
+}) {
+  if (timer == null || gated) return TimerSurfaceState.idle;
+  final on = prefs.consented;
+  final startedAt = timer.startedAt.toUtc();
+  final target = timer.target;
+  final description = timer.description?.trim();
+  final hasDescription = description != null && description.isNotEmpty;
+  return TimerSurfaceState(
+    running: true,
+    mode: timer.mode,
+    phase: timer.phase,
+    startedAt: startedAt,
+    endsAt: target == null ? null : startedAt.add(target),
+    label: on && prefs.surfaceDetails && hasDescription ? description : null,
+    lockScreenLabel: on && prefs.lockScreenDetails && hasDescription
+        ? description
+        : null,
+    validUntil: startedAt.add(timerSurfaceLifetime),
+    phaseEndNotification: on && prefs.phaseEndNotification,
+    runningSurface: on && prefs.runningSurface,
+    titleClock: on && prefs.titleClock,
+    texts: texts,
+  );
+}

@@ -22,6 +22,7 @@ desktop it says so.
 | https Universal / App Links (`track.asta.hn`) | ❌ | ❌ | ✅ |
 | Push notifications | ❌ | ✅ (WNS) | ✅ (FCM) |
 | In-app + e-mail notifications | ✅ | ✅ | ✅ |
+| Desktop notification when a timer interval ends | ✅ while the app runs | ✅ | ✅ |
 | File picking (attachments) | ✅ | ✅ | ✅ |
 | Photo / video picking from disk | ✅ | ✅ | ✅ |
 | Camera capture (webcam) | ❌ | ✅ | ❌ |
@@ -32,7 +33,7 @@ desktop it says so.
 | Drag & drop of files into the app | ⚠️ Flatpak/snap: from the XDG folders | ✅ | ✅ |
 | Rich clipboard (copy an image out of a comment) | ✅ | ✅ | ✅ |
 | Opening links in the browser | ✅ | ✅ | ✅ |
-| System tray icon | ❌ | ❌ | ❌ |
+| System tray icon | ❌ planned (time tracking, stage 19) | ❌ | ❌ |
 
 ✅ works · ⚠️ works, with a condition on the system or the sandbox · ❌ not
 available
@@ -61,12 +62,28 @@ is ever shown.
 
 **What the user sees:** notifications still arrive — in the app's own
 notification centre, and by e-mail if the account's notification matrix asks for
-them. Nothing appears in the desktop's notification tray, and nothing pops up
+them. None of them appears in the desktop's notification tray, and nothing pops up
 while the app is closed.
 
-There is deliberately no `--talk-name=org.freedesktop.Notifications` in the
-Flatpak manifest: with no notification path in the app, the permission would
-show up in the app's permission list without ever being used.
+### Timer notifications at the end of an interval
+
+The one desktop notification the Linux build does show is the end of a focus or
+break interval in time tracking. `flutter_local_notifications` sends it as an
+ordinary desktop notification over the session bus to
+`org.freedesktop.Notifications`, so it looks like every other notification on
+GNOME, KDE and the rest, and clicking it opens the timer.
+
+That specification has no way to schedule a notification ahead of time, so the
+app raises it at the moment the interval ends. If the app is not running then,
+nothing pops up; the timer itself is not affected and shows the right state at
+the next start.
+
+The sandboxes allow exactly this one bus name: the snap through its `desktop`
+plug, which already covers `org.freedesktop.Notifications`, the Flatpak through
+`--talk-name=org.freedesktop.Notifications`.
+
+A tray icon with the running timer is not there yet; it is planned as stage 19
+of the time-tracking work.
 
 ### Camera capture — not available
 
@@ -618,7 +635,8 @@ flatpak run com.ahmadre.hinata
 The permission set is deliberately short — `wayland` + `fallback-x11` (not a
 blanket `x11`, which would be a sandbox escape on a Wayland session), `ipc`,
 `dri`, `network`, `pulseaudio`, `--talk-name=org.freedesktop.secrets` for the
-keyring, `--filesystem=xdg-download:create` for downloads, and three read-only
+keyring, `--talk-name=org.freedesktop.Notifications` for the timer's
+notification, `--filesystem=xdg-download:create` for downloads, and three read-only
 XDG directories for drag & drop. Each one is justified in a comment next to it,
 including the ones that are deliberately absent.
 

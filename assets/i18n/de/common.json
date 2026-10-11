@@ -1595,6 +1595,38 @@
       "mentionHint": "Mit + teilst du den Eintrag mit jemandem aus dem Projekt.",
       "mentionNeedsProject": "Wähle zuerst ein Projekt, dann kannst du Personen daraus mit + erwähnen.",
       "mentioned": "Wird geteilt mit"
+    },
+    "surface": {
+      "workOver": "Dein Intervall ist vorbei.",
+      "running": "Timer läuft",
+      "onBreak": "Pause",
+      "intro": {
+        "title": "Timer außerhalb der App",
+        "subtitle": "Wähle, was dieses Gerät zeigen darf.",
+        "endClosed": "Wenn ein Intervall endet, meldet sich dein Gerät, auch bei geschlossener App.",
+        "endBackground": "Wenn ein Intervall endet, bekommst du eine Mitteilung, solange die App im Hintergrund läuft.",
+        "running": "Solange der Timer läuft, zeigt ihn eine stille Mitteilung.",
+        "runningLocked": "Solange der Timer läuft, zeigt ihn eine stille Mitteilung. Auf dem Sperrbildschirm steht nur die Zeit.",
+        "private": "Die Texte bleiben allgemein und verschwinden von selbst. Nichts geht an den Server oder an deinen Arbeitgeber.",
+        "switchOn": "Einschalten",
+        "later": "Später",
+        "denied": "Mitteilungen sind blockiert. Du kannst sie in den Systemeinstellungen erlauben."
+      },
+      "device": {
+        "heading": "Auf diesem Gerät",
+        "off": "Außerhalb der App zeigt sich nichts von deinem Timer.",
+        "phaseEnd": "Eine Mitteilung, wenn ein Intervall endet.",
+        "running": "Eine stille Mitteilung, solange der Timer läuft.",
+        "runningWeb": "Eine Markierung am App-Symbol, solange der Timer läuft.",
+        "titleClock": "Die laufende Zeit im Tab-Titel.",
+        "detailsOn": "Details sind an, also kann die Beschreibung außerhalb der App erscheinen.",
+        "detailsOff": "Details sind aus. Außerhalb der App siehst du nur die Zeit.",
+        "copy": "Solange ein Timer läuft, merkt sich dieses Gerät Start und Ende.",
+        "copyDetails": "Solange ein Timer läuft, merkt sich dieses Gerät Start, Ende und Beschreibung.",
+        "vanish": "Diese Kopien verschwinden nach 24 Stunden und beim Abmelden.",
+        "stored": "Deine Schalter bleiben auf diesem Gerät.",
+        "settings": "In den Einstellungen ändern"
+      }
     }
   },
   "availability": {
@@ -4179,6 +4211,37 @@
       "preferences": "Präferenzen",
       "privacy": "Datenschutz",
       "administration": "Verwaltung"
+    },
+    "timerSurfaces": {
+      "title": "Timer außerhalb der App",
+      "off": "Noch aus",
+      "offHint": "Außerhalb der App zeigt sich nichts von deinem Timer.",
+      "setUp": "Einrichten",
+      "phaseEnd": "Intervallende",
+      "phaseEndHint": "Eine Mitteilung, wenn ein Countdown oder ein Pomodoro-Intervall endet.",
+      "denied": "Mitteilungen sind für diese App blockiert. Du kannst sie in den Systemeinstellungen erlauben.",
+      "openSettings": "Einstellungen öffnen",
+      "exact": "Exakte Zeit",
+      "exactOn": "Die Mitteilung kommt auf die Minute.",
+      "exactOff": "Inexakt, wenige Minuten Spielraum.",
+      "exactAllow": "Erlauben",
+      "running": "Während der Timer läuft",
+      "runningHint": "Eine stille Mitteilung zeigt den laufenden Timer.",
+      "runningWeb": "Markierung am App-Symbol",
+      "runningWebHint": "Die installierte App markiert ihr Symbol, solange der Timer läuft.",
+      "details": "Details in Menü und Tooltip",
+      "detailsHint": "Zeigt auch die Beschreibung, nicht nur die Zeit.",
+      "lockDetails": "Details auf dem Sperrbildschirm",
+      "lockDetailsHint": "Wer dein Gerät in der Hand hat, kann die Beschreibung lesen.",
+      "titleClock": "Zeit im Tab-Titel",
+      "titleClockHint": "Der Browser-Tab zeigt die laufende Zeit.",
+      "clear": "Lokale Kopien",
+      "clearHint": "Entfernt sofort, was der Timer auf diesem Gerät hinterlassen hat.",
+      "clearButton": "Jetzt löschen",
+      "cleared": "Lokale Kopien gelöscht.",
+      "turnOff": "Alles ausschalten",
+      "turnOffHint": "Außerhalb der App zeigt sich nichts mehr. Du kannst es später wieder einrichten.",
+      "turnOffButton": "Ausschalten"
     }
   },
   "twofa": {

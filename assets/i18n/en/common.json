@@ -1595,6 +1595,38 @@
       "mentionHint": "Type + to share the entry with someone from the project.",
       "mentionNeedsProject": "Choose a project first, then you can mention people from it with +.",
       "mentioned": "Will be shared with"
+    },
+    "surface": {
+      "workOver": "Your interval is over.",
+      "running": "Timer running",
+      "onBreak": "Break",
+      "intro": {
+        "title": "Timer outside the app",
+        "subtitle": "Choose what this device may show.",
+        "endClosed": "When an interval ends, your device lets you know, even with the app closed.",
+        "endBackground": "When an interval ends, you get a notification while the app runs in the background.",
+        "running": "While the timer runs, a quiet notification shows it.",
+        "runningLocked": "While the timer runs, a quiet notification shows it. The lock screen only shows the time.",
+        "private": "The texts stay generic and disappear on their own. Nothing goes to the server or your employer.",
+        "switchOn": "Switch on",
+        "later": "Later",
+        "denied": "Notifications are blocked. You can allow them in the system settings."
+      },
+      "device": {
+        "heading": "On this device",
+        "off": "Nothing about your timer shows outside the app.",
+        "phaseEnd": "A notification when an interval ends.",
+        "running": "A quiet notification while the timer runs.",
+        "runningWeb": "A mark on the app icon while the timer runs.",
+        "titleClock": "The running time in the tab title.",
+        "detailsOn": "Details are on, so the description can show outside the app.",
+        "detailsOff": "Details are off. Outside the app you only see the time.",
+        "copy": "While a timer runs, this device keeps its start and end.",
+        "copyDetails": "While a timer runs, this device keeps its start, end and description.",
+        "vanish": "These copies disappear after 24 hours and when you sign out.",
+        "stored": "Your switches stay on this device.",
+        "settings": "Change in settings"
+      }
     }
   },
   "availability": {
@@ -4179,6 +4211,37 @@
       "preferences": "Preferences",
       "privacy": "Privacy",
       "administration": "Administration"
+    },
+    "timerSurfaces": {
+      "title": "Timer outside the app",
+      "off": "Off for now",
+      "offHint": "Nothing about your timer shows outside the app.",
+      "setUp": "Set up",
+      "phaseEnd": "Interval end",
+      "phaseEndHint": "A notification when a countdown or Pomodoro interval ends.",
+      "denied": "Notifications are blocked for this app. You can allow them in the system settings.",
+      "openSettings": "Open settings",
+      "exact": "Exact time",
+      "exactOn": "The notification arrives on the minute.",
+      "exactOff": "Inexact, a few minutes of leeway.",
+      "exactAllow": "Allow",
+      "running": "While the timer runs",
+      "runningHint": "A quiet notification shows the running timer.",
+      "runningWeb": "App icon badge",
+      "runningWebHint": "The installed app marks its icon while the timer runs.",
+      "details": "Details in menu and tooltip",
+      "detailsHint": "Also shows the description, not just the time.",
+      "lockDetails": "Details on the lock screen",
+      "lockDetailsHint": "Anyone holding your device can read the description.",
+      "titleClock": "Time in the tab title",
+      "titleClockHint": "The browser tab shows the running time.",
+      "clear": "Local copies",
+      "clearHint": "Removes what the timer left on this device right now.",
+      "clearButton": "Delete now",
+      "cleared": "Local copies deleted.",
+      "turnOff": "Switch everything off",
+      "turnOffHint": "Nothing shows outside the app anymore. You can set it up again later.",
+      "turnOffButton": "Switch off"
     }
   },
   "twofa": {

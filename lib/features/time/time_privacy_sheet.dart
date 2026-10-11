@@ -3,6 +3,7 @@ import 'dart:async';
 import '../../core/docs/docs_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/time_privacy_cubit.dart';
@@ -10,10 +11,13 @@ import '../../core/i18n/i18n.dart';
 import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/models/time_privacy_models.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/timer_surfaces/surface_platform.dart';
+import '../../core/timer_surfaces/timer_surface_prefs.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import '../../core/theme/app_type.dart';
+import 'timer_surface_options.dart';
 
 /// "Who sees my time data?" and the privacy notice of the module (Art. 12–14
 /// DSGVO), as one sheet.
@@ -27,12 +31,18 @@ Future<void> showTimePrivacySheet(
   bool firstUse = false,
 }) {
   final privacy = context.read<TimePrivacyCubit>();
+  // The sheet sits on the root navigator, above whatever provided these.
+  final surfaces = maybeTimerSurfacePrefs(context);
   return showGlassModal<void>(
     context,
     adaptive: true,
     width: 560,
-    builder: (_) => BlocProvider<TimePrivacyCubit>.value(
-      value: privacy,
+    builder: (_) => MultiBlocProvider(
+      providers: [
+        BlocProvider<TimePrivacyCubit>.value(value: privacy),
+        if (surfaces != null)
+          BlocProvider<TimerSurfacePrefsCubit>.value(value: surfaces),
+      ],
       child: TimePrivacyBody(firstUse: firstUse),
     ),
   );
@@ -142,6 +152,15 @@ class _TimePrivacyBodyState extends State<TimePrivacyBody> {
                     _Heading(text: context.t('time.privacy.whoSees')),
                     const SizedBox(height: 6),
                     TimeVisibilityPanel(visibility: privacy.visibility),
+                    if (_surfaces case final surfaces?) ...[
+                      const SizedBox(height: 18),
+                      _Heading(text: context.t('time.surface.device.heading')),
+                      const SizedBox(height: 6),
+                      TimerSurfacesDevicePanel(
+                        prefs: surfaces,
+                        platform: SurfacePlatform.current,
+                      ),
+                    ],
                     const SizedBox(height: 18),
                     _Heading(text: context.t('time.privacy.notice')),
                     const SizedBox(height: 6),
@@ -179,6 +198,13 @@ class _TimePrivacyBodyState extends State<TimePrivacyBody> {
         ),
       ],
     );
+  }
+
+  /// The person's switches for the timer outside the app, where this device
+  /// has any surface and somebody provided them.
+  TimerSurfacePrefsCubit? get _surfaces {
+    if (!hasTimerSurfaces(SurfacePlatform.current)) return null;
+    return maybeTimerSurfacePrefs(context);
   }
 
   Future<void> _acknowledge(BuildContext context) async {
@@ -336,7 +362,10 @@ class TimeVisibilityPanel extends StatelessWidget {
     );
   }
 
-  Widget _sentence(IconData icon, String sentence) => Padding(
+  Widget _sentence(IconData icon, String sentence) =>
+      _sentenceRow(icon, sentence);
+
+  static Widget _sentenceRow(IconData icon, String sentence) => Padding(
     padding: const EdgeInsets.symmetric(vertical: 5),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,6 +388,96 @@ class TimeVisibilityPanel extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// "On this device": what of the timer shows outside the app here, and what
+/// the device keeps for it.
+///
+/// Next to "who sees" on purpose: a lock screen is somebody seeing it too,
+/// and these copies are the one part of the time data that never reaches the
+/// server.
+class TimerSurfacesDevicePanel extends StatelessWidget {
+  const TimerSurfacesDevicePanel({
+    super.key,
+    required this.prefs,
+    required this.platform,
+  });
+
+  final TimerSurfacePrefsCubit prefs;
+  final SurfacePlatform platform;
+
+  void _openSettings(BuildContext context) {
+    final router = GoRouter.maybeOf(context);
+    Navigator.of(context).maybePop();
+    router?.go('/settings?section=time');
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocBuilder<TimerSurfacePrefsCubit, TimerSurfacePrefs>(
+        bloc: prefs,
+        builder: (context, state) {
+          bool on(TimerSurfaceOption option) =>
+              state.consented &&
+              option.availableOn(platform) &&
+              option.read(state);
+          final web = platform == SurfacePlatform.web;
+          final active = <(IconData, String)>[
+            if (on(TimerSurfaceOption.phaseEnd))
+              (LucideIcons.bellRing, 'time.surface.device.phaseEnd'),
+            if (on(TimerSurfaceOption.running))
+              (
+                LucideIcons.timer,
+                web
+                    ? 'time.surface.device.runningWeb'
+                    : 'time.surface.device.running',
+              ),
+            if (on(TimerSurfaceOption.titleClock))
+              (LucideIcons.panelTop, 'time.surface.device.titleClock'),
+          ];
+          final details =
+              on(TimerSurfaceOption.running) &&
+              (on(TimerSurfaceOption.details) ||
+                  on(TimerSurfaceOption.lockDetails));
+          final rows = <(IconData, String)>[
+            if (active.isEmpty)
+              (LucideIcons.bellOff, 'time.surface.device.off')
+            else ...[
+              ...active,
+              (
+                details ? LucideIcons.textSearch : LucideIcons.eyeOff,
+                details
+                    ? 'time.surface.device.detailsOn'
+                    : 'time.surface.device.detailsOff',
+              ),
+              (
+                LucideIcons.hardDrive,
+                details
+                    ? 'time.surface.device.copyDetails'
+                    : 'time.surface.device.copy',
+              ),
+              (LucideIcons.eraser, 'time.surface.device.vanish'),
+            ],
+            (LucideIcons.smartphone, 'time.surface.device.stored'),
+          ];
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final (icon, key) in rows)
+                TimeVisibilityPanel._sentenceRow(icon, context.t(key)),
+              const SizedBox(height: 6),
+              Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: GhostButton(
+                  icon: LucideIcons.settings,
+                  label: context.t('time.surface.device.settings'),
+                  onPressed: () => _openSettings(context),
+                ),
+              ),
+            ],
+          );
+        },
+      );
 }
 
 class _Heading extends StatelessWidget {
