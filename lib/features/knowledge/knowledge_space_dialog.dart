@@ -45,16 +45,21 @@ Future<String?> showCreateSpaceDialog(
     required String description,
   })
   onCreate,
+  KbSpace? editing,
 }) {
   return showGlassModal<String>(
     context,
     width: 460,
-    builder: (modalContext) => _CreateSpaceForm(onCreate: onCreate),
+    builder: (modalContext) =>
+        _CreateSpaceForm(onCreate: onCreate, editing: editing),
   );
 }
 
 class _CreateSpaceForm extends StatefulWidget {
-  const _CreateSpaceForm({required this.onCreate});
+  const _CreateSpaceForm({required this.onCreate, this.editing});
+
+  /// The space being changed; null creates a new one.
+  final KbSpace? editing;
 
   final Future<String?> Function({
     required String name,
@@ -69,10 +74,10 @@ class _CreateSpaceForm extends StatefulWidget {
 }
 
 class _CreateSpaceFormState extends State<_CreateSpaceForm> {
-  final _name = TextEditingController();
-  final _desc = TextEditingController();
-  String _icon = _kSpaceIcons.first;
-  int _hue = kLabelHues.first;
+  late final _name = TextEditingController(text: widget.editing?.name);
+  late final _desc = TextEditingController(text: widget.editing?.desc);
+  late String _icon = widget.editing?.icon ?? _kSpaceIcons.first;
+  late int _hue = widget.editing?.hue ?? kLabelHues.first;
   bool _busy = false;
   String? _error;
 
@@ -121,7 +126,11 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
       children: [
         GlassModalHeader(
           icon: lucideIcon('folder-plus'),
-          title: context.t('knowledge.newSpace'),
+          title: context.t(
+            widget.editing == null
+                ? 'knowledge.newSpace'
+                : 'knowledge.editSpace',
+          ),
           subtitle: context.t('knowledge.newSpaceSubtitle'),
         ),
         Padding(
@@ -191,7 +200,9 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
           ),
         ),
         GlassModalFooter(
-          confirmLabel: context.t('knowledge.createSpace'),
+          confirmLabel: context.t(
+            widget.editing == null ? 'knowledge.createSpace' : 'common.save',
+          ),
           confirmIcon: lucideIcon('plus'),
           busy: _busy,
           onConfirm: canSubmit ? _submit : null,
@@ -203,15 +214,21 @@ class _CreateSpaceFormState extends State<_CreateSpaceForm> {
   Widget _iconPicker() {
     // No Wrap spacing: each tile pads itself by half the old 8-point gap, so
     // the faces sit as far apart as before and each target is 48×48.
+    // A space dressed elsewhere keeps its glyph on offer.
+    final icons = [
+      if (widget.editing?.icon case final own? when !_kSpaceIcons.contains(own))
+        own,
+      ..._kSpaceIcons,
+    ];
     return Wrap(
       children: [
-        for (final (i, name) in _kSpaceIcons.indexed)
+        for (final (i, name) in icons.indexed)
           _PickTile(
             selected: _icon == name,
             hue: _hue,
             label: context.t(
               'knowledge.spaceIconOption',
-              variables: {'n': '${i + 1}', 'count': '${_kSpaceIcons.length}'},
+              variables: {'n': '${i + 1}', 'count': '${icons.length}'},
             ),
             onTap: () => setState(() => _icon = name),
             child: Icon(

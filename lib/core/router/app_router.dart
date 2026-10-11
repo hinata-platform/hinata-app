@@ -30,6 +30,7 @@ import '../../features/issues/issue_detail_sheet.dart' show IssueRouteArgs;
 import '../../features/issues/issue_filter.dart' show IssuesInitialView;
 import '../../features/issues/issues_screen.dart';
 import '../../features/issues/watched_issues_screen.dart';
+import '../../features/knowledge/knowledge_location.dart';
 import '../../features/knowledge/knowledge_screen.dart';
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/oauth/oauth_consent_screen.dart';
@@ -601,16 +602,53 @@ GoRouter buildRouter({
             pageBuilder: (_, state) =>
                 _transition(state, const ReportsScreen()),
           ),
+          // Every knowledge address builds the same page (one key), so moving
+          // between them keeps the screen and its state; the address alone
+          // says what it shows. Literal segments before `:id`.
           GoRoute(
             path: '/knowledge',
             pageBuilder: (_, state) =>
-                _transition(state, const KnowledgeScreen()),
+                _knowledgePage(state, const KnowledgeHomeLocation()),
+          ),
+          GoRoute(
+            path: '/knowledge/new',
+            pageBuilder: (_, state) => _knowledgePage(
+              state,
+              KnowledgeNewLocation(
+                spaceId: state.uri.queryParameters['space'],
+                parentId: state.uri.queryParameters['parent'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/knowledge/spaces/:space',
+            pageBuilder: (_, state) => _knowledgePage(
+              state,
+              KnowledgeSpaceLocation(state.pathParameters['space']!),
+            ),
           ),
           GoRoute(
             path: '/knowledge/:id',
-            pageBuilder: (_, state) => _transition(
+            pageBuilder: (_, state) => _knowledgePage(
               state,
-              KnowledgeScreen(initialArticleId: state.pathParameters['id']),
+              KnowledgeArticleLocation(state.pathParameters['id']!),
+            ),
+          ),
+          GoRoute(
+            path: '/knowledge/:id/edit',
+            pageBuilder: (_, state) => _knowledgePage(
+              state,
+              KnowledgeEditLocation(state.pathParameters['id']!),
+            ),
+          ),
+          GoRoute(
+            path: '/knowledge/:id/history',
+            pageBuilder: (_, state) => _knowledgePage(
+              state,
+              KnowledgeHistoryLocation(
+                state.pathParameters['id']!,
+                version: int.tryParse(state.uri.queryParameters['v'] ?? ''),
+              ),
             ),
           ),
           GoRoute(
@@ -820,6 +858,26 @@ CustomTransitionPage<void> _timePage(Widget child) =>
             child: child,
           ),
     );
+
+/// A knowledge address. One key for all of them: the navigator keeps the one
+/// screen and hands it the new location instead of stacking a page per step.
+CustomTransitionPage<void> _knowledgePage(
+  GoRouterState state,
+  KnowledgeLocation location,
+) => CustomTransitionPage<void>(
+  key: const ValueKey('knowledge'),
+  transitionDuration: const Duration(milliseconds: 280),
+  reverseTransitionDuration: const Duration(milliseconds: 180),
+  child: KnowledgeScreen(location: location),
+  transitionsBuilder: (context, animation, secondaryAnimation, child) =>
+      SharedAxisTransition(
+        animation: animation,
+        secondaryAnimation: secondaryAnimation,
+        transitionType: SharedAxisTransitionType.vertical,
+        fillColor: Colors.transparent,
+        child: child,
+      ),
+);
 
 CustomTransitionPage<void> _transition(GoRouterState state, Widget child) =>
     CustomTransitionPage<void>(

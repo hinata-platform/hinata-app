@@ -2490,7 +2490,7 @@
     "summary": "{{count}} 件の記事",
     "subtitle": "{{articles}} 件の記事 · {{spaces}} 件のスペース",
     "updated": "{{when}}に更新",
-    "updatedAgo": "{{when}}前に更新",
+    "updatedAgo": "{{when}}に更新",
     "new": "記事を作成",
     "newArticle": "記事を作成",
     "allSpaces": "すべてのスペース",
@@ -2548,7 +2548,7 @@
     "published": "記事を公開しました",
     "saved": "変更を保存しました",
     "deleted": "記事を削除しました",
-    "articleCount": "{{count}} 件の記事",
+    "articleCount": "{{count}} ページ",
     "saveWouldBlank": "このまま保存すると、記事が空のページに置き換わります。先に本文を入力してください。",
     "place": {
       "label": "公開範囲",
@@ -2564,7 +2564,9 @@
     "emptyTitle": "表示できるページはまだありません",
     "emptyMessage": "ページはプロジェクトとチームを通じて共有されます。新しいページは、プロジェクトかチームに入れるまで非公開のままです。",
     "tree": {
-      "truncated": "ページが多すぎて一覧に収まらないため、ここにはすべてのページが表示されていません。そのため、親ページがあってもサブページが最上位に表示されることがあります。"
+      "truncated": "ページが多すぎて一覧に収まらないため、ここにはすべてのページが表示されていません。そのため、親ページがあってもサブページが最上位に表示されることがあります。",
+      "moveUp": "上へ移動",
+      "moveDown": "下へ移動"
     },
     "spaceIconOption": "アイコン {{n}}/{{count}}",
     "subpages": "サブページ",
@@ -2575,7 +2577,85 @@
       "title": "閲覧できる人を変更しますか？",
       "message": "「{{page}}」とそのサブページは {{place}} が閲覧できるようになります。",
       "confirm": "移動"
-    }
+    },
+    "editSpace": "スペースを編集",
+    "spaceSaved": "スペースを保存しました",
+    "issueNotFound": "課題 {{id}} が見つかりません",
+    "loadFailedTitle": "ナレッジベースを読み込めませんでした",
+    "loadFailedMessage": "接続を確認して、もう一度お試しください。",
+    "notFoundMessage": "削除されたか、共有されていない可能性があります。",
+    "pageNotFound": "ページが見つかりません",
+    "spaceNotFound": "スペースが見つかりません",
+    "editor": {
+      "discard": "破棄",
+      "discardTitle": "変更を破棄しますか？",
+      "discardMessage": "このページの変更はまだ保存されていません。",
+      "pickSpace": "スペースを選択"
+    },
+    "history": {
+      "title": "履歴: {{title}}",
+      "open": "ページ履歴",
+      "versions": "バージョン: {{count}}",
+      "version": "バージョン {{number}}",
+      "versionBy": "バージョン {{number}} · {{name}} · {{when}}",
+      "current": "現在",
+      "more": "古いバージョンを表示",
+      "pickTitle": "バージョンを選択",
+      "pickMessage": "保存当時のページがここに表示されます。",
+      "emptyTitle": "まだバージョンがありません",
+      "emptyMessage": "次の変更からバージョンが記録されます。",
+      "loadFailedTitle": "履歴を読み込めませんでした",
+      "loadFailedMessage": "接続を確認して、もう一度お試しください。",
+      "restore": "このバージョンを復元",
+      "restoreTitle": "バージョンを復元しますか？",
+      "restoreMessage": "バージョン {{number}} が最新バージョンになります。間の変更は失われません。",
+      "restored": "バージョンを復元しました"
+    },
+    "home": {
+      "continue": "続きを読む",
+      "starred": "お気に入り",
+      "spaces": "スペース"
+    },
+    "labels": {
+      "add": "ラベルを追加",
+      "edit": "ラベルを編集",
+      "search": "ラベルを検索または作成",
+      "create": "ラベル「{{label}}」を作成",
+      "none": "ラベルはまだありません。入力して作成できます。",
+      "done": "完了"
+    },
+    "reader": {
+      "lastEdited": "最終更新: {{name}} · {{when}}",
+      "someone": "元メンバー",
+      "star": "お気に入りに追加",
+      "unstar": "お気に入りから削除",
+      "breadcrumb": "このページの場所",
+      "changed": "変更",
+      "author": "作成者",
+      "copyLink": "リンクをコピー",
+      "linkCopied": "リンクをコピーしました",
+      "pages": "ページ"
+    },
+    "spaceView": {
+      "actions": "スペースの操作",
+      "pages": "ページ",
+      "emptyTitle": "まだページがありません",
+      "emptyMessage": "このスペースの最初のページを書きましょう。プロジェクトやチームに共有するまで非公開です。",
+      "firstPage": "最初のページを作成",
+      "withLabel": "ラベル「{{label}}」: {{count}}",
+      "notYours": "スペースを作成した人だけが変更できます。",
+      "notEmpty": "先にページを移動または削除してください。"
+    },
+    "time": {
+      "justNow": "たった今",
+      "minutes": "{{count}}分前",
+      "minutes_plural": "{{count}}分前",
+      "hours": "{{count}}時間前",
+      "hours_plural": "{{count}}時間前",
+      "days": "{{count}}日前",
+      "days_plural": "{{count}}日前"
+    },
+    "articleCount_plural": "{{count}} ページ"
   },
   "md": {
     "heading1": "見出し 1",

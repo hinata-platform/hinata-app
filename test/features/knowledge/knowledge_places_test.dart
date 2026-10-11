@@ -94,7 +94,7 @@ void main() {
                 spaceId: 'Docs',
                 selectedId: null,
                 onSelect: (_) {},
-                onSpaceChange: (_) {},
+                onShift: (_, _) {},
                 onNewChild: (_) {},
                 onMove: (_, {parentId, required spaceId}) {},
                 onDelete: (_) {},
@@ -120,6 +120,12 @@ void main() {
       KnowledgeRepository repo,
     ) async {
       final moves = <(String, String?)>[];
+      // Room for the row menu and its submenu beside it: touch rows are 48
+      // tall now, and the menu carries more entries.
+      tester.view
+        ..physicalSize = const Size(1200, 1000)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
       await tester.pumpWidget(
         MaterialApp(
           home: Scaffold(
@@ -129,7 +135,7 @@ void main() {
                 spaceId: 'Docs',
                 selectedId: null,
                 onSelect: (_) {},
-                onSpaceChange: (_) {},
+                onShift: (_, _) {},
                 onNewChild: (_) {},
                 onMove: (id, {parentId, required spaceId}) =>
                     moves.add((id, parentId)),
@@ -155,9 +161,9 @@ void main() {
       });
       final moves = await pumpTree(tester, repo);
 
-      // Rows in tree order: top, child, other. Without a mouse the row
-      // actions are on screen for every row.
-      await tester.tap(find.byTooltip('knowledge.pageActions').at(2));
+      // Rows in sibling order, which falls back to the title: other, top,
+      // child. Without a mouse the row actions are on screen for every row.
+      await tester.tap(find.byTooltip('knowledge.pageActions').at(0));
       await tester.pumpAndSettle();
       await tester.tap(find.text('knowledge.moveUnder'));
       await tester.pumpAndSettle();
@@ -206,7 +212,8 @@ void main() {
       });
       await pumpTree(tester, repo);
 
-      await tester.tap(find.byTooltip('knowledge.pageActions').at(0));
+      // Rows: other, top, child; the menu of 'top'.
+      await tester.tap(find.byTooltip('knowledge.pageActions').at(1));
       await tester.pumpAndSettle();
       await tester.tap(find.text('knowledge.moveUnder'));
       await tester.pumpAndSettle();
@@ -244,7 +251,7 @@ void main() {
                 spaceId: 'Docs',
                 selectedId: null,
                 onSelect: (_) {},
-                onSpaceChange: (_) {},
+                onShift: (_, _) {},
                 onNewChild: (_) {},
                 onMove: (_, {parentId, required spaceId}) {},
                 onDelete: (_) {},
@@ -372,12 +379,7 @@ void main() {
         title: 'A',
         icon: 'file-text',
         authorId: 'me',
-        contributorIds: [],
-        updated: '',
-        created: '',
-        reads: 0,
         labels: [],
-        status: 'published',
         body: '',
         teamId: 't1',
       );

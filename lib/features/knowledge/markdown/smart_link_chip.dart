@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/app_avatar.dart';
 import '../data/knowledge_models.dart' show lucideIcon;
 import '../knowledge_tokens.dart';
+import '../widgets/knowledge_widgets.dart';
 import 'smart_link_resolver.dart';
 import '../../../core/theme/app_type.dart';
 
@@ -372,15 +373,13 @@ class _SmartLinkChipState extends State<SmartLinkChip> {
                 AppAvatar(name: a.authorName!, radius: 9),
                 a.authorName!.split(' ').first,
               ),
-            if (a.updated != null)
+            if (a.updatedAt != null)
               _metaItem(
-                Icon(lucideIcon('clock'), size: 13, color: AppColors.inkFaint),
-                '${a.updated} ago',
-              ),
-            if (a.reads != null)
-              _metaItem(
-                Icon(lucideIcon('eye'), size: 13, color: AppColors.inkFaint),
-                '${a.reads}',
+                Icon(lucideIcon('clock'), size: 13, color: AppColors.inkSoft),
+                context.t(
+                  'knowledge.updatedAgo',
+                  variables: {'when': kbWhen(context, a.updatedAt)},
+                ),
               ),
           ],
         ),
