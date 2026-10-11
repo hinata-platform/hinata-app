@@ -75,13 +75,23 @@ void main() {
   });
 
   testWidgets('no row for what the platform lacks', (tester) async {
-    await pump(tester, SurfacePlatform.ios);
+    await pump(tester, SurfacePlatform.macos);
 
     expect(find.text('account.timerSurfaces.phaseEnd'), findsOneWidget);
     expect(find.text('account.timerSurfaces.running'), findsNothing);
     expect(find.text('account.timerSurfaces.details'), findsNothing);
     expect(find.text('account.timerSurfaces.lockDetails'), findsNothing);
     expect(find.text('account.timerSurfaces.titleClock'), findsNothing);
+  });
+
+  testWidgets('iOS offers the Live Activity and says where it shows', (
+    tester,
+  ) async {
+    await pump(tester, SurfacePlatform.ios);
+
+    expect(valueOf(tester, 'account.timerSurfaces.runningIos'), isTrue);
+    expect(find.text('time.surface.intro.runningIos'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.details'), findsNothing);
   });
 
   testWidgets('the web offers the tab title, preset off, and says the '

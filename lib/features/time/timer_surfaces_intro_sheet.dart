@@ -131,7 +131,7 @@ class _TimerSurfacesIntroBodyState extends State<TimerSurfacesIntroBody> {
         ),
       if (caps.runningSurface && widget.platform != SurfacePlatform.web)
         context.t(
-          caps.trayIcon
+          caps.trayIcon || widget.platform == SurfacePlatform.ios
               ? 'time.surface.intro.running${surfacePlace(widget.platform)}'
               : caps.lockScreen
               ? 'time.surface.intro.runningLocked'

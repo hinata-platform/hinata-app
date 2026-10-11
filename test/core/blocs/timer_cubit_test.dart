@@ -171,6 +171,31 @@ void main() {
       },
     );
 
+    test('a restored timer is unconfirmed until the server answers', () async {
+      final first = TimerCubit(
+        _FakeTimeRepository(running: timer()),
+        storageId: 'server#me',
+      );
+      await first.refresh();
+      expect(first.state.confirmed, isTrue);
+      await first.close();
+
+      final restored = TimerCubit(
+        _FakeTimeRepository(running: timer()),
+        storageId: 'server#me',
+      );
+      // The Live Activity waits for this (HIN-102): a cached timer may have
+      // ended on another device a minute ago.
+      expect(restored.state.confirmed, isFalse);
+      // A tick keeps what is known about it.
+      expect(restored.state.copyWith().confirmed, isFalse);
+
+      await restored.refresh();
+
+      expect(restored.state.confirmed, isTrue);
+      await restored.close();
+    });
+
     test('what was restored loses to what the server says', () async {
       final first = TimerCubit(
         _FakeTimeRepository(running: timer()),

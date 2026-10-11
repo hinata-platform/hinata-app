@@ -117,14 +117,54 @@ void main() {
     expect(find.text('account.timerSurfaces.exactAllow'), findsNothing);
   });
 
-  testWidgets('on iOS only the notification', (tester) async {
+  testWidgets('on iOS the notification, the Live Activity and the lock '
+      'screen details', (tester) async {
     prefs.consent(TimerSurfacePrefs.suggested);
     await pump(tester, SurfacePlatform.ios);
 
-    expect(find.byType(HiveSwitch), findsOneWidget);
+    expect(find.byType(HiveSwitch), findsNWidgets(3));
     expect(find.text('account.timerSurfaces.phaseEnd'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.runningIos'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.lockDetails'), findsOneWidget);
     expect(find.text('account.timerSurfaces.exact'), findsNothing);
     expect(find.text('account.timerSurfaces.running'), findsNothing);
+    // Only Android has the description in an unlocked notification.
+    expect(find.text('account.timerSurfaces.details'), findsNothing);
+    expect(find.text('account.timerSurfaces.activitiesOff'), findsNothing);
+  });
+
+  testWidgets('the Live Activity asks the system for nothing', (tester) async {
+    prefs.consent(const TimerSurfacePrefs(phaseEndNotification: true));
+    await pump(tester, SurfacePlatform.ios);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.runningIos'));
+
+    expect(prefs.state.runningSurface, isTrue);
+    expect(gate.requests, 0);
+  });
+
+  testWidgets('Live Activities off in the system: the row cannot be switched '
+      'on and says why', (tester) async {
+    gate.activities = false;
+    prefs.consent(const TimerSurfacePrefs(phaseEndNotification: true));
+    await pump(tester, SurfacePlatform.ios);
+
+    expect(find.text('account.timerSurfaces.activitiesOff'), findsOneWidget);
+    final row = tester.widget<HiveSwitch>(
+      switchOf('account.timerSurfaces.runningIos'),
+    );
+    expect(row.onChanged, isNull);
+  });
+
+  testWidgets('Live Activities off in the system: a switch that is on can '
+      'still be switched off', (tester) async {
+    gate.activities = false;
+    prefs.consent(TimerSurfacePrefs.suggested);
+    await pump(tester, SurfacePlatform.ios);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.runningIos'));
+
+    expect(prefs.state.runningSurface, isFalse);
   });
 
   testWidgets('on the web the tab title', (tester) async {
