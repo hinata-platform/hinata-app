@@ -102,6 +102,33 @@ class _SwitchesState extends State<_Switches> {
   /// below it until the person tries again.
   TimerSurfaceOption? _refused;
 
+  /// Whether the system allows Live Activities (iOS). Read again when the app
+  /// is back in front, because the answer changes on a system page.
+  bool _activities = true;
+  late final AppLifecycleListener _lifecycle;
+
+  @override
+  void initState() {
+    super.initState();
+    _lifecycle = AppLifecycleListener(
+      onResume: () => unawaited(_readActivities()),
+    );
+    unawaited(_readActivities());
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
+  }
+
+  Future<void> _readActivities() async {
+    final enabled = await widget.gate.activitiesEnabled(widget.platform);
+    if (mounted && enabled != _activities) {
+      setState(() => _activities = enabled);
+    }
+  }
+
   Future<void> _toggle(TimerSurfaceOption option, bool on) async {
     if (on && option.needsPermission(widget.platform)) {
       final granted = await widget.gate.request(widget.platform);
@@ -119,6 +146,9 @@ class _SwitchesState extends State<_Switches> {
           : withOption(current, option, on),
     );
   }
+
+  bool _blocked(TimerSurfaceOption option) =>
+      option == TimerSurfaceOption.running && !_activities;
 
   void _clearCopies() {
     context.read<TimerSurfaceClearSignal>().request();
@@ -147,9 +177,34 @@ class _SwitchesState extends State<_Switches> {
               icon: option.icon,
               trailing: HiveSwitch(
                 value: option.read(state),
-                onChanged: (on) => unawaited(_toggle(option, on)),
+                // Switched off in the system, it can still be switched off
+                // here, never on.
+                onChanged: _blocked(option) && !option.read(state)
+                    ? null
+                    : (on) => unawaited(_toggle(option, on)),
               ),
             ),
+            if (_blocked(option)) ...[
+              AccountNote(
+                text: context.t('account.timerSurfaces.activitiesOff'),
+                icon: LucideIcons.circleSlash,
+                tone: AccountNoteTone.info,
+              ),
+              if (settings != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 4),
+                  child: Align(
+                    alignment: AlignmentDirectional.centerStart,
+                    child: AccountActionButton(
+                      label: context.t('account.timerSurfaces.openSettings'),
+                      icon: LucideIcons.settings,
+                      onPressed: () =>
+                          unawaited(widget.gate.openSettings(settings)),
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 6),
+            ],
             if (_refused == option) ...[
               AccountNote(
                 text: context.t('account.timerSurfaces.denied'),
