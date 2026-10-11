@@ -14,6 +14,7 @@ import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import '../time/timer_surface_options.dart';
 import '../time/timer_surfaces_intro_sheet.dart';
 import 'account_widgets.dart';
+import 'timer_hotkeys_rows.dart';
 
 /// Settings → Time tracking → "Timer outside the app": the switches of this
 /// device.
@@ -111,7 +112,12 @@ class _SwitchesState extends State<_Switches> {
       }
     }
     if (_refused == option) setState(() => _refused = null);
-    widget.prefs.update(withOption(widget.prefs.state, option, on));
+    final current = widget.prefs.state;
+    widget.prefs.update(
+      option == TimerSurfaceOption.hotkeys && on
+          ? withHotkeysOn(current, widget.platform)
+          : withOption(current, option, on),
+    );
   }
 
   void _clearCopies() {
@@ -164,6 +170,15 @@ class _SwitchesState extends State<_Switches> {
                   ),
                 ),
               const SizedBox(height: 6),
+            ],
+            if (option == TimerSurfaceOption.hotkeys &&
+                state.globalHotkeys) ...[
+              divider,
+              TimerHotkeysRows(
+                prefs: widget.prefs,
+                platform: platform,
+                stack: widget.stack,
+              ),
             ],
             if (option == TimerSurfaceOption.phaseEnd &&
                 state.phaseEndNotification &&

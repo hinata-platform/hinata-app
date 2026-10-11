@@ -193,4 +193,46 @@ void main() {
     expect(prefs.state, const TimerSurfacePrefs(introSeen: true));
     expect(find.text('account.timerSurfaces.setUp'), findsOneWidget);
   });
+
+  testWidgets('on a Mac: menu bar, keep running, shortcuts, no permission', (
+    tester,
+  ) async {
+    prefs.consent(TimerSurfacePrefs.suggestedOn(SurfacePlatform.macos));
+    await pump(tester, SurfacePlatform.macos);
+
+    expect(find.text('account.timerSurfaces.runningMenuBar'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.detailsMenu'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.keepRunning'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.hotkeys'), findsOneWidget);
+    // Off by default: no combinations on screen yet.
+    expect(find.text('account.timerSurfaces.hotkeyToggle'), findsNothing);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.hotkeys'));
+    await tester.pump();
+
+    expect(prefs.state.globalHotkeys, isTrue);
+    expect(
+      prefs.state.toggleHotkey,
+      TimerSurfacePrefs.defaultToggleHotkey(SurfacePlatform.macos),
+    );
+    expect(find.text('account.timerSurfaces.hotkeyToggle'), findsOneWidget);
+    expect(find.text('⌃⌥⌘S'), findsOneWidget);
+    expect(find.text('⌃⌥⌘F'), findsOneWidget);
+    // The menu bar is no notification: nothing was asked of the system.
+    expect(gate.requests, 0);
+  });
+
+  testWidgets('switching the menu bar off also ends keep running', (
+    tester,
+  ) async {
+    prefs.consent(TimerSurfacePrefs.suggestedOn(SurfacePlatform.macos));
+    await pump(tester, SurfacePlatform.macos);
+    expect(prefs.state.keepInTray, isTrue);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.runningMenuBar'));
+
+    expect(prefs.state.runningSurface, isFalse);
+    expect(prefs.state.keepInTray, isFalse);
+    expect(find.text('account.timerSurfaces.keepRunning'), findsNothing);
+  });
 }

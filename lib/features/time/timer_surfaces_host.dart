@@ -9,6 +9,7 @@ import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
 import '../../core/router/app_router.dart' show rootNavigatorKey;
+import '../../core/timer_surfaces/adapters/keep_running_surface.dart';
 import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
 import '../../core/timer_surfaces/build_timer_surfaces.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
@@ -156,6 +157,16 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     stop: context.t('time.timer.stop'),
     takeBreak: context.t('time.focus.takeBreak'),
     resume: context.t('time.focus.resume'),
+    start: context.t('time.surface.menu.start'),
+    nextPhase: context.t('time.surface.menu.nextPhase'),
+    openFocus: context.t('time.surface.menu.openFocus'),
+    showWindow: context.t('time.surface.menu.showWindow'),
+    quit: context.t('time.surface.menu.quit'),
+    idle: context.t('time.surface.menu.idle'),
+    stopwatch: context.t('time.surface.menu.stopwatch'),
+    countdown: context.t('time.surface.menu.countdown'),
+    focusPhase: context.t('time.surface.menu.focusPhase'),
+    breakPhase: context.t('time.surface.menu.breakPhase'),
   );
 
   TimerSurfaceState _derive() => deriveTimerSurfaceState(
@@ -242,7 +253,30 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   }
 
   @override
+  Future<void> start() => context.read<TimerCubit>().start();
+
+  @override
   void openFocus() => widget.openRoute(TimerNotificationAction.route);
+
+  @override
+  Future<void> showWindow() async {
+    if (!_desktop) return;
+    await WindowManagerGateway.shared.show();
+  }
+
+  @override
+  Future<void> quit() async {
+    if (!_desktop) return;
+    await _coordinator.clearAll();
+    await WindowManagerGateway.shared.close();
+  }
+
+  bool get _desktop => switch (SurfacePlatform.current) {
+    SurfacePlatform.macos ||
+    SurfacePlatform.windows ||
+    SurfacePlatform.linux => true,
+    _ => false,
+  };
 
   @override
   void openRoute(String route) => widget.openRoute(route);

@@ -18,7 +18,14 @@ enum TimerSurfaceOption {
   running,
   details,
   lockDetails,
-  titleClock;
+  titleClock,
+
+  /// Closing the window leaves a running timer in the menu bar or tray.
+  keepRunning,
+
+  /// The master switch of the system-wide shortcuts; their combinations are
+  /// set in the settings, below it.
+  hotkeys;
 
   /// Whether [platform] has anything this switch could turn on.
   bool availableOn(SurfacePlatform platform) {
@@ -31,18 +38,27 @@ enum TimerSurfaceOption {
       details => caps.runningSurface && platform != SurfacePlatform.web,
       lockDetails => caps.lockScreen && caps.runningSurface,
       titleClock => caps.titleClock,
+      keepRunning => caps.keepRunning,
+      hotkeys => caps.globalHotkeys,
     };
   }
+
+  /// Whether the introduction offers it. The shortcuts are a power feature
+  /// with combinations to choose; they wait in the settings.
+  bool get inIntro => this != hotkeys;
 
   /// Whether turning this on needs the system's permission for notifications.
   bool needsPermission(SurfacePlatform platform) => switch (this) {
     phaseEnd => true,
-    running => platform != SurfacePlatform.web,
+    // Only Android's ongoing notification; the menu bar, the tray and the
+    // web's badge are no notification.
+    running => platform == SurfacePlatform.android,
     _ => false,
   };
 
   /// The details only mean something while the running timer is shown.
-  bool get dependsOnRunning => this == details || this == lockDetails;
+  bool get dependsOnRunning =>
+      this == details || this == lockDetails || this == keepRunning;
 
   IconData get icon => switch (this) {
     phaseEnd => LucideIcons.bellRing,
@@ -50,28 +66,42 @@ enum TimerSurfaceOption {
     details => LucideIcons.textSearch,
     lockDetails => LucideIcons.lockKeyhole,
     titleClock => LucideIcons.panelTop,
+    keepRunning => LucideIcons.panelTopClose,
+    hotkeys => LucideIcons.keyboard,
+  };
+
+  /// The suffix that names where the running timer is on [platform].
+  static String _where(SurfacePlatform platform) => switch (platform) {
+    SurfacePlatform.web => 'Web',
+    SurfacePlatform.macos => 'MenuBar',
+    SurfacePlatform.windows || SurfacePlatform.linux => 'Tray',
+    _ => '',
   };
 
   String labelKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEnd',
-    running =>
-      platform == SurfacePlatform.web
-          ? 'account.timerSurfaces.runningWeb'
-          : 'account.timerSurfaces.running',
-    details => 'account.timerSurfaces.details',
+    running => 'account.timerSurfaces.running${_where(platform)}',
+    details =>
+      capabilitiesForPlatform(platform).menuBar
+          ? 'account.timerSurfaces.detailsMenu'
+          : 'account.timerSurfaces.details',
     lockDetails => 'account.timerSurfaces.lockDetails',
     titleClock => 'account.timerSurfaces.titleClock',
+    keepRunning => 'account.timerSurfaces.keepRunning',
+    hotkeys => 'account.timerSurfaces.hotkeys',
   };
 
   String hintKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEndHint',
-    running =>
-      platform == SurfacePlatform.web
-          ? 'account.timerSurfaces.runningWebHint'
-          : 'account.timerSurfaces.runningHint',
-    details => 'account.timerSurfaces.detailsHint',
+    running => 'account.timerSurfaces.running${_where(platform)}Hint',
+    details =>
+      capabilitiesForPlatform(platform).menuBar
+          ? 'account.timerSurfaces.detailsMenuHint'
+          : 'account.timerSurfaces.detailsHint',
     lockDetails => 'account.timerSurfaces.lockDetailsHint',
     titleClock => 'account.timerSurfaces.titleClockHint',
+    keepRunning => 'account.timerSurfaces.keepRunning${_where(platform)}Hint',
+    hotkeys => 'account.timerSurfaces.hotkeysHint',
   };
 
   bool read(TimerSurfacePrefs prefs) => switch (this) {
@@ -80,6 +110,8 @@ enum TimerSurfaceOption {
     details => prefs.surfaceDetails,
     lockDetails => prefs.lockScreenDetails,
     titleClock => prefs.titleClock,
+    keepRunning => prefs.keepInTray,
+    hotkeys => prefs.globalHotkeys,
   };
 
   TimerSurfacePrefs write(TimerSurfacePrefs prefs, bool on) => switch (this) {
@@ -88,6 +120,8 @@ enum TimerSurfaceOption {
     details => prefs.copyWith(surfaceDetails: on),
     lockDetails => prefs.copyWith(lockScreenDetails: on),
     titleClock => prefs.copyWith(titleClock: on),
+    keepRunning => prefs.copyWith(keepInTray: on),
+    hotkeys => prefs.copyWith(globalHotkeys: on),
   };
 
   /// The switches [platform] offers, in the order they are shown.
@@ -106,8 +140,25 @@ TimerSurfacePrefs withOption(
 ) {
   final next = option.write(prefs, on);
   if (option != TimerSurfaceOption.running || on) return next;
-  return next.copyWith(surfaceDetails: false, lockScreenDetails: false);
+  return next.copyWith(
+    surfaceDetails: false,
+    lockScreenDetails: false,
+    keepInTray: false,
+  );
 }
+
+/// [prefs] with the shortcuts switched on, with the conventional combinations
+/// where none was chosen before.
+TimerSurfacePrefs withHotkeysOn(
+  TimerSurfacePrefs prefs,
+  SurfacePlatform platform,
+) => prefs.copyWith(
+  globalHotkeys: true,
+  toggleHotkey:
+      prefs.toggleHotkey ?? TimerSurfacePrefs.defaultToggleHotkey(platform),
+  focusHotkey:
+      prefs.focusHotkey ?? TimerSurfacePrefs.defaultFocusHotkey(platform),
+);
 
 /// Whether [platform] has any surface at all.
 bool hasTimerSurfaces(SurfacePlatform platform) {

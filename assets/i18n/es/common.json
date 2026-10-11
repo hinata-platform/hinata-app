@@ -1610,7 +1610,9 @@
         "private": "Los textos son genéricos y desaparecen solos. Nada se envía al servidor ni a tu empleador.",
         "switchOn": "Activar",
         "later": "Más tarde",
-        "denied": "Las notificaciones están bloqueadas. Puedes permitirlas en los ajustes del sistema."
+        "denied": "Las notificaciones están bloqueadas. Puedes permitirlas en los ajustes del sistema.",
+        "runningMenuBar": "Mientras el temporizador corre, la barra de menús muestra el tiempo, igual para trabajo y pausa.",
+        "runningTray": "Mientras el temporizador corre, un icono en el área de notificación lo muestra, igual para trabajo y pausa."
       },
       "device": {
         "heading": "En este dispositivo",
@@ -1625,7 +1627,22 @@
         "copyDetails": "Mientras corre un temporizador, este dispositivo guarda su inicio, su fin y su descripción.",
         "vanish": "Estas copias desaparecen a las 24 horas y al cerrar sesión.",
         "stored": "Tus ajustes se quedan en este dispositivo.",
-        "settings": "Cambiar en ajustes"
+        "settings": "Cambiar en ajustes",
+        "runningMenuBar": "El tiempo en la barra de menús o el área de notificación mientras corre el temporizador.",
+        "keepRunning": "Al cerrar la ventana, el temporizador sigue ahí.",
+        "hotkeys": "Dos atajos en todo el sistema. La app solo oye estos, nunca otras teclas."
+      },
+      "menu": {
+        "start": "Iniciar temporizador",
+        "nextPhase": "Siguiente intervalo",
+        "openFocus": "Abrir vista de enfoque",
+        "showWindow": "Mostrar ventana",
+        "quit": "Salir de Hinata",
+        "idle": "Ningún temporizador en marcha",
+        "stopwatch": "Cronómetro en marcha",
+        "countdown": "Cuenta atrás en marcha",
+        "focusPhase": "Pomodoro, enfoque",
+        "breakPhase": "Pomodoro, pausa"
       }
     }
   },
@@ -4320,7 +4337,35 @@
       "cleared": "Copias locales borradas.",
       "turnOff": "Desactivar todo",
       "turnOffHint": "Fuera de la app ya no se ve nada. Puedes configurarlo de nuevo más tarde.",
-      "turnOffButton": "Desactivar"
+      "turnOffButton": "Desactivar",
+      "runningMenuBar": "En la barra de menús",
+      "runningMenuBarHint": "La barra de menús muestra el tiempo en curso y un menú para detenerlo.",
+      "runningTray": "En el área de notificación",
+      "runningTrayHint": "Un icono en el área de notificación indica que el temporizador está en marcha y ofrece un menú.",
+      "detailsMenu": "Descripción en el menú",
+      "detailsMenuHint": "El menú abierto también indica en qué trabajas. El icono y la hora nunca lo muestran.",
+      "keepRunning": "Seguir al cerrar",
+      "keepRunningMenuBarHint": "Al cerrar la ventana, el temporizador sigue en la barra de menús. ⌘Q cierra la app.",
+      "keepRunningTrayHint": "Al cerrar la ventana, el temporizador sigue en el área de notificación. Para salir, usa su menú.",
+      "hotkeys": "Atajos en todo el sistema",
+      "hotkeysHint": "Inicia, detén y abre la vista de enfoque desde cualquier app. La app solo oye estas dos combinaciones y ninguna otra tecla.",
+      "hotkeyToggle": "Iniciar o detener",
+      "hotkeyFocus": "Abrir la vista de enfoque",
+      "hotkeyBound": "Activo",
+      "hotkeyConflict": "Otra app o el sistema ya usa esta combinación. Elige otra.",
+      "hotkeyUnsupported": "No disponible en este dispositivo.",
+      "hotkeyChoose": "Elegir",
+      "keySpace": "Espacio",
+      "recordPrompt": "Pulsa la nueva combinación",
+      "recordHint": "Mantén al menos una tecla modificadora, por ejemplo {{example}}. Esc cancela.",
+      "recordNeedsModifier": "Un atajo necesita una tecla modificadora; si no, la tecla dejaría de funcionar en las demás apps.",
+      "recordUnsupportedKey": "Usa una letra, un dígito, de F1 a F12 o la barra espaciadora.",
+      "test": "Comprobar el atajo",
+      "testHint": "Púlsalo una vez, también con otra app delante. Durante la prueba no se inicia ni se detiene nada.",
+      "testButton": "Comprobar ahora",
+      "testWaiting": "Pulsa {{combo}} ahora.",
+      "testWorked": "Funciona. La pulsación llegó.",
+      "testSilent": "No llegó ninguna pulsación. Quizá otra app use esta combinación; elige otra."
     }
   },
   "twofa": {

@@ -3,6 +3,7 @@
 #include <optional>
 
 #include "flutter/generated_plugin_registrant.h"
+#include "taskbar_channel.h"
 #include "wns_channel.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
@@ -34,6 +35,9 @@ bool FlutterWindow::OnCreate() {
 
   // Hinata: WNS-Kanal für Push (FCM hat keine Windows-Implementierung).
   hinata::RegisterWnsChannel(flutter_controller_->engine(), GetHandle());
+
+  // Hinata: der Timer auf dem Taskleisten-Knopf (HIN-101).
+  hinata::RegisterTaskbarChannel(flutter_controller_->engine(), GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
     this->Show();
@@ -76,6 +80,10 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
   // Completed WNS channel requests hop back onto the platform thread through a
   // WM_APP message — flutter::MethodResult must not be completed off-thread.
   if (hinata::HandleWnsChannelMessage(message)) {
+    return 0;
+  }
+
+  if (hinata::HandleTaskbarMessage(hwnd, message, wparam, lparam)) {
     return 0;
   }
 

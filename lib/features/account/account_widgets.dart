@@ -275,47 +275,26 @@ class AccountActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fg = danger ? AppColors.danger : AppColors.ink;
-    return Semantics(
-      button: true,
-      enabled: onPressed != null,
-      child: Material(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        child: InkWell(
-          onTap: onPressed,
-          borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 9),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-              border: Border.all(
-                color: danger
-                    ? AppColors.danger.withValues(alpha: 0.4)
-                    : AppColors.hairline,
-              ),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (icon != null) ...[
-                  Icon(icon, size: 15, color: fg),
-                  const SizedBox(width: 7),
-                ],
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: FontWeight.w600,
-                    color: fg,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    // The app's frosted capsule ([GlassButtons.outlined]); danger tints the
+    // label and the rim.
+    final style = OutlinedButton.styleFrom(
+      minimumSize: const Size(0, 38),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      foregroundColor: danger ? AppColors.danger : null,
+      side: danger
+          ? BorderSide(color: AppColors.danger.withValues(alpha: 0.4))
+          : null,
     );
+    final text = Text(label);
+    final glyph = icon;
+    return glyph == null
+        ? OutlinedButton(onPressed: onPressed, style: style, child: text)
+        : OutlinedButton.icon(
+            onPressed: onPressed,
+            style: style,
+            icon: Icon(glyph, size: 15),
+            label: text,
+          );
   }
 }
 

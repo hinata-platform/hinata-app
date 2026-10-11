@@ -145,6 +145,24 @@ dependencies:
   # stdlib.h include". 0.8.0 is deliberately not taken: it requires Android
   # Gradle Plugin 9.
   desktop_drop: ^0.7.1
+  # The timer outside the app on the desktop (HIN-101), each behind its own
+  # adapter in lib/core/timer_surfaces/adapters/. tray_manager stays on 0.5.x,
+  # the last plain plugin: 0.6 and later build a C++ core (cnativeapi) through
+  # a native-assets hook for every target the app has, phones included, and
+  # put the Linux menu on a D-Bus path the snap's unity7 interface does not
+  # allow. The adapter is what keeps a later move to nativeapi one file.
+  tray_manager: 0.5.3
+  window_manager: ^0.5.2
+  # Our own (hinata-platform/system_hotkeys): RegisterEventHotKey on macOS,
+  # RegisterHotKey on Windows, conflicts reported. No keyboard hook.
+  system_hotkeys: ^0.1.0
+  # 0.1.1 or newer: before, super_native_extensions' Carbon handler swallowed
+  # every hot-key press in this app (see its CHANGELOG).
+  system_hotkeys_macos: ^0.1.1
+  # Linux: whether a StatusNotifierItem host is there at all. Without one
+  # libayatana shows nothing and reports nothing, and a window must not hide
+  # into a tray nobody sees. Pure Dart (Canonical), already in the tree.
+  dbus: ^0.7.11
   cross_file: ^0.3.4+2
   # Native download: present the OS share sheet on a downloaded attachment so the
   # user can "Save to Files" (iOS) / save to Downloads (Android) or send it on,
@@ -230,6 +248,8 @@ flutter:
     - assets/i18n/ru/
     - assets/i18n/ar/
     - assets/branding/
+    # Menu bar and tray icons (HIN-101), a few kilobytes on every platform.
+    - assets/branding/tray/
     # The end-of-interval chime (HIN-86). One file, 40 KB: a sound the app
     # plays is a sound it has to carry on every platform, and a soft two-tone
     # bell is all an interval ending needs to be.
