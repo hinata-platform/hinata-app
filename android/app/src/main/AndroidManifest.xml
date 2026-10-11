@@ -95,6 +95,17 @@
             </intent-filter>
         </receiver>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
+        <!-- HIN-102: the timer widget. Exported only for the system's widget
+             broadcasts; it reads the one record the app wrote and never acts on
+             the timer (a tap opens hinata://time/focus). -->
+        <receiver android:name=".TimerWidgetProvider" android:exported="true"
+            android:label="@string/timer_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider"
+                android:resource="@xml/timer_widget_info" />
+        </receiver>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
