@@ -1,6 +1,10 @@
+import 'dart:convert';
+import 'dart:math';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 
 import '../../models/time_models.dart';
@@ -8,6 +12,21 @@ import '../phase_end_schedule.dart';
 import '../surface_platform.dart';
 import '../timer_surface.dart';
 import '../timer_surface_state.dart';
+
+/// A random secret for this installation, made once and kept in the app's own
+/// preferences, which no other app can read.
+Future<String> installationActionToken() async {
+  const key = 'timer_surface_action_token';
+  final prefs = await SharedPreferences.getInstance();
+  final held = prefs.getString(key);
+  if (held != null && held.isNotEmpty) return held;
+  final random = Random.secure();
+  final token = base64Url.encode(
+    List<int>.generate(24, (_) => random.nextInt(256)),
+  );
+  await prefs.setString(key, token);
+  return token;
+}
 
 /// Action ids a notification carries back into the running app.
 abstract final class TimerNotificationAction {
@@ -29,13 +48,27 @@ class LocalNotificationsSurface extends TimerSurface {
     this.platform, {
     FlutterLocalNotificationsPlugin? plugin,
     DateTime Function()? clock,
+    Future<String> Function()? actionToken,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
-       _clock = clock ?? DateTime.now;
+       _clock = clock ?? DateTime.now,
+       _actionTokenSource = actionToken ?? installationActionToken;
 
   final SurfacePlatform platform;
   final FlutterLocalNotificationsPlugin _plugin;
   final DateTime Function() _clock;
   final PhaseEndPlanner _planner = PhaseEndPlanner();
+  final Future<String> Function() _actionTokenSource;
+
+  /// The secret every notification of ours carries in its payload.
+  ///
+  /// On Android another installed app can hand the main activity the same
+  /// intent a notification's button sends. Without this, that app could stop
+  /// somebody's timer; with it, a response that does not carry the secret only
+  /// opens the focus screen, which any link may.
+  String? _actionToken;
+
+  String get _payload =>
+      '${TimerNotificationAction.route}#${_actionToken ?? ''}';
 
   /// The ongoing notification of a running timer (Android).
   static const int runningId = 7101;
@@ -79,11 +112,13 @@ class LocalNotificationsSurface extends TimerSurface {
   @override
   Future<void> init(TimerSurfaceHost host) async {
     _host = host;
+    _actionToken ??= await _actionTokenSource();
   }
 
   /// Initialises the plugin, without asking for any permission: that is asked
   /// when the person switches a notification on, never at start.
   Future<void> _ensureReady(TimerSurfaceTexts texts) async {
+    _actionToken ??= await _actionTokenSource();
     if (_ready && (!_darwin || texts == _readyWith)) return;
     final darwin = DarwinInitializationSettings(
       requestAlertPermission: false,
@@ -138,13 +173,21 @@ class LocalNotificationsSurface extends TimerSurface {
       );
 
   /// A tap or an action from a notification, in the running app.
+  @visibleForTesting
+  void respond(NotificationResponse response) => _onResponse(response);
+
   void _onResponse(NotificationResponse response) {
     final host = _host;
     if (host == null) return;
+    final token = _actionToken;
+    final ours =
+        token != null &&
+        token.isNotEmpty &&
+        response.payload == '${TimerNotificationAction.route}#$token';
     switch (response.actionId) {
-      case TimerNotificationAction.stop:
+      case TimerNotificationAction.stop when ours:
         host.end();
-      case TimerNotificationAction.advance:
+      case TimerNotificationAction.advance when ours:
         host.advancePhase();
       default:
         host.openFocus();
@@ -201,7 +244,7 @@ class LocalNotificationsSurface extends TimerSurface {
           scheduledDate: tz.TZDateTime.from(at, tz.UTC),
           title: state.texts.appName,
           body: state.endText,
-          payload: TimerNotificationAction.route,
+          payload: _payload,
           notificationDetails: _endDetails(state),
           androidScheduleMode: await _scheduleMode(),
         );
@@ -281,7 +324,7 @@ class LocalNotificationsSurface extends TimerSurface {
       id: runningId,
       title: state.isBreak ? state.texts.onBreak : state.texts.running,
       body: lockScreen ? state.lockScreenLabel : state.label,
-      payload: TimerNotificationAction.route,
+      payload: _payload,
       notificationDetails: NotificationDetails(
         android: AndroidNotificationDetails(
           _runningChannel,
@@ -344,7 +387,7 @@ class LocalNotificationsSurface extends TimerSurface {
         id: PhaseEndSchedule.notificationId,
         title: state.texts.appName,
         body: state.endText,
-        payload: TimerNotificationAction.route,
+        payload: _payload,
         notificationDetails: _endDetails(state),
       );
     }
