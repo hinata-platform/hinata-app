@@ -51,14 +51,20 @@ class WebNotificationSurface extends TimerSurface {
       return;
     }
     _close();
-    final notification = web.Notification(
-      state.texts.appName,
-      web.NotificationOptions(
-        body: state.endText,
-        tag: _tag,
-        requireInteraction: false,
-      ),
-    );
+    final web.Notification notification;
+    try {
+      notification = web.Notification(
+        state.texts.appName,
+        web.NotificationOptions(
+          body: state.endText,
+          tag: _tag,
+          requireInteraction: false,
+        ),
+      );
+    } catch (_) {
+      // A browser that refuses after all: the toast already said it.
+      return;
+    }
     notification.onclick = ((web.Event _) {
       web.window.focus();
       _host?.openFocus();

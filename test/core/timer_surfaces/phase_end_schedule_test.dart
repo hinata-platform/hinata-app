@@ -77,6 +77,14 @@ void main() {
       expect(planner.next(TimerSurfaceState.idle, now), isA<PhaseEndKeep>());
     });
 
+    test('a countdown that stops itself at its end keeps its notification', () {
+      final planner = PhaseEndPlanner()..next(countdown(), now);
+
+      // The cubit stops a countdown the moment it reaches zero.
+      expect(planner.next(TimerSurfaceState.idle, end), isA<PhaseEndKeep>());
+      expect(planner.planned, isNull);
+    });
+
     test('a stopwatch plans nothing', () {
       final planner = PhaseEndPlanner();
       const stopwatch = TimerSurfaceState(
