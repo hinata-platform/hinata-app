@@ -76,10 +76,8 @@ void main() {
     // The Live Activity and the widgets (HIN-102), on the lock screen too.
     expect(capabilitiesForPlatform(SurfacePlatform.ios).runningSurface, isTrue);
     expect(capabilitiesForPlatform(SurfacePlatform.ios).lockScreen, isTrue);
-    expect(
-      capabilitiesForPlatform(SurfacePlatform.macos).runningSurface,
-      isFalse,
-    );
+    // A Mac has the menu bar for that (HIN-101), not the lock screen.
+    expect(capabilitiesForPlatform(SurfacePlatform.macos).lockScreen, isFalse);
     expect(
       capabilitiesForPlatform(SurfacePlatform.linux).schedulesAhead,
       isFalse,
