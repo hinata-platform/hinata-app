@@ -1,0 +1,19 @@
+name: hinata_device_lock
+description: Whether the device is locked, for hinata's background timer actions (Android).
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: ^3.11.3
+  flutter: '>=3.44.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+flutter:
+  plugin:
+    platforms:
+      android:
+        package: com.ahmadre.hinata.devicelock
+        pluginClass: HinataDeviceLockPlugin

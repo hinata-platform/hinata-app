@@ -1,0 +1,52 @@
+group = "com.ahmadre.hinata.devicelock"
+version = "0.1.0"
+
+buildscript {
+    ext.kotlin_version = "2.2.20"
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("com.android.tools.build:gradle:8.11.1")
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version")
+    }
+}
+
+rootProject.allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// AGP 9 brings Kotlin itself; applying the plugin again there fails the build.
+def isAgp9OrAbove = com.android.Version.ANDROID_GRADLE_PLUGIN_VERSION.tokenize('.')[0].toInteger() >= 9
+def builtInKotlinProperty = project.findProperty('android.builtInKotlin') ?: rootProject.findProperty('android.builtInKotlin')
+def useBuiltInKotlin = isAgp9OrAbove && (builtInKotlinProperty == null ? true : builtInKotlinProperty.toString().toBoolean())
+
+apply plugin: "com.android.library"
+if (!useBuiltInKotlin) {
+    apply plugin: "kotlin-android"
+}
+
+android {
+    namespace = "com.ahmadre.hinata.devicelock"
+    compileSdk = 35
+
+    sourceSets {
+        main.java.srcDirs += "src/main/kotlin"
+    }
+    defaultConfig {
+        minSdkVersion 21
+    }
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+    if (!useBuiltInKotlin) {
+        kotlinOptions {
+            jvmTarget = "17"
+        }
+    }
+}

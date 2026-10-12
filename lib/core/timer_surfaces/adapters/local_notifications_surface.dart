@@ -43,17 +43,35 @@ abstract final class TimerNotificationAction {
 /// The end is planned ahead with `zonedSchedule` where the platform can, so it
 /// arrives with the app closed. Linux cannot plan ahead, so there it is shown
 /// when the app notices the end while it is in the background.
+///
+/// Since HIN-103 "Stop" and the phase button act without opening the app: in
+/// front the running app takes them, otherwise a background isolate
+/// ([backgroundResponse]). From a locked screen iOS asks for
+/// the unlock first (`authenticationRequired`); Android checks the keyguard in
+/// the isolate and asks the person to unlock and try again.
 class LocalNotificationsSurface extends TimerSurface {
   LocalNotificationsSurface(
     this.platform, {
     FlutterLocalNotificationsPlugin? plugin,
     DateTime Function()? clock,
     Future<String> Function()? actionToken,
+    this.resetOnStart = true,
+    this.backgroundResponse,
   }) : _plugin = plugin ?? FlutterLocalNotificationsPlugin(),
        _clock = clock ?? DateTime.now,
        _actionTokenSource = actionToken ?? installationActionToken;
 
   final SurfacePlatform platform;
+
+  /// Runs a button pressed while the app is not in front, in a background
+  /// isolate (HIN-103). A top-level function; null leaves the buttons to the
+  /// running app.
+  final DidReceiveBackgroundNotificationResponseCallback? backgroundResponse;
+
+  /// Whether the first initialisation removes what an earlier run posted.
+  /// False in a background isolate, which acts beside the running app and
+  /// must not take down its notifications.
+  final bool resetOnStart;
   final FlutterLocalNotificationsPlugin _plugin;
   final DateTime Function() _clock;
   final PhaseEndPlanner _planner = PhaseEndPlanner();
@@ -72,6 +90,9 @@ class LocalNotificationsSurface extends TimerSurface {
 
   /// The ongoing notification of a running timer (Android).
   static const int runningId = 7101;
+
+  /// "Unlock and try again" after an action from a locked screen (Android).
+  static const int unlockHintId = 7102;
 
   static const String _endChannel = 'timer_end';
   static const String _runningChannel = 'timer_running';
@@ -153,10 +174,11 @@ class LocalNotificationsSurface extends TimerSurface {
         linux: LinuxInitializationSettings(defaultActionName: texts.appName),
       ),
       onDidReceiveNotificationResponse: _onResponse,
+      onDidReceiveBackgroundNotificationResponse: backgroundResponse,
     );
     final first = !_ready;
     _readyWith = texts;
-    if (first) {
+    if (first && resetOnStart) {
       // Whatever an earlier run left planned or posted belongs to a state this
       // run has not seen (a timer stopped elsewhere, another account). Start
       // from nothing and plan again from the state at hand.
@@ -165,11 +187,13 @@ class LocalNotificationsSurface extends TimerSurface {
     }
   }
 
+  /// In the background, and only after the device is unlocked: a timer is
+  /// not stopped by whoever picks up a locked phone.
   static DarwinNotificationAction _darwinAction(String id, String title) =>
       DarwinNotificationAction.plain(
         id,
         title,
-        options: {DarwinNotificationActionOption.foreground},
+        options: {DarwinNotificationActionOption.authenticationRequired},
       );
 
   /// A tap or an action from a notification, in the running app.
@@ -281,13 +305,13 @@ class LocalNotificationsSurface extends TimerSurface {
           AndroidNotificationAction(
             TimerNotificationAction.stop,
             state.texts.stop,
-            showsUserInterface: true,
+            showsUserInterface: false,
           ),
           if (pomodoro)
             AndroidNotificationAction(
               TimerNotificationAction.advance,
               state.isBreak ? state.texts.resume : state.texts.takeBreak,
-              showsUserInterface: true,
+              showsUserInterface: false,
             ),
         ],
       ),
@@ -350,13 +374,13 @@ class LocalNotificationsSurface extends TimerSurface {
             AndroidNotificationAction(
               TimerNotificationAction.stop,
               state.texts.stop,
-              showsUserInterface: true,
+              showsUserInterface: false,
             ),
             if (pomodoro)
               AndroidNotificationAction(
                 TimerNotificationAction.advance,
                 state.isBreak ? state.texts.resume : state.texts.takeBreak,
-                showsUserInterface: true,
+                showsUserInterface: false,
               ),
           ],
         ),
@@ -392,6 +416,30 @@ class LocalNotificationsSurface extends TimerSurface {
       );
     }
   }
+
+  /// Says that an action from the locked screen did nothing (Android). The
+  /// person unlocks and presses again; nothing is queued for later.
+  Future<void> showUnlockHint(TimerSurfaceTexts texts) => _quietly(() async {
+    if (!_android || texts.unlockToAct.isEmpty) return;
+    await _ensureReady(texts);
+    await _plugin.show(
+      id: unlockHintId,
+      title: texts.appName,
+      body: texts.unlockToAct,
+      payload: _payload,
+      notificationDetails: NotificationDetails(
+        android: AndroidNotificationDetails(
+          _endChannel,
+          texts.appName,
+          importance: Importance.high,
+          priority: Priority.high,
+          visibility: NotificationVisibility.public,
+          timeoutAfter: const Duration(minutes: 1).inMilliseconds,
+          autoCancel: true,
+        ),
+      ),
+    );
+  });
 
   @override
   Future<void> clear() => _quietly(_clear);

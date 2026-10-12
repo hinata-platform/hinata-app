@@ -12,6 +12,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.View
 import android.widget.RemoteViews
+import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetProvider
 import org.json.JSONObject
 
@@ -25,6 +26,10 @@ import org.json.JSONObject
  * `validUntil` the widget shows idle without the app and without the network.
  *
  * Every word comes from the app in the reader's language; the provider has only the gallery's.
+ *
+ * Since HIN-103 two buttons act on the timer without opening the app: stop, and for a Pomodoro
+ * the next phase. They send `hinata://timer/<command>` to home_widget's background receiver,
+ * which runs the Dart action (`timerSurfaceBackgroundAction`) in a background engine.
  */
 class TimerWidgetProvider : HomeWidgetProvider() {
 
@@ -39,6 +44,8 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     val views = render(context, record, now)
     for (id in appWidgetIds) appWidgetManager.updateAppWidget(id, views)
     scheduleNext(context, record, now)
+    // The Quick Settings tile reads the same record (HIN-103).
+    TimerTileService.refresh(context)
   }
 
   override fun onDisabled(context: Context) {
@@ -57,6 +64,8 @@ class TimerWidgetProvider : HomeWidgetProvider() {
       views.setViewVisibility(R.id.widget_clock, View.GONE)
       views.setViewVisibility(R.id.widget_over, View.GONE)
       views.setViewVisibility(R.id.widget_label, View.GONE)
+      views.setViewVisibility(R.id.widget_stop, View.GONE)
+      views.setViewVisibility(R.id.widget_advance, View.GONE)
       return views
     }
     val ends = record.endsAt
@@ -84,8 +93,36 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     val label = record.label
     views.setTextViewText(R.id.widget_label, label ?: "")
     views.setViewVisibility(R.id.widget_label, if (label == null) View.GONE else View.VISIBLE)
+    renderActions(context, views, record, over)
     return views
   }
+
+  /** The buttons while the stretch runs; over, a tap on the card opens the focus screen. */
+  private fun renderActions(context: Context, views: RemoteViews, record: Record, over: Boolean) {
+    val stop = record.stop
+    if (over || stop == null) {
+      views.setViewVisibility(R.id.widget_stop, View.GONE)
+      views.setViewVisibility(R.id.widget_advance, View.GONE)
+      return
+    }
+    views.setViewVisibility(R.id.widget_stop, View.VISIBLE)
+    views.setContentDescription(R.id.widget_stop, stop)
+    views.setOnClickPendingIntent(R.id.widget_stop, command(context, "stop"))
+    val advance = record.advance
+    if (advance == null) {
+      views.setViewVisibility(R.id.widget_advance, View.GONE)
+    } else {
+      views.setViewVisibility(R.id.widget_advance, View.VISIBLE)
+      views.setImageViewResource(
+          R.id.widget_advance,
+          if (record.isBreak) R.drawable.widget_action_play else R.drawable.widget_action_break)
+      views.setContentDescription(R.id.widget_advance, advance)
+      views.setOnClickPendingIntent(R.id.widget_advance, command(context, "advancePhase"))
+    }
+  }
+
+  private fun command(context: Context, command: String): PendingIntent =
+      HomeWidgetBackgroundIntent.getBroadcast(context, Uri.parse("$COMMAND_URI$command"))
 
   /** The next moment the widget changes by itself: the end, then the expiry. */
   private fun scheduleNext(context: Context, record: Record?, now: Long) {
@@ -140,6 +177,8 @@ class TimerWidgetProvider : HomeWidgetProvider() {
       val title: String,
       val over: String?,
       val idle: String?,
+      val stop: String? = null,
+      val advance: String? = null,
   ) {
     fun isRunning(now: Long) = startedAt > 0 && validUntil != null && validUntil > now
 
@@ -160,6 +199,8 @@ class TimerWidgetProvider : HomeWidgetProvider() {
               title = text("title") ?: "",
               over = text("over"),
               idle = text("idle"),
+              stop = text("stop"),
+              advance = text("advance"),
           )
         } catch (_: Exception) {
           null
@@ -171,5 +212,7 @@ class TimerWidgetProvider : HomeWidgetProvider() {
   companion object {
     const val KEY = "hinata_timer"
     const val FOCUS_URI = "hinata://time/focus"
+    /** The background action's link; the command follows (HIN-103). */
+    const val COMMAND_URI = "hinata://timer/"
   }
 }
