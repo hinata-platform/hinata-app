@@ -4178,7 +4178,7 @@
       },
       "schedule": {
         "title": "Horaires de notification",
-        "hint": "En dehors de tes horaires, les e-mails et notifications push attendent et arrivent ensemble au début de ta prochaine plage. La cloche montre tout immédiatement. Les messages de sécurité et les avis importants arrivent toujours.",
+        "hint": "En dehors de tes horaires, les e-mails et notifications push attendent et arrivent ensemble au début de ta prochaine plage. Ce que tu as déjà lu dans l’app d’ici là n’est pas renvoyé. La cloche montre tout immédiatement. Les messages de sécurité et les avis importants arrivent toujours.",
         "always": "Toujours",
         "custom": "Personnalisé",
         "from": "De",

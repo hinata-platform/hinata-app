@@ -4178,7 +4178,7 @@
       },
       "schedule": {
         "title": "Horario de notificaciones",
-        "hint": "Fuera de tu horario, los correos y las notificaciones push esperan y llegan juntos cuando empieza tu siguiente franja. La campana lo muestra todo al momento. Los mensajes de seguridad y los avisos importantes llegan siempre.",
+        "hint": "Fuera de tu horario, los correos y las notificaciones push esperan y llegan juntos cuando empieza tu siguiente franja. Lo que ya hayas leído en la app hasta entonces no se vuelve a enviar. La campana lo muestra todo al momento. Los mensajes de seguridad y los avisos importantes llegan siempre.",
         "always": "Siempre",
         "custom": "Personalizado",
         "from": "Desde",
