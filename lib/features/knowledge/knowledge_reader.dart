@@ -74,6 +74,33 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
   List<String> _linkedIssueIds = const [];
   NodeKey? _activeToc;
 
+  /// The page's subpages and related pages, worked out once per page and
+  /// change of the cache rather than on every frame the reader rebuilds.
+  List<KbArticle> _children = const [];
+  List<KbArticle> _related = const [];
+  (String, int)? _derivedFor;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _derive();
+  }
+
+  @override
+  void didUpdateWidget(KnowledgeReader oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _derive();
+  }
+
+  void _derive() {
+    final repo = KnowledgeScope.of(context).repo;
+    final key = (widget.article.id, repo.revision);
+    if (key == _derivedFor) return;
+    _derivedFor = key;
+    _children = repo.childrenOf(widget.article.id);
+    _related = repo.relatedArticles(widget.article);
+  }
+
   @override
   void dispose() {
     _blocks.dispose();
@@ -164,7 +191,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
     final sp = repo.spaceById(a.spaceId);
     final editor = repo.userById(a.editorId);
     final ancestors = repo.ancestorsOf(a.id);
-    final children = repo.childrenOf(a.id);
+    final children = _children;
     final linkedIds = _linkedIssueIds;
 
     return Column(
@@ -405,7 +432,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
   Widget _aside(KnowledgeRepository repo, List<OutlineEntry> toc) {
     final a = widget.article;
     final sp = repo.spaceById(a.spaceId);
-    final related = repo.relatedArticles(a);
+    final related = _related;
     final contributors = widget.contributors;
 
     return Column(
