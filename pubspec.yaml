@@ -59,7 +59,8 @@ dependencies:
   # Liquid Glass UI: the iOS 27 glass material (frost, rimShade/rimLight,
   # GlassLensModel.paraxial), the iOS 27 performance work (#359, in 1.9.0) and
   # our accessibility pass (#382, merged as #387 into 1.10.0). Back on the
-  # published package since 1.11.0.
+  # published package; 1.12.0 is the first release with #417 (morph springs
+  # stop once nothing visibly moves).
   liquid_glass_widgets: ^1.12.0
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
