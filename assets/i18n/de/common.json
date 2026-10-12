@@ -4178,7 +4178,7 @@
       },
       "schedule": {
         "title": "Benachrichtigungszeiten",
-        "hint": "Außerhalb deiner Zeiten warten E-Mails und Push-Nachrichten und kommen gesammelt, sobald deine nächste Zeit beginnt. Die Glocke zeigt alles sofort. Sicherheitsmeldungen und wichtige Hinweise kommen immer.",
+        "hint": "Außerhalb deiner Zeiten warten E-Mails und Push-Nachrichten und kommen gesammelt, sobald deine nächste Zeit beginnt. Was du bis dahin in der App gelesen hast, kommt nicht noch einmal. Die Glocke zeigt alles sofort. Sicherheitsmeldungen und wichtige Hinweise kommen immer.",
         "always": "Immer",
         "custom": "Benutzerdefiniert",
         "from": "Von",
