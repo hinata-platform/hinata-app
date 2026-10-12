@@ -217,12 +217,10 @@ Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
     surfaces: [
       if (platform == SurfacePlatform.android) notifications,
       if (platform == SurfacePlatform.ios) LiveActivitySurface(),
-      HomeWidgetSurface(
-        platform,
-        store: const TimerWidgetStore(
-          backgroundAction: timerSurfaceBackgroundAction,
-        ),
-      ),
+      // Without the action: registering it again from here would make
+      // home_widget start a second background engine in the middle of this
+      // one's run, and the widget would never hear that the button finished.
+      HomeWidgetSurface(platform),
     ],
   );
   final outcome = await action.run(command);
