@@ -44,6 +44,33 @@ import home_widget
     HinataLiveActivityChannel.register(with: engineBridge.applicationRegistrar.messenger())
   }
 
+  /// A notification button that acts in the background (HIN-103) runs its Dart
+  /// action in an engine of its own, after flutter_local_notifications has
+  /// already told iOS it is done. Without time asked for here, iOS suspends the
+  /// app before that action reaches the server. Twenty seconds are plenty for
+  /// one request, and the task ends by itself.
+  override func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    if response.actionIdentifier.hasPrefix("timer.") {
+      let application = UIApplication.shared
+      var task = UIBackgroundTaskIdentifier.invalid
+      task = application.beginBackgroundTask(withName: "hinata.timer.action") {
+        application.endBackgroundTask(task)
+        task = .invalid
+      }
+      DispatchQueue.main.asyncAfter(deadline: .now() + 20) {
+        guard task != .invalid else { return }
+        application.endBackgroundTask(task)
+        task = .invalid
+      }
+    }
+    super.userNotificationCenter(
+      center, didReceive: response, withCompletionHandler: completionHandler)
+  }
+
   /// The plugins of a background engine, and the Live Activity channel, so a
   /// background action can draw the activity after it stopped the timer.
   static func registerBackgroundPlugins(_ registry: FlutterPluginRegistry) {
