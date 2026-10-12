@@ -15,10 +15,20 @@ import '../../core/theme/app_type.dart';
 /// AppConfig to re-verify the new backend. Auth is re-checked centrally once the
 /// switch settles (see `HinataApp._onAppConfig`), so the user either lands back
 /// in the app (the server has a stored token) or on its sign-in screen.
-Future<void> switchToServer(BuildContext context, String url) async {
+///
+/// The server already chosen is left alone, unless [retry]: on the connect
+/// screen it is the one that just failed, and choosing it again tries again.
+Future<void> switchToServer(
+  BuildContext context,
+  String url, {
+  bool retry = false,
+}) async {
   final storage = context.read<AppStorage>();
-  if (storage.serverUrl == url) return;
   final appConfig = context.read<AppConfigBloc>();
+  if (storage.serverUrl == url) {
+    if (retry) appConfig.add(const AppConfigStarted());
+    return;
+  }
   await storage.setCurrentServer(url);
   appConfig.add(const AppConfigStarted());
 }
