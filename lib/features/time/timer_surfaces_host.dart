@@ -16,6 +16,7 @@ import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
 import '../../core/timer_surfaces/background/timer_surface_snapshot.dart';
 import '../../core/timer_surfaces/build_timer_surfaces.dart';
 import '../../core/timer_actions/api_live_activity_push_registry.dart';
+import '../../core/timer_surfaces/live_activity_push_registry.dart';
 import '../../core/timer_actions/timer_background_action.dart';
 import '../../core/timer_surfaces/quick_settings_tile.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
@@ -41,6 +42,7 @@ class TimerSurfacesHost extends StatefulWidget {
     required this.child,
     this.clearSignal,
     this.hotkeys,
+    this.liveActivityRegistry,
     this.surfaces,
     this.snapshots = const TimerSurfaceSnapshotStore(),
     this.tileOffer = const QuickSettingsTileOffer(),
@@ -58,6 +60,9 @@ class TimerSurfacesHost extends StatefulWidget {
 
   /// What the settings see of the system-wide shortcuts.
   final HotkeyStatus? hotkeys;
+
+  /// Where Live Activity tokens are registered; the app's own when null.
+  final LiveActivityPushRegistry? liveActivityRegistry;
 
   /// The surfaces to drive; the platform's own when null (tests hand fakes).
   final List<TimerSurface>? surfaces;
@@ -82,9 +87,9 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
           appTitle: () => _appTitle,
           flashText: () => _flashText,
           hotkeys: widget.hotkeys ?? (_ownHotkeys = HotkeyStatus()),
-          liveActivityRegistry: ApiLiveActivityPushRegistry(
-            context.read<ApiClient>(),
-          ),
+          liveActivityRegistry:
+              widget.liveActivityRegistry ??
+              ApiLiveActivityPushRegistry(context.read<ApiClient>()),
           background: const TimerBackgroundCallbacks(
             notification: timerNotificationBackgroundResponse,
             widget: timerSurfaceBackgroundAction,
