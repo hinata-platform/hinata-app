@@ -17,6 +17,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/util/dates.dart' show weekdayName;
 import '../../core/util/file_download.dart';
+import '../../core/util/share_origin.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch, fmtDuration;
 import '../sprint/modals/glass_modal.dart'
     show
@@ -234,6 +235,8 @@ class _TimePreferencesBody extends StatelessWidget {
   /// it far beyond any real career of entries.
   static Future<void> _exportCsv(BuildContext context) async {
     final export = context.read<TimeExportCubit>();
+    // Read before the first await: the share sheet grows out of the button.
+    final origin = shareOriginOf(context);
     try {
       final DownloadResult result;
       var truncated = false;
@@ -244,6 +247,7 @@ class _TimePreferencesBody extends StatelessWidget {
           'time-entries.csv',
           file.bytes,
           'text/csv',
+          sharePositionOrigin: origin,
         );
       } else {
         // Straight to disk: a long record of entries runs to tens of megabytes,
@@ -252,7 +256,7 @@ class _TimePreferencesBody extends StatelessWidget {
           path,
         ) async {
           truncated = await export.csvTo(path);
-        });
+        }, sharePositionOrigin: origin);
       }
       if (!context.mounted || result.outcome == DownloadOutcome.dismissed) {
         return;
