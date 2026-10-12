@@ -32,6 +32,7 @@ class TimerSurfaceTexts extends Equatable {
     this.focusPhase = '',
     this.breakPhase = '',
     this.unlockToAct = '',
+    this.actionFailed = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -80,6 +81,10 @@ class TimerSurfaceTexts extends Equatable {
   /// Why an action from a locked screen did nothing (Android, HIN-103).
   final String unlockToAct;
 
+  /// Why an action from outside the app did nothing else: no answer from the
+  /// server, or the session ended (Android).
+  final String actionFailed;
+
   /// The words as a background isolate reads them back (HIN-103).
   Map<String, String> toJson() => {
     'appName': appName,
@@ -93,6 +98,7 @@ class TimerSurfaceTexts extends Equatable {
     'resume': resume,
     'idle': idle,
     'unlockToAct': unlockToAct,
+    'actionFailed': actionFailed,
   };
 
   /// Anything missing reads as empty; a surface then shows less, not wrong.
@@ -110,6 +116,7 @@ class TimerSurfaceTexts extends Equatable {
       resume: text('resume'),
       idle: text('idle'),
       unlockToAct: text('unlockToAct'),
+      actionFailed: text('actionFailed'),
     );
   }
 
@@ -135,6 +142,7 @@ class TimerSurfaceTexts extends Equatable {
     focusPhase,
     breakPhase,
     unlockToAct,
+    actionFailed,
   ];
 }
 

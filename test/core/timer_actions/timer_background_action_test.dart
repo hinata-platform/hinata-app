@@ -16,8 +16,8 @@ import 'package:hinata_device_lock/hinata_device_lock.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Stop and the next phase from a notification, a widget or the tile, without
-/// the app (HIN-103): the server's answer is what counts, the token is never
-/// refreshed in the background, and a locked phone does nothing.
+/// the app (HIN-103): the server's answer is what counts, an expired token
+/// is refreshed like in the app, and a locked phone does nothing.
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   // The test binding answers every request with 400; this one talks to the
@@ -28,10 +28,12 @@ void main() {
   late List<String> requests;
   late Map<String, dynamic>? running;
   late int timerStatus;
+  late int refreshStatus;
 
   setUp(() async {
     requests = [];
     timerStatus = 200;
+    refreshStatus = 200;
     running = {
       'id': 'timer-1',
       'startedAt': DateTime.now()
@@ -49,6 +51,14 @@ void main() {
       requests.add('${request.method} ${request.uri.path} $body'.trim());
       final response = request.response..headers.contentType = ContentType.json;
       switch ('${request.method} ${request.uri.path}') {
+        case 'POST /api/v1/auth/refresh':
+          response.statusCode = refreshStatus;
+          if (refreshStatus == 200) {
+            timerStatus = 200;
+            response.write(
+              jsonEncode({'accessToken': 'fresh', 'refreshToken': 'next'}),
+            );
+          }
         case 'GET /api/v1/me/timer':
           response.statusCode = timerStatus;
           if (timerStatus == 200 && running != null) {
@@ -116,7 +126,7 @@ void main() {
     final surface = RecordingSurface();
     return (
       TimerBackgroundAction(
-        time: TimeRepository(ApiClient(storage, refreshOnUnauthorized: false)),
+        time: TimeRepository(ApiClient(storage)),
         surfaces: [surface],
         snapshot: snapshot,
         lock: lock ?? FakeLock(locked),
@@ -169,18 +179,31 @@ void main() {
     expect(surface.applied.single.running, isFalse);
   });
 
-  test('a 401 ends the attempt without a refresh and without signing the '
-      'app out', () async {
+  test('an expired access token is refreshed and the action goes through '
+      '(a widget pressed long after the app went to sleep)', () async {
     timerStatus = 401;
     final (run, surface, storage) = await action();
 
     expect(
       await run.run(TimerBackgroundCommand.stop),
+      TimerBackgroundOutcome.done,
+    );
+    expect(requests.where((r) => r.contains('/auth/refresh')), hasLength(1));
+    expect(requests.where((r) => r.contains('/timer/stop')), hasLength(1));
+    expect(storage.accessToken, 'fresh');
+    expect(surface.applied.single.running, isFalse);
+  });
+
+  test('a refused refresh ends the attempt as signed out', () async {
+    timerStatus = 401;
+    refreshStatus = 401;
+    final (run, surface, _) = await action();
+
+    expect(
+      await run.run(TimerBackgroundCommand.stop),
       TimerBackgroundOutcome.signedOut,
     );
-    expect(requests.where((r) => r.contains('/auth/refresh')), isEmpty);
-    expect(storage.accessToken, 'access');
-    expect(storage.refreshToken, 'refresh');
+    expect(requests.where((r) => r.contains('/timer/stop')), isEmpty);
     expect(surface.applied, isEmpty);
   });
 
@@ -206,8 +229,8 @@ void main() {
     expect(requests.where((r) => r.contains('/timer/stop')), hasLength(1));
   });
 
-  test('only stop, the next phase and discard exist, and only from our '
-      'own links and buttons', () {
+  test('only stop and the next phase exist, and only from our own links and '
+      'buttons', () {
     expect(
       TimerBackgroundCommand.fromUri(Uri.parse('hinata://timer/stop')),
       TimerBackgroundCommand.stop,
@@ -216,10 +239,12 @@ void main() {
       TimerBackgroundCommand.fromUri(Uri.parse('hinata://timer/advancePhase')),
       TimerBackgroundCommand.advancePhase,
     );
-    expect(
-      TimerBackgroundCommand.fromUri(Uri.parse('hinata://timer/start')),
-      isNull,
-    );
+    for (final other in const ['start', 'discard']) {
+      expect(
+        TimerBackgroundCommand.fromUri(Uri.parse('hinata://timer/$other')),
+        isNull,
+      );
+    }
     expect(
       TimerBackgroundCommand.fromUri(Uri.parse('https://evil/timer/stop')),
       isNull,

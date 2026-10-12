@@ -1647,7 +1647,8 @@
         "focusPhase": "Pomodoro, focus",
         "breakPhase": "Pomodoro, break"
       },
-      "unlockToAct": "Unlock your device, then try again."
+      "unlockToAct": "Unlock your device, then try again.",
+      "actionFailed": "That didn’t work. Open Hinata and try again there."
     }
   },
   "availability": {

@@ -91,8 +91,9 @@ class LocalNotificationsSurface extends TimerSurface {
   /// The ongoing notification of a running timer (Android).
   static const int runningId = 7101;
 
-  /// "Unlock and try again" after an action from a locked screen (Android).
-  static const int unlockHintId = 7102;
+  /// "Unlock and try again" or "open the app" after a press outside the app
+  /// that did nothing (Android).
+  static const int actionHintId = 7102;
 
   static const String _endChannel = 'timer_end';
   static const String _runningChannel = 'timer_running';
@@ -417,29 +418,32 @@ class LocalNotificationsSurface extends TimerSurface {
     }
   }
 
-  /// Says that an action from the locked screen did nothing (Android). The
-  /// person unlocks and presses again; nothing is queued for later.
-  Future<void> showUnlockHint(TimerSurfaceTexts texts) => _quietly(() async {
-    if (!_android || texts.unlockToAct.isEmpty) return;
-    await _ensureReady(texts);
-    await _plugin.show(
-      id: unlockHintId,
-      title: texts.appName,
-      body: texts.unlockToAct,
-      payload: _payload,
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          _endChannel,
-          texts.appName,
-          importance: Importance.high,
-          priority: Priority.high,
-          visibility: NotificationVisibility.public,
-          timeoutAfter: const Duration(minutes: 1).inMilliseconds,
-          autoCancel: true,
-        ),
-      ),
-    );
-  });
+  /// Says that a press outside the app did nothing (Android): [body] tells
+  /// to unlock, or to open the app. Nothing is queued for later. Not on iOS:
+  /// there the system asks for the unlock itself, and a background engine
+  /// must not take over the notification centre from the app.
+  Future<void> showActionHint(String body, TimerSurfaceTexts texts) =>
+      _quietly(() async {
+        if (!_android || body.isEmpty) return;
+        await _ensureReady(texts);
+        await _plugin.show(
+          id: actionHintId,
+          title: texts.appName,
+          body: body,
+          payload: _payload,
+          notificationDetails: NotificationDetails(
+            android: AndroidNotificationDetails(
+              _endChannel,
+              texts.appName,
+              importance: Importance.high,
+              priority: Priority.high,
+              visibility: NotificationVisibility.public,
+              timeoutAfter: const Duration(minutes: 1).inMilliseconds,
+              autoCancel: true,
+            ),
+          ),
+        );
+      });
 
   @override
   Future<void> clear() => _quietly(_clear);

@@ -91,10 +91,7 @@ enum _Refresh {
 /// Dio-based client bound to the configured server URL. Transparently
 /// attaches the bearer token and refreshes it once on 401.
 class ApiClient {
-  /// [refreshOnUnauthorized] false is for a background isolate (HIN-103): a
-  /// refresh there would rotate the refresh token under the running app and
-  /// sign it out, so a 401 is simply the answer and nothing is cleared.
-  ApiClient(this._storage, {this.refreshOnUnauthorized = true}) {
+  ApiClient(this._storage) {
     // The app builds exactly one, in `main`. Recorded here because an
     // `ImageProvider` is not a widget: it is created inside a decorator
     // builder, cached by Flutter across routes, and asked to fetch its bytes
@@ -145,8 +142,7 @@ class ApiClient {
           final isRefreshRequest = error.requestOptions.path.contains(
             '/auth/refresh',
           );
-          if (refreshOnUnauthorized &&
-              error.response?.statusCode == 401 &&
+          if (error.response?.statusCode == 401 &&
               !isRefreshRequest &&
               _storage.refreshToken != null &&
               error.requestOptions.extra['retried'] != true) {
@@ -195,9 +191,6 @@ class ApiClient {
 
   final AppStorage _storage;
   late final Dio _dio;
-
-  /// Whether a 401 tries `/auth/refresh` once before it fails.
-  final bool refreshOnUnauthorized;
 
   /// In-flight refresh, shared by every request that 401s at the same time so
   /// they trigger ONE `/auth/refresh` instead of a thundering herd (which wastes
