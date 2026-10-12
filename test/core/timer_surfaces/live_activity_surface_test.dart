@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/timer_surfaces/adapters/live_activity_surface.dart';
+import 'package:hinata/core/timer_surfaces/live_activity_push_registry.dart';
+import 'package:hinata/core/timer_surfaces/timer_surface.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_state.dart';
 
@@ -235,6 +237,111 @@ void main() {
       );
     });
   });
+
+  group('background updates (HIN-103)', () {
+    late FakeRegistry registry;
+    late LiveActivitySurface pushing;
+    const background = TimerSurfacePrefs(
+      consented: true,
+      introSeen: true,
+      runningSurface: true,
+      backgroundLiveActivity: true,
+    );
+
+    setUp(() async {
+      registry = FakeRegistry();
+      pushing = LiveActivitySurface(channel: channel, registry: registry);
+      await pushing.init(NoHost());
+    });
+
+    LiveActivityPushToken token(String value, {String ref = 'ref-1'}) =>
+        LiveActivityPushToken(ref: ref, token: value, key: 'a2V5');
+
+    test(
+      'switched off, an activity is local and nothing is registered',
+      () async {
+        await pushing.apply(state(timer()));
+        channel.tokens?.call(token('aa11'));
+        await pumpEventQueue();
+
+        expect(channel.push, isFalse);
+        expect(registry.calls, isEmpty);
+      },
+    );
+
+    test('switched on, the activity asks for pushes and its token is '
+        'registered with its key', () async {
+      await pushing.apply(state(timer(), prefs: background));
+      channel.tokens!(token('aa11'));
+      await pumpEventQueue();
+
+      expect(channel.push, isTrue);
+      expect(registry.calls, ['register:aa11']);
+      expect(registry.registered.single.key, 'a2V5');
+    });
+
+    test('a rotated token replaces the old one', () async {
+      await pushing.apply(state(timer(), prefs: background));
+      channel.tokens!(token('aa11'));
+      await pumpEventQueue();
+      channel.tokens!(token('bb22'));
+      await pumpEventQueue();
+
+      expect(registry.calls, [
+        'register:aa11',
+        'unregister:aa11',
+        'register:bb22',
+      ]);
+    });
+
+    test('a token of another activity is not registered', () async {
+      await pushing.apply(state(timer(), prefs: background));
+      channel.tokens!(token('cc33', ref: 'ref-other'));
+      await pumpEventQueue();
+
+      expect(registry.calls, isEmpty);
+    });
+
+    test('switching off takes the token back at once', () async {
+      await pushing.apply(state(timer(), prefs: background));
+      channel.tokens!(token('aa11'));
+      await pumpEventQueue();
+
+      await pushing.apply(state(timer()));
+
+      expect(registry.calls, ['register:aa11', 'unregister:aa11']);
+    });
+
+    test('stopping and signing out take the token back', () async {
+      await pushing.apply(state(timer(), prefs: background));
+      channel.tokens!(token('aa11'));
+      await pumpEventQueue();
+      await pushing.apply(state(null));
+      expect(registry.calls.last, 'unregister:aa11');
+
+      await pushing.apply(state(timer(), prefs: background));
+      channel.tokens!(token('dd44', ref: 'ref-2'));
+      await pumpEventQueue();
+      await pushing.clear();
+      expect(registry.calls.last, 'unregister:dd44');
+    });
+
+    test('the content carries the words for a sealed state, and no id or '
+        'description without the lock-screen switch', () async {
+      await pushing.apply(state(timer(), prefs: background));
+
+      expect(channel.last['words'], {
+        'running': 'Timer running',
+        'onBreak': 'Break',
+        'countdownOver': 'Countdown over',
+        'workOver': 'Interval over',
+        'breakOver': 'Break over',
+      });
+      expect(channel.last.toString(), isNot(contains('timer-1')));
+      expect(channel.last.toString(), isNot(contains('Quarterly')));
+      expect(channel.last.toString(), isNot(contains('project-1')));
+    });
+  });
 }
 
 class FakeLiveActivityChannel extends LiveActivityChannel {
@@ -248,13 +355,26 @@ class FakeLiveActivityChannel extends LiveActivityChannel {
   @override
   Future<bool> areActivitiesEnabled() async => true;
 
+  /// Whether the last start asked for server updates (HIN-103).
+  bool? push;
+
+  void Function(LiveActivityPushToken token)? tokens;
+
   @override
-  Future<String?> start(Map<String, Object?> content) async {
+  Future<String?> start(
+    Map<String, Object?> content, {
+    bool push = false,
+  }) async {
     calls.add('start');
     last = content;
+    this.push = push;
     if (refuse) return null;
     return 'ref-${++_next}';
   }
+
+  @override
+  void onPushToken(void Function(LiveActivityPushToken token) handler) =>
+      tokens = handler;
 
   /// Whether the activity is still there; false once swiped away.
   bool alive = true;
@@ -271,4 +391,38 @@ class FakeLiveActivityChannel extends LiveActivityChannel {
 
   @override
   Future<void> endAll() async => calls.add('endAll');
+}
+
+class FakeRegistry implements LiveActivityPushRegistry {
+  final List<String> calls = [];
+  final List<LiveActivityPushToken> registered = [];
+
+  @override
+  Future<bool> register(LiveActivityPushToken token) async {
+    calls.add('register:${token.token}');
+    registered.add(token);
+    return true;
+  }
+
+  @override
+  Future<void> unregister(String token) async => calls.add('unregister:$token');
+}
+
+class NoHost implements TimerSurfaceHost {
+  @override
+  bool get isForeground => true;
+  @override
+  Future<void> end() async {}
+  @override
+  Future<void> start() async {}
+  @override
+  Future<void> advancePhase() async {}
+  @override
+  void openFocus() {}
+  @override
+  void openRoute(String route) {}
+  @override
+  Future<void> showWindow() async {}
+  @override
+  Future<void> quit() async {}
 }

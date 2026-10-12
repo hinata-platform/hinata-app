@@ -1646,7 +1646,8 @@
         "countdown": "Compte à rebours en cours",
         "focusPhase": "Pomodoro, concentration",
         "breakPhase": "Pomodoro, pause"
-      }
+      },
+      "unlockToAct": "Déverrouille ton appareil, puis réessaie."
     }
   },
   "availability": {
@@ -4379,7 +4380,9 @@
         "alt": "Alt",
         "shift": "Maj",
         "win": "Win"
-      }
+      },
+      "backgroundUpdates": "Mettre à jour en arrière-plan",
+      "backgroundUpdatesHint": "Les changements de phase et un arrêt sur un autre appareil atteignent l'activité en direct même quand l'app est fermée. Ton serveur les envoie chiffrés de bout en bout via Hinata Connect, Google et Apple, qui ne voient que le moment de l'envoi."
     }
   },
   "twofa": {

@@ -31,6 +31,7 @@ class TimerSurfaceTexts extends Equatable {
     this.countdown = '',
     this.focusPhase = '',
     this.breakPhase = '',
+    this.unlockToAct = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -76,6 +77,42 @@ class TimerSurfaceTexts extends Equatable {
   final String focusPhase;
   final String breakPhase;
 
+  /// Why an action from a locked screen did nothing (Android, HIN-103).
+  final String unlockToAct;
+
+  /// The words as a background isolate reads them back (HIN-103).
+  Map<String, String> toJson() => {
+    'appName': appName,
+    'countdownOver': countdownOver,
+    'workOver': workOver,
+    'breakOver': breakOver,
+    'running': running,
+    'onBreak': onBreak,
+    'stop': stop,
+    'takeBreak': takeBreak,
+    'resume': resume,
+    'idle': idle,
+    'unlockToAct': unlockToAct,
+  };
+
+  /// Anything missing reads as empty; a surface then shows less, not wrong.
+  factory TimerSurfaceTexts.fromJson(Map<String, dynamic> json) {
+    String text(String key) => json[key] is String ? json[key] as String : '';
+    return TimerSurfaceTexts(
+      appName: text('appName'),
+      countdownOver: text('countdownOver'),
+      workOver: text('workOver'),
+      breakOver: text('breakOver'),
+      running: text('running'),
+      onBreak: text('onBreak'),
+      stop: text('stop'),
+      takeBreak: text('takeBreak'),
+      resume: text('resume'),
+      idle: text('idle'),
+      unlockToAct: text('unlockToAct'),
+    );
+  }
+
   @override
   List<Object?> get props => [
     appName,
@@ -97,6 +134,7 @@ class TimerSurfaceTexts extends Equatable {
     countdown,
     focusPhase,
     breakPhase,
+    unlockToAct,
   ];
 }
 
@@ -120,6 +158,7 @@ class TimerSurfaceState extends Equatable {
     this.runningSurface = false,
     this.titleClock = false,
     this.keepInTray = false,
+    this.backgroundUpdates = false,
     this.toggleHotkey,
     this.focusHotkey,
     this.confirmed = true,
@@ -156,6 +195,10 @@ class TimerSurfaceState extends Equatable {
 
   /// Closing the window leaves the timer in the menu bar or tray.
   final bool keepInTray;
+
+  /// The Live Activity takes updates from the server while the app sleeps
+  /// (iOS, HIN-103); only then does it register for them.
+  final bool backgroundUpdates;
 
   /// The system-wide shortcuts to bind; null when switched off.
   final HotKey? toggleHotkey;
@@ -196,6 +239,7 @@ class TimerSurfaceState extends Equatable {
     runningSurface,
     titleClock,
     keepInTray,
+    backgroundUpdates,
     toggleHotkey,
     focusHotkey,
     confirmed,
@@ -266,6 +310,8 @@ TimerSurfaceState deriveTimerSurfaceState(
     runningSurface: on && prefs.runningSurface,
     titleClock: on && prefs.titleClock,
     keepInTray: standing.keepInTray,
+    backgroundUpdates:
+        on && prefs.runningSurface && prefs.backgroundLiveActivity,
     toggleHotkey: standing.toggleHotkey,
     focusHotkey: standing.focusHotkey,
     confirmed: confirmed,

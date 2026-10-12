@@ -1646,7 +1646,8 @@
         "countdown": "Countdown läuft",
         "focusPhase": "Pomodoro, Fokus",
         "breakPhase": "Pomodoro, Pause"
-      }
+      },
+      "unlockToAct": "Entsperre dein Gerät und versuch es noch einmal."
     }
   },
   "availability": {
@@ -4379,7 +4380,9 @@
         "alt": "Alt",
         "shift": "Umschalt",
         "win": "Win"
-      }
+      },
+      "backgroundUpdates": "Im Hintergrund aktualisieren",
+      "backgroundUpdatesHint": "Phasenwechsel und ein Stopp auf einem anderen Gerät erreichen die Live-Aktivität auch bei geschlossener App. Dein Server schickt sie Ende-zu-Ende verschlüsselt über Hinata Connect, Google und Apple. Die sehen nur, wann etwas gesendet wird."
     }
   },
   "twofa": {

@@ -1646,7 +1646,8 @@
         "countdown": "カウントダウン作動中",
         "focusPhase": "ポモドーロ（集中）",
         "breakPhase": "ポモドーロ（休憩）"
-      }
+      },
+      "unlockToAct": "デバイスのロックを解除してから、もう一度お試しください。"
     }
   },
   "availability": {
@@ -4379,7 +4380,9 @@
         "alt": "Alt",
         "shift": "Shift",
         "win": "Win"
-      }
+      },
+      "backgroundUpdates": "バックグラウンドで更新",
+      "backgroundUpdatesHint": "アプリを閉じていても、フェーズの切り替えや別のデバイスでの停止がライブアクティビティに反映されます。サーバーはエンドツーエンドで暗号化して Hinata Connect、Google、Apple 経由で送信し、これらが知るのは送信時刻だけです。"
     }
   },
   "twofa": {
