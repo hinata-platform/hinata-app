@@ -10,7 +10,7 @@ import Foundation
 /// blinks.
 ///
 /// With `push` (HIN-103) a new activity is requested for server updates: a
-/// fresh key goes into the shared Keychain with the words the extension needs,
+/// fresh key goes into the App Group with the words the extension needs,
 /// and every push token iOS issues for it is handed to Dart (`pushToken`) with
 /// that key, to register with the server. The server then sends sealed states
 /// the extension opens; the key and the words go with the activity's end.
@@ -98,7 +98,7 @@ enum HinataLiveActivityChannel {
     if push {
       let record = TimerActivityRecord(
         key: TimerActivityCrypto.newKey(), words: words, label: state.label)
-      guard TimerActivityKeychain.save(record, ref: ref) else { return nil }
+      guard TimerActivityStore.save(record, ref: ref) else { return nil }
     }
     do {
       let activity = try Activity.request(
@@ -109,7 +109,7 @@ enum HinataLiveActivityChannel {
       watch(activity)
       return activity.attributes.activityRef
     } catch {
-      TimerActivityKeychain.delete(ref: ref)
+      TimerActivityStore.delete(ref: ref)
       return nil
     }
   }
@@ -123,7 +123,7 @@ enum HinataLiveActivityChannel {
       .first(where: { $0.attributes.activityRef == ref }),
       activity.activityState == .active || activity.activityState == .stale
     else {
-      TimerActivityKeychain.delete(ref: ref)
+      TimerActivityStore.delete(ref: ref)
       return false
     }
     keep(ref, words: words, label: state.label)
@@ -135,12 +135,12 @@ enum HinataLiveActivityChannel {
   /// updates: the language may have changed, the person may have switched the
   /// description off. Nothing for an activity without a key.
   private static func keep(_ ref: String, words: [String: String], label: String?) {
-    guard var record = TimerActivityKeychain.load(ref: ref) else { return }
+    guard var record = TimerActivityStore.load(ref: ref) else { return }
     let next = TimerActivityRecord(
       key: record.key, words: words.isEmpty ? record.words : words, label: label)
     guard next != record else { return }
     record = next
-    TimerActivityKeychain.save(record, ref: ref)
+    TimerActivityStore.save(record, ref: ref)
   }
 
   /// Hands each push token of [activity] to Dart with its key, the first and
@@ -149,12 +149,12 @@ enum HinataLiveActivityChannel {
   private static func watch(_ activity: Activity<TimerActivityAttributes>) {
     let ref = activity.attributes.activityRef
     guard primary != nil, !watched.contains(ref),
-      TimerActivityKeychain.load(ref: ref) != nil
+      TimerActivityStore.load(ref: ref) != nil
     else { return }
     watched.insert(ref)
     Task {
       for await token in activity.pushTokenUpdates {
-        guard let record = TimerActivityKeychain.load(ref: ref) else { break }
+        guard let record = TimerActivityStore.load(ref: ref) else { break }
         let hex = token.map { String(format: "%02x", $0) }.joined()
         await MainActor.run {
           primary?.invokeMethod(
@@ -169,7 +169,7 @@ enum HinataLiveActivityChannel {
   @available(iOS 16.2, *)
   private static func end(_ activity: Activity<TimerActivityAttributes>) async {
     await activity.end(nil, dismissalPolicy: .immediate)
-    TimerActivityKeychain.delete(ref: activity.attributes.activityRef)
+    TimerActivityStore.delete(ref: activity.attributes.activityRef)
   }
 
   @available(iOS 16.2, *)
@@ -177,7 +177,7 @@ enum HinataLiveActivityChannel {
     for activity in Activity<TimerActivityAttributes>.activities {
       await end(activity)
     }
-    TimerActivityKeychain.deleteAll()
+    TimerActivityStore.deleteAll()
   }
 
   /// Ends what is past its moment. A state the server sealed is opened first;
@@ -192,7 +192,7 @@ enum HinataLiveActivityChannel {
         await end(activity)
       }
     }
-    if held.isEmpty { TimerActivityKeychain.deleteAll() }
+    if held.isEmpty { TimerActivityStore.deleteAll() }
   }
 
   /// Stale at the end of the stretch, or at the dismissal for a stopwatch, so
