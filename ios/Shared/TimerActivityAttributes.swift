@@ -32,7 +32,8 @@ import Foundation
       /// A state from the server, still sealed (HIN-103); every field above is
       /// a placeholder until [resolved] opens it.
       var sealed: Sealed?
-      /// Draws "Timer" and no time: a sealed state this phone cannot open.
+      /// Draws the widget's name and no time: a sealed state this phone cannot
+      /// open.
       var hidesTime = false
 
       struct Sealed: Codable, Hashable {
@@ -55,11 +56,13 @@ import Foundation
         self.label = label
       }
 
-      /// "Timer", without a time or a word of the person's.
+      /// The widget's name ("Timer" in the reader's language), without a time
+      /// or a word of the person's.
       static var opaque: Self {
         var state = Self(
           mode: "stopwatch", phase: nil, startedAt: Date(), endsAt: nil,
-          dismissAt: Date().addingTimeInterval(3600), title: "Timer", staleTitle: nil, label: nil)
+          dismissAt: Date().addingTimeInterval(3600), title: String(localized: "widget.name"),
+          staleTitle: nil, label: nil)
         state.hidesTime = true
         return state
       }
