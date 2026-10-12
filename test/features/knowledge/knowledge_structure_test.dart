@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/article_repository.dart';
 import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
@@ -61,6 +62,22 @@ void main() {
     return (repo, api);
   }
 
+  group('account change', () {
+    test('reset forgets the pages and loads the next account afresh', () async {
+      final (repo, api) = await loaded([page('a'), page('b')]);
+      expect(repo.articles, hasLength(2));
+
+      repo.reset();
+      expect(repo.articles, isEmpty);
+      api.pages
+        ..clear()
+        ..add(page('c'));
+      await repo.init();
+
+      expect(repo.articles.map((a) => a.id), ['c']);
+    });
+  });
+
   group('order', () {
     test('siblings come by position, then by title', () async {
       final (repo, _) = await loaded([
@@ -114,6 +131,88 @@ void main() {
     });
   });
 
+  group('subpages', () {
+    test('come in sibling order and follow a move', () async {
+      final (repo, api) = await loaded([
+        page('root'),
+        page('b', parentId: 'root', sortOrder: 1),
+        page('a', parentId: 'root', sortOrder: 0),
+        page('other'),
+      ]);
+      expect(repo.childrenOf('root').map((a) => a.id), ['a', 'b']);
+
+      api.saved = page('b', parentId: 'other');
+      await repo.moveArticle('b', parentId: 'other');
+      expect(repo.childrenOf('root').map((a) => a.id), ['a']);
+      expect(repo.childrenOf('other').map((a) => a.id), ['b']);
+    });
+  });
+
+  group('search', () {
+    test('titles first, then space, labels and text', () async {
+      final (repo, _) = await loaded([
+        {
+          ...page('a', tags: ['Setup']),
+          'title': 'Laptop',
+        },
+        {...page('b'), 'title': 'Setup guide'},
+        {...page('c'), 'content': 'How to   SETUP\nthe printer'},
+        {...page('d', space: 'Setup'), 'title': 'Rules'},
+        page('e'),
+      ]);
+      expect(repo.search('setup').map((a) => a.id), ['b', 'a', 'c', 'd']);
+      expect(repo.search(''), isEmpty);
+    });
+
+    test('the excerpt shows the words around the match', () async {
+      final long = '${'word ' * 30}needle${' tail' * 40}';
+      final (repo, _) = await loaded([
+        {...page('a'), 'content': long},
+        {...page('b'), 'content': 'Short\n\ntext'},
+      ]);
+      final excerpt = repo.searchExcerpt('a', 'needle');
+      expect(excerpt, startsWith('…'));
+      expect(excerpt, contains('needle'));
+      expect(excerpt, endsWith('…'));
+      // No match in the text: its start, whitespace collapsed.
+      expect(repo.searchExcerpt('b', 'docs'), 'Short text');
+    });
+
+    test('follows a saved text', () async {
+      final (repo, api) = await loaded([page('a')]);
+      expect(repo.search('fresh'), isEmpty);
+      api.saved = {...page('a'), 'content': 'fresh words'};
+      await repo.saveEdit('a', title: 'Page a', doc: '{}', spaceId: 'Docs');
+      expect(repo.search('fresh').map((a) => a.id), ['a']);
+    });
+  });
+
+  group('link targets', () {
+    test(
+      'issues are fetched once, again after a failure or a reload',
+      () async {
+        final (repo, _) = await loaded([page('a')]);
+        var fetches = 0;
+        var fail = true;
+        Future<List<Issue>> fetch() async {
+          fetches++;
+          if (fail) throw ApiFailure('down');
+          return const [];
+        }
+
+        await expectLater(repo.linkIssues(fetch), throwsA(isA<ApiFailure>()));
+        fail = false;
+        await repo.linkIssues(fetch);
+        await repo.linkIssues(fetch);
+        expect(fetches, 2);
+
+        await repo.reload();
+        await repo.linkIssues(fetch);
+        expect(fetches, 3);
+      },
+    );
+  });
+
   group('labels', () {
     test('come from readable pages, most used first, per space', () async {
       final (repo, _) = await loaded([
@@ -154,6 +253,46 @@ void main() {
     test('a link to a page the reader cannot see is left out', () async {
       final (repo, _) = await loaded([page('a', doc: linkTo('secret'))]);
       expect(repo.relatedArticles(repo.articleById('a')!), isEmpty);
+    });
+
+    test('follow a saved link and a deleted page without a reload', () async {
+      final (repo, api) = await loaded([
+        page('a'),
+        page('b'),
+        page('c', doc: linkTo('b')),
+      ]);
+      expect(repo.relatedArticles(repo.articleById('b')!).map((a) => a.id), [
+        'c',
+      ]);
+
+      api.saved = page('a', doc: linkTo('b'));
+      await repo.saveEdit(
+        'a',
+        title: 'Page a',
+        doc: linkTo('b'),
+        spaceId: 'Docs',
+      );
+      expect(repo.relatedArticles(repo.articleById('b')!).map((a) => a.id), [
+        'c',
+        'a',
+      ]);
+
+      // The link is taken out again: the index forgets it.
+      api.saved = page('c');
+      await repo.saveEdit('c', title: 'Page c', doc: '{}', spaceId: 'Docs');
+      expect(repo.relatedArticles(repo.articleById('b')!).map((a) => a.id), [
+        'a',
+      ]);
+
+      await repo.deleteArticle('a');
+      expect(repo.relatedArticles(repo.articleById('b')!), isEmpty);
+    });
+
+    test('the cache moves its revision on with every change', () async {
+      final (repo, api) = await loaded([page('a'), page('b', sortOrder: 1)]);
+      final before = repo.revision;
+      await repo.reorder(['b', 'a']);
+      expect(repo.revision, greaterThan(before));
     });
 
     test('an unreadable document links nowhere', () {
@@ -263,6 +402,9 @@ class _Api implements ApiClient {
 
   final List<Map<String, dynamic>> pages;
   Map<String, dynamic>? marks;
+
+  /// What the server answers a save or a move with.
+  Map<String, dynamic>? saved;
   bool failPut = false;
   final List<(String, String, Object?)> calls = [];
 
@@ -301,6 +443,18 @@ class _Api implements ApiClient {
   @override
   Future<dynamic> post(String path, {Object? body}) async {
     calls.add(('post', path, body));
+    return null;
+  }
+
+  @override
+  Future<dynamic> patch(String path, {Object? body}) async {
+    calls.add(('patch', path, body));
+    return saved;
+  }
+
+  @override
+  Future<dynamic> delete(String path, {Object? body}) async {
+    calls.add(('delete', path, body));
     return null;
   }
 

@@ -174,18 +174,7 @@ class _Results extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final byTitle = <KbArticle>[];
-    final byRest = <KbArticle>[];
-    for (final a in repo.articles) {
-      if (a.title.toLowerCase().contains(query)) {
-        byTitle.add(a);
-      } else {
-        final space = repo.spaceById(a.spaceId)?.name ?? '';
-        final hay = '$space ${a.labels.join(' ')} ${a.body}'.toLowerCase();
-        if (hay.contains(query)) byRest.add(a);
-      }
-    }
-    final matches = [...byTitle, ...byRest];
+    final matches = repo.search(query);
     if (matches.isEmpty) {
       return HiveEmptyState(
         title: context.t('knowledge.noResultsTitle'),
@@ -213,22 +202,11 @@ class _Results extends StatelessWidget {
               if (repo.spaceById(a.spaceId) case final s?) s.name,
               ...repo.ancestorsOf(a.id).map((p) => p.title),
             ].join(' › '),
-            excerpt: _excerpt(a.body),
+            excerpt: repo.searchExcerpt(a.id, query),
             onTap: () => onOpenArticle(a.id),
           ),
       ],
     );
-  }
-
-  /// The words around the first match in the text, or its start.
-  String _excerpt(String body) {
-    final text = body.replaceAll(RegExp(r'\s+'), ' ').trim();
-    if (text.isEmpty) return '';
-    final at = text.toLowerCase().indexOf(query);
-    if (at < 0) return text.length > 140 ? '${text.substring(0, 140)}…' : text;
-    final start = (at - 50).clamp(0, text.length);
-    final end = (at + query.length + 90).clamp(0, text.length);
-    return '${start > 0 ? '…' : ''}${text.substring(start, end)}${end < text.length ? '…' : ''}';
   }
 }
 

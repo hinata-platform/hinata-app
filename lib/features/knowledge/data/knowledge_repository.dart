@@ -6,7 +6,7 @@ import '../../../core/blocs/paged_cubit.dart' show PageResult;
 import '../../../core/models/content_models.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/team_models.dart';
-import '../../../core/models/work_models.dart' show Project;
+import '../../../core/models/work_models.dart' show Issue, Project;
 import '../../../core/repositories/article_repository.dart';
 import '../../../core/repositories/auth_repository.dart';
 import '../../../core/repositories/project_repository.dart';
@@ -88,9 +88,13 @@ class KnowledgeRepository {
   }
 
   Future<void> reload() async {
-    final results = await Future.wait([
+    // One round trip's worth of waiting: none of these needs another's answer.
+    final results = await Future.wait<Object?>([
       _articleApi.readableArticles(all: true),
       _userApi.users(),
+      _signedIn(),
+      _persistedSpaces(),
+      loadMarks(),
     ]);
     final readable = results[0] as CappedList<Article>;
     final articles = readable.items;
@@ -100,8 +104,7 @@ class KnowledgeRepository {
     _users
       ..clear()
       ..addEntries(dirUsers.map((u) => MapEntry(u.id, _toKbUser(u))));
-    try {
-      final me = await _authApi.me();
+    if (results[2] case final AuthUser me) {
       _authUser = me;
       _me = KbUser(
         id: me.id,
@@ -110,27 +113,165 @@ class KnowledgeRepository {
         hue: _hueFor(me.id),
         pronouns: me.pronouns,
       );
-    } catch (_) {
-      // Non-critical — `me` falls back to the first directory user.
     }
 
     _backendSpaces.clear();
-    try {
-      for (final s in await _articleApi.spaces()) {
-        _backendSpaces[s.name] = s;
-      }
-    } catch (_) {
-      // Older backend without /spaces — fall back to derived spaces only.
+    for (final s in results[3] as List<Space>) {
+      _backendSpaces[s.name] = s;
     }
 
-    _articles
-      ..clear()
-      ..addEntries(articles.map((a) => MapEntry(a.id, _toKbArticle(a))));
+    _articles.clear();
+    _linksTo.clear();
+    _linksFrom.clear();
+    _childIds.clear();
+    _searchText.clear();
+    for (final a in articles) {
+      _put(_toKbArticle(a));
+    }
     _rebuildSpaces();
-    await loadMarks();
     // Names follow the new list: a page may have moved to a place not known yet.
     _placesLoad = null;
+    // A refresh is asked for: issues created since then become link targets.
+    _issueTargets = null;
     _loaded = true;
+  }
+
+  /// Forgets everything of the account that signed out, so the next one on
+  /// this device never sees its pages, people, favourites or link targets.
+  /// The next [init] loads afresh.
+  void reset() {
+    _loaded = false;
+    _truncated = false;
+    _authUser = null;
+    _me = null;
+    _placesLoad = null;
+    _issueTargets = null;
+    _myTeams = const [];
+    _placeNames.clear();
+    _placeProjects.clear();
+    _articles.clear();
+    _users.clear();
+    _spaces.clear();
+    _backendSpaces.clear();
+    _linksTo.clear();
+    _linksFrom.clear();
+    _childIds.clear();
+    _searchText.clear();
+    _starred.clear();
+    _recent.clear();
+    _revision++;
+  }
+
+  /// The signed-in person, or null. Non-critical: `me` then falls back to the
+  /// first directory user.
+  Future<AuthUser?> _signedIn() async {
+    try {
+      return await _authApi.me();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// The persisted spaces. An older backend without /spaces leaves only the
+  /// spaces derived from the pages.
+  Future<List<Space>> _persistedSpaces() async {
+    try {
+      return await _articleApi.spaces();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  // ── link targets ────────────────────────────────────────────────────────
+
+  Future<List<Issue>>? _issueTargets;
+
+  /// Every issue the reader sees, for `{{issue:…}}` links and the `@` menu.
+  /// Fetched with [fetch] once for as long as this cache lives, not on every
+  /// visit to the knowledge base; [reload] lets the next caller fetch again,
+  /// and so does a failure.
+  Future<List<Issue>> linkIssues(Future<List<Issue>> Function() fetch) async {
+    final pending = _issueTargets ??= fetch();
+    try {
+      return await pending;
+    } catch (_) {
+      if (identical(_issueTargets, pending)) _issueTargets = null;
+      rethrow;
+    }
+  }
+
+  // ── indexes ─────────────────────────────────────────────────────────────
+
+  /// Moves on with every change to the cached pages, so a view can keep what
+  /// it derived from them until the next change.
+  int get revision => _revision;
+  int _revision = 0;
+
+  /// The pages linking to a page, by the linked page's id.
+  final Map<String, Set<String>> _linksTo = {};
+
+  /// The pages a page links to, in document order, by the linking page's id.
+  final Map<String, List<String>> _linksFrom = {};
+
+  /// The direct subpages of a page, by the parent's id.
+  final Map<String, Set<String>> _childIds = {};
+
+  /// What the search reads of each page, by its id.
+  final Map<String, _SearchText> _searchText = {};
+
+  /// Puts [kb] into the cache and the indexes. A page's document is only
+  /// read again when it changed, so a reorder or a place change costs no
+  /// parsing.
+  void _put(KbArticle kb) {
+    final old = _articles[kb.id];
+    _articles[kb.id] = kb;
+    _revision++;
+    if (old == null || old.parentId != kb.parentId) {
+      if (old?.parentId case final parent?) _childIds[parent]?.remove(kb.id);
+      if (kb.parentId case final parent?) {
+        (_childIds[parent] ??= <String>{}).add(kb.id);
+      }
+    }
+    if (old == null || old.doc != kb.doc) {
+      for (final target in _linksFrom.remove(kb.id) ?? const <String>[]) {
+        _linksTo[target]?.remove(kb.id);
+      }
+      final targets = linkedDocIds(kb.doc);
+      if (targets.isNotEmpty) {
+        _linksFrom[kb.id] = targets;
+        for (final target in targets) {
+          (_linksTo[target] ??= <String>{}).add(kb.id);
+        }
+      }
+    }
+    if (old == null ||
+        old.body != kb.body ||
+        old.spaceId != kb.spaceId ||
+        !_sameLabels(old.labels, kb.labels)) {
+      _searchText[kb.id] = _SearchText.of(kb);
+    }
+  }
+
+  /// Takes [id] out of the cache and the indexes. Pages linking to it keep
+  /// their entry; a lookup only ever returns pages still here.
+  void _drop(String id) {
+    final old = _articles.remove(id);
+    if (old == null) return;
+    _revision++;
+    if (old.parentId case final parent?) _childIds[parent]?.remove(id);
+    for (final target in _linksFrom.remove(id) ?? const <String>[]) {
+      _linksTo[target]?.remove(id);
+    }
+    _searchText.remove(id);
+  }
+
+  static bool _sameLabels(List<String> a, List<String> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
   }
 
   // ── places ──────────────────────────────────────────────────────────────
@@ -294,7 +435,8 @@ class KnowledgeRepository {
 
   /// The direct subpages of [id] the reader can see, in sibling order.
   List<KbArticle> childrenOf(String id) =>
-      articles.where((a) => a.parentId == id).toList()..sort(bySiblingOrder);
+      [for (final child in _childIds[id] ?? const <String>{}) ?_articles[child]]
+        ..sort(bySiblingOrder);
 
   /// The pages above [id], from the top of its tree down to its parent. Stops
   /// at the first parent the reader cannot see.
@@ -383,24 +525,46 @@ class KnowledgeRepository {
   /// as the reader can see them. A link is a `smartlink` node of kind `doc`
   /// in the stored document; the plain text the server derives drops its
   /// target, so the document is what is read here.
+  ///
+  /// Read from the link index, so it costs the links of this one page, not
+  /// a pass over every document.
   List<KbArticle> relatedArticles(KbArticle article) {
     final out = <String, KbArticle>{};
-    for (final id in linkedDocIds(article.doc)) {
+    // A page that is not the cached one (a version, a draft) is read itself.
+    final outgoing = identical(_articles[article.id], article)
+        ? _linksFrom[article.id] ?? const <String>[]
+        : linkedDocIds(article.doc);
+    for (final id in [...outgoing, ...?_linksTo[article.id]]) {
       final linked = _articles[id];
       if (linked != null && linked.id != article.id) out[id] = linked;
     }
-    final needle = '"targetId":"${article.id}"';
-    for (final other in _articles.values) {
-      if (other.id == article.id || out.containsKey(other.id)) continue;
-      final doc = other.doc;
-      if (doc != null &&
-          doc.contains(needle) &&
-          linkedDocIds(doc).contains(article.id)) {
-        out[other.id] = other;
-      }
-    }
     return out.values.toList();
   }
+
+  // ── search ──────────────────────────────────────────────────────────────
+
+  /// Pages whose title, space, labels or text contain [query], titles first.
+  /// [query] is trimmed and in lower case. Reads the text each page was
+  /// prepared with when it was loaded or saved, so typing costs no lowering
+  /// of whole pages.
+  List<KbArticle> search(String query) {
+    if (query.isEmpty) return const [];
+    final byTitle = <KbArticle>[];
+    final byRest = <KbArticle>[];
+    for (final a in _articles.values) {
+      if (a.title.toLowerCase().contains(query)) {
+        byTitle.add(a);
+      } else if (_searchText[a.id]?.hay.contains(query) ?? false) {
+        byRest.add(a);
+      }
+    }
+    return [...byTitle, ...byRest];
+  }
+
+  /// The words around the first match of [query] in [id]'s text, or the
+  /// start of the text when it does not contain [query].
+  String searchExcerpt(String id, String query) =>
+      _searchText[id]?.excerpt(query) ?? '';
 
   /// The article ids the document [doc] links to, in document order.
   static List<String> linkedDocIds(String? doc) {
@@ -456,7 +620,7 @@ class KnowledgeRepository {
       tags: labels ?? existing?.labels,
     );
     final kb = _toKbArticle(saved);
-    _articles[id] = kb;
+    _put(kb);
     _rebuildSpaces();
     return kb;
   }
@@ -485,7 +649,7 @@ class KnowledgeRepository {
       tags: labels,
     );
     final kb = _toKbArticle(saved);
-    _articles[kb.id] = kb;
+    _put(kb);
     _rebuildSpaces();
     return kb;
   }
@@ -507,7 +671,7 @@ class KnowledgeRepository {
       space: spaceId ?? existing.spaceId,
     );
     final kb = _toKbArticle(saved);
-    _articles[id] = kb;
+    _put(kb);
     _rebuildSpaces();
     return kb;
   }
@@ -527,20 +691,17 @@ class KnowledgeRepository {
     );
     for (final a in _articles.values.toList()) {
       if (a.id != id && isSelfOrAncestor(id, a.id)) {
-        _articles[a.id] = a.copyWith(
-          projectId: saved.projectId,
-          teamId: saved.teamId,
-        );
+        _put(a.copyWith(projectId: saved.projectId, teamId: saved.teamId));
       }
     }
     final kb = _toKbArticle(saved);
-    _articles[id] = kb;
+    _put(kb);
     return kb;
   }
 
   Future<void> deleteArticle(String id) async {
     await _articleApi.deleteArticle(id);
-    _articles.remove(id);
+    _drop(id);
     _starred.remove(id);
     _recent.remove(id);
     _rebuildSpaces();
@@ -597,7 +758,7 @@ class KnowledgeRepository {
     _backendSpaces[s.name] = s;
     if (s.name != spaceId) {
       for (final a in _articles.values.toList()) {
-        if (a.spaceId == spaceId) _articles[a.id] = a.copyWith(spaceId: s.name);
+        if (a.spaceId == spaceId) _put(a.copyWith(spaceId: s.name));
       }
     }
     _rebuildSpaces();
@@ -611,7 +772,7 @@ class KnowledgeRepository {
     final before = {for (final id in ids) id: _articles[id]?.sortOrder};
     for (var i = 0; i < ids.length; i++) {
       final a = _articles[ids[i]];
-      if (a != null) _articles[a.id] = a.copyWith(sortOrder: i);
+      if (a != null) _put(a.copyWith(sortOrder: i));
     }
     try {
       await _articleApi.orderArticles(ids);
@@ -619,7 +780,7 @@ class KnowledgeRepository {
       for (final e in before.entries) {
         final a = _articles[e.key];
         if (a != null && e.value != null) {
-          _articles[a.id] = a.copyWith(sortOrder: e.value);
+          _put(a.copyWith(sortOrder: e.value));
         }
       }
       rethrow;
@@ -642,7 +803,7 @@ class KnowledgeRepository {
   /// Brings back version [number] of [id] as its newest state.
   Future<KbArticle> restoreVersion(String id, int number) async {
     final kb = _toKbArticle(await _articleApi.restoreVersion(id, number));
-    _articles[id] = kb;
+    _put(kb);
     return kb;
   }
 
@@ -718,5 +879,39 @@ class KnowledgeRepository {
       cursor = parent == null ? null : _articles[parent];
     }
     return false;
+  }
+}
+
+/// What the search reads of one page: its space, labels and text, collapsed
+/// and in lower case, prepared once per change of the page.
+class _SearchText {
+  _SearchText._(this.text, this.hay, this.textStart);
+
+  factory _SearchText.of(KbArticle a) {
+    final text = a.body.replaceAll(RegExp(r'\s+'), ' ').trim();
+    final head = '${a.spaceId} ${a.labels.join(' ')} '.toLowerCase();
+    return _SearchText._(text, '$head${text.toLowerCase()}', head.length);
+  }
+
+  /// The page's text, whitespace collapsed, as written.
+  final String text;
+
+  /// Space, labels and text in lower case; the text starts at [textStart].
+  final String hay;
+  final int textStart;
+
+  String excerpt(String query) {
+    if (text.isEmpty) return '';
+    final hit = query.isEmpty ? -1 : hay.indexOf(query, textStart);
+    // Lowering can change a string's length; then the offsets do not carry
+    // over and the start of the text is the honest answer.
+    final at = hit < 0 || hay.length - textStart != text.length
+        ? -1
+        : hit - textStart;
+    if (at < 0) return text.length > 140 ? '${text.substring(0, 140)}…' : text;
+    final start = (at - 50).clamp(0, text.length);
+    final end = (at + query.length + 90).clamp(0, text.length);
+    return '${start > 0 ? '…' : ''}${text.substring(start, end)}'
+        '${end < text.length ? '…' : ''}';
   }
 }

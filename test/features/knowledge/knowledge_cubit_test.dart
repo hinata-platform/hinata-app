@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/knowledge/data/knowledge_models.dart';
 import 'package:hinata/features/knowledge/knowledge_cubit.dart';
@@ -20,14 +19,20 @@ Issue _issue(String key) => Issue(
 void main() {
   late FakeKnowledgeRepository knowledge;
   late FakeIssueRepository issues;
-  late FakeUserRepository users;
   late KnowledgeCubit cubit;
 
   setUp(() {
     knowledge = FakeKnowledgeRepository();
     issues = FakeIssueRepository();
-    users = FakeUserRepository();
-    cubit = KnowledgeCubit(knowledge, issues, users);
+    cubit = KnowledgeCubit(knowledge, issues);
+    // The cache hands the fetch straight on, as the real one does the first
+    // time; whether it fetches again is the repository's test.
+    knowledge.answerWith(
+      #linkIssues,
+      (call) =>
+          (call.positionalArguments.single as Future<List<Issue>> Function())(),
+    );
+    knowledge.answerWith(#users, (_) => const <KbUser>[]);
   });
   tearDown(() => cubit.close());
 
@@ -37,14 +42,23 @@ void main() {
 
   test('loading opens the cache, then resolves issues and names', () async {
     knowledge.answer<void>(#init, null);
+    knowledge.answerWith(
+      #users,
+      (_) => const [KbUser(id: 'u1', name: 'Ada', title: '', hue: 1)],
+    );
     issues.answer<List<Issue>>(#allIssues, [_issue('HIN-1')]);
-    users.answer<List<DirectoryUser>>(#users, const []);
 
     await cubit.load();
 
-    expect(knowledge.only.memberName, #init);
+    expect(knowledge.calls.map((c) => c.memberName), [
+      #init,
+      #users,
+      #linkIssues,
+    ]);
     expect(cubit.state.status, KnowledgeStatus.ready);
     expect(cubit.state.issuesByReadable.keys, ['HIN-1']);
+    // Names come from the directory the cache already holds, not a new call.
+    expect(cubit.state.userNames, {'u1': 'Ada'});
   });
 
   test(
@@ -56,6 +70,10 @@ void main() {
 
       expect(cubit.state.status, KnowledgeStatus.failure);
       expect(issues.calls, isEmpty);
+      expect(
+        knowledge.calls.map((c) => c.memberName),
+        isNot(contains(#linkIssues)),
+      );
     },
   );
 
@@ -66,7 +84,7 @@ void main() {
     await cubit.load();
 
     expect(cubit.state.status, KnowledgeStatus.ready);
-    expect(users.calls, isEmpty);
+    expect(cubit.state.issuesByReadable, isEmpty);
   });
 
   test('a write moves the revision on, so the views rebuild', () async {
