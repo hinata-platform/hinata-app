@@ -23,7 +23,7 @@
 		3D6F09D42A81E1BA9973B939 /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */; };
 		471032818115EE975FADFDBE /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 99E5DF113E8B60069A79FA82 /* Pods_Runner.framework */; };
 		4861D4CB2BAA09EFD0CF955B /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 3EB82E95D6FDCFBD40665874 /* Pods_RunnerTests.framework */; };
-		4C35087E81A54C0A9ADE22A5 /* TimerActivityKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134EE2C2E6713FC47CE6DBE /* TimerActivityKeychain.swift */; };
+		4C35087E81A54C0A9ADE22A5 /* TimerActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */; };
 		65D2F81EC34257767B40E31A /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
@@ -40,7 +40,7 @@
 		D105A9C55E5F034B35E11829 /* TimerActivityCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */; };
 		E0A81A687E0FC2A3AD6AB93E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 96C9D9564928377F24C16406 /* GoogleService-Info.plist */; };
 		E21E3DFC37D31B33A5461DEA /* TimerActivityCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */; };
-		ECE6D819E33BF5E8B8532677 /* TimerActivityKeychain.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134EE2C2E6713FC47CE6DBE /* TimerActivityKeychain.swift */; };
+		ECE6D819E33BF5E8B8532677 /* TimerActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */; };
 		F57257B4632E0EA1752B9DDA /* TimerBackgroundIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7245F0B20B2B20CD187B57 /* TimerBackgroundIntent.swift */; };
 /* End PBXBuildFile section */
 
@@ -112,7 +112,7 @@
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
-		8134EE2C2E6713FC47CE6DBE /* TimerActivityKeychain.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerActivityKeychain.swift; sourceTree = "<group>"; };
+		8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerActivityStore.swift; sourceTree = "<group>"; };
 		8851870F318299DDAC8F27AE /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataLiveActivityChannel.swift; sourceTree = "<group>"; };
@@ -277,7 +277,7 @@
 			children = (
 				32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */,
 				F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */,
-				8134EE2C2E6713FC47CE6DBE /* TimerActivityKeychain.swift */,
+				8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */,
 				2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */,
 				2F7245F0B20B2B20CD187B57 /* TimerBackgroundIntent.swift */,
 			);
@@ -588,7 +588,7 @@
 				AB12CD34EF5600000000A006 /* HinataPdfChannel.swift in Sources */,
 				3D6F09D42A81E1BA9973B939 /* TimerActivityAttributes.swift in Sources */,
 				2472F3F772633A41BE50EBEC /* HinataLiveActivityChannel.swift in Sources */,
-				4C35087E81A54C0A9ADE22A5 /* TimerActivityKeychain.swift in Sources */,
+				4C35087E81A54C0A9ADE22A5 /* TimerActivityStore.swift in Sources */,
 				E21E3DFC37D31B33A5461DEA /* TimerActivityCrypto.swift in Sources */,
 				F57257B4632E0EA1752B9DDA /* TimerBackgroundIntent.swift in Sources */,
 			);
@@ -603,7 +603,7 @@
 				85F8D59CE916E79BCC9143CD /* TimerHomeWidget.swift in Sources */,
 				65D2F81EC34257767B40E31A /* TimerActivityAttributes.swift in Sources */,
 				13B44E58E25790FEA3CD273A /* TimerWidgetRecord.swift in Sources */,
-				ECE6D819E33BF5E8B8532677 /* TimerActivityKeychain.swift in Sources */,
+				ECE6D819E33BF5E8B8532677 /* TimerActivityStore.swift in Sources */,
 				D105A9C55E5F034B35E11829 /* TimerActivityCrypto.swift in Sources */,
 				3298C0BBFE0F27106E7EB6AC /* TimerBackgroundIntent.swift in Sources */,
 			);
