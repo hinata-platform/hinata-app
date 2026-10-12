@@ -1,3 +1,5 @@
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+
 import 'adapters/global_hotkeys_surface.dart';
 import 'adapters/home_widget_surface.dart';
 import 'adapters/keep_running_surface.dart';
@@ -8,8 +10,19 @@ import 'adapters/web_notification_surface.dart';
 import 'adapters/window_title_surface.dart';
 import 'adapters/windows_taskbar_surface.dart';
 import 'adapters/windows_toast_surface.dart';
+import 'live_activity_push_registry.dart';
 import 'surface_platform.dart';
 import 'timer_surface.dart';
+
+/// What runs a button outside the app while the app is not in front
+/// (HIN-103). Top-level functions from `core/timer_actions`, handed in so that
+/// nothing in the surfaces talks to the server itself.
+class TimerBackgroundCallbacks {
+  const TimerBackgroundCallbacks({this.notification, this.widget});
+
+  final DidReceiveBackgroundNotificationResponseCallback? notification;
+  final Future<void> Function(Uri?)? widget;
+}
 
 /// The surfaces of [platform], in the order they are applied.
 List<TimerSurface> buildTimerSurfaces(
@@ -17,6 +30,8 @@ List<TimerSurface> buildTimerSurfaces(
   required String Function() appTitle,
   required String Function() flashText,
   required HotkeyStatus hotkeys,
+  LiveActivityPushRegistry? liveActivityRegistry,
+  TimerBackgroundCallbacks background = const TimerBackgroundCallbacks(),
 }) {
   final title = WindowTitleSurface(
     platform,
@@ -35,23 +50,24 @@ List<TimerSurface> buildTimerSurfaces(
         trayAvailable: tray.available,
       ),
   ];
+  HomeWidgetSurface widgets() => HomeWidgetSurface(
+    platform,
+    store: TimerWidgetStore(backgroundAction: background.widget),
+  );
+  LocalNotificationsSurface notifications() => LocalNotificationsSurface(
+    platform,
+    backgroundResponse: background.notification,
+  );
   return switch (platform) {
     SurfacePlatform.ios => [
-      LocalNotificationsSurface(platform),
-      LiveActivitySurface(),
-      HomeWidgetSurface(platform),
+      notifications(),
+      LiveActivitySurface(registry: liveActivityRegistry),
+      widgets(),
       title,
     ],
-    SurfacePlatform.android => [
-      LocalNotificationsSurface(platform),
-      HomeWidgetSurface(platform),
-      title,
-    ],
-    SurfacePlatform.macos || SurfacePlatform.linux => [
-      LocalNotificationsSurface(platform),
-      ...desktop(tray()),
-      title,
-    ],
+    SurfacePlatform.android => [notifications(), widgets(), title],
+    SurfacePlatform.macos ||
+    SurfacePlatform.linux => [notifications(), ...desktop(tray()), title],
     SurfacePlatform.windows => [
       WindowsToastSurface(),
       ...desktop(tray()),

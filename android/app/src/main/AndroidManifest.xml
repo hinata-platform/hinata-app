@@ -106,6 +106,39 @@
             <meta-data android:name="android.appwidget.provider"
                 android:resource="@xml/timer_widget_info" />
         </receiver>
+        <!-- HIN-103: the widget buttons and the Quick Settings tile hand
+             hinata://timer/<command> to this receiver, which runs the Dart
+             action in a background engine. Not exported: only this app's own
+             PendingIntents reach it. -->
+        <receiver android:name="es.antonborri.home_widget.HomeWidgetBackgroundReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
+            </intent-filter>
+        </receiver>
+        <!-- HIN-103: the timer as a Quick Settings tile. Exported for the
+             system only, which binds it with BIND_QUICK_SETTINGS_TILE. -->
+        <service android:name=".TimerTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_qs_timer"
+            android:label="@string/timer_widget_name"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE"
+                android:value="false" />
+        </service>
+        <!-- A long press on the tile opens the focus screen. -->
+        <activity android:name=".TimerTilePreferencesActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE_PREFERENCES" />
+            </intent-filter>
+        </activity>
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
