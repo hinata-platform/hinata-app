@@ -102,9 +102,9 @@ class KnowledgeRepository {
     if (epoch != _epoch) return;
     final readable = results[0] as CappedList<Article>;
     final articles = readable.items;
-    // The documents are read off the UI thread; a thousand pages would
-    // otherwise stall a frame for their JSON.
-    final links = await _outgoingLinks(articles);
+    // The documents and texts are read off the UI thread; a thousand pages
+    // would otherwise stall a frame for their JSON and their lowering.
+    final prepared = await _prepare(articles);
     if (epoch != _epoch) return;
     _truncated = readable.truncated;
     final dirUsers = results[1] as List<DirectoryUser>;
@@ -134,8 +134,9 @@ class KnowledgeRepository {
     _childIds.clear();
     _hay.clear();
     for (final a in articles) {
-      _put(_toKbArticle(a), links: links[a.id] ?? const []);
+      _put(_toKbArticle(a), links: prepared.links[a.id] ?? const []);
     }
+    _hay.addAll(prepared.hay);
     _rebuildSpaces();
     // Names follow the new list: a page may have moved to a place not known yet.
     _placesLoad = null;
@@ -177,33 +178,46 @@ class KnowledgeRepository {
   /// its answer only when it has not moved since.
   int _epoch = 0;
 
-  /// Below this much document text, reading the links here is cheaper than
-  /// starting an isolate for it.
-  static const _inlineLinkScan = 64 * 1024;
+  /// Below this much text, reading it here is cheaper than starting an
+  /// isolate for it.
+  static const _inlineScan = 64 * 1024;
 
-  /// The pages each of [articles] links to, by page id. Only documents with a
-  /// smart link are read at all; many of them are read in an isolate.
-  static Future<Map<String, List<String>>> _outgoingLinks(
-    List<Article> articles,
-  ) async {
-    final docs = <(String, String)>[];
+  /// What [reload] reads of [articles] beyond mapping them: the pages each
+  /// one links to and, for a large knowledge base, the search text of every
+  /// page. Only documents with a smart link are parsed at all. Past
+  /// [_inlineScan] both are worked out in one isolate; below it the links
+  /// are read here and the search text waits for the first search.
+  static Future<_Prepared> _prepare(List<Article> articles) async {
+    final pages = <_PageText>[];
     var size = 0;
     for (final a in articles) {
       final doc = a.contentDoc;
-      if (doc != null && doc.contains('"smartlink"')) {
-        docs.add((a.id, doc));
-        size += doc.length;
-      }
+      final linking = doc != null && doc.contains('"smartlink"') ? doc : null;
+      final body = a.content ?? '';
+      pages.add((
+        id: a.id,
+        doc: linking,
+        space: a.space ?? '',
+        labels: a.tags,
+        body: body,
+      ));
+      size += body.length + (linking?.length ?? 0);
     }
-    if (docs.isEmpty) return const {};
-    return size < _inlineLinkScan
-        ? _linksOfAll(docs)
-        : compute(_linksOfAll, docs);
+    if (size < _inlineScan) {
+      return (links: _linksOfAll(pages), hay: const <String, String>{});
+    }
+    return compute(_prepareAll, pages);
   }
 
-  static Map<String, List<String>> _linksOfAll(List<(String, String)> docs) => {
-    for (final (id, doc) in docs)
-      if (linkedDocIds(doc) case final ids when ids.isNotEmpty) id: ids,
+  static _Prepared _prepareAll(List<_PageText> pages) => (
+    links: _linksOfAll(pages),
+    hay: {for (final p in pages) p.id: _hayFrom(p.space, p.labels, p.body)},
+  );
+
+  static Map<String, List<String>> _linksOfAll(List<_PageText> pages) => {
+    for (final p in pages)
+      if (p.doc != null)
+        if (linkedDocIds(p.doc) case final ids when ids.isNotEmpty) p.id: ids,
   };
 
   /// The signed-in person, or null. Non-critical: `me` then falls back to the
@@ -623,16 +637,31 @@ class KnowledgeRepository {
     return _searchHits = List.unmodifiable([...byTitle, ...byRest]);
   }
 
-  static String _hayOf(KbArticle a) =>
-      '${a.spaceId} ${a.labels.join(' ')} ${_collapsed(a.body)}'.toLowerCase();
+  static String _hayOf(KbArticle a) => _hayFrom(a.spaceId, a.labels, a.body);
+
+  static String _hayFrom(String space, List<String> labels, String body) =>
+      '$space ${labels.join(' ')} ${_collapsed(body)}'.toLowerCase();
 
   static String _collapsed(String text) =>
       text.replaceAll(RegExp(r'\s+'), ' ').trim();
 
   /// The words around the first match of [query] in [id]'s text, or the
   /// start of the text when it does not contain [query]. Made from the page
-  /// itself, for the few results on screen.
+  /// itself, for the few results on screen, and kept per page until the
+  /// query or the cache changes, so a rebuild of the results makes none anew.
   String searchExcerpt(String id, String query) {
+    final key = (query, _revision);
+    if (key != _excerptKey) {
+      _excerptKey = key;
+      _excerpts.clear();
+    }
+    return _excerpts[id] ??= _excerptOf(id, query);
+  }
+
+  (String, int)? _excerptKey;
+  final Map<String, String> _excerpts = {};
+
+  String _excerptOf(String id, String query) {
     final text = _collapsed(_articles[id]?.body ?? '');
     if (text.isEmpty) return '';
     final lower = text.toLowerCase();
@@ -965,3 +994,19 @@ class KnowledgeRepository {
     return false;
   }
 }
+
+/// What [KnowledgeRepository.reload] hands to an isolate of one page: its
+/// document only when it has a smart link, and what the search reads.
+typedef _PageText = ({
+  String id,
+  String? doc,
+  String space,
+  List<String> labels,
+  String body,
+});
+
+/// Links by page id, and the search text by page id (empty: made lazily).
+typedef _Prepared = ({
+  Map<String, List<String>> links,
+  Map<String, String> hay,
+});
