@@ -182,7 +182,9 @@ class _ConnectScreenState extends State<ConnectScreen> {
             ),
           ),
           trailing: Icon(forwardChevron(context), size: 18),
-          onTap: connecting ? null : () => switchToServer(context, server.url),
+          onTap: connecting
+              ? null
+              : () => switchToServer(context, server.url, retry: true),
         ),
     ];
   }
