@@ -54,7 +54,19 @@ final class TimerActivityCryptoTests: XCTestCase {
     let drawn = state.resolved(ref: "vector-activity", record: wrong)
 
     XCTAssertTrue(drawn.hidesTime)
+    XCTAssertNil(drawn.endsAt)
+    // The placeholder is the widget's name as the drawing bundle says it, and
+    // the extension, which draws it, says it in every language of the app.
     XCTAssertEqual(drawn.title, String(localized: "widget.name"))
+    let appex = try XCTUnwrap(Bundle.main.builtInPlugInsURL?.appendingPathComponent("HinataWidgets.appex"))
+    let widgets = try XCTUnwrap(Bundle(url: appex))
+    for language in ["ar", "de", "en", "es", "fr", "hi", "ja", "ru", "zh"] {
+      let path = try XCTUnwrap(
+        widgets.path(forResource: "Localizable", ofType: "strings", inDirectory: nil, forLocalization: language),
+        language)
+      let words = try XCTUnwrap(NSDictionary(contentsOfFile: path) as? [String: String], language)
+      XCTAssertFalse((words["widget.name"] ?? "").isEmpty, language)
+    }
   }
 
   func testTheAppsOwnStateSurvivesTheRoundTrip() throws {
