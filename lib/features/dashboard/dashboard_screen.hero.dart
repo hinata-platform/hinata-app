@@ -246,9 +246,9 @@ class _SprintHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
-    final ring = _ProgressRing(
+    final ring = DashboardProgressRing(
       pct: sprint.progressPercent,
-      size: compact ? 104 : 150,
+      size: compact ? 112 : 150,
     );
     return _GlassCard(
       padding: EdgeInsets.all(compact ? 20 : 26),
@@ -584,13 +584,62 @@ class _AvatarStack extends StatelessWidget {
 
 // ══════════════════════════ Progress ring ══════════════════════════════════
 
-class _ProgressRing extends StatelessWidget {
-  const _ProgressRing({required this.pct, this.size = 148});
+/// The sprint's share of done work as a ring, the figure and its label
+/// inside.
+@visibleForTesting
+class DashboardProgressRing extends StatelessWidget {
+  const DashboardProgressRing({super.key, required this.pct, this.size = 148});
   final double pct;
   final double size;
 
+  /// Stroke of the ring, shared with [_RingPainter].
+  static const stroke = 11.0;
+
+  /// Air between the text and the inner edge of the ring.
+  static const _gap = 5.0;
+
+  /// How far the figure and its label shrink so that every corner of the
+  /// block stays inside the ring. The label is the widest line and sits at
+  /// the bottom, where the circle narrows, so a square box is not enough:
+  /// the block's half diagonal must stay within the inner radius. Measured
+  /// with "100%" so the scale holds still while the figure counts up.
+  double _fit(BuildContext context, TextStyle figure, TextStyle label) {
+    final scaler = MediaQuery.textScalerOf(context);
+    final direction = Directionality.of(context);
+    final inherited = DefaultTextStyle.of(context).style;
+    TextPainter measure(String text, TextStyle style) => TextPainter(
+      text: TextSpan(text: text, style: inherited.merge(style)),
+      textDirection: direction,
+      textScaler: scaler,
+      maxLines: 1,
+    )..layout();
+    final top = measure('100%', figure);
+    final bottom = measure(context.t('dashboard.sprintCompleted'), label);
+    final width = math.max(top.width, bottom.width);
+    final height = top.height + _labelGap + bottom.height;
+    top.dispose();
+    bottom.dispose();
+    final radius = size / 2 - stroke - _gap;
+    final halfDiagonal = math.sqrt(width * width + height * height) / 2;
+    return halfDiagonal <= radius ? 1 : radius / halfDiagonal;
+  }
+
+  static const _labelGap = 3.0;
+
   @override
   Widget build(BuildContext context) {
+    final figure = TextStyle(
+      fontFamily: AppTheme.fontBrand,
+      fontSize: size < AppType.giant ? AppType.display : AppType.hero,
+      fontWeight: FontWeight.w700,
+      height: 1,
+      color: _heroInk,
+    );
+    final label = TextStyle(
+      fontSize: AppType.caption,
+      color: Colors.white.withValues(alpha: .7),
+    );
+    final scale = _fit(context, figure, label);
     return SizedBox(
       width: size,
       height: size,
@@ -602,35 +651,24 @@ class _ProgressRing extends StatelessWidget {
           alignment: Alignment.center,
           children: [
             CustomPaint(size: Size.square(size), painter: _RingPainter(v)),
-            // The ring is a drawing of fixed size; at a large text size the
-            // figure and its label shrink to fit inside it rather than
-            // spilling over the ring.
-            SizedBox.square(
-              dimension: size * 0.72,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
+            // The ring is a drawing of fixed size; a long label or a large
+            // text size shrinks the figure and its label to fit inside it, on
+            // one line, rather than touching or spilling over the ring.
+            Transform.scale(
+              scale: scale,
+              child: OverflowBox(
+                maxWidth: double.infinity,
+                maxHeight: double.infinity,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '${(v * 100).round()}%',
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontBrand,
-                        fontSize: size < AppType.giant
-                            ? AppType.display
-                            : AppType.hero,
-                        fontWeight: FontWeight.w700,
-                        height: 1,
-                        color: _heroInk,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
+                    Text('${(v * 100).round()}%', style: figure, maxLines: 1),
+                    const SizedBox(height: _labelGap),
                     Text(
                       context.t('dashboard.sprintCompleted'),
-                      style: TextStyle(
-                        fontSize: AppType.caption,
-                        color: Colors.white.withValues(alpha: .7),
-                      ),
+                      style: label,
+                      maxLines: 1,
+                      softWrap: false,
                     ),
                   ],
                 ),
@@ -649,7 +687,7 @@ class _RingPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const stroke = 11.0;
+    const stroke = DashboardProgressRing.stroke;
     final center = size.center(Offset.zero);
     final radius = (size.width - stroke) / 2;
     final track = Paint()
