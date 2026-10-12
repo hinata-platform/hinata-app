@@ -90,8 +90,11 @@ class AuthState extends Equatable {
 }
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  AuthBloc({required this.repository, required this.storage})
-    : super(const AuthState()) {
+  AuthBloc({
+    required this.repository,
+    required this.storage,
+    this.beforeSignOut,
+  }) : super(const AuthState()) {
     on<AuthChecked>(_onChecked, transformer: restartable());
     on<LoginSubmitted>(_onLogin, transformer: droppable());
     on<TwoFactorSubmitted>(_onTwoFactor, transformer: droppable());
@@ -101,6 +104,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   final AuthRepository repository;
   final AppStorage storage;
+
+  /// Runs while the session still holds its tokens: the device's push
+  /// registration is removed with them, or the server keeps sending this
+  /// account's notifications to a device somebody else signs in on next.
+  /// Best effort and bounded; a sign-out never waits on it for long.
+  final Future<void> Function()? beforeSignOut;
 
   Future<void> _onChecked(AuthChecked event, Emitter<AuthState> emit) async {
     if (storage.accessToken == null) {
@@ -222,6 +231,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
+    try {
+      await beforeSignOut?.call().timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Offline or slow: the server moves the registration to whoever signs
+      // in on this device next.
+    }
     await storage.clearTokens();
     emit(const AuthState(status: AuthStatus.unauthenticated));
   }

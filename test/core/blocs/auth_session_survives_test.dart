@@ -55,6 +55,40 @@ void main() {
     }
   });
 
+  test('signing out removes the push registration while the tokens still '
+      'hold, then drops them', () async {
+    final storage = await signedIn();
+    String? accessDuringUnregister;
+    final bloc = AuthBloc(
+      repository: _FakeAuth(ApiFailure('errors.unexpected')),
+      storage: storage,
+      beforeSignOut: () async => accessDuringUnregister = storage.accessToken,
+    )..add(const LogoutRequested());
+    await bloc.stream.firstWhere((s) => s.status == AuthStatus.unauthenticated);
+    await bloc.close();
+
+    expect(accessDuringUnregister, 'access');
+    expect(storage.accessToken, isNull);
+  });
+
+  test(
+    'a sign-out does not wait on an unregister that never answers',
+    () async {
+      final storage = await signedIn();
+      final bloc = AuthBloc(
+        repository: _FakeAuth(ApiFailure('errors.unexpected')),
+        storage: storage,
+        beforeSignOut: () => Future<void>.error(StateError('offline')),
+      )..add(const LogoutRequested());
+      await bloc.stream.firstWhere(
+        (s) => s.status == AuthStatus.unauthenticated,
+      );
+      await bloc.close();
+
+      expect(storage.accessToken, isNull);
+    },
+  );
+
   test('a refused token is dropped', () async {
     for (final status in const [400, 401, 403]) {
       final storage = await signedIn();
