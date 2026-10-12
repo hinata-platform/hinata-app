@@ -9,7 +9,6 @@ import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart' show ArticleVersion;
 import '../../core/repositories/issue_repository.dart';
-import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/glass_filter_bar.dart'
@@ -25,6 +24,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_cubit.dart';
+import 'knowledge_debouncer.dart';
 import 'knowledge_editor.dart';
 import 'knowledge_link_resolver.dart';
 import 'knowledge_location.dart';
@@ -59,7 +59,6 @@ class KnowledgeScreen extends StatelessWidget {
     create: (context) => KnowledgeCubit(
       context.read<KnowledgeRepository>(),
       context.read<IssueRepository>(),
-      context.read<UserRepository>(),
     )..load(),
     child: _KnowledgeBody(location: location),
   );
@@ -89,6 +88,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   final TextEditingController _search = TextEditingController();
   bool _searching = false;
   String _query = '';
+
+  /// Typing settles before the search runs; a cleared field shows the
+  /// start page at once.
+  final KbDebouncer _queryDebounce = KbDebouncer();
 
   // ── reading ──
   bool _treeCollapsed = false;
@@ -135,6 +138,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   @override
   void dispose() {
     _search.dispose();
+    _queryDebounce.dispose();
     _versions?.close();
     super.dispose();
   }
@@ -164,6 +168,8 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
     }, onError: (_) {});
   }
 
+  /// Opens the version list of [id]. Called when an address is reached, never
+  /// while building: it starts a request.
   void _historyOf(String id) {
     if (_versionsOf == id) return;
     _versions?.close();
@@ -379,7 +385,8 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
       await _knowledge.restoreVersion(id, number);
       if (!mounted) return;
       _contributors.remove(id);
-      _versionsOf = null;
+      // The restored state is the newest version now.
+      _versions?.load();
       _toast('knowledge.history.restored', kind: GlassToastKind.success);
       _openArticle(id);
     });
@@ -786,7 +793,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
           repo: _store,
           search: _search,
           query: _query,
-          onQueryChanged: (value) => setState(() => _query = value),
+          onQueryChanged: _onQueryChanged,
           wide: !compact,
           onOpenArticle: _openArticle,
           onOpenSpace: _openSpace,
@@ -796,6 +803,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
       ),
     );
   }
+
+  void _onQueryChanged(String value) => _queryDebounce.run(() {
+    if (mounted) setState(() => _query = value);
+  }, immediately: value.trim().isEmpty);
 
   /// A tear-off for the bar's action, so it compares equal between builds.
   void _newPageAction(Rect? _) => _go(const KnowledgeNewLocation());
@@ -808,7 +819,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         searching: _searching,
         controller: _search,
         hint: context.t('knowledge.searchHint'),
-        onChanged: (value) => setState(() => _query = value),
+        onChanged: _onQueryChanged,
         onClose: () => setState(() => _searching = false),
         controls: SizedBox(
           height: kGlassControlHeight,
@@ -1150,8 +1161,15 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   Widget _history(BuildContext context, String id, int? version) {
     final a = _store.articleById(id);
     if (a == null) return _missing(context, 'knowledge.pageNotFound');
-    _historyOf(id);
-    final versions = _versions!;
+    // Opened by [_arrived] when this address was reached.
+    final versions = _versions;
+    if (versions == null || _versionsOf != id) {
+      return PageChrome(
+        title: context.t('knowledge.title'),
+        onBack: _back,
+        child: const Center(child: HiveLoader()),
+      );
+    }
     return BlocBuilder<PagedCubit<ArticleVersion>, PagedState<ArticleVersion>>(
       bloc: versions,
       builder: (context, state) {

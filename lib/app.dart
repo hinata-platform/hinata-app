@@ -335,6 +335,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         : '${widget.storage.serverUrl ?? ''}#$userId';
     if (identity == _timerIdentity) return;
     _timerIdentity = identity;
+    // The knowledge base is held for the app's lifetime; what it loaded
+    // belongs to the account that just left.
+    _knowledge.reset();
     final previous = _timer;
     final previousPrefs = _surfacePrefs;
     // Reached only when the identity actually changed, which the boot-time
