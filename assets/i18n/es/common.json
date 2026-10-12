@@ -1647,7 +1647,8 @@
         "focusPhase": "Pomodoro, enfoque",
         "breakPhase": "Pomodoro, pausa"
       },
-      "unlockToAct": "Desbloquea tu dispositivo y vuelve a intentarlo."
+      "unlockToAct": "Desbloquea tu dispositivo y vuelve a intentarlo.",
+      "actionFailed": "No ha funcionado. Abre Hinata y vuelve a intentarlo desde ahí."
     }
   },
   "availability": {

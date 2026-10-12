@@ -1647,7 +1647,8 @@
         "focusPhase": "ポモドーロ（集中）",
         "breakPhase": "ポモドーロ（休憩）"
       },
-      "unlockToAct": "デバイスのロックを解除してから、もう一度お試しください。"
+      "unlockToAct": "デバイスのロックを解除してから、もう一度お試しください。",
+      "actionFailed": "うまくいきませんでした。Hinata を開いて、もう一度お試しください。"
     }
   },
   "availability": {
