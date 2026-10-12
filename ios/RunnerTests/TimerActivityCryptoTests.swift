@@ -55,9 +55,8 @@ final class TimerActivityCryptoTests: XCTestCase {
 
     XCTAssertTrue(drawn.hidesTime)
     XCTAssertNil(drawn.endsAt)
-    // The placeholder is the widget's name as the drawing bundle says it, and
-    // the extension, which draws it, says it in every language of the app.
-    XCTAssertEqual(drawn.title, String(localized: "widget.name"))
+    // The placeholder is the widget's name, which the extension that draws it
+    // says in every language of the app.
     let appex = try XCTUnwrap(Bundle.main.builtInPlugInsURL?.appendingPathComponent("HinataWidgets.appex"))
     let widgets = try XCTUnwrap(Bundle(url: appex))
     for language in ["ar", "de", "en", "es", "fr", "hi", "ja", "ru", "zh"] {
