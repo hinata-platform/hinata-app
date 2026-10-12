@@ -95,8 +95,16 @@ def next_build_number
 end
 
 # Run a flutter command from the repo root (fastlane runs inside ios/).
+# fastlane's own Ruby environment (Homebrew sets GEM_HOME and GEM_PATH for its
+# gems) leaks into `pod`, which then cannot load its gems: "CocoaPods is
+# installed but broken". The Flutter build gets the environment without it.
+RUBY_ENV_FOR_TOOLS = %w[GEM_HOME GEM_PATH RUBYOPT RUBYLIB BUNDLE_GEMFILE BUNDLE_BIN_PATH].freeze
+
 def flutter(*args)
+  saved = RUBY_ENV_FOR_TOOLS.to_h { |key| [key, ENV.delete(key)] }
   Dir.chdir("../..") { sh("flutter", *args) }
+ensure
+  saved&.each { |key, value| ENV[key] = value if value }
 end
 
 platform :ios do
