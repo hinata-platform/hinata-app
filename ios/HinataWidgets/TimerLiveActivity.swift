@@ -11,12 +11,12 @@ import WidgetKit
 struct TimerLiveActivity: Widget {
   var body: some WidgetConfiguration {
     ActivityConfiguration(for: TimerActivityAttributes.self) { context in
-      TimerLockScreenView(state: context.state, stale: isStale(context))
+      TimerLockScreenView(state: drawn(context), stale: isStale(context))
         .activityBackgroundTint(HinataPalette.navy.opacity(0.92))
         .activitySystemActionForegroundColor(HinataPalette.honey)
         .widgetURL(timerFocusURL)
     } dynamicIsland: { context in
-      let state = context.state
+      let state = drawn(context)
       let stale = isStale(context)
       return DynamicIsland {
         // Leading and trailing share one line: what runs on the left, the
@@ -63,11 +63,19 @@ struct TimerLiveActivity: Widget {
     }
   }
 
+  /// The state to draw: a sealed one from the server opened with this
+  /// activity's key (HIN-103), or "Timer" without times when it cannot be.
+  private func drawn(
+    _ context: ActivityViewContext<TimerActivityAttributes>
+  ) -> TimerActivityAttributes.ContentState {
+    context.state.resolved(ref: context.attributes.activityRef)
+  }
+
   private func isStale(_ context: ActivityViewContext<TimerActivityAttributes>) -> Bool {
     if #available(iOSApplicationExtension 16.2, *) {
       return context.isStale
     }
-    guard let end = context.state.endsAt else { return false }
+    guard let end = drawn(context).endsAt else { return false }
     return end <= Date()
   }
 }
@@ -188,7 +196,9 @@ struct TimerClock: View {
   }
 
   var body: some View {
-    if let end = state.endsAt {
+    if state.hidesTime {
+      EmptyView()
+    } else if let end = state.endsAt {
       if stale || end <= state.startedAt {
         Text(verbatim: "0:00")
       } else {

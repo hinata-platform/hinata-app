@@ -1646,7 +1646,8 @@
         "countdown": "倒计时运行中",
         "focusPhase": "番茄钟，专注",
         "breakPhase": "番茄钟，休息"
-      }
+      },
+      "unlockToAct": "请解锁设备后重试。"
     }
   },
   "availability": {
@@ -4379,7 +4380,9 @@
         "alt": "Alt",
         "shift": "Shift",
         "win": "Win"
-      }
+      },
+      "backgroundUpdates": "在后台更新",
+      "backgroundUpdatesHint": "即使应用已关闭，阶段切换和在其他设备上的停止也会同步到实时活动。你的服务器通过 Hinata Connect、Google 和 Apple 以端到端加密方式发送，它们只能看到发送时间。"
     }
   },
   "twofa": {

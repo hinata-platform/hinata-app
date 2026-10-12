@@ -26,7 +26,11 @@ enum TimerSurfaceOption {
 
   /// The master switch of the system-wide shortcuts; their combinations are
   /// set in the settings, below it.
-  hotkeys;
+  hotkeys,
+
+  /// The Live Activity follows the timer while the app sleeps (iOS): the
+  /// server sends each change, sealed, through the push services.
+  backgroundUpdates;
 
   /// Whether [platform] has anything this switch could turn on.
   bool availableOn(SurfacePlatform platform) {
@@ -47,12 +51,15 @@ enum TimerSurfaceOption {
       titleClock => caps.titleClock,
       keepRunning => caps.keepRunning,
       hotkeys => caps.globalHotkeys,
+      backgroundUpdates => platform == SurfacePlatform.ios,
     };
   }
 
   /// Whether the introduction offers it. The shortcuts are a power feature
   /// with combinations to choose; they wait in the settings.
-  bool get inIntro => this != hotkeys;
+  /// The background updates send the timer's state through third parties, so
+  /// they are asked for on their own, in the settings, never in passing.
+  bool get inIntro => this != hotkeys && this != backgroundUpdates;
 
   /// Whether turning this on needs the system's permission for notifications.
   /// A Live Activity and the widgets ask for none.
@@ -71,7 +78,8 @@ enum TimerSurfaceOption {
       this == details ||
       this == lockDetails ||
       this == keepRunning ||
-      this == hotkeys;
+      this == hotkeys ||
+      this == backgroundUpdates;
 
   IconData get icon => switch (this) {
     phaseEnd => LucideIcons.bellRing,
@@ -81,6 +89,7 @@ enum TimerSurfaceOption {
     titleClock => LucideIcons.panelTop,
     keepRunning => LucideIcons.panelTopClose,
     hotkeys => LucideIcons.keyboard,
+    backgroundUpdates => LucideIcons.refreshCw,
   };
 
   String labelKey(SurfacePlatform platform) => switch (this) {
@@ -94,6 +103,7 @@ enum TimerSurfaceOption {
     titleClock => 'account.timerSurfaces.titleClock',
     keepRunning => 'account.timerSurfaces.keepRunning',
     hotkeys => 'account.timerSurfaces.hotkeys',
+    backgroundUpdates => 'account.timerSurfaces.backgroundUpdates',
   };
 
   String hintKey(SurfacePlatform platform) => switch (this) {
@@ -108,6 +118,7 @@ enum TimerSurfaceOption {
     keepRunning =>
       'account.timerSurfaces.keepRunning${surfacePlace(platform)}Hint',
     hotkeys => 'account.timerSurfaces.hotkeysHint',
+    backgroundUpdates => 'account.timerSurfaces.backgroundUpdatesHint',
   };
 
   bool read(TimerSurfacePrefs prefs) => switch (this) {
@@ -118,6 +129,7 @@ enum TimerSurfaceOption {
     titleClock => prefs.titleClock,
     keepRunning => prefs.keepInTray,
     hotkeys => prefs.globalHotkeys,
+    backgroundUpdates => prefs.backgroundLiveActivity,
   };
 
   TimerSurfacePrefs write(TimerSurfacePrefs prefs, bool on) => switch (this) {
@@ -128,6 +140,7 @@ enum TimerSurfaceOption {
     titleClock => prefs.copyWith(titleClock: on),
     keepRunning => prefs.copyWith(keepInTray: on),
     hotkeys => prefs.copyWith(globalHotkeys: on),
+    backgroundUpdates => prefs.copyWith(backgroundLiveActivity: on),
   };
 
   /// The switches [platform] offers, in the order they are shown.
@@ -151,6 +164,7 @@ TimerSurfacePrefs withOption(
     lockScreenDetails: false,
     keepInTray: false,
     globalHotkeys: false,
+    backgroundLiveActivity: false,
   );
 }
 

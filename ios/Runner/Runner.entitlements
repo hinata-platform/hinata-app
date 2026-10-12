@@ -3,10 +3,17 @@
 <plist version="1.0">
 <dict>
 	<!-- Keychain access for flutter_secure_storage (auth tokens live in the
-	     Keychain, not plaintext prefs). An empty array uses the app's default
-	     access group and needs no App Group / special provisioning. -->
+	     Keychain, not plaintext prefs). The first group is the default for every
+	     item written without one, so it is the app's own identifier, the group
+	     the tokens were always in: existing sessions survive the update.
+	     HIN-103: the second group is shared with the HinataWidgets extension and
+	     holds the keys of Live Activities that take server updates. Profiles
+	     allow $(TeamIdentifierPrefix)*, so nothing changes in the portal. -->
 	<key>keychain-access-groups</key>
-	<array/>
+	<array>
+		<string>$(AppIdentifierPrefix)com.ahmadre.hinata</string>
+		<string>$(AppIdentifierPrefix)com.ahmadre.hinata.shared</string>
+	</array>
 	<!-- Push notifications (FCM/APNs). The value must match the signing profile's
 	     aps-environment. CI archives are signed with the App Store distribution
 	     profile (aps-environment = production), so this is "production". For local
