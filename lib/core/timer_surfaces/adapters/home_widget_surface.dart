@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:home_widget/home_widget.dart';
 
+import '../../models/time_models.dart';
 import '../surface_platform.dart';
 import '../timer_surface.dart';
 import '../timer_surface_state.dart';
@@ -20,10 +21,17 @@ const String timerWidgetAndroidProvider =
 
 /// The shared store of the widgets, behind one seam so tests hand a fake.
 class TimerWidgetStore {
-  const TimerWidgetStore();
+  const TimerWidgetStore({this.backgroundAction});
+
+  /// The action behind the widget buttons and the Quick Settings tile
+  /// (HIN-103): a top-level function home_widget runs in a background engine
+  /// with a `hinata://timer/<command>` link. Null leaves the buttons inert.
+  final Future<void> Function(Uri?)? backgroundAction;
 
   Future<void> init() async {
     await HomeWidget.setAppGroupId(timerWidgetAppGroup);
+    final action = backgroundAction;
+    if (action != null) await HomeWidget.registerInteractivityCallback(action);
   }
 
   /// Writes [record] (an empty one with null) and asks the widgets to draw.
@@ -125,6 +133,11 @@ String timerWidgetRecord(TimerSurfaceState state, {String idle = ''}) {
     'label': ?clipLockScreenLabel(state.lockScreenLabel),
     'title': state.isBreak ? texts.onBreak : texts.running,
     if (endsAt != null) 'over': state.endText,
+    // The buttons (HIN-103): they act in the background, the words are the
+    // app's. A phase button only where there are phases.
+    'stop': texts.stop,
+    if (state.mode == TimerMode.pomodoro)
+      'advance': state.isBreak ? texts.resume : texts.takeBreak,
     'idle': idle,
   });
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/api/api_client.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/timer_cubit.dart';
@@ -12,7 +13,11 @@ import '../../core/router/app_router.dart' show rootNavigatorKey;
 import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import '../../core/timer_surfaces/adapters/keep_running_surface.dart';
 import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
+import '../../core/timer_surfaces/background/timer_surface_snapshot.dart';
 import '../../core/timer_surfaces/build_timer_surfaces.dart';
+import '../../core/timer_actions/api_live_activity_push_registry.dart';
+import '../../core/timer_actions/timer_background_action.dart';
+import '../../core/timer_surfaces/quick_settings_tile.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
 import '../../core/timer_surfaces/timer_surface.dart';
 import '../../core/timer_surfaces/timer_surface_clear_signal.dart';
@@ -37,6 +42,8 @@ class TimerSurfacesHost extends StatefulWidget {
     this.clearSignal,
     this.hotkeys,
     this.surfaces,
+    this.snapshots = const TimerSurfaceSnapshotStore(),
+    this.tileOffer = const QuickSettingsTileOffer(),
   });
 
   final String appTitle;
@@ -55,6 +62,12 @@ class TimerSurfacesHost extends StatefulWidget {
   /// The surfaces to drive; the platform's own when null (tests hand fakes).
   final List<TimerSurface>? surfaces;
 
+  /// Where the switches and words for a background action are kept.
+  final TimerSurfaceSnapshotStore snapshots;
+
+  /// The one offer of the Quick Settings tile (Android).
+  final QuickSettingsTileOffer tileOffer;
+
   @override
   State<TimerSurfacesHost> createState() => _TimerSurfacesHostState();
 }
@@ -69,6 +82,13 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
           appTitle: () => _appTitle,
           flashText: () => _flashText,
           hotkeys: widget.hotkeys ?? (_ownHotkeys = HotkeyStatus()),
+          liveActivityRegistry: ApiLiveActivityPushRegistry(
+            context.read<ApiClient>(),
+          ),
+          background: const TimerBackgroundCallbacks(
+            notification: timerNotificationBackgroundResponse,
+            widget: timerSurfaceBackgroundAction,
+          ),
         ),
   );
 
@@ -178,6 +198,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     countdown: context.t('time.surface.menu.countdown'),
     focusPhase: context.t('time.surface.menu.focusPhase'),
     breakPhase: context.t('time.surface.menu.breakPhase'),
+    unlockToAct: context.t('time.surface.unlockToAct'),
   );
 
   TimerSurfaceState _derive() {
@@ -198,13 +219,32 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   void _sync() {
     if (!mounted) return;
     if (_gated) {
+      _keepSnapshot(null);
       _enqueue(_coordinator.clearAll);
       return;
     }
+    _keepSnapshot(
+      TimerSurfaceSnapshot(
+        prefs: context.read<TimerSurfacePrefsCubit>().state,
+        texts: _texts(),
+      ),
+    );
     final state = _derive();
     if (state == _cleared) return;
     _cleared = null;
     _enqueue(() => _coordinator.apply(state));
+  }
+
+  /// The last snapshot written, so an unchanged one is not written again.
+  String? _snapshot;
+
+  /// Keeps what a background action needs to redraw the surfaces (HIN-103):
+  /// the switches and the words, and nothing while signed out.
+  void _keepSnapshot(TimerSurfaceSnapshot? snapshot) {
+    final encoded = snapshot?.encode() ?? '';
+    if (encoded == _snapshot) return;
+    _snapshot = encoded;
+    unawaited(widget.snapshots.write(snapshot).catchError((Object _) {}));
   }
 
   /// A tap on one of our notifications that launched the app opens the focus
@@ -229,7 +269,16 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
         previous.confirmed != current.confirmed) {
       _sync();
       _offerIntro(previous.timer, current.timer);
+      _offerTile(previous.timer, current.timer);
     }
+  }
+
+  /// The Quick Settings tile is offered once, after the first timer started
+  /// here, with the app in front (Android 13 and later).
+  void _offerTile(RunningTimer? before, RunningTimer? now) {
+    if (before != null || now == null || _gated || !_foreground) return;
+    if (SurfacePlatform.current != SurfacePlatform.android) return;
+    unawaited(widget.tileOffer.offerOnce().catchError((Object _) {}));
   }
 
   /// The introduction comes the first time somebody starts a timer that ends
