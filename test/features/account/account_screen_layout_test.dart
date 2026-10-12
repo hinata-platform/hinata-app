@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -13,6 +14,8 @@ import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/widgets/settings_split.dart';
 import 'package:hinata/features/account/account_screen.dart';
+import 'package:hinata/features/connect/server_switcher.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 /// Settings on a wide window (HIN-110): a rail of the phone's sections and
 /// exactly one of them open, instead of every card at once. The phone keeps its
@@ -29,11 +32,20 @@ void main() {
     Size size, {
     String? section,
     Set<String> roles = const {'USER'},
+    bool unreachable = false,
+    AuthBloc? auth,
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final account = _FakeAccountRepository();
+    final account = _FakeAccountRepository(unreachable: unreachable);
+    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
+    final storage = AppStorage(
+      await SharedPreferences.getInstance(),
+      const FlutterSecureStorage(),
+    );
+    await storage.setServerUrl('https://hinata.example');
     final prefs = TimePreferencesCubit(account);
     addTearDown(prefs.close);
     await tester.pumpWidget(
@@ -42,11 +54,14 @@ void main() {
           GlobalMaterialLocalizations.delegate,
           GlobalWidgetsLocalizations.delegate,
         ],
-        home: RepositoryProvider<AccountRepository>.value(
-          value: account,
+        home: MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<AccountRepository>.value(value: account),
+            RepositoryProvider<AppStorage>.value(value: storage),
+          ],
           child: MultiBlocProvider(
             providers: [
-              BlocProvider<AuthBloc>.value(value: _FakeAuthBloc(roles)),
+              BlocProvider<AuthBloc>.value(value: auth ?? _FakeAuthBloc(roles)),
               BlocProvider<AppConfigBloc>.value(value: _FakeAppConfig()),
               BlocProvider<TimePreferencesCubit>.value(value: prefs),
             ],
@@ -121,17 +136,38 @@ void main() {
     expect(find.text(sessions), findsNothing);
     expect(find.text('account.security.email'), findsNothing);
   });
+
+  testWidgets('an unreachable server still offers another server and the '
+      'sign-out', (tester) async {
+    final auth = _RecordingAuthBloc();
+    addTearDown(auth.close);
+    await pump(tester, const Size(400, 900), unreachable: true, auth: auth);
+
+    expect(find.text('account.retryError'), findsOneWidget);
+    expect(find.byType(ServerCard), findsOneWidget);
+    await tester.tap(find.text('account.signOut'));
+    await tester.pump();
+
+    expect(auth.events, [isA<LogoutRequested>()]);
+  });
 }
 
 class _FakeAccountRepository implements AccountRepository {
+  _FakeAccountRepository({this.unreachable = false});
+
+  /// The server does not answer.
+  final bool unreachable;
+
   @override
-  Future<Me> meAccount() async => Me.fromJson(const {
-    'id': 'u1',
-    'displayName': 'Lena Vogt',
-    'username': 'lena',
-    'email': 'lena@example.org',
-    'roles': ['USER'],
-  });
+  Future<Me> meAccount() async => unreachable
+      ? throw Exception('unreachable')
+      : Me.fromJson(const {
+          'id': 'u1',
+          'displayName': 'Lena Vogt',
+          'username': 'lena',
+          'email': 'lena@example.org',
+          'roles': ['USER'],
+        });
 
   @override
   Future<({List<DeviceSession> items, int total})> sessionsPage({
@@ -200,4 +236,17 @@ class _UnusedMeta implements MetaRepository {
 class _UnusedStorage implements AppStorage {
   @override
   dynamic noSuchMethod(Invocation invocation) => null;
+}
+
+class _RecordingAuthBloc extends Bloc<AuthEvent, AuthState>
+    implements AuthBloc {
+  _RecordingAuthBloc() : super(const AuthState()) {
+    on<AuthEvent>((event, _) => events.add(event));
+  }
+
+  final List<AuthEvent> events = [];
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
 }
