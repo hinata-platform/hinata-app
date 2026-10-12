@@ -236,6 +236,45 @@ void main() {
         expect(repo.search('page'), isNot(same(first)));
       },
     );
+
+    test('an excerpt is made once per query and change of the cache', () async {
+      final (repo, _) = await loaded([
+        {...page('a'), 'content': 'Some words around a needle in the text'},
+      ]);
+      final first = repo.searchExcerpt('a', 'needle');
+      expect(first, contains('needle'));
+      expect(repo.searchExcerpt('a', 'needle'), same(first));
+      expect(repo.searchExcerpt('a', 'words'), isNot(same(first)));
+      final again = repo.searchExcerpt('a', 'needle');
+      await repo.reorder(['a']);
+      expect(repo.searchExcerpt('a', 'needle'), isNot(same(again)));
+      expect(repo.searchExcerpt('a', 'needle'), again);
+    });
+
+    test('a large knowledge base finds the same with prepared text', () async {
+      // Enough text to prepare the search in an isolate during the load.
+      final filler = 'Lorem ipsum ' * 400;
+      List<Map<String, dynamic>> pages() => [
+        for (var i = 0; i < 20; i++)
+          {
+            ...page('p$i', tags: [if (i == 3) 'Setup']),
+            'content': i.isEven ? '$filler NEEDLE\n  here' : filler,
+          },
+      ];
+      final (large, api) = await loaded(pages());
+      final expected = [for (var i = 0; i < 20; i += 2) 'p$i'];
+      expect(large.search('needle here').map((a) => a.id), expected);
+      expect(large.search('setup').map((a) => a.id), ['p3']);
+
+      // A changed page drops its prepared text and is read anew.
+      api.saved = {...page('p1'), 'content': 'needle here now'};
+      await large.saveEdit('p1', title: 'Page p1', doc: '{}', spaceId: 'Docs');
+      expect(large.search('needle here').map((a) => a.id), [
+        ...expected.take(1),
+        'p1',
+        ...expected.skip(1),
+      ]);
+    });
   });
 
   group('link targets', () {
