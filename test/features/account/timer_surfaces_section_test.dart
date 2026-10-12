@@ -122,15 +122,37 @@ void main() {
     prefs.consent(TimerSurfacePrefs.suggested);
     await pump(tester, SurfacePlatform.ios);
 
-    expect(find.byType(HiveSwitch), findsNWidgets(3));
+    expect(find.byType(HiveSwitch), findsNWidgets(4));
     expect(find.text('account.timerSurfaces.phaseEnd'), findsOneWidget);
     expect(find.text('account.timerSurfaces.runningIos'), findsOneWidget);
     expect(find.text('account.timerSurfaces.lockDetails'), findsOneWidget);
+    // HIN-103: its own opt-in, off until switched on here.
+    expect(
+      find.text('account.timerSurfaces.backgroundUpdates'),
+      findsOneWidget,
+    );
+    expect(prefs.state.backgroundLiveActivity, isFalse);
     expect(find.text('account.timerSurfaces.exact'), findsNothing);
     expect(find.text('account.timerSurfaces.running'), findsNothing);
     // Only Android has the description in an unlocked notification.
     expect(find.text('account.timerSurfaces.details'), findsNothing);
     expect(find.text('account.timerSurfaces.activitiesOff'), findsNothing);
+  });
+
+  testWidgets('background updates are switched on here, ask the system for '
+      'nothing and go with the running timer', (tester) async {
+    prefs.consent(TimerSurfacePrefs.suggested);
+    await pump(tester, SurfacePlatform.ios);
+
+    await tapVisible(
+      tester,
+      switchOf('account.timerSurfaces.backgroundUpdates'),
+    );
+    expect(prefs.state.backgroundLiveActivity, isTrue);
+    expect(gate.requests, 0);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.runningIos'));
+    expect(prefs.state.backgroundLiveActivity, isFalse);
   });
 
   testWidgets('the Live Activity asks the system for nothing', (tester) async {
