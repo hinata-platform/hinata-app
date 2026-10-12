@@ -7,7 +7,9 @@ import Foundation
 /// Base64: AES-256-GCM with a 96-bit nonce and a 128-bit tag, the activity's
 /// reference as associated data (`hinata-la-v1:<ref>`), so a state made for
 /// one activity does not open in another. The plaintext carries the timer's
-/// shape only: mode, phase, cycles, start, end of the stretch, ended.
+/// shape only: mode, phase, cycles, start, end of the stretch, when the
+/// activity goes away, ended. The server works out that moment by the app's
+/// rule, so the phone never computes it a second way.
 enum TimerActivityCrypto {
   static let version = 1
 
@@ -17,6 +19,7 @@ enum TimerActivityCrypto {
     var cyclesDone: Int?
     var startedAt: Double?
     var endsAt: Double?
+    var dismissAt: Double?
     var ended: Bool
   }
 
@@ -43,19 +46,19 @@ enum TimerActivityCrypto {
   @available(iOS 16.1, *)
   extension TimerActivityAttributes.ContentState {
     /// What this state draws for the activity [ref]: itself when the app wrote
-    /// it, the opened state when the server sent it, and "Timer" without any
-    /// time when it cannot be opened (no key on this phone, a wrong key).
+    /// it, the opened state when the server sent it, and the widget's name
+    /// without any time when it cannot be opened (no key on this phone, a
+    /// wrong key).
     func resolved(ref: String, record: TimerActivityRecord? = nil) -> Self {
       guard let sealed else { return self }
       let words = (record ?? TimerActivityStore.load(ref: ref))
       guard sealed.v == TimerActivityCrypto.version, let words,
         let plain = TimerActivityCrypto.open(n: sealed.n, c: sealed.c, key: words.key, ref: ref),
-        !plain.ended, let started = plain.startedAt
+        !plain.ended, let started = plain.startedAt, let dismiss = plain.dismissAt
       else { return .opaque }
       let startedAt = Date(timeIntervalSince1970: started / 1000)
       let endsAt = plain.endsAt.map { Date(timeIntervalSince1970: $0 / 1000) }
-      let byDay = startedAt.addingTimeInterval(24 * 3600)
-      let dismissAt = endsAt.map { min($0.addingTimeInterval(3600), byDay) } ?? byDay
+      let dismissAt = Date(timeIntervalSince1970: dismiss / 1000)
       let isBreak = plain.phase == "shortBreak" || plain.phase == "longBreak"
       let staleTitle: String? =
         endsAt == nil
