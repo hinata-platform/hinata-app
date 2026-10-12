@@ -79,6 +79,8 @@ class TimerBackgroundAction {
     required this.surfaces,
     required this.snapshot,
     this.lock = const HinataDeviceLock(),
+    this.unlockGrace = const Duration(seconds: 3),
+    this.unlockPoll = const Duration(milliseconds: 250),
   });
 
   final TimeRepository time;
@@ -88,9 +90,11 @@ class TimerBackgroundAction {
   final List<TimerSurface> surfaces;
   final TimerSurfaceSnapshot snapshot;
   final HinataDeviceLock lock;
+  final Duration unlockGrace;
+  final Duration unlockPoll;
 
   Future<TimerBackgroundOutcome> run(TimerBackgroundCommand command) async {
-    if (await lock.isLocked()) return TimerBackgroundOutcome.locked;
+    if (await _stillLocked()) return TimerBackgroundOutcome.locked;
     try {
       final timer = await time.timer();
       if (timer == null) {
@@ -107,6 +111,21 @@ class TimerBackgroundAction {
       debugPrint('Background timer action failed: $error');
       return TimerBackgroundOutcome.failed;
     }
+  }
+
+  /// Whether the device stays locked for [unlockGrace].
+  ///
+  /// The Quick Settings tile asks for the unlock itself (`unlockAndRun`) and
+  /// sends the command the moment the PIN is accepted, while the keyguard is
+  /// still on its way out. Without the grace that tap was refused as locked.
+  /// A device that is really locked is still locked when the grace is over.
+  Future<bool> _stillLocked() async {
+    final until = DateTime.now().add(unlockGrace);
+    while (await lock.isLocked()) {
+      if (!DateTime.now().isBefore(until)) return true;
+      await Future<void>.delayed(unlockPoll);
+    }
+    return false;
   }
 
   /// The timer that runs after [command], or null when none does.
