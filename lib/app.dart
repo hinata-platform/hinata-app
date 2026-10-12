@@ -15,6 +15,7 @@ import 'core/api/time_zone_sync.dart';
 import 'core/blocs/app_config_bloc.dart';
 import 'core/branding/org_logo_store.dart';
 import 'core/blocs/auth_bloc.dart';
+import 'core/timer_actions/api_live_activity_push_registry.dart';
 import 'core/blocs/locale_cubit.dart';
 import 'core/blocs/theme_cubit.dart';
 import 'core/blocs/timer_cubit.dart';
@@ -157,6 +158,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   String? _timerIdentity;
   late final TimeZoneSync _timeZone;
   late final FcmService _fcm;
+
+  /// Shared with the timer surfaces so a sign-out can take the Live Activity
+  /// tokens off the server while the session still holds its tokens.
+  late final ApiLiveActivityPushRegistry _liveActivityRegistry =
+      ApiLiveActivityPushRegistry(widget.apiClient);
   StreamSubscription<AuthState>? _authSub;
   StreamSubscription<AppConfigState>? _configSub;
   // The server the auth session was last (re)checked against. When the user
@@ -206,7 +212,8 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _auth = AuthBloc(
       repository: domains.auth,
       storage: widget.storage,
-      beforeSignOut: () => _fcm.stop(),
+      beforeSignOut: () =>
+          Future.wait([_fcm.stop(), _liveActivityRegistry.unregisterAll()]),
     )..add(const AuthChecked());
     widget.apiClient.onSessionExpired = () =>
         _auth.add(const LogoutRequested());
@@ -885,6 +892,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                             openRoute: _router.go,
                             clearSignal: _surfaceClear,
                             hotkeys: _hotkeys,
+                            liveActivityRegistry: _liveActivityRegistry,
                             child: TimerSignals(
                               child: child ?? const SizedBox.shrink(),
                             ),

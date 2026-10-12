@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
@@ -71,23 +73,37 @@ void main() {
     expect(storage.accessToken, isNull);
   });
 
-  test(
-    'a sign-out does not wait on an unregister that never answers',
-    () async {
-      final storage = await signedIn();
-      final bloc = AuthBloc(
-        repository: _FakeAuth(ApiFailure('errors.unexpected')),
-        storage: storage,
-        beforeSignOut: () => Future<void>.error(StateError('offline')),
-      )..add(const LogoutRequested());
-      await bloc.stream.firstWhere(
-        (s) => s.status == AuthStatus.unauthenticated,
-      );
-      await bloc.close();
+  test('a failing unregister does not block the sign-out', () async {
+    final storage = await signedIn();
+    final bloc = AuthBloc(
+      repository: _FakeAuth(ApiFailure('errors.unexpected')),
+      storage: storage,
+      beforeSignOut: () => Future<void>.error(StateError('offline')),
+    )..add(const LogoutRequested());
+    await bloc.stream.firstWhere((s) => s.status == AuthStatus.unauthenticated);
+    await bloc.close();
 
-      expect(storage.accessToken, isNull);
-    },
-  );
+    expect(storage.accessToken, isNull);
+  });
+
+  test('a sign-out waits only its grace on an unregister that never '
+      'answers', () async {
+    final storage = await signedIn();
+    final bloc = AuthBloc(
+      repository: _FakeAuth(ApiFailure('errors.unexpected')),
+      storage: storage,
+      beforeSignOut: () => Completer<void>().future,
+      signOutGrace: const Duration(milliseconds: 200),
+    )..add(const LogoutRequested());
+
+    final signedOut = await bloc.stream
+        .firstWhere((s) => s.status == AuthStatus.unauthenticated)
+        .timeout(const Duration(seconds: 2));
+    await bloc.close();
+
+    expect(signedOut.status, AuthStatus.unauthenticated);
+    expect(storage.accessToken, isNull);
+  });
 
   test('a refused token is dropped', () async {
     for (final status in const [400, 401, 403]) {
