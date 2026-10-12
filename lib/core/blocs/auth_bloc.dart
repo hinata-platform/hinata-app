@@ -94,6 +94,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required this.repository,
     required this.storage,
     this.beforeSignOut,
+    this.signOutGrace = const Duration(seconds: 5),
   }) : super(const AuthState()) {
     on<AuthChecked>(_onChecked, transformer: restartable());
     on<LoginSubmitted>(_onLogin, transformer: droppable());
@@ -105,11 +106,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository repository;
   final AppStorage storage;
 
-  /// Runs while the session still holds its tokens: the device's push
-  /// registration is removed with them, or the server keeps sending this
-  /// account's notifications to a device somebody else signs in on next.
-  /// Best effort and bounded; a sign-out never waits on it for long.
+  /// Runs before the tokens are dropped, on a sign-out the person asked for:
+  /// the device's push and Live Activity registrations go with them. A session
+  /// the server ended has no tokens left to do it with; there the server moves
+  /// the push registration to whoever signs in on the device next. Best effort
+  /// and bounded; a sign-out never waits on it for long.
   final Future<void> Function()? beforeSignOut;
+
+  /// How long a sign-out waits on [beforeSignOut] at most.
+  final Duration signOutGrace;
 
   Future<void> _onChecked(AuthChecked event, Emitter<AuthState> emit) async {
     if (storage.accessToken == null) {
@@ -232,7 +237,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   Future<void> _onLogout(LogoutRequested event, Emitter<AuthState> emit) async {
     try {
-      await beforeSignOut?.call().timeout(const Duration(seconds: 5));
+      await beforeSignOut?.call().timeout(signOutGrace);
     } catch (_) {
       // Offline or slow: the server moves the registration to whoever signs
       // in on this device next.
