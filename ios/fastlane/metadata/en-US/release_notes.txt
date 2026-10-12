@@ -1,6 +1,5 @@
-• A notification when a countdown or Pomodoro interval ends, even with the app closed
-• Subscribe to your own calendars and turn events into time entries
-• Share a time entry with colleagues
-• Rates, billing reports and invoices for time tracking
-• Holiday calendars that follow your region
-• Smoother menus and many smaller fixes
+• The running timer on your lock screen and in a home screen widget, kept current with end-to-end encryption
+• Stop the timer or start the next Pomodoro phase from a notification or widget, without opening the app
+• The timer always in sight on your desktop, with shortcuts that work in every app
+• Knowledge base: page versions, favourites and recently opened pages
+• Many smaller fixes and improvements

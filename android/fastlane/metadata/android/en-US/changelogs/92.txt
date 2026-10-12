@@ -1,0 +1,5 @@
+• The running timer on your lock screen and in a home screen widget, kept current with end-to-end encryption
+• Stop the timer or start the next Pomodoro phase from a notification or widget, without opening the app
+• The timer always in sight on your desktop, with shortcuts that work in every app
+• Knowledge base: page versions, favourites and recently opened pages
+• Many smaller fixes and improvements

@@ -1,0 +1,5 @@
+• Der laufende Timer auf dem Sperrbildschirm und als Widget, Ende-zu-Ende-verschlüsselt aktuell gehalten
+• Timer stoppen oder die nächste Pomodoro-Phase starten, direkt aus Mitteilung oder Widget, ohne die App zu öffnen
+• Der Timer am Desktop immer im Blick, mit Tastenkürzeln, die in jeder App funktionieren
+• Wissensdatenbank: Seitenversionen, Favoriten und zuletzt geöffnete Seiten
+• Viele kleinere Korrekturen und Verbesserungen
