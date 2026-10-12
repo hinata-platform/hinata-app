@@ -64,7 +64,8 @@ struct TimerLiveActivity: Widget {
   }
 
   /// The state to draw: a sealed one from the server opened with this
-  /// activity's key (HIN-103), or "Timer" without times when it cannot be.
+  /// activity's key (HIN-103), or the widget's name without times when it
+  /// cannot be.
   private func drawn(
     _ context: ActivityViewContext<TimerActivityAttributes>
   ) -> TimerActivityAttributes.ContentState {

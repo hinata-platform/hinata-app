@@ -10,7 +10,7 @@ final class TimerActivityCryptoTests: XCTestCase {
   private let key = Data((0..<32).map { UInt8($0) })
   private let nonce = "AAECAwQFBgcICQoL"
   private let cipher =
-    "PCC7dKGA4CGvIvj+350cAvS4pRjSCzcdSwLHv3McbN4tMs2FzK136zDLEYiqvRgUzCoU7Ciixr5+4wgjKdTM38cF9Erj4RZRLHiIC4HrfalMqPNTQVpiX8TPqPxIwIm959o8iMAkrDikel/eOxBcce5lDgxvbFZM1VoVi7P9Kg=="
+    "PCC7dKGA4CGvIvj+350cAvS4pRjSCzcdSwLHv3McbN4tMs2FzK136zDLEYiqvRgUzCoU7Ciixr5+4wgjKdTM38cF9Erj4RZRLHiIC4HrfalMqPNTQVpiX8TPqPxIwIm959o9j9csoWntXUqQckQWRotQW53R9RWqfc977+eICmvfcDqg1bu4NnUH+gPLNTHjDJ1OApcvwhH3"
 
   func testTheServersVectorOpensToItsPlaintext() {
     let plain = TimerActivityCrypto.open(n: nonce, c: cipher, key: key, ref: "vector-activity")
@@ -19,7 +19,7 @@ final class TimerActivityCryptoTests: XCTestCase {
       plain,
       TimerActivityCrypto.Plain(
         mode: "countdown", phase: nil, cyclesDone: 0, startedAt: 1_791_792_000_000,
-        endsAt: 1_791_792_600_000, ended: false))
+        endsAt: 1_791_792_600_000, dismissAt: 1_791_796_200_000, ended: false))
   }
 
   func testAWrongKeyOrAnotherActivityOpensNothing() {
@@ -54,7 +54,7 @@ final class TimerActivityCryptoTests: XCTestCase {
     let drawn = state.resolved(ref: "vector-activity", record: wrong)
 
     XCTAssertTrue(drawn.hidesTime)
-    XCTAssertEqual(drawn.title, "Timer")
+    XCTAssertEqual(drawn.title, String(localized: "widget.name"))
   }
 
   func testTheAppsOwnStateSurvivesTheRoundTrip() throws {
