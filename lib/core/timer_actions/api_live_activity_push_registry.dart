@@ -15,6 +15,9 @@ class ApiLiveActivityPushRegistry implements LiveActivityPushRegistry {
   final ApiClient _api;
   final Future<String?> Function() _fcmToken;
 
+  /// The tokens this run registered and has not removed yet.
+  final Set<String> _held = {};
+
   @override
   Future<bool> register(LiveActivityPushToken token) async {
     try {
@@ -31,6 +34,7 @@ class ApiLiveActivityPushRegistry implements LiveActivityPushRegistry {
           'fcmToken': fcm,
         },
       );
+      _held.add(token.token);
       return true;
     } catch (error) {
       debugPrint('Live Activity registration failed: $error');
@@ -40,10 +44,18 @@ class ApiLiveActivityPushRegistry implements LiveActivityPushRegistry {
 
   @override
   Future<void> unregister(String token) async {
+    _held.remove(token);
     try {
       await _api.delete('/api/v1/me/devices', body: {'token': token});
     } catch (_) {
       // The server drops it with the end of the activity anyway.
     }
   }
+
+  /// Removes every token this run registered, while the session can still
+  /// say so (a sign-out). The server would otherwise keep them for the
+  /// account that left until they expire.
+  Future<void> unregisterAll() => Future.wait([
+    for (final token in {..._held}) unregister(token),
+  ]);
 }
