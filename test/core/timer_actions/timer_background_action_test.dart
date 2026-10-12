@@ -110,6 +110,7 @@ void main() {
 
   Future<(TimerBackgroundAction, RecordingSurface, AppStorage)> action({
     bool locked = false,
+    HinataDeviceLock? lock,
   }) async {
     final storage = await signedIn();
     final surface = RecordingSurface();
@@ -118,7 +119,9 @@ void main() {
         time: TimeRepository(ApiClient(storage, refreshOnUnauthorized: false)),
         surfaces: [surface],
         snapshot: snapshot,
-        lock: FakeLock(locked),
+        lock: lock ?? FakeLock(locked),
+        unlockGrace: const Duration(milliseconds: 200),
+        unlockPoll: const Duration(milliseconds: 20),
       ),
       surface,
       storage,
@@ -192,6 +195,17 @@ void main() {
     expect(surface.applied, isEmpty);
   });
 
+  test('a phone that is being unlocked right now acts once the keyguard is '
+      'gone', () async {
+    final (run, surface, _) = await action(lock: UnlockingLock(checks: 3));
+
+    expect(
+      await run.run(TimerBackgroundCommand.stop),
+      TimerBackgroundOutcome.done,
+    );
+    expect(requests.where((r) => r.contains('/timer/stop')), hasLength(1));
+  });
+
   test('only stop, the next phase and discard exist, and only from our '
       'own links and buttons', () {
     expect(
@@ -239,6 +253,17 @@ class FakeLock extends HinataDeviceLock {
 
   @override
   Future<bool> isLocked() async => locked;
+}
+
+/// Locked for the first [checks] questions, then unlocked: the moment after
+/// the PIN of `unlockAndRun` was accepted.
+class UnlockingLock extends HinataDeviceLock {
+  UnlockingLock({required this.checks});
+
+  int checks;
+
+  @override
+  Future<bool> isLocked() async => checks-- > 0;
 }
 
 class RecordingSurface extends TimerSurface {

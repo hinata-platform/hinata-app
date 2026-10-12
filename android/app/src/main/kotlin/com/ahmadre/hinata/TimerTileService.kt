@@ -5,6 +5,7 @@ import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.SharedPreferences
 import android.graphics.drawable.Icon
 import android.net.Uri
 import android.os.Build
@@ -27,8 +28,27 @@ import es.antonborri.home_widget.HomeWidgetPlugin
  */
 class TimerTileService : TileService() {
 
+  /**
+   * Redraws while the shade is open: a background action writes the record in this process, and
+   * the tile shows the new stretch at once instead of the one that just ended.
+   */
+  private val onRecord =
+      SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
+        if (key == TimerWidgetProvider.KEY) draw()
+      }
+
   override fun onStartListening() {
     super.onStartListening()
+    HomeWidgetPlugin.getData(this).registerOnSharedPreferenceChangeListener(onRecord)
+    draw()
+  }
+
+  override fun onStopListening() {
+    HomeWidgetPlugin.getData(this).unregisterOnSharedPreferenceChangeListener(onRecord)
+    super.onStopListening()
+  }
+
+  private fun draw() {
     val tile = qsTile ?: return
     val record = record()
     val now = System.currentTimeMillis()
