@@ -101,7 +101,9 @@ end
 RUBY_ENV_FOR_TOOLS = %w[GEM_HOME GEM_PATH RUBYOPT RUBYLIB BUNDLE_GEMFILE BUNDLE_BIN_PATH].freeze
 
 def flutter(*args)
-  saved = RUBY_ENV_FOR_TOOLS.to_h { |key| [key, ENV.delete(key)] }
+  # Under `bundle exec` (CI) CocoaPods is one of the bundle's own gems and needs
+  # exactly this environment; only a standalone fastlane's is in the way.
+  saved = ENV["BUNDLE_GEMFILE"] ? {} : RUBY_ENV_FOR_TOOLS.to_h { |key| [key, ENV.delete(key)] }
   Dir.chdir("../..") { sh("flutter", *args) }
 ensure
   saved&.each { |key, value| ENV[key] = value if value }
