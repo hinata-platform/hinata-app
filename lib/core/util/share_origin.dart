@@ -66,9 +66,9 @@ Rect shareOriginOf(BuildContext context, {Rect? preferred}) {
 /// of [window] points — see the rules above.
 ///
 /// Separate from [shareOriginOf] and public so the geometry can be pinned by
-/// tests without a widget tree; every case that reached the platform channel as
-/// an exception is one of these.
-@visibleForTesting
+/// tests without a widget tree, and so a download without a widget to anchor
+/// to still hands over a rectangle; every case that reached the platform
+/// channel as an exception is one of these.
 Rect shareAnchorWithin(Rect? candidate, Size window) {
   // A window with no area gives nothing to clip against and nothing to centre
   // in. It does not happen in a laid-out app; if it ever does, a small square

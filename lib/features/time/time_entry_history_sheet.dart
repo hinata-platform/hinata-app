@@ -114,7 +114,14 @@ class _HistoryBody extends StatelessWidget {
                 },
                 child: ListView.builder(
                   shrinkWrap: true,
-                  padding: const EdgeInsets.fromLTRB(18, 4, 18, 20),
+                  // The list runs to the bottom of the sheet, where a phone
+                  // has its home indicator.
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    4,
+                    18,
+                    20 + MediaQuery.viewPaddingOf(context).bottom,
+                  ),
                   itemCount: state.items.length + (state.isLoadingMore ? 1 : 0),
                   itemBuilder: (context, index) {
                     if (index >= state.items.length) {

@@ -180,7 +180,11 @@ class _TimePrivacyBodyState extends State<TimePrivacyBody> {
           },
         ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 4, 20, 18),
+          // The last row of a bottom sheet on a phone sits where the home
+          // indicator is; the footer keeps clear of it itself.
+          padding:
+              const EdgeInsets.fromLTRB(20, 4, 20, 18) +
+              EdgeInsets.only(bottom: MediaQuery.viewPaddingOf(context).bottom),
           child: Align(
             alignment: AlignmentDirectional.centerEnd,
             child: widget.firstUse
