@@ -468,32 +468,60 @@ class _AccountScreenState extends State<_AccountBody> {
     if (_loading && _me == null) {
       return const Center(child: HiveLoader());
     }
-    if (_me == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                context.t('account.retryError'),
-                style: TextStyle(color: AppColors.inkSoft),
-              ),
-              const SizedBox(height: 12),
-              FilledButton(
-                onPressed: _load,
-                child: Text(context.t('common.retry')),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    if (_me == null) return _unreachable();
 
     // Phone: an index list whose rows open one section at a time, so the
     // surface never overloads. Desktop / tablet: a rail of the same sections.
     if (context.isCompact) return _compactView();
     return _wideView();
+  }
+
+  /// The account could not be loaded: the server is down, unreachable or
+  /// gone. The way out stays open: switching to another server and signing
+  /// out need nothing from this one.
+  Widget _unreachable() {
+    return LayoutBuilder(
+      builder: (context, constraints) => SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(24, 24, 24, context.bottomGutter + 24),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: constraints.maxHeight - 48),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    context.t('account.retryError'),
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: AppColors.inkSoft),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: FilledButton(
+                      onPressed: _load,
+                      child: Text(context.t('common.retry')),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+                  const ServerCard(),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: () =>
+                          context.read<AuthBloc>().add(const LogoutRequested()),
+                      icon: const Icon(LucideIcons.logOut, size: 15),
+                      label: Text(context.t('account.signOut')),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   /// Desktop and tablet: the sections in a rail on the left and the one that
