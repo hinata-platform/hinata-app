@@ -47,7 +47,7 @@ enum TimerActivityCrypto {
     /// time when it cannot be opened (no key on this phone, a wrong key).
     func resolved(ref: String, record: TimerActivityRecord? = nil) -> Self {
       guard let sealed else { return self }
-      let words = (record ?? TimerActivityKeychain.load(ref: ref))
+      let words = (record ?? TimerActivityStore.load(ref: ref))
       guard sealed.v == TimerActivityCrypto.version, let words,
         let plain = TimerActivityCrypto.open(n: sealed.n, c: sealed.c, key: words.key, ref: ref),
         !plain.ended, let started = plain.startedAt

@@ -90,8 +90,9 @@ void main() {
   });
 
   test('the Keychain class of the session tokens is unchanged (HIN-103)', () {
-    // The shared group is for Live Activity keys only. The tokens keep the
-    // plugin's defaults: no accessibility, no group of their own.
+    // Live Activity keys live in the App Group (the extension has no Keychain
+    // where it draws). The tokens keep the plugin's defaults: no
+    // accessibility, no group of their own.
     final storage = File(
       'lib/core/storage/app_storage.dart',
     ).readAsStringSync();
