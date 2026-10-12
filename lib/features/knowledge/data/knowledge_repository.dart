@@ -104,7 +104,8 @@ class KnowledgeRepository {
     final articles = readable.items;
     // The documents and texts are read off the UI thread; a thousand pages
     // would otherwise stall a frame for their JSON and their lowering.
-    final prepared = await _prepare(articles);
+    final pages = [for (final a in articles) _toKbArticle(a)];
+    final prepared = await _prepare(pages);
     if (epoch != _epoch) return;
     _truncated = readable.truncated;
     final dirUsers = results[1] as List<DirectoryUser>;
@@ -133,8 +134,8 @@ class KnowledgeRepository {
     _linksFrom.clear();
     _childIds.clear();
     _hay.clear();
-    for (final a in articles) {
-      _put(_toKbArticle(a), links: prepared.links[a.id] ?? const []);
+    for (final page in pages) {
+      _put(page, links: prepared.links[page.id] ?? const []);
     }
     _hay.addAll(prepared.hay);
     _rebuildSpaces();
@@ -187,18 +188,18 @@ class KnowledgeRepository {
   /// page. Only documents with a smart link are parsed at all. Past
   /// [_inlineScan] both are worked out in one isolate; below it the links
   /// are read here and the search text waits for the first search.
-  static Future<_Prepared> _prepare(List<Article> articles) async {
+  static Future<_Prepared> _prepare(List<KbArticle> articles) async {
     final pages = <_PageText>[];
     var size = 0;
     for (final a in articles) {
-      final doc = a.contentDoc;
+      final doc = a.doc;
       final linking = doc != null && doc.contains('"smartlink"') ? doc : null;
-      final body = a.content ?? '';
+      final body = a.body;
       pages.add((
         id: a.id,
         doc: linking,
-        space: a.space ?? '',
-        labels: a.tags,
+        space: a.spaceId,
+        labels: a.labels,
         body: body,
       ));
       size += body.length + (linking?.length ?? 0);
