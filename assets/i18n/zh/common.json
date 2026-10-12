@@ -1647,7 +1647,8 @@
         "focusPhase": "番茄钟，专注",
         "breakPhase": "番茄钟，休息"
       },
-      "unlockToAct": "请解锁设备后重试。"
+      "unlockToAct": "请解锁设备后重试。",
+      "actionFailed": "操作未成功。请打开 Hinata 后重试。"
     }
   },
   "availability": {

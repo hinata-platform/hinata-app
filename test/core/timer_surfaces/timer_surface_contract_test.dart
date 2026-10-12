@@ -86,7 +86,6 @@ void main() {
       'lib/core/timer_actions/timer_background_action.dart',
     ).readAsStringSync();
     expect(action, contains('lock.isLocked()'));
-    expect(action, contains('refreshOnUnauthorized: false'));
   });
 
   test('the Keychain class of the session tokens is unchanged (HIN-103)', () {

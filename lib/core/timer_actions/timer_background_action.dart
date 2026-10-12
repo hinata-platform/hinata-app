@@ -20,8 +20,7 @@ import '../timer_surfaces/background/timer_surface_snapshot.dart';
 /// (HIN-103). Never a start, and never anything that carries content.
 enum TimerBackgroundCommand {
   stop,
-  advancePhase,
-  discard;
+  advancePhase;
 
   /// The command of a widget or tile link, `hinata://timer/<command>`.
   static TimerBackgroundCommand? fromUri(Uri? uri) {
@@ -31,7 +30,6 @@ enum TimerBackgroundCommand {
     return switch (uri.pathSegments.firstOrNull) {
       'stop' => stop,
       'advancePhase' => advancePhase,
-      'discard' => discard,
       _ => null,
     };
   }
@@ -45,8 +43,9 @@ enum TimerBackgroundCommand {
       };
 }
 
-/// How a background action ended. Nothing of it is shown or sent; the app
-/// reconciles with the server when it next opens.
+/// How a background action ended. Nothing of it is sent; on Android a press
+/// that did nothing says so in a short notification, and the app reconciles
+/// with the server when it next opens.
 enum TimerBackgroundOutcome {
   done,
 
@@ -56,8 +55,7 @@ enum TimerBackgroundOutcome {
   /// The screen was locked; the person is told to unlock and try again.
   locked,
 
-  /// Signed out, the session expired, or no server: nothing was attempted
-  /// beyond one request.
+  /// Signed out, the session was ended, or no server.
   signedOut,
 
   /// The server said no or was not reached.
@@ -70,9 +68,10 @@ enum TimerBackgroundOutcome {
 /// It is the same request the button in the app makes, against the server's
 /// timer as it is now: a stop names the timer it ends, a phase change the
 /// phase it turns, so a press that arrives after the timer changed elsewhere
-/// does no harm. The client never refreshes its token here
-/// ([ApiClient.refreshOnUnauthorized] false): a refresh would rotate the
-/// session under the running app and sign it out. A 401 ends the attempt.
+/// does no harm. An expired access token is refreshed like in the app: the
+/// server's refresh tokens belong to the device's session and stay valid
+/// after a refresh, so the running app keeps working with the pair it holds.
+/// Only a refused refresh ends the session.
 class TimerBackgroundAction {
   TimerBackgroundAction({
     required this.time,
@@ -136,9 +135,6 @@ class TimerBackgroundAction {
     switch (command) {
       case TimerBackgroundCommand.stop:
         await time.stopTimer(timerId: timer.id, endedAt: DateTime.now());
-        return null;
-      case TimerBackgroundCommand.discard:
-        await time.discardTimer();
         return null;
       case TimerBackgroundCommand.advancePhase:
         if (timer.mode != TimerMode.pomodoro) return timer;
@@ -212,7 +208,7 @@ Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
     backgroundResponse: timerNotificationBackgroundResponse,
   );
   final action = TimerBackgroundAction(
-    time: TimeRepository(ApiClient(storage, refreshOnUnauthorized: false)),
+    time: TimeRepository(ApiClient(storage)),
     snapshot: snapshot,
     surfaces: [
       if (platform == SurfacePlatform.android) notifications,
@@ -224,9 +220,13 @@ Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
     ],
   );
   final outcome = await action.run(command);
-  if (outcome == TimerBackgroundOutcome.locked) {
-    await notifications.showUnlockHint(snapshot.texts);
-  }
+  final hint = switch (outcome) {
+    TimerBackgroundOutcome.locked => snapshot.texts.unlockToAct,
+    TimerBackgroundOutcome.signedOut ||
+    TimerBackgroundOutcome.failed => snapshot.texts.actionFailed,
+    _ => '',
+  };
+  await notifications.showActionHint(hint, snapshot.texts);
   return outcome;
 }
 

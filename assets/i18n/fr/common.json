@@ -1647,7 +1647,8 @@
         "focusPhase": "Pomodoro, concentration",
         "breakPhase": "Pomodoro, pause"
       },
-      "unlockToAct": "Déverrouille ton appareil, puis réessaie."
+      "unlockToAct": "Déverrouille ton appareil, puis réessaie.",
+      "actionFailed": "Ça n’a pas marché. Ouvre Hinata et réessaie depuis l’app."
     }
   },
   "availability": {
