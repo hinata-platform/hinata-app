@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -75,6 +76,45 @@ void main() {
       await repo.init();
 
       expect(repo.articles.map((a) => a.id), ['c']);
+    });
+
+    test('reset during a reload keeps the cache empty and init then loads the '
+        'new account', () async {
+      final (repo, api) = await loaded([page('a')]);
+      final gate = Completer<void>();
+      api.gate = gate;
+      final pending = repo.reload();
+
+      repo.reset();
+      api.pages
+        ..clear()
+        ..add(page('c'));
+      gate.complete();
+      await pending;
+
+      // The answer of the account that left is dropped, and the cache
+      // still knows it has to load.
+      expect(repo.articles, isEmpty);
+      api.gate = null;
+      await repo.init();
+      expect(repo.articles.map((a) => a.id), ['c']);
+    });
+
+    test('link targets fetched before a reset answer nothing', () async {
+      final (repo, _) = await loaded([page('a')]);
+      final gate = Completer<List<Issue>>();
+      final pending = repo.linkIssues(() => gate.future);
+      repo.reset();
+      gate.complete([
+        const Issue(
+          id: 'i1',
+          projectId: 'p1',
+          readableId: 'OLD-1',
+          title: 'old',
+          state: 'Open',
+        ),
+      ]);
+      expect(await pending, isEmpty);
     });
   });
 
@@ -185,6 +225,17 @@ void main() {
       await repo.saveEdit('a', title: 'Page a', doc: '{}', spaceId: 'Docs');
       expect(repo.search('fresh').map((a) => a.id), ['a']);
     });
+
+    test(
+      'the same query on an unchanged cache is not searched again',
+      () async {
+        final (repo, _) = await loaded([page('a')]);
+        final first = repo.search('page');
+        expect(repo.search('page'), same(first));
+        await repo.reorder(['a']);
+        expect(repo.search('page'), isNot(same(first)));
+      },
+    );
   });
 
   group('link targets', () {
@@ -286,6 +337,25 @@ void main() {
 
       await repo.deleteArticle('a');
       expect(repo.relatedArticles(repo.articleById('b')!), isEmpty);
+    });
+
+    test('many linking pages are read off the UI thread alike', () async {
+      // Enough document text to go to an isolate.
+      final filler = 'x' * 2000;
+      final (repo, _) = await loaded([
+        page('target'),
+        for (var i = 0; i < 40; i++)
+          page(
+            'p$i',
+            doc: linkTo(
+              'target',
+            ).replaceFirst('"label":"x"', '"label":"$filler"'),
+          ),
+      ]);
+      expect(repo.relatedArticles(repo.articleById('target')!), hasLength(40));
+      expect(repo.relatedArticles(repo.articleById('p7')!).map((a) => a.id), [
+        'target',
+      ]);
     });
 
     test('the cache moves its revision on with every change', () async {
@@ -403,6 +473,9 @@ class _Api implements ApiClient {
   final List<Map<String, dynamic>> pages;
   Map<String, dynamic>? marks;
 
+  /// Holds the page list back until completed, for a reset mid-load.
+  Completer<void>? gate;
+
   /// What the server answers a save or a move with.
   Map<String, dynamic>? saved;
   bool failPut = false;
@@ -430,7 +503,10 @@ class _Api implements ApiClient {
     Map<String, dynamic>? query,
   }) async {
     calls.add(('get', path, query));
-    return (data: pages, header: (String _) => null);
+    // The answer is what the server held when asked, not when it arrives.
+    final answer = [...pages];
+    await gate?.future;
+    return (data: answer, header: (String _) => null);
   }
 
   @override
