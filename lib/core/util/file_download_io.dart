@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 import 'dart:typed_data';
-import 'dart:ui' show Rect;
+import 'dart:ui' show PlatformDispatcher, Rect, Size;
 
 import 'package:flutter/foundation.dart'
     show debugPrint, kDebugMode, visibleForTesting;
@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'file_download_types.dart';
+import 'share_origin.dart';
 
 /// Native: hand the bytes to whatever the platform offers for "the user now
 /// owns this file".
@@ -48,7 +49,7 @@ Future<DownloadResult> downloadBytes(
             name: name,
           ),
         ],
-        sharePositionOrigin: sharePositionOrigin,
+        sharePositionOrigin: sharePositionOrigin ?? _windowCentre(),
       ),
     );
     return result.status == ShareResultStatus.dismissed
@@ -96,7 +97,7 @@ Future<DownloadResult> downloadFile(
             name: name,
           ),
         ],
-        sharePositionOrigin: sharePositionOrigin,
+        sharePositionOrigin: sharePositionOrigin ?? _windowCentre(),
       ),
     );
     return result.status == ShareResultStatus.dismissed
@@ -384,4 +385,14 @@ String _withinNameLimit(String name) {
     used += size;
   }
   return kept.isEmpty ? 'download$extension' : '$kept$extension';
+}
+
+/// A share anchor for a caller that named none: the middle of the app's
+/// window. UIKit refuses a share sheet without one (see [shareAnchorWithin]),
+/// and a missing anchor must never turn into a failed export.
+Rect _windowCentre() {
+  final views = PlatformDispatcher.instance.views;
+  if (views.isEmpty) return shareAnchorWithin(null, Size.zero);
+  final view = views.first;
+  return shareAnchorWithin(null, view.physicalSize / view.devicePixelRatio);
 }
