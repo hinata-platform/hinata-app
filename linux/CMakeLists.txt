@@ -74,6 +74,13 @@ set_target_properties(${BINARY_NAME}
 # them to the application.
 include(flutter/generated_plugins.cmake)
 
+# tray_manager calls app_indicator_new, which newer libayatana-appindicator
+# marks deprecated; the plugin settings turn warnings into errors, so the snap's
+# newer base would refuse to build it. Still a warning, no longer fatal.
+if(TARGET tray_manager_plugin)
+  target_compile_options(tray_manager_plugin PRIVATE -Wno-error=deprecated-declarations)
+endif()
+
 
 # === Installation ===
 # By default, "installing" just makes a relocatable bundle in the build
