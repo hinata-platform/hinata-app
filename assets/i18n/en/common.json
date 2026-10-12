@@ -4178,7 +4178,7 @@
       },
       "schedule": {
         "title": "Notification times",
-        "hint": "Outside your times, e-mail and push wait and arrive together when your next window begins. The bell shows everything at once. Security messages and important notices always arrive.",
+        "hint": "Outside your times, e-mail and push wait and arrive together when your next window begins. Anything you have read in the app by then is not sent again. The bell shows everything at once. Security messages and important notices always arrive.",
         "always": "Always",
         "custom": "Custom",
         "from": "From",
