@@ -126,7 +126,7 @@ struct TimerWidgetView: View {
       }
       .frame(maxWidth: .infinity, alignment: .leading)
     case .systemMedium:
-      HStack(spacing: 16) {
+      HStack(spacing: 12) {
         glyph
           .font(.largeTitle)
           .frame(width: 64, height: 64)
@@ -143,10 +143,15 @@ struct TimerWidgetView: View {
           }
         }
         Spacer(minLength: 0)
+        actions(axis: .vertical)
       }
     default:
       VStack(alignment: .leading, spacing: 6) {
-        glyph.font(.title2)
+        HStack(alignment: .top, spacing: 6) {
+          glyph.font(.title2)
+          Spacer(minLength: 0)
+          actions(axis: .horizontal)
+        }
         Spacer(minLength: 0)
         Text(heading).font(.subheadline.weight(.semibold)).foregroundStyle(.white).lineLimit(2)
         if running {
@@ -160,6 +165,26 @@ struct TimerWidgetView: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+    }
+  }
+
+  /// Stop, and for a Pomodoro the next phase, without opening the app
+  /// (HIN-103, iOS 17). Only while the stretch runs; over, a tap on the widget
+  /// opens the focus screen as before.
+  @ViewBuilder private func actions(axis: Axis) -> some View {
+    if #available(iOSApplicationExtension 17.0, *), running, !entry.over, let record,
+      let stop = record.stop
+    {
+      let layout = axis == .vertical
+        ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 6))
+      layout {
+        if let advance = record.advance {
+          TimerWidgetButton(
+            title: advance, symbol: record.isBreak ? "play.fill" : "cup.and.saucer.fill",
+            command: "advancePhase")
+        }
+        TimerWidgetButton(title: stop, symbol: "stop.fill", command: "stop")
+      }
     }
   }
 
@@ -190,6 +215,27 @@ struct TimerWidgetView: View {
           countsDown: false)
       }
     }
+  }
+}
+
+/// One round button of the widget. The word is its accessible name; the
+/// glyph alone is drawn, so it fits the small widget in every language.
+@available(iOSApplicationExtension 17.0, *)
+private struct TimerWidgetButton: View {
+  let title: String
+  let symbol: String
+  let command: String
+
+  var body: some View {
+    Button(intent: TimerBackgroundIntent(command: command)) {
+      Image(systemName: symbol)
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(HinataPalette.navy)
+        .frame(width: 36, height: 36)
+        .background(HinataPalette.honey, in: Circle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(Text(title))
   }
 }
 

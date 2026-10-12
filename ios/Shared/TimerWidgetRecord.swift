@@ -16,6 +16,9 @@ struct TimerWidgetRecord: Equatable {
   var title: String?
   var over: String?
   var idle: String?
+  /// The words of the buttons (HIN-103); nil hides a button.
+  var stop: String?
+  var advance: String?
 
   var isRunning: Bool { startedAt != nil && validUntil != nil }
 
@@ -47,7 +50,9 @@ struct TimerWidgetRecord: Equatable {
       label: text("label"),
       title: text("title"),
       over: text("over"),
-      idle: text("idle")
+      idle: text("idle"),
+      stop: text("stop"),
+      advance: text("advance")
     )
   }
 

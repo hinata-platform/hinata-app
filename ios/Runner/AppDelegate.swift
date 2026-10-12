@@ -1,6 +1,8 @@
 import Flutter
 import UIKit
 import UserNotifications
+import flutter_local_notifications
+import home_widget
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -17,6 +19,17 @@ import UserNotifications
     // setForegroundNotificationPresentationOptions (alert, badge, sound).
     // Must be set before super, so a tap that launched the app is not lost.
     UNUserNotificationCenter.current().delegate = self
+    // HIN-103: a notification button or a widget button acts on the timer in a
+    // background engine of its own, without opening the app. Those engines need
+    // the plugins and the Live Activity channel too.
+    FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { registry in
+      AppDelegate.registerBackgroundPlugins(registry)
+    }
+    if #available(iOS 17, *) {
+      HomeWidgetBackgroundWorker.setPluginRegistrantCallback { registry in
+        AppDelegate.registerBackgroundPlugins(registry)
+      }
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -29,5 +42,14 @@ import UserNotifications
 
     // Hinata: der laufende Timer als Live Activity (HIN-102).
     HinataLiveActivityChannel.register(with: engineBridge.applicationRegistrar.messenger())
+  }
+
+  /// The plugins of a background engine, and the Live Activity channel, so a
+  /// background action can draw the activity after it stopped the timer.
+  static func registerBackgroundPlugins(_ registry: FlutterPluginRegistry) {
+    GeneratedPluginRegistrant.register(with: registry)
+    if let registrar = registry.registrar(forPlugin: "HinataLiveActivityChannel") {
+      HinataLiveActivityChannel.register(with: registrar.messenger(), primary: false)
+    }
   }
 }

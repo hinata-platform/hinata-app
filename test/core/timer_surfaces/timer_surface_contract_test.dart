@@ -66,4 +66,37 @@ void main() {
       }
     }
   });
+
+  test('buttons act in the background, and only after an unlock (HIN-103)', () {
+    final source = File(
+      'lib/core/timer_surfaces/adapters/local_notifications_surface.dart',
+    ).readAsStringSync();
+    // iOS: the system asks for Face ID or the code before it runs the action.
+    expect(
+      source,
+      contains('DarwinNotificationActionOption.authenticationRequired'),
+    );
+    expect(
+      source,
+      isNot(contains('DarwinNotificationActionOption.foreground')),
+    );
+    // Android: no activity opens; the isolate checks the keyguard itself.
+    expect(source, isNot(contains('showsUserInterface: true')));
+    final action = File(
+      'lib/core/timer_actions/timer_background_action.dart',
+    ).readAsStringSync();
+    expect(action, contains('lock.isLocked()'));
+    expect(action, contains('refreshOnUnauthorized: false'));
+  });
+
+  test('the Keychain class of the session tokens is unchanged (HIN-103)', () {
+    // The shared group is for Live Activity keys only. The tokens keep the
+    // plugin's defaults: no accessibility, no group of their own.
+    final storage = File(
+      'lib/core/storage/app_storage.dart',
+    ).readAsStringSync();
+    expect(storage, isNot(contains('KeychainAccessibility')));
+    expect(storage, isNot(contains('groupId')));
+    expect(storage, contains('const secure = FlutterSecureStorage();'));
+  });
 }
