@@ -282,4 +282,37 @@ void main() {
       },
     );
   });
+
+  group('progress ring', () {
+    // Every corner of the label stays inside the ring with air to spare, on
+    // one line, at the phone and the wide size and at twice the text size.
+    for (final size in const [112.0, 150.0]) {
+      for (final textScale in const [1.0, 2.0]) {
+        testWidgets('size $size, text x$textScale: label clear of the ring', (
+          tester,
+        ) async {
+          await pump(
+            tester,
+            Center(child: DashboardProgressRing(pct: .87, size: size)),
+            screen: const Size(400, 400),
+            textScale: textScale,
+          );
+          final ring = tester.getRect(find.byType(DashboardProgressRing));
+          final label = tester.getRect(find.text('dashboard.sprintCompleted'));
+          final inner = size / 2 - DashboardProgressRing.stroke;
+          for (final corner in [
+            label.topLeft,
+            label.topRight,
+            label.bottomLeft,
+            label.bottomRight,
+          ]) {
+            expect((corner - ring.center).distance, lessThan(inner - 2));
+          }
+          // One line: the label is no taller than one line of its text.
+          final figure = tester.getRect(find.text('87%'));
+          expect(label.height, lessThan(figure.height));
+        });
+      }
+    }
+  });
 }
