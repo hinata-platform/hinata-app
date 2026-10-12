@@ -1646,7 +1646,8 @@
         "countdown": "Cuenta atrás en marcha",
         "focusPhase": "Pomodoro, enfoque",
         "breakPhase": "Pomodoro, pausa"
-      }
+      },
+      "unlockToAct": "Desbloquea tu dispositivo y vuelve a intentarlo."
     }
   },
   "availability": {
@@ -4379,7 +4380,9 @@
         "alt": "Alt",
         "shift": "Mayús",
         "win": "Win"
-      }
+      },
+      "backgroundUpdates": "Actualizar en segundo plano",
+      "backgroundUpdatesHint": "Los cambios de fase y una parada en otro dispositivo llegan a la actividad en vivo aunque la app esté cerrada. Tu servidor los envía cifrados de extremo a extremo a través de Hinata Connect, Google y Apple, que solo ven cuándo se envía algo."
     }
   },
   "twofa": {

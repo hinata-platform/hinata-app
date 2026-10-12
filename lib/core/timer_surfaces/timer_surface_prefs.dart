@@ -20,6 +20,7 @@ class TimerSurfacePrefs extends Equatable {
     this.titleClock = false,
     this.keepInTray = false,
     this.globalHotkeys = false,
+    this.backgroundLiveActivity = false,
     this.toggleHotkey,
     this.focusHotkey,
   });
@@ -89,6 +90,12 @@ class TimerSurfacePrefs extends Equatable {
   /// whatever combinations are stored.
   final bool globalHotkeys;
 
+  /// The Live Activity follows the timer while the app sleeps (iOS, HIN-103):
+  /// the server sends each change, sealed, through Hinata Connect, Google and
+  /// Apple. Off by default and never part of the suggested set; only with it
+  /// on does the device register anything for its activities.
+  final bool backgroundLiveActivity;
+
   /// Start or stop the timer from anywhere; null until one is chosen.
   final HotKey? toggleHotkey;
 
@@ -105,6 +112,7 @@ class TimerSurfacePrefs extends Equatable {
     bool? titleClock,
     bool? keepInTray,
     bool? globalHotkeys,
+    bool? backgroundLiveActivity,
     HotKey? toggleHotkey,
     HotKey? focusHotkey,
   }) => TimerSurfacePrefs(
@@ -117,6 +125,8 @@ class TimerSurfacePrefs extends Equatable {
     titleClock: titleClock ?? this.titleClock,
     keepInTray: keepInTray ?? this.keepInTray,
     globalHotkeys: globalHotkeys ?? this.globalHotkeys,
+    backgroundLiveActivity:
+        backgroundLiveActivity ?? this.backgroundLiveActivity,
     toggleHotkey: toggleHotkey ?? this.toggleHotkey,
     focusHotkey: focusHotkey ?? this.focusHotkey,
   );
@@ -131,6 +141,7 @@ class TimerSurfacePrefs extends Equatable {
     'titleClock': titleClock,
     'keepInTray': keepInTray,
     'globalHotkeys': globalHotkeys,
+    'backgroundLiveActivity': backgroundLiveActivity,
     'toggleHotkey': toggleHotkey?.toMap(),
     'focusHotkey': focusHotkey?.toMap(),
   };
@@ -149,6 +160,7 @@ class TimerSurfacePrefs extends Equatable {
       titleClock: on('titleClock'),
       keepInTray: on('keepInTray'),
       globalHotkeys: on('globalHotkeys'),
+      backgroundLiveActivity: on('backgroundLiveActivity'),
       toggleHotkey: _hotKey(json['toggleHotkey']),
       focusHotkey: _hotKey(json['focusHotkey']),
     );
@@ -176,6 +188,7 @@ class TimerSurfacePrefs extends Equatable {
     titleClock,
     keepInTray,
     globalHotkeys,
+    backgroundLiveActivity,
     toggleHotkey,
     focusHotkey,
   ];

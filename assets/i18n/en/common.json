@@ -1646,7 +1646,8 @@
         "countdown": "Countdown running",
         "focusPhase": "Pomodoro, focus",
         "breakPhase": "Pomodoro, break"
-      }
+      },
+      "unlockToAct": "Unlock your device, then try again."
     }
   },
   "availability": {
@@ -4379,7 +4380,9 @@
         "alt": "Alt",
         "shift": "Shift",
         "win": "Win"
-      }
+      },
+      "backgroundUpdates": "Update in the background",
+      "backgroundUpdatesHint": "Phase changes and a stop on another device reach the Live Activity while the app is closed. Your server sends them end-to-end encrypted through Hinata Connect, Google and Apple, who only see when something is sent."
     }
   },
   "twofa": {
