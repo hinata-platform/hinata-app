@@ -44,8 +44,16 @@ class TimerWidgetProvider : HomeWidgetProvider() {
     val views = render(context, record, now)
     for (id in appWidgetIds) appWidgetManager.updateAppWidget(id, views)
     scheduleNext(context, record, now)
-    // The Quick Settings tile reads the same record (HIN-103).
-    TimerTileService.refresh(context)
+  }
+
+  /**
+   * The Quick Settings tile reads the same record (HIN-103), and has to be drawn again on every
+   * write, also with no widget placed: then the system never calls [onUpdate] for the broadcast
+   * home_widget sends, and an open shade would keep showing the stretch that just ended.
+   */
+  override fun onReceive(context: Context, intent: Intent) {
+    super.onReceive(context, intent)
+    if (intent.action == AppWidgetManager.ACTION_APPWIDGET_UPDATE) TimerTileService.refresh(context)
   }
 
   override fun onDisabled(context: Context) {
