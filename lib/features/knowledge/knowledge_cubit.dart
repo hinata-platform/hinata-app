@@ -4,7 +4,6 @@ import '../../core/blocs/paged_cubit.dart' show PageResult;
 import '../../core/models/content_models.dart' show ArticleVersion;
 import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
-import '../../core/repositories/user_repository.dart';
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_state.dart';
@@ -17,12 +16,10 @@ import 'knowledge_state.dart';
 /// come back to the caller as the repository threw them, so the view can
 /// say what went wrong where it happened.
 class KnowledgeCubit extends Cubit<KnowledgeState> {
-  KnowledgeCubit(this._knowledge, this._issues, this._users)
-    : super(const KnowledgeState());
+  KnowledgeCubit(this._knowledge, this._issues) : super(const KnowledgeState());
 
   final KnowledgeRepository _knowledge;
   final IssueRepository _issues;
-  final UserRepository _users;
 
   /// The shared page and space cache the views render from.
   KnowledgeRepository get store => _knowledge;
@@ -37,6 +34,7 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
         state.copyWith(
           status: KnowledgeStatus.ready,
           revision: state.revision + 1,
+          userNames: _userNames(),
         ),
       );
     } catch (_) {
@@ -45,6 +43,11 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
     }
     await _loadLinkTargets();
   }
+
+  /// Member names by id, from the directory the cache loaded with the pages.
+  Map<String, String> _userNames() => {
+    for (final u in _knowledge.users) u.id: u.name,
+  };
 
   /// Reads everything again, after a failure or on pull-to-refresh.
   Future<void> reload() async {
@@ -56,6 +59,7 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
           state.copyWith(
             status: KnowledgeStatus.ready,
             revision: state.revision + 1,
+            userNames: _userNames(),
           ),
         );
       }
@@ -64,13 +68,12 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
     }
   }
 
-  /// Every issue the reader can see and the member directory, so `{{issue:…}}`
-  /// links and the `@` menu resolve. Best effort: links show their stored
-  /// label until this arrives.
+  /// Every issue the reader can see, so `{{issue:…}}` links and the `@` menu
+  /// resolve. Fetched once per cache, not on every visit. Best effort: links
+  /// show their stored label until this arrives.
   Future<void> _loadLinkTargets() async {
     try {
-      final issues = await _issues.allIssues();
-      final users = await _users.users();
+      final issues = await _knowledge.linkIssues(_issues.allIssues);
       if (isClosed) return;
       emit(
         state.copyWith(
@@ -78,7 +81,6 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
             for (final i in issues)
               for (final key in i.allReadableIds) key: i,
           },
-          userNames: {for (final u in users) u.id: u.displayName},
         ),
       );
     } catch (_) {

@@ -298,39 +298,47 @@ class _VersionRow extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              context.t(
-                                'knowledge.history.version',
-                                variables: {'number': '${version.number}'},
-                              ),
-                              style: TextStyle(
-                                fontSize: AppType.label,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.ink,
+                            Flexible(
+                              child: Text(
+                                context.t(
+                                  'knowledge.history.version',
+                                  variables: {'number': '${version.number}'},
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: AppType.label,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.ink,
+                                ),
                               ),
                             ),
                             if (current) ...[
                               const SizedBox(width: 8),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.surfaceMuted,
-                                  borderRadius: BorderRadius.circular(
-                                    AppTheme.radiusPill,
+                              Flexible(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
                                   ),
-                                  border: Border.all(
-                                    color: AppColors.hairline2,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceMuted,
+                                    borderRadius: BorderRadius.circular(
+                                      AppTheme.radiusPill,
+                                    ),
+                                    border: Border.all(
+                                      color: AppColors.hairline2,
+                                    ),
                                   ),
-                                ),
-                                child: Text(
-                                  context.t('knowledge.history.current'),
-                                  style: TextStyle(
-                                    fontSize: AppType.caption,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.inkSoft,
+                                  child: Text(
+                                    context.t('knowledge.history.current'),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: AppType.caption,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.inkSoft,
+                                    ),
                                   ),
                                 ),
                               ),
