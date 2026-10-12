@@ -116,42 +116,34 @@ platform :ios do
     UI.success("iOS signing assets are in the match repo. CI can now run read-only.")
   end
 
-  desc "One-time (HIN-102): widget App ID, App Group on both ids, fresh iOS profiles"
-  # Changes the Apple Developer account and invalidates the iOS profiles that
-  # releases are built with, so it runs by hand on a maintainer's machine:
+  desc "One-time (HIN-102): widget App ID, App Groups on both ids, fresh profiles"
+  # Changes the Apple Developer account and invalidates the profiles of
+  # com.ahmadre.hinata, so it runs by hand on a maintainer's machine:
   #
-  #   bundle exec fastlane ios widgets_bootstrap apple_id:<Apple ID>
+  #   bundle exec fastlane ios widgets_bootstrap
   #
-  # App Groups have no App Store Connect API endpoint, hence the Apple ID
-  # (two-factor prompt) instead of the API key. macOS profiles and all
-  # certificates stay as they are; only iOS profiles are regenerated.
-  lane :widgets_bootstrap do |options|
-    apple_id = options[:apple_id] || ENV["FASTLANE_USER"]
-    UI.user_error!("Pass apple_id:<Apple ID> (App Groups need an Apple ID login).") if apple_id.to_s.empty?
-    produce(
-      username: apple_id,
-      team_id: TEAM_ID,
-      app_identifier: WIDGETS_IDENTIFIER,
-      app_name: "Hinata Widgets",
-      skip_itc: true,
-      enable_services: { app_group: "on" }
-    )
-    modify_services(
-      username: apple_id,
-      team_id: TEAM_ID,
-      app_identifier: APP_IDENTIFIER,
-      services: { app_group: "on" }
-    )
-    sh("fastlane", "produce", "group", "-g", APP_GROUP, "-n", "Hinata", "-u", apple_id,
-       "-b", TEAM_ID, error_callback: ->(_) { UI.important("#{APP_GROUP} exists already") })
-    APP_IDENTIFIERS.each do |id|
-      sh("fastlane", "produce", "associate_group", "-a", id, "-u", apple_id, "-b", TEAM_ID, APP_GROUP)
-    end
+  # The App ID and the App Groups capability go through the App Store Connect
+  # API key. The API cannot create the group itself or assign it, so that one
+  # step is the developer portal: Identifiers → App Groups → group.com.ahmadre.hinata,
+  # then App Groups → Configure on both App IDs. Done once in October 2026.
+  #
+  # com.ahmadre.hinata is a universal App ID, so the capability change also
+  # invalidates the macOS profiles: run `fastlane mac widgets_profiles` after
+  # this lane. Certificates stay as they are.
+  lane :widgets_bootstrap do
     auth!
-    # The capability change invalidates the existing iOS profiles: regenerate.
+    widgets = Spaceship::ConnectAPI::BundleId.find(WIDGETS_IDENTIFIER) ||
+              Spaceship::ConnectAPI::BundleId.create(name: "Hinata Widgets", platform: "UNIVERSAL",
+                                                     identifier: WIDGETS_IDENTIFIER)
+    [APP_IDENTIFIER, WIDGETS_IDENTIFIER].each do |id|
+      bundle = id == WIDGETS_IDENTIFIER ? widgets : Spaceship::ConnectAPI::BundleId.find(id)
+      next if bundle.get_capabilities.any? { |c| c.capability_type == "APP_GROUPS" }
+      bundle.create_capability("APP_GROUPS")
+    end
+    UI.important("Assign #{APP_GROUP} to both App IDs in the developer portal before the profiles.")
     match(type: "development", app_identifier: APP_IDENTIFIERS, readonly: false, force: true)
     match(type: "appstore", app_identifier: APP_IDENTIFIERS, readonly: false, force: true)
-    UI.success("Widget App ID, App Group and fresh iOS profiles are in the match repo.")
+    UI.success("Widget App ID and fresh iOS profiles are in the match repo.")
   end
 
   desc "Create the App Store Connect app record (name must be globally unique)"

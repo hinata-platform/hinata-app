@@ -107,6 +107,18 @@ platform :mac do
     UI.success("macOS signing assets are in the match repo. CI can now run read-only.")
   end
 
+  desc "Regenerate the macOS profiles after a capability change of the shared App ID"
+  # com.ahmadre.hinata is universal: when iOS adds a capability (App Groups for the
+  # widgets, HIN-102) Apple invalidates the macOS profiles as well. Certificates stay.
+  lane :widgets_profiles do
+    auth!
+    match(type: "development", app_identifier: APP_IDENTIFIER,
+          platform: "macos", readonly: false, force: true)
+    match(type: "appstore", app_identifier: APP_IDENTIFIER,
+          platform: "macos", additional_cert_types: ["mac_installer_distribution"],
+          readonly: false, force: true)
+  end
+
   desc "Fetch signing certificates & profiles (read-only on CI)"
   lane :signing do
     auth!
