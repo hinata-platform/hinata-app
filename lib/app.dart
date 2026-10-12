@@ -290,7 +290,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   void _onAppConfig(AppConfigState state) {
     if (state.status != AppConfigStatus.ready) return;
     final server = widget.storage.serverUrl;
-    if (_authServer == server) return;
+    if (!needsAuthCheck(
+      checkedServer: _authServer,
+      server: server,
+      status: _auth.state.status,
+      hasToken: widget.storage.accessToken != null,
+    )) {
+      return;
+    }
     _authServer = server;
     _auth.add(const AuthChecked());
   }
@@ -943,3 +950,16 @@ class _SignedInShortcuts extends StatelessWidget {
     );
   }
 }
+
+/// Whether a server that is ready asks for the sign-in to be checked: a new
+/// server always, the same one again only when a session is stranded there,
+/// its tokens kept through a start against a server that was down.
+@visibleForTesting
+bool needsAuthCheck({
+  required String? checkedServer,
+  required String? server,
+  required AuthStatus status,
+  required bool hasToken,
+}) =>
+    checkedServer != server ||
+    (status == AuthStatus.unauthenticated && hasToken);
