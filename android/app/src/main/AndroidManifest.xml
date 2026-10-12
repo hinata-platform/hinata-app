@@ -96,8 +96,9 @@
         </receiver>
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />
         <!-- HIN-102: the timer widget. Exported only for the system's widget
-             broadcasts; it reads the one record the app wrote and never acts on
-             the timer (a tap opens hinata://time/focus). -->
+             broadcasts; any other broadcast only redraws it from the record the
+             app wrote. Its stop and next-phase buttons (HIN-103) go through
+             home_widget's receiver, which is not exported. -->
         <receiver android:name=".TimerWidgetProvider" android:exported="true"
             android:label="@string/timer_widget_name">
             <intent-filter>
