@@ -203,8 +203,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // sign-in hero and the admin console all show it, and it must be fetched
     // once per server rather than once per surface.
     _orgLogo = OrgLogoStore(meta: domains.meta, api: widget.apiClient);
-    _auth = AuthBloc(repository: domains.auth, storage: widget.storage)
-      ..add(const AuthChecked());
+    _auth = AuthBloc(
+      repository: domains.auth,
+      storage: widget.storage,
+      beforeSignOut: () => _fcm.stop(),
+    )..add(const AuthChecked());
     widget.apiClient.onSessionExpired = () =>
         _auth.add(const LogoutRequested());
     // A flag-gated module answering "switched off" means our /meta is stale —
