@@ -1648,7 +1648,8 @@
         "breakPhase": "Pomodoro, pausa"
       },
       "unlockToAct": "Desbloquea tu dispositivo y vuelve a intentarlo.",
-      "actionFailed": "No ha funcionado. Abre Hinata y vuelve a intentarlo desde ahí."
+      "actionFailed": "No ha funcionado. Abre Hinata y vuelve a intentarlo desde ahí.",
+      "timeLabel": "Tiempo"
     }
   },
   "availability": {
@@ -4381,7 +4382,12 @@
         "win": "Win"
       },
       "backgroundUpdates": "Actualizar en segundo plano",
-      "backgroundUpdatesHint": "Los cambios de fase y una parada en otro dispositivo llegan a la actividad en vivo aunque la app esté cerrada. Tu servidor los envía cifrados de extremo a extremo a través de Hinata Connect, Google y Apple, que solo ven cuándo se envía algo."
+      "backgroundUpdatesHint": "Los cambios de fase y una parada en otro dispositivo llegan a la actividad en vivo aunque la app esté cerrada. Tu servidor los envía cifrados de extremo a extremo a través de Hinata Connect, Google y Apple, que solo ven cuándo se envía algo.",
+      "liveUpdate": "Live Update en la barra de estado",
+      "liveUpdateHint": "El temporizador en marcha como chip en la barra de estado, en la pantalla de bloqueo y en la pantalla siempre activa. El chip solo muestra el tiempo, igual en trabajo y en pausa.",
+      "liveUpdateOff": "Las Live Updates están desactivadas para esta app en los ajustes del sistema. La notificación en curso se mantiene igualmente.",
+      "reliability": "Modo fiable",
+      "reliabilityHint": "Para dispositivos cuyo gestor de batería cierra la notificación en curso. Un servicio en primer plano la mantiene mientras corre el temporizador y no recopila nada. Solo se inicia con la app abierta."
     }
   },
   "twofa": {

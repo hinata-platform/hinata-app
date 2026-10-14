@@ -1648,7 +1648,8 @@
         "breakPhase": "Pomodoro, pause"
       },
       "unlockToAct": "Déverrouille ton appareil, puis réessaie.",
-      "actionFailed": "Ça n’a pas marché. Ouvre Hinata et réessaie depuis l’app."
+      "actionFailed": "Ça n’a pas marché. Ouvre Hinata et réessaie depuis l’app.",
+      "timeLabel": "Temps"
     }
   },
   "availability": {
@@ -4381,7 +4382,12 @@
         "win": "Win"
       },
       "backgroundUpdates": "Mettre à jour en arrière-plan",
-      "backgroundUpdatesHint": "Les changements de phase et un arrêt sur un autre appareil atteignent l'activité en direct même quand l'app est fermée. Ton serveur les envoie chiffrés de bout en bout via Hinata Connect, Google et Apple, qui ne voient que le moment de l'envoi."
+      "backgroundUpdatesHint": "Les changements de phase et un arrêt sur un autre appareil atteignent l'activité en direct même quand l'app est fermée. Ton serveur les envoie chiffrés de bout en bout via Hinata Connect, Google et Apple, qui ne voient que le moment de l'envoi.",
+      "liveUpdate": "Live Update dans la barre d’état",
+      "liveUpdateHint": "Le minuteur en cours sous forme de puce dans la barre d’état, sur l’écran de verrouillage et sur l’écran toujours allumé. La puce n’affiche que le temps, pareil pour le travail et la pause.",
+      "liveUpdateOff": "Les Live Updates sont désactivées pour cette app dans les réglages du système. La notification en cours reste quand même.",
+      "reliability": "Mode fiabilité",
+      "reliabilityHint": "Pour les appareils dont le gestionnaire de batterie ferme la notification en cours. Un service au premier plan la maintient tant que le minuteur tourne et ne collecte rien. Il ne démarre que lorsque l’app est ouverte."
     }
   },
   "twofa": {

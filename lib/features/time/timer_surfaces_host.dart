@@ -205,6 +205,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     breakPhase: context.t('time.surface.menu.breakPhase'),
     unlockToAct: context.t('time.surface.unlockToAct'),
     actionFailed: context.t('time.surface.actionFailed'),
+    timeLabel: context.t('time.surface.timeLabel'),
   );
 
   TimerSurfaceState _derive() {

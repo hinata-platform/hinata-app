@@ -1648,7 +1648,8 @@
         "breakPhase": "番茄钟，休息"
       },
       "unlockToAct": "请解锁设备后重试。",
-      "actionFailed": "操作未成功。请打开 Hinata 后重试。"
+      "actionFailed": "操作未成功。请打开 Hinata 后重试。",
+      "timeLabel": "时间"
     }
   },
   "availability": {
@@ -4381,7 +4382,12 @@
         "win": "Win"
       },
       "backgroundUpdates": "在后台更新",
-      "backgroundUpdatesHint": "即使应用已关闭，阶段切换和在其他设备上的停止也会同步到实时活动。你的服务器通过 Hinata Connect、Google 和 Apple 以端到端加密方式发送，它们只能看到发送时间。"
+      "backgroundUpdatesHint": "即使应用已关闭，阶段切换和在其他设备上的停止也会同步到实时活动。你的服务器通过 Hinata Connect、Google 和 Apple 以端到端加密方式发送，它们只能看到发送时间。",
+      "liveUpdate": "状态栏中的 Live Update",
+      "liveUpdateHint": "正在运行的计时器以小标签显示在状态栏、锁屏和息屏显示中。小标签只显示时间，工作和休息时都一样。",
+      "liveUpdateOff": "系统设置中已为此应用关闭 Live Updates。正在进行的通知仍会保留。",
+      "reliability": "可靠模式",
+      "reliabilityHint": "适用于电池管理会结束正在进行的通知的设备。计时器运行期间，由前台服务保留该通知，不收集任何数据。它只在应用打开时启动。"
     }
   },
   "twofa": {
