@@ -181,11 +181,14 @@ class PomodoroSetPosition extends Equatable {
     if (cycles < 1 || cycles * 2 > maxPhases) return null;
     // A set: work, short break, work, … work, long break. A break follows the
     // work interval that was just counted, so it sits right after that one.
+    // An interval under a minute is not counted, so a break can follow none:
+    // it then sits after the first.
     final done = timer.cyclesDone;
-    final index = phase == TimerPhase.work
-        ? 2 * (done % cycles)
-        : 2 * ((done - 1) % cycles) + 1;
-    if (index < 0) return null;
+    final index = switch (phase) {
+      TimerPhase.work => 2 * (done % cycles),
+      TimerPhase.longBreak => 2 * cycles - 1,
+      TimerPhase.shortBreak => 2 * (done < 1 ? 0 : (done - 1) % cycles) + 1,
+    };
     return PomodoroSetPosition(
       minutes: [
         for (var i = 0; i < cycles; i++) ...[
