@@ -1336,8 +1336,10 @@ class _SaveBar extends StatelessWidget {
               child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
             )
           : const Icon(LucideIcons.check, size: 16),
+      // Without the status beside it the short word says the same and fits
+      // a phone without shortening.
       label: Text(
-        context.t('projectSettings.saveChanges'),
+        context.t(label ? 'projectSettings.saveChanges' : 'common.save'),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
