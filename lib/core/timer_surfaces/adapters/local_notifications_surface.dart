@@ -10,8 +10,10 @@ import 'package:timezone/timezone.dart' as tz;
 import '../../models/time_models.dart';
 import '../phase_end_schedule.dart';
 import '../surface_platform.dart';
+import '../timer_reliability.dart';
 import '../timer_surface.dart';
 import '../timer_surface_state.dart';
+import 'android_live_update.dart';
 
 /// A random secret for this installation, made once and kept in the app's own
 /// preferences, which no other app can read.
@@ -113,6 +115,18 @@ class LocalNotificationsSurface extends TimerSurface {
   TimerSurfaceHost? _host;
   bool _showsRunning = false;
 
+  /// Whether this run started the reliability mode's foreground service.
+  bool _holding = false;
+
+  /// The stretch whose running notification the person swiped away. It is
+  /// not posted again until the timer changes: a new phase, a new timer.
+  Object? _dismissed;
+  Object? _shownStretch;
+
+  /// What makes one stretch of a timer another.
+  static Object _stretchOf(TimerSurfaceState state) =>
+      (state.mode, state.phase, state.startedAt, state.endsAt);
+
   /// The words the plugin was initialised with; null before the first time.
   /// Apple platforms register the action buttons at initialisation, so a new
   /// language initialises again.
@@ -202,6 +216,13 @@ class LocalNotificationsSurface extends TimerSurface {
   void respond(NotificationResponse response) => _onResponse(response);
 
   void _onResponse(NotificationResponse response) {
+    if (response.notificationResponseType ==
+        NotificationResponseType.notificationDismissed) {
+      // Swiped away: the person does not want it now. Not put back until
+      // the timer changes, which no button can do from a gone notification.
+      if (response.id == runningId) _dismissed = _shownStretch;
+      return;
+    }
     final host = _host;
     if (host == null) return;
     final token = _actionToken;
@@ -336,58 +357,109 @@ class LocalNotificationsSurface extends TimerSurface {
         !state.runningSurface ||
         startedAt == null ||
         (left != null && left <= Duration.zero)) {
+      await _release();
       if (_showsRunning) await _plugin.cancel(id: runningId);
       _showsRunning = false;
       return;
     }
+    final stretch = _stretchOf(state);
+    if (stretch == _dismissed) return;
+    _dismissed = null;
+    _shownStretch = stretch;
+    final live = AndroidLiveUpdate.of(state);
     final countsDown = state.endsAt != null;
     final pomodoro = state.mode == TimerMode.pomodoro;
     // Locked, the screen shows the app name and nothing else, unless the person
     // switched details on for the lock screen too.
     final lockScreen = state.lockScreenLabel != null;
-    await _plugin.show(
-      id: runningId,
-      title: state.isBreak ? state.texts.onBreak : state.texts.running,
-      body: lockScreen ? state.lockScreenLabel : state.label,
-      payload: _payload,
-      notificationDetails: NotificationDetails(
-        android: AndroidNotificationDetails(
-          _runningChannel,
-          state.texts.running,
-          importance: Importance.low,
-          priority: Priority.low,
-          playSound: false,
-          enableVibration: false,
-          silent: true,
-          ongoing: true,
-          autoCancel: false,
-          onlyAlertOnce: true,
-          showWhen: true,
-          timeoutAfter: left?.inMilliseconds,
-          usesChronometer: true,
-          chronometerCountDown: countsDown,
-          when: (countsDown ? state.endsAt! : startedAt).millisecondsSinceEpoch,
-          category: AndroidNotificationCategory.stopwatch,
-          visibility: lockScreen
-              ? NotificationVisibility.public
-              : NotificationVisibility.private,
-          actions: [
-            AndroidNotificationAction(
-              TimerNotificationAction.stop,
-              state.texts.stop,
-              showsUserInterface: false,
-            ),
-            if (pomodoro)
-              AndroidNotificationAction(
-                TimerNotificationAction.advance,
-                state.isBreak ? state.texts.resume : state.texts.takeBreak,
-                showsUserInterface: false,
-              ),
-          ],
+    final title = state.isBreak ? state.texts.onBreak : state.texts.running;
+    final body = lockScreen ? state.lockScreenLabel : state.label;
+    final details = AndroidNotificationDetails(
+      _runningChannel,
+      state.texts.running,
+      importance: Importance.low,
+      priority: Priority.low,
+      playSound: false,
+      enableVibration: false,
+      silent: true,
+      ongoing: true,
+      autoCancel: false,
+      onlyAlertOnce: true,
+      showWhen: true,
+      timeoutAfter: left?.inMilliseconds,
+      usesChronometer: true,
+      chronometerCountDown: countsDown,
+      when: (countsDown ? state.endsAt! : startedAt).millisecondsSinceEpoch,
+      category: AndroidNotificationCategory.stopwatch,
+      visibility: lockScreen
+          ? NotificationVisibility.public
+          : NotificationVisibility.private,
+      requestPromotedOngoing: live.promote,
+      styleInformation: live.style,
+      // A swipe is reported, so the notification is not put back on the
+      // next redraw of the same stretch.
+      dismissIsolate: NotificationDismissedIsolate.main,
+      actions: [
+        AndroidNotificationAction(
+          TimerNotificationAction.stop,
+          state.texts.stop,
+          showsUserInterface: false,
         ),
-      ),
+        if (pomodoro)
+          AndroidNotificationAction(
+            TimerNotificationAction.advance,
+            state.isBreak ? state.texts.resume : state.texts.takeBreak,
+            showsUserInterface: false,
+          ),
+      ],
     );
+    if (state.reliabilityService && !_holding && _mayStartService) {
+      // The service posts this very notification itself, under the same id.
+      await _androidPlugin?.startForegroundService(
+        id: runningId,
+        title: title,
+        body: body,
+        payload: _payload,
+        notificationDetails: details,
+        // Ended with the process, it is not brought back by the system: it
+        // would come back with a notification nobody keeps up to date.
+        startType: AndroidServiceStartType.startNotSticky,
+        foregroundServiceTypes: {
+          AndroidServiceForegroundType.foregroundServiceTypeSpecialUse,
+        },
+      );
+      _holding = true;
+    } else {
+      if (!state.reliabilityService && _holding) await _release();
+      // Also updates the service's notification while it holds it.
+      await _plugin.show(
+        id: runningId,
+        title: title,
+        body: body,
+        payload: _payload,
+        notificationDetails: NotificationDetails(android: details),
+      );
+    }
     _showsRunning = true;
+  }
+
+  AndroidFlutterLocalNotificationsPlugin? get _androidPlugin => _plugin
+      .resolvePlatformSpecificImplementation<
+        AndroidFlutterLocalNotificationsPlugin
+      >();
+
+  /// Android lets a foreground service start only from an app in front, or
+  /// from what the person just did in it; a background isolate never starts
+  /// one.
+  bool get _mayStartService =>
+      kTimerReliabilityService && (_host?.isForeground ?? false);
+
+  /// Ends the reliability mode's service. Also when this run did not start
+  /// it: a background action ends the timer in an isolate of its own.
+  Future<void> _release() async {
+    if (!_android || !kTimerReliabilityService) return;
+    await _androidPlugin?.stopForegroundService();
+    _holding = false;
   }
 
   @override
@@ -454,6 +526,8 @@ class LocalNotificationsSurface extends TimerSurface {
     await _ensureReady(_readyWith ?? TimerSurfaceTexts.empty);
     _planner.reset();
     _showsRunning = false;
+    _dismissed = null;
+    await _release();
     await _plugin.cancel(id: PhaseEndSchedule.notificationId);
     await _plugin.cancel(id: runningId);
   }

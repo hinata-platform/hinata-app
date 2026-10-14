@@ -21,6 +21,8 @@ class TimerSurfacePrefs extends Equatable {
     this.keepInTray = false,
     this.globalHotkeys = false,
     this.backgroundLiveActivity = false,
+    this.liveUpdate = false,
+    this.reliabilityService = false,
     this.toggleHotkey,
     this.focusHotkey,
   });
@@ -31,6 +33,7 @@ class TimerSurfacePrefs extends Equatable {
     introSeen: true,
     phaseEndNotification: true,
     runningSurface: true,
+    liveUpdate: true,
   );
 
   /// [suggested] for [platform]. A Mac keeps a timer in the menu bar when its
@@ -96,6 +99,16 @@ class TimerSurfacePrefs extends Equatable {
   /// on does the device register anything for its activities.
   final bool backgroundLiveActivity;
 
+  /// The running timer's notification asks to be a Live Update (Android 16
+  /// and later): a chip in the status bar, the lock screen and the always-on
+  /// display. Without it the notification stays as it was.
+  final bool liveUpdate;
+
+  /// A foreground service holds the running timer's notification, so a
+  /// manufacturer's battery manager does not end it (Android). Off by default
+  /// and never part of the suggested set.
+  final bool reliabilityService;
+
   /// Start or stop the timer from anywhere; null until one is chosen.
   final HotKey? toggleHotkey;
 
@@ -113,6 +126,8 @@ class TimerSurfacePrefs extends Equatable {
     bool? keepInTray,
     bool? globalHotkeys,
     bool? backgroundLiveActivity,
+    bool? liveUpdate,
+    bool? reliabilityService,
     HotKey? toggleHotkey,
     HotKey? focusHotkey,
   }) => TimerSurfacePrefs(
@@ -127,6 +142,8 @@ class TimerSurfacePrefs extends Equatable {
     globalHotkeys: globalHotkeys ?? this.globalHotkeys,
     backgroundLiveActivity:
         backgroundLiveActivity ?? this.backgroundLiveActivity,
+    liveUpdate: liveUpdate ?? this.liveUpdate,
+    reliabilityService: reliabilityService ?? this.reliabilityService,
     toggleHotkey: toggleHotkey ?? this.toggleHotkey,
     focusHotkey: focusHotkey ?? this.focusHotkey,
   );
@@ -142,12 +159,16 @@ class TimerSurfacePrefs extends Equatable {
     'keepInTray': keepInTray,
     'globalHotkeys': globalHotkeys,
     'backgroundLiveActivity': backgroundLiveActivity,
+    'liveUpdate': liveUpdate,
+    'reliabilityService': reliabilityService,
     'toggleHotkey': toggleHotkey?.toMap(),
     'focusHotkey': focusHotkey?.toMap(),
   };
 
   /// Anything that is not a `true` reads as off: a broken store must never
-  /// switch a surface on.
+  /// switch a surface on. One exception: switches stored before the Live
+  /// Update existed follow the running notification the person already
+  /// allowed, since it only changes where that notification shows.
   factory TimerSurfacePrefs.fromJson(Map<String, dynamic> json) {
     bool on(String key) => json[key] == true;
     return TimerSurfacePrefs(
@@ -161,6 +182,10 @@ class TimerSurfacePrefs extends Equatable {
       keepInTray: on('keepInTray'),
       globalHotkeys: on('globalHotkeys'),
       backgroundLiveActivity: on('backgroundLiveActivity'),
+      liveUpdate: json.containsKey('liveUpdate')
+          ? on('liveUpdate')
+          : on('runningSurface'),
+      reliabilityService: on('reliabilityService'),
       toggleHotkey: _hotKey(json['toggleHotkey']),
       focusHotkey: _hotKey(json['focusHotkey']),
     );
@@ -189,6 +214,8 @@ class TimerSurfacePrefs extends Equatable {
     keepInTray,
     globalHotkeys,
     backgroundLiveActivity,
+    liveUpdate,
+    reliabilityService,
     toggleHotkey,
     focusHotkey,
   ];

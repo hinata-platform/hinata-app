@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:system_hotkeys/system_hotkeys.dart';
 
 import '../models/time_models.dart';
+import 'timer_reliability.dart';
 import 'timer_surface_prefs.dart';
 
 /// The words a surface may show, resolved in the reader's language.
@@ -33,6 +34,7 @@ class TimerSurfaceTexts extends Equatable {
     this.breakPhase = '',
     this.unlockToAct = '',
     this.actionFailed = '',
+    this.timeLabel = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -85,6 +87,10 @@ class TimerSurfaceTexts extends Equatable {
   /// server, or the session ended (Android).
   final String actionFailed;
 
+  /// What the time on a Live Update is called (Android 17): one word, the
+  /// same for work and a break.
+  final String timeLabel;
+
   /// The words as a background isolate reads them back (HIN-103).
   Map<String, String> toJson() => {
     'appName': appName,
@@ -99,6 +105,7 @@ class TimerSurfaceTexts extends Equatable {
     'idle': idle,
     'unlockToAct': unlockToAct,
     'actionFailed': actionFailed,
+    'timeLabel': timeLabel,
   };
 
   /// Anything missing reads as empty; a surface then shows less, not wrong.
@@ -117,6 +124,7 @@ class TimerSurfaceTexts extends Equatable {
       idle: text('idle'),
       unlockToAct: text('unlockToAct'),
       actionFailed: text('actionFailed'),
+      timeLabel: text('timeLabel'),
     );
   }
 
@@ -143,7 +151,54 @@ class TimerSurfaceTexts extends Equatable {
     breakPhase,
     unlockToAct,
     actionFailed,
+    timeLabel,
   ];
+}
+
+/// Where a Pomodoro stands in its set: the length of every phase of the set,
+/// in order, and which of them runs. Lengths and a position, nothing else.
+class PomodoroSetPosition extends Equatable {
+  const PomodoroSetPosition({required this.minutes, required this.index});
+
+  /// The most phases a set may have to be drawn as segments.
+  static const maxPhases = 12;
+
+  final List<int> minutes;
+  final int index;
+
+  /// Minutes of the set before the running phase.
+  int get minutesBefore => minutes.take(index).fold(0, (a, b) => a + b);
+
+  /// Where [timer] stands in its set; null outside a Pomodoro, for a broken
+  /// configuration, or for a set too long to draw.
+  static PomodoroSetPosition? of(RunningTimer timer) {
+    final config = timer.pomodoro;
+    final phase = timer.phase;
+    if (timer.mode != TimerMode.pomodoro || config == null || phase == null) {
+      return null;
+    }
+    final cycles = config.cycles;
+    if (cycles < 1 || cycles * 2 > maxPhases) return null;
+    // A set: work, short break, work, … work, long break. A break follows the
+    // work interval that was just counted, so it sits right after that one.
+    final done = timer.cyclesDone;
+    final index = phase == TimerPhase.work
+        ? 2 * (done % cycles)
+        : 2 * ((done - 1) % cycles) + 1;
+    if (index < 0) return null;
+    return PomodoroSetPosition(
+      minutes: [
+        for (var i = 0; i < cycles; i++) ...[
+          config.work,
+          i == cycles - 1 ? config.longBreak : config.shortBreak,
+        ],
+      ],
+      index: index,
+    );
+  }
+
+  @override
+  List<Object?> get props => [minutes, index];
 }
 
 /// What every surface outside the app draws, and nothing more.
@@ -167,6 +222,9 @@ class TimerSurfaceState extends Equatable {
     this.titleClock = false,
     this.keepInTray = false,
     this.backgroundUpdates = false,
+    this.liveUpdate = false,
+    this.reliabilityService = false,
+    this.pomodoroSet,
     this.toggleHotkey,
     this.focusHotkey,
     this.confirmed = true,
@@ -208,6 +266,15 @@ class TimerSurfaceState extends Equatable {
   /// (iOS, HIN-103); only then does it register for them.
   final bool backgroundUpdates;
 
+  /// The running timer's notification asks to be a Live Update (Android 16+).
+  final bool liveUpdate;
+
+  /// A foreground service holds the running timer's notification (Android).
+  final bool reliabilityService;
+
+  /// Where a Pomodoro stands in its set, for the Live Update's segments.
+  final PomodoroSetPosition? pomodoroSet;
+
   /// The system-wide shortcuts to bind; null when switched off.
   final HotKey? toggleHotkey;
   final HotKey? focusHotkey;
@@ -248,6 +315,9 @@ class TimerSurfaceState extends Equatable {
     titleClock,
     keepInTray,
     backgroundUpdates,
+    liveUpdate,
+    reliabilityService,
+    pomodoroSet,
     toggleHotkey,
     focusHotkey,
     confirmed,
@@ -320,6 +390,13 @@ TimerSurfaceState deriveTimerSurfaceState(
     keepInTray: standing.keepInTray,
     backgroundUpdates:
         on && prefs.runningSurface && prefs.backgroundLiveActivity,
+    liveUpdate: on && prefs.runningSurface && prefs.liveUpdate,
+    reliabilityService:
+        kTimerReliabilityService &&
+        on &&
+        prefs.runningSurface &&
+        prefs.reliabilityService,
+    pomodoroSet: PomodoroSetPosition.of(timer),
     toggleHotkey: standing.toggleHotkey,
     focusHotkey: standing.focusHotkey,
     confirmed: confirmed,
