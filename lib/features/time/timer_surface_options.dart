@@ -6,7 +6,9 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/timer_surfaces/adapters/live_activity_surface.dart';
 import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
 import '../../core/timer_surfaces/adapters/web_notification_surface.dart';
+import '../../core/timer_surfaces/live_update_channel.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
+import '../../core/timer_surfaces/timer_reliability.dart';
 import '../../core/timer_surfaces/timer_surface_prefs.dart';
 
 /// One switch of the timer outside the app, as the introduction and the
@@ -17,6 +19,14 @@ import '../../core/timer_surfaces/timer_surface_prefs.dart';
 enum TimerSurfaceOption {
   phaseEnd,
   running,
+
+  /// The running timer's notification as a Live Update (Android 16+): a chip
+  /// in the status bar, the lock screen and the always-on display.
+  liveUpdate,
+
+  /// A foreground service holds the running timer's notification (Android),
+  /// against battery managers that end it.
+  reliability,
   details,
   lockDetails,
   titleClock,
@@ -38,6 +48,9 @@ enum TimerSurfaceOption {
     return switch (this) {
       phaseEnd => caps.phaseEndNotification,
       running => caps.runningSurface,
+      liveUpdate => platform == SurfacePlatform.android,
+      reliability =>
+        platform == SurfacePlatform.android && kTimerReliabilityService,
       // Only a surface that carries a label can show a description; the web
       // badge is a dot, a Linux tray menu is readable on the session bus by
       // any process, open or not, and on iOS everything that shows the
@@ -59,7 +72,15 @@ enum TimerSurfaceOption {
   /// with combinations to choose; they wait in the settings.
   /// The background updates send the timer's state through third parties, so
   /// they are asked for on their own, in the settings, never in passing.
-  bool get inIntro => this != hotkeys && this != backgroundUpdates;
+  /// The reliability mode keeps a service running; it is chosen on its own,
+  /// with its explanation, never in passing. The Live Update is on in the
+  /// suggested set already and only changes where the running notification
+  /// shows, so the introduction stays short without it.
+  bool get inIntro =>
+      this != hotkeys &&
+      this != backgroundUpdates &&
+      this != reliability &&
+      this != liveUpdate;
 
   /// Whether turning this on needs the system's permission for notifications.
   /// A Live Activity and the widgets ask for none.
@@ -75,6 +96,8 @@ enum TimerSurfaceOption {
   /// details, keeping it running when the window closes, and the shortcuts,
   /// which must never start a timer nothing outside the app shows.
   bool get dependsOnRunning =>
+      this == liveUpdate ||
+      this == reliability ||
       this == details ||
       this == lockDetails ||
       this == keepRunning ||
@@ -84,6 +107,8 @@ enum TimerSurfaceOption {
   IconData get icon => switch (this) {
     phaseEnd => LucideIcons.bellRing,
     running => LucideIcons.timer,
+    liveUpdate => LucideIcons.smartphone,
+    reliability => LucideIcons.shieldCheck,
     details => LucideIcons.textSearch,
     lockDetails => LucideIcons.lockKeyhole,
     titleClock => LucideIcons.panelTop,
@@ -95,6 +120,8 @@ enum TimerSurfaceOption {
   String labelKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEnd',
     running => 'account.timerSurfaces.running${surfacePlace(platform)}',
+    liveUpdate => 'account.timerSurfaces.liveUpdate',
+    reliability => 'account.timerSurfaces.reliability',
     details =>
       capabilitiesForPlatform(platform).trayIcon
           ? 'account.timerSurfaces.detailsMenu'
@@ -109,6 +136,8 @@ enum TimerSurfaceOption {
   String hintKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEndHint',
     running => 'account.timerSurfaces.running${surfacePlace(platform)}Hint',
+    liveUpdate => 'account.timerSurfaces.liveUpdateHint',
+    reliability => 'account.timerSurfaces.reliabilityHint',
     details =>
       capabilitiesForPlatform(platform).trayIcon
           ? 'account.timerSurfaces.detailsMenuHint'
@@ -124,6 +153,8 @@ enum TimerSurfaceOption {
   bool read(TimerSurfacePrefs prefs) => switch (this) {
     phaseEnd => prefs.phaseEndNotification,
     running => prefs.runningSurface,
+    liveUpdate => prefs.liveUpdate,
+    reliability => prefs.reliabilityService,
     details => prefs.surfaceDetails,
     lockDetails => prefs.lockScreenDetails,
     titleClock => prefs.titleClock,
@@ -135,6 +166,8 @@ enum TimerSurfaceOption {
   TimerSurfacePrefs write(TimerSurfacePrefs prefs, bool on) => switch (this) {
     phaseEnd => prefs.copyWith(phaseEndNotification: on),
     running => prefs.copyWith(runningSurface: on),
+    liveUpdate => prefs.copyWith(liveUpdate: on),
+    reliability => prefs.copyWith(reliabilityService: on),
     details => prefs.copyWith(surfaceDetails: on),
     lockDetails => prefs.copyWith(lockScreenDetails: on),
     titleClock => prefs.copyWith(titleClock: on),
@@ -165,6 +198,7 @@ TimerSurfacePrefs withOption(
     keepInTray: false,
     globalHotkeys: false,
     backgroundLiveActivity: false,
+    reliabilityService: false,
   );
 }
 
@@ -213,6 +247,16 @@ class TimerSurfacePermissionGate {
   /// Whether the system delivers on the minute (Android 12 and later).
   Future<bool> canScheduleExact(SurfacePlatform platform) =>
       LocalNotificationPermissions(platform).canScheduleExact();
+
+  /// Whether the device shows Live Updates and lets this app post them.
+  Future<LiveUpdateSupport> liveUpdates(SurfacePlatform platform) async =>
+      platform == SurfacePlatform.android
+      ? const LiveUpdateChannel().support()
+      : LiveUpdateSupport.unsupported;
+
+  /// Opens the system page where Live Updates are allowed for this app.
+  Future<void> openLiveUpdateSettings() =>
+      const LiveUpdateChannel().openSettings();
 
   /// Opens the system page for exact alarms.
   Future<void> requestExact(SurfacePlatform platform) =>

@@ -1,3 +1,4 @@
+import 'package:hinata/core/timer_surfaces/live_update_channel.dart';
 import 'package:hinata/core/timer_surfaces/surface_platform.dart';
 import 'package:hinata/features/time/timer_surface_options.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -8,6 +9,7 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
     this.grants = true,
     this.exact = false,
     this.activities = true,
+    this.liveUpdateSupport = LiveUpdateSupport.allowed,
   });
 
   bool grants;
@@ -15,6 +17,10 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
 
   /// What the system says about Live Activities (iOS).
   bool activities;
+
+  /// What the system says about Live Updates (Android 16+).
+  LiveUpdateSupport liveUpdateSupport;
+  int liveUpdateSettingsOpened = 0;
   int requests = 0;
   int exactRequests = 0;
 
@@ -26,6 +32,15 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
 
   @override
   Future<bool> activitiesEnabled(SurfacePlatform platform) async => activities;
+
+  @override
+  Future<LiveUpdateSupport> liveUpdates(SurfacePlatform platform) async =>
+      platform == SurfacePlatform.android
+      ? liveUpdateSupport
+      : LiveUpdateSupport.unsupported;
+
+  @override
+  Future<void> openLiveUpdateSettings() async => liveUpdateSettingsOpened++;
 
   @override
   Future<bool> canScheduleExact(SurfacePlatform platform) async => exact;

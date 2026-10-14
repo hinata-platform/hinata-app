@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/timer_surfaces/adapters/global_hotkeys_surface.dart';
+import 'package:hinata/core/timer_surfaces/live_update_channel.dart';
 import 'package:hinata/core/timer_surfaces/surface_platform.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_clear_signal.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
@@ -187,6 +188,53 @@ void main() {
     await tapVisible(tester, switchOf('account.timerSurfaces.runningIos'));
 
     expect(prefs.state.runningSurface, isFalse);
+  });
+
+  testWidgets('on Android 16: the Live Update and the reliability mode', (
+    tester,
+  ) async {
+    prefs.consent(TimerSurfacePrefs.suggested);
+    await pump(tester, SurfacePlatform.android);
+
+    expect(
+      tester
+          .widget<HiveSwitch>(switchOf('account.timerSurfaces.liveUpdate'))
+          .value,
+      isTrue,
+    );
+    expect(
+      tester
+          .widget<HiveSwitch>(switchOf('account.timerSurfaces.reliability'))
+          .value,
+      isFalse,
+    );
+  });
+
+  testWidgets('before Android 16 there is no Live Update row', (tester) async {
+    gate.liveUpdateSupport = LiveUpdateSupport.unsupported;
+    prefs.consent(TimerSurfacePrefs.suggested);
+    await pump(tester, SurfacePlatform.android);
+
+    expect(find.text('account.timerSurfaces.liveUpdate'), findsNothing);
+    expect(find.text('account.timerSurfaces.reliability'), findsOneWidget);
+  });
+
+  testWidgets('Live Updates off in the system: says why and opens the page', (
+    tester,
+  ) async {
+    gate.liveUpdateSupport = LiveUpdateSupport.blocked;
+    prefs.consent(TimerSurfacePrefs.suggested.copyWith(liveUpdate: false));
+    await pump(tester, SurfacePlatform.android);
+
+    expect(find.text('account.timerSurfaces.liveUpdateOff'), findsOneWidget);
+    expect(
+      tester
+          .widget<HiveSwitch>(switchOf('account.timerSurfaces.liveUpdate'))
+          .onChanged,
+      isNull,
+    );
+    await tapVisible(tester, find.text('account.timerSurfaces.openSettings'));
+    expect(gate.liveUpdateSettingsOpened, 1);
   });
 
   testWidgets('on the web the tab title', (tester) async {
