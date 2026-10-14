@@ -294,6 +294,20 @@ void main() {
       expect(bar.bottom, lessThanOrEqualTo(form.top));
     });
 
+    testWidgets('a phone keeps only the glyph beside the buttons', (
+      tester,
+    ) async {
+      await pump(tester, me: user('lead'), width: 540);
+
+      await tester.enterText(find.byType(TextField).first, 'Winterfest');
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(find.text('projectSettings.saveChanges'), findsOneWidget);
+      expect(find.text('projectSettings.unsavedChanges'), findsNothing);
+      expect(find.byTooltip('projectSettings.unsavedChanges'), findsOneWidget);
+    });
+
     testWidgets('?section= opens that section', (tester) async {
       await pump(
         tester,
