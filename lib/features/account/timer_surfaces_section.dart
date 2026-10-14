@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/timer_surfaces/live_update_channel.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
 import '../../core/timer_surfaces/timer_surface_clear_signal.dart';
 import '../../core/timer_surfaces/timer_surface_prefs.dart';
@@ -105,15 +106,29 @@ class _SwitchesState extends State<_Switches> {
   /// Whether the system allows Live Activities (iOS). Read again when the app
   /// is back in front, because the answer changes on a system page.
   bool _activities = true;
+
+  /// Whether this Android shows Live Updates and lets them through. The
+  /// row is left out until the answer is in, and on older versions.
+  LiveUpdateSupport _liveUpdates = LiveUpdateSupport.unsupported;
   late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
     super.initState();
-    _lifecycle = AppLifecycleListener(
-      onResume: () => unawaited(_readActivities()),
-    );
+    _lifecycle = AppLifecycleListener(onResume: _readSystem);
+    _readSystem();
+  }
+
+  void _readSystem() {
     unawaited(_readActivities());
+    unawaited(_readLiveUpdates());
+  }
+
+  Future<void> _readLiveUpdates() async {
+    final support = await widget.gate.liveUpdates(widget.platform);
+    if (mounted && support != _liveUpdates) {
+      setState(() => _liveUpdates = support);
+    }
   }
 
   @override
@@ -147,8 +162,16 @@ class _SwitchesState extends State<_Switches> {
     );
   }
 
-  bool _blocked(TimerSurfaceOption option) =>
-      option == TimerSurfaceOption.running && !_activities;
+  bool _blocked(TimerSurfaceOption option) => switch (option) {
+    TimerSurfaceOption.running => !_activities,
+    TimerSurfaceOption.liveUpdate => _liveUpdates == LiveUpdateSupport.blocked,
+    _ => false,
+  };
+
+  /// Rows this device has nothing behind: no Live Update before Android 16.
+  bool _hidden(TimerSurfaceOption option) =>
+      option == TimerSurfaceOption.liveUpdate &&
+      _liveUpdates == LiveUpdateSupport.unsupported;
 
   void _clearCopies() {
     context.read<TimerSurfaceClearSignal>().request();
@@ -170,7 +193,7 @@ class _SwitchesState extends State<_Switches> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final option in TimerSurfaceOption.offeredOn(platform))
-          if (!option.dependsOnRunning || running) ...[
+          if ((!option.dependsOnRunning || running) && !_hidden(option)) ...[
             SettingRow(
               label: context.t(option.labelKey(platform)),
               description: context.t(option.hintKey(platform)),
@@ -184,7 +207,27 @@ class _SwitchesState extends State<_Switches> {
                     : (on) => unawaited(_toggle(option, on)),
               ),
             ),
-            if (_blocked(option)) ...[
+            if (_blocked(option) &&
+                option == TimerSurfaceOption.liveUpdate) ...[
+              AccountNote(
+                text: context.t('account.timerSurfaces.liveUpdateOff'),
+                icon: LucideIcons.circleSlash,
+                tone: AccountNoteTone.info,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 4),
+                child: Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: AccountActionButton(
+                    label: context.t('account.timerSurfaces.openSettings'),
+                    icon: LucideIcons.settings,
+                    onPressed: () =>
+                        unawaited(widget.gate.openLiveUpdateSettings()),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 6),
+            ] else if (_blocked(option)) ...[
               AccountNote(
                 text: context.t('account.timerSurfaces.activitiesOff'),
                 icon: LucideIcons.circleSlash,
