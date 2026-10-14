@@ -616,32 +616,52 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   void _openTreeSheet(KbArticle a) {
     showGlassBottomSheet<void>(
       context,
-      builder: (sheetCtx) => SizedBox(
-        height: MediaQuery.sizeOf(sheetCtx).height * 0.72,
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
-          child: KnowledgeTree(
-            repo: _store,
-            spaceId: a.spaceId,
-            selectedId: a.id,
-            onOpenSpace: () {
-              Navigator.of(sheetCtx).pop();
-              _openSpace(a.spaceId);
-            },
-            onSelect: (id) {
-              Navigator.of(sheetCtx).pop();
-              _openArticle(id);
-            },
-            onNewChild: (pid) {
-              Navigator.of(sheetCtx).pop();
-              _go(KnowledgeNewLocation(spaceId: a.spaceId, parentId: pid));
-            },
-            onMove: _move,
-            onShift: _shift,
-            onDelete: _confirmDelete,
+      builder: (sheetCtx) {
+        // Closes this sheet even while a row's action menu still sits above
+        // it: the menu answers as it starts folding away, and a plain pop
+        // would close the menu and leave the sheet over the page it opened.
+        void close() {
+          final sheet = ModalRoute.of(sheetCtx);
+          final navigator = Navigator.of(sheetCtx);
+          if (sheet == null || !sheet.isActive) return;
+          navigator.popUntil((route) => route == sheet);
+          navigator.pop();
+        }
+
+        return SizedBox(
+          height: MediaQuery.sizeOf(sheetCtx).height * 0.72,
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 24),
+            // The sheet is a route of its own, outside the page's builder:
+            // without this a move or a reorder changed the pages but not the
+            // tree on screen.
+            child: BlocBuilder<KnowledgeCubit, KnowledgeState>(
+              bloc: _knowledge,
+              buildWhen: (a, b) => a.revision != b.revision,
+              builder: (_, _) => KnowledgeTree(
+                repo: _store,
+                spaceId: a.spaceId,
+                selectedId: a.id,
+                onOpenSpace: () {
+                  close();
+                  _openSpace(a.spaceId);
+                },
+                onSelect: (id) {
+                  close();
+                  _openArticle(id);
+                },
+                onNewChild: (pid) {
+                  close();
+                  _go(KnowledgeNewLocation(spaceId: a.spaceId, parentId: pid));
+                },
+                onMove: _move,
+                onShift: _shift,
+                onDelete: _confirmDelete,
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
