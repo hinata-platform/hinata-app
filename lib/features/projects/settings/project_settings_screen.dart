@@ -1267,21 +1267,20 @@ class _SaveBar extends StatelessWidget {
           // The buttons are capsules set in by the same 6 points all round,
           // so their curve runs parallel to the bar's.
           padding: const EdgeInsets.fromLTRB(16, 6, 6, 6),
-          child: docked
-              ? LayoutBuilder(
-                  // Docked beside the page title, a narrow window has no room
-                  // for the words: "U…" says nothing, so they go and the
-                  // glyph carries them as its tooltip and its label.
-                  builder: (context, box) => _row(
-                    context,
-                    tokens,
-                    dark,
-                    label:
-                        box.maxWidth >=
-                        MediaQuery.textScalerOf(context).scale(_kLabelRoom),
-                  ),
-                )
-              : _row(context, tokens, dark, label: true),
+          // A narrow bar has no room for the words beside both buttons:
+          // "U…" says nothing, so they go and the glyph carries them as its
+          // tooltip and its label. Docked beside the page title and floating
+          // on a phone alike.
+          child: LayoutBuilder(
+            builder: (context, box) => _row(
+              context,
+              tokens,
+              dark,
+              label:
+                  box.maxWidth >=
+                  MediaQuery.textScalerOf(context).scale(_kLabelRoom),
+            ),
+          ),
         ),
       ),
     );
@@ -1290,7 +1289,7 @@ class _SaveBar extends StatelessWidget {
   /// Height of the bar's two buttons.
   static const double _kCapsule = 40;
 
-  /// How wide a docked bar must be to keep its label beside both buttons.
+  /// How wide the bar must be to keep its label beside both buttons.
   static const double _kLabelRoom = 520;
 
   Widget _row(
@@ -1307,60 +1306,90 @@ class _SaveBar extends StatelessWidget {
       size: 17,
       color: valid ? AppColors.accentInk : AppColors.danger,
     );
-    return Row(
-      mainAxisSize: docked ? MainAxisSize.min : MainAxisSize.max,
-      children: [
-        if (label) ...[
-          glyph,
-          const SizedBox(width: 8),
-          Flexible(
-            fit: docked ? FlexFit.loose : FlexFit.tight,
-            child: Text(
-              status,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: AppType.label,
-                fontWeight: FontWeight.w600,
-                color: tokens.inkSoft,
-              ),
-            ),
-          ),
-        ] else
+    final discard = TextButton(
+      onPressed: saving ? null : onDiscard,
+      style: TextButton.styleFrom(
+        foregroundColor: tokens.ink,
+        overlayColor: tokens.rowHover,
+        minimumSize: const Size(0, _kCapsule),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        shape: const StadiumBorder(),
+      ),
+      child: Text(
+        context.t('projectSettings.discard'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+    // The app's honey capsule ([GlassButtons.filled]), at the bar's
+    // height so its curve runs parallel to the bar's.
+    final save = FilledButton.icon(
+      onPressed: (!valid || saving) ? null : onSave,
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(0, _kCapsule),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+      ),
+      icon: saving
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
+            )
+          : const Icon(LucideIcons.check, size: 16),
+      label: Text(
+        context.t('projectSettings.saveChanges'),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+    );
+    if (!label) {
+      // The glyph keeps the left edge and the buttons the right; on a narrow
+      // phone or at a large text size the buttons' words shorten before
+      // anything spills out of the bar.
+      return Row(
+        mainAxisSize: docked ? MainAxisSize.min : MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
           Tooltip(
             message: status,
             child: Semantics(label: status, child: glyph),
           ),
+          const SizedBox(width: 8),
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(child: discard),
+                const SizedBox(width: 2),
+                Flexible(child: save),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return Row(
+      mainAxisSize: docked ? MainAxisSize.min : MainAxisSize.max,
+      children: [
+        glyph,
         const SizedBox(width: 8),
-        TextButton(
-          onPressed: saving ? null : onDiscard,
-          style: TextButton.styleFrom(
-            foregroundColor: tokens.ink,
-            overlayColor: tokens.rowHover,
-            minimumSize: const Size(0, _kCapsule),
-            padding: const EdgeInsets.symmetric(horizontal: 14),
-            shape: const StadiumBorder(),
+        Flexible(
+          fit: docked ? FlexFit.loose : FlexFit.tight,
+          child: Text(
+            status,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(
+              fontSize: AppType.label,
+              fontWeight: FontWeight.w600,
+              color: tokens.inkSoft,
+            ),
           ),
-          child: Text(context.t('projectSettings.discard')),
         ),
+        const SizedBox(width: 8),
+        discard,
         const SizedBox(width: 2),
-        // The app's honey capsule ([GlassButtons.filled]), at the bar's
-        // height so its curve runs parallel to the bar's.
-        FilledButton.icon(
-          onPressed: (!valid || saving) ? null : onSave,
-          style: FilledButton.styleFrom(
-            minimumSize: const Size(0, _kCapsule),
-            padding: const EdgeInsets.symmetric(horizontal: 18),
-          ),
-          icon: saving
-              ? const SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
-                )
-              : const Icon(LucideIcons.check, size: 16),
-          label: Text(context.t('projectSettings.saveChanges')),
-        ),
+        save,
       ],
     );
   }
