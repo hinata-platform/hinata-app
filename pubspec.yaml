@@ -213,7 +213,14 @@ dependencies:
   # as an ongoing notification on Android. Not on Windows (the runner's own
   # toast channel, one ToastActivatorCLSID per MSIX) and not on the web
   # (package:web). Scheduled in UTC, so `timezone` is used without its database.
-  flutter_local_notifications: ^22.3.1
+  # HIN-104: our fork of 22.3.2 with the Android 16 live updates (upstream
+  # #2810, released only in the 23.0 previews that need AGP 9) and the Android
+  # 17 metric style. Back to pub.dev once 23.0 is stable.
+  flutter_local_notifications:
+    git:
+      url: https://github.com/hinata-platform/flutter_local_notifications.git
+      ref: hinata
+      path: flutter_local_notifications
   # Home and lock-screen widgets (HIN-102): App Group store on iOS, the
   # plugin's preferences on Android, and the reload of both.
   home_widget: ^0.9.4
