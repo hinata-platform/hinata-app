@@ -97,6 +97,20 @@ flutter {
     source = "../.."
 }
 
+// HIN-104: `--dart-define=HINATA_FGS=off` builds a store package without the
+// reliability mode's foreground service. The defines reach Gradle as a
+// comma-separated list of base64 strings; the release build then merges
+// src/nofgs/AndroidManifest.xml, which removes the service and its two
+// permissions (there is no src/release manifest it would replace).
+val withoutForegroundService =
+    (project.findProperty("dart-defines") as String?)
+        ?.split(",")
+        ?.map { String(java.util.Base64.getDecoder().decode(it)) }
+        ?.contains("HINATA_FGS=off") == true
+if (withoutForegroundService) {
+    android.sourceSets.getByName("release").manifest.srcFile("src/nofgs/AndroidManifest.xml")
+}
+
 dependencies {
     // Version from the flutter_local_notifications README (v22).
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")

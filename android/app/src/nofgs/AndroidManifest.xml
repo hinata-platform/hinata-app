@@ -1,0 +1,13 @@
+<!-- HIN-104: merged over the main manifest by a build with dart-define
+     HINATA_FGS=off (see build.gradle.kts). Takes the reliability mode's
+     foreground service and its permissions out of the package, for the case
+     that Google Play turns the service's declaration down. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" tools:node="remove"/>
+    <application>
+        <service android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
+            tools:node="remove"/>
+    </application>
+</manifest>
