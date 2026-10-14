@@ -14,12 +14,22 @@
          the notification's buzz. SCHEDULE_EXACT_ALARM (user-grantable, asked
          for in-app) keeps the alert on the minute; without the grant the app
          schedules an inexact alarm instead. Deliberately no
-         USE_EXACT_ALARM (reserved for alarm/calendar apps by Play policy) and
-         no foreground service: the timer runs on wall-clock timestamps, so
-         nothing has to stay alive in the background. -->
+         USE_EXACT_ALARM (reserved for alarm/calendar apps by Play policy). The
+         timer runs on wall-clock timestamps, so nothing has to stay alive in
+         the background. -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.VIBRATE"/>
+    <!-- HIN-104: the running timer as a Live Update (Android 16 and later).
+         A normal permission, granted with the install; the person can still
+         switch the promotion off in the system settings. -->
+    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS"/>
+    <!-- HIN-104, reliability mode (off by default): a foreground service holds
+         the running timer's notification so a manufacturer's battery manager
+         does not end it. A build with dart-define HINATA_FGS=off takes these
+         and the service out again (src/nofgs/AndroidManifest.xml). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
     <application
         android:label="Hinata"
         android:name="${applicationName}"
@@ -117,6 +127,16 @@
                 <action android:name="es.antonborri.home_widget.action.BACKGROUND" />
             </intent-filter>
         </receiver>
+        <!-- HIN-104: the plugin's foreground service, started only from the app
+             in front and only with the reliability mode on. It posts the
+             running timer's own notification (same id) and runs no Dart. -->
+        <service android:name="com.dexterous.flutterlocalnotifications.ForegroundService"
+            android:exported="false"
+            android:stopWithTask="false"
+            android:foregroundServiceType="specialUse">
+            <property android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Holds the timer the user started on screen while the device's battery manager would otherwise end it." />
+        </service>
         <!-- HIN-103: the timer as a Quick Settings tile. Exported for the
              system only, which binds it with BIND_QUICK_SETTINGS_TILE. -->
         <service android:name=".TimerTileService"
