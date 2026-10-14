@@ -142,4 +142,33 @@ void main() {
     expect(broken.toggleHotkey, isNull);
     expect(broken.focusHotkey, isNull);
   });
+
+  test('the Live Update is suggested, the reliability mode never', () {
+    expect(TimerSurfacePrefs.suggested.liveUpdate, isTrue);
+    expect(TimerSurfacePrefs.suggested.reliabilityService, isFalse);
+  });
+
+  test(
+    'switches from before the Live Update follow the running notification',
+    () {
+      expect(
+        TimerSurfacePrefs.fromJson(const {'runningSurface': true}).liveUpdate,
+        isTrue,
+      );
+      expect(TimerSurfacePrefs.fromJson(const {}).liveUpdate, isFalse);
+      expect(
+        TimerSurfacePrefs.fromJson(const {
+          'runningSurface': true,
+          'liveUpdate': false,
+        }).liveUpdate,
+        isFalse,
+      );
+      expect(
+        TimerSurfacePrefs.fromJson(const {
+          'reliabilityService': 'yes',
+        }).reliabilityService,
+        isFalse,
+      );
+    },
+  );
 }
