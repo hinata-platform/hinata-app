@@ -303,7 +303,7 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 300));
 
-      expect(find.text('projectSettings.saveChanges'), findsOneWidget);
+      expect(find.text('common.save'), findsOneWidget);
       expect(find.text('projectSettings.unsavedChanges'), findsNothing);
       expect(find.byTooltip('projectSettings.unsavedChanges'), findsOneWidget);
     });
