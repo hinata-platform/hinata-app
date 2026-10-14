@@ -25,6 +25,7 @@ class EditorResult {
     this.spaceId, {
     this.projectId,
     this.teamId,
+    this.organization = false,
     this.labels = const [],
   });
   final String title;
@@ -36,10 +37,11 @@ class EditorResult {
   final String doc;
   final String spaceId;
 
-  /// Where a new top-level page lives; both null keeps it to its author.
+  /// Where a new top-level page lives; none of them keeps it to its author.
   /// Ignored for an edit, which never moves a page.
   final String? projectId;
   final String? teamId;
+  final bool organization;
 }
 
 /// Page editor: the title first, a quiet line of properties (space, who
@@ -139,7 +141,7 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
 
   /// A new page starts private: nobody but its author sees it until it is put
   /// into a project or a team.
-  KbPlaceChoice _place = (projectId: null, teamId: null);
+  KbPlaceChoice _place = kbPlacePrivate;
 
   @override
   void dispose() {
@@ -174,6 +176,7 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
         _spaceId,
         projectId: _place.projectId,
         teamId: _place.teamId,
+        organization: _place.organization,
         labels: _labels,
       ),
     );
@@ -305,6 +308,7 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
             repo: repo,
             projectId: _place.projectId,
             teamId: _place.teamId,
+            organization: _place.organization,
             onChanged: (place) => setState(() => _place = place),
           ),
         KnowledgeLabelField(

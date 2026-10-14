@@ -11,13 +11,24 @@ import 'data/knowledge_repository.dart';
 import 'knowledge_tree.dart' show KbPlaceGlyph;
 import '../../core/theme/app_type.dart';
 
-/// Where a page should live: a project, a team, or (both null) only its
-/// author.
-typedef KbPlaceChoice = ({String? projectId, String? teamId});
+/// Where a page should live: a project, a team, the whole organisation, or
+/// (none of them) only its author.
+typedef KbPlaceChoice = ({
+  String? projectId,
+  String? teamId,
+  bool organization,
+});
+
+/// The place of a page only its author reads.
+const KbPlaceChoice kbPlacePrivate = (
+  projectId: null,
+  teamId: null,
+  organization: false,
+);
 
 /// "Visible to" for a knowledge page: one line with the current place, and a
 /// glass menu to move a top-level page into a project, one of the person's
-/// teams, or back to "only me".
+/// teams, the whole organisation, or back to "only me".
 ///
 /// A subpage lives wherever its parent lives, so with [followsParent] the field
 /// is read-only and says so instead of offering a choice the server would turn
@@ -32,6 +43,7 @@ class KnowledgePlaceField extends StatefulWidget {
     required this.repo,
     required this.projectId,
     required this.teamId,
+    this.organization = false,
     required this.onChanged,
     this.followsParent = false,
     this.allowPrivate = true,
@@ -44,6 +56,9 @@ class KnowledgePlaceField extends StatefulWidget {
 
   final String? projectId;
   final String? teamId;
+
+  /// Shared with the whole organisation.
+  final bool organization;
 
   /// Receives the new place. Not called when the same place is picked again.
   final ValueChanged<KbPlaceChoice> onChanged;
@@ -70,12 +85,17 @@ class KnowledgePlaceField extends StatefulWidget {
 
 class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
   static const _private = 'private';
+  static const _organization = 'organization';
   static const _project = 'project';
   static const _teamPrefix = 'team:';
 
   bool _opening = false;
 
-  KbPlace get _place => placeOf(widget.projectId, widget.teamId);
+  KbPlace get _place => placeOf(
+    widget.projectId,
+    widget.teamId,
+    organization: widget.organization,
+  );
 
   @override
   void initState() {
@@ -99,6 +119,7 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
       final teams = widget.repo.myTeams;
       final current = switch (_place) {
         KbPlace.private => _private,
+        KbPlace.organization => _organization,
         KbPlace.team => '$_teamPrefix${widget.teamId}',
         KbPlace.project => _project,
       };
@@ -116,6 +137,16 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
                 ? null
                 : context.t('knowledge.place.privateAuthorOnly'),
             leading: Icon(LucideIcons.lock, size: 16, color: AppColors.inkSoft),
+          ),
+          // For pages everybody needs, like a guide for new colleagues.
+          GlassMenuItem(
+            value: _organization,
+            label: context.t('knowledge.place.organization'),
+            leading: Icon(
+              KbPlaceGlyph.iconFor(KbPlace.organization),
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
           ),
           for (final (i, t) in teams.indexed)
             GlassMenuItem(
@@ -152,13 +183,19 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
       );
       if (!mounted || picked == null) return;
       if (picked == _private) {
-        if (_place != KbPlace.private) {
-          widget.onChanged((projectId: null, teamId: null));
+        if (_place != KbPlace.private) widget.onChanged(kbPlacePrivate);
+      } else if (picked == _organization) {
+        if (_place != KbPlace.organization) {
+          widget.onChanged((projectId: null, teamId: null, organization: true));
         }
       } else if (picked.startsWith(_teamPrefix)) {
         final teamId = picked.substring(_teamPrefix.length);
         if (teamId != widget.teamId) {
-          widget.onChanged((projectId: null, teamId: teamId));
+          widget.onChanged((
+            projectId: null,
+            teamId: teamId,
+            organization: false,
+          ));
         }
       } else if (picked == _project) {
         final projects = await showProjectPicker(
@@ -172,7 +209,11 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
         if (!mounted || project == null) return;
         widget.repo.rememberProject(project);
         if (project.id != widget.projectId) {
-          widget.onChanged((projectId: project.id, teamId: null));
+          widget.onChanged((
+            projectId: project.id,
+            teamId: null,
+            organization: false,
+          ));
         }
       }
     } finally {
@@ -182,6 +223,7 @@ class _KnowledgePlaceFieldState extends State<KnowledgePlaceField> {
 
   String _label(BuildContext context) => switch (_place) {
     KbPlace.private => context.t('knowledge.place.private'),
+    KbPlace.organization => context.t('knowledge.place.organization'),
     KbPlace.team =>
       widget.repo.placeName(widget.teamId) ?? context.t('knowledge.place.team'),
     KbPlace.project =>

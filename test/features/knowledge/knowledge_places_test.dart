@@ -402,7 +402,7 @@ void main() {
       final (method, path, body) = api.calls.last;
       expect(method, 'put');
       expect(path, '/api/v1/articles/top/place');
-      expect(body, {'projectId': null, 'teamId': 't1'});
+      expect(body, {'projectId': null, 'teamId': 't1', 'organization': false});
       expect(repo.articleById('top')!.place, KbPlace.team);
       expect(repo.articleById('child')!.teamId, 't1');
     });
@@ -413,8 +413,30 @@ void main() {
 
       await repo.placeArticle('top');
 
-      expect(api.calls.last.$3, {'projectId': null, 'teamId': null});
+      expect(api.calls.last.$3, {
+        'projectId': null,
+        'teamId': null,
+        'organization': false,
+      });
       expect(repo.articleById('top')!.place, KbPlace.private);
+    });
+
+    test('sharing with the organisation carries the subtree', () async {
+      final (repo, api) = await loaded([
+        page('top'),
+        page('child', parentId: 'top'),
+      ]);
+      api.putResponse = {...page('top'), 'organization': true};
+
+      await repo.placeArticle('top', organization: true);
+
+      expect(api.calls.last.$3, {
+        'projectId': null,
+        'teamId': null,
+        'organization': true,
+      });
+      expect(repo.articleById('top')!.place, KbPlace.organization);
+      expect(repo.articleById('child')!.place, KbPlace.organization);
     });
 
     test('an edit never sends a project or team', () async {

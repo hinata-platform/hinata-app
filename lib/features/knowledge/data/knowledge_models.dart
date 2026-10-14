@@ -52,6 +52,9 @@ enum KbPlace {
   /// Neither project nor team: only the author reads it.
   private,
 
+  /// Shared with the whole organisation: every account reads it.
+  organization,
+
   /// A team page: Team-Admins always, members per their knowledge access.
   team,
 
@@ -60,11 +63,17 @@ enum KbPlace {
 }
 
 /// Where a page with [projectId] and [teamId] lives. A project wins over a
-/// team; the server never sets both.
-KbPlace placeOf(String? projectId, String? teamId) => projectId != null
+/// team; the server never sets both, nor either of them with [organization].
+KbPlace placeOf(
+  String? projectId,
+  String? teamId, {
+  bool organization = false,
+}) => projectId != null
     ? KbPlace.project
     : teamId != null
     ? KbPlace.team
+    : organization
+    ? KbPlace.organization
     : KbPlace.private;
 
 /// Marks a nullable [KbArticle.copyWith] argument as "leave as it is", so
@@ -85,6 +94,7 @@ class KbArticle {
     this.doc,
     this.projectId,
     this.teamId,
+    this.organization = false,
     this.sortOrder = 0,
     this.createdAt,
     this.updatedAt,
@@ -111,6 +121,9 @@ class KbArticle {
   /// The team the page lives in, if any.
   final String? teamId;
 
+  /// Whether the page is shared with the whole organisation.
+  final bool organization;
+
   /// Position among its siblings; ties fall back to the title.
   final int sortOrder;
   final DateTime? createdAt;
@@ -120,7 +133,7 @@ class KbArticle {
   /// since this was recorded.
   final String? lastEditorId;
 
-  KbPlace get place => placeOf(projectId, teamId);
+  KbPlace get place => placeOf(projectId, teamId, organization: organization);
 
   /// Who the byline names as the last to change the page.
   String get editorId => lastEditorId ?? authorId;
@@ -137,6 +150,7 @@ class KbArticle {
     int? sortOrder,
     Object? projectId = _keep,
     Object? teamId = _keep,
+    bool? organization,
   }) => KbArticle(
     id: id,
     spaceId: spaceId ?? this.spaceId,
@@ -151,6 +165,7 @@ class KbArticle {
         ? this.projectId
         : projectId as String?,
     teamId: identical(teamId, _keep) ? this.teamId : teamId as String?,
+    organization: organization ?? this.organization,
     sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt,
     updatedAt: updatedAt,

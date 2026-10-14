@@ -2572,6 +2572,7 @@
     "place": {
       "label": "Sichtbar für",
       "private": "Nur ich",
+      "organization": "Ganze Organisation",
       "team": "Team",
       "project": "Projekt",
       "followsParent": "Wie die übergeordnete Seite",
@@ -2581,7 +2582,7 @@
       "saved": "Sichtbarkeit geändert. Die Unterseiten sind mitgezogen."
     },
     "emptyTitle": "Noch keine Seiten für dich",
-    "emptyMessage": "Seiten werden über Projekte und Teams geteilt. Eine neue Seite bleibt privat, bis du sie einem Projekt oder Team zuordnest.",
+    "emptyMessage": "Seiten werden über Projekte, Teams oder mit der ganzen Organisation geteilt. Eine neue Seite bleibt privat, bis du festlegst, wer sie sieht.",
     "tree": {
       "truncated": "Hier stehen nicht alle Seiten, weil es zu viele für eine Liste sind. Eine Unterseite kann deshalb oben stehen, obwohl es ihre übergeordnete Seite gibt.",
       "moveUp": "Nach oben",

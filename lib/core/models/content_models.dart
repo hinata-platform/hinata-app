@@ -50,6 +50,7 @@ class Article extends Equatable {
     this.contentDoc,
     this.projectId,
     this.teamId,
+    this.organization = false,
     this.parentId,
     this.space,
     this.icon,
@@ -78,6 +79,10 @@ class Article extends Equatable {
   /// knowledge access. With neither [projectId] nor [teamId] the page is
   /// private to its author. A subpage always lives where its parent lives.
   final String? teamId;
+
+  /// Shared with the whole organisation: every account reads it. Only without
+  /// [projectId] and [teamId].
+  final bool organization;
   final String? parentId;
 
   /// Knowledge-base space (e.g. "Engineering"); null for ungrouped articles.
@@ -102,6 +107,7 @@ class Article extends Equatable {
     contentDoc: json['contentDoc'] as String?,
     projectId: json['projectId'] as String?,
     teamId: json['teamId'] as String?,
+    organization: json['organization'] == true,
     parentId: json['parentId'] as String?,
     space: json['space'] as String?,
     icon: json['icon'] as String?,
@@ -120,6 +126,7 @@ class Article extends Equatable {
     parentId,
     projectId,
     teamId,
+    organization,
     space,
     sortOrder,
     updatedAt,
