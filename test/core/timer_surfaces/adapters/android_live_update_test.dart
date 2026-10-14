@@ -73,6 +73,16 @@ void main() {
       expect(PomodoroSetPosition.of(pomodoro(TimerPhase.work, 4))!.index, 0);
     });
 
+    test(
+      'a break after an interval too short to count sits after the first',
+      () {
+        expect(
+          PomodoroSetPosition.of(pomodoro(TimerPhase.shortBreak, 0))!.index,
+          1,
+        );
+      },
+    );
+
     test('a set too long to draw has no segments', () {
       final long = RunningTimer(
         id: 't1',

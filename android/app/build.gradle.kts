@@ -1,3 +1,4 @@
+import java.util.Base64
 import java.util.Properties
 
 plugins {
@@ -105,7 +106,7 @@ flutter {
 val withoutForegroundService =
     (project.findProperty("dart-defines") as String?)
         ?.split(",")
-        ?.map { String(java.util.Base64.getDecoder().decode(it)) }
+        ?.map { String(Base64.getDecoder().decode(it)) }
         ?.contains("HINATA_FGS=off") == true
 if (withoutForegroundService) {
     android.sourceSets.getByName("release").manifest.srcFile("src/nofgs/AndroidManifest.xml")
