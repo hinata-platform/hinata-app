@@ -73,6 +73,7 @@ class ArticleRepository {
     String? contentDoc,
     String? projectId,
     String? teamId,
+    bool organization = false,
     String? parentId,
     String? space,
     String? icon,
@@ -84,6 +85,7 @@ class ArticleRepository {
       'contentDoc': ?contentDoc,
       'projectId': ?projectId,
       'teamId': ?teamId,
+      if (organization) 'organization': true,
       'parentId': ?parentId,
       'space': ?space,
       'icon': ?icon,
@@ -112,16 +114,21 @@ class ArticleRepository {
   }
 
   /// Moves a top-level page, with everything below it, into a project, a team,
-  /// or (both null) back to its author alone. Only the author may make a page
+  /// the whole [organization], or (none of them) back to its author alone. Only the author may make a page
   /// private; a subpage refuses with `error.article.placeFollowsParent`.
   Future<Article> placeArticle(
     String id, {
     String? projectId,
     String? teamId,
+    bool organization = false,
   }) async => Article.fromJson(
     await _api.put(
           '/api/v1/articles/$id/place',
-          body: {'projectId': projectId, 'teamId': teamId},
+          body: {
+            'projectId': projectId,
+            'teamId': teamId,
+            'organization': organization,
+          },
         )
         as Map<String, dynamic>,
   );

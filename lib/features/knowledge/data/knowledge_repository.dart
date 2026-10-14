@@ -402,6 +402,8 @@ class KnowledgeRepository {
     if (me == null) return false;
     return switch (article.place) {
       KbPlace.private => article.authorId == me.id,
+      KbPlace.organization =>
+        article.authorId == me.id || me.isAdmin || me.isOrgAdmin,
       KbPlace.team => _myTeams.any(
         (t) => t.id == article.teamId && t.membershipOf(me.id)?.isAdmin == true,
       ),
@@ -456,6 +458,7 @@ class KnowledgeRepository {
     doc: a.contentDoc,
     projectId: a.projectId,
     teamId: a.teamId,
+    organization: a.organization,
     sortOrder: a.sortOrder,
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
@@ -747,6 +750,7 @@ class KnowledgeRepository {
     String? parentId,
     String? projectId,
     String? teamId,
+    bool organization = false,
     List<String> labels = const [],
   }) async {
     final topLevel = parentId == null;
@@ -757,6 +761,7 @@ class KnowledgeRepository {
       parentId: parentId,
       projectId: topLevel ? projectId : null,
       teamId: topLevel ? teamId : null,
+      organization: topLevel && organization,
       icon: 'file-text',
       tags: labels,
     );
@@ -783,30 +788,51 @@ class KnowledgeRepository {
       space: spaceId ?? existing.spaceId,
     );
     final kb = _toKbArticle(saved);
+    // Under a parent in another place the server carries the subtree along;
+    // the cache follows, so the pages below show their new place at once.
+    if (kb.place != existing.place ||
+        kb.projectId != existing.projectId ||
+        kb.teamId != existing.teamId) {
+      _followPlace(id, kb);
+    }
     _put(kb);
     _rebuildSpaces();
     return kb;
   }
 
+  /// Gives every page below [id] the place of [root].
+  void _followPlace(String id, KbArticle root) {
+    for (final a in _articles.values.toList()) {
+      if (a.id != id && isSelfOrAncestor(id, a.id)) {
+        _put(
+          a.copyWith(
+            projectId: root.projectId,
+            teamId: root.teamId,
+            organization: root.organization,
+          ),
+        );
+      }
+    }
+  }
+
   /// Moves the top-level page [id] with everything below it into a project,
-  /// a team, or (both null) back to its author alone. The server moves the
+  /// a team, the whole [organization], or (none of them) back to its author
+  /// alone. The server moves the
   /// subtree; the cache follows so the tree glyphs are right without a reload.
   Future<KbArticle> placeArticle(
     String id, {
     String? projectId,
     String? teamId,
+    bool organization = false,
   }) async {
     final saved = await _articleApi.placeArticle(
       id,
       projectId: projectId,
       teamId: teamId,
+      organization: organization,
     );
-    for (final a in _articles.values.toList()) {
-      if (a.id != id && isSelfOrAncestor(id, a.id)) {
-        _put(a.copyWith(projectId: saved.projectId, teamId: saved.teamId));
-      }
-    }
     final kb = _toKbArticle(saved);
+    _followPlace(id, kb);
     _put(kb);
     return kb;
   }

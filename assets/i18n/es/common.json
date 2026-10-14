@@ -2572,6 +2572,7 @@
     "place": {
       "label": "Visible para",
       "private": "Solo yo",
+      "organization": "Toda la organización",
       "team": "Equipo",
       "project": "Proyecto",
       "followsParent": "Igual que la página superior",
@@ -2581,7 +2582,7 @@
       "saved": "Visibilidad cambiada. Las subpáginas se movieron con ella."
     },
     "emptyTitle": "Todavía no hay páginas para ti",
-    "emptyMessage": "Las páginas se comparten a través de proyectos y equipos. Una página nueva es privada hasta que la pongas en un proyecto o un equipo.",
+    "emptyMessage": "Las páginas se comparten a través de proyectos, equipos o con toda la organización. Una página nueva es privada hasta que elijas quién la ve.",
     "tree": {
       "truncated": "Aquí no aparecen todas las páginas porque son demasiadas para una lista. Por eso una subpágina puede aparecer arriba aunque su página superior exista.",
       "moveUp": "Subir",

@@ -269,6 +269,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
             parentId: parentId,
             projectId: r.projectId,
             teamId: r.teamId,
+            organization: r.organization,
             labels: r.labels,
           );
           if (!mounted) return;
@@ -314,6 +315,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         id,
         projectId: place.projectId,
         teamId: place.teamId,
+        organization: place.organization,
       );
       if (mounted) {
         _toast('knowledge.place.saved', kind: GlassToastKind.success);

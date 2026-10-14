@@ -322,7 +322,8 @@ class _TreeBranchState extends State<_TreeBranch> {
   Future<void> _moveUnderConfirmed(String id, KbArticle parent) async {
     final moving = widget.repo.articleById(id);
     if (moving != null &&
-        (moving.projectId != parent.projectId ||
+        (moving.place != parent.place ||
+            moving.projectId != parent.projectId ||
             moving.teamId != parent.teamId)) {
       final placeName =
           widget.repo.placeName(parent.projectId ?? parent.teamId) ??
@@ -763,12 +764,14 @@ class KbPlaceGlyph extends StatelessWidget {
 
   static IconData iconFor(KbPlace place) => switch (place) {
     KbPlace.private => LucideIcons.lock,
+    KbPlace.organization => LucideIcons.building2,
     KbPlace.team => LucideIcons.users,
     KbPlace.project => LucideIcons.folder,
   };
 
   static String labelKeyFor(KbPlace place) => switch (place) {
     KbPlace.private => 'knowledge.place.private',
+    KbPlace.organization => 'knowledge.place.organization',
     KbPlace.team => 'knowledge.place.team',
     KbPlace.project => 'knowledge.place.project',
   };

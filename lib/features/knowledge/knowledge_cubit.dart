@@ -109,6 +109,7 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
     String? parentId,
     String? projectId,
     String? teamId,
+    bool organization = false,
     List<String> labels = const [],
   }) => _changed(
     _knowledge.createArticle(
@@ -118,6 +119,7 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
       parentId: parentId,
       projectId: projectId,
       teamId: teamId,
+      organization: organization,
       labels: labels,
     ),
   );
@@ -150,8 +152,14 @@ class KnowledgeCubit extends Cubit<KnowledgeState> {
     String id, {
     String? projectId,
     String? teamId,
+    bool organization = false,
   }) => _changed(
-    _knowledge.placeArticle(id, projectId: projectId, teamId: teamId),
+    _knowledge.placeArticle(
+      id,
+      projectId: projectId,
+      teamId: teamId,
+      organization: organization,
+    ),
   );
 
   Future<void> deleteArticle(String id) =>

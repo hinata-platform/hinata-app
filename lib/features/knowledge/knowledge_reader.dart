@@ -270,6 +270,7 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
             repo: repo,
             projectId: a.projectId,
             teamId: a.teamId,
+            organization: a.organization,
             followsParent: !repo.isTopLevel(a),
             // Only the author may make a page private; a page that already is
             // private can only be the author's own.

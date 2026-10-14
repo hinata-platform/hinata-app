@@ -221,6 +221,7 @@ void main() {
     expect(knowledge.calls[1].namedArguments, {
       #projectId: 'p1',
       #teamId: null,
+      #organization: false,
     });
     expect(knowledge.calls[2].namedArguments, {
       #title: 't',
@@ -229,6 +230,7 @@ void main() {
       #parentId: null,
       #projectId: null,
       #teamId: 't1',
+      #organization: false,
       #labels: const <String>[],
     });
     expect(knowledge.calls[3].positionalArguments, ['a1']);

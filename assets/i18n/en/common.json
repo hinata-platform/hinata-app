@@ -2572,6 +2572,7 @@
     "place": {
       "label": "Visible to",
       "private": "Only me",
+      "organization": "Whole organisation",
       "team": "Team",
       "project": "Project",
       "followsParent": "Same as the page above",
@@ -2581,7 +2582,7 @@
       "saved": "Visibility changed. Pages below it moved along."
     },
     "emptyTitle": "No pages for you yet",
-    "emptyMessage": "Pages are shared through projects and teams. A new page stays private until you put it into a project or a team.",
+    "emptyMessage": "Pages are shared through projects, teams or with the whole organisation. A new page stays private until you choose who sees it.",
     "tree": {
       "truncated": "Not every page is listed here, as there are too many for one list. A subpage may therefore stand at the top even though its parent page exists.",
       "moveUp": "Move up",

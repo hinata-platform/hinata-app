@@ -2572,6 +2572,7 @@
     "place": {
       "label": "Visible par",
       "private": "Moi uniquement",
+      "organization": "Toute l'organisation",
       "team": "Équipe",
       "project": "Projet",
       "followsParent": "Comme la page parente",
@@ -2581,7 +2582,7 @@
       "saved": "Visibilité modifiée. Les sous-pages ont suivi."
     },
     "emptyTitle": "Aucune page pour toi pour l’instant",
-    "emptyMessage": "Les pages se partagent via les projets et les équipes. Une nouvelle page reste privée jusqu’à ce que tu la places dans un projet ou une équipe.",
+    "emptyMessage": "Les pages se partagent via les projets, les équipes ou avec toute l’organisation. Une nouvelle page reste privée jusqu’à ce que tu choisisses qui la voit.",
     "tree": {
       "truncated": "Toutes les pages ne sont pas listées ici, car il y en a trop pour une seule liste. Une sous-page peut donc apparaître en haut alors que sa page parente existe.",
       "moveUp": "Monter",
