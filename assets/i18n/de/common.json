@@ -1648,7 +1648,8 @@
         "breakPhase": "Pomodoro, Pause"
       },
       "unlockToAct": "Entsperre dein Gerät und versuch es noch einmal.",
-      "actionFailed": "Das hat nicht geklappt. Öffne Hinata und versuch es dort noch einmal."
+      "actionFailed": "Das hat nicht geklappt. Öffne Hinata und versuch es dort noch einmal.",
+      "timeLabel": "Zeit"
     }
   },
   "availability": {
@@ -4381,7 +4382,12 @@
         "win": "Win"
       },
       "backgroundUpdates": "Im Hintergrund aktualisieren",
-      "backgroundUpdatesHint": "Phasenwechsel und ein Stopp auf einem anderen Gerät erreichen die Live-Aktivität auch bei geschlossener App. Dein Server schickt sie Ende-zu-Ende verschlüsselt über Hinata Connect, Google und Apple. Die sehen nur, wann etwas gesendet wird."
+      "backgroundUpdatesHint": "Phasenwechsel und ein Stopp auf einem anderen Gerät erreichen die Live-Aktivität auch bei geschlossener App. Dein Server schickt sie Ende-zu-Ende verschlüsselt über Hinata Connect, Google und Apple. Die sehen nur, wann etwas gesendet wird.",
+      "liveUpdate": "Live Update in der Statusleiste",
+      "liveUpdateHint": "Der laufende Timer als Chip in der Statusleiste, auf dem Sperrbildschirm und im Always-on-Display. Der Chip zeigt nur die Zeit, bei Arbeit und Pause gleich.",
+      "liveUpdateOff": "Live Updates sind für diese App in den Systemeinstellungen ausgeschaltet. Die laufende Benachrichtigung bleibt trotzdem.",
+      "reliability": "Zuverlässigkeitsmodus",
+      "reliabilityHint": "Für Geräte, deren Akku-Manager die laufende Benachrichtigung beendet. Ein Vordergrunddienst hält sie, solange der Timer läuft, und erhebt dabei nichts. Er startet nur, während die App offen ist."
     }
   },
   "twofa": {

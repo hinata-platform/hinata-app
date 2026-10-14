@@ -1648,7 +1648,8 @@
         "breakPhase": "Pomodoro, break"
       },
       "unlockToAct": "Unlock your device, then try again.",
-      "actionFailed": "That didn’t work. Open Hinata and try again there."
+      "actionFailed": "That didn’t work. Open Hinata and try again there.",
+      "timeLabel": "Time"
     }
   },
   "availability": {
@@ -4381,7 +4382,12 @@
         "win": "Win"
       },
       "backgroundUpdates": "Update in the background",
-      "backgroundUpdatesHint": "Phase changes and a stop on another device reach the Live Activity while the app is closed. Your server sends them end-to-end encrypted through Hinata Connect, Google and Apple, who only see when something is sent."
+      "backgroundUpdatesHint": "Phase changes and a stop on another device reach the Live Activity while the app is closed. Your server sends them end-to-end encrypted through Hinata Connect, Google and Apple, who only see when something is sent.",
+      "liveUpdate": "Live Update in the status bar",
+      "liveUpdateHint": "The running timer as a chip in the status bar, on the lock screen and on the always-on display. The chip shows only the time, the same for work and a break.",
+      "liveUpdateOff": "Live Updates are switched off for this app in the system settings. The ongoing notification stays anyway.",
+      "reliability": "Reliability mode",
+      "reliabilityHint": "For devices whose battery manager ends the ongoing notification. A foreground service holds it while the timer runs and collects nothing. It only starts while the app is open."
     }
   },
   "twofa": {

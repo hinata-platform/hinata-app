@@ -74,7 +74,12 @@ class _TimerSurfacesIntroBodyState extends State<TimerSurfacesIntroBody> {
     for (final option in _options) {
       next = option.write(next, option.read(prefs));
     }
-    return next;
+    // Not a row of its own here: the Live Update comes with the running
+    // notification, where this device has it.
+    const live = TimerSurfaceOption.liveUpdate;
+    return live.availableOn(widget.platform)
+        ? live.write(next, next.runningSurface && live.read(prefs))
+        : next;
   }
 
   bool get _needsPermission => _options.any(
