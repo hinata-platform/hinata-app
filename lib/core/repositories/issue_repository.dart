@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 
 import '../api/api_client.dart';
 import '../models/issue_detail.dart';
+import '../models/issue_participation.dart';
 import '../models/issue_move.dart';
 import '../models/work_models.dart';
 import '../util/reader_time_zone.dart';
@@ -483,6 +484,40 @@ class IssueRepository {
           .toList(),
       total: data['totalElements'] as int? ?? 0,
     );
+  }
+
+  // --- Participants (sharing one issue outside its project) ------------------
+
+  /// The people [issueId] is shared with from outside its project. At most 25,
+  /// so not paged; members only.
+  Future<List<IssueParticipant>> participants(String issueId) async =>
+      ((await _api.get('/api/v1/issues/$issueId/participants'))
+              as List<dynamic>)
+          .map((p) => IssueParticipant.fromJson(p as Map<String, dynamic>))
+          .toList();
+
+  /// Shares [issueId] with [userId]. Idempotent.
+  Future<void> addParticipant(String issueId, String userId) =>
+      _api.put('/api/v1/issues/$issueId/participants/$userId');
+
+  /// Takes [userId] off [issueId]; with one's own id, leaves the issue.
+  Future<void> removeParticipant(String issueId, String userId) =>
+      _api.delete('/api/v1/issues/$issueId/participants/$userId');
+
+  /// Which of [userIds] could not open [issueId], for the hint under a
+  /// comment that mentions them.
+  Future<Set<String>> usersWithoutAccess(
+    String issueId,
+    List<String> userIds,
+  ) async {
+    if (userIds.isEmpty) return const {};
+    final data = await _api.get(
+      '/api/v1/issues/$issueId/participants/blocked',
+      query: {'userIds': userIds},
+    );
+    return {
+      for (final id in (data as List<dynamic>?) ?? const []) id as String,
+    };
   }
 
   // --- Issue links (typed relationships) -------------------------------------
