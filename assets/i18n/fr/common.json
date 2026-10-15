@@ -986,7 +986,8 @@
       "noResults": "Personne trouvé",
       "alreadyMember": "{{name}} est membre et voit déjà ce ticket",
       "shareWith": "Partager avec {{name}}",
-      "aMember": "un membre"
+      "aMember": "un membre",
+      "noDescription": "Pas encore de description."
     }
   },
   "type": {

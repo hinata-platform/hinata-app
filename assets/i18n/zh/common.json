@@ -986,7 +986,8 @@
       "noResults": "未找到任何人",
       "alreadyMember": "{{name}} 是成员，本来就能看到此事项",
       "shareWith": "共享给 {{name}}",
-      "aMember": "一位成员"
+      "aMember": "一位成员",
+      "noDescription": "暂无描述。"
     }
   },
   "type": {

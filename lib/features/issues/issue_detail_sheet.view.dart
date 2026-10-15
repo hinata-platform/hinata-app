@@ -2213,7 +2213,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                             : _saveCheckedDescription,
                       )
                     : Text(
-                        context.t('issues.noDescription'),
+                        context.t(
+                          isParticipant
+                              ? 'issues.participants.noDescription'
+                              : 'issues.noDescription',
+                        ),
                         style: TextStyle(
                           color: AppColors.inkFaint,
                           fontStyle: FontStyle.italic,

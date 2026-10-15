@@ -986,7 +986,8 @@
       "noResults": "No se encontró a nadie",
       "alreadyMember": "{{name}} es miembro y ya ve esta incidencia",
       "shareWith": "Compartir con {{name}}",
-      "aMember": "un miembro"
+      "aMember": "un miembro",
+      "noDescription": "Todavía no hay descripción."
     }
   },
   "type": {
