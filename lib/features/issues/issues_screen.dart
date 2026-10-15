@@ -46,6 +46,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassConfirm,
         showGlassOptions,
         showGlassToast,
+        showGlassToastIn,
         showGlassDatePicker,
         showGlassDateRangePicker;
 import '../reports/logo_raster.dart';
@@ -195,7 +196,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
     // Deselecting the last row leaves selection mode, so a stray long-press
     // never strands the list with no way out but the ✕. Not when the mode was
     // asked for with the toggle; see [_selectionPinned].
-    if (_selected.isEmpty && !_selectionPinned) _selectionMode = false;
+    if (_selected.isEmpty && !_selectionPinned) {
+      _selectionMode = false;
+      _rangeAnchor = null;
+    }
   });
 
   void _exitSelection() => setState(() {
@@ -307,6 +311,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
     if (_selected.isNotEmpty || _selectionMode) {
       setState(() {
         _selected.clear();
+        // A range would otherwise start from a row clicked in the old order.
+        _rangeAnchor = null;
         if (!_selectionPinned) _selectionMode = false;
       });
     }
@@ -356,7 +362,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// Runs one bulk request with the bar's actions held off until it answers,
   /// and turns a refusal into a toast in the reader's language.
   Future<void> _runBulk(Future<void> Function() request) async {
-    if (_bulkBusy) return;
+    if (!mounted || _bulkBusy) return;
     setState(() => _bulkBusy = true);
     try {
       await request();
@@ -588,53 +594,96 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// No question first: nothing is lost, and the toast's Undo is the faster way
   /// back from a slip than a dialog in front of every deliberate archive. The
   /// rows leave the list in place, sub-tasks with their parents, so the pages
-  /// already scrolled through stay.
+  /// already scrolled through stay; Undo puts them back where they were.
   Future<void> _archiveSelected() async {
     if (_selected.isEmpty || _bulkBusy || !_selectionFits()) return;
     final ids = _selected.keys.toList();
     final archive = !_filter.archivedOnly;
+    // Held now: Undo may come after this screen is gone.
+    final repo = context.read<IssueRepository>();
+    final overlay = Overlay.of(context, rootOverlay: true);
     await _runBulk(() async {
-      final changed = await _issues.bulkArchive(ids, archived: archive);
+      final result = await _issues.bulkArchive(ids, archived: archive);
       if (!mounted) return;
       _exitSelection();
-      final gone = {for (final issue in changed) issue.id};
+      final gone = {...result.toggledIds};
+      final removed = [
+        for (final (index, issue) in _issues.state.items.indexed)
+          if (gone.contains(issue.id) ||
+              (issue.isSubtask && gone.contains(issue.parentId)))
+            (index: index, item: issue),
+      ];
       _issues.removeWhere(
         (issue) =>
             gone.contains(issue.id) ||
-            (issue.type == 'SUBTASK' && gone.contains(issue.parentId)),
+            (issue.isSubtask && gone.contains(issue.parentId)),
       );
       IssueEvents.instance.notifyChanged(origin: this);
+      if (result.toggledIds.isEmpty) return;
       showGlassToast(
         context,
         context.t(
           archive ? 'issues.bulk.archived' : 'issues.bulk.restored',
-          count: changed.length,
+          count: result.issues.length,
         ),
         kind: GlassToastKind.success,
         actionLabel: context.t('issues.bulk.undo'),
-        onAction: () => _undoArchive(ids, archived: archive),
+        onAction: () => _undoArchive(
+          repo: repo,
+          overlay: overlay,
+          toggledIds: result.toggledIds,
+          archived: archive,
+          removed: removed,
+        ),
       );
     });
   }
 
-  /// Takes an archive (or a restore) back. The rows return with a fresh read of
-  /// the list, since they were no longer part of it.
-  Future<void> _undoArchive(List<String> ids, {required bool archived}) async {
-    await _runBulk(() async {
-      final changed = await _issues.bulkArchive(ids, archived: !archived);
-      if (!mounted) return;
-      IssueEvents.instance.notifyChanged(origin: this);
-      await _issues.load();
-      if (!mounted) return;
-      showGlassToast(
-        context,
-        context.t(
+  /// Takes an archive (or a restore) back: exactly the issues it switched, with
+  /// nothing cascading, so a sub-task archived on its own before stays so.
+  ///
+  /// Works after this screen is gone too, which is why it reaches the server
+  /// through the repository and speaks through the root overlay. While the
+  /// screen is still there, the rows go back where they were.
+  Future<void> _undoArchive({
+    required IssueRepository repo,
+    required OverlayState overlay,
+    required List<String> toggledIds,
+    required bool archived,
+    required List<({int index, Issue item})> removed,
+  }) async {
+    String t(String key, {int? count}) => overlay.context.t(key, count: count);
+    try {
+      final result = await repo.bulkArchive(
+        toggledIds,
+        archived: !archived,
+        cascade: false,
+      );
+      final fresh = {for (final issue in result.issues) issue.id: issue};
+      if (mounted) {
+        _issues.reinsert([
+          for (final entry in removed)
+            (index: entry.index, item: fresh[entry.item.id] ?? entry.item),
+        ]);
+      }
+      IssueEvents.instance.notifyChanged(origin: mounted ? this : null);
+      showGlassToastIn(
+        overlay,
+        t(
           archived ? 'issues.bulk.restored' : 'issues.bulk.archived',
-          count: changed.length,
+          count: result.issues.length,
         ),
         kind: GlassToastKind.success,
       );
-    });
+    } on ApiFailure catch (failure) {
+      showGlassToastIn(overlay, t(failure.message), kind: GlassToastKind.error);
+    } catch (_) {
+      showGlassToastIn(
+        overlay,
+        t('errors.unexpected'),
+        kind: GlassToastKind.error,
+      );
+    }
   }
 
   /// Whether Delete is worth showing at all: the caller may delete somewhere,
@@ -678,7 +727,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // The board and the dashboard hear it on the app-wide bus; this screen
       // fetches its own rows again, sub-tasks of the deleted issues included.
       IssueEvents.instance.notifyChanged(origin: this);
-      await _reload();
+      // Only the rows: the people, projects and rights the list holds alongside
+      // them have not changed.
+      await _issues.load();
     });
   }
 
@@ -688,12 +739,15 @@ class _IssuesScreenState extends State<IssuesScreen> {
     if (_bulkBusy) return;
     final phone = context.isCompact;
     final some = _selected.isNotEmpty;
+    // What the bar itself leaves out on a phone, and never the field changes
+    // in the archive view.
+    final extra = phone && !_filter.archivedOnly;
     final choice = await showGlassOptions<_MoreChoice>(
       context,
       title: context.t('issues.bulk.more'),
       anchorRect: anchor,
       options: [
-        if (phone)
+        if (extra)
           (
             value: _MoreChoice.selectAll,
             child: _OptionLabel(
@@ -701,7 +755,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
               label: context.t('issues.selectAll'),
             ),
           ),
-        if (phone && some) ...[
+        if (extra && some) ...[
           (
             value: _MoreChoice.priority,
             child: _OptionLabel(
@@ -725,7 +779,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
               label: context.t('issues.move.action'),
             ),
           ),
-        if (phone && some && _deleteOffered && _mayDeleteSelection)
+        if (extra && some && _deleteOffered && _mayDeleteSelection)
           (
             value: _MoreChoice.delete,
             child: _OptionLabel(
@@ -765,7 +819,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     );
     if (moved != true || !mounted) return;
     _exitSelection();
-    await _reload();
+    await _issues.load();
   }
 
   IssueFilter _filter = IssueFilter.empty;
@@ -1716,6 +1770,10 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// A phone has room for four icons beside the count, so it keeps the three
   /// most used changes in the bar and moves the rest into the overflow, which
   /// opens there as a sheet with labels.
+  ///
+  /// The archive view offers restoring, deleting and moving, not field changes:
+  /// an archived issue is out of the work, and editing its state or deadline
+  /// there would change something nobody sees until it is restored.
   Widget _bulkBar() {
     final none = _selected.isEmpty || _bulkBusy;
     final archiveView = _filter.archivedOnly;
@@ -1781,17 +1839,44 @@ class _IssuesScreenState extends State<IssuesScreen> {
         // Last of the strip, and red, so it is never the action a hurried tap
         // lands on.
         if (_deleteOffered && (archiveView || !phone)) delete,
-        if (!archiveView)
-          GlassBulkAction(
-            icon: LucideIcons.ellipsis,
-            label: context.t('issues.bulk.more'),
-            iconOnly: true,
-            // Select all stays reachable with nothing ticked yet.
-            onTapAt: _bulkBusy || (none && !phone) ? null : _moreSelected,
-          ),
+        GlassBulkAction(
+          icon: LucideIcons.ellipsis,
+          label: context.t('issues.bulk.more'),
+          iconOnly: true,
+          // Select all stays reachable with nothing ticked yet.
+          onTapAt: _bulkBusy || (none && !(phone && !archiveView))
+              ? null
+              : _moreSelected,
+        ),
       ],
     );
   }
+
+  /// What the list's shortcuts do, made once: each reads the state when it is
+  /// pressed, so a rebuild for every ticked row need not make new ones.
+  late final Map<Type, Action<Intent>> _keyActions = {
+    _SelectAllIssuesIntent: _ListKeyAction<_SelectAllIssuesIntent>(
+      enabled: () => !_typing && !_bulkBusy && _viewList.isNotEmpty,
+      run: () {
+        if (!_selectionMode) _selectionPinned = true;
+        _selectAllVisible();
+      },
+    ),
+    _ExitSelectionIntent: _ListKeyAction<_ExitSelectionIntent>(
+      enabled: () => !_typing && _selectionMode,
+      run: _exitSelection,
+    ),
+    _DeleteSelectionIntent: _ListKeyAction<_DeleteSelectionIntent>(
+      enabled: () =>
+          !_typing &&
+          _selectionMode &&
+          _selected.isNotEmpty &&
+          !_bulkBusy &&
+          _deleteOffered &&
+          _mayDeleteSelection,
+      run: _deleteSelected,
+    ),
+  };
 
   /// The list's keyboard shortcuts: ⌘A (Ctrl+A) selects every row on screen,
   /// Escape ends the selection, Delete or Backspace deletes it. Each stands
@@ -1811,29 +1896,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
             _DeleteSelectionIntent(),
       },
       child: Actions(
-        actions: {
-          _SelectAllIssuesIntent: _ListKeyAction<_SelectAllIssuesIntent>(
-            enabled: () => !_typing && !_bulkBusy && _viewList.isNotEmpty,
-            run: () {
-              if (!_selectionMode) _selectionPinned = true;
-              _selectAllVisible();
-            },
-          ),
-          _ExitSelectionIntent: _ListKeyAction<_ExitSelectionIntent>(
-            enabled: () => !_typing && _selectionMode,
-            run: _exitSelection,
-          ),
-          _DeleteSelectionIntent: _ListKeyAction<_DeleteSelectionIntent>(
-            enabled: () =>
-                !_typing &&
-                _selectionMode &&
-                _selected.isNotEmpty &&
-                !_bulkBusy &&
-                _deleteOffered &&
-                _mayDeleteSelection,
-            run: _deleteSelected,
-          ),
-        },
+        actions: _keyActions,
         child: Focus(focusNode: _keys, autofocus: !compact, child: child),
       ),
     );

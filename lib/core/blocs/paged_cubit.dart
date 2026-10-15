@@ -226,6 +226,23 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     );
   }
 
+  /// Puts rows back where [removeWhere] took them from: each [entries] index is
+  /// the row's position in the list before it went. In one emit, counting that
+  /// many more; a row that is somehow back already is left alone.
+  void reinsert(List<({int index, T item})> entries) {
+    final key = keyOf;
+    final items = [...state.items];
+    final present = key == null ? <Object>{} : {for (final i in items) key(i)};
+    var added = 0;
+    for (final entry in [...entries]..sort((a, b) => a.index - b.index)) {
+      if (key != null && present.contains(key(entry.item))) continue;
+      items.insert(entry.index.clamp(0, items.length), entry.item);
+      added++;
+    }
+    if (added == 0) return;
+    emit(state.copyWith(items: items, total: state.total + added));
+  }
+
   List<T> _append(List<T> current, List<T> incoming) {
     if (keyOf == null) return [...current, ...incoming];
     final seen = {for (final item in current) keyOf!(item)};
