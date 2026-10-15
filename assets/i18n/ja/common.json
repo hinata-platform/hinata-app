@@ -986,7 +986,8 @@
       "noResults": "見つかりません",
       "alreadyMember": "{{name}} さんはメンバーなので、もともとこの課題を見られます",
       "shareWith": "{{name}} さんと共有",
-      "aMember": "メンバー"
+      "aMember": "メンバー",
+      "noDescription": "説明はまだありません。"
     }
   },
   "type": {

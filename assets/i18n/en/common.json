@@ -986,7 +986,8 @@
       "noResults": "No one found",
       "alreadyMember": "{{name}} is a member and sees this issue anyway",
       "shareWith": "Share with {{name}}",
-      "aMember": "a member"
+      "aMember": "a member",
+      "noDescription": "No description yet."
     }
   },
   "type": {

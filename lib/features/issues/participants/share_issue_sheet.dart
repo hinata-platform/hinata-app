@@ -530,6 +530,22 @@ class _PersonLine extends StatelessWidget {
   Widget build(BuildContext context) {
     final detail = this.detail;
     final trailing = this.trailing;
+    return LayoutBuilder(
+      builder: (context, constraints) => _line(
+        context,
+        detail,
+        trailing,
+        maxTrailing: constraints.maxWidth * 0.42,
+      ),
+    );
+  }
+
+  Widget _line(
+    BuildContext context,
+    String? detail,
+    Widget? trailing, {
+    required double maxTrailing,
+  }) {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: 52),
       child: Padding(
@@ -570,11 +586,14 @@ class _PersonLine extends StatelessWidget {
                 ],
               ),
             ),
-            // Flexible, so a long label at twice the text size shortens
-            // instead of pushing the row past the edge.
+            // Capped, so a long label at twice the text size shortens
+            // instead of pushing the row past the edge, and held to the end.
             if (trailing != null) ...[
               const SizedBox(width: 10),
-              Flexible(child: trailing),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxTrailing),
+                child: trailing,
+              ),
             ],
           ],
         ),
@@ -717,20 +736,33 @@ class _Footer extends StatelessWidget {
         top: BorderSide(color: AppColors.hairline.withValues(alpha: 0.6)),
       ),
     ),
-    child: Wrap(
-      alignment: WrapAlignment.spaceBetween,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      spacing: 12,
-      runSpacing: 8,
+    child: Row(
       children: [
-        Text(
-          context.t('issues.participants.footer'),
-          style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
+        Expanded(
+          flex: 3,
+          child: Text(
+            context.t('issues.participants.footer'),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.inkSoft,
+            ),
+          ),
         ),
-        FilledButton(
-          onPressed: () => Navigator.of(context).maybePop(),
-          style: FilledButton.styleFrom(minimumSize: const Size(88, 48)),
-          child: Text(context.t('issues.participants.done')),
+        const SizedBox(width: 12),
+        Flexible(
+          flex: 2,
+          child: Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: FilledButton(
+              onPressed: () => Navigator.of(context).maybePop(),
+              style: FilledButton.styleFrom(minimumSize: const Size(88, 48)),
+              child: Text(
+                context.t('issues.participants.done'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ),
         ),
       ],
     ),

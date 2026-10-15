@@ -986,7 +986,8 @@
       "noResults": "कोई नहीं मिला",
       "alreadyMember": "{{name}} सदस्य हैं और यह इश्यू वैसे भी देखते हैं",
       "shareWith": "{{name}} के साथ साझा करें",
-      "aMember": "एक सदस्य"
+      "aMember": "एक सदस्य",
+      "noDescription": "अभी कोई विवरण नहीं।"
     }
   },
   "type": {
