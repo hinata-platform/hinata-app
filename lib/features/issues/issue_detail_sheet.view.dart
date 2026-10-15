@@ -208,6 +208,27 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// trash vs. archive affordance.
   bool get canDelete => _canDelete;
 
+  /// How the caller stands to this issue (HIN-136); a member until the detail
+  /// says otherwise, which is what a server without sharing means.
+  IssueParticipation _participation = IssueParticipation.member;
+
+  /// The people the detail names who could not open this issue.
+  Set<String> _cannotSeeIssue = const {};
+
+  /// Whether each person the detail names can open this issue, for the note
+  /// under a comment that mentions one of them.
+  Map<String, bool> _knownAccess = const {};
+
+  /// Whether the caller only takes part in this issue: read and comment.
+  bool get isParticipant => _participation.isParticipant;
+
+  /// The "Share with …" entry of the "…" menu, or null when the caller may
+  /// not share. Read by all three top bars.
+  void Function(Rect anchorRect)? get shareAction =>
+      _participation.canManageParticipants && _issue != null
+      ? (anchor) => shareIssue(anchorRect: anchor)
+      : null;
+
   /// Who is watching this issue, plus the caller's own subscription. Owned here
   /// rather than by the "…" menu that renders it: three separate top bars host
   /// that menu (wolt sheet, wide route, compact route), each in its own subtree
@@ -620,6 +641,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _sprints = detail.sprints;
       _hierarchy = detail.hierarchy;
       _canDelete = detail.canDelete;
+      _participation = detail.participation;
+      _cannotSeeIssue = detail.cannotSeeIssue;
+      _knownAccess = {
+        for (final user in detail.users)
+          user.id: !detail.cannotSeeIssue.contains(user.id),
+      };
       _projectIssues = const {};
       // PAINT NOW — the user sees the issue, comments, activity, hierarchy and
       // actions immediately. Everything below fills in without a spinner.
@@ -731,12 +758,37 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // A re-parent changes the breadcrumb ancestors — keep them in sync.
       await _reloadHierarchy();
     } on ApiFailure catch (failure) {
-      _toast(failure.message);
+      if (!_offerShareForRefusedAssignee(failure)) _toast(failure.message);
     } catch (_) {
       _toast('errors.unexpected');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  /// An assignment the server refused because the person cannot open the
+  /// project: instead of a dead end, a toast that offers to share the issue
+  /// with them (HIN-136). False when [failure] is anything else, or the caller
+  /// may not share, and the plain error should show.
+  bool _offerShareForRefusedAssignee(ApiFailure failure) {
+    final refused = refusedAssigneeId(failure);
+    if (refused == null || !_participation.canManageParticipants || !mounted) {
+      return false;
+    }
+    final name = _names[refused] ?? '';
+    if (name.isEmpty) return false;
+    showGlassToast(
+      context,
+      context.t(
+        'issues.participants.assigneeHint',
+        variables: {'name': name, 'project': _project?.name ?? ''},
+      ),
+      kind: GlassToastKind.warning,
+      duration: const Duration(seconds: 8),
+      actionLabel: context.t('issues.participants.share'),
+      onAction: () => shareIssue(initialQuery: name),
+    );
+    return true;
   }
 
   /// Tells the opener to refresh *and* broadcasts app-wide. The opener callback
@@ -1654,6 +1706,31 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     GoRouter.of(context).push('/issues/${copy.id}');
   }
 
+  /// Opens the share dialog (HIN-136) and re-reads the history afterwards,
+  /// which now says who was added or removed.
+  /// [initialQuery] prefills the search for the entries that already know
+  /// whom to share with.
+  Future<void> shareIssue({Rect? anchorRect, String? initialQuery}) async {
+    final issue = _issue;
+    if (issue == null || !_participation.canManageParticipants) return;
+    final me = context.read<AuthBloc>().state.user;
+    final named = {issue.reporterId, ...issue.assigneeIds}..remove(null);
+    await showShareIssueSheet(
+      context,
+      issue: issue,
+      projectName: _project?.name ?? '',
+      members: [
+        for (final user in _users)
+          if (named.contains(user.id) && !_cannotSeeIssue.contains(user.id))
+            user,
+      ],
+      meId: me?.id,
+      anchorRect: anchorRect == Rect.zero ? null : anchorRect,
+      initialQuery: initialQuery,
+    );
+    if (mounted) await _refreshActivity();
+  }
+
   /// Opens the move-to-another-project wizard for this issue and reloads on
   /// success — the issue keeps its id but gets a new readable id, project and
   /// status, so every panel on this screen has to be re-read.
@@ -1740,6 +1817,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 onReply: _replyEmailAction(issue),
                 watch: watchMenu,
                 canDelete: _canDelete,
+                onShare: shareAction,
+                readOnly: isParticipant,
               ),
             Padding(
               // Extra bottom room when the composer floats, so the last comment
@@ -3025,6 +3104,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               onReply: _replyEmailAction(issue),
               watch: watchMenu,
               canDelete: _canDelete,
+              onShare: shareAction,
+              readOnly: isParticipant,
             ),
           ),
         ],
@@ -3245,7 +3326,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// [MentionField] so `@`-smart-link autocomplete keeps working.
   Widget _commentComposer() {
     final replying = _replyingTo;
-    return GlassCommentComposer(
+    final composer = GlassCommentComposer(
       controller: _comment,
       focusNode: _commentFocus,
       editing: _editingComment != null,
@@ -3258,6 +3339,23 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       onSubmitText: _submitComment,
       onSendVoice: _sendVoiceComment,
       onAttach: _onComposerAttach,
+    );
+    // A participant cannot share, so there is nothing to offer them.
+    if (!_participation.canManageParticipants) return composer;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        MentionAccessHint(
+          controller: _comment,
+          known: _knownAccess,
+          blockedAmong: (ids) =>
+              _detail.usersWithoutAccess(widget.issueId, ids),
+          nameOf: (id) => _names[id] ?? '',
+          onShare: (id, name) => shareIssue(initialQuery: name),
+        ),
+        composer,
+      ],
     );
   }
 

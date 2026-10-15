@@ -20,6 +20,14 @@ import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../../sprint/modals/glass_modal.dart';
 import 'issue_participants_cubit.dart';
 
+/// The first person an assignment was refused for because they cannot open the
+/// project, from the server's refusal; null for any other failure.
+String? refusedAssigneeId(ApiFailure failure) {
+  if (failure.details['reason'] != 'assigneeNoAccess') return null;
+  final first = (failure.details['userIds'] ?? '').split(',').first.trim();
+  return first.isEmpty ? null : first;
+}
+
 /// Opens the share dialog for [issue] (HIN-136): search the directory, share
 /// with a tap, take people off again.
 ///

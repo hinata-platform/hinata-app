@@ -4,7 +4,7 @@ part of 'issue_detail_sheet.dart';
 
 /// Actions collapsed into the "…" overflow menu of the issue top bars. The
 /// export submenu reports an [IssueExportChoice] instead.
-enum _IssueMenuAction { toggleWatch, reply, clone, move, delete }
+enum _IssueMenuAction { toggleWatch, reply, share, clone, move, delete }
 
 /// The delete/archive/restore affordance shared by both top bars: label,
 /// icon and tint depend on the archived state and the delete permission.
@@ -30,8 +30,10 @@ enum _IssueMenuAction { toggleWatch, reply, clone, move, delete }
 /// row opens a submenu card — the subscription, why you may already be
 /// notified, and the roster are a section of their own, not three more rows in
 /// a list of actions. Export opens one too, with the formats.
-class _IssueActionsMenu extends StatelessWidget {
-  const _IssueActionsMenu({
+class IssueActionsMenu extends StatelessWidget {
+  @visibleForTesting
+  const IssueActionsMenu({
+    super.key,
     required this.onExport,
     required this.onClone,
     required this.onMove,
@@ -40,7 +42,17 @@ class _IssueActionsMenu extends StatelessWidget {
     required this.archived,
     this.onReply,
     this.watch,
+    this.onShare,
+    this.readOnly = false,
   });
+
+  /// Opens the share dialog under the rect this menu's button stands at; null
+  /// for a caller who may not share (HIN-136).
+  final void Function(Rect anchorRect)? onShare;
+
+  /// Somebody the issue is only shared with: watching and exporting are all
+  /// the menu offers them.
+  final bool readOnly;
 
   /// Exports in the format chosen in the export submenu. Gets the rect this
   /// menu's button stands at, which the share sheet grows out of.
@@ -97,7 +109,7 @@ class _IssueActionsMenu extends StatelessWidget {
             data: watch,
             state: watchState,
           ),
-        if (onReply != null)
+        if (onReply != null && !readOnly)
           GlassMenuItem(
             value: _IssueMenuAction.reply,
             label: context.t('issues.replyEmail.action'),
@@ -116,35 +128,48 @@ class _IssueActionsMenu extends StatelessWidget {
             size: 16,
             color: AppColors.inkSoft,
           ),
-          dividerAbove: afterWatch && onReply == null,
+          dividerAbove: afterWatch && (onReply == null || readOnly),
           submenu: issueExportMenuItems(context),
         ),
-        GlassMenuItem(
-          value: _IssueMenuAction.clone,
-          label: context.t('issues.clone.action'),
-          leading: Icon(LucideIcons.copy, size: 16, color: AppColors.inkSoft),
-        ),
-        GlassMenuItem(
-          value: _IssueMenuAction.move,
-          label: context.t('issues.move.action'),
-          leading: Icon(
-            LucideIcons.folderInput,
-            size: 16,
-            color: AppColors.inkSoft,
+        if (onShare != null && !readOnly)
+          GlassMenuItem(
+            value: _IssueMenuAction.share,
+            label: context.t('issues.participants.menu'),
+            leading: Icon(
+              LucideIcons.share2,
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
           ),
-          // An archived issue is soft-deleted; restore it before relocating it.
-          enabled: !archived,
-          disabledReason: archived
-              ? context.t('issues.move.archivedHint')
-              : null,
-        ),
-        GlassMenuItem(
-          value: _IssueMenuAction.delete,
-          label: context.t(removal.labelKey),
-          leading: Icon(removal.icon, size: 16, color: removal.color),
-          color: canDelete && !archived ? AppColors.danger : null,
-          dividerAbove: true,
-        ),
+        if (!readOnly)
+          GlassMenuItem(
+            value: _IssueMenuAction.clone,
+            label: context.t('issues.clone.action'),
+            leading: Icon(LucideIcons.copy, size: 16, color: AppColors.inkSoft),
+          ),
+        if (!readOnly)
+          GlassMenuItem(
+            value: _IssueMenuAction.move,
+            label: context.t('issues.move.action'),
+            leading: Icon(
+              LucideIcons.folderInput,
+              size: 16,
+              color: AppColors.inkSoft,
+            ),
+            // An archived issue is soft-deleted; restore it before relocating it.
+            enabled: !archived,
+            disabledReason: archived
+                ? context.t('issues.move.archivedHint')
+                : null,
+          ),
+        if (!readOnly)
+          GlassMenuItem(
+            value: _IssueMenuAction.delete,
+            label: context.t(removal.labelKey),
+            leading: Icon(removal.icon, size: 16, color: removal.color),
+            color: canDelete && !archived ? AppColors.danger : null,
+            dividerAbove: true,
+          ),
       ],
       onSelected: (action) {
         switch (action) {
@@ -152,6 +177,9 @@ class _IssueActionsMenu extends StatelessWidget {
             watch?.onToggle();
           case _IssueMenuAction.reply:
             onReply?.call();
+          case _IssueMenuAction.share:
+            final share = onShare;
+            if (share != null) _withMenuAnchor(context, share);
           case IssueExportChoice choice:
             _exportFromMenuAnchor(context, choice, onExport);
           case _IssueMenuAction.clone:
@@ -197,11 +225,14 @@ void _exportFromMenuAnchor(
   BuildContext context,
   IssueExportChoice choice,
   void Function(IssueExportChoice, Rect) export,
-) {
+) => _withMenuAnchor(context, (anchor) => export(choice, anchor));
+
+/// Hands [action] the rect the "…" menu's button stands at; see
+/// [_exportFromMenuAnchor] for why a torn-down context bails out.
+void _withMenuAnchor(BuildContext context, void Function(Rect) action) {
   if (!context.mounted) return;
   final box = context.findRenderObject() as RenderBox?;
-  export(
-    choice,
+  action(
     (box != null && box.hasSize)
         ? box.localToGlobal(Offset.zero) & box.size
         : Rect.zero,
@@ -223,7 +254,15 @@ class _RouteTopBar extends StatelessWidget {
     this.onReply,
     this.watch,
     this.canDelete = false,
+    this.onShare,
+    this.readOnly = false,
   });
+
+  /// Opens the share dialog; null for a caller who may not share.
+  final void Function(Rect anchorRect)? onShare;
+
+  /// Whether the caller only takes part in the issue (reads and comments).
+  final bool readOnly;
 
   final Issue issue;
   final bool busy;
@@ -316,7 +355,7 @@ class _RouteTopBar extends StatelessWidget {
             // Secondary actions (watch · clone · move · reply · remove) live in
             // one "…" popover so the bar keeps a fixed shape regardless of
             // which are available.
-            _IssueActionsMenu(
+            IssueActionsMenu(
               onReply: onReply,
               onExport: onExport,
               onClone: onClone,
@@ -325,6 +364,8 @@ class _RouteTopBar extends StatelessWidget {
               canDelete: canDelete,
               archived: issue.archived,
               watch: watch,
+              onShare: onShare,
+              readOnly: readOnly,
             ),
           ],
         ),
