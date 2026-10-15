@@ -10,6 +10,10 @@ import '../util/reader_time_zone.dart';
 
 /// Issues: search/CRUD, hierarchy, relationship links, change history,
 /// attachments, and time-tracking work items.
+/// What a bulk archive did: the named issues as they now are, and every issue
+/// it switched, sub-tasks included.
+typedef BulkArchiveResult = ({List<Issue> issues, List<String> toggledIds});
+
 class IssueRepository {
   IssueRepository(this._api);
 
@@ -330,20 +334,37 @@ class IssueRepository {
     return data['deleted'] as int? ?? issueIds.length;
   }
 
-  /// Archives — or with [archived] false restores — all of [issueIds], sub-tasks
-  /// along. Any member may. All or nothing; returns the named issues as they
-  /// now are.
-  Future<List<Issue>> bulkArchive(
+  /// Archives — or with [archived] false restores — all of [issueIds]. Any
+  /// member may. With [cascade] a standard issue takes its sub-tasks along; an
+  /// undo sends back exactly the [BulkArchiveResult.toggledIds] of the first
+  /// call with it off, so a sub-task archived on its own before stays archived.
+  /// All or nothing.
+  Future<BulkArchiveResult> bulkArchive(
     List<String> issueIds, {
     bool archived = true,
-  }) async =>
-      ((await _api.post(
-                '/api/v1/issues/bulk/archive',
-                body: {'issueIds': issueIds, 'archived': archived},
-              ))
-              as List<dynamic>)
-          .map((i) => Issue.fromJson(i as Map<String, dynamic>))
-          .toList();
+    bool cascade = true,
+  }) async {
+    final data =
+        await _api.post(
+              '/api/v1/issues/bulk/archive',
+              body: {
+                'issueIds': issueIds,
+                'archived': archived,
+                'cascade': cascade,
+              },
+            )
+            as Map<String, dynamic>;
+    return (
+      issues: [
+        for (final i in data['issues'] as List<dynamic>? ?? const [])
+          Issue.fromJson(i as Map<String, dynamic>),
+      ],
+      toggledIds: [
+        for (final id in data['toggledIds'] as List<dynamic>? ?? const [])
+          id as String,
+      ],
+    );
+  }
 
   /// Sets the [state], the [priority] or the assignee of all of [issueIds].
   /// Null leaves a field alone; an empty [assigneeId] clears the assignees.

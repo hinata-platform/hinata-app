@@ -85,10 +85,11 @@ class IssuesListCubit extends PagedCubit<Issue> {
   Future<int> bulkDelete(List<String> issueIds) => _issues.bulkDelete(issueIds);
 
   /// Archives, or with [archived] false restores, every one of [issueIds].
-  Future<List<Issue>> bulkArchive(
+  Future<BulkArchiveResult> bulkArchive(
     List<String> issueIds, {
     bool archived = true,
-  }) => _issues.bulkArchive(issueIds, archived: archived);
+    bool cascade = true,
+  }) => _issues.bulkArchive(issueIds, archived: archived, cascade: cascade);
 
   /// Sets state, priority or assignee of every one of [issueIds], or of none.
   Future<List<Issue>> bulkUpdate(
