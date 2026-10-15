@@ -1206,7 +1206,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// caller belongs to none, which is where somebody an issue was shared with
   /// stands (HIN-136).
   bool _withoutProjects(_RefData ref) =>
-      _ref != null && ref.projectNames.isEmpty && widget.projectId == null;
+      !identical(ref, _emptyRef) &&
+      ref.projectNames.isEmpty &&
+      widget.projectId == null;
 
   void _onGroupingChanged(IssueGrouping g) => setState(() {
     _grouping = g;

@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
@@ -26,7 +24,7 @@ void main() {
     issues: issues,
     issueId: 'i1',
     meId: 'u1',
-    members: const [member],
+    namedWithAccess: const [member],
   );
 
   blocTest<IssueParticipantsCubit, IssueParticipantsState>(
@@ -35,8 +33,11 @@ void main() {
     build: build,
     act: (cubit) => cubit.load(),
     expect: () => [
-      const IssueParticipantsState(members: [member], loading: true),
-      const IssueParticipantsState(members: [member], participants: [helen]),
+      const IssueParticipantsState(namedWithAccess: [member], loading: true),
+      const IssueParticipantsState(
+        namedWithAccess: [member],
+        participants: [helen],
+      ),
     ],
   );
 
@@ -50,8 +51,10 @@ void main() {
       ]);
     },
     build: build,
-    seed: () =>
-        const IssueParticipantsState(members: [member], participants: [helen]),
+    seed: () => const IssueParticipantsState(
+      namedWithAccess: [member],
+      participants: [helen],
+    ),
     act: (cubit) async => expect(await cubit.add(omar), AddOutcome.added),
     verify: (cubit) {
       expect(cubit.state.participants.map((p) => p.id), ['u2', 'u3']);
@@ -67,8 +70,10 @@ void main() {
       issues.answer(#participants, const [helen]);
     },
     build: build,
-    seed: () =>
-        const IssueParticipantsState(members: [member], participants: [helen]),
+    seed: () => const IssueParticipantsState(
+      namedWithAccess: [member],
+      participants: [helen],
+    ),
     act: (cubit) async =>
         expect(await cubit.add(omar), AddOutcome.alreadyMember),
     verify: (cubit) =>
@@ -147,20 +152,6 @@ void main() {
 
     expect(await cubit.add(member), AddOutcome.alreadyMember);
     expect(issues.calls, isEmpty);
-    await cubit.close();
-  });
-
-  test('leaving removes the caller', () async {
-    final done = Completer<void>();
-    issues.answerWith(#removeParticipant, (_) {
-      done.complete();
-      return Future<void>.value();
-    });
-    final cubit = build();
-
-    expect(await cubit.leave(), isTrue);
-    await done.future;
-    expect(issues.only.positionalArguments, ['i1', 'u1']);
     await cubit.close();
   });
 }

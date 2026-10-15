@@ -2,7 +2,6 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/events/issue_events.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/issue_detail.dart';
 import '../../../core/repositories/issue_repository.dart';
@@ -15,14 +14,16 @@ enum AddOutcome { added, alreadyShared, alreadyMember, failed }
 class IssueParticipantsState extends Equatable {
   const IssueParticipantsState({
     this.participants = const [],
-    this.members = const [],
+    this.namedWithAccess = const [],
     this.loading = false,
     this.busy = const {},
     this.errorKey,
   });
 
   final List<IssueParticipant> participants;
-  final List<DirectoryUser> members;
+
+  /// The people the issue names (reporter, assignees) who reach it anyway.
+  final List<DirectoryUser> namedWithAccess;
   final bool loading;
 
   /// Ids of the people being added or removed right now.
@@ -42,28 +43,34 @@ class IssueParticipantsState extends Equatable {
     String? errorKey,
   }) => IssueParticipantsState(
     participants: participants ?? this.participants,
-    members: members,
+    namedWithAccess: namedWithAccess,
     loading: loading ?? this.loading,
     busy: busy ?? this.busy,
     errorKey: errorKey,
   );
 
   @override
-  List<Object?> get props => [participants, members, loading, busy, errorKey];
+  List<Object?> get props => [
+    participants,
+    namedWithAccess,
+    loading,
+    busy,
+    errorKey,
+  ];
 }
 
 /// Shares one issue with people outside its project and takes them off again
 /// (HIN-136). Both changes show at once and are put back if the server
-/// refuses; every change is announced on [IssueEvents] so the detail, the
-/// lists and the watched page catch up.
+/// refuses. Nothing is broadcast: no list shows participants, and the detail
+/// re-reads its history when the dialog closes.
 class IssueParticipantsCubit extends Cubit<IssueParticipantsState> {
   IssueParticipantsCubit({
     required IssueRepository issues,
     required this.issueId,
     required this.meId,
-    List<DirectoryUser> members = const [],
+    List<DirectoryUser> namedWithAccess = const [],
   }) : _issues = issues,
-       super(IssueParticipantsState(members: members));
+       super(IssueParticipantsState(namedWithAccess: namedWithAccess));
 
   /// The most people one issue is shared with; the server holds the same cap.
   static const maxParticipants = 25;
@@ -71,7 +78,8 @@ class IssueParticipantsCubit extends Cubit<IssueParticipantsState> {
   final IssueRepository _issues;
   final String issueId;
 
-  /// The signed-in user, who leaves with [leave].
+  /// The signed-in user, recorded as who added a row shown before the server
+  /// answers.
   final String? meId;
 
   Future<void> load() async {
@@ -93,7 +101,7 @@ class IssueParticipantsCubit extends Cubit<IssueParticipantsState> {
     if (state.participants.any((p) => p.id == user.id)) {
       return AddOutcome.alreadyShared;
     }
-    if (state.members.any((m) => m.id == user.id)) {
+    if (state.namedWithAccess.any((m) => m.id == user.id)) {
       return AddOutcome.alreadyMember;
     }
     final before = state.participants;
@@ -125,7 +133,6 @@ class IssueParticipantsCubit extends Cubit<IssueParticipantsState> {
           busy: {...state.busy}..remove(user.id),
         ),
       );
-      IssueEvents.instance.notifyChanged(origin: this);
       return list.any((p) => p.id == user.id)
           ? AddOutcome.added
           : AddOutcome.alreadyMember;
@@ -159,7 +166,6 @@ class IssueParticipantsCubit extends Cubit<IssueParticipantsState> {
       await _issues.removeParticipant(issueId, userId);
       if (isClosed) return true;
       emit(state.copyWith(busy: {...state.busy}..remove(userId)));
-      IssueEvents.instance.notifyChanged(origin: this);
       return true;
     } on ApiFailure catch (failure) {
       if (isClosed) return false;
@@ -170,20 +176,6 @@ class IssueParticipantsCubit extends Cubit<IssueParticipantsState> {
           errorKey: failure.message,
         ),
       );
-      return false;
-    }
-  }
-
-  /// The caller leaves an issue that is only shared with them.
-  Future<bool> leave() async {
-    final me = meId;
-    if (me == null) return false;
-    try {
-      await _issues.removeParticipant(issueId, me);
-      IssueEvents.instance.notifyChanged(origin: this);
-      return true;
-    } on ApiFailure catch (failure) {
-      if (!isClosed) emit(state.copyWith(errorKey: failure.message));
       return false;
     }
   }

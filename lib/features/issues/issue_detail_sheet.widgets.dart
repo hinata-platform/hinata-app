@@ -21,7 +21,7 @@ enum _IssueMenuAction { toggleWatch, reply, share, clone, move, delete }
   color: canDelete && !archived ? AppColors.danger : AppColors.accentStrong,
 );
 
-/// "…" overflow button for the issue top bars, bundling watch · reply · clone ·
+/// "…" overflow button for the issue top bars, bundling watch · reply · share · clone ·
 /// move · delete/archive into one liquid-glass popover so the bar stays tidy.
 ///
 /// Watching is a menu entry rather than a button of its own (or a card in the
@@ -131,7 +131,7 @@ class IssueActionsMenu extends StatelessWidget {
           dividerAbove: afterWatch && (onReply == null || readOnly),
           submenu: issueExportMenuItems(context),
         ),
-        if (onShare != null && !readOnly)
+        if (onShare != null)
           GlassMenuItem(
             value: _IssueMenuAction.share,
             label: context.t('issues.participants.menu'),
@@ -352,7 +352,7 @@ class _RouteTopBar extends StatelessWidget {
                   color: AppColors.inkSoft,
                 ),
               ),
-            // Secondary actions (watch · clone · move · reply · remove) live in
+            // Secondary actions (watch · share · clone · move · reply · remove) live in
             // one "…" popover so the bar keeps a fixed shape regardless of
             // which are available.
             IssueActionsMenu(
@@ -599,6 +599,35 @@ class _ActivityTabs extends StatelessWidget {
   }
 }
 
+/// What a history entry says after the actor's name: "created this issue",
+/// "changed the status", or, for a share (HIN-136), whom it was shared with,
+/// who was taken off and who left. [names] resolves the user ids a share
+/// entry carries.
+String issueActivitySentence(
+  BuildContext context,
+  IssueActivity activity,
+  Map<String, String> names,
+) {
+  String nameOf(String? id) => id == null ? '' : names[id] ?? '';
+  return switch (activity.field) {
+    'CREATED' => context.t('issues.act.created'),
+    'PARTICIPANT_ADDED' => context.t(
+      'issues.act.participantAdded',
+      variables: {'name': nameOf(activity.toValue)},
+    ),
+    'PARTICIPANT_REMOVED' when activity.fromValue == activity.actorId =>
+      context.t('issues.act.participantLeft'),
+    'PARTICIPANT_REMOVED' => context.t(
+      'issues.act.participantRemoved',
+      variables: {'name': nameOf(activity.fromValue)},
+    ),
+    _ => context.t(
+      'issues.act.changed',
+      variables: {'field': _fieldLabel(context, activity.field)},
+    ),
+  };
+}
+
 /// History row: actor avatar + "[name] changed [field]" + optional from→to.
 class _ActivityTile extends StatelessWidget {
   const _ActivityTile({
@@ -633,12 +662,7 @@ class _ActivityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final action = activity.field == 'CREATED'
-        ? context.t('issues.act.created')
-        : context.t(
-            'issues.act.changed',
-            variables: {'field': _fieldLabel(context, activity.field)},
-          );
+    final action = issueActivitySentence(context, activity, names);
     final showChips = _chipFields.contains(activity.field);
 
     final dark = AppColors.brightness == Brightness.dark;
@@ -768,23 +792,23 @@ class _ActivityTile extends StatelessWidget {
         ? MaterialLocalizations.of(context).formatMediumDate(parsed)
         : raw;
   }
-
-  String _fieldLabel(BuildContext context, String field) => switch (field) {
-    'TITLE' => context.t('issues.field.title'),
-    'DESCRIPTION' => context.t('issues.field.description'),
-    'STATE' => context.t('issues.field.state'),
-    'ASSIGNEE' => context.t('issues.field.assignee'),
-    'PRIORITY' => context.t('issues.field.priority'),
-    'TYPE' => context.t('issues.field.type'),
-    'SPRINT' => context.t('issues.field.sprint'),
-    'PARENT' => context.t('issues.field.parent'),
-    'START_DATE' => context.t('issues.field.startDate'),
-    'DUE_DATE' => context.t('issues.field.dueDate'),
-    'ESTIMATE' => context.t('issues.field.estimate'),
-    'TAGS' => context.t('issues.field.tags'),
-    _ => field.toLowerCase(),
-  };
 }
+
+String _fieldLabel(BuildContext context, String field) => switch (field) {
+  'TITLE' => context.t('issues.field.title'),
+  'DESCRIPTION' => context.t('issues.field.description'),
+  'STATE' => context.t('issues.field.state'),
+  'ASSIGNEE' => context.t('issues.field.assignee'),
+  'PRIORITY' => context.t('issues.field.priority'),
+  'TYPE' => context.t('issues.field.type'),
+  'SPRINT' => context.t('issues.field.sprint'),
+  'PARENT' => context.t('issues.field.parent'),
+  'START_DATE' => context.t('issues.field.startDate'),
+  'DUE_DATE' => context.t('issues.field.dueDate'),
+  'ESTIMATE' => context.t('issues.field.estimate'),
+  'TAGS' => context.t('issues.field.tags'),
+  _ => field.toLowerCase(),
+};
 
 /// Small bordered pill used for before/after values in the history.
 class _ChangeChip extends StatelessWidget {

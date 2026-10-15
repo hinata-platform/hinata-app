@@ -417,7 +417,7 @@ class _SheetActions extends StatelessWidget {
           onPressed: onMaximize,
           icon: Icon(LucideIcons.maximize2, size: 19, color: AppColors.inkSoft),
         ),
-        // Secondary actions (watch · clone · move · reply · remove) share one
+        // Secondary actions (watch · share · clone · move · reply · remove) share one
         // "…" popover so the header keeps a fixed shape regardless of which are
         // available.
         IssueActionsMenu(
