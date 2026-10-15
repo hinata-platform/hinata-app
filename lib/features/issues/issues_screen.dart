@@ -1789,6 +1789,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
       label: context.t('issues.bulkDelete.action'),
       danger: true,
       onTap: none || !_mayDeleteSelection ? null : _deleteSelected,
+      disabledReason: !none && !_mayDeleteSelection
+          ? context.t('issues.bulk.deleteNotAllowed')
+          : null,
     );
     return GlassBulkBar(
       countLabel: phone && !archiveView ? '${_selected.length}' : count,
