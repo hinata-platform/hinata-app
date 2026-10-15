@@ -925,6 +925,20 @@
       "done": "{{count}} Vorgang gelöscht",
       "done_plural": "{{count}} Vorgänge gelöscht"
     },
+    "bulk": {
+      "assignee": "Bearbeiter",
+      "more": "Mehr",
+      "pickPerson": "Person wählen …",
+      "unassign": "Zuweisung entfernen",
+      "noCommonStatus": "Die ausgewählten Vorgänge liegen in Projekten ohne gemeinsamen Status. Wähle Vorgänge aus einem Projekt.",
+      "updated": "{{count}} Vorgang geändert",
+      "updated_plural": "{{count}} Vorgänge geändert",
+      "archived": "{{count}} Vorgang archiviert",
+      "archived_plural": "{{count}} Vorgänge archiviert",
+      "restored": "{{count}} Vorgang wiederhergestellt",
+      "restored_plural": "{{count}} Vorgänge wiederhergestellt",
+      "undo": "Rückgängig"
+    },
     "selectAll": "Alle auswählen",
     "selectAllCapped": "Die ersten {{max}} sind ausgewählt. Mehr lassen sich nicht auf einmal ändern.",
     "selection": {

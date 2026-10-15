@@ -925,6 +925,20 @@
       "done": "{{count}} इश्यू हटाया गया",
       "done_plural": "{{count}} इश्यू हटाए गए"
     },
+    "bulk": {
+      "assignee": "असाइनी",
+      "more": "और",
+      "pickPerson": "व्यक्ति चुनें …",
+      "unassign": "असाइनी हटाएँ",
+      "noCommonStatus": "चुने गए इश्यू ऐसे प्रोजेक्ट में हैं जिनमें कोई साझा स्टेटस नहीं है। एक ही प्रोजेक्ट के इश्यू चुनें।",
+      "updated": "{{count}} इश्यू बदला गया",
+      "updated_plural": "{{count}} इश्यू बदले गए",
+      "archived": "{{count}} इश्यू संग्रहित",
+      "archived_plural": "{{count}} इश्यू संग्रहित",
+      "restored": "{{count}} इश्यू वापस लाया गया",
+      "restored_plural": "{{count}} इश्यू वापस लाए गए",
+      "undo": "पूर्ववत करें"
+    },
     "selectAll": "सभी चुनें",
     "selectAllCapped": "पहले {{max}} चुने गए हैं। एक बदलाव में इससे ज़्यादा नहीं हो सकते।",
     "selection": {

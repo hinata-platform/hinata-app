@@ -55,13 +55,20 @@ class GlassBulkBar extends StatelessWidget {
   const GlassBulkBar({
     super.key,
     required this.countLabel,
+    this.countSemanticsLabel,
     required this.actions,
     required this.onClear,
     this.clearTooltip,
+    this.leading,
+    this.labelledMinWidth = 760,
   });
 
   /// The leading "N selected" label.
   final String countLabel;
+
+  /// What a screen reader says for the count, when [countLabel] is shortened
+  /// for a narrow bar (just the number on a phone).
+  final String? countSemanticsLabel;
 
   /// The action strip — typically [GlassBulkAction] buttons, but any inline
   /// control (e.g. a dropdown) works.
@@ -70,11 +77,16 @@ class GlassBulkBar extends StatelessWidget {
   final VoidCallback onClear;
   final String? clearTooltip;
 
-  static const double _radius = 26;
+  /// Sits right after the count, before the divider: what acts on the selection
+  /// itself rather than on the issues, such as "Select all".
+  final Widget? leading;
 
-  /// Narrowest bar that still shows its actions with labels: the count and
-  /// four labelled actions, in German, at the default text size.
-  static const double _labelledMinWidth = 760;
+  /// Narrowest bar that still shows its actions with labels. The default fits
+  /// the count and four labelled actions in German at the default text size;
+  /// a bar with more actions passes more.
+  final double labelledMinWidth;
+
+  static const double _radius = 26;
 
   @override
   Widget build(BuildContext context) {
@@ -97,7 +109,7 @@ class GlassBulkBar extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) => _BulkBarScope(
             iconOnly:
-                constraints.maxWidth < _labelledMinWidth || context.isCompact,
+                constraints.maxWidth < labelledMinWidth || context.isCompact,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -117,6 +129,7 @@ class GlassBulkBar extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 8),
                     child: Text(
                       countLabel,
+                      semanticsLabel: countSemanticsLabel,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -127,12 +140,8 @@ class GlassBulkBar extends StatelessWidget {
                     ),
                   ),
                 ),
-                Container(
-                  width: 1,
-                  height: 22,
-                  color: tokens.hairline,
-                  margin: const EdgeInsets.symmetric(horizontal: 6),
-                ),
+                ?leading,
+                const GlassBulkDivider(),
                 // The action strip scrolls when the bar can't fit — instead of
                 // overflowing the screen edge or clipping labels.
                 Flexible(
@@ -171,6 +180,26 @@ class _BulkBarScope extends InheritedWidget {
       iconOnly != oldWidget.iconOnly;
 }
 
+/// A hairline between groups of actions in a [GlassBulkBar]: what changes the
+/// issues, what removes them, what is left in the overflow.
+class GlassBulkDivider extends StatelessWidget {
+  const GlassBulkDivider({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
+    return ExcludeSemantics(
+      child: Container(
+        width: 1,
+        height: 22,
+        color: tokens.hairline,
+        margin: const EdgeInsets.symmetric(horizontal: 6),
+      ),
+    );
+  }
+}
+
 /// One icon+label action inside a [GlassBulkBar].
 ///
 /// In a narrow bar it drops the label and keeps the icon, the label moving into
@@ -182,36 +211,59 @@ class GlassBulkAction extends StatelessWidget {
     super.key,
     required this.icon,
     required this.label,
-    required this.onTap,
+    this.onTap,
+    this.onTapAt,
     this.danger = false,
+    this.menu = false,
+    this.iconOnly = false,
   });
 
   final IconData icon;
   final String label;
 
-  /// Null disables the action, e.g. while nothing is selected yet.
+  /// Null disables the action, e.g. while nothing is selected yet, unless
+  /// [onTapAt] is given instead.
   final VoidCallback? onTap;
+
+  /// Like [onTap], with the action's own rectangle in window coordinates, for
+  /// a popover to grow out of the button that opened it.
+  final ValueChanged<Rect>? onTapAt;
+
   final bool danger;
+
+  /// Opens a menu rather than acting at once; a labelled action shows a chevron.
+  final bool menu;
+
+  /// Always just the icon, with the label as its tooltip: the overflow button.
+  final bool iconOnly;
 
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tokens = SearchTokens.of(dark ? Brightness.dark : Brightness.light);
-    final enabled = onTap != null;
+    final tapAt = onTapAt;
+    final VoidCallback? handler = tapAt != null
+        ? () {
+            final box = context.findRenderObject() as RenderBox?;
+            if (box == null || !box.hasSize) return;
+            tapAt(box.localToGlobal(Offset.zero) & box.size);
+          }
+        : onTap;
+    final enabled = handler != null;
     final base = danger
         ? (dark ? const Color(0xFFFF8A80) : AppColors.danger)
         : tokens.ink;
     final color = enabled ? base : tokens.inkSoft;
-    if (_BulkBarScope.iconOnlyIn(context)) {
+    if (iconOnly || _BulkBarScope.iconOnlyIn(context)) {
       return IconButton(
-        onPressed: onTap,
+        onPressed: handler,
         tooltip: label,
         style: IconButton.styleFrom(overlayColor: tokens.rowHover),
         icon: Icon(icon, size: 20, color: color),
       );
     }
-    return TextButton.icon(
-      onPressed: onTap,
+    return TextButton(
+      onPressed: handler,
       style: TextButton.styleFrom(
         foregroundColor: color,
         overlayColor: tokens.rowHover,
@@ -221,8 +273,18 @@ class GlassBulkAction extends StatelessWidget {
           fontSize: AppType.label,
         ),
       ),
-      icon: Icon(icon, size: 15, color: color),
-      label: Text(label),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 15, color: color),
+          const SizedBox(width: 8),
+          Text(label),
+          if (menu) ...[
+            const SizedBox(width: 4),
+            Icon(LucideIcons.chevronDown, size: 14, color: color),
+          ],
+        ],
+      ),
     );
   }
 }

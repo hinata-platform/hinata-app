@@ -925,6 +925,20 @@
       "done": "已删除 {{count}} 个事项",
       "done_plural": "已删除 {{count}} 个事项"
     },
+    "bulk": {
+      "assignee": "负责人",
+      "more": "更多",
+      "pickPerson": "选择人员 …",
+      "unassign": "移除负责人",
+      "noCommonStatus": "所选事项所在的项目没有共同的状态。请选择同一项目中的事项。",
+      "updated": "已更改 {{count}} 个事项",
+      "updated_plural": "已更改 {{count}} 个事项",
+      "archived": "已归档 {{count}} 个事项",
+      "archived_plural": "已归档 {{count}} 个事项",
+      "restored": "已恢复 {{count}} 个事项",
+      "restored_plural": "已恢复 {{count}} 个事项",
+      "undo": "撤销"
+    },
     "selectAll": "全选",
     "selectAllCapped": "已选择前 {{max}} 个。一次更改最多只能这么多。",
     "selection": {

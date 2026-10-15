@@ -208,6 +208,24 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     emit(state.copyWith(items: kept, total: state.total - 1));
   }
 
+  /// Drops every loaded item [test] matches, in one emit, and counts that many
+  /// fewer: a bulk change that takes forty rows out of a view repaints once,
+  /// not forty times.
+  void removeWhere(bool Function(T item) test) {
+    final kept = [
+      for (final existing in state.items)
+        if (!test(existing)) existing,
+    ];
+    final removed = state.items.length - kept.length;
+    if (removed == 0) return;
+    emit(
+      state.copyWith(
+        items: kept,
+        total: (state.total - removed).clamp(0, state.total),
+      ),
+    );
+  }
+
   List<T> _append(List<T> current, List<T> incoming) {
     if (keyOf == null) return [...current, ...incoming];
     final seen = {for (final item in current) keyOf!(item)};
