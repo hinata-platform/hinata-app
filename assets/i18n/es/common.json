@@ -915,6 +915,16 @@
       "cleared_plural": "Fecha límite quitada de {{count}} incidencias",
       "tooMany": "Puedes cambiar como máximo {{max}} incidencias a la vez. Quita algunas de la selección y vuelve a intentarlo."
     },
+    "bulkDelete": {
+      "action": "Eliminar",
+      "title": "¿Eliminar {{count}} incidencia?",
+      "title_plural": "¿Eliminar {{count}} incidencias?",
+      "message": "La incidencia se elimina definitivamente, con sus subtareas, comentarios y vínculos. El tiempo registrado se queda en el proyecto.",
+      "message_plural": "Las incidencias se eliminan definitivamente, con sus subtareas, comentarios y vínculos. El tiempo registrado se queda en el proyecto.",
+      "confirm": "Eliminar definitivamente",
+      "done": "{{count}} incidencia eliminada",
+      "done_plural": "{{count}} incidencias eliminadas"
+    },
     "selectAll": "Seleccionar todo",
     "selectAllCapped": "Están seleccionadas las primeras {{max}}. Es el máximo que admite un solo cambio.",
     "selection": {

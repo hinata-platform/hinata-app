@@ -915,6 +915,16 @@
       "cleared_plural": "已移除 {{count}} 个事项的截止日期",
       "tooMany": "一次最多可更改 {{max}} 个事项。请取消选择一些后再试。"
     },
+    "bulkDelete": {
+      "action": "删除",
+      "title": "删除 {{count}} 个事项？",
+      "title_plural": "删除 {{count}} 个事项？",
+      "message": "事项将连同其子任务、评论和链接被永久删除。已记录的工时保留在项目中。",
+      "message_plural": "事项将连同其子任务、评论和链接被永久删除。已记录的工时保留在项目中。",
+      "confirm": "永久删除",
+      "done": "已删除 {{count}} 个事项",
+      "done_plural": "已删除 {{count}} 个事项"
+    },
     "selectAll": "全选",
     "selectAllCapped": "已选择前 {{max}} 个。一次更改最多只能这么多。",
     "selection": {

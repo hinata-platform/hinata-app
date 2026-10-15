@@ -915,6 +915,16 @@
       "cleared_plural": "Échéance retirée de {{count}} tickets",
       "tooMany": "Tu peux modifier au plus {{max}} tickets à la fois. Désélectionnes-en quelques-uns et réessaie."
     },
+    "bulkDelete": {
+      "action": "Supprimer",
+      "title": "Supprimer {{count}} ticket ?",
+      "title_plural": "Supprimer {{count}} tickets ?",
+      "message": "Le ticket est supprimé définitivement, avec ses sous-tâches, commentaires et liens. Le temps saisi reste dans le projet.",
+      "message_plural": "Les tickets sont supprimés définitivement, avec leurs sous-tâches, commentaires et liens. Le temps saisi reste dans le projet.",
+      "confirm": "Supprimer définitivement",
+      "done": "{{count}} ticket supprimé",
+      "done_plural": "{{count}} tickets supprimés"
+    },
     "selectAll": "Tout sélectionner",
     "selectAllCapped": "Les {{max}} premiers sont sélectionnés. Une seule modification ne peut pas en prendre plus.",
     "selection": {
