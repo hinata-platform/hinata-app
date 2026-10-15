@@ -53,7 +53,7 @@ void main() {
     });
 
     test('an issue carries the ids it is shared with', () {
-      final issue = Issue.fromJson({
+      final issue = Issue.fromJson(const {
         'id': 'i1',
         'projectId': 'p1',
         'title': 't',
@@ -62,7 +62,7 @@ void main() {
 
       expect(issue.participantIds, ['u2']);
       expect(
-        Issue.fromJson({'id': 'i1', 'projectId': 'p1'}).participantIds,
+        Issue.fromJson(const {'id': 'i1', 'projectId': 'p1'}).participantIds,
         isEmpty,
       );
     });

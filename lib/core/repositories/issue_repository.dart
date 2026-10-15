@@ -4,7 +4,6 @@ import 'package:dio/dio.dart';
 
 import '../api/api_client.dart';
 import '../models/issue_detail.dart';
-import '../models/issue_participation.dart';
 import '../models/issue_move.dart';
 import '../models/work_models.dart';
 import '../util/reader_time_zone.dart';
