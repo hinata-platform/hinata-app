@@ -45,7 +45,12 @@ class IssueLinksSection extends StatefulWidget {
     required this.userAvatars,
     this.onOpenIssue,
     this.onChanged,
+    this.readOnly = false,
   });
+
+  /// Shows the links without the means to add or remove one: somebody the
+  /// issue is only shared with reads it (HIN-136).
+  final bool readOnly;
 
   final String issueId;
   final String projectId;
@@ -268,55 +273,56 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
                 userNames: widget.userNames,
                 userAvatars: widget.userAvatars,
                 onOpen: widget.onOpenIssue,
-                onRemove: _remove,
+                onRemove: widget.readOnly ? null : _remove,
               ),
             ],
             const SizedBox(height: 6),
             // Animated transform: the text-only "add" button morphs into the
             // inline link editor and back.
-            AnimatedSize(
-              duration: const Duration(milliseconds: 220),
-              curve: Curves.easeOutCubic,
-              alignment: Alignment.topLeft,
-              child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 200),
-                switchInCurve: Curves.easeOut,
-                switchOutCurve: Curves.easeIn,
-                transitionBuilder: (child, anim) => FadeTransition(
-                  opacity: anim,
-                  child: SizeTransition(sizeFactor: anim, child: child),
-                ),
-                child: _adding
-                    ? BlocProvider.value(
-                        key: const ValueKey('editor'),
-                        value: _cubit,
-                        child: _LinkEditor(
-                          projectId: widget.projectId,
-                          issueId: widget.issueId,
-                          linkedIssueIds: _linkedIssueIds,
-                          project: widget.project,
-                          onSubmit: _submit,
-                          onCancel: () => setState(() => _adding = false),
-                        ),
-                      )
-                    : Align(
-                        key: const ValueKey('button'),
-                        alignment: AlignmentDirectional.centerStart,
-                        child: TextButton.icon(
-                          onPressed: () => setState(() => _adding = true),
-                          style: TextButton.styleFrom(
-                            foregroundColor: AppColors.stTodo,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 6,
-                            ),
+            if (!widget.readOnly)
+              AnimatedSize(
+                duration: const Duration(milliseconds: 220),
+                curve: Curves.easeOutCubic,
+                alignment: Alignment.topLeft,
+                child: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 200),
+                  switchInCurve: Curves.easeOut,
+                  switchOutCurve: Curves.easeIn,
+                  transitionBuilder: (child, anim) => FadeTransition(
+                    opacity: anim,
+                    child: SizeTransition(sizeFactor: anim, child: child),
+                  ),
+                  child: _adding
+                      ? BlocProvider.value(
+                          key: const ValueKey('editor'),
+                          value: _cubit,
+                          child: _LinkEditor(
+                            projectId: widget.projectId,
+                            issueId: widget.issueId,
+                            linkedIssueIds: _linkedIssueIds,
+                            project: widget.project,
+                            onSubmit: _submit,
+                            onCancel: () => setState(() => _adding = false),
                           ),
-                          icon: const Icon(LucideIcons.plus, size: 16),
-                          label: Text(context.t('issues.links.add')),
+                        )
+                      : Align(
+                          key: const ValueKey('button'),
+                          alignment: AlignmentDirectional.centerStart,
+                          child: TextButton.icon(
+                            onPressed: () => setState(() => _adding = true),
+                            style: TextButton.styleFrom(
+                              foregroundColor: AppColors.stTodo,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 6,
+                              ),
+                            ),
+                            icon: const Icon(LucideIcons.plus, size: 16),
+                            label: Text(context.t('issues.links.add')),
+                          ),
                         ),
-                      ),
+                ),
               ),
-            ),
           ],
         ],
       ),

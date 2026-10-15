@@ -1706,6 +1706,46 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     GoRouter.of(context).push('/issues/${copy.id}');
   }
 
+  /// Leaves an issue that is only shared with the caller, after a short
+  /// question, then closes it: they will not see it any more.
+  Future<void> _leaveIssue() async {
+    final issue = _issue;
+    final me = context.read<AuthBloc>().state.user;
+    if (issue == null || me == null) return;
+    final ok = await showGlassConfirm(
+      context,
+      icon: LucideIcons.logOut,
+      title: context.t(
+        'issues.participants.leaveTitle',
+        variables: {'key': issue.readableId},
+      ),
+      message: context.t('issues.participants.leaveMessage'),
+      confirmLabel: context.t('issues.participants.leave'),
+      confirmIcon: LucideIcons.logOut,
+    );
+    if (ok != true || !mounted) return;
+    try {
+      await _detail.leaveIssue(issue.id, me.id);
+    } on ApiFailure catch (failure) {
+      _toast(failure.message);
+      return;
+    }
+    if (!mounted) return;
+    _toast(
+      context.t(
+        'issues.participants.left',
+        variables: {'key': issue.readableId},
+      ),
+      kind: GlassToastKind.info,
+    );
+    _notifyChanged();
+    if (widget.header != null) {
+      Navigator.of(context).maybePop();
+    } else {
+      _closeRoute();
+    }
+  }
+
   /// Opens the share dialog (HIN-136) and re-reads the history afterwards,
   /// which now says who was added or removed.
   /// [initialQuery] prefills the search for the entries that already know
@@ -1820,6 +1860,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 onShare: shareAction,
                 readOnly: isParticipant,
               ),
+            if (isParticipant)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: ParticipantBanner(
+                  projectName: _project?.name ?? '',
+                  onLeave: _leaveIssue,
+                ),
+              ),
             Padding(
               // Extra bottom room when the composer floats, so the last comment
               // isn't hidden behind the docked input. The sheet no longer
@@ -1843,7 +1891,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     ],
                     // The Development block owns its own leading gap and hides
                     // entirely when no work is linked (Jira-style).
-                    if (_gitConnected) _developmentBlock(issue),
+                    if (_gitConnected && !isParticipant)
+                      _developmentBlock(issue),
                     const SizedBox(height: 14),
                     _linksSection(issue),
                     const SizedBox(height: 14),
@@ -1857,13 +1906,16 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   ];
                   final right = <Widget>[
                     _detailsCard(issue),
-                    // Deployment sits between Details and Timeline.
-                    if (_project != null) ...[
+                    // Deployment sits between Details and Timeline. Neither is
+                    // a participant's business: they read the issue only.
+                    if (_project != null && !isParticipant) ...[
                       const SizedBox(height: 14),
                       _deploymentPanel(issue),
                     ],
-                    const SizedBox(height: 14),
-                    _timeCard(issue),
+                    if (!isParticipant) ...[
+                      const SizedBox(height: 14),
+                      _timeCard(issue),
+                    ],
                     const SizedBox(height: 14),
                     _issueMeta(issue),
                   ];
@@ -1900,7 +1952,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                         const SizedBox(height: 14),
                         hierarchy,
                       ],
-                      if (_gitConnected) _developmentBlock(issue),
+                      if (_gitConnected && !isParticipant)
+                        _developmentBlock(issue),
                       const SizedBox(height: 14),
                       _linksSection(issue),
                       const SizedBox(height: 14),
@@ -1912,12 +1965,14 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                       const SizedBox(height: 14),
                       _detailsCard(issue),
                       // Deployment sits between Details and Timeline.
-                      if (_project != null) ...[
+                      if (_project != null && !isParticipant) ...[
                         const SizedBox(height: 14),
                         _deploymentPanel(issue),
                       ],
-                      const SizedBox(height: 14),
-                      _timeCard(issue),
+                      if (!isParticipant) ...[
+                        const SizedBox(height: 14),
+                        _timeCard(issue),
+                      ],
                       const SizedBox(height: 14),
                       _issueMeta(issue),
                       const SizedBox(height: 14),
@@ -2083,11 +2138,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               waitDuration: const Duration(milliseconds: 700),
               child: Semantics(
                 container: true,
-                onTap: beginTitleEdit,
-                onTapHint: context.t('issues.editTitle'),
+                onTap: isParticipant ? null : beginTitleEdit,
+                onTapHint: isParticipant ? null : context.t('issues.editTitle'),
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onDoubleTap: beginTitleEdit,
+                  onDoubleTap: isParticipant ? null : beginTitleEdit,
                   child: Text(issue.title, style: titleStyle),
                 ),
               ),
@@ -2139,11 +2194,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             // same editor.
             Semantics(
               container: true,
-              onTap: _beginDescEdit,
-              onTapHint: context.t('issues.editDescription'),
+              onTap: isParticipant ? null : _beginDescEdit,
+              onTapHint: isParticipant
+                  ? null
+                  : context.t('issues.editDescription'),
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
-                onDoubleTap: _beginDescEdit,
+                onDoubleTap: isParticipant ? null : _beginDescEdit,
                 // A description the backfill could not convert still has its
                 // markdown; "no description" would be a lie about a row that has
                 // one.
@@ -2151,7 +2208,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     ? HinataDocument(
                         doc: _describedDoc(issue),
                         fontSize: AppType.body,
-                        onChecked: _saveCheckedDescription,
+                        onChecked: isParticipant
+                            ? null
+                            : _saveCheckedDescription,
                       )
                     : Text(
                         context.t('issues.noDescription'),
@@ -2190,6 +2249,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     initial: issue.attachments,
     userNames: _names,
     onChanged: _notifyChanged,
+    removableOnlyBy: isParticipant
+        ? context.read<AuthBloc>().state.user?.id
+        : null,
   );
 
   /// "Verknüpfte Vorgänge" — the Jira-style issue links (blocks / duplicates /
@@ -2202,6 +2264,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     userAvatars: _avatars,
     onOpenIssue: _openLinkedIssue,
     onChanged: _notifyChanged,
+    readOnly: isParticipant,
   );
 
   /// Hierarchy breadcrumb above the title (`⚡ HIV-12 / ☑ HIV-48`). Hidden for
@@ -2335,7 +2398,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               ),
             ),
           const SizedBox(height: 8),
-          if (isEpic)
+          if (isParticipant)
+            const SizedBox.shrink()
+          else if (isEpic)
             _addChildButton(issue)
           else
             _SubtaskQuickAdd(onSubmit: (title) => _addSubtask(issue, title)),
@@ -2503,6 +2568,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final sprintName = issue.sprintId != null
         ? _sprints.where((s) => s.id == issue.sprintId).firstOrNull?.name
         : null;
+    // Somebody the issue is only shared with reads the fields; nothing here
+    // is a tap target for them (HIN-136).
+    final ro = isParticipant;
 
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 6),
@@ -2520,7 +2588,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           // Status
           _DetailRow(
             label: context.t('issues.status'),
-            onTap: _pickStatus,
+            onTap: ro ? null : _pickStatus,
             child: StateDotBadge(
               state: issue.state,
               color: _projStateColor(_project, issue.state),
@@ -2533,7 +2601,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   ? 'issues.assignees'
                   : 'issues.assignee',
             ),
-            onTap: _pickAssignee,
+            onTap: ro ? null : _pickAssignee,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -2561,7 +2629,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     ],
                     size: 28,
                   ),
-                if (me != null && !issue.assigneeIds.contains(me.id)) ...[
+                if (!ro &&
+                    me != null &&
+                    !issue.assigneeIds.contains(me.id)) ...[
                   const SizedBox(height: 2),
                   Semantics(
                     button: true,
@@ -2591,13 +2661,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           // Priority
           _DetailRow(
             label: context.t('issues.priority'),
-            onTap: _pickPriority,
+            onTap: ro ? null : _pickPriority,
             child: PriorityFlag(priority: issue.priority, withLabel: true),
           ),
           // Type — a sub-task's type is fixed; everything else is switchable.
           _DetailRow(
             label: context.t('issues.type'),
-            onTap: issue.isSubtask ? null : _pickType,
+            onTap: issue.isSubtask || ro ? null : _pickType,
             child: TypeBadge(type: issue.type),
           ),
           // Parent link — epics have no parent; standard issues attach to an
@@ -2606,13 +2676,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           // Story points (Scrum estimate)
           _DetailRow(
             label: context.t('issues.storyPoints'),
-            onTap: _pickStoryPoints,
+            onTap: ro ? null : _pickStoryPoints,
             child: _pointsValue(issue.storyPoints),
           ),
           // Labels ("Stichwort")
           _DetailRow(
             label: context.t('issues.label'),
-            onTap: _pickLabels,
+            onTap: ro ? null : _pickLabels,
             child: issue.tags.isEmpty
                 ? Text(
                     context.t('issues.noLabels'),
@@ -2630,21 +2700,22 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     ],
                   ),
           ),
-          // Sprint
-          _DetailRow(
-            label: context.t('issues.sprint'),
-            onTap: _sprints.isEmpty ? null : _pickSprint,
-            child: Text(
-              sprintName ?? context.t('issues.noSprint'),
-              style: TextStyle(
-                fontSize: AppType.label,
-                fontWeight: FontWeight.w600,
-                color: sprintName != null
-                    ? AppColors.stTodo
-                    : AppColors.inkFaint,
+          // Sprint — a participant sees none of the project's sprints.
+          if (!ro)
+            _DetailRow(
+              label: context.t('issues.sprint'),
+              onTap: _sprints.isEmpty ? null : _pickSprint,
+              child: Text(
+                sprintName ?? context.t('issues.noSprint'),
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  fontWeight: FontWeight.w600,
+                  color: sprintName != null
+                      ? AppColors.stTodo
+                      : AppColors.inkFaint,
+                ),
               ),
             ),
-          ),
           // Author / reporter (read-only)
           _DetailRow(
             label: context.t('issues.author'),
@@ -3738,7 +3809,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       label: issue.isSubtask
           ? context.t('issues.parent')
           : context.t('issues.epic'),
-      onTap: (anchor) => _pickParent(issue, anchor),
+      onTap: isParticipant ? null : (anchor) => _pickParent(issue, anchor),
       child: parent == null
           ? Text(
               issue.isSubtask ? '—' : context.t('issues.noEpic'),

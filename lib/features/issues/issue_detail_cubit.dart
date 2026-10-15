@@ -82,6 +82,10 @@ class IssueDetailCubit extends Cubit<void> {
 
   Future<void> deleteIssue(String id) => _issues.deleteIssue(id);
 
+  /// Takes the caller ([meId]) off an issue that is only shared with them.
+  Future<void> leaveIssue(String issueId, String meId) =>
+      _issues.removeParticipant(issueId, meId);
+
   /// Which of [userIds] could not open [issueId] (the mention note).
   Future<Set<String>> usersWithoutAccess(
     String issueId,
