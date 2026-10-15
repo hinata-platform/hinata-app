@@ -159,13 +159,15 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                       tooltip: context.t('issues.attachments.download'),
                       onTap: widget.onDownload!,
                     ),
-                    const SizedBox(width: 6),
-                    _TileAction(
-                      icon: LucideIcons.trash2,
-                      tooltip: context.t('issues.attachments.remove'),
-                      danger: true,
-                      onTap: widget.onDelete!,
-                    ),
+                    if (widget.onDelete != null) ...[
+                      const SizedBox(width: 6),
+                      _TileAction(
+                        icon: LucideIcons.trash2,
+                        tooltip: context.t('issues.attachments.remove'),
+                        danger: true,
+                        onTap: widget.onDelete!,
+                      ),
+                    ],
                   ],
                 ),
               ),

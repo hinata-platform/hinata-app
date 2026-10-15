@@ -26,7 +26,9 @@ class _LinkGroup extends StatelessWidget {
   final Project? project;
   final Map<String, String> userNames;
   final Map<String, String?> userAvatars;
-  final void Function(IssueLink) onRemove;
+
+  /// Null for a reader who may not change links.
+  final void Function(IssueLink)? onRemove;
   final void Function(String readableId)? onOpen;
 
   @override
@@ -56,7 +58,7 @@ class _LinkGroup extends StatelessWidget {
                   ? userAvatars[link.issue.assigneeId!]
                   : null,
               onOpen: onOpen,
-              onRemove: () => onRemove(link),
+              onRemove: onRemove == null ? null : () => onRemove!(link),
             ),
           ),
       ],
@@ -81,7 +83,7 @@ class _LinkRow extends StatefulWidget {
   final String? assigneeName;
   final String? assigneeAvatar;
   final void Function(String readableId)? onOpen;
-  final VoidCallback onRemove;
+  final VoidCallback? onRemove;
 
   @override
   State<_LinkRow> createState() => _LinkRowState();
@@ -151,17 +153,18 @@ class _LinkRowState extends State<_LinkRow> {
                 // Unlink — always reachable (touch), emphasised on hover (desktop).
                 // Compact 40 dp keeps the link card at its height; it clears
                 // the 24 dp floor (WCAG 2.5.8).
-                IconButton(
-                  tooltip: context.t('issues.links.remove'),
-                  onPressed: widget.onRemove,
-                  visualDensity: VisualDensity.compact,
-                  iconSize: 16,
-                  splashRadius: 18,
-                  icon: Icon(
-                    LucideIcons.unlink,
-                    color: _hover ? AppColors.danger : AppColors.inkFaint,
+                if (widget.onRemove != null)
+                  IconButton(
+                    tooltip: context.t('issues.links.remove'),
+                    onPressed: widget.onRemove,
+                    visualDensity: VisualDensity.compact,
+                    iconSize: 16,
+                    splashRadius: 18,
+                    icon: Icon(
+                      LucideIcons.unlink,
+                      color: _hover ? AppColors.danger : AppColors.inkFaint,
+                    ),
                   ),
-                ),
               ],
             ),
           ),

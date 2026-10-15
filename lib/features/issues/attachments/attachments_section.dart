@@ -67,9 +67,14 @@ class AttachmentsSection extends StatefulWidget {
     this.issueKey,
     this.userNames = const {},
     this.onChanged,
+    this.removableOnlyBy,
   });
 
   final String issueId;
+
+  /// Set for somebody the issue is only shared with (HIN-136): they remove
+  /// what they uploaded themselves and nothing else.
+  final String? removableOnlyBy;
 
   /// Readable issue id (e.g. `HIN-42`), used to name the "download all"
   /// archive. Falls back to a generic name when absent.
@@ -530,10 +535,15 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
     }
   }
 
+  bool _mayRemove(IssueAttachment a) {
+    final only = widget.removableOnlyBy;
+    return only == null || a.uploaderId == only;
+  }
+
   /// "Delete all": one bulk call carrying exactly the ids currently on screen,
   /// so an attachment that arrived meanwhile (SSE) is not swept away with them.
   Future<void> _deleteAll() async {
-    final targets = List.of(_server);
+    final targets = _server.where(_mayRemove).toList();
     if (targets.isEmpty) return;
     final confirmed = await showGlassConfirm(
       context,
@@ -829,7 +839,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
               imagePath: _thumbnailPath,
               onOpen: () => _open(a),
               onDownload: () => _download(a),
-              onDelete: () => _delete(a),
+              onDelete: _mayRemove(a) ? () => _delete(a) : null,
             );
           },
         );

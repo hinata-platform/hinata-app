@@ -12,6 +12,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show GlassContainer, LiquidRoundedSuperellipse;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 
 import '../../core/api/api_client.dart' show ApiFailure;
@@ -1201,6 +1202,12 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// data at tap time instead of closing over a build snapshot).
   void _openFilterCurrent() => _openFilter(_ref ?? _emptyRef);
 
+  /// Whether the reference data has loaded and names no project at all: the
+  /// caller belongs to none, which is where somebody an issue was shared with
+  /// stands (HIN-136).
+  bool _withoutProjects(_RefData ref) =>
+      _ref != null && ref.projectNames.isEmpty && widget.projectId == null;
+
   void _onGroupingChanged(IssueGrouping g) => setState(() {
     _grouping = g;
     _collapsed.clear();
@@ -1633,8 +1640,26 @@ class _IssuesScreenState extends State<IssuesScreen> {
                                   title: context.t('nav.issues'),
                                   message: _hasActiveView
                                       ? context.t('issues.emptyFiltered')
+                                      : _withoutProjects(ref)
+                                      ? context.t(
+                                          'issues.participants.emptyIssuesHint',
+                                        )
                                       : context.t('issues.empty'),
-                                  action: _hasActiveView
+                                  action:
+                                      !_hasActiveView && _withoutProjects(ref)
+                                      // Somebody in no project finds what is
+                                      // shared with them on the watched page.
+                                      ? OutlinedButton(
+                                          onPressed: () => GoRouter.of(
+                                            context,
+                                          ).go('/watched'),
+                                          child: Text(
+                                            context.t(
+                                              'issues.participants.openWatched',
+                                            ),
+                                          ),
+                                        )
+                                      : _hasActiveView
                                       ? OutlinedButton(
                                           onPressed: () {
                                             final refetch =
