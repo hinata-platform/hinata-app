@@ -915,6 +915,16 @@
       "cleared_plural": "Deadline removed from {{count}} issues",
       "tooMany": "You can change at most {{max}} issues at once. Unselect a few and try again."
     },
+    "bulkDelete": {
+      "action": "Delete",
+      "title": "Delete {{count}} issue?",
+      "title_plural": "Delete {{count}} issues?",
+      "message": "The issue is deleted for good, with its sub-tasks, comments and links. Logged time stays with the project.",
+      "message_plural": "The issues are deleted for good, with their sub-tasks, comments and links. Logged time stays with the project.",
+      "confirm": "Delete for good",
+      "done": "{{count}} issue deleted",
+      "done_plural": "{{count}} issues deleted"
+    },
     "selectAll": "Select all",
     "selectAllCapped": "The first {{max}} are selected. That is as many as one change can take.",
     "selection": {

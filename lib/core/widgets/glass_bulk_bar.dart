@@ -72,6 +72,10 @@ class GlassBulkBar extends StatelessWidget {
 
   static const double _radius = 26;
 
+  /// Narrowest bar that still shows its actions with labels: the count and
+  /// four labelled actions, in German, at the default text size.
+  static const double _labelledMinWidth = 760;
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -90,55 +94,89 @@ class GlassBulkBar extends StatelessWidget {
       radius: _radius,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Shares the width with the action strip, so a long translation
-            // or a large text size shortens the count instead of pushing the
-            // actions and the close button off the bar.
-            Flexible(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  countLabel,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: tokens.ink,
-                    fontWeight: FontWeight.w700,
-                    fontSize: AppType.label,
+        child: LayoutBuilder(
+          builder: (context, constraints) => _BulkBarScope(
+            iconOnly:
+                constraints.maxWidth < _labelledMinWidth || context.isCompact,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // At most two fifths of the bar, so a long translation or a
+                // large text size shortens the count instead of pushing the
+                // actions and the close button off the bar. A cap rather than a
+                // flex share: two flexible halves gave the strip only half the
+                // bar, and it scrolled its last action out of sight even where
+                // the window had room for all of them.
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: constraints.maxWidth.isFinite
+                        ? constraints.maxWidth * 0.4
+                        : double.infinity,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Text(
+                      countLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: tokens.ink,
+                        fontWeight: FontWeight.w700,
+                        fontSize: AppType.label,
+                      ),
+                    ),
                   ),
                 ),
-              ),
+                Container(
+                  width: 1,
+                  height: 22,
+                  color: tokens.hairline,
+                  margin: const EdgeInsets.symmetric(horizontal: 6),
+                ),
+                // The action strip scrolls when the bar can't fit — instead of
+                // overflowing the screen edge or clipping labels.
+                Flexible(
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: actions,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                close,
+              ],
             ),
-            Container(
-              width: 1,
-              height: 22,
-              color: tokens.hairline,
-              margin: const EdgeInsets.symmetric(horizontal: 6),
-            ),
-            // The action strip scrolls when the bar can't fit — instead of
-            // overflowing the screen edge or clipping labels.
-            Flexible(
-              child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(mainAxisSize: MainAxisSize.min, children: actions),
-              ),
-            ),
-            const SizedBox(width: 2),
-            close,
-          ],
+          ),
         ),
       ),
     );
   }
 }
 
+/// Tells the [GlassBulkAction]s of one bar whether there is room for labels.
+class _BulkBarScope extends InheritedWidget {
+  const _BulkBarScope({required this.iconOnly, required super.child});
+
+  final bool iconOnly;
+
+  /// Icon only inside a narrow bar, and on a phone outside any bar.
+  static bool iconOnlyIn(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<_BulkBarScope>()?.iconOnly ??
+      context.isCompact;
+
+  @override
+  bool updateShouldNotify(_BulkBarScope oldWidget) =>
+      iconOnly != oldWidget.iconOnly;
+}
+
 /// One icon+label action inside a [GlassBulkBar].
 ///
-/// On a phone it drops the label and keeps the icon, the label moving into the
-/// tooltip and the semantics: three labelled actions next to the count do not
-/// fit a phone's width, and a strip that scrolls hides the last ones from view.
+/// In a narrow bar it drops the label and keeps the icon, the label moving into
+/// the tooltip and the semantics: four labelled actions next to the count fit
+/// neither a phone nor a tablet beside the rail, and a strip that scrolls hides
+/// the last ones from view. The bar decides by its own width, not the window's.
 class GlassBulkAction extends StatelessWidget {
   const GlassBulkAction({
     super.key,
@@ -164,7 +202,7 @@ class GlassBulkAction extends StatelessWidget {
         ? (dark ? const Color(0xFFFF8A80) : AppColors.danger)
         : tokens.ink;
     final color = enabled ? base : tokens.inkSoft;
-    if (context.isCompact) {
+    if (_BulkBarScope.iconOnlyIn(context)) {
       return IconButton(
         onPressed: onTap,
         tooltip: label,

@@ -81,6 +81,9 @@ class IssuesListCubit extends PagedCubit<Issue> {
     clearDueDate: clearDueDate,
   );
 
+  /// Deletes every one of [issueIds] or none; answers how many went.
+  Future<int> bulkDelete(List<String> issueIds) => _issues.bulkDelete(issueIds);
+
   /// The day [offset] falls on in the project [projectId].
   Future<DateTime?> resolveOffset(
     String projectId, {
