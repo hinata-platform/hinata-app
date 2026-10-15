@@ -162,3 +162,70 @@ class _SelectHint extends StatelessWidget {
     );
   }
 }
+
+/// What the bulk assignee menu offers before the directory opens.
+enum _AssignChoice { me, someone, nobody }
+
+/// What the bulk bar's overflow holds.
+enum _MoreChoice { selectAll, priority, deadline, move, delete }
+
+/// An icon and a label, as one row of a bulk action's menu.
+class _OptionLabel extends StatelessWidget {
+  const _OptionLabel({
+    required this.icon,
+    required this.label,
+    this.danger = false,
+  });
+
+  final IconData icon;
+  final String label;
+
+  /// Red, for the one row that cannot be taken back.
+  final bool danger;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = danger ? AppColors.danger : null;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 16, color: color ?? AppColors.inkSoft),
+        const SizedBox(width: 10),
+        Flexible(
+          child: Text(label, style: TextStyle(color: color)),
+        ),
+      ],
+    );
+  }
+}
+
+class _SelectAllIssuesIntent extends Intent {
+  const _SelectAllIssuesIntent();
+}
+
+class _ExitSelectionIntent extends Intent {
+  const _ExitSelectionIntent();
+}
+
+class _DeleteSelectionIntent extends Intent {
+  const _DeleteSelectionIntent();
+}
+
+/// A list shortcut that can stand aside. While [enabled] says no, the key is
+/// left unhandled and travels on: Backspace to the field being typed in,
+/// Escape to the dialog that is open.
+class _ListKeyAction<T extends Intent> extends Action<T> {
+  _ListKeyAction({required this.enabled, required this.run});
+
+  final bool Function() enabled;
+  final VoidCallback run;
+
+  @override
+  bool isEnabled(T intent) => enabled();
+
+  @override
+  Object? invoke(T intent) {
+    run();
+    return null;
+  }
+}

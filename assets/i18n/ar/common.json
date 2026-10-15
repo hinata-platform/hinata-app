@@ -925,6 +925,20 @@
       "done": "تم حذف {{count}} مهمة",
       "done_plural": "تم حذف {{count}} مهام"
     },
+    "bulk": {
+      "assignee": "المسؤول",
+      "more": "المزيد",
+      "pickPerson": "اختيار شخص …",
+      "unassign": "إزالة المسؤول",
+      "noCommonStatus": "المهام المحددة في مشاريع لا تشترك في أي حالة. حدّد مهام من مشروع واحد.",
+      "updated": "تم تغيير {{count}} مهمة",
+      "updated_plural": "تم تغيير {{count}} مهام",
+      "archived": "تمت أرشفة {{count}} مهمة",
+      "archived_plural": "تمت أرشفة {{count}} مهام",
+      "restored": "تمت استعادة {{count}} مهمة",
+      "restored_plural": "تمت استعادة {{count}} مهام",
+      "undo": "تراجع"
+    },
     "selectAll": "تحديد الكل",
     "selectAllCapped": "تم تحديد أول {{max}} مهمة. هذا أقصى ما يقبله تغيير واحد.",
     "selection": {

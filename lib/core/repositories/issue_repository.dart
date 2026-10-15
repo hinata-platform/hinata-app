@@ -330,6 +330,58 @@ class IssueRepository {
     return data['deleted'] as int? ?? issueIds.length;
   }
 
+  /// Archives — or with [archived] false restores — all of [issueIds], sub-tasks
+  /// along. Any member may. All or nothing; returns the named issues as they
+  /// now are.
+  Future<List<Issue>> bulkArchive(
+    List<String> issueIds, {
+    bool archived = true,
+  }) async =>
+      ((await _api.post(
+                '/api/v1/issues/bulk/archive',
+                body: {'issueIds': issueIds, 'archived': archived},
+              ))
+              as List<dynamic>)
+          .map((i) => Issue.fromJson(i as Map<String, dynamic>))
+          .toList();
+
+  /// Sets the [state], the [priority] or the assignee of all of [issueIds].
+  /// Null leaves a field alone; an empty [assigneeId] clears the assignees.
+  ///
+  /// All or nothing: a state one project's workflow lacks, or an assignee who
+  /// cannot open one of the projects, changes none of them. Returns the
+  /// updated issues.
+  Future<List<Issue>> bulkUpdate(
+    List<String> issueIds, {
+    String? state,
+    String? priority,
+    String? assigneeId,
+  }) async =>
+      ((await _api.post(
+                '/api/v1/issues/bulk/update',
+                body: {
+                  'issueIds': issueIds,
+                  'state': ?state,
+                  'priority': ?priority,
+                  'assigneeId': ?assigneeId,
+                },
+              ))
+              as List<dynamic>)
+          .map((i) => Issue.fromJson(i as Map<String, dynamic>))
+          .toList();
+
+  /// The projects in which the caller may hard-delete issues, so the list can
+  /// offer Delete only where it works. The server still checks every request.
+  Future<Set<String>> deletableProjectIds() async {
+    final data =
+        await _api.get('/api/v1/issues/permissions') as Map<String, dynamic>;
+    return {
+      for (final id
+          in data['deletableProjectIds'] as List<dynamic>? ?? const [])
+        id as String,
+    };
+  }
+
   /// Soft delete — any project member may archive; the issue disappears from
   /// all default listings but stays restorable.
   Future<Issue> archiveIssue(String id) async => Issue.fromJson(

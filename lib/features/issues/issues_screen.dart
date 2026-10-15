@@ -36,6 +36,7 @@ import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../../core/widgets/person_picker.dart' show showPersonPicker;
 import '../../core/widgets/subtask_widgets.dart';
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
@@ -43,6 +44,7 @@ import '../sprint/modals/glass_modal.dart'
     show
         GlassToastKind,
         showGlassConfirm,
+        showGlassOptions,
         showGlassToast,
         showGlassDatePicker,
         showGlassDateRangePicker;
@@ -152,6 +154,19 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// While a bulk request runs; keeps the bar's actions from firing twice.
   bool _bulkBusy = false;
 
+  /// The projects whose issues the caller may delete, read once with the
+  /// reference data. Null while unknown, or when the server cannot say: Delete
+  /// then shows, and the server decides as it always does.
+  Set<String>? _deletable;
+
+  /// The row a shift-click range starts from: the last one ticked or unticked
+  /// on its own.
+  String? _rangeAnchor;
+
+  /// Takes the list's keyboard shortcuts (select all, Delete, Escape) on a
+  /// wide window, where the hardware keyboard is.
+  final FocusNode _keys = FocusNode(debugLabel: 'issues list');
+
   /// Projects by id, kept from the reference load, so a bulk deadline can
   /// count from the event date of the one project a selection belongs to.
   Map<String, Project> _projectsById = const {};
@@ -165,7 +180,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
     setState(() {
       _selectionMode = true;
       _selected[issue.id] = issue.projectId;
+      _rangeAnchor = issue.id;
     });
+    _takeKeys();
     // Whoever found the long press on their own needs no tip about it.
     if (_showSelectHint) _dismissSelectHint();
   }
@@ -174,6 +191,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
     if (_selected.remove(issue.id) == null) {
       _selected[issue.id] = issue.projectId;
     }
+    _rangeAnchor = issue.id;
     // Deselecting the last row leaves selection mode, so a stray long-press
     // never strands the list with no way out but the ✕. Not when the mode was
     // asked for with the toggle; see [_selectionPinned].
@@ -184,7 +202,101 @@ class _IssuesScreenState extends State<IssuesScreen> {
     _selectionMode = false;
     _selectionPinned = false;
     _selected.clear();
+    _rangeAnchor = null;
   });
+
+  /// Whether a shift key is down: a click then extends the selection.
+  bool get _rangeKey => HardwareKeyboard.instance.isShiftPressed;
+
+  /// Whether ⌘ or Ctrl is down: a click then ticks a row instead of opening it.
+  bool get _addKey =>
+      HardwareKeyboard.instance.isMetaPressed ||
+      HardwareKeyboard.instance.isControlPressed;
+
+  /// A row tapped outside selection mode. With shift, ⌘ or Ctrl held it starts
+  /// a selection, as in a file manager; a plain tap opens the issue.
+  void _tapRow(Issue issue) {
+    if (_rangeKey && _rangeAnchor != null) {
+      _selectRange(issue);
+    } else if (_rangeKey || _addKey) {
+      _enterSelection(issue);
+    } else {
+      showIssueDetailSheet(context, issueId: issue.id);
+    }
+  }
+
+  /// A row tapped in selection mode: shift extends from the anchor, anything
+  /// else ticks or unticks the one row.
+  void _toggleRow(Issue issue) => _rangeKey && _rangeAnchor != null
+      ? _selectRange(issue)
+      : _toggleSelection(issue);
+
+  /// Ticks every visible row from the anchor to [issue], both included, in the
+  /// order they are shown. Capped like select all.
+  void _selectRange(Issue issue) {
+    final visible = _visibleIssues();
+    final from = visible.indexWhere((i) => i.id == _rangeAnchor);
+    final to = visible.indexWhere((i) => i.id == issue.id);
+    if (from < 0 || to < 0) {
+      _selectionMode ? _toggleSelection(issue) : _enterSelection(issue);
+      return;
+    }
+    final range = visible.sublist(
+      from < to ? from : to,
+      (from < to ? to : from) + 1,
+    );
+    _addToSelection(range);
+    _takeKeys();
+  }
+
+  /// Ticks [issues] up to what one bulk request may carry, and says so when
+  /// that cut the selection short.
+  void _addToSelection(Iterable<Issue> issues) {
+    const max = IssueRepository.bulkDeadlineMax;
+    var capped = false;
+    setState(() {
+      _selectionMode = true;
+      for (final issue in issues) {
+        if (_selected.containsKey(issue.id)) continue;
+        if (_selected.length >= max) {
+          capped = true;
+          break;
+        }
+        _selected[issue.id] = issue.projectId;
+      }
+    });
+    if (capped) {
+      showGlassToast(
+        context,
+        context.t('issues.selectAllCapped', variables: {'max': '$max'}),
+      );
+    }
+  }
+
+  /// The rows on screen in the order they are shown: the loaded rows that match
+  /// the current view, minus those folded away in a collapsed group.
+  List<Issue> _visibleIssues() => _grouping == IssueGrouping.none
+      ? _viewList
+      : [
+          for (final section in _viewSections)
+            if (!_collapsed.contains(section.key)) ...section.issues,
+        ];
+
+  /// Moves keyboard focus to the list, so Delete and Escape reach it, unless
+  /// somebody is typing: their field keeps it.
+  void _takeKeys() {
+    if (_typing || _keys.hasFocus) return;
+    _keys.requestFocus();
+  }
+
+  /// Whether a text field has the keyboard. The list's shortcuts stand aside
+  /// then, so Backspace deletes a character and ⌘A selects text, not issues.
+  bool get _typing {
+    final focused = FocusManager.instance.primaryFocus?.context;
+    if (focused == null) return false;
+    return focused.widget is EditableText ||
+        focused.findAncestorWidgetOfExactType<EditableText>() != null;
+  }
 
   /// Refetches from page 0 because the server query changed (filter, sort).
   ///
@@ -219,36 +331,73 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// request may carry, so "select all" never builds a selection the bar's
   /// actions would then refuse.
   void _selectAllVisible() {
-    final visible = _grouping == IssueGrouping.none
-        ? _viewList
-        : [
-            for (final section in _viewSections)
-              if (!_collapsed.contains(section.key)) ...section.issues,
-          ];
-    const max = IssueRepository.bulkDeadlineMax;
-    var capped = false;
-    setState(() {
-      for (final issue in visible) {
-        if (_selected.containsKey(issue.id)) continue;
-        if (_selected.length >= max) {
-          capped = true;
-          break;
-        }
-        _selected[issue.id] = issue.projectId;
-      }
-    });
-    if (capped) {
-      showGlassToast(
-        context,
-        context.t('issues.selectAllCapped', variables: {'max': '$max'}),
-      );
-    }
+    _addToSelection(_visibleIssues());
+    _takeKeys();
   }
 
   /// Hides the long-press tip for good on this server.
   void _dismissSelectHint() {
     setState(() => _showSelectHint = false);
     unawaited(context.read<AppStorage?>()?.setMultiSelectHintSeen());
+  }
+
+  /// Whether the selection fits one bulk request; says so when it does not.
+  bool _selectionFits() {
+    const max = IssueRepository.bulkDeadlineMax;
+    if (_selected.length <= max) return true;
+    showGlassToast(
+      context,
+      context.t('issues.bulkDeadline.tooMany', variables: {'max': '$max'}),
+      kind: GlassToastKind.error,
+    );
+    return false;
+  }
+
+  /// Runs one bulk request with the bar's actions held off until it answers,
+  /// and turns a refusal into a toast in the reader's language.
+  Future<void> _runBulk(Future<void> Function() request) async {
+    if (_bulkBusy) return;
+    setState(() => _bulkBusy = true);
+    try {
+      await request();
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t(failure.message),
+          kind: GlassToastKind.error,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t('errors.unexpected'),
+          kind: GlassToastKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _bulkBusy = false);
+    }
+  }
+
+  /// Takes the server's answer to a change of fields into the list.
+  ///
+  /// The selection stays, so a second field can follow the first, and the rows
+  /// are swapped in place: the pages already scrolled through stay, and
+  /// nothing is fetched again. Not under a filter or a time range, though: a
+  /// changed row may no longer belong there, so the list is read again and the
+  /// selection goes with it, as on every refetch.
+  void _adoptBulkChange(List<Issue> updated) {
+    if (_hasActiveView) {
+      _exitSelection();
+      _issues.load();
+    } else {
+      _issues.replaceItems(updated);
+    }
+    // The board and the dashboard show these issues too and hear it on the
+    // app-wide bus; this screen skips its own message.
+    IssueEvents.instance.notifyChanged(origin: this);
   }
 
   /// One deadline for every selected issue.
@@ -258,16 +407,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
   /// project, whose event date they would count from. Otherwise a date is all
   /// there is to choose. The server applies it to all of them or to none.
   Future<void> _setDeadlineSelected() async {
-    if (_selected.isEmpty || _bulkBusy) return;
-    const max = IssueRepository.bulkDeadlineMax;
-    if (_selected.length > max) {
-      showGlassToast(
-        context,
-        context.t('issues.bulkDeadline.tooMany', variables: {'max': '$max'}),
-        kind: GlassToastKind.error,
-      );
-      return;
-    }
+    if (_selected.isEmpty || _bulkBusy || !_selectionFits()) return;
     final ids = _selected.keys.toList();
     final meta = context.read<AppConfigBloc?>()?.state.meta;
     final projectIds = _selected.values.toSet();
@@ -287,8 +427,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       },
     );
     if (choice == null || !mounted) return;
-    setState(() => _bulkBusy = true);
-    try {
+    await _runBulk(() async {
       final updated = await _issues.bulkSetDeadline(
         ids,
         // A rule's day is only what the editor showed; the server writes the
@@ -308,49 +447,214 @@ class _IssuesScreenState extends State<IssuesScreen> {
         ),
         kind: GlassToastKind.success,
       );
-      _exitSelection();
-      // The server answers with the updated issues, so the rows are swapped
-      // in place: the pages already scrolled through stay, and nothing is
-      // fetched again. The board and the dashboard show these deadlines too
-      // and hear it on the app-wide bus; this screen skips its own message.
-      _issues.replaceItems(updated);
-      IssueEvents.instance.notifyChanged(origin: this);
-    } on ApiFailure catch (failure) {
-      if (mounted) {
-        showGlassToast(
-          context,
-          context.t(failure.message),
-          kind: GlassToastKind.error,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        showGlassToast(
-          context,
-          context.t('errors.unexpected'),
-          kind: GlassToastKind.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _bulkBusy = false);
+      _adoptBulkChange(updated);
+    });
+  }
+
+  /// Sets the state, the priority or the assignee of every selected issue.
+  Future<void> _updateSelected({
+    String? state,
+    String? priority,
+    String? assigneeId,
+  }) async {
+    if (_selected.isEmpty || !_selectionFits()) return;
+    final ids = _selected.keys.toList();
+    await _runBulk(() async {
+      final updated = await _issues.bulkUpdate(
+        ids,
+        state: state,
+        priority: priority,
+        assigneeId: assigneeId,
+      );
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t('issues.bulk.updated', count: updated.length),
+        kind: GlassToastKind.success,
+      );
+      _adoptBulkChange(updated);
+    });
+  }
+
+  /// The states every selected issue's project has, in the first project's
+  /// order. Empty when the projects share none, or one is not loaded.
+  List<String> _sharedStates() {
+    final projects = [
+      for (final id in _selected.values.toSet()) _projectsById[id],
+    ];
+    if (projects.isEmpty || projects.contains(null)) return const [];
+    return [
+      for (final state in projects.first!.stateNames)
+        if (projects.every((p) => p!.stateNames.contains(state))) state,
+    ];
+  }
+
+  Future<void> _pickStatusSelected(Rect anchor) async {
+    if (_selected.isEmpty || _bulkBusy) return;
+    final states = _sharedStates();
+    if (states.isEmpty) {
+      showGlassToast(context, context.t('issues.bulk.noCommonStatus'));
+      return;
     }
+    final palette = _ref?.palette;
+    final chosen = await showGlassOptions<String>(
+      context,
+      title: context.t('issues.status'),
+      anchorRect: anchor,
+      options: [
+        for (final s in states)
+          (
+            value: s,
+            child: StateDotBadge(state: s, color: palette?.stateColor(s)),
+          ),
+      ],
+    );
+    if (chosen != null && mounted) await _updateSelected(state: chosen);
+  }
+
+  Future<void> _pickPrioritySelected(Rect anchor) async {
+    if (_selected.isEmpty || _bulkBusy) return;
+    final chosen = await showGlassOptions<String>(
+      context,
+      title: context.t('issues.priority'),
+      anchorRect: anchor,
+      options: [
+        for (final p in kIssuePriorityCodes)
+          (value: p, child: PriorityFlag(priority: p, withLabel: true)),
+      ],
+    );
+    if (chosen != null && mounted) await _updateSelected(priority: chosen);
+  }
+
+  /// Assigns every selected issue to one person, or to nobody.
+  ///
+  /// Two steps at most: the short list (me, somebody else, nobody), and the
+  /// searchable, server-paged directory only for "somebody else". Assigning
+  /// replaces who was on the issues before, as the single picker does. The
+  /// server refuses a person who cannot open every one of the projects.
+  Future<void> _pickAssigneeSelected(Rect anchor) async {
+    if (_selected.isEmpty || _bulkBusy) return;
+    final me = context.read<AuthBloc?>()?.state.user;
+    final choice = await showGlassOptions<_AssignChoice>(
+      context,
+      title: context.t('issues.bulk.assignee'),
+      anchorRect: anchor,
+      options: [
+        if (me != null)
+          (
+            value: _AssignChoice.me,
+            child: _OptionLabel(
+              icon: LucideIcons.userCheck,
+              label: context.t('issues.assignToMe'),
+            ),
+          ),
+        (
+          value: _AssignChoice.someone,
+          child: _OptionLabel(
+            icon: LucideIcons.userSearch,
+            label: context.t('issues.bulk.pickPerson'),
+          ),
+        ),
+        (
+          value: _AssignChoice.nobody,
+          child: _OptionLabel(
+            icon: LucideIcons.userX,
+            label: context.t('issues.bulk.unassign'),
+          ),
+        ),
+      ],
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case _AssignChoice.me:
+        await _updateSelected(assigneeId: me!.id);
+      case _AssignChoice.nobody:
+        await _updateSelected(assigneeId: '');
+      case _AssignChoice.someone:
+        final person = await showPersonPicker(
+          context,
+          anchorRect: anchor,
+          meId: me?.id,
+        );
+        if (person != null && mounted) {
+          await _updateSelected(assigneeId: person.id);
+        }
+    }
+  }
+
+  /// Archives the selected issues, or restores them in the archive view, and
+  /// offers to take it back.
+  ///
+  /// No question first: nothing is lost, and the toast's Undo is the faster way
+  /// back from a slip than a dialog in front of every deliberate archive. The
+  /// rows leave the list in place, sub-tasks with their parents, so the pages
+  /// already scrolled through stay.
+  Future<void> _archiveSelected() async {
+    if (_selected.isEmpty || _bulkBusy || !_selectionFits()) return;
+    final ids = _selected.keys.toList();
+    final archive = !_filter.archivedOnly;
+    await _runBulk(() async {
+      final changed = await _issues.bulkArchive(ids, archived: archive);
+      if (!mounted) return;
+      _exitSelection();
+      final gone = {for (final issue in changed) issue.id};
+      _issues.removeWhere(
+        (issue) =>
+            gone.contains(issue.id) ||
+            (issue.type == 'SUBTASK' && gone.contains(issue.parentId)),
+      );
+      IssueEvents.instance.notifyChanged(origin: this);
+      showGlassToast(
+        context,
+        context.t(
+          archive ? 'issues.bulk.archived' : 'issues.bulk.restored',
+          count: changed.length,
+        ),
+        kind: GlassToastKind.success,
+        actionLabel: context.t('issues.bulk.undo'),
+        onAction: () => _undoArchive(ids, archived: archive),
+      );
+    });
+  }
+
+  /// Takes an archive (or a restore) back. The rows return with a fresh read of
+  /// the list, since they were no longer part of it.
+  Future<void> _undoArchive(List<String> ids, {required bool archived}) async {
+    await _runBulk(() async {
+      final changed = await _issues.bulkArchive(ids, archived: !archived);
+      if (!mounted) return;
+      IssueEvents.instance.notifyChanged(origin: this);
+      await _issues.load();
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t(
+          archived ? 'issues.bulk.restored' : 'issues.bulk.archived',
+          count: changed.length,
+        ),
+        kind: GlassToastKind.success,
+      );
+    });
+  }
+
+  /// Whether Delete is worth showing at all: the caller may delete somewhere,
+  /// or the server has not said.
+  bool get _deleteOffered => _deletable?.isNotEmpty ?? true;
+
+  /// Whether the server would accept deleting this selection.
+  bool get _mayDeleteSelection {
+    final allowed = _deletable;
+    if (allowed == null) return true;
+    return _selected.values.every(allowed.contains);
   }
 
   /// Deletes the selected issues for good, after asking once for all of them.
   ///
-  /// Only project leads and team admins may delete; for anybody else the
-  /// server refuses the whole request and the toast says to archive instead.
+  /// Only project leads and team admins may delete, and the bar offers Delete
+  /// only where they are; the server checks again and refuses the whole
+  /// request for anybody else.
   Future<void> _deleteSelected() async {
-    if (_selected.isEmpty || _bulkBusy) return;
-    const max = IssueRepository.bulkDeadlineMax;
-    if (_selected.length > max) {
-      showGlassToast(
-        context,
-        context.t('issues.bulkDeadline.tooMany', variables: {'max': '$max'}),
-        kind: GlassToastKind.error,
-      );
-      return;
-    }
+    if (_selected.isEmpty || _bulkBusy || !_selectionFits()) return;
     final ids = _selected.keys.toList();
     final confirmed = await showGlassConfirm(
       context,
@@ -362,8 +666,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       destructive: true,
     );
     if (confirmed != true || !mounted) return;
-    setState(() => _bulkBusy = true);
-    try {
+    await _runBulk(() async {
       final deleted = await _issues.bulkDelete(ids);
       if (!mounted) return;
       showGlassToast(
@@ -376,24 +679,75 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // fetches its own rows again, sub-tasks of the deleted issues included.
       IssueEvents.instance.notifyChanged(origin: this);
       await _reload();
-    } on ApiFailure catch (failure) {
-      if (mounted) {
-        showGlassToast(
-          context,
-          context.t(failure.message),
-          kind: GlassToastKind.error,
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        showGlassToast(
-          context,
-          context.t('errors.unexpected'),
-          kind: GlassToastKind.error,
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _bulkBusy = false);
+    });
+  }
+
+  /// The overflow: what is rarely done to a selection, and on a phone what
+  /// the bar has no room for.
+  Future<void> _moreSelected(Rect anchor) async {
+    if (_bulkBusy) return;
+    final phone = context.isCompact;
+    final some = _selected.isNotEmpty;
+    final choice = await showGlassOptions<_MoreChoice>(
+      context,
+      title: context.t('issues.bulk.more'),
+      anchorRect: anchor,
+      options: [
+        if (phone)
+          (
+            value: _MoreChoice.selectAll,
+            child: _OptionLabel(
+              icon: LucideIcons.listChecks,
+              label: context.t('issues.selectAll'),
+            ),
+          ),
+        if (phone && some) ...[
+          (
+            value: _MoreChoice.priority,
+            child: _OptionLabel(
+              icon: LucideIcons.signal,
+              label: context.t('issues.priority'),
+            ),
+          ),
+          (
+            value: _MoreChoice.deadline,
+            child: _OptionLabel(
+              icon: LucideIcons.calendarClock,
+              label: context.t('issues.bulkDeadline.action'),
+            ),
+          ),
+        ],
+        if (some)
+          (
+            value: _MoreChoice.move,
+            child: _OptionLabel(
+              icon: LucideIcons.folderInput,
+              label: context.t('issues.move.action'),
+            ),
+          ),
+        if (phone && some && _deleteOffered && _mayDeleteSelection)
+          (
+            value: _MoreChoice.delete,
+            child: _OptionLabel(
+              icon: LucideIcons.trash2,
+              label: context.t('issues.bulkDelete.action'),
+              danger: true,
+            ),
+          ),
+      ],
+    );
+    if (choice == null || !mounted) return;
+    switch (choice) {
+      case _MoreChoice.selectAll:
+        _selectAllVisible();
+      case _MoreChoice.priority:
+        await _pickPrioritySelected(anchor);
+      case _MoreChoice.deadline:
+        await _setDeadlineSelected();
+      case _MoreChoice.move:
+        await _moveSelected();
+      case _MoreChoice.delete:
+        await _deleteSelected();
     }
   }
 
@@ -475,6 +829,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
   @override
   void dispose() {
     _issueSub?.cancel();
+    _keys.dispose();
     _scroll.dispose();
     _issues.close();
     _exporter?.close();
@@ -491,7 +846,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
       });
     }
     try {
+      final deletable = _loadDeletable();
       final (:users, :projects) = await _issues.reference();
+      final mayDelete = await deletable;
       // Workflow-state order (UPPER-CASE), unioned across projects in first-seen
       // order, so status grouping lists columns the way the projects define them.
       final stateOrder = <String>[];
@@ -504,6 +861,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       }
       if (!mounted) return;
       setState(() {
+        _deletable = mayDelete;
         _projectsById = {for (final p in projects) p.id: p};
         _ref = (
           names: {for (final u in users) u.id: u.displayName},
@@ -531,6 +889,16 @@ class _IssuesScreenState extends State<IssuesScreen> {
         _refLoading = false;
         _refError = true;
       });
+    }
+  }
+
+  /// Where the caller may delete issues; null when the server cannot say, so a
+  /// failure here never takes the list down with it.
+  Future<Set<String>?> _loadDeletable() async {
+    try {
+      return await _issues.deletableProjectIds();
+    } catch (_) {
+      return null;
     }
   }
 
@@ -1153,176 +1521,183 @@ class _IssuesScreenState extends State<IssuesScreen> {
                 )
               : null,
           bottomHeight: compact ? _kDockedToolbarHeight : 0,
-          child: Stack(
-            children: [
-              RefreshIndicator(
-                onRefresh: _reload,
-                color: AppColors.accent,
-                edgeOffset: context.topGutter,
-                child: AsyncView(
-                  isLoading:
-                      state.isLoading ||
-                      (_refLoading && _ref == null && !_refError),
-                  hasData: state.hasData && (_ref != null || _refError),
-                  errorKey: state.errorKey,
-                  onRetry: _reload,
-                  builder: (context) {
-                    final scroll = CustomScrollView(
-                      controller: _scroll,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        // On a phone the list starts right under the bar; the
-                        // head is the bar's title and buttons there.
-                        if (compact)
+          child: _keyboard(
+            compact: compact,
+            child: Stack(
+              children: [
+                RefreshIndicator(
+                  onRefresh: _reload,
+                  color: AppColors.accent,
+                  edgeOffset: context.topGutter,
+                  child: AsyncView(
+                    isLoading:
+                        state.isLoading ||
+                        (_refLoading && _ref == null && !_refError),
+                    hasData: state.hasData && (_ref != null || _refError),
+                    errorKey: state.errorKey,
+                    onRetry: _reload,
+                    builder: (context) {
+                      final scroll = CustomScrollView(
+                        controller: _scroll,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        slivers: [
+                          // On a phone the list starts right under the bar; the
+                          // head is the bar's title and buttons there.
+                          if (compact)
+                            SliverToBoxAdapter(
+                              child: SizedBox(height: context.topGutter + 12),
+                            ),
+                          // The long-press tip, once per server, and only where
+                          // there is a row to press.
+                          if (compact &&
+                              _showSelectHint &&
+                              !_selectionMode &&
+                              list.isNotEmpty)
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                context.pageGutter,
+                                0,
+                                context.pageGutter,
+                                4,
+                              ),
+                              sliver: SliverToBoxAdapter(
+                                child: _SelectHint(
+                                  onDismiss: _dismissSelectHint,
+                                ),
+                              ),
+                            ),
+                          if (list.isEmpty && !searchingMore)
+                            SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(
+                                  horizontal: context.pageGutter,
+                                  vertical: 40,
+                                ),
+                                child: HiveEmptyState(
+                                  title: context.t('nav.issues'),
+                                  message: _hasActiveView
+                                      ? context.t('issues.emptyFiltered')
+                                      : context.t('issues.empty'),
+                                  action: _hasActiveView
+                                      ? OutlinedButton(
+                                          onPressed: () {
+                                            final refetch =
+                                                _filter.archivedOnly;
+                                            setState(() {
+                                              _filter = IssueFilter.empty;
+                                              _timeRange = IssueTimeRange.none;
+                                            });
+                                            if (refetch) _reloadFromStart();
+                                          },
+                                          child: Text(
+                                            context.t('board.clearFilters'),
+                                          ),
+                                        )
+                                      : null,
+                                ),
+                              ),
+                            )
+                          else if (list.isNotEmpty)
+                            SliverPadding(
+                              padding: EdgeInsets.fromLTRB(
+                                context.pageGutter,
+                                12,
+                                context.pageGutter,
+                                14,
+                              ),
+                              // Measured here rather than read off the window:
+                              // the rail and the gutters take their share first,
+                              // and the table only pays off when what is left
+                              // gives the title room to be read.
+                              sliver: SliverLayoutBuilder(
+                                builder: (context, constraints) {
+                                  final table = issueTableFits(
+                                    context,
+                                    constraints.crossAxisExtent,
+                                  );
+                                  // Lightweight row descriptors (headers / issues /
+                                  // spacers) fed to a lazy builder, so only on-screen
+                                  // rows are ever built — a workspace with thousands of
+                                  // issues no longer constructs every SoftCard per frame.
+                                  final entries =
+                                      _grouping == IssueGrouping.none
+                                      ? _flatEntries(list, table: table)
+                                      : _groupedEntries(sections);
+                                  return SliverList.builder(
+                                    itemCount: entries.length,
+                                    itemBuilder: (context, i) => _buildEntry(
+                                      entries[i],
+                                      ref.names,
+                                      ref.avatars,
+                                      ref.pronouns,
+                                      ref.palette,
+                                      table: table,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          // Infinite-scroll footer: the standard HiveLoader while the next
+                          // page (or a filter's background sweep) is loading.
+                          if (state.isLoadingMore || searchingMore)
+                            const SliverToBoxAdapter(
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Center(child: HiveLoader(size: 30)),
+                              ),
+                            ),
                           SliverToBoxAdapter(
-                            child: SizedBox(height: context.topGutter + 12),
+                            child: SizedBox(
+                              // Extra room while selecting so the floating bulk bar
+                              // never covers the last row.
+                              height:
+                                  context.pageGutter +
+                                  context.bottomGutter +
+                                  (_selectionMode && compact ? 72 : 0),
+                            ),
                           ),
-                        // The long-press tip, once per server, and only where
-                        // there is a row to press.
-                        if (compact &&
-                            _showSelectHint &&
-                            !_selectionMode &&
-                            list.isNotEmpty)
-                          SliverPadding(
+                        ],
+                      );
+                      if (compact) return scroll;
+                      // On a wide window the head and the tools stay where they
+                      // are while the list scrolls, as on the boards and the
+                      // time pages: narrowing a long list should not start with
+                      // scrolling back up to its top.
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              context.pageGutter,
+                              24 + context.topGutter,
+                              context.pageGutter,
+                              14,
+                            ),
+                            child: head,
+                          ),
+                          Padding(
                             padding: EdgeInsets.fromLTRB(
                               context.pageGutter,
                               0,
                               context.pageGutter,
-                              4,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: _SelectHint(onDismiss: _dismissSelectHint),
-                            ),
-                          ),
-                        if (list.isEmpty && !searchingMore)
-                          SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: context.pageGutter,
-                                vertical: 40,
-                              ),
-                              child: HiveEmptyState(
-                                title: context.t('nav.issues'),
-                                message: _hasActiveView
-                                    ? context.t('issues.emptyFiltered')
-                                    : context.t('issues.empty'),
-                                action: _hasActiveView
-                                    ? OutlinedButton(
-                                        onPressed: () {
-                                          final refetch = _filter.archivedOnly;
-                                          setState(() {
-                                            _filter = IssueFilter.empty;
-                                            _timeRange = IssueTimeRange.none;
-                                          });
-                                          if (refetch) _reloadFromStart();
-                                        },
-                                        child: Text(
-                                          context.t('board.clearFilters'),
-                                        ),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                          )
-                        else if (list.isNotEmpty)
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(
-                              context.pageGutter,
-                              12,
-                              context.pageGutter,
                               14,
                             ),
-                            // Measured here rather than read off the window:
-                            // the rail and the gutters take their share first,
-                            // and the table only pays off when what is left
-                            // gives the title room to be read.
-                            sliver: SliverLayoutBuilder(
-                              builder: (context, constraints) {
-                                final table = issueTableFits(
-                                  context,
-                                  constraints.crossAxisExtent,
-                                );
-                                // Lightweight row descriptors (headers / issues /
-                                // spacers) fed to a lazy builder, so only on-screen
-                                // rows are ever built — a workspace with thousands of
-                                // issues no longer constructs every SoftCard per frame.
-                                final entries = _grouping == IssueGrouping.none
-                                    ? _flatEntries(list, table: table)
-                                    : _groupedEntries(sections);
-                                return SliverList.builder(
-                                  itemCount: entries.length,
-                                  itemBuilder: (context, i) => _buildEntry(
-                                    entries[i],
-                                    ref.names,
-                                    ref.avatars,
-                                    ref.pronouns,
-                                    ref.palette,
-                                    table: table,
-                                  ),
-                                );
-                              },
-                            ),
+                            child: _toolbarSlot(),
                           ),
-                        // Infinite-scroll footer: the standard HiveLoader while the next
-                        // page (or a filter's background sweep) is loading.
-                        if (state.isLoadingMore || searchingMore)
-                          const SliverToBoxAdapter(
-                            child: Padding(
-                              padding: EdgeInsets.symmetric(vertical: 24),
-                              child: Center(child: HiveLoader(size: 30)),
-                            ),
-                          ),
-                        SliverToBoxAdapter(
-                          child: SizedBox(
-                            // Extra room while selecting so the floating bulk bar
-                            // never covers the last row.
-                            height:
-                                context.pageGutter +
-                                context.bottomGutter +
-                                (_selectionMode && compact ? 72 : 0),
-                          ),
-                        ),
-                      ],
-                    );
-                    if (compact) return scroll;
-                    // On a wide window the head and the tools stay where they
-                    // are while the list scrolls, as on the boards and the
-                    // time pages: narrowing a long list should not start with
-                    // scrolling back up to its top.
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            context.pageGutter,
-                            24 + context.topGutter,
-                            context.pageGutter,
-                            14,
-                          ),
-                          child: head,
-                        ),
-                        Padding(
-                          padding: EdgeInsets.fromLTRB(
-                            context.pageGutter,
-                            0,
-                            context.pageGutter,
-                            14,
-                          ),
-                          child: _toolbarSlot(),
-                        ),
-                        Expanded(child: scroll),
-                      ],
-                    );
-                  },
+                          Expanded(child: scroll),
+                        ],
+                      );
+                    },
+                  ),
                 ),
-              ),
-              // On a phone the bulk-action bar docks above the nav, where the
-              // thumb is. The dock measures from the nav's own edge; the scroll
-              // gutter counts the home indicator twice on an iPhone. Wider
-              // windows show it at the top instead; see [_toolbarSlot].
-              if (_selectionMode && compact)
-                GlassBulkBarDock(child: _bulkBar()),
-            ],
+                // On a phone the bulk-action bar docks above the nav, where the
+                // thumb is. The dock measures from the nav's own edge; the scroll
+                // gutter counts the home indicator twice on an iPhone. Wider
+                // windows show it at the top instead; see [_toolbarSlot].
+                if (_selectionMode && compact)
+                  GlassBulkBarDock(child: _bulkBar()),
+              ],
+            ),
           ),
         );
       },
@@ -1330,40 +1705,139 @@ class _IssuesScreenState extends State<IssuesScreen> {
   }
 
   /// The bar of actions on the selected issues.
-  Widget _bulkBar() => GlassBulkBar(
-    countLabel: context.t(
+  ///
+  /// Grouped and divided as people scan it: what acts on the selection (select
+  /// all), what changes the issues' fields, what takes them out of the list,
+  /// and the overflow. The field actions open a menu and say so with a chevron.
+  /// Disabled, not hidden, while nothing is ticked: the bar then says what it
+  /// will offer once something is. Delete appears only where the caller may
+  /// delete; everybody can archive.
+  ///
+  /// A phone has room for four icons beside the count, so it keeps the three
+  /// most used changes in the bar and moves the rest into the overflow, which
+  /// opens there as a sheet with labels.
+  Widget _bulkBar() {
+    final none = _selected.isEmpty || _bulkBusy;
+    final archiveView = _filter.archivedOnly;
+    final phone = context.isCompact;
+    final count = context.t(
       'issues.selectedCount',
       variables: {'count': '${_selected.length}'},
-    ),
-    onClear: _exitSelection,
-    clearTooltip: context.t('issues.selection.exit'),
-    actions: [
-      GlassBulkAction(
-        icon: LucideIcons.listChecks,
-        label: context.t('issues.selectAll'),
-        onTap: _bulkBusy ? null : _selectAllVisible,
+    );
+    final delete = GlassBulkAction(
+      icon: LucideIcons.trash2,
+      label: context.t('issues.bulkDelete.action'),
+      danger: true,
+      onTap: none || !_mayDeleteSelection ? null : _deleteSelected,
+    );
+    return GlassBulkBar(
+      countLabel: phone && !archiveView ? '${_selected.length}' : count,
+      countSemanticsLabel: count,
+      onClear: _exitSelection,
+      clearTooltip: context.t('issues.selection.exit'),
+      labelledMinWidth: archiveView ? 640 : 1120,
+      leading: phone && !archiveView
+          ? null
+          : GlassBulkAction(
+              icon: LucideIcons.listChecks,
+              label: context.t('issues.selectAll'),
+              onTap: _bulkBusy ? null : _selectAllVisible,
+            ),
+      actions: [
+        if (!archiveView) ...[
+          GlassBulkAction(
+            icon: LucideIcons.circleDot,
+            label: context.t('issues.status'),
+            menu: true,
+            onTapAt: none ? null : _pickStatusSelected,
+          ),
+          if (!phone)
+            GlassBulkAction(
+              icon: LucideIcons.signal,
+              label: context.t('issues.priority'),
+              menu: true,
+              onTapAt: none ? null : _pickPrioritySelected,
+            ),
+          GlassBulkAction(
+            icon: LucideIcons.userRound,
+            label: context.t('issues.bulk.assignee'),
+            menu: true,
+            onTapAt: none ? null : _pickAssigneeSelected,
+          ),
+          if (!phone) ...[
+            GlassBulkAction(
+              icon: LucideIcons.calendarClock,
+              label: context.t('issues.bulkDeadline.action'),
+              onTap: none ? null : _setDeadlineSelected,
+            ),
+            const GlassBulkDivider(),
+          ],
+        ],
+        GlassBulkAction(
+          icon: archiveView ? LucideIcons.archiveRestore : LucideIcons.archive,
+          label: context.t(archiveView ? 'issues.unarchive' : 'issues.archive'),
+          onTap: none ? null : _archiveSelected,
+        ),
+        // Last of the strip, and red, so it is never the action a hurried tap
+        // lands on.
+        if (_deleteOffered && (archiveView || !phone)) delete,
+        if (!archiveView)
+          GlassBulkAction(
+            icon: LucideIcons.ellipsis,
+            label: context.t('issues.bulk.more'),
+            iconOnly: true,
+            // Select all stays reachable with nothing ticked yet.
+            onTapAt: _bulkBusy || (none && !phone) ? null : _moreSelected,
+          ),
+      ],
+    );
+  }
+
+  /// The list's keyboard shortcuts: ⌘A (Ctrl+A) selects every row on screen,
+  /// Escape ends the selection, Delete or Backspace deletes it. Each stands
+  /// aside while a text field has the keyboard, or while it could not act, so
+  /// the key reaches whatever else wants it.
+  Widget _keyboard({required bool compact, required Widget child}) {
+    return Shortcuts(
+      shortcuts: const {
+        SingleActivator(LogicalKeyboardKey.keyA, meta: true):
+            _SelectAllIssuesIntent(),
+        SingleActivator(LogicalKeyboardKey.keyA, control: true):
+            _SelectAllIssuesIntent(),
+        SingleActivator(LogicalKeyboardKey.escape): _ExitSelectionIntent(),
+        SingleActivator(LogicalKeyboardKey.delete): _DeleteSelectionIntent(),
+        SingleActivator(LogicalKeyboardKey.backspace): _DeleteSelectionIntent(),
+        SingleActivator(LogicalKeyboardKey.backspace, meta: true):
+            _DeleteSelectionIntent(),
+      },
+      child: Actions(
+        actions: {
+          _SelectAllIssuesIntent: _ListKeyAction<_SelectAllIssuesIntent>(
+            enabled: () => !_typing && !_bulkBusy && _viewList.isNotEmpty,
+            run: () {
+              if (!_selectionMode) _selectionPinned = true;
+              _selectAllVisible();
+            },
+          ),
+          _ExitSelectionIntent: _ListKeyAction<_ExitSelectionIntent>(
+            enabled: () => !_typing && _selectionMode,
+            run: _exitSelection,
+          ),
+          _DeleteSelectionIntent: _ListKeyAction<_DeleteSelectionIntent>(
+            enabled: () =>
+                !_typing &&
+                _selectionMode &&
+                _selected.isNotEmpty &&
+                !_bulkBusy &&
+                _deleteOffered &&
+                _mayDeleteSelection,
+            run: _deleteSelected,
+          ),
+        },
+        child: Focus(focusNode: _keys, autofocus: !compact, child: child),
       ),
-      // Disabled, not hidden, while nothing is ticked: the bar then says what
-      // it will offer once something is.
-      GlassBulkAction(
-        icon: LucideIcons.calendarClock,
-        label: context.t('issues.bulkDeadline.action'),
-        onTap: _selected.isEmpty || _bulkBusy ? null : _setDeadlineSelected,
-      ),
-      GlassBulkAction(
-        icon: LucideIcons.folderInput,
-        label: context.t('issues.move.action'),
-        onTap: _selected.isEmpty || _bulkBusy ? null : _moveSelected,
-      ),
-      // Last, and red, so it is never the action a hurried tap lands on.
-      GlassBulkAction(
-        icon: LucideIcons.trash2,
-        label: context.t('issues.bulkDelete.action'),
-        danger: true,
-        onTap: _selected.isEmpty || _bulkBusy ? null : _deleteSelected,
-      ),
-    ],
-  );
+    );
+  }
 
   /// The tools row of a wide window, which the bulk bar takes over while
   /// selecting.
@@ -1533,7 +2007,8 @@ class _IssuesScreenState extends State<IssuesScreen> {
             table: table,
             selectionMode: _selectionMode,
             selected: _selected.containsKey(issue.id),
-            onToggleSelect: () => _toggleSelection(issue),
+            onTap: () => _tapRow(issue),
+            onToggleSelect: () => _toggleRow(issue),
             onLongPress: () => _enterSelection(issue),
           ),
         );
