@@ -519,7 +519,10 @@
     "loadMore": "Mehr laden",
     "act": {
       "created": "hat diesen Vorgang erstellt",
-      "changed": "hat {{field}} geändert"
+      "changed": "hat {{field}} geändert",
+      "participantAdded": "hat {{name}} beteiligt",
+      "participantRemoved": "hat {{name}} entfernt",
+      "participantLeft": "hat den Vorgang verlassen"
     },
     "field": {
       "title": "den Titel",
@@ -952,7 +955,36 @@
       "gotIt": "Verstanden"
     },
     "editTitle": "Titel bearbeiten",
-    "editDescription": "Beschreibung bearbeiten"
+    "editDescription": "Beschreibung bearbeiten",
+    "participants": {
+      "menu": "Teilen mit …",
+      "title": "{{key}} teilen",
+      "subtitle": "Beteiligte lesen und kommentieren diesen Vorgang. Das Projekt {{project}} bleibt für sie unsichtbar.",
+      "search": "Person suchen …",
+      "section": "Beteiligte · {{count}} von {{max}}",
+      "empty": "Noch niemand. Suche eine Person, mit der du den Vorgang teilen willst.",
+      "membersSection": "Mitglieder sehen den Vorgang ohnehin",
+      "member": "Mitglied",
+      "addedBy": "beteiligt von {{name}}, {{when}}",
+      "remove": "Entfernen",
+      "removeOf": "{{name}} entfernen",
+      "done": "Fertig",
+      "footer": "Jede Beteiligung steht im Verlauf und im Audit-Log.",
+      "full": "Der Vorgang ist schon mit {{max}} Personen geteilt, mehr geht nicht.",
+      "banner": "Du bist an diesem Vorgang beteiligt: lesen und kommentieren. Das Projekt {{project}} ist für dich nicht sichtbar.",
+      "leave": "Verlassen",
+      "leaveTitle": "{{key}} verlassen?",
+      "leaveMessage": "Du siehst den Vorgang danach nicht mehr. Ein Mitglied kann dich wieder beteiligen.",
+      "mentionHint": "{{name}} kann diesen Vorgang nicht sehen und würde nichts davon erfahren.",
+      "share": "Beteiligen",
+      "assigneeHint": "{{name}} kann das Projekt {{project}} nicht öffnen und kann den Vorgang deshalb nicht übernehmen.",
+      "added": "{{name}} ist jetzt beteiligt",
+      "removed": "{{name}} entfernt",
+      "left": "Du hast {{key}} verlassen",
+      "emptyIssuesHint": "Du bist noch in keinem Projekt. Vorgänge, an denen du beteiligt bist, findest du unter Beobachtet.",
+      "openWatched": "Beobachtet öffnen",
+      "noResults": "Niemand gefunden"
+    }
   },
   "type": {
     "task": "Aufgabe",
@@ -3664,7 +3696,9 @@
       "INVOICE_DELETED": "Rechnungsentwurf gelöscht",
       "INVOICE_ISSUED": "Rechnung ausgestellt",
       "INVOICE_CREDITED": "Rechnung storniert",
-      "INVOICE_EXPORTED": "Rechnung exportiert"
+      "INVOICE_EXPORTED": "Rechnung exportiert",
+      "ISSUE_PARTICIPANT_ADDED": "Vorgang mit einer Person geteilt",
+      "ISSUE_PARTICIPANT_REMOVED": "Person aus einem Vorgang entfernt"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -4746,7 +4780,7 @@
   },
   "watched": {
     "title": "Beobachtete Vorgänge",
-    "subtitle": "Alles, was du abonniert hast",
+    "subtitle": "Alles, was du abonniert hast oder woran du beteiligt bist",
     "empty": {
       "title": "Nichts beobachtet",
       "message": "Öffne einen Vorgang und schalte „Beobachten“ ein, um über jede Änderung informiert zu werden."

@@ -519,7 +519,10 @@
     "loadMore": "Cargar más",
     "act": {
       "created": "creó esta incidencia",
-      "changed": "cambió {{field}}"
+      "changed": "cambió {{field}}",
+      "participantAdded": "compartió esta incidencia con {{name}}",
+      "participantRemoved": "quitó a {{name}} de esta incidencia",
+      "participantLeft": "salió de esta incidencia"
     },
     "field": {
       "title": "el título",
@@ -952,7 +955,36 @@
       "gotIt": "Entendido"
     },
     "editTitle": "Editar título",
-    "editDescription": "Editar descripción"
+    "editDescription": "Editar descripción",
+    "participants": {
+      "menu": "Compartir con…",
+      "title": "Compartir {{key}}",
+      "subtitle": "Los participantes leen y comentan esta incidencia. El proyecto {{project}} sigue oculto para ellos.",
+      "search": "Buscar una persona…",
+      "section": "Participantes · {{count}} de {{max}}",
+      "empty": "Nadie todavía. Busca a una persona con quien compartir esta incidencia.",
+      "membersSection": "Los miembros ya ven esta incidencia",
+      "member": "Miembro",
+      "addedBy": "añadido por {{name}}, {{when}}",
+      "remove": "Quitar",
+      "removeOf": "Quitar a {{name}}",
+      "done": "Listo",
+      "footer": "Cada participación queda en el historial y en el registro de auditoría.",
+      "full": "Esta incidencia ya se comparte con {{max}} personas, el máximo posible.",
+      "banner": "Participas en esta incidencia: puedes leer y comentar. El proyecto {{project}} no es visible para ti.",
+      "leave": "Salir",
+      "leaveTitle": "¿Salir de {{key}}?",
+      "leaveMessage": "Dejarás de ver esta incidencia. Un miembro puede volver a añadirte.",
+      "mentionHint": "{{name}} no puede ver esta incidencia y no se enteraría de esto.",
+      "share": "Compartir",
+      "assigneeHint": "{{name}} no puede abrir el proyecto {{project}} y no se le puede asignar.",
+      "added": "{{name}} ya puede leer y comentar",
+      "removed": "{{name}} quitado",
+      "left": "Saliste de {{key}}",
+      "emptyIssuesHint": "Aún no estás en ningún proyecto. Las incidencias compartidas contigo están en Seguidas.",
+      "openWatched": "Abrir Seguidas",
+      "noResults": "No se encontró a nadie"
+    }
   },
   "type": {
     "task": "Tarea",
@@ -3664,7 +3696,9 @@
       "INVOICE_DELETED": "Borrador de factura eliminado",
       "INVOICE_ISSUED": "Factura emitida",
       "INVOICE_CREDITED": "Factura anulada",
-      "INVOICE_EXPORTED": "Factura exportada"
+      "INVOICE_EXPORTED": "Factura exportada",
+      "ISSUE_PARTICIPANT_ADDED": "Incidencia compartida con una persona",
+      "ISSUE_PARTICIPANT_REMOVED": "Persona quitada de una incidencia"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -4746,7 +4780,7 @@
   },
   "watched": {
     "title": "Incidencias seguidas",
-    "subtitle": "Todo aquello a lo que te has suscrito",
+    "subtitle": "Todo lo que sigues o en lo que participas",
     "empty": {
       "title": "Todavía no sigues nada",
       "message": "Abre una incidencia y activa «Seguir» para recibir avisos de cada cambio."
