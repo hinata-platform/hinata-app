@@ -519,7 +519,10 @@
     "loadMore": "Load more",
     "act": {
       "created": "created this issue",
-      "changed": "changed the {{field}}"
+      "changed": "changed the {{field}}",
+      "participantAdded": "shared this issue with {{name}}",
+      "participantRemoved": "removed {{name}} from this issue",
+      "participantLeft": "left this issue"
     },
     "field": {
       "title": "title",
@@ -952,7 +955,36 @@
       "gotIt": "Got it"
     },
     "editTitle": "Edit title",
-    "editDescription": "Edit description"
+    "editDescription": "Edit description",
+    "participants": {
+      "menu": "Share with…",
+      "title": "Share {{key}}",
+      "subtitle": "Participants read and comment on this issue. The project {{project}} stays hidden from them.",
+      "search": "Search for a person…",
+      "section": "Participants · {{count}} of {{max}}",
+      "empty": "Nobody yet. Search for a person to share this issue with.",
+      "membersSection": "Members see this issue anyway",
+      "member": "Member",
+      "addedBy": "added by {{name}}, {{when}}",
+      "remove": "Remove",
+      "removeOf": "Remove {{name}}",
+      "done": "Done",
+      "footer": "Every share is recorded in the history and the audit log.",
+      "full": "This issue is already shared with {{max}} people, the most it can be.",
+      "banner": "You take part in this issue: you can read and comment. The project {{project}} is not visible to you.",
+      "leave": "Leave",
+      "leaveTitle": "Leave {{key}}?",
+      "leaveMessage": "You will no longer see this issue. A member can add you again.",
+      "mentionHint": "{{name}} cannot see this issue and would not hear about this.",
+      "share": "Share",
+      "assigneeHint": "{{name}} cannot open the project {{project}} and cannot be assigned.",
+      "added": "{{name}} can now read and comment",
+      "removed": "{{name}} removed",
+      "left": "You left {{key}}",
+      "emptyIssuesHint": "You are not in any project yet. Issues shared with you are listed under Watched.",
+      "openWatched": "Open Watched",
+      "noResults": "No one found"
+    }
   },
   "type": {
     "task": "Task",
@@ -3664,7 +3696,9 @@
       "INVOICE_DELETED": "Invoice draft deleted",
       "INVOICE_ISSUED": "Invoice issued",
       "INVOICE_CREDITED": "Invoice reversed",
-      "INVOICE_EXPORTED": "Invoice exported"
+      "INVOICE_EXPORTED": "Invoice exported",
+      "ISSUE_PARTICIPANT_ADDED": "Issue shared with a person",
+      "ISSUE_PARTICIPANT_REMOVED": "Person removed from an issue"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -4746,7 +4780,7 @@
   },
   "watched": {
     "title": "Watched issues",
-    "subtitle": "Everything you subscribed to",
+    "subtitle": "Everything you subscribed to or take part in",
     "empty": {
       "title": "Nothing watched yet",
       "message": "Open an issue and turn on “Watch” to be notified about every change to it."
