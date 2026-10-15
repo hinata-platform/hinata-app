@@ -88,11 +88,11 @@ void main() {
     test('the top edge is the gap, the lift and the pill', () {
       expect(
         floatingNavTopEdge(48, platform: TargetPlatform.android),
-        kFloatingNavPaddingV + 48 + kFloatingNavBarHeight,
+        48 + kFloatingNavPaddingV + kFloatingNavBarHeight,
       );
       expect(
         floatingNavTopEdge(34, platform: TargetPlatform.iOS),
-        kFloatingNavPaddingV + kFloatingNavBarHeight,
+        kFloatingNavPaddingH + kFloatingNavBarHeight,
       );
     });
   });
@@ -176,8 +176,9 @@ void main() {
       );
       debugDefaultTargetPlatformOverride = null;
 
-      // Unchanged from before the Android fix: the gap and nothing else.
-      expect(screen.height - nav.bottom, kFloatingNavPaddingV);
+      // No lift, and the same gap below the pill as beside it.
+      expect(screen.height - nav.bottom, kFloatingNavPaddingH);
+      expect(nav.left, kFloatingNavPaddingH);
       expect(
         screen.height - nav.top,
         floatingNavTopEdge(34, platform: TargetPlatform.iOS),
@@ -201,7 +202,7 @@ void main() {
       // it anyway and it floats 48dp above the keyboard, and every gap measured
       // from the nav (the toast, the last row of a list) is wrong by that much,
       // because the footprint reads the same keyboard-adjusted inset.
-      expect(screen.height - keyboard - nav.bottom, kFloatingNavPaddingV);
+      expect(screen.height - keyboard - nav.bottom, kFloatingNavPaddingH);
     });
   });
 

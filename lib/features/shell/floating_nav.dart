@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
@@ -20,9 +22,11 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 /// out from under the footprint.
 const double kFloatingNavBarHeight = 64;
 
-/// Breathing room around the floating nav. The horizontal value is cosmetic;
-/// the vertical one is the smallest gap that may ever sit between the pill and
-/// the bottom of the window.
+/// Breathing room around the floating nav. The horizontal value is the gap to
+/// the side edges and, where nothing below the pill gets in the way, to the
+/// bottom edge as well, so the pill floats evenly inside the rounded corners.
+/// The vertical one is the gap above the pill and the smallest gap that may
+/// ever sit between the pill and system chrome below it.
 const double kFloatingNavPaddingH = 24;
 const double kFloatingNavPaddingV = 16;
 
@@ -65,8 +69,27 @@ double floatingNavLift(
     ? bottomViewPadding
     : 0;
 
+/// Gap between the bottom of the window and the bottom edge of the pill.
+///
+/// Matches the side gap, so the pill sits as far from the bottom edge as from
+/// the sides; with only 16 under it the iPhone pill sat visibly lower than it
+/// sat in from the sides. Where the pill has to be lifted out of system chrome
+/// it keeps at least [kFloatingNavPaddingV] above that chrome instead.
+double floatingNavBottomGap(
+  double bottomViewPadding, {
+  bool isWeb = kIsWeb,
+  TargetPlatform? platform,
+}) {
+  final lift = floatingNavLift(
+    bottomViewPadding,
+    isWeb: isWeb,
+    platform: platform,
+  );
+  return math.max(kFloatingNavPaddingH, lift + kFloatingNavPaddingV);
+}
+
 /// Distance from the bottom of the window up to the *top edge* of the pill: its
-/// bottom gap, the lift out of system chrome, and the pill itself.
+/// bottom gap, including any lift out of system chrome, and the pill itself.
 ///
 /// This is the line content must clear, and the value the shell publishes to
 /// `ShellInsets` so a toast rides above the nav rather than on it. It is
@@ -78,12 +101,12 @@ double floatingNavTopEdge(
   bool isWeb = kIsWeb,
   TargetPlatform? platform,
 }) {
-  final lift = floatingNavLift(
+  final gap = floatingNavBottomGap(
     bottomViewPadding,
     isWeb: isWeb,
     platform: platform,
   );
-  return kFloatingNavPaddingV + lift + kFloatingNavBarHeight;
+  return gap + kFloatingNavBarHeight;
 }
 
 /// Places the floating nav [child] against the bottom of the window, owning
@@ -106,7 +129,7 @@ class FloatingNavPadding extends StatelessWidget {
     // viewPaddingOf, not MediaQuery.of: this needs one field, and depending on
     // the whole MediaQueryData would rebuild the nav — and at the shell, the
     // entire glass Stack around it — on every frame of the keyboard animation.
-    final lift = floatingNavLift(MediaQuery.viewPaddingOf(context).bottom);
+    final gap = floatingNavBottomGap(MediaQuery.viewPaddingOf(context).bottom);
     return SafeArea(
       // Left/right only, and load-bearing: those are the landscape insets —
       // Android's side navigation bar, a notched iPhone turned sideways — and
@@ -120,7 +143,7 @@ class FloatingNavPadding extends StatelessWidget {
           kFloatingNavPaddingH,
           kFloatingNavPaddingV,
           kFloatingNavPaddingH,
-          kFloatingNavPaddingV + lift,
+          gap,
         ),
         child: above == null
             ? child
