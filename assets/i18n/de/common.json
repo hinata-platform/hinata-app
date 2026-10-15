@@ -983,7 +983,10 @@
       "left": "Du hast {{key}} verlassen",
       "emptyIssuesHint": "Du bist noch in keinem Projekt. Vorgänge, an denen du beteiligt bist, findest du unter Beobachtet.",
       "openWatched": "Beobachtet öffnen",
-      "noResults": "Niemand gefunden"
+      "noResults": "Niemand gefunden",
+      "alreadyMember": "{{name}} ist Mitglied und sieht den Vorgang ohnehin",
+      "shareWith": "Mit {{name}} teilen",
+      "aMember": "einem Mitglied"
     }
   },
   "type": {
