@@ -52,6 +52,7 @@ class IssueParticipant extends Equatable {
     this.pronouns,
     this.addedAt,
     this.addedById,
+    this.addedByName,
   });
 
   final String id;
@@ -61,6 +62,9 @@ class IssueParticipant extends Equatable {
   final DateTime? addedAt;
   final String? addedById;
 
+  /// The display name of whoever added them; null on a server that predates it.
+  final String? addedByName;
+
   factory IssueParticipant.fromJson(Map<String, dynamic> json) =>
       IssueParticipant(
         id: json['id'] as String,
@@ -69,8 +73,17 @@ class IssueParticipant extends Equatable {
         pronouns: json['pronouns'] as String?,
         addedAt: parseInstant(json['addedAt']),
         addedById: json['addedById'] as String?,
+        addedByName: json['addedByName'] as String?,
       );
 
   @override
-  List<Object?> get props => [id, displayName, avatarUrl, addedAt, addedById];
+  List<Object?> get props => [
+    id,
+    displayName,
+    avatarUrl,
+    pronouns,
+    addedAt,
+    addedById,
+    addedByName,
+  ];
 }

@@ -53,7 +53,7 @@ void main() {
                 issues: issues,
                 issueId: 'i1',
                 meId: 'u1',
-                members: const [rebar],
+                namedWithAccess: const [rebar],
               )..load(),
             ),
             BlocProvider(create: (_) => PersonPickerCubit(users)),

@@ -212,9 +212,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// says otherwise, which is what a server without sharing means.
   IssueParticipation _participation = IssueParticipation.member;
 
-  /// The people the detail names who could not open this issue.
-  Set<String> _cannotSeeIssue = const {};
-
   /// Whether each person the detail names can open this issue, for the note
   /// under a comment that mentions one of them.
   Map<String, bool> _knownAccess = const {};
@@ -642,7 +639,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _hierarchy = detail.hierarchy;
       _canDelete = detail.canDelete;
       _participation = detail.participation;
-      _cannotSeeIssue = detail.cannotSeeIssue;
       _knownAccess = {
         for (final user in detail.users)
           user.id: !detail.cannotSeeIssue.contains(user.id),
@@ -688,11 +684,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// "documented in" backlinks + `{{doc:…}}` mention corpus. Each step is
   /// best-effort — a slow or failed fetch just leaves that section empty.
   Future<void> _hydrateSecondary(Issue issue) async {
-    try {
-      final all = await _detail.users();
-      if (mounted && all.isNotEmpty) setState(() => _setUsers(all));
-    } catch (_) {
-      // Keep the referenced-user subset from the aggregate.
+    // A participant has no picker to fill; the detail already names everybody
+    // the issue mentions.
+    if (!isParticipant) {
+      try {
+        final all = await _detail.users();
+        if (mounted && all.isNotEmpty) setState(() => _setUsers(all));
+      } catch (_) {
+        // Keep the referenced-user subset from the aggregate.
+      }
     }
     // Resolve `{{issue:…}}` chip previews for the description + loaded comments.
     try {
@@ -1739,6 +1739,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       kind: GlassToastKind.info,
     );
     _notifyChanged();
+    // The watched page is where a participant found the issue; it has to drop it.
+    IssueWatchEvents.instance.notifyChanged();
     if (widget.header != null) {
       Navigator.of(context).maybePop();
     } else {
@@ -1759,10 +1761,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       context,
       issue: issue,
       projectName: _project?.name ?? '',
-      members: [
+      namedWithAccess: [
         for (final user in _users)
-          if (named.contains(user.id) && !_cannotSeeIssue.contains(user.id))
-            user,
+          if (named.contains(user.id) && _knownAccess[user.id] != false) user,
       ],
       meId: me?.id,
       anchorRect: anchorRect == Rect.zero ? null : anchorRect,

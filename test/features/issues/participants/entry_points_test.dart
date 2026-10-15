@@ -51,7 +51,8 @@ void main() {
   testWidgets('a participant sees only export (and watch when loaded)', (
     tester,
   ) async {
-    await tester.pumpWidget(menu(onShare: (_) {}, readOnly: true));
+    // A participant gets no share action: shareAction is null for them.
+    await tester.pumpWidget(menu(readOnly: true));
     await open(tester);
 
     expect(find.text('issues.export.action'), findsOneWidget);

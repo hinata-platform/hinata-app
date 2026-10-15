@@ -75,6 +75,7 @@ class IssueDetail {
     final activityPage =
         (json['activity'] as Map<String, dynamic>?) ?? const {};
     final workItems = parseList(json['workItems'], WorkItem.fromJson);
+    final rawUsers = (json['users'] as List<dynamic>?) ?? const [];
     return IssueDetail(
       issue: Issue.fromJson(json['issue'] as Map<String, dynamic>),
       project: json['project'] == null
@@ -92,15 +93,14 @@ class IssueDetail {
           ? IssueHierarchy.empty
           : IssueHierarchy.fromJson(json['hierarchy'] as Map<String, dynamic>),
       sprints: parseList(json['sprints'], Sprint.fromJson),
-      users: parseList(json['users'], DirectoryUser.fromJson),
+      users: parseList(rawUsers, DirectoryUser.fromJson),
       canDelete: json['canDelete'] as bool? ?? false,
       participation: IssueParticipation.fromJson(
         json['participation'] as Map<String, dynamic>?,
       ),
       cannotSeeIssue: {
-        for (final user in (json['users'] as List<dynamic>?) ?? const [])
-          if ((user as Map<String, dynamic>)['canSeeIssue'] == false)
-            user['id'] as String,
+        for (final user in rawUsers.cast<Map<String, dynamic>>())
+          if (user['canSeeIssue'] == false) user['id'] as String,
       },
     );
   }

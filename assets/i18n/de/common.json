@@ -969,7 +969,7 @@
       "remove": "Entfernen",
       "removeOf": "{{name}} entfernen",
       "done": "Fertig",
-      "footer": "Jede Beteiligung steht im Verlauf und im Audit-Log.",
+      "footer": "Jede Beteiligung steht im Verlauf und im Audit-Protokoll.",
       "full": "Der Vorgang ist schon mit {{max}} Personen geteilt, mehr geht nicht.",
       "banner": "Du bist an diesem Vorgang beteiligt: lesen und kommentieren. Das Projekt {{project}} ist für dich nicht sichtbar.",
       "leave": "Verlassen",

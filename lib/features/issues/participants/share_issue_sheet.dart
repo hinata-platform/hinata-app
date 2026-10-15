@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -17,6 +15,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
+import '../../../core/widgets/person_search_pager.dart';
 import '../../sprint/modals/glass_modal.dart';
 import 'issue_participants_cubit.dart';
 
@@ -33,14 +32,14 @@ String? refusedAssigneeId(ApiFailure failure) {
 ///
 /// Wide windows get it as a glass popover under [anchorRect] (the ⋯ menu);
 /// phones, and callers without an anchor, get the adaptive modal, which is a
-/// bottom sheet on a phone. [members] are the people the detail names who see
-/// the issue anyway; [initialQuery] prefills the search, for the entries that
+/// bottom sheet on a phone. [namedWithAccess] are the people the detail names
+/// who see the issue anyway; [initialQuery] prefills the search, for the entries that
 /// already know whom to share with.
 Future<void> showShareIssueSheet(
   BuildContext context, {
   required Issue issue,
   required String projectName,
-  required List<DirectoryUser> members,
+  required List<DirectoryUser> namedWithAccess,
   String? meId,
   Rect? anchorRect,
   String? initialQuery,
@@ -55,7 +54,7 @@ Future<void> showShareIssueSheet(
           issues: issues,
           issueId: issue.id,
           meId: meId,
-          members: members,
+          namedWithAccess: namedWithAccess,
         )..load(),
       ),
       BlocProvider(create: (_) => PersonPickerCubit(users)),
@@ -100,38 +99,36 @@ class ShareIssuePanel extends StatefulWidget {
 }
 
 class _ShareIssuePanelState extends State<ShareIssuePanel> {
-  static const _debounceDelay = Duration(milliseconds: 180);
-  static const _pageSize = 20;
-
   late final TextEditingController _search = TextEditingController(
     text: widget.initialQuery ?? '',
   );
   final _scroll = ScrollController();
-  Timer? _debounce;
 
-  final List<DirectoryUser> _results = [];
-  final Set<String> _seen = {};
-  int _page = 0;
-  int _total = 0;
-  bool _searching = false;
-  bool _exhausted = false;
-  String? _searchError;
+  late final PersonSearchPager _pager = PersonSearchPager(
+    (query, {required page, required size}) =>
+        context.read<PersonPickerCubit>().search(query, page: page, size: size),
+    pageSize: 20,
+    searchEmpty: false,
+  );
 
-  /// Drops a debounced answer that lands after a newer search began.
-  int _seq = 0;
-
-  String get _query => _search.text.trim();
+  String get _query => _pager.query;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    if (_query.isNotEmpty) _runSearch(reset: true);
+    _pager.addListener(_onPage);
+    if (_search.text.trim().isNotEmpty) {
+      _pager.setQuery(_search.text);
+      _pager.refresh();
+    }
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _pager
+      ..removeListener(_onPage)
+      ..dispose();
     _scroll
       ..removeListener(_onScroll)
       ..dispose();
@@ -139,64 +136,14 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
     super.dispose();
   }
 
-  void _onQueryChanged(String _) {
-    _debounce?.cancel();
-    if (_query.isEmpty) {
-      setState(() {
-        _seq++;
-        _results.clear();
-        _seen.clear();
-        _searching = false;
-        _searchError = null;
-      });
-      return;
-    }
-    _debounce = Timer(_debounceDelay, () => _runSearch(reset: true));
+  void _onPage() {
+    if (mounted) setState(() {});
   }
 
   void _onScroll() {
     if (!_scroll.hasClients || _query.isEmpty) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 120) {
-      _runSearch(reset: false);
-    }
-  }
-
-  Future<void> _runSearch({required bool reset}) async {
-    if (!reset && (_searching || _exhausted || _results.length >= _total)) {
-      return;
-    }
-    final seq = ++_seq;
-    final page = reset ? 0 : _page + 1;
-    setState(() {
-      _searching = true;
-      _searchError = null;
-    });
-    try {
-      final result = await context.read<PersonPickerCubit>().search(
-        _query,
-        page: page,
-        size: _pageSize,
-      );
-      if (!mounted || seq != _seq) return;
-      setState(() {
-        if (reset) {
-          _results.clear();
-          _seen.clear();
-        }
-        for (final user in result.items) {
-          if (_seen.add(user.id)) _results.add(user);
-        }
-        _page = page;
-        _total = result.total;
-        _exhausted = result.items.length < _pageSize;
-        _searching = false;
-      });
-    } on ApiFailure catch (failure) {
-      if (!mounted || seq != _seq) return;
-      setState(() {
-        _searching = false;
-        _searchError = failure.message;
-      });
+      _pager.loadMore();
     }
   }
 
@@ -283,7 +230,7 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
               autofocus:
                   widget.initialQuery == null &&
                   MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint,
-              onChanged: _onQueryChanged,
+              onChanged: _pager.setQuery,
             ),
           ),
           Flexible(
@@ -292,7 +239,7 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
               shrinkWrap: true,
               slivers: [
                 if (_query.isNotEmpty) ..._resultSlivers(context),
-                ..._participantSlivers(context),
+                _participantSliver(),
                 ..._memberSlivers(context),
                 const SliverToBoxAdapter(child: SizedBox(height: 8)),
               ],
@@ -308,15 +255,17 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
     final full = context.select<IssueParticipantsCubit, bool>(
       (cubit) => cubit.state.isFull,
     );
+    final results = _pager.results;
+    final error = _pager.error;
     Widget? status;
-    if (_searchError != null && _results.isEmpty) {
-      status = _Note(context.t(_searchError!), color: AppColors.dangerInk);
-    } else if (_searching && _results.isEmpty) {
+    if (error != null && results.isEmpty) {
+      status = _Note(context.t(error), color: AppColors.dangerInk);
+    } else if (_pager.loading && results.isEmpty) {
       status = const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
         child: Center(child: HiveLoader(size: 18)),
       );
-    } else if (_results.isEmpty) {
+    } else if (results.isEmpty) {
       status = _Note(context.t('issues.participants.noResults'));
     } else if (full) {
       status = _Note(
@@ -331,13 +280,13 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
       if (status != null)
         SliverToBoxAdapter(child: Semantics(liveRegion: true, child: status)),
       SliverList.builder(
-        itemCount: _results.length,
+        itemCount: results.length,
         itemBuilder: (context, index) {
-          final user = _results[index];
+          final user = results[index];
           return _ResultRow(user: user, onTap: full ? null : () => _add(user));
         },
       ),
-      if (_searching && _results.isNotEmpty)
+      if (_pager.loadingMore)
         const SliverToBoxAdapter(
           child: Padding(
             padding: EdgeInsets.symmetric(vertical: 10),
@@ -347,56 +296,57 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
     ];
   }
 
-  List<Widget> _participantSlivers(BuildContext context) {
-    final state = context.watch<IssueParticipantsCubit>().state;
-    return [
-      SliverToBoxAdapter(
-        child: _SectionLabel(
-          context.t(
-            'issues.participants.section',
-            variables: {
-              'count': state.participants.length,
-              'max': IssueParticipantsCubit.maxParticipants,
-            },
-          ),
+  /// The people the issue is shared with, rebuilt on their own when the
+  /// list or a row's request changes, not with the whole panel.
+  Widget _participantSliver() =>
+      BlocBuilder<IssueParticipantsCubit, IssueParticipantsState>(
+        buildWhen: (a, b) =>
+            a.participants != b.participants ||
+            a.busy != b.busy ||
+            a.loading != b.loading,
+        builder: (context, state) => SliverMainAxisGroup(
+          slivers: [
+            SliverToBoxAdapter(
+              child: _SectionLabel(
+                context.t(
+                  'issues.participants.section',
+                  variables: {
+                    'count': state.participants.length,
+                    'max': IssueParticipantsCubit.maxParticipants,
+                  },
+                ),
+              ),
+            ),
+            if (state.loading && state.participants.isEmpty)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 12),
+                  child: Center(child: HiveLoader(size: 16)),
+                ),
+              )
+            else if (state.participants.isEmpty)
+              SliverToBoxAdapter(
+                child: _Note(context.t('issues.participants.empty')),
+              )
+            else
+              SliverList.builder(
+                itemCount: state.participants.length,
+                itemBuilder: (context, index) {
+                  final person = state.participants[index];
+                  return _ParticipantRow(
+                    person: person,
+                    busy: state.busy.contains(person.id),
+                    onRemove: () => _remove(person),
+                  );
+                },
+              ),
+          ],
         ),
-      ),
-      if (state.loading && state.participants.isEmpty)
-        const SliverToBoxAdapter(
-          child: Padding(
-            padding: EdgeInsets.symmetric(vertical: 12),
-            child: Center(child: HiveLoader(size: 16)),
-          ),
-        )
-      else if (state.participants.isEmpty)
-        SliverToBoxAdapter(child: _Note(context.t('issues.participants.empty')))
-      else
-        SliverList.builder(
-          itemCount: state.participants.length,
-          itemBuilder: (context, index) {
-            final person = state.participants[index];
-            return _ParticipantRow(
-              person: person,
-              addedByName: _nameOf(state, person.addedById),
-              busy: state.busy.contains(person.id),
-              onRemove: () => _remove(person),
-            );
-          },
-        ),
-    ];
-  }
-
-  String? _nameOf(IssueParticipantsState state, String? id) {
-    if (id == null) return null;
-    for (final m in state.members) {
-      if (m.id == id) return m.displayName;
-    }
-    return null;
-  }
+      );
 
   List<Widget> _memberSlivers(BuildContext context) {
     final members = context.select<IssueParticipantsCubit, List<DirectoryUser>>(
-      (cubit) => cubit.state.members,
+      (cubit) => cubit.state.namedWithAccess,
     );
     if (members.isEmpty) return const [];
     return [
@@ -647,13 +597,11 @@ class _ResultRow extends StatelessWidget {
 class _ParticipantRow extends StatelessWidget {
   const _ParticipantRow({
     required this.person,
-    required this.addedByName,
     required this.busy,
     required this.onRemove,
   });
 
   final IssueParticipant person;
-  final String? addedByName;
   final bool busy;
   final VoidCallback onRemove;
 
@@ -665,7 +613,9 @@ class _ParticipantRow extends StatelessWidget {
         : context.t(
             'issues.participants.addedBy',
             variables: {
-              'name': addedByName ?? context.t('issues.participants.aMember'),
+              'name':
+                  person.addedByName ??
+                  context.t('issues.participants.aMember'),
               'when': MaterialLocalizations.of(
                 context,
               ).formatShortDate(addedAt.toLocal()),
