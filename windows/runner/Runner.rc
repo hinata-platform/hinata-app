@@ -93,11 +93,11 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.ahmadre" "\0"
+            VALUE "CompanyName", "Rebar Ahmad" "\0"
             VALUE "FileDescription", "hinata" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "hinata" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.ahmadre. All rights reserved." "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 Rebar Ahmad. All rights reserved." "\0"
             VALUE "OriginalFilename", "hinata.exe" "\0"
             VALUE "ProductName", "hinata" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
