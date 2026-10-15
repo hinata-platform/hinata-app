@@ -11,6 +11,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -26,7 +27,8 @@ import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/core/widgets/glass_bulk_bar.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
-import 'package:hinata/core/widgets/hive_widgets.dart' show PageHead;
+import 'package:hinata/core/widgets/hive_widgets.dart'
+    show PageHead, stateLabel;
 import 'package:hinata/features/issues/issues_screen.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -52,6 +54,10 @@ final _project = Project(
   name: 'Mobile App',
   eventDate: DateTime(2026, 12, 1),
   deadlineBasis: RelativeDateBasis.working,
+  workflowStates: const [
+    WorkflowState(id: 's1', name: 'OPEN', hue: 210),
+    WorkflowState(id: 's2', name: 'DONE', hue: 140),
+  ],
 );
 
 void main() {
@@ -130,6 +136,18 @@ void main() {
     await settle(tester, 3);
   }
 
+  /// Taps a labelled action of the bar. Raw i18n keys make the labels long
+  /// enough for the strip to scroll, so the action is scrolled into view first.
+  Future<void> tapBar(WidgetTester tester, String key) async {
+    final label = find.descendant(
+      of: find.byType(GlassBulkBar),
+      matching: find.text(key),
+    );
+    await tester.ensureVisible(label);
+    await settle(tester, 2);
+    await tester.tap(label);
+  }
+
   TextButton action(WidgetTester tester, String key) => tester.widget(
     find.ancestor(of: find.text(key), matching: find.byType(TextButton)),
   );
@@ -143,7 +161,7 @@ void main() {
       await tester.tap(find.text('Issue number 3'));
       await settle(tester, 2);
 
-      await tester.tap(find.text('issues.bulkDeadline.action'));
+      await tapBar(tester, 'issues.bulkDeadline.action');
       await settle(tester);
       // One project and the module on: rules are offered.
       // The raw key in the test font is wider than the 300 px switch bar, so
@@ -171,8 +189,8 @@ void main() {
       expect(call.dueOffset?.unit, RelativeDateUnit.weeks);
       expect(call.dueOffset?.basis, RelativeDateBasis.working);
 
-      // Done: the selection is gone with its bar.
-      expect(find.byType(GlassBulkBar), findsNothing);
+      // Done, and the selection stays, so another field can follow.
+      expect(find.byType(GlassBulkBar), findsOneWidget);
       // Let the success toast run out.
       await tester.pump(const Duration(seconds: 10));
     });
@@ -188,7 +206,7 @@ void main() {
 
       await tester.longPress(find.text('Issue number 2'));
       await settle(tester, 2);
-      await tester.tap(find.text('issues.bulkDeadline.action'));
+      await tapBar(tester, 'issues.bulkDeadline.action');
       await settle(tester);
       await tester.tap(find.text('common.clear'));
       await settle(tester);
@@ -217,7 +235,7 @@ void main() {
       await settle(tester, 3);
       expect(find.text('Issue number 1'), findsNothing);
 
-      await tester.tap(find.text('issues.bulkDeadline.action'));
+      await tapBar(tester, 'issues.bulkDeadline.action');
       await settle(tester);
       // Still one project, so rules are still on offer.
       expect(find.text('issues.deadline.modeOffset'), findsOneWidget);
@@ -236,10 +254,10 @@ void main() {
 
       await tester.longPress(find.text('Issue number 2'));
       await settle(tester, 2);
-      IconButton deadline() => tester
+      IconButton status() => tester
           .widgetList<IconButton>(find.byType(IconButton))
-          .firstWhere((b) => b.tooltip == 'issues.bulkDeadline.action');
-      expect(deadline().onPressed, isNotNull);
+          .firstWhere((b) => b.tooltip == 'issues.status');
+      expect(status().onPressed, isNotNull);
 
       await tester.tap(find.byTooltip('issues.sort.label').first);
       // The menu's glass grows out of the chip on a spring before its rows
@@ -279,7 +297,7 @@ void main() {
 
       await tester.longPress(find.text('Issue number 2'));
       await settle(tester, 2);
-      await tester.tap(find.text('issues.bulkDeadline.action'));
+      await tapBar(tester, 'issues.bulkDeadline.action');
       await settle(tester);
       await tester.tap(find.text('common.clear'));
       await settle(tester);
@@ -294,9 +312,9 @@ void main() {
 
       await tester.longPress(find.text('Issue number 4'));
       await settle(tester, 2);
-      await tester.tap(find.text('issues.selectAll'));
+      await tapBar(tester, 'issues.selectAll');
       await settle(tester, 2);
-      await tester.tap(find.text('issues.bulkDeadline.action'));
+      await tapBar(tester, 'issues.bulkDeadline.action');
       await settle(tester);
       await tester.tap(find.text('common.clear'));
       await settle(tester);
@@ -332,16 +350,20 @@ void main() {
       final screen =
           Offset.zero & tester.view.physicalSize / tester.view.devicePixelRatio;
       for (final key in const [
-        'issues.selectAll',
-        'issues.bulkDeadline.action',
-        'issues.move.action',
+        'issues.status',
+        'issues.bulk.assignee',
+        'issues.archive',
+        'issues.bulk.more',
       ]) {
         final button = find.byTooltip(key);
         expect(button, findsOneWidget, reason: key);
         expect(screen.contains(tester.getCenter(button)), isTrue, reason: key);
       }
 
-      await tester.tap(find.byTooltip('issues.bulkDeadline.action'));
+      // Everything else sits in the overflow, which opens as a sheet.
+      await tester.tap(find.byTooltip('issues.bulk.more'));
+      await settle(tester, 6);
+      await tester.tap(find.text('issues.bulkDeadline.action').last);
       await settle(tester);
       await tester.tap(find.text('common.clear'));
       await settle(tester);
@@ -364,7 +386,7 @@ void main() {
       // Raw i18n keys make the labels long enough for the strip to scroll.
       await tester.ensureVisible(find.text('issues.bulkDelete.action'));
       await settle(tester, 2);
-      await tester.tap(find.text('issues.bulkDelete.action'));
+      await tapBar(tester, 'issues.bulkDelete.action');
       await settle(tester);
 
       // Nothing goes before the question is answered.
@@ -388,13 +410,184 @@ void main() {
       // Raw i18n keys make the labels long enough for the strip to scroll.
       await tester.ensureVisible(find.text('issues.bulkDelete.action'));
       await settle(tester, 2);
-      await tester.tap(find.text('issues.bulkDelete.action'));
+      await tapBar(tester, 'issues.bulkDelete.action');
       await settle(tester);
       await tester.tap(find.text('common.cancel').last);
       await settle(tester);
 
       expect(issueRepo.deleteCalls, isEmpty);
       expect(find.byType(GlassBulkBar), findsOneWidget);
+    });
+  });
+
+  group('bulk archive', () {
+    testWidgets('takes the rows out in place and offers Undo', (tester) async {
+      await open(tester, width: 1400);
+      final reads = issueRepo.listCalls;
+
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+      await tester.tap(find.text('Issue number 2'));
+      await settle(tester, 2);
+      await tapBar(tester, 'issues.archive');
+      await settle(tester);
+
+      expect(issueRepo.archiveCalls.single.ids, ['i1', 'i2']);
+      expect(issueRepo.archiveCalls.single.archived, isTrue);
+      // No question first, and no refetch: the rows leave where they are.
+      expect(find.text('Issue number 1'), findsNothing);
+      expect(find.text('Issue number 2'), findsNothing);
+      expect(find.text('Issue number 3'), findsOneWidget);
+      expect(issueRepo.listCalls, reads);
+      expect(find.byType(GlassBulkBar), findsNothing);
+
+      await tester.tap(find.text('issues.bulk.undo'));
+      await settle(tester);
+      expect(issueRepo.archiveCalls.last.archived, isFalse);
+      expect(issueRepo.archiveCalls.last.ids, ['i1', 'i2']);
+      expect(find.text('Issue number 1'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
+    });
+  });
+
+  group('bulk fields', () {
+    testWidgets(
+      'sets one state on every ticked issue and keeps the selection',
+      (tester) async {
+        await open(tester, width: 1400);
+
+        await tester.longPress(find.text('Issue number 1'));
+        await settle(tester, 2);
+        await tester.tap(find.text('Issue number 3'));
+        await settle(tester, 2);
+        await tapBar(tester, 'issues.status');
+        await settle(tester, 8);
+        await tester.tap(find.text(stateLabel('DONE')).last);
+        await settle(tester);
+
+        final call = issueRepo.updateCalls.single;
+        expect(call.ids, ['i1', 'i3']);
+        expect(call.state, 'DONE');
+        expect(call.priority, isNull);
+        expect(call.assigneeId, isNull);
+        // Swapped in place, and still selected for the next change.
+        expect(find.text('Issue number 1 (changed)'), findsOneWidget);
+        expect(find.byType(GlassBulkBar), findsOneWidget);
+        expect(find.text('issues.selectedCount'), findsOneWidget);
+        await tester.pump(const Duration(seconds: 10));
+      },
+    );
+
+    testWidgets('takes the assignee off every ticked issue', (tester) async {
+      await open(tester, width: 1400);
+
+      await tester.longPress(find.text('Issue number 2'));
+      await settle(tester, 2);
+      await tapBar(tester, 'issues.bulk.assignee');
+      await settle(tester, 8);
+      await tester.tap(find.text('issues.bulk.unassign').last);
+      await settle(tester);
+
+      expect(issueRepo.updateCalls.single.ids, ['i2']);
+      expect(issueRepo.updateCalls.single.assigneeId, '');
+      await tester.pump(const Duration(seconds: 10));
+    });
+  });
+
+  group('delete rights', () {
+    testWidgets('Delete is not offered where the caller may not delete', (
+      tester,
+    ) async {
+      issueRepo.deletable = {};
+      await open(tester, width: 1400);
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+
+      expect(find.text('issues.bulkDelete.action'), findsNothing);
+      // Archive is everybody's.
+      expect(find.text('issues.archive'), findsOneWidget);
+    });
+
+    testWidgets('Delete waits for a selection inside the allowed projects', (
+      tester,
+    ) async {
+      issueRepo.deletable = {'elsewhere'};
+      await open(tester, width: 1400);
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+
+      expect(action(tester, 'issues.bulkDelete.action').onPressed, isNull);
+    });
+  });
+
+  group('keyboard and pointer', () {
+    testWidgets('shift-click ticks every row between the two clicks', (
+      tester,
+    ) async {
+      await open(tester, width: 1400);
+
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.tap(find.text('Issue number 4'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await settle(tester, 2);
+
+      await tapBar(tester, 'issues.archive');
+      await settle(tester);
+      expect(issueRepo.archiveCalls.single.ids, ['i1', 'i2', 'i3', 'i4']);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
+    testWidgets('a ⌘-click ticks a row instead of opening it', (tester) async {
+      await open(tester, width: 1400);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.tap(find.text('Issue number 2'));
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await settle(tester, 2);
+
+      expect(find.byType(GlassBulkBar), findsOneWidget);
+      expect(
+        tester
+            .widget<IssueRow>(
+              find.ancestor(
+                of: find.text('Issue number 2'),
+                matching: find.byType(IssueRow),
+              ),
+            )
+            .selected,
+        isTrue,
+      );
+    });
+
+    testWidgets('⌘A selects every row, Escape ends it, Delete asks first', (
+      tester,
+    ) async {
+      await open(tester, width: 1400);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await settle(tester, 2);
+      expect(find.byType(GlassBulkBar), findsOneWidget);
+      expect(
+        tester
+            .widgetList<IssueRow>(find.byType(IssueRow))
+            .where((r) => r.selected),
+        hasLength(5),
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await settle(tester);
+      expect(find.text('issues.bulkDelete.confirm'), findsOneWidget);
+      expect(issueRepo.deleteCalls, isEmpty);
+      await tester.tap(find.text('common.cancel').last);
+      await settle(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await settle(tester, 4);
+      expect(find.byType(GlassBulkBar), findsNothing);
     });
   });
 
@@ -421,7 +614,8 @@ void main() {
       );
       // Nothing ticked yet: the actions are there, and inert.
       expect(action(tester, 'issues.bulkDeadline.action').onPressed, isNull);
-      expect(action(tester, 'issues.move.action').onPressed, isNull);
+      expect(action(tester, 'issues.status').onPressed, isNull);
+      expect(action(tester, 'issues.archive').onPressed, isNull);
 
       // Ticking and unticking a row does not end a mode somebody asked for.
       await tester.tap(find.text('Issue number 2'));
@@ -538,6 +732,14 @@ class _FakeIssueRepository implements IssueRepository {
   final List<Issue> all;
   final List<_BulkCall> bulkCalls = [];
   final List<List<String>> deleteCalls = [];
+  final List<({List<String> ids, bool archived})> archiveCalls = [];
+  final List<
+    ({List<String> ids, String? state, String? priority, String? assigneeId})
+  >
+  updateCalls = [];
+
+  /// The projects whose issues the caller may delete; the list reads it once.
+  Set<String> deletable = {'p1'};
 
   /// How often the list was read, page 0 or later.
   int listCalls = 0;
@@ -564,6 +766,62 @@ class _FakeIssueRepository implements IssueRepository {
             readableId: issue.readableId,
             title: '${issue.title} (updated)',
             state: issue.state,
+          ),
+    ];
+  }
+
+  @override
+  Future<Set<String>> deletableProjectIds() async => deletable;
+
+  @override
+  Future<List<Issue>> bulkArchive(
+    List<String> issueIds, {
+    bool archived = true,
+  }) async {
+    archiveCalls.add((ids: issueIds, archived: archived));
+    final named = [
+      for (final i in all)
+        if (issueIds.contains(i.id)) i,
+    ];
+    if (archived) all.removeWhere((i) => issueIds.contains(i.id));
+    if (!archived) {
+      for (final id in issueIds) {
+        if (all.every((i) => i.id != id)) {
+          all.add(_issues.firstWhere((i) => i.id == id));
+        }
+      }
+    }
+    return archived
+        ? named
+        : [
+            for (final i in all)
+              if (issueIds.contains(i.id)) i,
+          ];
+  }
+
+  @override
+  Future<List<Issue>> bulkUpdate(
+    List<String> issueIds, {
+    String? state,
+    String? priority,
+    String? assigneeId,
+  }) async {
+    updateCalls.add((
+      ids: issueIds,
+      state: state,
+      priority: priority,
+      assigneeId: assigneeId,
+    ));
+    return [
+      for (final issue in all)
+        if (issueIds.contains(issue.id))
+          Issue(
+            id: issue.id,
+            projectId: issue.projectId,
+            readableId: issue.readableId,
+            title: '${issue.title} (changed)',
+            state: state ?? issue.state,
+            priority: priority ?? issue.priority,
           ),
     ];
   }

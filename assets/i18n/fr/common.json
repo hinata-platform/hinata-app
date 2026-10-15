@@ -925,6 +925,20 @@
       "done": "{{count}} ticket supprimé",
       "done_plural": "{{count}} tickets supprimés"
     },
+    "bulk": {
+      "assignee": "Responsable",
+      "more": "Plus",
+      "pickPerson": "Choisir une personne …",
+      "unassign": "Retirer le responsable",
+      "noCommonStatus": "Les tickets sélectionnés appartiennent à des projets sans statut commun. Sélectionnez des tickets d’un seul projet.",
+      "updated": "{{count}} ticket modifié",
+      "updated_plural": "{{count}} tickets modifiés",
+      "archived": "{{count}} ticket archivé",
+      "archived_plural": "{{count}} tickets archivés",
+      "restored": "{{count}} ticket restauré",
+      "restored_plural": "{{count}} tickets restaurés",
+      "undo": "Annuler"
+    },
     "selectAll": "Tout sélectionner",
     "selectAllCapped": "Les {{max}} premiers sont sélectionnés. Une seule modification ne peut pas en prendre plus.",
     "selection": {

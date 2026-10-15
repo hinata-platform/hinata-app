@@ -925,6 +925,20 @@
       "done": "{{count}} 件の課題を削除しました",
       "done_plural": "{{count}} 件の課題を削除しました"
     },
+    "bulk": {
+      "assignee": "担当者",
+      "more": "その他",
+      "pickPerson": "担当者を選ぶ …",
+      "unassign": "担当者を外す",
+      "noCommonStatus": "選択した課題のプロジェクトに共通のステータスがありません。1 つのプロジェクトの課題を選択してください。",
+      "updated": "{{count}} 件の課題を変更しました",
+      "updated_plural": "{{count}} 件の課題を変更しました",
+      "archived": "{{count}} 件の課題をアーカイブしました",
+      "archived_plural": "{{count}} 件の課題をアーカイブしました",
+      "restored": "{{count}} 件の課題を復元しました",
+      "restored_plural": "{{count}} 件の課題を復元しました",
+      "undo": "元に戻す"
+    },
     "selectAll": "すべて選択",
     "selectAllCapped": "最初の {{max}} 件を選択しました。一度に変更できるのはここまでです。",
     "selection": {

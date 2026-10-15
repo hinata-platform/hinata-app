@@ -84,6 +84,28 @@ class IssuesListCubit extends PagedCubit<Issue> {
   /// Deletes every one of [issueIds] or none; answers how many went.
   Future<int> bulkDelete(List<String> issueIds) => _issues.bulkDelete(issueIds);
 
+  /// Archives, or with [archived] false restores, every one of [issueIds].
+  Future<List<Issue>> bulkArchive(
+    List<String> issueIds, {
+    bool archived = true,
+  }) => _issues.bulkArchive(issueIds, archived: archived);
+
+  /// Sets state, priority or assignee of every one of [issueIds], or of none.
+  Future<List<Issue>> bulkUpdate(
+    List<String> issueIds, {
+    String? state,
+    String? priority,
+    String? assigneeId,
+  }) => _issues.bulkUpdate(
+    issueIds,
+    state: state,
+    priority: priority,
+    assigneeId: assigneeId,
+  );
+
+  /// The projects whose issues the caller may delete.
+  Future<Set<String>> deletableProjectIds() => _issues.deletableProjectIds();
+
   /// The day [offset] falls on in the project [projectId].
   Future<DateTime?> resolveOffset(
     String projectId, {

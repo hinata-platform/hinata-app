@@ -925,6 +925,20 @@
       "done": "{{count}} incidencia eliminada",
       "done_plural": "{{count}} incidencias eliminadas"
     },
+    "bulk": {
+      "assignee": "Responsable",
+      "more": "Más",
+      "pickPerson": "Elegir persona …",
+      "unassign": "Quitar responsable",
+      "noCommonStatus": "Las incidencias seleccionadas están en proyectos sin ningún estado en común. Selecciona incidencias de un solo proyecto.",
+      "updated": "{{count}} incidencia cambiada",
+      "updated_plural": "{{count}} incidencias cambiadas",
+      "archived": "{{count}} incidencia archivada",
+      "archived_plural": "{{count}} incidencias archivadas",
+      "restored": "{{count}} incidencia restaurada",
+      "restored_plural": "{{count}} incidencias restauradas",
+      "undo": "Deshacer"
+    },
     "selectAll": "Seleccionar todo",
     "selectAllCapped": "Están seleccionadas las primeras {{max}}. Es el máximo que admite un solo cambio.",
     "selection": {

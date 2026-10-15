@@ -925,6 +925,20 @@
       "done": "{{count}} issue deleted",
       "done_plural": "{{count}} issues deleted"
     },
+    "bulk": {
+      "assignee": "Assignee",
+      "more": "More",
+      "pickPerson": "Choose a person …",
+      "unassign": "Remove assignee",
+      "noCommonStatus": "The selected issues sit in projects with no status in common. Select issues from one project.",
+      "updated": "{{count}} issue changed",
+      "updated_plural": "{{count}} issues changed",
+      "archived": "{{count}} issue archived",
+      "archived_plural": "{{count}} issues archived",
+      "restored": "{{count}} issue restored",
+      "restored_plural": "{{count}} issues restored",
+      "undo": "Undo"
+    },
     "selectAll": "Select all",
     "selectAllCapped": "The first {{max}} are selected. That is as many as one change can take.",
     "selection": {
