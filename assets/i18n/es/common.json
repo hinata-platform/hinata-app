@@ -927,7 +927,7 @@
     },
     "bulk": {
       "assignee": "Responsable",
-      "more": "Más",
+      "more": "Más acciones",
       "pickPerson": "Elegir persona …",
       "unassign": "Quitar responsable",
       "noCommonStatus": "Las incidencias seleccionadas están en proyectos sin ningún estado en común. Selecciona incidencias de un solo proyecto.",
@@ -937,7 +937,8 @@
       "archived_plural": "{{count}} incidencias archivadas",
       "restored": "{{count}} incidencia restaurada",
       "restored_plural": "{{count}} incidencias restauradas",
-      "undo": "Deshacer"
+      "undo": "Deshacer",
+      "deleteNotAllowed": "Solo puedes eliminar en proyectos que diriges o cuyo equipo administras. Archivar siempre es posible."
     },
     "selectAll": "Seleccionar todo",
     "selectAllCapped": "Están seleccionadas las primeras {{max}}. Es el máximo que admite un solo cambio.",

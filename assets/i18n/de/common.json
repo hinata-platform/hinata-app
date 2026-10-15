@@ -927,7 +927,7 @@
     },
     "bulk": {
       "assignee": "Bearbeiter",
-      "more": "Mehr",
+      "more": "Weitere Aktionen",
       "pickPerson": "Person wählen …",
       "unassign": "Zuweisung entfernen",
       "noCommonStatus": "Die ausgewählten Vorgänge liegen in Projekten ohne gemeinsamen Status. Wähle Vorgänge aus einem Projekt.",
@@ -937,7 +937,8 @@
       "archived_plural": "{{count}} Vorgänge archiviert",
       "restored": "{{count}} Vorgang wiederhergestellt",
       "restored_plural": "{{count}} Vorgänge wiederhergestellt",
-      "undo": "Rückgängig"
+      "undo": "Rückgängig",
+      "deleteNotAllowed": "Löschen geht nur in Projekten, die du leitest oder deren Team du verwaltest. Archivieren geht immer."
     },
     "selectAll": "Alle auswählen",
     "selectAllCapped": "Die ersten {{max}} sind ausgewählt. Mehr lassen sich nicht auf einmal ändern.",

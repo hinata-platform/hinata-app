@@ -927,7 +927,7 @@
     },
     "bulk": {
       "assignee": "负责人",
-      "more": "更多",
+      "more": "更多操作",
       "pickPerson": "选择人员 …",
       "unassign": "移除负责人",
       "noCommonStatus": "所选事项所在的项目没有共同的状态。请选择同一项目中的事项。",
@@ -937,7 +937,8 @@
       "archived_plural": "已归档 {{count}} 个事项",
       "restored": "已恢复 {{count}} 个事项",
       "restored_plural": "已恢复 {{count}} 个事项",
-      "undo": "撤销"
+      "undo": "撤销",
+      "deleteNotAllowed": "只能在你负责的项目或你管理其团队的项目中删除。归档始终可用。"
     },
     "selectAll": "全选",
     "selectAllCapped": "已选择前 {{max}} 个。一次更改最多只能这么多。",
