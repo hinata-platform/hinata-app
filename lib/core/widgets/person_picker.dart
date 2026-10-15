@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../api/api_client.dart';
 import '../blocs/person_picker_cubit.dart';
 import '../i18n/i18n.dart';
 import '../models/core_models.dart';
@@ -14,6 +13,7 @@ import '../theme/app_theme.dart';
 import '../theme/glass_field.dart';
 import 'hive_loader.dart';
 import 'hive_widgets.dart' show HiveAvatar, hiveEase;
+import 'person_search_pager.dart';
 import '../../features/sprint/modals/glass_modal.dart'
     show
         kGlassPopoverBreakpoint,
@@ -177,36 +177,14 @@ class _PersonPickerPanel extends StatefulWidget {
 }
 
 class _PersonPickerPanelState extends State<_PersonPickerPanel> {
-  static const _debounceDelay = Duration(milliseconds: 180);
-  static const _pageSize = 25;
-
   final _searchCtrl = TextEditingController();
   final _focus = FocusNode();
   final _scroll = ScrollController();
-  Timer? _debounce;
 
-  final List<DirectoryUser> _results = [];
-
-  /// Ids already in [_results] — somebody can shift across a page boundary
-  /// while paging, and the same face twice reads as a bug.
-  final Set<String> _seen = {};
-
-  String _query = '';
-  int _page = 0;
-  int _total = 0;
-  bool _loading = true;
-  bool _loadingMore = false;
-
-  /// Set once the server hands back a short page, so a total that never quite
-  /// matches what is on screen cannot keep asking for a page that is not there.
-  bool _exhausted = false;
-  String? _error;
-
-  /// Monotonic request token: a debounced search that lands after a newer one
-  /// started is dropped, so a slow response can never overwrite fresh results.
-  int _reqSeq = 0;
-
-  bool get _hasMore => !_exhausted && _results.length < _total;
+  late final PersonSearchPager _pager = PersonSearchPager(
+    (query, {required page, required size}) =>
+        context.read<PersonPickerCubit>().search(query, page: page, size: size),
+  );
 
   @override
   void initState() {
@@ -215,12 +193,15 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
     // The search pill draws its own focus ring, so it has to repaint on focus.
     _focus.addListener(_onFocusChanged);
     _focus.requestFocus();
-    _runSearch(reset: true);
+    _pager.addListener(_onPage);
+    _pager.refresh();
   }
 
   @override
   void dispose() {
-    _debounce?.cancel();
+    _pager
+      ..removeListener(_onPage)
+      ..dispose();
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
     _searchCtrl.dispose();
@@ -229,71 +210,23 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
     super.dispose();
   }
 
+  void _onPage() {
+    if (mounted) setState(() {});
+  }
+
   void _onFocusChanged() {
     if (mounted) setState(() {});
   }
 
   void _onQueryChanged(String value) {
-    setState(() => _query = value);
-    _debounce?.cancel();
-    _debounce = Timer(_debounceDelay, () => _runSearch(reset: true));
+    setState(() {});
+    _pager.setQuery(value);
   }
 
   void _onScroll() {
     if (!_scroll.hasClients) return;
     if (_scroll.position.pixels >= _scroll.position.maxScrollExtent - 100) {
-      _runSearch(reset: false);
-    }
-  }
-
-  Future<void> _runSearch({required bool reset}) async {
-    if (reset) {
-      _debounce?.cancel();
-    } else if (_loadingMore || _loading || !_hasMore) {
-      return;
-    }
-
-    final seq = ++_reqSeq;
-    final page = reset ? 0 : _page + 1;
-    final query = _query.trim();
-
-    setState(() {
-      if (reset) {
-        _loading = true;
-      } else {
-        _loadingMore = true;
-      }
-      _error = null;
-    });
-
-    try {
-      final result = await context.read<PersonPickerCubit>().search(
-        query,
-        page: page,
-        size: _pageSize,
-      );
-      if (!mounted || seq != _reqSeq) return;
-      setState(() {
-        if (reset) {
-          _results.clear();
-          _seen.clear();
-        }
-        for (final user in result.items) {
-          if (_seen.add(user.id)) _results.add(user);
-        }
-        _page = page;
-        _total = result.total;
-        _exhausted = result.items.length < _pageSize;
-        _loading = false;
-        _loadingMore = false;
-      });
-    } on ApiFailure catch (failure) {
-      if (!mounted || seq != _reqSeq) return;
-      setState(() {
-        _loading = false;
-        _loadingMore = false;
-        _error = failure.message;
-      });
+      _pager.loadMore();
     }
   }
 
@@ -367,7 +300,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
                 ),
               ),
             ),
-            if (_query.isNotEmpty)
+            if (_searchCtrl.text.isNotEmpty)
               // Named for screen readers; the padding gives a 32-point target around
               // the same 14-point glyph.
               Semantics(
@@ -396,31 +329,33 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
   }
 
   Widget _list() {
-    if (_loading && _results.isEmpty) {
+    final results = _pager.results;
+    final error = _pager.error;
+    if (_pager.loading && results.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 26),
         child: Center(child: HiveLoader(size: 18)),
       );
     }
-    if (_error != null && _results.isEmpty) {
+    if (error != null && results.isEmpty) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(14, 14, 14, 16),
         child: Text(
-          context.t(_error!),
+          context.t(error),
           style: TextStyle(fontSize: AppType.label, color: AppColors.dangerInk),
         ),
       );
     }
 
     final rows = <Widget>[
-      for (final user in _results)
+      for (final user in results)
         _PersonRow(
           user: user,
           selected: user.id == widget.selectedId,
           isMe: user.id == widget.meId,
           onTap: () => Navigator.of(context).pop(user),
         ),
-      if (_results.isEmpty && !_loadingMore)
+      if (results.isEmpty && !_pager.loadingMore)
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
           child: Text(
@@ -431,7 +366,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
             ),
           ),
         ),
-      if (_loadingMore)
+      if (_pager.loadingMore)
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 10),
           child: Center(child: HiveLoader(size: 15)),
