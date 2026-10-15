@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/person_picker_cubit.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/issue_detail.dart';
-import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/participants/issue_participants_cubit.dart';
 import 'package:hinata/features/issues/participants/share_issue_sheet.dart';
 
