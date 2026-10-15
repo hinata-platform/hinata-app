@@ -1,5 +1,8 @@
 import 'core_models.dart';
+import 'issue_participation.dart';
 import 'work_models.dart';
+
+export 'issue_participation.dart';
 
 /// First-paint bootstrap payload from `GET /api/v1/issues/{id}/detail`: the
 /// issue plus everything the detail view needs, composed server-side in ONE
@@ -23,6 +26,8 @@ class IssueDetail {
     required this.sprints,
     required this.users,
     required this.canDelete,
+    this.participation = IssueParticipation.member,
+    this.cannotSeeIssue = const {},
   });
 
   final Issue issue;
@@ -49,6 +54,14 @@ class IssueDetail {
   /// whole org directory. The full directory for pickers is fetched lazily.
   final List<DirectoryUser> users;
   final bool canDelete;
+
+  /// Whether the caller is a member of the project or somebody the issue is
+  /// shared with; the latter reads and comments only.
+  final IssueParticipation participation;
+
+  /// Those of [users] who could not open this issue, for the hint under a
+  /// comment that mentions one of them.
+  final Set<String> cannotSeeIssue;
 
   factory IssueDetail.fromJson(Map<String, dynamic> json) {
     List<T> parseList<T>(
@@ -81,6 +94,14 @@ class IssueDetail {
       sprints: parseList(json['sprints'], Sprint.fromJson),
       users: parseList(json['users'], DirectoryUser.fromJson),
       canDelete: json['canDelete'] as bool? ?? false,
+      participation: IssueParticipation.fromJson(
+        json['participation'] as Map<String, dynamic>?,
+      ),
+      cannotSeeIssue: {
+        for (final user in (json['users'] as List<dynamic>?) ?? const [])
+          if ((user as Map<String, dynamic>)['canSeeIssue'] == false)
+            user['id'] as String,
+      },
     );
   }
 }
