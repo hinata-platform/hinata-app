@@ -852,7 +852,7 @@
         "sprint": "{{issue}} 将离开迭代“{{detail}}”，其看板未覆盖目标项目。",
         "parent": "{{issue}} 将失去与 {{detail}} 的关联，后者留在原处。",
         "epicChildren": "{{issue}} 有 {{detail}} 个子事项将留在当前项目。",
-        "assignee": "{{issue}} 的某位负责人不是目标项目的成员。",
+        "assignee": "{{issue}} 的一位负责人无法打开目标项目，将在那里被移除负责人身份。",
         "generic": "此次移动会产生当前应用版本尚未识别的影响。"
       },
       "summary": "将移动 {{count}} 个事项",

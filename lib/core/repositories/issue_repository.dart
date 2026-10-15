@@ -10,9 +10,13 @@ import '../util/reader_time_zone.dart';
 
 /// Issues: search/CRUD, hierarchy, relationship links, change history,
 /// attachments, and time-tracking work items.
-/// What a bulk archive did: the named issues as they now are, and every issue
-/// it switched, sub-tasks included.
-typedef BulkArchiveResult = ({List<Issue> issues, List<String> toggledIds});
+/// What a bulk archive did: the named issues as they now are, which of them it
+/// switched, and which of their sub-tasks it switched along with them.
+typedef BulkArchiveResult = ({
+  List<Issue> issues,
+  List<String> toggledIds,
+  List<String> toggledSubtaskIds,
+});
 
 class IssueRepository {
   IssueRepository(this._api);
@@ -335,14 +339,17 @@ class IssueRepository {
   }
 
   /// Archives — or with [archived] false restores — all of [issueIds]. Any
-  /// member may. With [cascade] a standard issue takes its sub-tasks along; an
-  /// undo sends back exactly the [BulkArchiveResult.toggledIds] of the first
-  /// call with it off, so a sub-task archived on its own before stays archived.
-  /// All or nothing.
+  /// member may. With [cascade] a standard issue takes its sub-tasks along.
+  ///
+  /// An undo sends back what the first call switched: its `toggledIds` as
+  /// [issueIds] and its `toggledSubtaskIds` as [subtaskIds], with [cascade]
+  /// off, so a sub-task archived on its own before stays archived. All or
+  /// nothing.
   Future<BulkArchiveResult> bulkArchive(
     List<String> issueIds, {
     bool archived = true,
     bool cascade = true,
+    List<String>? subtaskIds,
   }) async {
     final data =
         await _api.post(
@@ -351,6 +358,7 @@ class IssueRepository {
                 'issueIds': issueIds,
                 'archived': archived,
                 'cascade': cascade,
+                'subtaskIds': ?subtaskIds,
               },
             )
             as Map<String, dynamic>;
@@ -361,6 +369,11 @@ class IssueRepository {
       ],
       toggledIds: [
         for (final id in data['toggledIds'] as List<dynamic>? ?? const [])
+          id as String,
+      ],
+      toggledSubtaskIds: [
+        for (final id
+            in data['toggledSubtaskIds'] as List<dynamic>? ?? const [])
           id as String,
       ],
     );

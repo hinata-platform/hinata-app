@@ -606,7 +606,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
       final result = await _issues.bulkArchive(ids, archived: archive);
       if (!mounted) return;
       _exitSelection();
-      final gone = {...result.toggledIds};
+      final gone = {...result.toggledIds, ...result.toggledSubtaskIds};
       final removed = [
         for (final (index, issue) in _issues.state.items.indexed)
           if (gone.contains(issue.id) ||
@@ -619,7 +619,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
             (issue.isSubtask && gone.contains(issue.parentId)),
       );
       IssueEvents.instance.notifyChanged(origin: this);
-      if (result.toggledIds.isEmpty) return;
+      if (gone.isEmpty) return;
       showGlassToast(
         context,
         context.t(
@@ -631,7 +631,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
         onAction: () => _undoArchive(
           repo: repo,
           overlay: overlay,
-          toggledIds: result.toggledIds,
+          switched: result,
           archived: archive,
           removed: removed,
         ),
@@ -644,20 +644,22 @@ class _IssuesScreenState extends State<IssuesScreen> {
   ///
   /// Works after this screen is gone too, which is why it reaches the server
   /// through the repository and speaks through the root overlay. While the
-  /// screen is still there, the rows go back where they were.
+  /// screen is still there, the rows go back where they were; had the list been
+  /// read again in between, a row already back is left alone.
   Future<void> _undoArchive({
     required IssueRepository repo,
     required OverlayState overlay,
-    required List<String> toggledIds,
+    required BulkArchiveResult switched,
     required bool archived,
     required List<({int index, Issue item})> removed,
   }) async {
     String t(String key, {int? count}) => overlay.context.t(key, count: count);
     try {
       final result = await repo.bulkArchive(
-        toggledIds,
+        switched.toggledIds,
         archived: !archived,
         cascade: false,
+        subtaskIds: switched.toggledSubtaskIds,
       );
       final fresh = {for (final issue in result.issues) issue.id: issue};
       if (mounted) {

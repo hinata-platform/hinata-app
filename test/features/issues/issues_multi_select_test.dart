@@ -480,6 +480,13 @@ void main() {
 
       expect(find.text('Child of one'), findsNothing);
       expect(find.text('Issue number 2'), findsOneWidget);
+
+      // Undo sends the sub-task apart, and it comes back with its parent.
+      await tester.tap(find.text('issues.bulk.undo'));
+      await settle(tester);
+      expect(issueRepo.archiveCalls.last.ids, ['i1']);
+      expect(issueRepo.archiveCalls.last.subtaskIds, ['c1']);
+      expect(find.text('Child of one'), findsOneWidget);
       await tester.pump(const Duration(seconds: 10));
     });
   });
@@ -816,8 +823,10 @@ class _FakeIssueRepository implements IssueRepository {
   final List<Issue> all;
   final List<_BulkCall> bulkCalls = [];
   final List<List<String>> deleteCalls = [];
-  final List<({List<String> ids, bool archived, bool cascade})> archiveCalls =
-      [];
+  final List<
+    ({List<String> ids, bool archived, bool cascade, List<String> subtaskIds})
+  >
+  archiveCalls = [];
 
   /// What the fake server holds archived, so an undo can bring it back.
   final List<Issue> archivedRows = [];
@@ -866,8 +875,14 @@ class _FakeIssueRepository implements IssueRepository {
     List<String> issueIds, {
     bool archived = true,
     bool cascade = true,
+    List<String>? subtaskIds,
   }) async {
-    archiveCalls.add((ids: issueIds, archived: archived, cascade: cascade));
+    archiveCalls.add((
+      ids: issueIds,
+      archived: archived,
+      cascade: cascade,
+      subtaskIds: subtaskIds ?? const [],
+    ));
     if (archived) {
       final children = [
         if (cascade)
@@ -881,15 +896,23 @@ class _FakeIssueRepository implements IssueRepository {
       ];
       archivedRows.addAll(all.where((i) => toggled.contains(i.id)));
       all.removeWhere((i) => toggled.contains(i.id));
-      return (issues: named, toggledIds: toggled);
+      return (issues: named, toggledIds: issueIds, toggledSubtaskIds: children);
     }
+    final ids = {...issueIds, ...?subtaskIds};
     final back = [
       for (final i in archivedRows)
-        if (issueIds.contains(i.id)) i,
+        if (ids.contains(i.id)) i,
     ];
-    archivedRows.removeWhere((i) => issueIds.contains(i.id));
+    archivedRows.removeWhere((i) => ids.contains(i.id));
     all.addAll(back);
-    return (issues: back, toggledIds: [for (final i in back) i.id]);
+    return (
+      issues: [
+        for (final i in back)
+          if (issueIds.contains(i.id)) i,
+      ],
+      toggledIds: issueIds,
+      toggledSubtaskIds: subtaskIds ?? const <String>[],
+    );
   }
 
   @override
