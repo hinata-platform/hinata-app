@@ -1,0 +1,12 @@
+/* The phrases Siri and Spotlight know for the timer (HIN-105). Each one names the app. */
+
+"${applicationName} timer status" = "${applicationName}计时状态";
+"How long is my ${applicationName} timer running" = "我的${applicationName}计时进行多久了";
+"Next phase in ${applicationName}" = "${applicationName}下一阶段";
+"Open focus in ${applicationName}" = "在${applicationName}中打开专注";
+"Start a timer for ${project} in ${applicationName}" = "在${applicationName}中为${project}开始计时";
+"Start a timer in ${applicationName}" = "在${applicationName}中开始计时";
+"Start the ${applicationName} timer" = "开始${applicationName}计时";
+"Stop the ${applicationName} timer" = "停止${applicationName}计时";
+"Stop the timer in ${applicationName}" = "在${applicationName}中停止计时";
+"Take a break in ${applicationName}" = "在${applicationName}中休息一下";
