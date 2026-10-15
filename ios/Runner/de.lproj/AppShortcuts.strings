@@ -1,0 +1,12 @@
+/* The phrases Siri and Spotlight know for the timer (HIN-105). Each one names the app. */
+
+"${applicationName} timer status" = "${applicationName} Timer-Status";
+"How long is my ${applicationName} timer running" = "Wie lange läuft mein ${applicationName} Timer";
+"Next phase in ${applicationName}" = "Nächste Phase in ${applicationName}";
+"Open focus in ${applicationName}" = "Fokus öffnen in ${applicationName}";
+"Start a timer for ${project} in ${applicationName}" = "Timer für ${project} starten in ${applicationName}";
+"Start a timer in ${applicationName}" = "Timer starten in ${applicationName}";
+"Start the ${applicationName} timer" = "${applicationName} Timer starten";
+"Stop the ${applicationName} timer" = "${applicationName} Timer stoppen";
+"Stop the timer in ${applicationName}" = "Timer stoppen in ${applicationName}";
+"Take a break in ${applicationName}" = "Pause machen in ${applicationName}";

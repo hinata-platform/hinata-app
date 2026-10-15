@@ -9,12 +9,14 @@
 /* Begin PBXBuildFile section */
 		09CAD45A4EF69F73C013DF35 /* TimerActivityCryptoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D761ABB18719FF8F6C3FE76D /* TimerActivityCryptoTests.swift */; };
 		0DCC9D7EFF9B63E98609E83F /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 3036CF8364C2B225C4A96674 /* Localizable.strings */; };
+		11C3BF7EA5F4CC96911FDF78 /* AppIntents.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 82B68C027354CDC38A21F78B /* AppIntents.xcstrings */; };
 		13B44E58E25790FEA3CD273A /* TimerWidgetRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */; };
 		13EBA85209FE59AB995AF8BE /* HinataWidgetsBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C7C52D81665F8F14D86EC5F /* HinataWidgetsBundle.swift */; };
 		1498D2341E8E89220040F4C2 /* GeneratedPluginRegistrant.m in Sources */ = {isa = PBXBuildFile; fileRef = 1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */; };
 		20757CC8DA0CA9F434D741BD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */; };
 		2472F3F772633A41BE50EBEC /* HinataLiveActivityChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */; };
 		2ADC41719F8D324A5F411CA0 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CBD76350A3EA059258B881EE /* SwiftUI.framework */; };
+		3173A496780E9616D18D9708 /* TimerWidgetRecord.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */; };
 		3298C0BBFE0F27106E7EB6AC /* TimerBackgroundIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7245F0B20B2B20CD187B57 /* TimerBackgroundIntent.swift */; };
 		331C808B294A63AB00263BE5 /* RunnerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 331C807B294A618700263BE5 /* RunnerTests.swift */; };
 		33F541512BAB718FE29F1952 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 67974D91D13EB0DE6AC69D3B /* InfoPlist.strings */; };
@@ -27,7 +29,10 @@
 		65D2F81EC34257767B40E31A /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
+		80FB2B1D1FBD1ACF046A8FC4 /* TimerIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7273D7510D8CA9659B0196D9 /* TimerIntents.swift */; };
 		85F8D59CE916E79BCC9143CD /* TimerHomeWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = 23FC8AD56013B050DD9239BF /* TimerHomeWidget.swift */; };
+		86C35E6D28A36A1A0F7E3CA5 /* AppShortcuts.strings in Resources */ = {isa = PBXBuildFile; fileRef = B4EB03B5D8A849A921B996EA /* AppShortcuts.strings */; };
+		91730B266ED03CFE0ECEA43B /* AppIntents.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 82B68C027354CDC38A21F78B /* AppIntents.xcstrings */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
@@ -36,10 +41,14 @@
 		AB12CD34EF5600000000A002 /* HinataSplashView.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A001 /* HinataSplashView.swift */; };
 		AB12CD34EF5600000000A004 /* Sora-Variable.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A003 /* Sora-Variable.ttf */; };
 		AB12CD34EF5600000000A006 /* HinataPdfChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = AB12CD34EF5600000000A005 /* HinataPdfChannel.swift */; };
+		AB8F9FB927E862C3BD89DEA8 /* HinataAppIntentsChannel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A62FFC9128B1DEA8561FDF /* HinataAppIntentsChannel.swift */; };
+		ADB633F20C655D3ACA6BABC6 /* TimerIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7273D7510D8CA9659B0196D9 /* TimerIntents.swift */; };
+		BF9C0F783D43CA29485BF6F3 /* TimerControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4382722CE6689A96356E81F1 /* TimerControls.swift */; };
 		C5952B62163FB9A89886828E /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EBA6EAFD3BD1FD11C29E3678 /* WidgetKit.framework */; };
 		D105A9C55E5F034B35E11829 /* TimerActivityCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */; };
 		E0A81A687E0FC2A3AD6AB93E /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 96C9D9564928377F24C16406 /* GoogleService-Info.plist */; };
 		E21E3DFC37D31B33A5461DEA /* TimerActivityCrypto.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */; };
+		E5CA922C1A4A236D03208B61 /* HinataAppShortcuts.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8444A77145539269A8A36EFF /* HinataAppShortcuts.swift */; };
 		ECE6D819E33BF5E8B8532677 /* TimerActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */; };
 		F57257B4632E0EA1752B9DDA /* TimerBackgroundIntent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F7245F0B20B2B20CD187B57 /* TimerBackgroundIntent.swift */; };
 /* End PBXBuildFile section */
@@ -87,10 +96,16 @@
 
 /* Begin PBXFileReference section */
 		024158F8003EE3546E45DA43 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		069AD21A5161586E30A855CD /* ar */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		0B56419B6A765E08448E5869 /* hi */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		0C7D1766A24693108F00F473 /* de */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		1498D2321E8E86230040F4C2 /* GeneratedPluginRegistrant.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GeneratedPluginRegistrant.h; sourceTree = "<group>"; };
 		1498D2331E8E89220040F4C2 /* GeneratedPluginRegistrant.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GeneratedPluginRegistrant.m; sourceTree = "<group>"; };
 		15C65A2FC959F60D3F6BF7A4 /* TimerLiveActivity.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerLiveActivity.swift; sourceTree = "<group>"; };
+		15F06D8A35179DAAC9D18A89 /* zh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
+		1EF3E875687466D15542745C /* en */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		23FC8AD56013B050DD9239BF /* TimerHomeWidget.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerHomeWidget.swift; sourceTree = "<group>"; };
+		244B6302F1C7218CED8BC8FD /* es */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerActivityCrypto.swift; sourceTree = "<group>"; };
 		2C610EA3C9D83E901D27477B /* hi */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/Localizable.strings; sourceTree = "<group>"; };
 		2F7245F0B20B2B20CD187B57 /* TimerBackgroundIntent.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerBackgroundIntent.swift; sourceTree = "<group>"; };
@@ -100,19 +115,25 @@
 		347DFBCCB9E3A19FD4C553F4 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = AppFrameworkInfo.plist; path = Flutter/AppFrameworkInfo.plist; sourceTree = "<group>"; };
 		3EB82E95D6FDCFBD40665874 /* Pods_RunnerTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_RunnerTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		4382722CE6689A96356E81F1 /* TimerControls.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerControls.swift; sourceTree = "<group>"; };
 		44DB317A51D5C72D0C7A2775 /* Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		450CA13014EE39391B4A0D97 /* es */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = es; path = es.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4B9ABD58DE13F415F78CA195 /* hi */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = hi; path = hi.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		4F4B465A67D4D192B67BA77D /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
+		544E277C029F438CEE337E21 /* ru */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		5D552507177754D3285DBF6D /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		67410BB23F78FAB2E535E54E /* zh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/Localizable.strings; sourceTree = "<group>"; };
 		67F817F25D2552AFE4A2371E /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
 		6C7C52D81665F8F14D86EC5F /* HinataWidgetsBundle.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataWidgetsBundle.swift; sourceTree = "<group>"; };
+		7273D7510D8CA9659B0196D9 /* TimerIntents.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerIntents.swift; sourceTree = "<group>"; };
 		74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Runner-Bridging-Header.h"; sourceTree = "<group>"; };
 		74858FAE1ED2DC5600515810 /* AppDelegate.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		74B7BB9B31086FE651DA151B /* ja */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ja; path = ja.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneDelegate.swift; sourceTree = "<group>"; };
 		7AFA3C8E1D35360C0083082E /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = Release.xcconfig; path = Flutter/Release.xcconfig; sourceTree = "<group>"; };
 		8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerActivityStore.swift; sourceTree = "<group>"; };
+		82B68C027354CDC38A21F78B /* AppIntents.xcstrings */ = {isa = PBXFileReference; includeInIndex = 1; path = AppIntents.xcstrings; sourceTree = "<group>"; };
+		8444A77145539269A8A36EFF /* HinataAppShortcuts.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataAppShortcuts.swift; sourceTree = "<group>"; };
 		8851870F318299DDAC8F27AE /* Pods-RunnerTests.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.profile.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.profile.xcconfig"; sourceTree = "<group>"; };
 		899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataLiveActivityChannel.swift; sourceTree = "<group>"; };
@@ -147,8 +168,10 @@
 		EBA6EAFD3BD1FD11C29E3678 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		EC8FDD80CD7B651AB8728305 /* de */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		EEF10B0B7D7B6F70D78CEE54 /* HinataWidgets.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = HinataWidgets.xcconfig; sourceTree = "<group>"; };
+		F2A62FFC9128B1DEA8561FDF /* HinataAppIntentsChannel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataAppIntentsChannel.swift; sourceTree = "<group>"; };
 		F32F5F308E2692286A7F702B /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		F3D103E198B0971867E6939A /* Pods-RunnerTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-RunnerTests.debug.xcconfig"; path = "Target Support Files/Pods-RunnerTests/Pods-RunnerTests.debug.xcconfig"; sourceTree = "<group>"; };
+		F8BED2776AC0B42A0848C710 /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		F8FB80371A503F9A2B28F5B1 /* TimerWidgetRecord.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerWidgetRecord.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -193,6 +216,7 @@
 				9E315CC38938C654405F4729 /* HinataWidgets.entitlements */,
 				899D13F5B95A64CBE9AA7B83 /* PrivacyInfo.xcprivacy */,
 				3036CF8364C2B225C4A96674 /* Localizable.strings */,
+				4382722CE6689A96356E81F1 /* TimerControls.swift */,
 			);
 			name = HinataWidgets;
 			path = HinataWidgets;
@@ -268,6 +292,9 @@
 				AB12CD34EF5600000000A003 /* Sora-Variable.ttf */,
 				74858FAD1ED2DC5600515810 /* Runner-Bridging-Header.h */,
 				8B4914DB69DC9E6F2884796E /* HinataLiveActivityChannel.swift */,
+				8444A77145539269A8A36EFF /* HinataAppShortcuts.swift */,
+				F2A62FFC9128B1DEA8561FDF /* HinataAppIntentsChannel.swift */,
+				B4EB03B5D8A849A921B996EA /* AppShortcuts.strings */,
 			);
 			path = Runner;
 			sourceTree = "<group>";
@@ -280,6 +307,8 @@
 				8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */,
 				2B86D6804D4CEBF303040C78 /* TimerActivityCrypto.swift */,
 				2F7245F0B20B2B20CD187B57 /* TimerBackgroundIntent.swift */,
+				7273D7510D8CA9659B0196D9 /* TimerIntents.swift */,
+				82B68C027354CDC38A21F78B /* AppIntents.xcstrings */,
 			);
 			name = Shared;
 			path = Shared;
@@ -441,6 +470,8 @@
 				97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */,
 				97C146FC1CF9000F007C117D /* Main.storyboard in Resources */,
 				E0A81A687E0FC2A3AD6AB93E /* GoogleService-Info.plist in Resources */,
+				91730B266ED03CFE0ECEA43B /* AppIntents.xcstrings in Resources */,
+				86C35E6D28A36A1A0F7E3CA5 /* AppShortcuts.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -450,6 +481,7 @@
 			files = (
 				20757CC8DA0CA9F434D741BD /* PrivacyInfo.xcprivacy in Resources */,
 				0DCC9D7EFF9B63E98609E83F /* Localizable.strings in Resources */,
+				11C3BF7EA5F4CC96911FDF78 /* AppIntents.xcstrings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -591,6 +623,10 @@
 				4C35087E81A54C0A9ADE22A5 /* TimerActivityStore.swift in Sources */,
 				E21E3DFC37D31B33A5461DEA /* TimerActivityCrypto.swift in Sources */,
 				F57257B4632E0EA1752B9DDA /* TimerBackgroundIntent.swift in Sources */,
+				80FB2B1D1FBD1ACF046A8FC4 /* TimerIntents.swift in Sources */,
+				E5CA922C1A4A236D03208B61 /* HinataAppShortcuts.swift in Sources */,
+				AB8F9FB927E862C3BD89DEA8 /* HinataAppIntentsChannel.swift in Sources */,
+				3173A496780E9616D18D9708 /* TimerWidgetRecord.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -606,6 +642,8 @@
 				ECE6D819E33BF5E8B8532677 /* TimerActivityStore.swift in Sources */,
 				D105A9C55E5F034B35E11829 /* TimerActivityCrypto.swift in Sources */,
 				3298C0BBFE0F27106E7EB6AC /* TimerBackgroundIntent.swift in Sources */,
+				ADB633F20C655D3ACA6BABC6 /* TimerIntents.swift in Sources */,
+				BF9C0F783D43CA29485BF6F3 /* TimerControls.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -672,6 +710,22 @@
 				97C147001CF9000F007C117D /* Base */,
 			);
 			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+		B4EB03B5D8A849A921B996EA /* AppShortcuts.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1EF3E875687466D15542745C /* en */,
+				0C7D1766A24693108F00F473 /* de */,
+				244B6302F1C7218CED8BC8FD /* es */,
+				F8BED2776AC0B42A0848C710 /* fr */,
+				544E277C029F438CEE337E21 /* ru */,
+				15F06D8A35179DAAC9D18A89 /* zh */,
+				74B7BB9B31086FE651DA151B /* ja */,
+				0B56419B6A765E08448E5869 /* hi */,
+				069AD21A5161586E30A855CD /* ar */,
+			);
+			name = AppShortcuts.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
