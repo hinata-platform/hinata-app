@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'adapters/app_intents_surface.dart';
 import 'adapters/global_hotkeys_surface.dart';
 import 'adapters/home_widget_surface.dart';
 import 'adapters/keep_running_surface.dart';
@@ -63,6 +64,8 @@ List<TimerSurface> buildTimerSurfaces(
       notifications(),
       LiveActivitySurface(registry: liveActivityRegistry),
       widgets(),
+      // After the widgets: the controls read the record they just wrote.
+      AppIntentsSurface(),
       title,
     ],
     SurfacePlatform.android => [notifications(), widgets(), title],
