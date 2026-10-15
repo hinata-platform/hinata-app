@@ -30,6 +30,11 @@ import home_widget
         AppDelegate.registerBackgroundPlugins(registry)
       }
     }
+    // HIN-105: Siri, Shortcuts and the controls run their intents in this
+    // process; a request goes to a headless engine, a route to the app's own.
+    TimerIntentBridge.perform = { request in await HinataIntentEngine.perform(request) }
+    TimerIntentBridge.openRoute = { route in HinataAppIntentsChannel.openRoute(route) }
+    TimerIntentBridge.reloadControls = { HinataAppIntentsChannel.reloadControls() }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -42,6 +47,9 @@ import home_widget
 
     // Hinata: der laufende Timer als Live Activity (HIN-102).
     HinataLiveActivityChannel.register(with: engineBridge.applicationRegistrar.messenger())
+
+    // Hinata: Siri, Shortcuts und Controls (HIN-105).
+    HinataAppIntentsChannel.register(with: engineBridge.applicationRegistrar.messenger())
   }
 
   /// A notification button that acts in the background (HIN-103) runs its Dart

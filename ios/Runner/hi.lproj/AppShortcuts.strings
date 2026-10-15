@@ -1,0 +1,12 @@
+/* The phrases Siri and Spotlight know for the timer (HIN-105). Each one names the app. */
+
+"${applicationName} timer status" = "${applicationName} टाइमर की स्थिति";
+"How long is my ${applicationName} timer running" = "मेरा ${applicationName} टाइमर कितनी देर से चल रहा है";
+"Next phase in ${applicationName}" = "${applicationName} में अगला चरण";
+"Open focus in ${applicationName}" = "${applicationName} में फ़ोकस खोलो";
+"Start a timer for ${project} in ${applicationName}" = "${applicationName} में ${project} का टाइमर शुरू करो";
+"Start a timer in ${applicationName}" = "${applicationName} में टाइमर शुरू करो";
+"Start the ${applicationName} timer" = "${applicationName} टाइमर चालू करो";
+"Stop the ${applicationName} timer" = "${applicationName} टाइमर बंद करो";
+"Stop the timer in ${applicationName}" = "${applicationName} में टाइमर रोको";
+"Take a break in ${applicationName}" = "${applicationName} में ब्रेक लो";

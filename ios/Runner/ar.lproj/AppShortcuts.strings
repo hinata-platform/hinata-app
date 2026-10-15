@@ -1,0 +1,12 @@
+/* The phrases Siri and Spotlight know for the timer (HIN-105). Each one names the app. */
+
+"${applicationName} timer status" = "حالة مؤقت ${applicationName}";
+"How long is my ${applicationName} timer running" = "منذ متى يعمل مؤقت ${applicationName}";
+"Next phase in ${applicationName}" = "المرحلة التالية في ${applicationName}";
+"Open focus in ${applicationName}" = "افتح التركيز في ${applicationName}";
+"Start a timer for ${project} in ${applicationName}" = "ابدأ مؤقتًا لـ ${project} في ${applicationName}";
+"Start a timer in ${applicationName}" = "ابدأ مؤقتًا في ${applicationName}";
+"Start the ${applicationName} timer" = "شغّل مؤقت ${applicationName}";
+"Stop the ${applicationName} timer" = "أوقف مؤقت ${applicationName}";
+"Stop the timer in ${applicationName}" = "أوقف المؤقت في ${applicationName}";
+"Take a break in ${applicationName}" = "خذ استراحة في ${applicationName}";

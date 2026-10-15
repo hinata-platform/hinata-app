@@ -2,15 +2,22 @@ import SwiftUI
 import WidgetKit
 
 /// The widget extension of Hinata (HIN-102): the running timer as a Live
-/// Activity and as home and lock screen widgets.
+/// Activity and as home and lock screen widgets, and from iOS 18 as three
+/// controls (HIN-105).
 ///
 /// No Flutter in here. The app writes everything these views say, in the
-/// reader's language; the only strings of the extension are the gallery's.
+/// reader's language; the only strings of the extension are the gallery's and
+/// the controls'.
 @main
 struct HinataWidgetsBundle: WidgetBundle {
   var body: some Widget {
     TimerHomeWidget()
     TimerLiveActivity()
+    if #available(iOSApplicationExtension 18.0, *) {
+      TimerToggleControl()
+      TimerAdvanceControl()
+      TimerFocusControl()
+    }
   }
 }
 
