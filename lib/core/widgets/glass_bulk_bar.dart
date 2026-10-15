@@ -180,8 +180,8 @@ class _BulkBarScope extends InheritedWidget {
       iconOnly != oldWidget.iconOnly;
 }
 
-/// A hairline between groups of actions in a [GlassBulkBar]: what changes the
-/// issues, what removes them, what is left in the overflow.
+/// A hairline between groups of actions in a [GlassBulkBar], such as what
+/// changes the selected items, what removes them and the overflow.
 class GlassBulkDivider extends StatelessWidget {
   const GlassBulkDivider({super.key});
 
@@ -216,7 +216,10 @@ class GlassBulkAction extends StatelessWidget {
     this.danger = false,
     this.menu = false,
     this.iconOnly = false,
-  });
+  }) : assert(
+         onTap == null || onTapAt == null,
+         'Give onTap or onTapAt, not both: onTapAt would win.',
+       );
 
   final IconData icon;
   final String label;

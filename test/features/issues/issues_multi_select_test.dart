@@ -79,6 +79,7 @@ void main() {
     bool templates = true,
     AppStorage? storage,
     List<Issue>? issues,
+    bool fieldOutside = false,
   }) async {
     if (issues != null) issueRepo = _FakeIssueRepository(issues);
     tester.view
@@ -121,6 +122,8 @@ void main() {
                               child: chrome.bottomFor('/issues'),
                             ),
                           ),
+                          if (fieldOutside)
+                            const TextField(key: ValueKey('outside')),
                           const Expanded(child: IssuesScreen()),
                         ],
                       ),
@@ -383,9 +386,6 @@ void main() {
       await settle(tester, 2);
       await tester.tap(find.text('Issue number 3'));
       await settle(tester, 2);
-      // Raw i18n keys make the labels long enough for the strip to scroll.
-      await tester.ensureVisible(find.text('issues.bulkDelete.action'));
-      await settle(tester, 2);
       await tapBar(tester, 'issues.bulkDelete.action');
       await settle(tester);
 
@@ -407,9 +407,6 @@ void main() {
 
       await tester.longPress(find.text('Issue number 2'));
       await settle(tester, 2);
-      // Raw i18n keys make the labels long enough for the strip to scroll.
-      await tester.ensureVisible(find.text('issues.bulkDelete.action'));
-      await settle(tester, 2);
       await tapBar(tester, 'issues.bulkDelete.action');
       await settle(tester);
       await tester.tap(find.text('common.cancel').last);
@@ -421,31 +418,68 @@ void main() {
   });
 
   group('bulk archive', () {
-    testWidgets('takes the rows out in place and offers Undo', (tester) async {
+    testWidgets('takes the rows out in place, and Undo puts them back there', (
+      tester,
+    ) async {
       await open(tester, width: 1400);
       final reads = issueRepo.listCalls;
 
-      await tester.longPress(find.text('Issue number 1'));
+      await tester.longPress(find.text('Issue number 2'));
       await settle(tester, 2);
-      await tester.tap(find.text('Issue number 2'));
+      await tester.tap(find.text('Issue number 3'));
       await settle(tester, 2);
       await tapBar(tester, 'issues.archive');
       await settle(tester);
 
-      expect(issueRepo.archiveCalls.single.ids, ['i1', 'i2']);
+      expect(issueRepo.archiveCalls.single.ids, ['i2', 'i3']);
       expect(issueRepo.archiveCalls.single.archived, isTrue);
       // No question first, and no refetch: the rows leave where they are.
-      expect(find.text('Issue number 1'), findsNothing);
       expect(find.text('Issue number 2'), findsNothing);
-      expect(find.text('Issue number 3'), findsOneWidget);
+      expect(find.text('Issue number 3'), findsNothing);
       expect(issueRepo.listCalls, reads);
       expect(find.byType(GlassBulkBar), findsNothing);
 
       await tester.tap(find.text('issues.bulk.undo'));
       await settle(tester);
+      // Exactly what was switched, nothing cascading, and no refetch either.
       expect(issueRepo.archiveCalls.last.archived, isFalse);
-      expect(issueRepo.archiveCalls.last.ids, ['i1', 'i2']);
-      expect(find.text('Issue number 1'), findsOneWidget);
+      expect(issueRepo.archiveCalls.last.cascade, isFalse);
+      expect(issueRepo.archiveCalls.last.ids, ['i2', 'i3']);
+      expect(issueRepo.listCalls, reads);
+      // Back between the rows they were taken from.
+      final order = [
+        for (final row in tester.widgetList<IssueRow>(find.byType(IssueRow)))
+          row.issue.id,
+      ];
+      expect(order, ['i1', 'i2', 'i3', 'i4', 'i5']);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
+    testWidgets('a sub-task leaves with its parent', (tester) async {
+      await open(
+        tester,
+        width: 1400,
+        issues: [
+          ..._issues,
+          const Issue(
+            id: 'c1',
+            projectId: 'p1',
+            readableId: 'MOB-9',
+            title: 'Child of one',
+            state: 'OPEN',
+            type: 'SUBTASK',
+            parentId: 'i1',
+          ),
+        ],
+      );
+
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+      await tapBar(tester, 'issues.archive');
+      await settle(tester);
+
+      expect(find.text('Child of one'), findsNothing);
+      expect(find.text('Issue number 2'), findsOneWidget);
       await tester.pump(const Duration(seconds: 10));
     });
   });
@@ -591,6 +625,56 @@ void main() {
     });
   });
 
+  group('phone overflow', () {
+    testWidgets('offers select all before anything is ticked', (tester) async {
+      await open(tester, width: 390);
+      await tester.tap(find.byTooltip('issues.selection.enter').first);
+      await settle(tester, 2);
+
+      await tester.tap(find.byTooltip('issues.bulk.more'));
+      await settle(tester, 6);
+      // Nothing ticked: only what does not need a selection.
+      expect(find.text('issues.bulkDeadline.action'), findsNothing);
+      expect(find.text('issues.move.action'), findsNothing);
+      await tester.tap(find.text('issues.selectAll').last);
+      await settle(tester, 4);
+
+      expect(
+        tester
+            .widgetList<IssueRow>(find.byType(IssueRow))
+            .where((r) => r.selected),
+        hasLength(5),
+      );
+    });
+  });
+
+  group('shortcuts stand aside', () {
+    testWidgets('⌘A in a text field selects its text, not the issues', (
+      tester,
+    ) async {
+      await open(tester, width: 1400, fieldOutside: true);
+      await tester.enterText(find.byKey(const ValueKey('outside')), 'draft');
+      await settle(tester, 2);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await settle(tester, 2);
+
+      expect(find.byType(GlassBulkBar), findsNothing);
+      // The field took both keys: its text was selected, then deleted.
+      expect(
+        tester
+            .widget<TextField>(find.byKey(const ValueKey('outside')))
+            .controller
+            ?.text,
+        anyOf(isNull, isEmpty),
+      );
+      expect(find.text('draft'), findsNothing);
+    });
+  });
+
   group('selection toggle', () {
     testWidgets('enters selection with nothing selected and stays there', (
       tester,
@@ -732,7 +816,11 @@ class _FakeIssueRepository implements IssueRepository {
   final List<Issue> all;
   final List<_BulkCall> bulkCalls = [];
   final List<List<String>> deleteCalls = [];
-  final List<({List<String> ids, bool archived})> archiveCalls = [];
+  final List<({List<String> ids, bool archived, bool cascade})> archiveCalls =
+      [];
+
+  /// What the fake server holds archived, so an undo can bring it back.
+  final List<Issue> archivedRows = [];
   final List<
     ({List<String> ids, String? state, String? priority, String? assigneeId})
   >
@@ -774,29 +862,34 @@ class _FakeIssueRepository implements IssueRepository {
   Future<Set<String>> deletableProjectIds() async => deletable;
 
   @override
-  Future<List<Issue>> bulkArchive(
+  Future<BulkArchiveResult> bulkArchive(
     List<String> issueIds, {
     bool archived = true,
+    bool cascade = true,
   }) async {
-    archiveCalls.add((ids: issueIds, archived: archived));
-    final named = [
-      for (final i in all)
+    archiveCalls.add((ids: issueIds, archived: archived, cascade: cascade));
+    if (archived) {
+      final children = [
+        if (cascade)
+          for (final i in all)
+            if (i.isSubtask && issueIds.contains(i.parentId)) i.id,
+      ];
+      final toggled = [...issueIds, ...children];
+      final named = [
+        for (final i in all)
+          if (issueIds.contains(i.id)) i,
+      ];
+      archivedRows.addAll(all.where((i) => toggled.contains(i.id)));
+      all.removeWhere((i) => toggled.contains(i.id));
+      return (issues: named, toggledIds: toggled);
+    }
+    final back = [
+      for (final i in archivedRows)
         if (issueIds.contains(i.id)) i,
     ];
-    if (archived) all.removeWhere((i) => issueIds.contains(i.id));
-    if (!archived) {
-      for (final id in issueIds) {
-        if (all.every((i) => i.id != id)) {
-          all.add(_issues.firstWhere((i) => i.id == id));
-        }
-      }
-    }
-    return archived
-        ? named
-        : [
-            for (final i in all)
-              if (issueIds.contains(i.id)) i,
-          ];
+    archivedRows.removeWhere((i) => issueIds.contains(i.id));
+    all.addAll(back);
+    return (issues: back, toggledIds: [for (final i in back) i.id]);
   }
 
   @override
