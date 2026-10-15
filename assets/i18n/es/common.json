@@ -983,7 +983,10 @@
       "left": "Saliste de {{key}}",
       "emptyIssuesHint": "Aún no estás en ningún proyecto. Las incidencias compartidas contigo están en Seguidas.",
       "openWatched": "Abrir Seguidas",
-      "noResults": "No se encontró a nadie"
+      "noResults": "No se encontró a nadie",
+      "alreadyMember": "{{name}} es miembro y ya ve esta incidencia",
+      "shareWith": "Compartir con {{name}}",
+      "aMember": "un miembro"
     }
   },
   "type": {
