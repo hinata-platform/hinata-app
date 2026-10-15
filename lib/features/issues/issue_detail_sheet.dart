@@ -39,6 +39,7 @@ import '../../core/lexical/hinata_lexical.dart';
 import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/lexical/hinata_outline.dart';
 import '../../core/models/core_models.dart';
+import '../../core/models/issue_participation.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
@@ -58,6 +59,8 @@ import 'comments/composer_keyboard_gate.dart';
 import 'comments/glass_comment_composer.dart';
 import 'comments/voice/voice_recorder.dart' show VoiceRecording;
 import 'issue_move_wizard.dart';
+import 'participants/mention_access_hint.dart';
+import 'participants/share_issue_sheet.dart';
 import '../git/widgets/deployment_panel.dart';
 import '../git/widgets/development_summary.dart';
 import '../knowledge/knowledge_location.dart' show KnowledgePaths;
@@ -253,6 +256,8 @@ Future<void> showIssueDetailSheet(
             // only has one once it has loaded the issue — which is what pushes
             // the `header` update this builder is running for.
             watch: bodyKey.currentState?.watchMenu,
+            onShare: bodyKey.currentState?.shareAction,
+            readOnly: bodyKey.currentState?.isParticipant ?? false,
             // Reply-by-email: only for email-sourced issues, gated on the flag.
             onReply: issue != null && issue.isEmailSourced && emailReplyEnabled
                 ? () => showEmailReplySheet(
@@ -365,6 +370,8 @@ class _SheetActions extends StatelessWidget {
     this.watch,
     this.canDelete = false,
     this.archived = false,
+    this.onShare,
+    this.readOnly = false,
   });
 
   final VoidCallback onMaximize;
@@ -387,6 +394,12 @@ class _SheetActions extends StatelessWidget {
   /// The watch section of the "…" menu; null until the body has loaded.
   final IssueWatchMenuData? watch;
 
+  /// Opens the share dialog; null for a caller who may not share.
+  final void Function(Rect anchorRect)? onShare;
+
+  /// Whether the caller only takes part in the issue (reads and comments).
+  final bool readOnly;
+
   /// Whether the current user may hard-delete (trash icon); regular members
   /// only see the archive affordance, archived issues a restore one.
   final bool canDelete;
@@ -405,7 +418,7 @@ class _SheetActions extends StatelessWidget {
         // Secondary actions (watch · clone · move · reply · remove) share one
         // "…" popover so the header keeps a fixed shape regardless of which are
         // available.
-        _IssueActionsMenu(
+        IssueActionsMenu(
           onReply: onReply,
           onExport: onExport,
           onClone: onClone,
@@ -414,6 +427,8 @@ class _SheetActions extends StatelessWidget {
           canDelete: canDelete,
           archived: archived,
           watch: watch,
+          onShare: onShare,
+          readOnly: readOnly,
         ),
         IconButton(
           tooltip: context.t('common.cancel'),
