@@ -72,6 +72,19 @@ void main() {
               'entry': {'id': 'timer-1', 'durationMinutes': 10},
             }),
           );
+        case 'POST /api/v1/me/timer/start':
+          final sent = jsonDecode(body) as Map<String, dynamic>;
+          running = {
+            'id': 'timer-3',
+            'startedAt': DateTime.now().toUtc().toIso8601String(),
+            'mode': 'STOPWATCH',
+            'description': ?sent['description'],
+            'projectId': ?sent['projectId'],
+          };
+          response.write(jsonEncode(running));
+        case 'POST /api/v1/me/timer/discard':
+          running = null;
+          response.statusCode = 204;
         case 'POST /api/v1/me/timer/phase':
           response.write(
             jsonEncode({
@@ -227,6 +240,63 @@ void main() {
       TimerBackgroundOutcome.done,
     );
     expect(requests.where((r) => r.contains('/timer/stop')), hasLength(1));
+  });
+
+  test('a start from Siri or a control starts a stopwatch with what the '
+      'intent was given and draws it (HIN-105)', () async {
+    running = null;
+    final (run, surface, _) = await action();
+
+    expect(
+      await run.run(
+        TimerBackgroundCommand.start,
+        description: 'Review',
+        projectId: 'project-1',
+      ),
+      TimerBackgroundOutcome.done,
+    );
+
+    final start = requests.singleWhere((r) => r.contains('/timer/start'));
+    expect(start, contains('"description":"Review"'));
+    expect(start, contains('"projectId":"project-1"'));
+    expect(start, contains('"mode":"STOPWATCH"'));
+    expect(surface.applied.single.running, isTrue);
+  });
+
+  test('a start while a timer runs starts nothing', () async {
+    final (run, surface, _) = await action();
+
+    expect(
+      await run.run(TimerBackgroundCommand.start),
+      TimerBackgroundOutcome.alreadyRunning,
+    );
+    expect(requests.where((r) => r.contains('/timer/start')), isEmpty);
+    expect(surface.applied.single.running, isTrue);
+  });
+
+  test('the next phase of a stopwatch changes nothing and says so', () async {
+    running = {...running!, 'mode': 'STOPWATCH', 'phase': null};
+    final (run, _, _) = await action();
+
+    expect(
+      await run.run(TimerBackgroundCommand.advancePhase),
+      TimerBackgroundOutcome.notPomodoro,
+    );
+    expect(requests.where((r) => r.contains('/timer/phase')), isEmpty);
+  });
+
+  test('stop during a break discards it, as the app does: a break is never '
+      'filed', () async {
+    running = {...running!, 'phase': 'BREAK'};
+    final (run, surface, _) = await action();
+
+    expect(
+      await run.run(TimerBackgroundCommand.stop),
+      TimerBackgroundOutcome.done,
+    );
+    expect(requests.where((r) => r.contains('/timer/stop')), isEmpty);
+    expect(requests.where((r) => r.contains('/timer/discard')), hasLength(1));
+    expect(surface.applied.single.running, isFalse);
   });
 
   test('only stop and the next phase exist, and only from our own links and '

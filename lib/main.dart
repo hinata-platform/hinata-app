@@ -21,6 +21,11 @@ import 'core/router/app_router.dart' show rootNavigatorKey;
 import 'core/storage/app_storage.dart';
 import 'firebase_options.dart';
 
+// The entry point of the headless engine iOS starts for Siri, Shortcuts and
+// the controls (HIN-105). Exported so the release build compiles its library;
+// the runner starts it by name.
+export 'core/timer_actions/app_intent_action.dart' show appIntentMain;
+
 /// [args] are the process arguments the embedder hands to the Dart entrypoint.
 /// Only Linux puts anything there we care about — see [_launchDeepLink].
 Future<void> main(List<String> args) async {
