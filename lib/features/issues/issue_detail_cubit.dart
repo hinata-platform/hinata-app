@@ -82,6 +82,12 @@ class IssueDetailCubit extends Cubit<void> {
 
   Future<void> deleteIssue(String id) => _issues.deleteIssue(id);
 
+  /// Which of [userIds] could not open [issueId] (the mention note).
+  Future<Set<String>> usersWithoutAccess(
+    String issueId,
+    List<String> userIds,
+  ) => _issues.usersWithoutAccess(issueId, userIds);
+
   Future<({List<IssueActivity> items, int total})> issueActivity(
     String issueId, {
     int page = 0,
