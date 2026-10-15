@@ -9,6 +9,7 @@ import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/repositories/project_repository.dart';
 import '../../core/router/app_router.dart' show rootNavigatorKey;
 import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import '../../core/timer_surfaces/adapters/keep_running_surface.dart';
@@ -17,6 +18,7 @@ import '../../core/timer_surfaces/background/timer_surface_snapshot.dart';
 import '../../core/timer_surfaces/build_timer_surfaces.dart';
 import '../../core/timer_actions/api_live_activity_push_registry.dart';
 import '../../core/timer_surfaces/live_activity_push_registry.dart';
+import '../../core/timer_actions/intent_project_snapshot.dart';
 import '../../core/timer_actions/timer_background_action.dart';
 import '../../core/timer_surfaces/quick_settings_tile.dart';
 import '../../core/timer_surfaces/surface_platform.dart';
@@ -44,6 +46,7 @@ class TimerSurfacesHost extends StatefulWidget {
     this.hotkeys,
     this.liveActivityRegistry,
     this.surfaces,
+    this.intentProjects,
     this.snapshots = const TimerSurfaceSnapshotStore(),
     this.tileOffer = const QuickSettingsTileOffer(),
   });
@@ -66,6 +69,9 @@ class TimerSurfacesHost extends StatefulWidget {
 
   /// The surfaces to drive; the platform's own when null (tests hand fakes).
   final List<TimerSurface>? surfaces;
+
+  /// The projects for Siri and Shortcuts (iOS); the app's own when null.
+  final IntentProjectSnapshot? intentProjects;
 
   /// Where the switches and words for a background action are kept.
   final TimerSurfaceSnapshotStore snapshots;
@@ -96,6 +102,13 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
           ),
         ),
   );
+
+  /// The projects Siri and Shortcuts offer, on iOS only (HIN-105).
+  late final IntentProjectSnapshot? _intentProjects =
+      widget.intentProjects ??
+      (SurfacePlatform.current == SurfacePlatform.ios
+          ? IntentProjectSnapshot(context.read<ProjectRepository>())
+          : null);
 
   /// A status of our own where nobody handed one in (a test); disposed here.
   HotkeyStatus? _ownHotkeys;
@@ -227,9 +240,11 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     if (!mounted) return;
     if (_gated) {
       _keepSnapshot(null);
+      _intentProjects?.invalidate();
       _enqueue(_coordinator.clearAll);
       return;
     }
+    unawaited(_intentProjects?.refresh());
     _keepSnapshot(
       TimerSurfaceSnapshot(
         prefs: context.read<TimerSurfacePrefsCubit>().state,

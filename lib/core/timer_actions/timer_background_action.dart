@@ -17,12 +17,18 @@ import '../timer_surfaces/timer_surface_state.dart';
 import '../timer_surfaces/background/timer_surface_snapshot.dart';
 
 /// What a button outside the app may do to the timer without opening it
-/// (HIN-103). Never a start, and never anything that carries content.
+/// (HIN-103), and what Siri, Shortcuts and the controls may do (HIN-105).
 enum TimerBackgroundCommand {
   stop,
-  advancePhase;
+  advancePhase,
 
-  /// The command of a widget or tile link, `hinata://timer/<command>`.
+  /// Starts a stopwatch. Only from an App Intent, which iOS runs in the app's
+  /// own process after the unlock (`appIntentMain`); never from a link, a
+  /// widget, a tile or a notification, which another app could fake.
+  start;
+
+  /// The command of a widget or tile link, `hinata://timer/<command>`. Never
+  /// a start.
   static TimerBackgroundCommand? fromUri(Uri? uri) {
     if (uri == null || uri.scheme != 'hinata' || uri.host != 'timer') {
       return null;
@@ -51,6 +57,12 @@ enum TimerBackgroundOutcome {
 
   /// No timer was running any more (stopped elsewhere a moment ago).
   nothingRunning,
+
+  /// A start while a timer already runs: nothing changed.
+  alreadyRunning,
+
+  /// The next phase of a timer without phases: nothing changed.
+  notPomodoro,
 
   /// The screen was locked; the person is told to unlock and try again.
   locked,
@@ -92,13 +104,37 @@ class TimerBackgroundAction {
   final Duration unlockGrace;
   final Duration unlockPoll;
 
-  Future<TimerBackgroundOutcome> run(TimerBackgroundCommand command) async {
+  /// Runs [command]. A [TimerBackgroundCommand.start] takes the
+  /// [description] and the [projectId] the intent was given, both optional;
+  /// the other commands ignore them.
+  Future<TimerBackgroundOutcome> run(
+    TimerBackgroundCommand command, {
+    String? description,
+    String? projectId,
+  }) async {
     if (await _stillLocked()) return TimerBackgroundOutcome.locked;
     try {
       final timer = await time.timer();
+      if (command == TimerBackgroundCommand.start) {
+        if (timer != null) {
+          await _redraw(timer);
+          return TimerBackgroundOutcome.alreadyRunning;
+        }
+        final started = await time.startTimer(
+          description: description,
+          projectId: projectId,
+        );
+        await _redraw(started);
+        return TimerBackgroundOutcome.done;
+      }
       if (timer == null) {
         await _redraw(null);
         return TimerBackgroundOutcome.nothingRunning;
+      }
+      if (command == TimerBackgroundCommand.advancePhase &&
+          timer.mode != TimerMode.pomodoro) {
+        await _redraw(timer);
+        return TimerBackgroundOutcome.notPomodoro;
       }
       final next = await _act(command, timer);
       await _redraw(next);
@@ -127,18 +163,24 @@ class TimerBackgroundAction {
     return false;
   }
 
-  /// The timer that runs after [command], or null when none does.
+  /// The timer that runs after [command] on [timer], or null when none does.
   Future<RunningTimer?> _act(
     TimerBackgroundCommand command,
     RunningTimer timer,
   ) async {
     switch (command) {
       case TimerBackgroundCommand.stop:
-        await time.stopTimer(timerId: timer.id, endedAt: DateTime.now());
+        // A break is never filed; ending one is a discard, as in the app.
+        if (timer.isBreak) {
+          await time.discardTimer();
+        } else {
+          await time.stopTimer(timerId: timer.id, endedAt: DateTime.now());
+        }
         return null;
       case TimerBackgroundCommand.advancePhase:
-        if (timer.mode != TimerMode.pomodoro) return timer;
         return time.advancePhase(timerId: timer.id);
+      case TimerBackgroundCommand.start:
+        return timer;
     }
   }
 
@@ -193,8 +235,10 @@ class _BackgroundHost implements TimerSurfaceHost {
 /// Builds the action from what is on this device and runs [command]. Signed
 /// out, without the app's switches or without a server, it does nothing.
 Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
-  TimerBackgroundCommand command,
-) async {
+  TimerBackgroundCommand command, {
+  String? description,
+  String? projectId,
+}) async {
   final snapshot = await const TimerSurfaceSnapshotStore().read();
   if (snapshot == null) return TimerBackgroundOutcome.signedOut;
   final storage = await AppStorage.create();
@@ -219,7 +263,11 @@ Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
       HomeWidgetSurface(platform),
     ],
   );
-  final outcome = await action.run(command);
+  final outcome = await action.run(
+    command,
+    description: description,
+    projectId: projectId,
+  );
   final hint = switch (outcome) {
     TimerBackgroundOutcome.locked => snapshot.texts.unlockToAct,
     TimerBackgroundOutcome.signedOut ||
