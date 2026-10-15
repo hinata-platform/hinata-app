@@ -852,7 +852,7 @@
         "sprint": "{{issue}} sale del sprint «{{detail}}»: su tablero no abarca el proyecto de destino.",
         "parent": "{{issue}} pierde el vínculo con {{detail}}, que se queda atrás.",
         "epicChildren": "{{issue}} tiene {{detail}} incidencia(s) secundaria(s) que se quedan en el proyecto actual.",
-        "assignee": "Un responsable de {{issue}} no es miembro del proyecto de destino.",
+        "assignee": "Una persona asignada a {{issue}} no puede abrir el proyecto de destino y deja de estar asignada allí.",
         "generic": "Este traslado tiene un efecto que esta versión de la app todavía no conoce."
       },
       "summary": "Se moverán {{count}} incidencia(s)",

@@ -852,7 +852,7 @@
         "sprint": "{{issue}} leaves the sprint “{{detail}}” — its board doesn’t cover the target project.",
         "parent": "{{issue}} loses its link to {{detail}}, which stays behind.",
         "epicChildren": "{{issue}} has {{detail}} child issue(s) that stay in the current project.",
-        "assignee": "An assignee of {{issue}} is not a member of the target project.",
+        "assignee": "An assignee of {{issue}} cannot open the target project and is taken off the issue there.",
         "generic": "This move has an effect this app version doesn’t know about yet."
       },
       "summary": "{{count}} issue(s) will move",

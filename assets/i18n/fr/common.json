@@ -852,7 +852,7 @@
         "sprint": "{{issue}} quitte le sprint « {{detail}} » — son tableau ne couvre pas le projet de destination.",
         "parent": "{{issue}} perd son lien avec {{detail}}, qui reste en place.",
         "epicChildren": "{{issue}} a {{detail}} ticket(s) enfant(s) qui restent dans le projet actuel.",
-        "assignee": "Un responsable de {{issue}} n'est pas membre du projet de destination.",
+        "assignee": "Une personne assignée à {{issue}} ne peut pas ouvrir le projet cible et n’y est plus assignée.",
         "generic": "Ce déplacement a un effet que cette version de l'application ne connaît pas encore."
       },
       "summary": "{{count}} ticket(s) seront déplacés",
