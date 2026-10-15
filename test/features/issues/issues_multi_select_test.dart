@@ -558,6 +558,8 @@ void main() {
       await settle(tester, 2);
 
       expect(action(tester, 'issues.bulkDelete.action').onPressed, isNull);
+      // And says why, rather than greying out without a word.
+      expect(find.byTooltip('issues.bulk.deleteNotAllowed'), findsOneWidget);
     });
   });
 

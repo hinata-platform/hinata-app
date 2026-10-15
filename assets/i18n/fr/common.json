@@ -927,7 +927,7 @@
     },
     "bulk": {
       "assignee": "Responsable",
-      "more": "Plus",
+      "more": "Autres actions",
       "pickPerson": "Choisir une personne …",
       "unassign": "Retirer le responsable",
       "noCommonStatus": "Les tickets sélectionnés appartiennent à des projets sans statut commun. Sélectionnez des tickets d’un seul projet.",
@@ -937,7 +937,8 @@
       "archived_plural": "{{count}} tickets archivés",
       "restored": "{{count}} ticket restauré",
       "restored_plural": "{{count}} tickets restaurés",
-      "undo": "Annuler"
+      "undo": "Annuler",
+      "deleteNotAllowed": "Vous ne pouvez supprimer que dans les projets que vous dirigez ou dont vous administrez l’équipe. L’archivage est toujours possible."
     },
     "selectAll": "Tout sélectionner",
     "selectAllCapped": "Les {{max}} premiers sont sélectionnés. Une seule modification ne peut pas en prendre plus.",

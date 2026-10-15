@@ -927,7 +927,7 @@
     },
     "bulk": {
       "assignee": "Assignee",
-      "more": "More",
+      "more": "More actions",
       "pickPerson": "Choose a person …",
       "unassign": "Remove assignee",
       "noCommonStatus": "The selected issues sit in projects with no status in common. Select issues from one project.",
@@ -937,7 +937,8 @@
       "archived_plural": "{{count}} issues archived",
       "restored": "{{count}} issue restored",
       "restored_plural": "{{count}} issues restored",
-      "undo": "Undo"
+      "undo": "Undo",
+      "deleteNotAllowed": "You can delete only in projects you lead or whose team you administer. Archiving always works."
     },
     "selectAll": "Select all",
     "selectAllCapped": "The first {{max}} are selected. That is as many as one change can take.",

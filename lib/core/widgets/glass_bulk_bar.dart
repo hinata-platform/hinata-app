@@ -216,6 +216,7 @@ class GlassBulkAction extends StatelessWidget {
     this.danger = false,
     this.menu = false,
     this.iconOnly = false,
+    this.disabledReason,
   }) : assert(
          onTap == null || onTapAt == null,
          'Give onTap or onTapAt, not both: onTapAt would win.',
@@ -240,6 +241,10 @@ class GlassBulkAction extends StatelessWidget {
   /// Always just the icon, with the label as its tooltip: the overflow button.
   final bool iconOnly;
 
+  /// Why the action is off, shown as its tooltip while it is: a control that
+  /// is greyed out without a reason leaves people guessing.
+  final String? disabledReason;
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -257,18 +262,22 @@ class GlassBulkAction extends StatelessWidget {
         ? (dark ? const Color(0xFFFF8A80) : AppColors.danger)
         : tokens.ink;
     final color = enabled ? base : tokens.inkSoft;
+    final reason = enabled ? null : disabledReason;
     if (iconOnly || _BulkBarScope.iconOnlyIn(context)) {
       return IconButton(
         onPressed: handler,
-        tooltip: label,
+        tooltip: reason == null ? label : '$label. $reason',
         style: IconButton.styleFrom(overlayColor: tokens.rowHover),
         icon: Icon(icon, size: 20, color: color),
       );
     }
-    return TextButton(
+    final button = TextButton(
       onPressed: handler,
       style: TextButton.styleFrom(
         foregroundColor: color,
+        // Stated, not left to the theme: the dark theme's text buttons are
+        // honey, which made a disabled action look like the one to press.
+        disabledForegroundColor: tokens.inkSoft,
         overlayColor: tokens.rowHover,
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         textStyle: const TextStyle(
@@ -289,5 +298,6 @@ class GlassBulkAction extends StatelessWidget {
         ],
       ),
     );
+    return reason == null ? button : Tooltip(message: reason, child: button);
   }
 }
