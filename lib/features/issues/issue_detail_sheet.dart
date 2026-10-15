@@ -60,6 +60,7 @@ import 'comments/glass_comment_composer.dart';
 import 'comments/voice/voice_recorder.dart' show VoiceRecording;
 import 'issue_move_wizard.dart';
 import 'participants/mention_access_hint.dart';
+import 'participants/participant_banner.dart';
 import 'participants/share_issue_sheet.dart';
 import '../git/widgets/deployment_panel.dart';
 import '../git/widgets/development_summary.dart';
@@ -78,6 +79,7 @@ import '../sprint/modals/glass_modal.dart'
         GlassModalHeader,
         GlassOptionRow,
         GlassToastKind,
+        showGlassConfirm,
         glassInputDecoration,
         glassWoltSurface,
         kGlassPopoverBreakpoint,
