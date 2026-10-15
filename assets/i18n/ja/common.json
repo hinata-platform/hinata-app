@@ -983,7 +983,10 @@
       "left": "{{key}} から退出しました",
       "emptyIssuesHint": "まだどのプロジェクトにも参加していません。共有された課題は「ウォッチ中」にあります。",
       "openWatched": "「ウォッチ中」を開く",
-      "noResults": "見つかりません"
+      "noResults": "見つかりません",
+      "alreadyMember": "{{name}} さんはメンバーなので、もともとこの課題を見られます",
+      "shareWith": "{{name}} さんと共有",
+      "aMember": "メンバー"
     }
   },
   "type": {

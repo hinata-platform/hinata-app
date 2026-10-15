@@ -983,7 +983,10 @@
       "left": "你已退出 {{key}}",
       "emptyIssuesHint": "你还没有加入任何项目。与你共享的事项在“关注”中。",
       "openWatched": "打开“关注”",
-      "noResults": "未找到任何人"
+      "noResults": "未找到任何人",
+      "alreadyMember": "{{name}} 是成员，本来就能看到此事项",
+      "shareWith": "共享给 {{name}}",
+      "aMember": "一位成员"
     }
   },
   "type": {

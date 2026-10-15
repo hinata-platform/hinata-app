@@ -983,7 +983,10 @@
       "left": "You left {{key}}",
       "emptyIssuesHint": "You are not in any project yet. Issues shared with you are listed under Watched.",
       "openWatched": "Open Watched",
-      "noResults": "No one found"
+      "noResults": "No one found",
+      "alreadyMember": "{{name}} is a member and sees this issue anyway",
+      "shareWith": "Share with {{name}}",
+      "aMember": "a member"
     }
   },
   "type": {

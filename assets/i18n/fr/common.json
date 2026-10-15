@@ -983,7 +983,10 @@
       "left": "Vous avez quitté {{key}}",
       "emptyIssuesHint": "Vous ne faites encore partie d’aucun projet. Les tickets partagés avec vous se trouvent dans Suivis.",
       "openWatched": "Ouvrir Suivis",
-      "noResults": "Personne trouvé"
+      "noResults": "Personne trouvé",
+      "alreadyMember": "{{name}} est membre et voit déjà ce ticket",
+      "shareWith": "Partager avec {{name}}",
+      "aMember": "un membre"
     }
   },
   "type": {
