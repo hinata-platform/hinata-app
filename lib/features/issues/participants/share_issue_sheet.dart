@@ -278,7 +278,11 @@ class _ShareIssuePanelState extends State<ShareIssuePanel> {
             padding: const EdgeInsets.fromLTRB(18, 0, 18, 6),
             child: _SearchPill(
               controller: _search,
-              autofocus: widget.initialQuery == null,
+              // On a phone the keyboard would cover the list it searches;
+              // there the field takes the focus when tapped.
+              autofocus:
+                  widget.initialQuery == null &&
+                  MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint,
               onChanged: _onQueryChanged,
             ),
           ),
