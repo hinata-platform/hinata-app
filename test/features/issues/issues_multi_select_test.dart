@@ -230,24 +230,48 @@ void main() {
     testWidgets('a new sort starts over without the old selection', (
       tester,
     ) async {
-      await open(tester, width: 1400);
+      // A phone: there the tools stay in the bar while selecting. A wide
+      // window hands their row to the bulk bar.
+      await open(tester, width: 390);
 
-      await tester.tap(find.byTooltip('issues.selection.enter'));
+      await tester.longPress(find.text('Issue number 2'));
       await settle(tester, 2);
-      await tester.tap(find.text('Issue number 2'));
-      await settle(tester, 2);
-      expect(action(tester, 'issues.bulkDeadline.action').onPressed, isNotNull);
+      IconButton deadline() => tester
+          .widgetList<IconButton>(find.byType(IconButton))
+          .firstWhere((b) => b.tooltip == 'issues.bulkDeadline.action');
+      expect(deadline().onPressed, isNotNull);
 
-      await tester.tap(find.text('issues.sort.label'));
+      await tester.tap(find.byTooltip('issues.sort.label').first);
       // The menu's glass grows out of the chip on a spring before its rows
       // take a tap.
       await settle(tester, 8);
       await tester.tap(find.text('issues.sort.createdAsc').last);
       await settle(tester);
 
-      // The mode asked for stays; what was ticked in the old order does not.
-      expect(find.byType(GlassBulkBar), findsOneWidget);
-      expect(action(tester, 'issues.bulkDeadline.action').onPressed, isNull);
+      // What was ticked in the old order does not survive the new one.
+      expect(find.byType(GlassBulkBar), findsNothing);
+    });
+
+    testWidgets('on a wide window the bar takes the tools row at the top', (
+      tester,
+    ) async {
+      await open(tester, width: 1400);
+      final tools = tester.getRect(find.text('issues.sort.label'));
+
+      await tester.longPress(find.text('Issue number 2'));
+      await settle(tester, 4);
+
+      final bar = tester.getRect(find.byType(GlassBulkBar));
+      // Where the tools were, above the first row, not at the bottom edge.
+      expect(bar.top, closeTo(tools.top, 12));
+      expect(
+        bar.bottom,
+        lessThan(tester.getTopLeft(find.text('Issue number 1')).dy),
+      );
+      // The tools give way instead of sitting under the bar.
+      expect(find.text('issues.sort.label').hitTestable(), findsNothing);
+      // And the list stays where it was.
+      expect(tester.getRect(find.text('issues.sort.label')), tools);
     });
 
     testWidgets('clears the deadline of every ticked issue', (tester) async {
@@ -327,6 +351,53 @@ void main() {
     });
   });
 
+  group('bulk delete', () {
+    testWidgets('deletes exactly the ticked issues after one confirmation', (
+      tester,
+    ) async {
+      await open(tester, width: 1400);
+
+      await tester.longPress(find.text('Issue number 1'));
+      await settle(tester, 2);
+      await tester.tap(find.text('Issue number 3'));
+      await settle(tester, 2);
+      // Raw i18n keys make the labels long enough for the strip to scroll.
+      await tester.ensureVisible(find.text('issues.bulkDelete.action'));
+      await settle(tester, 2);
+      await tester.tap(find.text('issues.bulkDelete.action'));
+      await settle(tester);
+
+      // Nothing goes before the question is answered.
+      expect(issueRepo.deleteCalls, isEmpty);
+      await tester.tap(find.text('issues.bulkDelete.confirm'));
+      await settle(tester);
+
+      expect(issueRepo.deleteCalls.single, ['i1', 'i3']);
+      expect(find.text('Issue number 1'), findsNothing);
+      expect(find.text('Issue number 3'), findsNothing);
+      expect(find.text('Issue number 2'), findsOneWidget);
+      expect(find.byType(GlassBulkBar), findsNothing);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
+    testWidgets('a cancelled confirmation deletes nothing', (tester) async {
+      await open(tester, width: 1400);
+
+      await tester.longPress(find.text('Issue number 2'));
+      await settle(tester, 2);
+      // Raw i18n keys make the labels long enough for the strip to scroll.
+      await tester.ensureVisible(find.text('issues.bulkDelete.action'));
+      await settle(tester, 2);
+      await tester.tap(find.text('issues.bulkDelete.action'));
+      await settle(tester);
+      await tester.tap(find.text('common.cancel').last);
+      await settle(tester);
+
+      expect(issueRepo.deleteCalls, isEmpty);
+      expect(find.byType(GlassBulkBar), findsOneWidget);
+    });
+  });
+
   group('selection toggle', () {
     testWidgets('enters selection with nothing selected and stays there', (
       tester,
@@ -362,7 +433,7 @@ void main() {
 
       // The same button leaves again. (The bar's ✕ shares its tooltip.)
       await tester.tap(find.byTooltip('issues.selection.exit').first);
-      await settle(tester, 2);
+      await settle(tester, 4);
       expect(find.byType(GlassBulkBar), findsNothing);
       semantics.dispose();
     });
@@ -466,6 +537,7 @@ class _FakeIssueRepository implements IssueRepository {
 
   final List<Issue> all;
   final List<_BulkCall> bulkCalls = [];
+  final List<List<String>> deleteCalls = [];
 
   /// How often the list was read, page 0 or later.
   int listCalls = 0;
@@ -494,6 +566,13 @@ class _FakeIssueRepository implements IssueRepository {
             state: issue.state,
           ),
     ];
+  }
+
+  @override
+  Future<int> bulkDelete(List<String> issueIds) async {
+    deleteCalls.add(issueIds);
+    all.removeWhere((issue) => issueIds.contains(issue.id));
+    return issueIds.length;
   }
 
   @override

@@ -314,6 +314,22 @@ class IssueRepository {
           .map((i) => Issue.fromJson(i as Map<String, dynamic>))
           .toList();
 
+  /// Hard-deletes all of [issueIds] at once, with their sub-tasks, comments
+  /// and links; logged time stays with the project. Up to [bulkDeadlineMax]
+  /// per call, the same bound as every bulk change.
+  ///
+  /// All or nothing: when the caller may not delete one of the issues, none of
+  /// them go. Returns how many issues were deleted.
+  Future<int> bulkDelete(List<String> issueIds) async {
+    final data =
+        await _api.post(
+              '/api/v1/issues/bulk/delete',
+              body: {'issueIds': issueIds},
+            )
+            as Map<String, dynamic>;
+    return data['deleted'] as int? ?? issueIds.length;
+  }
+
   /// Soft delete — any project member may archive; the issue disappears from
   /// all default listings but stays restorable.
   Future<Issue> archiveIssue(String id) async => Issue.fromJson(

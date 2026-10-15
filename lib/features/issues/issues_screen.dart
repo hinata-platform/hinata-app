@@ -42,6 +42,7 @@ import '../../core/widgets/status_widgets.dart';
 import '../sprint/modals/glass_modal.dart'
     show
         GlassToastKind,
+        showGlassConfirm,
         showGlassToast,
         showGlassDatePicker,
         showGlassDateRangePicker;
@@ -314,6 +315,67 @@ class _IssuesScreenState extends State<IssuesScreen> {
       // and hear it on the app-wide bus; this screen skips its own message.
       _issues.replaceItems(updated);
       IssueEvents.instance.notifyChanged(origin: this);
+    } on ApiFailure catch (failure) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t(failure.message),
+          kind: GlassToastKind.error,
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        showGlassToast(
+          context,
+          context.t('errors.unexpected'),
+          kind: GlassToastKind.error,
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _bulkBusy = false);
+    }
+  }
+
+  /// Deletes the selected issues for good, after asking once for all of them.
+  ///
+  /// Only project leads and team admins may delete; for anybody else the
+  /// server refuses the whole request and the toast says to archive instead.
+  Future<void> _deleteSelected() async {
+    if (_selected.isEmpty || _bulkBusy) return;
+    const max = IssueRepository.bulkDeadlineMax;
+    if (_selected.length > max) {
+      showGlassToast(
+        context,
+        context.t('issues.bulkDeadline.tooMany', variables: {'max': '$max'}),
+        kind: GlassToastKind.error,
+      );
+      return;
+    }
+    final ids = _selected.keys.toList();
+    final confirmed = await showGlassConfirm(
+      context,
+      icon: LucideIcons.trash2,
+      title: context.t('issues.bulkDelete.title', count: ids.length),
+      message: context.t('issues.bulkDelete.message', count: ids.length),
+      confirmLabel: context.t('issues.bulkDelete.confirm'),
+      confirmIcon: LucideIcons.trash2,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _bulkBusy = true);
+    try {
+      final deleted = await _issues.bulkDelete(ids);
+      if (!mounted) return;
+      showGlassToast(
+        context,
+        context.t('issues.bulkDelete.done', count: deleted),
+        kind: GlassToastKind.success,
+      );
+      _exitSelection();
+      // The board and the dashboard hear it on the app-wide bus; this screen
+      // fetches its own rows again, sub-tasks of the deleted issues included.
+      IssueEvents.instance.notifyChanged(origin: this);
+      await _reload();
     } on ApiFailure catch (failure) {
       if (mounted) {
         showGlassToast(
@@ -1217,7 +1279,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                             height:
                                 context.pageGutter +
                                 context.bottomGutter +
-                                (_selectionMode ? 72 : 0),
+                                (_selectionMode && compact ? 72 : 0),
                           ),
                         ),
                       ],
@@ -1246,7 +1308,7 @@ class _IssuesScreenState extends State<IssuesScreen> {
                             context.pageGutter,
                             14,
                           ),
-                          child: _toolbar(),
+                          child: _toolbarSlot(),
                         ),
                         Expanded(child: scroll),
                       ],
@@ -1254,47 +1316,94 @@ class _IssuesScreenState extends State<IssuesScreen> {
                   },
                 ),
               ),
-              // Bulk-action bar, docked above the nav while selecting. The
-              // dock measures from the nav's own edge; the scroll gutter used
-              // here before counts the home indicator twice on an iPhone.
-              if (_selectionMode)
-                GlassBulkBarDock(
-                  child: GlassBulkBar(
-                    countLabel: context.t(
-                      'issues.selectedCount',
-                      variables: {'count': '${_selected.length}'},
-                    ),
-                    onClear: _exitSelection,
-                    clearTooltip: context.t('issues.selection.exit'),
-                    actions: [
-                      GlassBulkAction(
-                        icon: LucideIcons.listChecks,
-                        label: context.t('issues.selectAll'),
-                        onTap: _bulkBusy ? null : _selectAllVisible,
-                      ),
-                      // Disabled, not hidden, while nothing is ticked: the bar
-                      // then says what it will offer once something is.
-                      GlassBulkAction(
-                        icon: LucideIcons.calendarClock,
-                        label: context.t('issues.bulkDeadline.action'),
-                        onTap: _selected.isEmpty || _bulkBusy
-                            ? null
-                            : _setDeadlineSelected,
-                      ),
-                      GlassBulkAction(
-                        icon: LucideIcons.folderInput,
-                        label: context.t('issues.move.action'),
-                        onTap: _selected.isEmpty || _bulkBusy
-                            ? null
-                            : _moveSelected,
-                      ),
-                    ],
-                  ),
-                ),
+              // On a phone the bulk-action bar docks above the nav, where the
+              // thumb is. The dock measures from the nav's own edge; the scroll
+              // gutter counts the home indicator twice on an iPhone. Wider
+              // windows show it at the top instead; see [_toolbarSlot].
+              if (_selectionMode && compact)
+                GlassBulkBarDock(child: _bulkBar()),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// The bar of actions on the selected issues.
+  Widget _bulkBar() => GlassBulkBar(
+    countLabel: context.t(
+      'issues.selectedCount',
+      variables: {'count': '${_selected.length}'},
+    ),
+    onClear: _exitSelection,
+    clearTooltip: context.t('issues.selection.exit'),
+    actions: [
+      GlassBulkAction(
+        icon: LucideIcons.listChecks,
+        label: context.t('issues.selectAll'),
+        onTap: _bulkBusy ? null : _selectAllVisible,
+      ),
+      // Disabled, not hidden, while nothing is ticked: the bar then says what
+      // it will offer once something is.
+      GlassBulkAction(
+        icon: LucideIcons.calendarClock,
+        label: context.t('issues.bulkDeadline.action'),
+        onTap: _selected.isEmpty || _bulkBusy ? null : _setDeadlineSelected,
+      ),
+      GlassBulkAction(
+        icon: LucideIcons.folderInput,
+        label: context.t('issues.move.action'),
+        onTap: _selected.isEmpty || _bulkBusy ? null : _moveSelected,
+      ),
+      // Last, and red, so it is never the action a hurried tap lands on.
+      GlassBulkAction(
+        icon: LucideIcons.trash2,
+        label: context.t('issues.bulkDelete.action'),
+        danger: true,
+        onTap: _selected.isEmpty || _bulkBusy ? null : _deleteSelected,
+      ),
+    ],
+  );
+
+  /// The tools row of a wide window, which the bulk bar takes over while
+  /// selecting.
+  ///
+  /// At the bottom of a large window the bar sat far from where anyone is
+  /// looking. Up here it is next to the head, and it replaces the tools rather
+  /// than adding a row: changing a filter or the sort drops the selection
+  /// anyway, and the hidden tools keep their height, so the list does not move
+  /// as the bar comes and goes.
+  Widget _toolbarSlot() {
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    return Stack(
+      alignment: AlignmentDirectional.centerStart,
+      children: [
+        Visibility(
+          visible: !_selectionMode,
+          maintainState: true,
+          maintainAnimation: true,
+          maintainSize: true,
+          child: _toolbar(),
+        ),
+        Positioned.fill(
+          child: OverflowBox(
+            minWidth: 0,
+            minHeight: 0,
+            maxHeight: double.infinity,
+            alignment: AlignmentDirectional.centerStart,
+            child: AnimatedSwitcher(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 200),
+              switchInCurve: Curves.easeOutCubic,
+              switchOutCurve: Curves.easeInCubic,
+              child: _selectionMode
+                  ? KeyedSubtree(key: const ValueKey('bulk'), child: _bulkBar())
+                  : const SizedBox.shrink(key: ValueKey('none')),
+            ),
+          ),
+        ),
+      ],
     );
   }
 

@@ -915,6 +915,16 @@
       "cleared_plural": "Frist bei {{count}} Vorgängen entfernt",
       "tooMany": "Du kannst höchstens {{max}} Vorgänge auf einmal ändern. Wähle ein paar ab und versuch es noch mal."
     },
+    "bulkDelete": {
+      "action": "Löschen",
+      "title": "{{count}} Vorgang löschen?",
+      "title_plural": "{{count}} Vorgänge löschen?",
+      "message": "Der Vorgang wird mit seinen Unteraufgaben, Kommentaren und Verlinkungen endgültig gelöscht. Erfasste Zeiten bleiben im Projekt.",
+      "message_plural": "Die Vorgänge werden mit ihren Unteraufgaben, Kommentaren und Verlinkungen endgültig gelöscht. Erfasste Zeiten bleiben im Projekt.",
+      "confirm": "Endgültig löschen",
+      "done": "{{count}} Vorgang gelöscht",
+      "done_plural": "{{count}} Vorgänge gelöscht"
+    },
     "selectAll": "Alle auswählen",
     "selectAllCapped": "Die ersten {{max}} sind ausgewählt. Mehr lassen sich nicht auf einmal ändern.",
     "selection": {
