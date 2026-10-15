@@ -519,7 +519,10 @@
     "loadMore": "さらに読み込む",
     "act": {
       "created": "がこの課題を作成しました",
-      "changed": "が{{field}}を変更しました"
+      "changed": "が{{field}}を変更しました",
+      "participantAdded": "がこの課題を {{name}} さんと共有しました",
+      "participantRemoved": "が {{name}} さんをこの課題から削除しました",
+      "participantLeft": "がこの課題から退出しました"
     },
     "field": {
       "title": "タイトル",
@@ -952,7 +955,36 @@
       "gotIt": "OK"
     },
     "editTitle": "タイトルを編集",
-    "editDescription": "説明を編集"
+    "editDescription": "説明を編集",
+    "participants": {
+      "menu": "共有先…",
+      "title": "{{key}} を共有",
+      "subtitle": "参加者はこの課題を閲覧し、コメントできます。プロジェクト {{project}} は参加者には表示されません。",
+      "search": "ユーザーを検索…",
+      "section": "参加者 · {{count}} / {{max}}",
+      "empty": "まだいません。この課題を共有するユーザーを検索してください。",
+      "membersSection": "メンバーはもともとこの課題を見られます",
+      "member": "メンバー",
+      "addedBy": "{{name}} が追加、{{when}}",
+      "remove": "削除",
+      "removeOf": "{{name}} を削除",
+      "done": "完了",
+      "footer": "共有はすべて履歴と監査ログに記録されます。",
+      "full": "この課題はすでに上限の {{max}} 人と共有されています。",
+      "banner": "あなたはこの課題の参加者です。閲覧とコメントができます。プロジェクト {{project}} は表示されません。",
+      "leave": "退出",
+      "leaveTitle": "{{key}} から退出しますか？",
+      "leaveMessage": "退出するとこの課題は表示されなくなります。メンバーが再び追加できます。",
+      "mentionHint": "{{name}} さんはこの課題を見られないため、通知も届きません。",
+      "share": "共有",
+      "assigneeHint": "{{name}} さんはプロジェクト {{project}} を開けないため、担当者にできません。",
+      "added": "{{name}} さんが閲覧とコメントをできるようになりました",
+      "removed": "{{name}} さんを削除しました",
+      "left": "{{key}} から退出しました",
+      "emptyIssuesHint": "まだどのプロジェクトにも参加していません。共有された課題は「ウォッチ中」にあります。",
+      "openWatched": "「ウォッチ中」を開く",
+      "noResults": "見つかりません"
+    }
   },
   "type": {
     "task": "タスク",
@@ -3664,7 +3696,9 @@
       "INVOICE_DELETED": "請求書の下書きを削除",
       "INVOICE_ISSUED": "請求書を発行",
       "INVOICE_CREDITED": "請求書を取消",
-      "INVOICE_EXPORTED": "請求書をエクスポート"
+      "INVOICE_EXPORTED": "請求書をエクスポート",
+      "ISSUE_PARTICIPANT_ADDED": "課題をユーザーと共有",
+      "ISSUE_PARTICIPANT_REMOVED": "ユーザーを課題から削除"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -4746,7 +4780,7 @@
   },
   "watched": {
     "title": "ウォッチ中の課題",
-    "subtitle": "購読しているものすべて",
+    "subtitle": "ウォッチ中または参加中のすべて",
     "empty": {
       "title": "ウォッチ中の課題はありません",
       "message": "課題を開いて「ウォッチ」をオンにすると、その課題のすべての変更が通知されます。"

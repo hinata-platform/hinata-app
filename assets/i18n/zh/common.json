@@ -519,7 +519,10 @@
     "loadMore": "加载更多",
     "act": {
       "created": "创建了该事项",
-      "changed": "修改了{{field}}"
+      "changed": "修改了{{field}}",
+      "participantAdded": "将此事项共享给了 {{name}}",
+      "participantRemoved": "将 {{name}} 移出了此事项",
+      "participantLeft": "退出了此事项"
     },
     "field": {
       "title": "标题",
@@ -952,7 +955,36 @@
       "gotIt": "知道了"
     },
     "editTitle": "编辑标题",
-    "editDescription": "编辑描述"
+    "editDescription": "编辑描述",
+    "participants": {
+      "menu": "共享给…",
+      "title": "共享 {{key}}",
+      "subtitle": "参与者可以阅读和评论此事项。项目 {{project}} 对他们不可见。",
+      "search": "搜索人员…",
+      "section": "参与者 · {{count}} / {{max}}",
+      "empty": "还没有人。搜索要共享此事项的人员。",
+      "membersSection": "成员本来就能看到此事项",
+      "member": "成员",
+      "addedBy": "由 {{name}} 添加，{{when}}",
+      "remove": "移除",
+      "removeOf": "移除 {{name}}",
+      "done": "完成",
+      "footer": "每次共享都会记录在历史和审计日志中。",
+      "full": "此事项已与 {{max}} 人共享，已达上限。",
+      "banner": "你是此事项的参与者：可以阅读和评论。项目 {{project}} 对你不可见。",
+      "leave": "退出",
+      "leaveTitle": "退出 {{key}}？",
+      "leaveMessage": "退出后你将无法再看到此事项。成员可以再次添加你。",
+      "mentionHint": "{{name}} 看不到此事项，也不会收到相关通知。",
+      "share": "共享",
+      "assigneeHint": "{{name}} 无法打开项目 {{project}}，因此不能被指派。",
+      "added": "{{name}} 现在可以阅读和评论",
+      "removed": "已移除 {{name}}",
+      "left": "你已退出 {{key}}",
+      "emptyIssuesHint": "你还没有加入任何项目。与你共享的事项在“关注”中。",
+      "openWatched": "打开“关注”",
+      "noResults": "未找到任何人"
+    }
   },
   "type": {
     "task": "任务",
@@ -3664,7 +3696,9 @@
       "INVOICE_DELETED": "已删除发票草稿",
       "INVOICE_ISSUED": "已开具发票",
       "INVOICE_CREDITED": "已冲销发票",
-      "INVOICE_EXPORTED": "已导出发票"
+      "INVOICE_EXPORTED": "已导出发票",
+      "ISSUE_PARTICIPANT_ADDED": "事项已与人员共享",
+      "ISSUE_PARTICIPANT_REMOVED": "人员已从事项中移除"
     },
     "meta": {
       "oldRole": "原角色",
@@ -4746,7 +4780,7 @@
   },
   "watched": {
     "title": "关注的事项",
-    "subtitle": "你订阅的全部内容",
+    "subtitle": "你关注或参与的所有内容",
     "empty": {
       "title": "还没有关注任何内容",
       "message": "打开一个事项并开启“关注”，即可接收它的每一次变更通知。"

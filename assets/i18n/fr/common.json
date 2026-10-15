@@ -519,7 +519,10 @@
     "loadMore": "Charger plus",
     "act": {
       "created": "a créé ce ticket",
-      "changed": "a modifié le champ {{field}}"
+      "changed": "a modifié le champ {{field}}",
+      "participantAdded": "a partagé ce ticket avec {{name}}",
+      "participantRemoved": "a retiré {{name}} de ce ticket",
+      "participantLeft": "a quitté ce ticket"
     },
     "field": {
       "title": "titre",
@@ -952,7 +955,36 @@
       "gotIt": "Compris"
     },
     "editTitle": "Modifier le titre",
-    "editDescription": "Modifier la description"
+    "editDescription": "Modifier la description",
+    "participants": {
+      "menu": "Partager avec…",
+      "title": "Partager {{key}}",
+      "subtitle": "Les participants lisent et commentent ce ticket. Le projet {{project}} leur reste invisible.",
+      "search": "Rechercher une personne…",
+      "section": "Participants · {{count}} sur {{max}}",
+      "empty": "Personne pour l’instant. Recherchez une personne avec qui partager ce ticket.",
+      "membersSection": "Les membres voient déjà ce ticket",
+      "member": "Membre",
+      "addedBy": "ajouté par {{name}}, {{when}}",
+      "remove": "Retirer",
+      "removeOf": "Retirer {{name}}",
+      "done": "Terminé",
+      "footer": "Chaque partage figure dans l’historique et dans le journal d’audit.",
+      "full": "Ce ticket est déjà partagé avec {{max}} personnes, le maximum possible.",
+      "banner": "Vous participez à ce ticket : vous pouvez le lire et le commenter. Le projet {{project}} ne vous est pas visible.",
+      "leave": "Quitter",
+      "leaveTitle": "Quitter {{key}} ?",
+      "leaveMessage": "Vous ne verrez plus ce ticket. Un membre peut vous ajouter de nouveau.",
+      "mentionHint": "{{name}} ne peut pas voir ce ticket et n’en saurait rien.",
+      "share": "Partager",
+      "assigneeHint": "{{name}} ne peut pas ouvrir le projet {{project}} et ne peut pas se voir attribuer le ticket.",
+      "added": "{{name}} peut maintenant lire et commenter",
+      "removed": "{{name}} retiré",
+      "left": "Vous avez quitté {{key}}",
+      "emptyIssuesHint": "Vous ne faites encore partie d’aucun projet. Les tickets partagés avec vous se trouvent dans Suivis.",
+      "openWatched": "Ouvrir Suivis",
+      "noResults": "Personne trouvé"
+    }
   },
   "type": {
     "task": "Tâche",
@@ -3664,7 +3696,9 @@
       "INVOICE_DELETED": "Brouillon de facture supprimé",
       "INVOICE_ISSUED": "Facture émise",
       "INVOICE_CREDITED": "Facture annulée",
-      "INVOICE_EXPORTED": "Facture exportée"
+      "INVOICE_EXPORTED": "Facture exportée",
+      "ISSUE_PARTICIPANT_ADDED": "Ticket partagé avec une personne",
+      "ISSUE_PARTICIPANT_REMOVED": "Personne retirée d’un ticket"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -4746,7 +4780,7 @@
   },
   "watched": {
     "title": "Tickets observés",
-    "subtitle": "Tout ce à quoi vous vous êtes abonné",
+    "subtitle": "Tout ce que vous suivez ou à quoi vous participez",
     "empty": {
       "title": "Aucun ticket observé",
       "message": "Ouvrez un ticket et activez « Observer » pour être averti de chacune de ses modifications."
