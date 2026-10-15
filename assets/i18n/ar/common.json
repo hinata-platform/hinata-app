@@ -986,7 +986,8 @@
       "noResults": "لم يُعثر على أحد",
       "alreadyMember": "{{name}} عضو ويرى هذه المهمة على أي حال",
       "shareWith": "مشاركة مع {{name}}",
-      "aMember": "عضو"
+      "aMember": "عضو",
+      "noDescription": "لا يوجد وصف بعد."
     }
   },
   "type": {

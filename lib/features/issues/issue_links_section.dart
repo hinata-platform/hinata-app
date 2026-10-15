@@ -196,6 +196,10 @@ class _IssueLinksSectionState extends State<IssueLinksSection> {
   @override
   Widget build(BuildContext context) {
     final hasLinks = _links.isNotEmpty;
+    // A reader cannot add a link, so an empty card would only say so.
+    if (widget.readOnly && !hasLinks && !_loading && !_loadError) {
+      return const SizedBox.shrink();
+    }
     return SoftCard(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
       child: Column(
