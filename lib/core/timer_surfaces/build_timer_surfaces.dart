@@ -58,11 +58,13 @@ List<TimerSurface> buildTimerSurfaces(
   // widget and tile go through home_widget's background callback.
   HomeWidgetSurface widgets() => HomeWidgetSurface(
     platform,
-    store: TimerWidgetStore(
-      backgroundAction: platform == SurfacePlatform.android
-          ? background.widget
-          : null,
-    ),
+    store: platform == SurfacePlatform.macos
+        ? MacTimerWidgetStore()
+        : TimerWidgetStore(
+            backgroundAction: platform == SurfacePlatform.android
+                ? background.widget
+                : null,
+          ),
   );
   LocalNotificationsSurface notifications() => LocalNotificationsSurface(
     platform,
@@ -82,7 +84,13 @@ List<TimerSurface> buildTimerSurfaces(
       title,
     ],
     SurfacePlatform.android => [notifications(), widgets(), title],
-    SurfacePlatform.macos ||
+    // The Mac's widgets on the desktop and in Notification Center (HIN-108).
+    SurfacePlatform.macos => [
+      notifications(),
+      ...desktop(tray()),
+      widgets(),
+      title,
+    ],
     SurfacePlatform.linux => [notifications(), ...desktop(tray()), title],
     SurfacePlatform.windows => [
       WindowsToastSurface(),
