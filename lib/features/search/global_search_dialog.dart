@@ -252,8 +252,8 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
           constraints: BoxConstraints(maxWidth: maxW, maxHeight: maxH),
           child: _shadowed(
             tokens,
-            BorderRadius.circular(28),
-            _glassPanel(tokens, radius: 28, mobile: false),
+            BorderRadius.circular(AppTheme.radiusDialog),
+            _glassPanel(tokens, radius: AppTheme.radiusDialog, mobile: false),
           ),
         ),
       ),
@@ -293,12 +293,14 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
     bool reduceMotion,
     Size size,
   ) {
-    const radius = BorderRadius.vertical(bottom: Radius.circular(26));
+    const radius = BorderRadius.vertical(
+      bottom: Radius.circular(AppTheme.radiusDialog),
+    );
     final panel = SizedBox.expand(
       child: _shadowed(
         tokens,
         radius,
-        _glassPanel(tokens, radius: 26, mobile: true),
+        _glassPanel(tokens, radius: AppTheme.radiusDialog, mobile: true),
       ),
     );
     if (reduceMotion) return FadeTransition(opacity: anim, child: panel);
@@ -384,7 +386,9 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
 
     if (mobile) {
       return ClipRRect(
-        borderRadius: const BorderRadius.vertical(bottom: Radius.circular(26)),
+        borderRadius: const BorderRadius.vertical(
+          bottom: Radius.circular(AppTheme.radiusDialog),
+        ),
         child: glass,
       );
     }

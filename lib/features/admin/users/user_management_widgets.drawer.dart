@@ -56,14 +56,14 @@ Future<void> showUserDrawer(
                   child: SizedBox(
                     width: 440,
                     child: GlassPanelShadow(
-                      radius: BorderRadius.circular(26),
+                      radius: BorderRadius.circular(AppTheme.radiusDialog),
                       shadows: tokens.panelShadow,
                       child: GlassContainer(
                         useOwnLayer: true,
                         quality: kPanelGlassQuality,
                         clipBehavior: Clip.antiAlias,
                         shape: const LiquidRoundedSuperellipse(
-                          borderRadius: 26,
+                          borderRadius: AppTheme.radiusDialog,
                         ),
                         settings: liquidGlassPanelSettings(
                           glassFill: tokens.glassFill,

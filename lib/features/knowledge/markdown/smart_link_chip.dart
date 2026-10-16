@@ -510,7 +510,7 @@ class _SmartPreviewState extends State<_SmartPreview>
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(KbTokens.radiusCard),
+          borderRadius: BorderRadius.circular(AppTheme.radiusPopover),
           border: Border.all(color: AppColors.hairline),
           boxShadow: [
             BoxShadow(

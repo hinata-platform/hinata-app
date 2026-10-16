@@ -416,14 +416,14 @@ class _MentionMenu extends StatelessWidget {
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     final dark = Theme.of(context).brightness == Brightness.dark;
     final card = GlassPanelShadow(
-      radius: BorderRadius.circular(KbTokens.radiusCard),
+      radius: BorderRadius.circular(AppTheme.radiusPopover),
       shadows: tokens.panelShadow,
       child: GlassContainer(
         useOwnLayer: true,
         quality: kPanelGlassQuality,
         clipBehavior: Clip.antiAlias,
         shape: const LiquidRoundedSuperellipse(
-          borderRadius: KbTokens.radiusCard,
+          borderRadius: AppTheme.radiusPopover,
         ),
         settings: liquidGlassPanelSettings(
           glassFill: tokens.glassFill,

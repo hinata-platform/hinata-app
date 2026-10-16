@@ -287,13 +287,15 @@ class _GlassColorCard extends StatelessWidget {
     final dark = Theme.of(context).brightness == Brightness.dark;
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     return GlassPanelShadow(
-      radius: BorderRadius.circular(20),
+      radius: BorderRadius.circular(AppTheme.radiusPopover),
       shadows: tokens.panelShadow,
       child: GlassContainer(
         useOwnLayer: true,
         quality: kPanelGlassQuality,
         clipBehavior: Clip.antiAlias,
-        shape: const LiquidRoundedSuperellipse(borderRadius: 20),
+        shape: const LiquidRoundedSuperellipse(
+          borderRadius: AppTheme.radiusPopover,
+        ),
         settings: liquidGlassPanelSettings(
           glassFill: tokens.glassFill,
           dark: dark,
