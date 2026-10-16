@@ -23,6 +23,8 @@ import 'package:hinata/core/widgets/folded_hint.dart';
 import 'package:hinata/core/widgets/glass_filter_bar.dart';
 import 'package:hinata/core/widgets/hive_empty_state.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart';
+import 'package:hinata/core/widgets/hue_slider.dart';
+import 'package:hinata/features/account/account_widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 /// Every node a reader can reach.
@@ -92,6 +94,32 @@ void main() {
                 child: const Text('New board'),
               ),
             ),
+            // The tint's controls (HIN-150): tiles, pills and the sliders.
+            TileSelector<int>(
+              value: 0,
+              layout: TileSelectorLayout.tile,
+              onChanged: (_) => taps.add('tile'),
+              options: const [
+                TileOption(value: 0, label: 'Standard'),
+                TileOption(value: 1, label: 'Tinted'),
+              ],
+            ),
+            TileSelector<int>(
+              value: 0,
+              onChanged: (_) => taps.add('pill'),
+              options: const [
+                TileOption(value: 0, label: 'Light'),
+                TileOption(value: 1, label: 'Dark'),
+              ],
+            ),
+            SizedBox(
+              width: 280,
+              child: HueSlider(hue: 79, level: 100, onChanged: (_) {}),
+            ),
+            SizedBox(
+              width: 280,
+              child: LevelSlider(hue: 79, level: 100, onChanged: (_) {}),
+            ),
           ],
         ),
       ),
@@ -154,6 +182,8 @@ void main() {
           'scope',
           'circle',
           'empty',
+          'tile',
+          'pill',
         ]),
       );
       // Not in a tearDown: the binding checks for live handles before those

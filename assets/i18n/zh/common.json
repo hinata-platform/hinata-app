@@ -50,7 +50,8 @@
       "orange": "橙色",
       "cyan": "青色",
       "blue": "蓝色",
-      "custom": "自定义"
+      "custom": "自定义",
+      "near": "自定义，接近{{name}}"
     },
     "pagination": {
       "previous": "上一页",
@@ -4451,6 +4452,21 @@
       "liveUpdateOff": "系统设置中已为此应用关闭 Live Updates。正在进行的通知仍会保留。",
       "reliability": "可靠模式",
       "reliabilityHint": "适用于电池管理会结束正在进行的通知的设备。计时器运行期间，由前台服务保留该通知，不收集任何数据。它只在应用打开时启动。"
+    },
+    "tint": {
+      "title": "自定义",
+      "subtitle": "整个应用使用一种颜色，就像手机上一样。",
+      "styleDefault": "标准",
+      "styleTinted": "着色",
+      "hue": "颜色",
+      "hueValue": "{{degrees}}度，{{name}}",
+      "level": "色调",
+      "levelValue": "{{value}}%，{{hint}}",
+      "levelClear": "透明玻璃",
+      "levelMid": "中等",
+      "levelStrong": "浓郁",
+      "reset": "恢复标准",
+      "saveFailed": "无法保存颜色。显示的是上次保存的颜色。"
     }
   },
   "twofa": {

@@ -50,7 +50,8 @@
       "orange": "Orange",
       "cyan": "Cyan",
       "blue": "Blau",
-      "custom": "Eigene"
+      "custom": "Eigene",
+      "near": "Eigene, nahe {{name}}"
     },
     "pagination": {
       "previous": "Vorherige Seite",
@@ -4451,6 +4452,21 @@
       "liveUpdateOff": "Live Updates sind für diese App in den Systemeinstellungen ausgeschaltet. Die laufende Benachrichtigung bleibt trotzdem.",
       "reliability": "Zuverlässigkeitsmodus",
       "reliabilityHint": "Für Geräte, deren Akku-Manager die laufende Benachrichtigung beendet. Ein Vordergrunddienst hält sie, solange der Timer läuft, und erhebt dabei nichts. Er startet nur, während die App offen ist."
+    },
+    "tint": {
+      "title": "Anpassen",
+      "subtitle": "Eine Farbe für die ganze App, wie auf dem Handy.",
+      "styleDefault": "Standard",
+      "styleTinted": "Eingefärbt",
+      "hue": "Farbe",
+      "hueValue": "{{degrees}} Grad, {{name}}",
+      "level": "Tönung",
+      "levelValue": "{{value}} Prozent, {{hint}}",
+      "levelClear": "klares Glas",
+      "levelMid": "mittel",
+      "levelStrong": "kräftig",
+      "reset": "Auf Standard zurücksetzen",
+      "saveFailed": "Die Farbe konnte nicht gespeichert werden. Angezeigt wird die zuletzt gespeicherte."
     }
   },
   "twofa": {

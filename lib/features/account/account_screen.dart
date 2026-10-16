@@ -12,7 +12,6 @@ import '../../core/repositories/account_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
-import '../../core/blocs/theme_cubit.dart';
 import '../../core/blocs/time_preferences_cubit.dart';
 import '../../core/blocs/tint_cubit.dart';
 import '../../core/i18n/i18n.dart';
@@ -39,6 +38,7 @@ import '../shell/page_chrome.dart';
 import 'account_cubit.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
+import 'tint_section.dart';
 import 'availability_section.dart';
 import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
@@ -1769,7 +1769,6 @@ class _AccountScreenState extends State<_AccountBody> {
   Widget _appearanceSection() {
     final config = context.watch<AppConfigBloc>().state;
     final locale = context.watch<LocaleCubit>().state;
-    final themeMode = context.watch<ThemeCubit>().state;
     return AccountSection(
       icon: LucideIcons.sunMoon,
       title: context.t('account.appearance.title'),
@@ -1823,15 +1822,10 @@ class _AccountScreenState extends State<_AccountBody> {
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),
-        SettingRow(
-          label: context.t('settings.theme'),
-          icon: LucideIcons.sunMoon,
-          stack: context.isCompact,
-          trailing: _ThemeSelector(
-            mode: themeMode,
-            onChanged: (m) => context.read<ThemeCubit>().setMode(m),
-          ),
-        ),
+        // Light/dark and the tint together, laid out like iOS 27's
+        // "Customize" sheet (HIN-150). Reads its own cubits; the section
+        // itself only watches the locale and the config.
+        const TintSection(),
         Divider(height: 1, color: AppColors.hairline2),
         SettingRow(
           label: context.t('legal.privacyPolicy'),

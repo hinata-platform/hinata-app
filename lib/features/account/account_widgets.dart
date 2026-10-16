@@ -348,3 +348,223 @@ class AccountNote extends StatelessWidget {
 }
 
 enum AccountNoteTone { warn, danger, info }
+
+/// How a [TileSelector] lays its options out.
+enum TileSelectorLayout {
+  /// Square tiles with a preview above the name — iOS 27's style tiles.
+  tile,
+
+  /// A row of pills — the Light / Dark / System switch.
+  pill,
+}
+
+/// One choice of a [TileSelector].
+class TileOption<T> {
+  const TileOption({
+    required this.value,
+    required this.label,
+    this.icon,
+    this.preview,
+  });
+
+  final T value;
+  final String label;
+  final IconData? icon;
+
+  /// What a tile shows above its name; decorative, excluded from semantics.
+  final Widget? preview;
+}
+
+/// A group of options of which exactly one is chosen, as tiles or pills.
+///
+/// Replaces the account screen's private segment switches, which were bare
+/// `GestureDetector`s: unreachable by Tab, deaf to Space and Enter, their
+/// active segment told apart by a wash of colour alone. Here every option is
+/// a focusable button with a visible focus ring, and the chosen one carries a
+/// check and a bold name as well as its colour (WCAG 1.4.1, 2.1.1, 2.4.7).
+class TileSelector<T> extends StatelessWidget {
+  const TileSelector({
+    super.key,
+    required this.value,
+    required this.options,
+    required this.onChanged,
+    this.layout = TileSelectorLayout.pill,
+  });
+
+  final T value;
+  final List<TileOption<T>> options;
+  final ValueChanged<T> onChanged;
+  final TileSelectorLayout layout;
+
+  @override
+  Widget build(BuildContext context) {
+    final tiles = [
+      for (final option in options)
+        _TileOptionButton<T>(
+          option: option,
+          selected: option.value == value,
+          layout: layout,
+          onSelect: () => onChanged(option.value),
+        ),
+    ];
+    return switch (layout) {
+      TileSelectorLayout.tile => Wrap(
+        spacing: 12,
+        runSpacing: 12,
+        children: tiles,
+      ),
+      TileSelectorLayout.pill => Wrap(
+        spacing: 8,
+        runSpacing: 8,
+        children: tiles,
+      ),
+    };
+  }
+}
+
+class _TileOptionButton<T> extends StatefulWidget {
+  const _TileOptionButton({
+    required this.option,
+    required this.selected,
+    required this.layout,
+    required this.onSelect,
+  });
+
+  final TileOption<T> option;
+  final bool selected;
+  final TileSelectorLayout layout;
+  final VoidCallback onSelect;
+
+  @override
+  State<_TileOptionButton<T>> createState() => _TileOptionButtonState<T>();
+}
+
+class _TileOptionButtonState<T> extends State<_TileOptionButton<T>> {
+  bool _focused = false;
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final tile = widget.layout == TileSelectorLayout.tile;
+    final selected = widget.selected;
+    final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final ink = selected ? AppColors.accentInk : AppColors.inkSoft;
+    final label = Text(
+      widget.option.label,
+      textAlign: TextAlign.center,
+      style: TextStyle(
+        fontSize: tile ? AppType.caption : AppType.label,
+        fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+        color: ink,
+      ),
+    );
+    final check = selected
+        ? Icon(LucideIcons.check, size: tile ? 14 : 15, color: ink)
+        : null;
+    final content = tile
+        ? ConstrainedBox(
+            // A tile is a square with a name under it; a long name wraps
+            // rather than widening the tile past its neighbours.
+            constraints: const BoxConstraints(maxWidth: 132),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.option.preview != null)
+                  ExcludeSemantics(
+                    child: SizedBox(
+                      width: 64,
+                      height: 64,
+                      child: widget.option.preview,
+                    ),
+                  ),
+                const SizedBox(height: 6),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (check != null) ...[check, const SizedBox(width: 4)],
+                    Flexible(child: label),
+                  ],
+                ),
+              ],
+            ),
+          )
+        : ConstrainedBox(
+            // A pill's name wraps at large text sizes instead of running
+            // past the row.
+            constraints: const BoxConstraints(maxWidth: 300),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.option.icon != null) ...[
+                  Icon(widget.option.icon, size: 15, color: ink),
+                  const SizedBox(width: 6),
+                ],
+                if (check != null) ...[check, const SizedBox(width: 4)],
+                Flexible(child: label),
+              ],
+            ),
+          );
+    return FocusableActionDetector(
+      onShowFocusHighlight: (v) => setState(() => _focused = v),
+      onShowHoverHighlight: (v) => setState(() => _hovered = v),
+      mouseCursor: SystemMouseCursors.click,
+      actions: {
+        ActivateIntent: CallbackAction<ActivateIntent>(
+          onInvoke: (_) {
+            widget.onSelect();
+            return null;
+          },
+        ),
+      },
+      child: Semantics(
+        button: true,
+        selected: selected,
+        inMutuallyExclusiveGroup: true,
+        label: widget.option.label,
+        onTap: widget.onSelect,
+        excludeSemantics: true,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onSelect,
+          // The focus ring sits outside the pill so it never fights the
+          // state border.
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(tile ? 16 : 12),
+              border: Border.all(
+                color: _focused ? AppColors.focusRing : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: AnimatedContainer(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 160),
+              constraints: BoxConstraints(
+                minWidth: tile ? 72 : 48,
+                minHeight: tile ? 72 : 44,
+              ),
+              margin: const EdgeInsets.all(2),
+              padding: EdgeInsets.symmetric(
+                horizontal: tile ? 10 : 14,
+                vertical: tile ? 8 : 9,
+              ),
+              decoration: BoxDecoration(
+                color: selected
+                    ? AppColors.accentSoft
+                    : _hovered
+                    ? AppColors.surfaceMuted
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(tile ? 14 : 10),
+                border: Border.all(
+                  color: selected ? AppColors.stateBorder : AppColors.hairline,
+                ),
+              ),
+              child: content,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
