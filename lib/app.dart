@@ -162,7 +162,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// The identity [_timer] was built for, so the rebuild happens once.
   String? _timerIdentity;
 
-  /// Whether this process has had a signed-in session yet; see [_syncTimer].
+  /// Whether this process has had a signed-in session yet. A cold start that
+  /// settles on `unauthenticated` without one has a session that was revoked
+  /// or ran out while the app was closed, and the hydrated tint is then the
+  /// previous person's; see [_syncAccountStream].
   bool _sessionSeen = false;
   late final TimeZoneSync _timeZone;
   late final FcmService _fcm;
@@ -333,8 +336,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // starts push — otherwise the OS notification-permission prompt would pop
       // over the very screen we're capturing. Normal launches are unaffected.
       if (widget.storage.screenshotRoute == null) _fcm.start();
+      _sessionSeen = true;
       _syncTimer(state.user?.id);
     } else {
+      if (state.status == AuthStatus.unauthenticated && !_sessionSeen) {
+        // Settled, not `unknown` while the session is still being restored:
+        // resetting then would throw the hydrated tint away on every start.
+        _tint.reset();
+      }
       _streamServer = null;
       _accountEvents.stop();
       // Whatever the server said about the previous account's zone must not be
@@ -358,15 +367,17 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     final identity = userId == null
         ? null
         : '${widget.storage.serverUrl ?? ''}#$userId';
-    if (identity == null && !_sessionSeen) {
-      // A cold start with no session: the session may have been revoked or
-      // may have run out while the app was closed, and the hydrated tint is
-      // the previous person's. Nothing else below needs to run.
+    if (identity == _timerIdentity) return;
+    final previousIdentity = _timerIdentity;
+    _timerIdentity = identity;
+    if (previousIdentity != null) {
+      // The colour is the person's, not the device's: whoever comes next —
+      // nobody, or another account, or the same person on another server —
+      // must not inherit it, a collected save must not land under their
+      // token, and the answer to a request still out is ignored. The new
+      // account's own tint arrives with its /me read below.
       _tint.reset();
     }
-    if (identity != null) _sessionSeen = true;
-    if (identity == _timerIdentity) return;
-    _timerIdentity = identity;
     // The knowledge base is held for the app's lifetime; what it loaded
     // belongs to the account that just left.
     _knowledge.reset();
@@ -407,11 +418,6 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       _timePolicy.reset();
       _timePrivacy.reset();
       _myAbsences.reset();
-      // The colour is the person's, not the device's: a shared computer must
-      // not show the next person the last one's tint. A collected save is
-      // dropped and the answer to a request still out is ignored; the
-      // request itself, once sent, is the API client's to finish.
-      _tint.reset();
     }
   }
 
@@ -419,8 +425,12 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// timer rhythm and the tint. One request, not one per cubit; a failure
   /// keeps what each of them holds.
   Future<void> _loadAccountPreferences() async {
+    final asked = _timerIdentity;
     try {
       final me = await widget.repositories.account.meAccount();
+      // The account that asked may have left while the read was out; its
+      // answer must not dress the sign-in screen or the next account.
+      if (asked != _timerIdentity) return;
       _timePreferences.adopt(me.timePreferences);
       _tint.adopt(me.tint);
     } catch (_) {
