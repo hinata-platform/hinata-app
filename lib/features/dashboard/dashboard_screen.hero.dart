@@ -252,10 +252,15 @@ class _SprintHero extends StatelessWidget {
     );
     return _GlassCard(
       padding: EdgeInsets.all(compact ? 20 : 26),
-      gradient: const LinearGradient(
+      // The primary at two depths (navy in the standard brand); follows the
+      // tint (HIN-150) like the rail does.
+      gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xE01E1C3A), Color(0xD12D2B55)],
+        colors: [
+          AppColors.primaryDeep.withValues(alpha: 0xE0 / 255),
+          AppColors.primary.withValues(alpha: 0xD1 / 255),
+        ],
       ),
       borderColor: Colors.white.withValues(alpha: .14),
       child: Stack(
@@ -574,9 +579,9 @@ class _AvatarStack extends StatelessWidget {
   // A solid ring drawn *around* (not over) the avatar so initials stay intact.
   Widget _ringed(Widget child) => Container(
     padding: const EdgeInsets.all(_ring),
-    decoration: const BoxDecoration(
+    decoration: BoxDecoration(
       shape: BoxShape.circle,
-      color: Color(0xFF262450),
+      color: AppColors.primaryDeep,
     ),
     child: child,
   );
