@@ -2,7 +2,6 @@ import Flutter
 import UIKit
 import UserNotifications
 import flutter_local_notifications
-import home_widget
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
@@ -19,16 +18,12 @@ import home_widget
     // setForegroundNotificationPresentationOptions (alert, badge, sound).
     // Must be set before super, so a tap that launched the app is not lost.
     UNUserNotificationCenter.current().delegate = self
-    // HIN-103: a notification button or a widget button acts on the timer in a
-    // background engine of its own, without opening the app. Those engines need
-    // the plugins and the Live Activity channel too.
+    // HIN-103: a notification button acts on the timer in a background engine
+    // of its own, without opening the app. That engine needs the plugins and
+    // the Live Activity channel too. Widget, Live Activity and control buttons
+    // run App Intents instead (HIN-105, `HinataIntentEngine`).
     FlutterLocalNotificationsPlugin.setPluginRegistrantCallback { registry in
       AppDelegate.registerBackgroundPlugins(registry)
-    }
-    if #available(iOS 17, *) {
-      HomeWidgetBackgroundWorker.setPluginRegistrantCallback { registry in
-        AppDelegate.registerBackgroundPlugins(registry)
-      }
     }
     // HIN-105: Siri, Shortcuts and the controls run their intents in this
     // process; a request goes to a headless engine, a route to the app's own.

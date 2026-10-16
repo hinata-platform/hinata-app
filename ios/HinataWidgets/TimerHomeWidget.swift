@@ -1,3 +1,4 @@
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -170,20 +171,23 @@ struct TimerWidgetView: View {
 
   /// Stop, and for a Pomodoro the next phase, without opening the app
   /// (HIN-103, iOS 17). Only while the stretch runs; over, a tap on the widget
-  /// opens the focus screen as before.
+  /// opens the focus screen as before. Idle, a start button starts a stopwatch
+  /// (HIN-105).
   @ViewBuilder private func actions(axis: Axis) -> some View {
-    if #available(iOSApplicationExtension 17.0, *), running, !entry.over, let record,
-      let stop = record.stop
-    {
+    if #available(iOSApplicationExtension 17.0, *), let record {
       let layout = axis == .vertical
         ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 6))
-      layout {
-        if let advance = record.advance {
-          TimerWidgetButton(
-            title: advance, symbol: record.isBreak ? "play.fill" : "cup.and.saucer.fill",
-            command: "advancePhase")
+      if running, !entry.over, let stop = record.stop {
+        layout {
+          if let advance = record.advance {
+            TimerWidgetButton(
+              title: advance, symbol: record.isBreak ? "play.fill" : "cup.and.saucer.fill",
+              intent: AdvancePhaseIntent())
+          }
+          TimerWidgetButton(title: stop, symbol: "stop.fill", intent: StopTimerIntent())
         }
-        TimerWidgetButton(title: stop, symbol: "stop.fill", command: "stop")
+      } else if !running, let start = record.start {
+        TimerWidgetButton(title: start, symbol: "play.fill", intent: StartTimerIntent())
       }
     }
   }
@@ -221,13 +225,13 @@ struct TimerWidgetView: View {
 /// One round button of the widget. The word is its accessible name; the
 /// glyph alone is drawn, so it fits the small widget in every language.
 @available(iOSApplicationExtension 17.0, *)
-private struct TimerWidgetButton: View {
+private struct TimerWidgetButton<Intent: AppIntent>: View {
   let title: String
   let symbol: String
-  let command: String
+  let intent: Intent
 
   var body: some View {
-    Button(intent: TimerBackgroundIntent(command: command)) {
+    Button(intent: intent) {
       Image(systemName: symbol)
         .font(.system(size: 15, weight: .semibold))
         .foregroundStyle(HinataPalette.navy)

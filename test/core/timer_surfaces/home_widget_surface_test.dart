@@ -151,6 +151,43 @@ void main() {
     expect(read(store.records.last), {'idle': 'No timer running'});
   });
 
+  test(
+    'idle on iOS the widget offers a start, also after the copy of a '
+    'running timer expires (HIN-105); Android keeps its widget as it is',
+    () async {
+      final withStart = deriveTimerSurfaceState(
+        timer(),
+        TimerSurfacePrefs.suggested,
+        gated: false,
+        texts: const TimerSurfaceTexts(
+          appName: 'Hinata',
+          countdownOver: 'Countdown over',
+          workOver: 'Interval over',
+          breakOver: 'Break over',
+          running: 'Timer running',
+          onBreak: 'Break',
+          stop: 'Stop',
+          takeBreak: 'Take a break',
+          resume: 'Resume',
+          idle: 'No timer running',
+          start: 'Start',
+        ),
+      );
+
+      await surface.apply(withStart);
+      expect(read(store.records.last)['start'], 'Start');
+      await surface.apply(TimerSurfaceState.idle);
+      expect(read(store.records.last), {
+        'idle': 'No timer running',
+        'start': 'Start',
+      });
+
+      final android = HomeWidgetSurface(SurfacePlatform.android, store: store);
+      await android.apply(withStart);
+      expect(read(store.records.last), isNot(contains('start')));
+    },
+  );
+
   test('an unchanged record is not written again', () async {
     await surface.apply(state(timer()));
     await surface.apply(state(timer()));

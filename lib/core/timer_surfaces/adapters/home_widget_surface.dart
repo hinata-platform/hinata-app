@@ -69,6 +69,10 @@ class HomeWidgetSurface extends TimerSurface {
   /// idle state carries none, and the widget has to say something then too.
   String _idle = '';
 
+  /// The word of the idle widget's start button (iOS, HIN-105), kept the same
+  /// way as [_idle].
+  String _start = '';
+
   @override
   String get id => 'home-widget';
 
@@ -82,7 +86,14 @@ class HomeWidgetSurface extends TimerSurface {
   @override
   Future<void> apply(TimerSurfaceState state) async {
     if (state.texts.idle.isNotEmpty) _idle = state.texts.idle;
-    await _write(timerWidgetRecord(state, idle: _idle));
+    if (state.texts.start.isNotEmpty) _start = state.texts.start;
+    await _write(
+      timerWidgetRecord(
+        state,
+        idle: _idle,
+        start: platform == SurfacePlatform.ios ? _start : '',
+      ),
+    );
   }
 
   Future<void> _write(String? record) async {
@@ -102,6 +113,7 @@ class HomeWidgetSurface extends TimerSurface {
   @override
   Future<void> clear() async {
     _idle = '';
+    _start = '';
     _hasWritten = false;
     await _write(null);
   }
@@ -115,12 +127,17 @@ class HomeWidgetSurface extends TimerSurface {
 /// Minimal by design: start, end, the direction, whether a break runs, when
 /// the copy expires and, only with details on the lock screen switched on,
 /// the description. No timer id and no other id, so nothing on the device
-/// links the widget to a record on the server.
-String timerWidgetRecord(TimerSurfaceState state, {String idle = ''}) {
+/// links the widget to a record on the server. Idle, [start] names the
+/// button that starts a stopwatch (iOS, HIN-105); empty leaves it out.
+String timerWidgetRecord(
+  TimerSurfaceState state, {
+  String idle = '',
+  String start = '',
+}) {
   final content = liveActivityContent(state);
   final startedAt = state.startedAt;
   if (content == null || startedAt == null) {
-    return jsonEncode({'idle': idle});
+    return jsonEncode({'idle': idle, if (start.isNotEmpty) 'start': start});
   }
   final texts = state.texts;
   final endsAt = state.endsAt;
@@ -139,5 +156,7 @@ String timerWidgetRecord(TimerSurfaceState state, {String idle = ''}) {
     if (state.mode == TimerMode.pomodoro)
       'advance': state.isBreak ? texts.resume : texts.takeBreak,
     'idle': idle,
+    // What the widget offers once this copy expires.
+    if (start.isNotEmpty) 'start': start,
   });
 }
