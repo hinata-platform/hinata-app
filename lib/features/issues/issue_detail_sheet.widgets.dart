@@ -572,25 +572,29 @@ class _ActivityTabs extends StatelessWidget {
     return Semantics(
       button: true,
       selected: active,
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => onChanged(filter),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: active ? AppColors.surface : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-            border: Border.all(
-              color: active ? AppColors.hairline : Colors.transparent,
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => onChanged(filter),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 140),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+            decoration: BoxDecoration(
+              color: active
+                  ? AppColors.surface
+                  : withHoverWash(Colors.transparent, hovered),
+              borderRadius: BorderRadius.circular(7),
+              border: Border.all(
+                color: active ? AppColors.hairline : Colors.transparent,
+              ),
             ),
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: AppType.label,
-              fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-              color: active ? AppColors.ink : AppColors.inkSoft,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: AppType.label,
+                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
+                color: active ? AppColors.ink : AppColors.inkSoft,
+              ),
             ),
           ),
         ),

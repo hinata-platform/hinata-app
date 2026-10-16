@@ -8,6 +8,7 @@ import '../../../core/theme/app_theme.dart';
 import '../sprint_format.dart';
 import 'glass_modal.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/hover_builder.dart';
 
 /// Liquid-Glass "Complete sprint" modal. Returns the destination for unfinished
 /// work: a planned sprint id, or `backlog`. Null when dismissed.
@@ -269,73 +270,78 @@ class _DestOption extends StatelessWidget {
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.accentSoft
-                : AppColors.surface.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: selected ? AppColors.accent : AppColors.hairline,
-              width: 1.5,
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accentSoft
+                  : withHoverWash(
+                      AppColors.surface.withValues(alpha: 0.55),
+                      hovered,
+                    ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: selected ? AppColors.accent : AppColors.hairline,
+                width: 1.5,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 18,
-                height: 18,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: selected
-                        ? AppColors.accentStrong
-                        : AppColors.inkFaint,
-                    width: 1.5,
+            child: Row(
+              children: [
+                Container(
+                  width: 18,
+                  height: 18,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: selected
+                          ? AppColors.accentStrong
+                          : AppColors.inkFaint,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: selected
+                      ? Container(
+                          width: 9,
+                          height: 9,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: AppColors.accentStrong,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 11),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        sub,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppType.caption,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                child: selected
-                    ? Container(
-                        width: 9,
-                        height: 9,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: AppColors.accentStrong,
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 11),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: AppType.label,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    Text(
-                      sub,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: AppType.caption,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

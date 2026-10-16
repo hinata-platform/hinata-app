@@ -24,6 +24,7 @@ import 'account_modals.dart' show showConfirm;
 import 'account_widgets.dart';
 import 'account_cubit.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/hover_builder.dart';
 
 /// The account "Access tokens" section — lists the caller's Personal Access
 /// Tokens (used to authenticate against the embedded MCP server), and mints new
@@ -478,55 +479,59 @@ class _SelectableScope extends StatelessWidget {
     final label = context.t(key);
     return Semantics(
       checked: selected,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.accentSoft : AppColors.surface,
-            borderRadius: BorderRadius.circular(9),
-            border: Border.all(
-              color: selected ? AppColors.accentStrong : AppColors.hairline,
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accentSoft
+                  : withHoverWash(AppColors.surface, hovered),
+              borderRadius: BorderRadius.circular(9),
+              border: Border.all(
+                color: selected ? AppColors.accentStrong : AppColors.hairline,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                selected ? LucideIcons.check : LucideIcons.plus,
-                size: 14,
-                color: selected ? AppColors.accentInk : AppColors.inkFaint,
-              ),
-              const SizedBox(width: 7),
-              // Flexible, so a label longer than the sheet is wide wraps
-              // inside the pill instead of running past its edge.
-              Flexible(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      label == key ? scope : label,
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? AppColors.accentInk : AppColors.ink,
-                      ),
-                    ),
-                    Text(
-                      scope,
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: AppType.caption,
-                        color: AppColors.inkFaint,
-                      ),
-                    ),
-                  ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  selected ? LucideIcons.check : LucideIcons.plus,
+                  size: 14,
+                  color: selected ? AppColors.accentInk : AppColors.inkFaint,
                 ),
-              ),
-            ],
+                const SizedBox(width: 7),
+                // Flexible, so a label longer than the sheet is wide wraps
+                // inside the pill instead of running past its edge.
+                Flexible(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label == key ? scope : label,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: FontWeight.w600,
+                          color: selected ? AppColors.accentInk : AppColors.ink,
+                        ),
+                      ),
+                      Text(
+                        scope,
+                        style: TextStyle(
+                          fontFamily: AppTheme.fontMono,
+                          fontSize: AppType.caption,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

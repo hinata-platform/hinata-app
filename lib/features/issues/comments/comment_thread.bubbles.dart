@@ -704,7 +704,9 @@ class _ReactionChips extends StatelessWidget {
         child: InkWell(
           onTap: () => onTap(emoji),
           customBorder: const StadiumBorder(),
-          child: Container(
+          // Ink, not Container: a Container paints over the InkWell's
+          // hover and hides it.
+          child: Ink(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: selected

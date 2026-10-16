@@ -15,6 +15,7 @@ import '../../core/widgets/hive_widgets.dart';
 import '../search/search_tokens.dart';
 import 'issue_filter.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/hover_builder.dart';
 
 const double _kCompactBreakpoint = 610;
 
@@ -666,54 +667,58 @@ class _ScopeChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: active,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
-          decoration: BoxDecoration(
-            color: active ? AppColors.accentSoft : tokens.field,
-            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            border: Border.all(
-              color: active ? AppColors.accentLine : tokens.hairline,
-            ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 14, color: fg),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: AppType.label,
-                  fontWeight: FontWeight.w600,
-                  color: active ? AppColors.accentInk : tokens.ink,
-                ),
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+            decoration: BoxDecoration(
+              color: active
+                  ? AppColors.accentSoft
+                  : withHoverWash(tokens.field, hovered),
+              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+              border: Border.all(
+                color: active ? AppColors.accentLine : tokens.hairline,
               ),
-              if (count > 0) ...[
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 14, color: fg),
                 const SizedBox(width: 6),
-                Container(
-                  constraints: const BoxConstraints(minWidth: 16),
-                  height: 16,
-                  alignment: Alignment.center,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.accent,
-                    shape: BoxShape.circle,
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    fontWeight: FontWeight.w600,
+                    color: active ? AppColors.accentInk : tokens.ink,
                   ),
-                  child: Text(
-                    '$count',
-                    style: TextStyle(
-                      fontFamily: AppTheme.fontMono,
-                      fontSize: AppType.caption,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.onAccent,
+                ),
+                if (count > 0) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    constraints: const BoxConstraints(minWidth: 16),
+                    height: 16,
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: AppColors.accent,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$count',
+                      style: TextStyle(
+                        fontFamily: AppTheme.fontMono,
+                        fontSize: AppType.caption,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.onAccent,
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
