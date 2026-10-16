@@ -37,7 +37,7 @@ import '../shell/page_chrome.dart';
 import 'account_cubit.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
-import 'tint_section.dart';
+import 'tint_customizer.dart';
 import 'availability_section.dart';
 import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
@@ -1823,10 +1823,10 @@ class _AccountScreenState extends State<_AccountBody> {
           ),
         ),
         Divider(height: 1, color: AppColors.hairline2),
-        // Light/dark and the tint together, laid out like iOS 27's
-        // "Customize" sheet (HIN-150). Reads its own cubits; the section
-        // itself only watches the locale and the config.
-        const TintSection(),
+        // Light/dark and the tint together behind one row that opens the
+        // Customize panel, as on iOS 27 (HIN-150). Reads its own cubits; the
+        // section itself only watches the locale and the config.
+        const TintCustomizeRow(),
         Divider(height: 1, color: AppColors.hairline2),
         SettingRow(
           label: context.t('legal.privacyPolicy'),

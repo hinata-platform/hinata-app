@@ -4453,9 +4453,9 @@
     },
     "tint": {
       "title": "تخصيص",
-      "subtitle": "لون واحد للتطبيق كله، كما على هاتفك.",
       "styleDefault": "قياسي",
       "styleTinted": "ملوّن",
+      "modeAuto": "تلقائي",
       "hue": "اللون",
       "hueValue": "{{degrees}} درجة، {{name}}",
       "level": "التلوين",
@@ -4463,7 +4463,6 @@
       "levelClear": "زجاج شفاف",
       "levelMid": "متوسط",
       "levelStrong": "قوي",
-      "reset": "إعادة الضبط إلى القياسي",
       "saveFailed": "تعذّر حفظ اللون. يُعرض آخر لون محفوظ."
     }
   },

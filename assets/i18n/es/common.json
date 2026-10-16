@@ -4453,9 +4453,9 @@
     },
     "tint": {
       "title": "Personalizar",
-      "subtitle": "Un color para toda la app, como en tu móvil.",
       "styleDefault": "Estándar",
       "styleTinted": "Teñido",
+      "modeAuto": "Automático",
       "hue": "Color",
       "hueValue": "{{degrees}} grados, {{name}}",
       "level": "Tinte",
@@ -4463,7 +4463,6 @@
       "levelClear": "cristal transparente",
       "levelMid": "medio",
       "levelStrong": "intenso",
-      "reset": "Restablecer al estándar",
       "saveFailed": "No se pudo guardar el color. Se muestra el último guardado."
     }
   },
