@@ -354,31 +354,3 @@ msix_config:
   # I18n.supportedLocales; store_languages_test.dart fails if they drift.
   languages: en-us, de-de, zh-cn, hi-in, es-es, ja-jp, fr-fr, ru-ru, ar-sa
   store: true
-
-# Until system_hotkeys 0.2.0 is on pub.dev (HIN-107): the release branch.
-dependency_overrides:
-  system_hotkeys:
-    git:
-      url: https://github.com/hinata-platform/system_hotkeys.git
-      ref: HIN-107-linux-shortcuts
-      path: packages/system_hotkeys
-  system_hotkeys_platform_interface:
-    git:
-      url: https://github.com/hinata-platform/system_hotkeys.git
-      ref: HIN-107-linux-shortcuts
-      path: packages/system_hotkeys_platform_interface
-  system_hotkeys_linux:
-    git:
-      url: https://github.com/hinata-platform/system_hotkeys.git
-      ref: HIN-107-linux-shortcuts
-      path: packages/system_hotkeys_linux
-  system_hotkeys_macos:
-    git:
-      url: https://github.com/hinata-platform/system_hotkeys.git
-      ref: HIN-107-linux-shortcuts
-      path: packages/system_hotkeys_macos
-  system_hotkeys_windows:
-    git:
-      url: https://github.com/hinata-platform/system_hotkeys.git
-      ref: HIN-107-linux-shortcuts
-      path: packages/system_hotkeys_windows
