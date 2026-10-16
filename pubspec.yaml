@@ -151,14 +151,17 @@ dependencies:
   tray_manager: 0.5.3
   window_manager: ^0.5.2
   # Our own (hinata-platform/system_hotkeys): RegisterEventHotKey on macOS,
-  # RegisterHotKey on Windows, conflicts reported. No keyboard hook.
-  system_hotkeys: ^0.1.0
-  # 0.1.1 or newer: before, super_native_extensions' Carbon handler swallowed
-  # every hot-key press in this app (see its CHANGELOG). 0.1.2 refuses bare
-  # keys natively.
-  system_hotkeys_macos: ^0.1.2
-  # 0.1.2: owns its channels and reuses freed hot key numbers.
-  system_hotkeys_windows: ^0.1.2
+  # RegisterHotKey on Windows, the GlobalShortcuts portal on Linux (HIN-107),
+  # conflicts reported. No keyboard hook, no key grab.
+  system_hotkeys: ^0.2.0
+  # 0.2.0 carries the macOS fixes of 0.1.1 (super_native_extensions' Carbon
+  # handler swallowed every press) and 0.1.2 (bare keys refused natively).
+  system_hotkeys_macos: ^0.2.0
+  # 0.2.0 carries 0.1.2: owns its channels and reuses freed hot key numbers.
+  system_hotkeys_windows: ^0.2.0
+  # Imported for its app id registration (an AppImage is not known to the
+  # portal by a sandbox).
+  system_hotkeys_linux: ^0.2.0
   # Our own (hinata-platform/alarm_kit, HIN-106): the end of an interval as a
   # system alarm on iOS and iPadOS 26. Below that it answers "unsupported".
   alarm_kit: ^0.1.1
@@ -351,3 +354,31 @@ msix_config:
   # I18n.supportedLocales; store_languages_test.dart fails if they drift.
   languages: en-us, de-de, zh-cn, hi-in, es-es, ja-jp, fr-fr, ru-ru, ar-sa
   store: true
+
+# Until system_hotkeys 0.2.0 is on pub.dev (HIN-107): the release branch.
+dependency_overrides:
+  system_hotkeys:
+    git:
+      url: https://github.com/hinata-platform/system_hotkeys.git
+      ref: HIN-107-linux-shortcuts
+      path: packages/system_hotkeys
+  system_hotkeys_platform_interface:
+    git:
+      url: https://github.com/hinata-platform/system_hotkeys.git
+      ref: HIN-107-linux-shortcuts
+      path: packages/system_hotkeys_platform_interface
+  system_hotkeys_linux:
+    git:
+      url: https://github.com/hinata-platform/system_hotkeys.git
+      ref: HIN-107-linux-shortcuts
+      path: packages/system_hotkeys_linux
+  system_hotkeys_macos:
+    git:
+      url: https://github.com/hinata-platform/system_hotkeys.git
+      ref: HIN-107-linux-shortcuts
+      path: packages/system_hotkeys_macos
+  system_hotkeys_windows:
+    git:
+      url: https://github.com/hinata-platform/system_hotkeys.git
+      ref: HIN-107-linux-shortcuts
+      path: packages/system_hotkeys_windows
