@@ -55,6 +55,7 @@ void main() {
       #locale: 'de',
       #timezone: null,
       #timePreferences: null,
+      #tint: null,
     });
   });
 

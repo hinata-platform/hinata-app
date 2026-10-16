@@ -13,6 +13,7 @@ import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
+import '../../core/blocs/tint_cubit.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart';
@@ -121,8 +122,9 @@ class _AppShellState extends State<AppShell> {
     // trigger rebuilds on their own. Subscribe to the inputs that resolve the
     // active brightness so the whole shell subtree re-runs build (and re-reads
     // AppColors) the moment the theme flips: the chosen ThemeMode, plus the OS
-    // brightness for ThemeMode.system.
+    // brightness for ThemeMode.system, plus the tint (HIN-150).
     context.watch<ThemeCubit>();
+    context.watch<TintCubit>();
     MediaQuery.platformBrightnessOf(context);
     // Which navigation this server asks for. Watched, not read: an admin can
     // switch the extended time-tracking module on while this app is running,
