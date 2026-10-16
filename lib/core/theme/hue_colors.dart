@@ -31,8 +31,16 @@ const Map<String, int> kDefaultStateHues = {
   'Done': 155,
 };
 
-/// Core oklch → [Color] conversion (alpha forced opaque).
+/// Core oklch → [Color] conversion (alpha forced opaque). Channels outside
+/// sRGB are clamped; see [inSrgbGamut] and [fitChroma] to avoid that.
 Color oklch(double l, double c, double hueDeg) {
+  final (r, g, b) = oklchLinear(l, c, hueDeg);
+  return Color.fromARGB(255, _channel(r), _channel(g), _channel(b));
+}
+
+/// oklch → linear sRGB, unclamped, so a caller can tell whether the colour
+/// exists in the gamut before it is rounded to eight bits.
+(double, double, double) oklchLinear(double l, double c, double hueDeg) {
   final h = hueDeg * math.pi / 180.0;
   final a = c * math.cos(h);
   final b = c * math.sin(h);
@@ -49,9 +57,44 @@ Color oklch(double l, double c, double hueDeg) {
   final r = 4.0767416621 * lc - 3.3077115913 * mc + 0.2309699292 * sc;
   final g = -1.2684380046 * lc + 2.6097574011 * mc - 0.3413193965 * sc;
   final bl = -0.0041960863 * lc - 0.7034186147 * mc + 1.7076147010 * sc;
-
-  return Color.fromARGB(255, _channel(r), _channel(g), _channel(bl));
+  return (r, g, bl);
 }
+
+/// Whether oklch(l, c, h) lies inside sRGB, judged on the linear channels
+/// before they are clamped. A hair of tolerance for rounding.
+bool inSrgbGamut(double l, double c, double hueDeg) {
+  final (r, g, b) = oklchLinear(l, c, hueDeg);
+  const eps = 0.0005;
+  return r >= -eps &&
+      r <= 1 + eps &&
+      g >= -eps &&
+      g <= 1 + eps &&
+      b >= -eps &&
+      b <= 1 + eps;
+}
+
+/// The largest chroma at or below [c] for which oklch(l, c, h) is in gamut:
+/// a saturated blue at L 0.74 does not exist in sRGB, and clamping its
+/// channels would shift its hue, so the chroma gives way instead. Bisection,
+/// seven steps, fine enough for eight-bit output.
+double fitChroma(double l, double c, double hueDeg) {
+  if (inSrgbGamut(l, c, hueDeg)) return c;
+  var lo = 0.0;
+  var hi = c;
+  for (var i = 0; i < 7; i++) {
+    final mid = (lo + hi) / 2;
+    if (inSrgbGamut(l, mid, hueDeg)) {
+      lo = mid;
+    } else {
+      hi = mid;
+    }
+  }
+  return lo;
+}
+
+/// oklch with the chroma fitted to the gamut first.
+Color oklchFit(double l, double c, double hueDeg) =>
+    oklch(l, fitChroma(l, c, hueDeg), hueDeg);
 
 int _channel(double linear) {
   final v = linear <= 0.0031308
