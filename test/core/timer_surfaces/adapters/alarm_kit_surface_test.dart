@@ -44,6 +44,7 @@ void main() {
     takeBreak: 'Take a break',
     resume: 'Resume',
     alarmTitle: 'Interval',
+    alarmBreakOver: 'Break over.',
   );
 
   final alarmOn = TimerSurfacePrefs.suggested.copyWith(
@@ -182,7 +183,7 @@ void main() {
       );
       plan = kit.scheduled.last;
       expect(plan.metadataKind, 'break');
-      expect(plan.presentation.alert.title, 'Break over');
+      expect(plan.presentation.alert.title, 'Break over.');
       expect(plan.presentation.alert.secondaryButton!.text, 'Resume');
       // The work phase's alarm went with the new phase.
       expect(kit.held.map((a) => a.id), [plan.id]);

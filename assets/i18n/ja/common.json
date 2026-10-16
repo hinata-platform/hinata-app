@@ -1711,7 +1711,8 @@
       "unlockToAct": "デバイスのロックを解除してから、もう一度お試しください。",
       "actionFailed": "うまくいきませんでした。Hinata を開いて、もう一度お試しください。",
       "timeLabel": "時間",
-      "alarmTitle": "インターバル"
+      "alarmTitle": "インターバル",
+      "alarmBreakOver": "休憩終了。"
     }
   },
   "availability": {
