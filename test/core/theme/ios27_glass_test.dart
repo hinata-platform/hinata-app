@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/models/account_models.dart';
+import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/theme/glass_chrome.dart';
+import 'package:hinata/core/theme/tint_palette.dart';
 import 'package:hinata/core/widgets/glass_panel.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
@@ -120,6 +123,63 @@ void main() {
       expect(light.frost, 0);
       expect(dark.rimShade, LiquidGlassSettings.ios27Dark.rimShade);
       expect(dark.lensModel, GlassLensModel.paraxial);
+    });
+  });
+
+  group('the tint (HIN-150)', () {
+    tearDown(() => AppColors.palette = TintPalette.standard);
+
+    test('the chrome keeps its optics and takes the palette colour', () {
+      final tinted = TintPalette.of(
+        const TintPreferences(style: TintStyle.tinted, hue: 300, level: 100),
+      );
+      AppColors.palette = tinted;
+      for (final dark in const [false, true]) {
+        final base = dark ? kNavGlassDark : kNavGlassLight;
+        final chrome = navGlass(dark);
+        expect(chrome.glassColor, dark ? tinted.chromeTintDark : tinted.chromeTintLight);
+        expect(chrome.glassColor.a, greaterThan(0));
+        // Everything but the colour is the neutral chrome: no frost pass, same
+        // rim and lens, the tint is a uniform.
+        expect(chrome.frost, base.frost);
+        expect(chrome.blur, base.blur);
+        expect(chrome.rimShade, base.rimShade);
+        expect(chrome.rimLight, base.rimLight);
+        expect(chrome.lensModel, base.lensModel);
+        expect(chrome.thickness, base.thickness);
+        expect(chrome.saturation, base.saturation);
+        final standard = navGlass(dark, standard: true);
+        expect(standard.glassColor, chrome.glassColor);
+        expect(
+          standard.thickness,
+          (dark ? kNavGlassStandardDark : kNavGlassStandardLight).thickness,
+        );
+      }
+    });
+
+    test('level 0 and the standard brand are the clear chrome, same instance', () {
+      for (final prefs in const [
+        TintPreferences.standard,
+        TintPreferences(style: TintStyle.tinted, hue: 300, level: 0),
+      ]) {
+        AppColors.palette = TintPalette.of(prefs);
+        expect(navGlass(false), same(kNavGlassLight));
+        expect(navGlass(true), same(kNavGlassDark));
+        expect(navGlass(true, standard: true), same(kNavGlassStandardDark));
+      }
+    });
+
+    test('panels stay neutral whatever the tint', () {
+      AppColors.palette = TintPalette.of(
+        const TintPreferences(style: TintStyle.tinted, hue: 20, level: 100),
+      );
+      final panel = liquidGlassPanelSettings(
+        glassFill: Colors.white,
+        dark: false,
+        standard: false,
+      );
+      expect(panel.glassColor, Colors.white);
+      expect(ios27GlassTheme().light.settings!.glassColor!.a, 0);
     });
   });
 }
