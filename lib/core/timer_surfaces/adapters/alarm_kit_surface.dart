@@ -277,14 +277,17 @@ String alarmKind(TimerSurfaceState state) {
 }
 
 /// What the system shows for the alarm of [state]. The words the
-/// notification it replaces would say, and a title for the countdown that
-/// does not tell work from a break on a lock screen.
+/// notification it replaces would say (shorter after a break, where the
+/// button says how to go on), and a title for the countdown that does not
+/// tell work from a break on a lock screen.
 AlarmPresentation alarmPresentation(TimerSurfaceState state) {
   final texts = state.texts;
   final pomodoro = state.mode == TimerMode.pomodoro;
   return AlarmPresentation(
     alert: AlarmAlert(
-      title: state.endText,
+      title: pomodoro && state.isBreak && texts.alarmBreakOver.isNotEmpty
+          ? texts.alarmBreakOver
+          : state.endText,
       stopButton: AlarmButton(
         text: texts.stop,
         systemImageName: 'stop.fill',

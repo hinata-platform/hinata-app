@@ -36,6 +36,7 @@ class TimerSurfaceTexts extends Equatable {
     this.actionFailed = '',
     this.timeLabel = '',
     this.alarmTitle = '',
+    this.alarmBreakOver = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -96,6 +97,10 @@ class TimerSurfaceTexts extends Equatable {
   /// for a countdown, work and a break.
   final String alarmTitle;
 
+  /// A ringing alarm's title after a break: short, because the system's
+  /// banner has one line, and its button already says how to go on.
+  final String alarmBreakOver;
+
   /// The words as a background isolate reads them back (HIN-103).
   Map<String, String> toJson() => {
     'appName': appName,
@@ -114,6 +119,7 @@ class TimerSurfaceTexts extends Equatable {
     'actionFailed': actionFailed,
     'timeLabel': timeLabel,
     'alarmTitle': alarmTitle,
+    'alarmBreakOver': alarmBreakOver,
   };
 
   /// Anything missing reads as empty; a surface then shows less, not wrong.
@@ -135,6 +141,7 @@ class TimerSurfaceTexts extends Equatable {
       actionFailed: text('actionFailed'),
       timeLabel: text('timeLabel'),
       alarmTitle: text('alarmTitle'),
+      alarmBreakOver: text('alarmBreakOver'),
     );
   }
 
@@ -163,6 +170,7 @@ class TimerSurfaceTexts extends Equatable {
     actionFailed,
     timeLabel,
     alarmTitle,
+    alarmBreakOver,
   ];
 }
 

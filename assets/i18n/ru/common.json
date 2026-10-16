@@ -1711,7 +1711,8 @@
       "unlockToAct": "Разблокируйте устройство и попробуйте ещё раз.",
       "actionFailed": "Не получилось. Откройте Hinata и попробуйте ещё раз там.",
       "timeLabel": "Время",
-      "alarmTitle": "Интервал"
+      "alarmTitle": "Интервал",
+      "alarmBreakOver": "Перерыв окончен."
     }
   },
   "availability": {

@@ -1711,7 +1711,8 @@
       "unlockToAct": "Entsperre dein Gerät und versuch es noch einmal.",
       "actionFailed": "Das hat nicht geklappt. Öffne Hinata und versuch es dort noch einmal.",
       "timeLabel": "Zeit",
-      "alarmTitle": "Intervall"
+      "alarmTitle": "Intervall",
+      "alarmBreakOver": "Pause vorbei."
     }
   },
   "availability": {

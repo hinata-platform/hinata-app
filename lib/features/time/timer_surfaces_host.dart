@@ -284,6 +284,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     actionFailed: context.t('time.surface.actionFailed'),
     timeLabel: context.t('time.surface.timeLabel'),
     alarmTitle: context.t('time.surface.alarmTitle'),
+    alarmBreakOver: context.t('time.surface.alarmBreakOver'),
   );
 
   TimerSurfaceState _derive() {

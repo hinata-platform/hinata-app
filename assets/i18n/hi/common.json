@@ -1711,7 +1711,8 @@
       "unlockToAct": "अपना डिवाइस अनलॉक करें, फिर दोबारा कोशिश करें।",
       "actionFailed": "यह नहीं हो पाया। Hinata खोलें और वहीं से दोबारा कोशिश करें।",
       "timeLabel": "समय",
-      "alarmTitle": "अंतराल"
+      "alarmTitle": "अंतराल",
+      "alarmBreakOver": "ब्रेक खत्म।"
     }
   },
   "availability": {
