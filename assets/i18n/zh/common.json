@@ -1712,7 +1712,9 @@
       "actionFailed": "操作未成功。请打开 Hinata 后重试。",
       "timeLabel": "时间",
       "alarmTitle": "时段",
-      "alarmBreakOver": "休息结束。"
+      "alarmBreakOver": "休息结束。",
+      "hotkeyToggle": "启动或停止计时器",
+      "hotkeyFocus": "打开专注视图"
     }
   },
   "availability": {
@@ -4429,7 +4431,14 @@
       "hotkeyBound": "已启用",
       "hotkeyConflict": "其他应用或系统已在使用此组合键。请选择其他组合。",
       "hotkeyUnsupported": "此设备上不可用。",
+      "hotkeyDeclined": "已在系统对话框中被拒绝。“在系统中配置”会再次询问。",
+      "hotkeyNoKeys": "已启用，但尚未分配按键。请在系统中设置。",
+      "hotkeyUnsupportedLinux": "此桌面不提供系统级快捷键（例如 Sway），或 AppImage 未集成到系统中。应用内的快捷键仍然可用。",
       "hotkeyChoose": "选择",
+      "configure": "系统中的按键",
+      "configureHint": "由你的桌面决定哪些按键触发它们，也在那里修改。",
+      "configureButton": "在系统中配置",
+      "configureUnavailable": "你的桌面无法从这里打开快捷键设置。可在系统设置的“键盘”中找到。",
       "keySpace": "空格",
       "recordPrompt": "按下新的组合键",
       "recordHint": "同时按住 Ctrl 或 Windows 键，例如 {{example}}。按 Esc 取消。",

@@ -9,7 +9,10 @@ import 'package:hinata/core/timer_surfaces/timer_surface_clear_signal.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/account/timer_surfaces_section.dart';
+import 'package:hinata/features/time/timer_surface_options.dart'
+    show withHotkeysOn;
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:system_hotkeys/system_hotkeys.dart' show HotKeyResult;
 
 import '../time/fake_timer_surface_gate.dart';
 
@@ -33,7 +36,11 @@ void main() {
     clear.dispose();
   });
 
-  Future<void> pump(WidgetTester tester, SurfacePlatform platform) async {
+  Future<void> pump(
+    WidgetTester tester,
+    SurfacePlatform platform, {
+    HotkeyStatus? hotkeys,
+  }) async {
     await tester.pumpWidget(
       MediaQuery(
         data: const MediaQueryData(size: Size(1200, 1600)),
@@ -42,7 +49,9 @@ void main() {
             body: MultiRepositoryProvider(
               providers: [
                 RepositoryProvider<TimerSurfaceClearSignal>.value(value: clear),
-                RepositoryProvider<HotkeyStatus>.value(value: HotkeyStatus()),
+                RepositoryProvider<HotkeyStatus>.value(
+                  value: hotkeys ?? HotkeyStatus(),
+                ),
               ],
               child: BlocProvider<TimerSurfacePrefsCubit>.value(
                 value: prefs,
@@ -375,6 +384,56 @@ void main() {
     expect(find.text('⌃⌥⌘F'), findsOneWidget);
     // The menu bar is no notification: nothing was asked of the system.
     expect(gate.requests, 0);
+  });
+
+  testWidgets('on Linux: the desktop\'s keys and its settings, no recorder', (
+    tester,
+  ) async {
+    final hotkeys = HotkeyStatus();
+    addTearDown(hotkeys.dispose);
+    prefs.consent(
+      withHotkeysOn(
+        TimerSurfacePrefs.suggestedOn(SurfacePlatform.linux),
+        SurfacePlatform.linux,
+      ),
+    );
+    hotkeys.results.value = const {
+      GlobalHotkeysSurface.toggleId: HotKeyResult.bound,
+      GlobalHotkeysSurface.focusId: HotKeyResult.declined,
+    };
+    hotkeys.triggers.value = const {
+      GlobalHotkeysSurface.toggleId: 'Ctrl+Alt+S',
+    };
+    await pump(tester, SurfacePlatform.linux, hotkeys: hotkeys);
+
+    expect(find.text('Ctrl+Alt+S'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.hotkeyDeclined'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.configureButton'), findsOneWidget);
+    expect(find.text('account.timerSurfaces.hotkeyChoose'), findsNothing);
+  });
+
+  testWidgets('on Linux without a portal backend: one note, no rows', (
+    tester,
+  ) async {
+    final hotkeys = HotkeyStatus();
+    addTearDown(hotkeys.dispose);
+    prefs.consent(
+      withHotkeysOn(
+        TimerSurfacePrefs.suggestedOn(SurfacePlatform.linux),
+        SurfacePlatform.linux,
+      ),
+    );
+    hotkeys.results.value = const {
+      GlobalHotkeysSurface.toggleId: HotKeyResult.unsupported,
+      GlobalHotkeysSurface.focusId: HotKeyResult.unsupported,
+    };
+    await pump(tester, SurfacePlatform.linux, hotkeys: hotkeys);
+
+    expect(
+      find.text('account.timerSurfaces.hotkeyUnsupportedLinux'),
+      findsOneWidget,
+    );
+    expect(find.text('account.timerSurfaces.configureButton'), findsNothing);
   });
 
   testWidgets('switching the menu bar off also ends keep running', (

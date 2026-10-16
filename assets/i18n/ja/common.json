@@ -1712,7 +1712,9 @@
       "actionFailed": "うまくいきませんでした。Hinata を開いて、もう一度お試しください。",
       "timeLabel": "時間",
       "alarmTitle": "インターバル",
-      "alarmBreakOver": "休憩終了。"
+      "alarmBreakOver": "休憩終了。",
+      "hotkeyToggle": "タイマーを開始または停止",
+      "hotkeyFocus": "フォーカス表示を開く"
     }
   },
   "availability": {
@@ -4429,7 +4431,14 @@
       "hotkeyBound": "有効",
       "hotkeyConflict": "この組み合わせは他のアプリかシステムがすでに使っています。別の組み合わせを選んでください。",
       "hotkeyUnsupported": "このデバイスでは使用できません。",
+      "hotkeyDeclined": "システムのダイアログで拒否されました。「システムで設定」でもう一度確認されます。",
+      "hotkeyNoKeys": "有効ですが、キーはまだありません。システムで割り当ててください。",
+      "hotkeyUnsupportedLinux": "このデスクトップはシステム全体のショートカットに対応していません（Sway など）。または AppImage がシステムに統合されていません。アプリ内のショートカットは引き続き使えます。",
       "hotkeyChoose": "選択",
+      "configure": "システムのキー",
+      "configureHint": "どのキーで動くかはデスクトップが決めます。変更もそちらで行います。",
+      "configureButton": "システムで設定",
+      "configureUnavailable": "このデスクトップはここからショートカット設定を開けません。システム設定の「キーボード」にあります。",
       "keySpace": "スペース",
       "recordPrompt": "新しい組み合わせを押してください",
       "recordHint": "Ctrl または Windows キーを押したままにしてください（例：{{example}}）。Escでキャンセルします。",

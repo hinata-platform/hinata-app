@@ -285,6 +285,8 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     timeLabel: context.t('time.surface.timeLabel'),
     alarmTitle: context.t('time.surface.alarmTitle'),
     alarmBreakOver: context.t('time.surface.alarmBreakOver'),
+    hotkeyToggle: context.t('time.surface.hotkeyToggle'),
+    hotkeyFocus: context.t('time.surface.hotkeyFocus'),
   );
 
   TimerSurfaceState _derive() {

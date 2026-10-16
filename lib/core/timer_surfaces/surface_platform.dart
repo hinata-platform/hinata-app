@@ -66,13 +66,16 @@ TimerSurfaceCapabilities capabilitiesForPlatform(SurfacePlatform platform) =>
         taskbar: true,
       ),
       // The tray is best effort here (a desktop without a StatusNotifierItem
-      // host shows nothing), and system-wide shortcuts come with the portal in
-      // stage 25.
+      // host shows nothing), and so are the shortcuts: the GlobalShortcuts
+      // portal binds them where the desktop has a backend for it (KDE, GNOME
+      // 48 and later), and the desktop picks the keys.
       SurfacePlatform.linux => const TimerSurfaceCapabilities(
         phaseEndNotification: true,
         runningSurface: true,
         trayIcon: true,
         keepRunning: true,
+        globalHotkeys: true,
+        hotkeysBySystem: true,
       ),
       // On the web the running timer is the app badge of an installed app.
       SurfacePlatform.web => const TimerSurfaceCapabilities(
