@@ -2,3 +2,4 @@
    these .lproj folders, so every language the app speaks needs one. */
 CFBundleDisplayName = "Hinata";
 CFBundleName = "Hinata";
+NSAlarmKitUsageDescription = "Hinata звонит будильником в конце обратного отсчёта или интервала Pomodoro, если включить это в настройках.";

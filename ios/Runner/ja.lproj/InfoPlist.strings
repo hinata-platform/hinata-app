@@ -2,3 +2,4 @@
    these .lproj folders, so every language the app speaks needs one. */
 CFBundleDisplayName = "Hinata";
 CFBundleName = "Hinata";
+NSAlarmKitUsageDescription = "設定でオンにすると、Hinata はカウントダウンやポモドーロのインターバルの終わりをアラームで知らせます。";

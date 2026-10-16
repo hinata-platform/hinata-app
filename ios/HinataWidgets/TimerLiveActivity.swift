@@ -143,7 +143,7 @@ struct TimerActivityButtons: View {
 
 /// One round button of the activity; the word is its accessible name.
 @available(iOSApplicationExtension 17.0, *)
-private struct TimerActivityButton<Intent: AppIntent>: View {
+struct TimerActivityButton<Intent: AppIntent>: View {
   let title: String
   let symbol: String
   let size: CGFloat
