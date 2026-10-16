@@ -10,6 +10,8 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
     this.exact = false,
     this.activities = true,
     this.liveUpdateSupport = LiveUpdateSupport.allowed,
+    this.alarms = false,
+    this.alarmGrant = true,
   });
 
   bool grants;
@@ -20,6 +22,12 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
 
   /// What the system says about Live Updates (Android 16+).
   LiveUpdateSupport liveUpdateSupport;
+
+  /// Whether the system has alarms (iOS 26), and whether the person allows
+  /// them when asked.
+  bool alarms;
+  bool alarmGrant;
+  int alarmRequests = 0;
   int liveUpdateSettingsOpened = 0;
   int requests = 0;
   int exactRequests = 0;
@@ -28,6 +36,16 @@ class FakeTimerSurfaceGate extends TimerSurfacePermissionGate {
   Future<bool> request(SurfacePlatform platform) async {
     requests++;
     return grants;
+  }
+
+  @override
+  Future<bool> alarmsSupported(SurfacePlatform platform) async =>
+      platform == SurfacePlatform.ios && alarms;
+
+  @override
+  Future<bool> requestAlarms() async {
+    alarmRequests++;
+    return alarmGrant;
   }
 
   @override
