@@ -1,15 +1,18 @@
 import 'dart:convert';
 
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/timer_surfaces/adapters/home_widget_surface.dart';
 import 'package:hinata/core/timer_surfaces/surface_platform.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_state.dart';
+import 'package:widgetkit_macos/widgetkit_macos.dart';
 
 /// The widgets' shared store (HIN-102): one record, no ids, the description
 /// only with details on the lock screen, and gone on clear.
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   final start = DateTime.now().toUtc().subtract(const Duration(minutes: 5));
 
   RunningTimer timer({
@@ -201,6 +204,92 @@ void main() {
     await surface.clear();
 
     expect(store.records, [isNotNull, null, null]);
+  });
+
+  // HIN-108: the same record for the Mac's widgets, through widgetkit_macos.
+  group('on a Mac', () {
+    const channel = MethodChannel('widgetkit_macos');
+    final calls = <MethodCall>[];
+
+    setUp(() {
+      calls.clear();
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (call) async {
+            calls.add(call);
+            return null;
+          });
+    });
+
+    tearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, null),
+    );
+
+    HomeWidgetSurface mac() => HomeWidgetSurface(
+      SurfacePlatform.macos,
+      store: MacTimerWidgetStore(
+        kit: WidgetKitMacos(
+          appGroup: timerWidgetAppGroup,
+          channel: channel,
+          isMacOS: true,
+        ),
+      ),
+    );
+
+    Map<Object?, Object?> saved(int i) =>
+        calls.where((c) => c.method == 'saveWidgetData').elementAt(i).arguments
+            as Map<Object?, Object?>;
+
+    test(
+      'writes the record into the App Group, then reloads the widget',
+      () async {
+        await mac().apply(state(timer()));
+
+        expect(calls.map((c) => c.method), [
+          'saveWidgetData',
+          'reloadTimelines',
+        ]);
+        expect(saved(0)['appGroup'], 'group.com.ahmadre.hinata');
+        expect(saved(0)['key'], 'hinata_timer');
+        expect(
+          (calls.last.arguments as Map<Object?, Object?>)['kind'],
+          'HinataTimerWidget',
+        );
+        final record = read(saved(0)['value'] as String?);
+        expect(record['startedAt'], start.millisecondsSinceEpoch);
+        expect(record, isNot(contains('start')));
+      },
+    );
+
+    test('minimal: no ids and no description', () async {
+      await mac().apply(state(timer()));
+
+      final raw = saved(0)['value'] as String;
+      expect(raw, isNot(contains('timer-1')));
+      expect(raw, isNot(contains('project-1')));
+      expect(raw, isNot(contains('Quarterly report')));
+    });
+
+    test('a transition reloads, an unchanged state does not', () async {
+      final surface = mac();
+      await surface.apply(state(timer()));
+      await surface.apply(state(timer()));
+      await surface.apply(TimerSurfaceState.idle);
+
+      expect(calls.where((c) => c.method == 'reloadTimelines'), hasLength(2));
+    });
+
+    test(
+      'sign-out empties the record with an empty string, never null',
+      () async {
+        final surface = mac();
+        await surface.apply(state(timer()));
+        await surface.clear();
+
+        expect(saved(1)['value'], '');
+        expect(calls.last.method, 'reloadTimelines');
+      },
+    );
   });
 }
 

@@ -29,6 +29,7 @@ import super_native_extensions
 import system_hotkeys_macos
 import tray_manager
 import url_launcher_macos
+import widgetkit_macos
 import window_manager
 
 func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
@@ -56,5 +57,6 @@ func RegisterGeneratedPlugins(registry: FlutterPluginRegistry) {
   SystemHotkeysMacosPlugin.register(with: registry.registrar(forPlugin: "SystemHotkeysMacosPlugin"))
   TrayManagerPlugin.register(with: registry.registrar(forPlugin: "TrayManagerPlugin"))
   UrlLauncherPlugin.register(with: registry.registrar(forPlugin: "UrlLauncherPlugin"))
+  WidgetkitMacosPlugin.register(with: registry.registrar(forPlugin: "WidgetkitMacosPlugin"))
   WindowManagerPlugin.register(with: registry.registrar(forPlugin: "WindowManagerPlugin"))
 }

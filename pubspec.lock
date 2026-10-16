@@ -2097,6 +2097,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  widgetkit_macos:
+    dependency: "direct main"
+    description:
+      path: "../widgetkit_macos"
+      relative: true
+    source: path
+    version: "0.1.0"
   win32:
     dependency: transitive
     description:
