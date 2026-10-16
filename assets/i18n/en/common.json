@@ -1712,7 +1712,9 @@
       "actionFailed": "That didn’t work. Open Hinata and try again there.",
       "timeLabel": "Time",
       "alarmTitle": "Interval",
-      "alarmBreakOver": "Break over."
+      "alarmBreakOver": "Break over.",
+      "hotkeyToggle": "Start or stop the timer",
+      "hotkeyFocus": "Open the focus view"
     }
   },
   "availability": {
@@ -4429,7 +4431,14 @@
       "hotkeyBound": "Active",
       "hotkeyConflict": "Another app or the system already uses this combination. Choose a different one.",
       "hotkeyUnsupported": "Not available on this device.",
+      "hotkeyDeclined": "Turned down in the system dialog. Configure in the system asks again.",
+      "hotkeyNoKeys": "Active, but no keys yet. Set them in the system.",
+      "hotkeyUnsupportedLinux": "This desktop offers no system-wide shortcuts (Sway, for example), or the AppImage is not integrated into the system. The shortcuts inside the app still work.",
       "hotkeyChoose": "Choose",
+      "configure": "Keys in the system",
+      "configureHint": "Your desktop decides which keys trigger them. You change them there too.",
+      "configureButton": "Configure in the system",
+      "configureUnavailable": "Your desktop does not open its shortcut settings from here. You find them in the system settings under Keyboard.",
       "keySpace": "Space",
       "recordPrompt": "Press the new combination",
       "recordHint": "Hold Ctrl or the Windows key, for example {{example}}. Esc cancels.",

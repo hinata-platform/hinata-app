@@ -17,6 +17,7 @@ class TimerSurfaceCapabilities extends Equatable {
     this.trayIcon = false,
     this.keepRunning = false,
     this.globalHotkeys = false,
+    this.hotkeysBySystem = false,
     this.taskbar = false,
   });
 
@@ -51,6 +52,11 @@ class TimerSurfaceCapabilities extends Equatable {
   /// Can bind system-wide keyboard shortcuts.
   final bool globalHotkeys;
 
+  /// The desktop, not the app, decides those shortcuts' keys (the Linux
+  /// GlobalShortcuts portal): the settings show what it bound and open its
+  /// own settings instead of recording a combination.
+  final bool hotkeysBySystem;
+
   /// Draws progress and buttons on the taskbar button (Windows).
   final bool taskbar;
 
@@ -66,6 +72,7 @@ class TimerSurfaceCapabilities extends Equatable {
         trayIcon: trayIcon || other.trayIcon,
         keepRunning: keepRunning || other.keepRunning,
         globalHotkeys: globalHotkeys || other.globalHotkeys,
+        hotkeysBySystem: hotkeysBySystem || other.hotkeysBySystem,
         taskbar: taskbar || other.taskbar,
       );
 
@@ -80,6 +87,7 @@ class TimerSurfaceCapabilities extends Equatable {
     trayIcon,
     keepRunning,
     globalHotkeys,
+    hotkeysBySystem,
     taskbar,
   ];
 }

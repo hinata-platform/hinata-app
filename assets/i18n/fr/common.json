@@ -1712,7 +1712,9 @@
       "actionFailed": "Ça n’a pas marché. Ouvre Hinata et réessaie depuis l’app.",
       "timeLabel": "Temps",
       "alarmTitle": "Intervalle",
-      "alarmBreakOver": "Pause terminée."
+      "alarmBreakOver": "Pause terminée.",
+      "hotkeyToggle": "Démarrer ou arrêter le minuteur",
+      "hotkeyFocus": "Ouvrir la vue concentration"
     }
   },
   "availability": {
@@ -4429,7 +4431,14 @@
       "hotkeyBound": "Actif",
       "hotkeyConflict": "Une autre app ou le système utilise déjà cette combinaison. Choisis-en une autre.",
       "hotkeyUnsupported": "Indisponible sur cet appareil.",
+      "hotkeyDeclined": "Refusé dans la boîte de dialogue du système. Configurer dans le système redemande.",
+      "hotkeyNoKeys": "Actif, mais encore sans touches. Définis-les dans le système.",
+      "hotkeyUnsupportedLinux": "Ce bureau ne propose pas de raccourcis globaux (Sway, par exemple), ou l’AppImage n’est pas intégrée au système. Les raccourcis dans l’app fonctionnent toujours.",
       "hotkeyChoose": "Choisir",
+      "configure": "Touches dans le système",
+      "configureHint": "Ton bureau décide quelles touches les déclenchent. Tu les modifies aussi là-bas.",
+      "configureButton": "Configurer dans le système",
+      "configureUnavailable": "Ton bureau n’ouvre pas ses réglages de raccourcis depuis ici. Tu les trouves dans les paramètres du système, sous Clavier.",
       "keySpace": "Espace",
       "recordPrompt": "Appuie sur la nouvelle combinaison",
       "recordHint": "Maintiens Ctrl ou la touche Windows, par exemple {{example}}. Échap annule.",

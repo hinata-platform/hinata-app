@@ -1712,7 +1712,9 @@
       "actionFailed": "Das hat nicht geklappt. Öffne Hinata und versuch es dort noch einmal.",
       "timeLabel": "Zeit",
       "alarmTitle": "Intervall",
-      "alarmBreakOver": "Pause vorbei."
+      "alarmBreakOver": "Pause vorbei.",
+      "hotkeyToggle": "Timer starten oder stoppen",
+      "hotkeyFocus": "Fokusansicht öffnen"
     }
   },
   "availability": {
@@ -4429,7 +4431,14 @@
       "hotkeyBound": "Aktiv",
       "hotkeyConflict": "Eine andere App oder das System nutzt diese Kombination schon. Wähle eine andere.",
       "hotkeyUnsupported": "Auf diesem Gerät nicht verfügbar.",
+      "hotkeyDeclined": "Im Systemdialog abgelehnt. Über „Im System konfigurieren“ fragt der Desktop noch einmal.",
+      "hotkeyNoKeys": "Aktiv, aber noch ohne Tasten. Leg sie im System fest.",
+      "hotkeyUnsupportedLinux": "Dieser Desktop bietet keine systemweiten Kürzel an, etwa Sway, oder das AppImage ist nicht ins System eingebunden. Die Kürzel in der App gelten weiter.",
       "hotkeyChoose": "Wählen",
+      "configure": "Tasten im System",
+      "configureHint": "Welche Tasten auslösen, legt dein Desktop fest. Dort änderst du sie auch.",
+      "configureButton": "Im System konfigurieren",
+      "configureUnavailable": "Dein Desktop öffnet seine Kürzel-Einstellungen nicht von hier aus. Du findest sie in den Systemeinstellungen unter Tastatur.",
       "keySpace": "Leertaste",
       "recordPrompt": "Drücke die neue Kombination",
       "recordHint": "Halte Strg oder die Windows-Taste dazu, etwa {{example}}. Esc bricht ab.",

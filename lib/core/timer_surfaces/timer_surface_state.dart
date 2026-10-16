@@ -37,6 +37,8 @@ class TimerSurfaceTexts extends Equatable {
     this.timeLabel = '',
     this.alarmTitle = '',
     this.alarmBreakOver = '',
+    this.hotkeyToggle = '',
+    this.hotkeyFocus = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -100,6 +102,12 @@ class TimerSurfaceTexts extends Equatable {
   /// A ringing alarm's title after a break: short, because the system's
   /// banner has one line, and its button already says how to go on.
   final String alarmBreakOver;
+
+  /// What the system-wide shortcuts do, where the desktop lists them (the
+  /// Linux portal's dialog and settings). The window is open whenever they
+  /// are bound, so a background isolate never needs these.
+  final String hotkeyToggle;
+  final String hotkeyFocus;
 
   /// The words as a background isolate reads them back (HIN-103).
   Map<String, String> toJson() => {
@@ -171,6 +179,8 @@ class TimerSurfaceTexts extends Equatable {
     timeLabel,
     alarmTitle,
     alarmBreakOver,
+    hotkeyToggle,
+    hotkeyFocus,
   ];
 }
 
