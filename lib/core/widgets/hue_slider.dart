@@ -205,12 +205,10 @@ class SpectrumTrackShape extends _GradientTrackShape {
 
   static final _stops = <int, List<Color>>{};
 
-  /// One colour every ten degrees, in gamut, for [level].
+  /// One colour every ten degrees for [level]: the accent each hue gives,
+  /// so the track promises exactly what the tint will be.
   static List<Color> stopsFor(int level) => _stops.putIfAbsent(level, () {
-    final c = 0.137 * TintPalette.chromaScale(level);
-    return [
-      for (var h = 0; h <= 360; h += 10) oklchFit(0.742, c, h.toDouble()),
-    ];
+    return [for (var h = 0; h <= 360; h += 10) TintPalette.accentFor(h, level)];
   });
 
   @override
@@ -226,13 +224,11 @@ class LevelTrackShape extends _GradientTrackShape {
   static final _stops = <int, List<Color>>{};
 
   static List<Color> stopsFor(int hue) => _stops.putIfAbsent(hue, () {
-    final full = oklchFit(0.742, 0.137, hue.toDouble());
-    final pale = oklchFit(
-      0.742,
-      0.137 * TintPalette.chromaScale(0),
-      hue.toDouble(),
-    );
-    return [Colors.white, pale, full];
+    return [
+      Colors.white,
+      TintPalette.accentFor(hue, 0),
+      TintPalette.accentFor(hue, 100),
+    ];
   });
 
   @override

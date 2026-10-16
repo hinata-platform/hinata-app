@@ -117,4 +117,35 @@ void main() {
       isFalse,
     );
   });
+
+  group('a tint is as vivid as its hue allows', () {
+    test('red at full level is a real red, not salmon', () {
+      final p = TintPalette.of(
+        const TintPreferences(style: TintStyle.tinted, hue: 27, level: 100),
+      );
+      expect(p.accent.r, greaterThanOrEqualTo(0.95));
+      expect(p.accent.g, lessThanOrEqualTo(0.35));
+      expect(p.accent.b, lessThanOrEqualTo(0.35));
+    });
+
+    test('the default tint stays close to the brand honey', () {
+      final p = TintPalette.of(
+        const TintPreferences(style: TintStyle.tinted, hue: 79, level: 100),
+      );
+      // #D9A032, within a few steps per channel.
+      expect((p.accent.r * 255 - 0xD9).abs(), lessThanOrEqualTo(12));
+      expect((p.accent.g * 255 - 0xA0).abs(), lessThanOrEqualTo(12));
+      expect((p.accent.b * 255 - 0x32).abs(), lessThanOrEqualTo(60));
+    });
+
+    test('level 0 stays pale', () {
+      final p = TintPalette.of(
+        const TintPreferences(style: TintStyle.tinted, hue: 27, level: 0),
+      );
+      final spread =
+          [p.accent.r, p.accent.g, p.accent.b].reduce((a, b) => a > b ? a : b) -
+          [p.accent.r, p.accent.g, p.accent.b].reduce((a, b) => a < b ? a : b);
+      expect(spread, lessThan(0.45));
+    });
+  });
 }
