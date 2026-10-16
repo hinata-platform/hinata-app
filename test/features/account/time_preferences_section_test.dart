@@ -249,6 +249,7 @@ class _FakeAccountRepository implements AccountRepository {
     String? locale,
     String? timezone,
     TimePreferences? timePreferences,
+    TintPreferences? tint,
   }) async {
     if (refuse) throw ApiFailure('nope');
     saved = timePreferences;

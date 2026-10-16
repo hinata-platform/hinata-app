@@ -14,6 +14,7 @@ import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/locale_cubit.dart';
 import '../../core/blocs/theme_cubit.dart';
 import '../../core/blocs/time_preferences_cubit.dart';
+import '../../core/blocs/tint_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/models/core_models.dart' show PlatformFlags;
@@ -218,6 +219,7 @@ class _AccountScreenState extends State<_AccountBody> {
       context.read<TimePreferencesCubit>().adopt(
         (results[0] as Me).timePreferences,
       );
+      context.read<TintCubit>().adopt((results[0] as Me).tint);
       setState(() {
         _me = results[0] as Me;
         _sessions = page.items;

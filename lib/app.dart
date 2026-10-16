@@ -31,11 +31,11 @@ import 'core/storage/app_storage.dart';
 import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_colors_refresh.dart';
-import 'core/theme/app_theme.dart';
 import 'core/blocs/my_absences_cubit.dart';
 import 'core/blocs/time_policy_cubit.dart';
 import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
+import 'core/blocs/tint_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/time/time_shortcuts.dart';
 import 'features/time/timer_signals.dart';
@@ -133,6 +133,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final TimePreferencesCubit _timePreferences = TimePreferencesCubit(
     widget.repositories.account,
   );
+
+  /// The colour the account gives the app (HIN-150). App-wide because the
+  /// theme is built from it; see [TintCubit].
+  late final TintCubit _tint = TintCubit(widget.repositories.account);
 
   /// The operator's rules for the module — required fields, the lock date, who
   /// may coin a tag. App-wide for the same reason the rhythm is; see
@@ -386,13 +390,30 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // three numbers and a switch behind a request the app already makes, and
       // a stale copy of somebody's break length is worth less than the round
       // trip costs.
-      unawaited(_timePreferences.load());
+      unawaited(_loadAccountPreferences());
     } else {
       // Another server may freeze another month. Held rules from the session
       // that ended would grey out a day that is perfectly editable on the next.
       _timePolicy.reset();
       _timePrivacy.reset();
       _myAbsences.reset();
+      // The colour is the person's, not the device's: a shared computer must
+      // not show the next person the last one's tint, and a pending save of
+      // the account that just left must not land under the next token.
+      _tint.reset();
+    }
+  }
+
+  /// One account read for everything the account carries about taste: the
+  /// timer rhythm and the tint. One request, not one per cubit; a failure
+  /// keeps what each of them holds.
+  Future<void> _loadAccountPreferences() async {
+    try {
+      final me = await widget.repositories.account.meAccount();
+      _timePreferences.adopt(me.timePreferences);
+      _tint.adopt(me.tint);
+    } catch (_) {
+      // What we have stands.
     }
   }
 
@@ -816,16 +837,25 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _timer),
           BlocProvider.value(value: _surfacePrefs),
           BlocProvider.value(value: _timePreferences),
+          BlocProvider.value(value: _tint),
           BlocProvider.value(value: _timePolicy),
           BlocProvider.value(value: _myAbsences),
           BlocProvider.value(value: _timePrivacy),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
-        // Light/dark reaches the widgets that read AppColors through a full
-        // rebuild, const subtrees included: see AppColorsRefresh.
+        // Light/dark and the tint reach the widgets that read AppColors
+        // through a full rebuild, const subtrees included: see
+        // AppColorsRefresh.
         child: AppColorsRefresh(
           child: BlocBuilder<ThemeCubit, ThemeMode>(
             builder: (context, themeMode) {
+              // The tint's state holds its palette and both ThemeData, built
+              // once per preferences: a rebuild that changed nothing hands the
+              // same instances back and starts no theme cross-fade.
+              final tint = context.watch<TintCubit>().state;
+              // Beside the brightness, before MaterialApp builds its theme, so
+              // the getters and the ThemeData see the same palette in a frame.
+              AppColors.palette = tint.palette;
               return BlocBuilder<LocaleCubit, Locale>(
                 builder: (context, locale) {
                   // Keep the API client's Accept-Language in sync so the server
@@ -847,9 +877,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                         ? 'Hinata'
                         : organization,
                     debugShowCheckedModeBanner: false,
-                    theme: AppTheme.light(),
-                    darkTheme: AppTheme.dark(),
+                    theme: tint.lightTheme,
+                    darkTheme: tint.darkTheme,
                     themeMode: themeMode,
+                    // No cross-fade for a tint change: the tokens read through
+                    // AppColors jump at once, and a fade of the few Material
+                    // colours against them is 24 frames of mixed colours. Also
+                    // none under reduced motion.
+                    themeAnimationDuration: Duration.zero,
                     locale: locale,
                     supportedLocales: I18n.supportedLocales,
                     localizationsDelegates: I18n.delegates(),

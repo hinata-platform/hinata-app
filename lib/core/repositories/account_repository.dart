@@ -25,6 +25,7 @@ class AccountRepository {
     String? locale,
     String? timezone,
     TimePreferences? timePreferences,
+    TintPreferences? tint,
   }) async => Me.fromJson(
     await _api.patch(
           '/api/v1/me',
@@ -38,6 +39,9 @@ class AccountRepository {
             // edits together, and the server merges them onto what it holds.
             if (timePreferences != null)
               'timePreferences': timePreferences.toJson(),
+            // The tint (HIN-150): three values the server merges onto what
+            // it holds and writes with a targeted set.
+            if (tint != null) 'tint': tint.toJson(),
           },
         )
         as Map<String, dynamic>,
