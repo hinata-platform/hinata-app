@@ -1,5 +1,6 @@
 import Flutter
 import UIKit
+import alarm_kit
 import UserNotifications
 import flutter_local_notifications
 
@@ -30,6 +31,17 @@ import flutter_local_notifications
     TimerIntentBridge.perform = { request in await HinataIntentEngine.perform(request) }
     TimerIntentBridge.openRoute = { route in HinataAppIntentsChannel.openRoute(route) }
     TimerIntentBridge.reloadControls = { HinataAppIntentsChannel.reloadControls() }
+    // HIN-106: the buttons of an alarm are the same intents, by the keys the
+    // Dart side names; they run in this process like the ones above.
+    if #available(iOS 17.0, *) {
+      AlarmKitIntents.register { key in
+        switch key {
+        case "stop": return StopTimerIntent()
+        case "advancePhase": return AdvancePhaseIntent()
+        default: return nil
+        }
+      }
+    }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 

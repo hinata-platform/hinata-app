@@ -1,4 +1,6 @@
 PODS:
+  - alarm_kit (0.1.0):
+    - Flutter
   - app_links (6.4.1):
     - Flutter
   - audio_session (0.0.1):
@@ -150,6 +152,7 @@ PODS:
     - Flutter
 
 DEPENDENCIES:
+  - alarm_kit (from `.symlinks/plugins/alarm_kit/ios`)
   - app_links (from `.symlinks/plugins/app_links/ios`)
   - audio_session (from `.symlinks/plugins/audio_session/ios`)
   - camera_avfoundation (from `.symlinks/plugins/camera_avfoundation/ios`)
@@ -193,6 +196,8 @@ SPEC REPOS:
     - SwiftyGif
 
 EXTERNAL SOURCES:
+  alarm_kit:
+    :path: ".symlinks/plugins/alarm_kit/ios"
   app_links:
     :path: ".symlinks/plugins/app_links/ios"
   audio_session:
@@ -245,6 +250,7 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/url_launcher_ios/ios"
 
 SPEC CHECKSUMS:
+  alarm_kit: e60be6498241181cb63559f9b4572fb3d7d9196f
   app_links: 3dbc685f76b1693c66a6d9dd1e9ab6f73d97dc0a
   audio_session: 9bb7f6c970f21241b19f5a3658097ae459681ba0
   camera_avfoundation: 5675ca25298b6f81fa0a325188e7df62cc217741

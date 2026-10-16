@@ -2,3 +2,4 @@
    these .lproj folders, so every language the app speaks needs one. */
 CFBundleDisplayName = "Hinata";
 CFBundleName = "Hinata";
+NSAlarmKitUsageDescription = "Hinata lässt das Ende eines Countdowns oder Pomodoro-Intervalls als Alarm klingeln, wenn du das in den Einstellungen einschaltest.";

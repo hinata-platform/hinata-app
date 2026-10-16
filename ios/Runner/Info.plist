@@ -121,6 +121,8 @@
 		</array>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSAlarmKitUsageDescription</key>
+		<string>Hinata rings the end of a countdown or Pomodoro interval as an alarm, if you switch this on in the settings.</string>
 		<key>NSPhotoLibraryUsageDescription</key>
 		<string>Hinata needs access to your photo library so you can attach photos and videos to issues.</string>
 		<key>NSCameraUsageDescription</key>
