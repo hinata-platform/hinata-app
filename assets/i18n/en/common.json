@@ -4453,9 +4453,9 @@
     },
     "tint": {
       "title": "Customize",
-      "subtitle": "One colour for the whole app, as on your phone.",
       "styleDefault": "Standard",
       "styleTinted": "Tinted",
+      "modeAuto": "Automatic",
       "hue": "Colour",
       "hueValue": "{{degrees}} degrees, {{name}}",
       "level": "Tint",
@@ -4463,7 +4463,6 @@
       "levelClear": "clear glass",
       "levelMid": "medium",
       "levelStrong": "strong",
-      "reset": "Reset to standard",
       "saveFailed": "The colour could not be saved. Showing the last saved one."
     }
   },
