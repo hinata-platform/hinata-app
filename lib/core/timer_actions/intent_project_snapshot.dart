@@ -7,9 +7,9 @@ import '../timer_surfaces/adapters/app_intents_surface.dart';
 ///
 /// Only the person's visible projects, by name, at most [limit], with id and
 /// name and nothing else. Read again when it is older than [maxAge] and the
-/// app comes to the front or signs in; no sync in the background. Signing out
-/// removes it ([AppIntentsSurface.clear]), and [invalidate] drops an answer
-/// still on its way.
+/// app comes to the front or signs in, at once for another server or person;
+/// no sync in the background. Signing out and "Delete now" remove it
+/// ([clear]), and [invalidate] drops an answer still on its way.
 class IntentProjectSnapshot {
   IntentProjectSnapshot(
     this._projects, {
@@ -30,15 +30,19 @@ class IntentProjectSnapshot {
   final DateTime Function() _clock;
 
   DateTime? _at;
+  String? _owner;
   bool _loading = false;
 
   /// Bumped by [invalidate]; an answer read under an older one is dropped.
   int _generation = 0;
 
-  /// Reads the projects again unless the last read is younger than [maxAge].
-  Future<void> refresh() async {
+  /// Reads the projects again unless the last read of the same [owner]
+  /// (server and person) is younger than [maxAge].
+  Future<void> refresh({String? owner}) async {
     final at = _at;
-    if (_loading || (at != null && _clock().difference(at) < maxAge)) return;
+    final fresh =
+        owner == _owner && at != null && _clock().difference(at) < maxAge;
+    if (_loading || fresh) return;
     _loading = true;
     final generation = _generation;
     try {
@@ -46,6 +50,7 @@ class IntentProjectSnapshot {
       if (generation != _generation) return;
       await _channel.setProjects(projects);
       _at = _clock();
+      _owner = owner;
     } catch (error) {
       debugPrint('Intent projects not refreshed: $error');
     } finally {
@@ -58,6 +63,17 @@ class IntentProjectSnapshot {
   void invalidate() {
     _generation++;
     _at = null;
+  }
+
+  /// Signed out, or the local copies deleted: the list goes from the device.
+  Future<void> clear() async {
+    invalidate();
+    _owner = null;
+    try {
+      await _channel.setProjects(null);
+    } catch (error) {
+      debugPrint('Intent projects not removed: $error');
+    }
   }
 
   Future<List<IntentProject>> _read() async {
