@@ -96,6 +96,28 @@ jobs:
       - name: The widget extension is embedded
         run: test -x build/ios/iphoneos/Runner.app/PlugIns/HinataWidgets.appex/HinataWidgets
 
+  # The macOS app with its widget extension (HIN-108), unsigned: the App Group
+  # needs the team's profile, which only the release workflow has. Proves the
+  # HinataWidgetsMac target builds, compiles the views it shares with iOS and
+  # lands in PlugIns/.
+  build-macos:
+    name: Build macOS (no codesign)
+    needs: quality
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build macos --release
+        env:
+          FLUTTER_XCODE_CODE_SIGNING_ALLOWED: 'NO'
+      - name: The widget extension is embedded
+        run: test -x build/macos/Build/Products/Release/hinata.app/Contents/PlugIns/HinataWidgetsMac.appex/Contents/MacOS/HinataWidgetsMac
+
   build-linux:
     name: Build Linux
     needs: quality
