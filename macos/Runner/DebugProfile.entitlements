@@ -33,5 +33,11 @@
 	     build signs manually with the matching profile. Consequence: FCM push and
 	     universal links don't work in a local macOS debug run (fine for dev);
 	     re-adding either here breaks `flutter run -d macos` again. -->
+	<!-- The one record the app writes for its widgets on the desktop and in
+	     Notification Center (HIN-108), shared with HinataWidgetsMac only. -->
+	<key>com.apple.security.application-groups</key>
+	<array>
+		<string>group.com.ahmadre.hinata</string>
+	</array>
 </dict>
 </plist>

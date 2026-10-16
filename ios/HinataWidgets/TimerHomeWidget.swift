@@ -1,8 +1,15 @@
+#if os(iOS)
 import AppIntents
+#endif
 import SwiftUI
 import WidgetKit
 
-/// The running timer on the home screen and the lock screen.
+/// The running timer on the home screen and the lock screen, and on a Mac on
+/// the desktop and in Notification Center (HIN-108).
+///
+/// The Mac's extension (`macos/HinataWidgetsMac`) compiles this file too. It
+/// has no lock screen and no buttons: a Mac widget in v1 only opens the focus
+/// screen.
 ///
 /// The app writes one record when the timer changes and asks for a reload;
 /// in between nothing reloads. The time ticks by itself, and the timeline
@@ -19,11 +26,17 @@ struct TimerHomeWidget: Widget {
     }
     .configurationDisplayName(Text("widget.name", bundle: .main))
     .description(Text("widget.description", bundle: .main))
-    .supportedFamilies([
-      .systemSmall, .systemMedium,
-      .accessoryCircular, .accessoryRectangular, .accessoryInline,
-    ])
+    .supportedFamilies(Self.families)
   }
+
+  #if os(iOS)
+  static let families: [WidgetFamily] = [
+    .systemSmall, .systemMedium,
+    .accessoryCircular, .accessoryRectangular, .accessoryInline,
+  ]
+  #else
+  static let families: [WidgetFamily] = [.systemSmall, .systemMedium]
+  #endif
 }
 
 struct TimerWidgetEntry: TimelineEntry {
@@ -91,6 +104,7 @@ struct TimerWidgetView: View {
 
   var body: some View {
     switch family {
+    #if os(iOS)
     case .accessoryInline:
       // One line: the time while it runs, the words once it is over.
       if running && !entry.over {
@@ -126,6 +140,7 @@ struct TimerWidgetView: View {
         }
       }
       .frame(maxWidth: .infinity, alignment: .leading)
+    #endif
     case .systemMedium:
       HStack(spacing: 12) {
         glyph
@@ -174,6 +189,7 @@ struct TimerWidgetView: View {
   /// opens the focus screen as before. Idle, a start button starts a stopwatch
   /// (HIN-105).
   @ViewBuilder private func actions(axis: Axis) -> some View {
+    #if os(iOS)
     if #available(iOSApplicationExtension 17.0, *), let record {
       let layout = axis == .vertical
         ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 6))
@@ -190,6 +206,7 @@ struct TimerWidgetView: View {
         TimerWidgetButton(title: start, symbol: "play.fill", intent: StartTimerIntent())
       }
     }
+    #endif
   }
 
   private var glyph: some View {
@@ -222,6 +239,7 @@ struct TimerWidgetView: View {
   }
 }
 
+#if os(iOS)
 /// One round button of the widget. The word is its accessible name; the
 /// glyph alone is drawn, so it fits the small widget in every language.
 @available(iOSApplicationExtension 17.0, *)
@@ -242,14 +260,19 @@ private struct TimerWidgetButton<Intent: AppIntent>: View {
     .accessibilityLabel(Text(title))
   }
 }
+#endif
 
 /// The navy card of the home screen widgets; the lock screen draws its own.
 private struct WidgetBackground: ViewModifier {
   @Environment(\.widgetFamily) private var family
 
   func body(content: Content) -> some View {
+    #if os(iOS)
     let accessory = [.accessoryCircular, .accessoryRectangular, .accessoryInline].contains(family)
-    if #available(iOSApplicationExtension 17.0, *) {
+    #else
+    let accessory = false
+    #endif
+    if #available(iOSApplicationExtension 17.0, macOSApplicationExtension 14.0, *) {
       content.containerBackground(for: .widget) {
         if accessory { Color.clear } else { HinataPalette.navy }
       }

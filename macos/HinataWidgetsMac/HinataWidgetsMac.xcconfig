@@ -1,0 +1,4 @@
+// The widget extension carries no Flutter and no pods; it only borrows the
+// app's version (FLUTTER_BUILD_NAME / FLUTTER_BUILD_NUMBER), so the extension
+// and the app it is embedded in always report the same one.
+#include? "../Flutter/ephemeral/Flutter-Generated.xcconfig"
