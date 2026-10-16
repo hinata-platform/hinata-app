@@ -4,7 +4,8 @@ git_url(ENV["MATCH_GIT_URL"] || "https://github.com/hinata-platform/hinata-certi
 storage_mode("git")
 
 type("development")
-app_identifier(["com.ahmadre.hinata"])
+# The app and its widget extension (HIN-108); both carry the App Group.
+app_identifier(["com.ahmadre.hinata", "com.ahmadre.hinata.widgets"])
 platform("macos")
 
 readonly(ENV["CI"] == "true")
