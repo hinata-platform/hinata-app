@@ -35,7 +35,7 @@ desktop it says so.
 | Opening links in the browser | ✅ | ✅ | ✅ |
 | Running timer in the tray / menu bar | ⚠️ needs a StatusNotifierItem host (KDE, or GNOME with the AppIndicator extension) | ✅ icon, tooltip, menu, taskbar progress | ✅ menu bar clock |
 | Keep the timer running when the window closes | ⚠️ only where the tray shows | ✅ switch, off by default | ✅ switch, on by default |
-| System-wide shortcuts (start/stop, focus view) | ❌ planned (GlobalShortcuts portal, stage 25) | ✅ | ✅ |
+| System-wide shortcuts (start/stop, focus view) | ⚠️ GlobalShortcuts portal: KDE Plasma, GNOME 48+; the desktop picks the keys | ✅ | ✅ |
 
 ✅ works · ⚠️ works, with a condition on the system or the sandbox · ❌ not
 available
@@ -112,7 +112,43 @@ register the icon. The AppImage carries libayatana-appindicator and its
 dbusmenu libraries, so it starts on a host without them. A hand-built bundle
 needs `libayatana-appindicator3-1` installed (see Running below).
 
-System-wide shortcuts come with the GlobalShortcuts portal in a later stage.
+### System-wide shortcuts — the GlobalShortcuts portal
+
+"Start or stop" and "Open the focus view" work from any app through
+`org.freedesktop.portal.GlobalShortcuts`, on Wayland and X11 alike
+(`system_hotkeys_linux`, pure Dart on D-Bus). The app sees nothing but those
+two shortcuts: no key grab, no keyboard monitoring, nothing goes to the server.
+Like on the other desktops they are bound only while the tray icon shows.
+
+The desktop, not the app, decides the keys. Hinata suggests the same
+combinations as on Windows (`Ctrl+Alt+Shift+S` and `…+F`); the desktop binds
+them, other keys, or none:
+
+| Desktop | What happens |
+| --- | --- |
+| GNOME 48 and later | a dialog asks once which shortcuts to allow; the answer is kept |
+| KDE Plasma 5.27 and later | bound right away, changeable in System Settings → Shortcuts |
+| Sway, Niri, other wlroots compositors | no portal backend: "not available", no error |
+
+So the settings show no recorder here. Each row shows the keys in the
+desktop's own words, and **Configure in the system** opens the desktop's
+shortcut settings (portal version 2). A set turned down in GNOME's dialog
+shows "turned down"; the same button asks again. Turned down for good means
+the answer sits in the permission store (`flatpak permission-reset
+com.ahmadre.hinata`, or the app's page in GNOME Settings).
+
+The portal needs to know which app is asking:
+
+- **Snap**: known by its sandbox (the `desktop` plug covers the portal); the
+  desktop matches it to `hinata_hinata.desktop`.
+- **AppImage and a hand-built bundle**: the app registers as
+  `com.ahmadre.hinata` through `org.freedesktop.host.portal.Registry`
+  (xdg-desktop-portal 1.20 and later), and that only counts when
+  `com.ahmadre.hinata.desktop` is installed in `~/.local/share/applications`
+  or `/usr/share/applications`. The AppImage carries the file; integrate it
+  with Gear Lever or AppImageLauncher, or copy it there by hand (see
+  "Installing by hand"). Without it GNOME refuses the session and the settings
+  say "not available".
 
 ### Camera capture — not available
 
@@ -554,6 +590,9 @@ sudo update-desktop-database /usr/share/applications
 sudo gtk-update-icon-cache /usr/share/icons/hicolor
 ```
 
+The desktop file is also what the GlobalShortcuts portal identifies the app
+by; without it the system-wide shortcuts are not available.
+
 The bundle has to stay together as one directory: the runner locates
 `data/flutter_assets` and `lib/` relative to its own executable, and the plugin
 libraries carry an RPATH of `$ORIGIN/lib`. A symlink into `PATH` is fine —
@@ -729,6 +768,10 @@ the AppDir. The bundle is already self-contained for everything it owns, and is
 linked against the system GTK, GStreamer and libsecret on purpose — bundling GTK
 would lose the user's theme and the host's GIO/gdk-pixbuf modules, and bundling
 GStreamer would lose the codecs the distribution installed.
+
+The AppImage carries `com.ahmadre.hinata.desktop` and its icon. A desktop
+integrator (Gear Lever, AppImageLauncher) installs them, and only then does the
+GlobalShortcuts portal know the app; see "System-wide shortcuts".
 
 So this AppImage is portable, not self-sufficient: it assumes the host has GTK 3,
 a glibc at least as new as the build machine's, and the runtime packages in the
