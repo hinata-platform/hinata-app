@@ -1371,7 +1371,7 @@ class _CardAction extends StatelessWidget {
         // its own opacity, so it stays a wash on dark instead of solid amber.
         color: _ViewerInk.accentSoft,
         shape: RoundedRectangleBorder(
-          side: const BorderSide(color: _ViewerInk.accentLine),
+          side: BorderSide(color: _ViewerInk.accentLine),
           borderRadius: BorderRadius.circular(AppTheme.radiusPill),
         ),
         child: InkWell(
@@ -1392,7 +1392,7 @@ class _CardAction extends StatelessWidget {
                     label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
                       color: _ViewerInk.accentInk,

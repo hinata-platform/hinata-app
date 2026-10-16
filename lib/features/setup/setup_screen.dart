@@ -135,7 +135,7 @@ class _SetupScreenState extends State<_SetupForm> {
                       FilledButton(
                         onPressed: _submitting ? null : _submit,
                         child: _submitting
-                            ? const SizedBox(
+                            ? SizedBox(
                                 width: 22,
                                 height: 22,
                                 child: HiveLoader(

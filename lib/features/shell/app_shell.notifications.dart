@@ -150,7 +150,7 @@ class _NotificationBellState extends State<_NotificationBellBody> {
           height: 42,
           iconSize: 18,
           useOwnLayer: true,
-          settings: widget.dark ? kNavGlassDark : kNavGlassLight,
+          settings: navGlass(widget.dark),
           iconColor: widget.dark ? AppColors.inkDark : AppColors.ink,
           glowColor: AppColors.accent,
 

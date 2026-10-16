@@ -287,7 +287,7 @@ class _PrimaryAction extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
       ),
       icon: busy
-          ? const SizedBox(
+          ? SizedBox(
               width: 15,
               height: 15,
               child: CircularProgressIndicator(

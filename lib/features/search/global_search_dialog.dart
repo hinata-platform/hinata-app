@@ -551,7 +551,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
             ),
           ),
           const SizedBox(width: 16),
-          const HexMark(size: 15, color: AppColors.accent),
+          HexMark(size: 15, color: AppColors.accent),
           const SizedBox(width: 7),
           Text(
             context.t('search.brand'),

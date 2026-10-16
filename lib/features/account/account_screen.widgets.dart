@@ -66,7 +66,7 @@ class _EditableAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.rail, width: 2),
               ),
-              child: const Icon(LucideIcons.camera, size: 12, color: kOnAmber),
+              child: Icon(LucideIcons.camera, size: 12, color: onAccent),
             ),
           ),
           // The tap surface sits on top: an ink drawn under the opaque photo

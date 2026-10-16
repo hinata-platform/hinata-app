@@ -22,7 +22,7 @@ import '../../core/notifications/fcm_service.dart'
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/util/file_pick.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/app_avatar.dart';
@@ -861,7 +861,7 @@ class _AccountScreenState extends State<_AccountBody> {
       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
       child: Stack(
         children: [
-          const Positioned.fill(
+          Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -872,7 +872,7 @@ class _AccountScreenState extends State<_AccountBody> {
                     AppColors.navy,
                     AppColors.accentStrong,
                   ],
-                  stops: [0, 0.55, 1.4],
+                  stops: const [0, 0.55, 1.4],
                 ),
               ),
             ),

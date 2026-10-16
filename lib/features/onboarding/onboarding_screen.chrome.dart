@@ -238,7 +238,7 @@ class _CtaButtonState extends State<_CtaButton> {
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(15),
                   gradient: isLast
-                      ? const LinearGradient(
+                      ? LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [_amber, _amber2],

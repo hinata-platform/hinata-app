@@ -5,7 +5,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/team_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/theme/hue_labels.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import 'team_widgets.dart';
@@ -604,9 +604,7 @@ class _CheckBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(7),
         border: Border.all(color: on ? AppColors.accent : AppColors.hairline),
       ),
-      child: on
-          ? const Icon(LucideIcons.check, size: 14, color: kOnAmber)
-          : null,
+      child: on ? Icon(LucideIcons.check, size: 14, color: onAccent) : null,
     );
   }
 }
@@ -1058,7 +1056,7 @@ class _Radio extends StatelessWidget {
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.accent,
                   shape: BoxShape.circle,
                 ),
@@ -1087,6 +1085,6 @@ InputDecoration teamFieldDecoration(BuildContext context, {String? hint}) =>
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-        borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+        borderSide: BorderSide(color: AppColors.accent, width: 1.5),
       ),
     );

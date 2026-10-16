@@ -650,7 +650,7 @@ class _SelectDot extends StatelessWidget {
         ),
       ),
       child: selected
-          ? const Icon(LucideIcons.check, size: 13, color: kOnAmber)
+          ? Icon(LucideIcons.check, size: 13, color: onAccent)
           : null,
     );
   }

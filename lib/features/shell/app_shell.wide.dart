@@ -275,7 +275,7 @@ class _NavRail extends StatelessWidget {
           Positioned.fill(
             child: BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-              child: const DecoratedBox(
+              child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topCenter,
@@ -334,7 +334,7 @@ class _NavRail extends StatelessWidget {
                                     ? _RailIconButton(
                                         icon: LucideIcons.plus,
                                         active: false,
-                                        amber: true,
+                                        accent: true,
                                         tooltip: context.t('issues.new'),
                                         onTap: () => _createIssue(context),
                                       )
@@ -478,7 +478,7 @@ class _CollapseToggle extends StatelessWidget {
                   const SizedBox(width: 10),
                   Text(
                     context.t('nav.collapse'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppType.label,
                       color: AppColors.railFaint,
                     ),
@@ -503,7 +503,7 @@ class _RailGroupLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: AppTheme.fontMono,
           fontSize: AppType.caption,
           fontWeight: FontWeight.w500,
@@ -536,7 +536,7 @@ class _RailItem extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Clean amber edge indicator (3×18, rounded) — sits just outside
+          // Clean accent edge indicator (3×18, rounded) — sits just outside
           // the tile's left edge like the prototype's `::before` bar.
           if (selected && !collapsed)
             Positioned(
@@ -628,20 +628,20 @@ class _RailIconButton extends StatelessWidget {
     required this.icon,
     required this.active,
     required this.onTap,
-    this.amber = false,
+    this.accent = false,
     this.tooltip,
   });
 
   final IconData icon;
   final bool active;
-  final bool amber;
+  final bool accent;
   final String? tooltip;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final child = Material(
-      color: amber ? AppColors.accent : Colors.transparent,
+      color: accent ? AppColors.accent : Colors.transparent,
       borderRadius: BorderRadius.circular(AppTheme.radiusControl),
       child: InkWell(
         onTap: onTap,
@@ -651,7 +651,7 @@ class _RailIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: amber ? kOnAmber : AppColors.railFaint,
+            color: accent ? onAccent : AppColors.railFaint,
           ),
         ),
       ),
@@ -1145,7 +1145,7 @@ class _WidePageAction extends StatelessWidget {
         height: 40,
         shape: const LiquidRoundedSuperellipse(borderRadius: 20),
         useOwnLayer: true,
-        settings: dark ? kNavGlassDark : kNavGlassLight,
+        settings: navGlass(dark),
         glowColor: AppColors.accent,
         stretch: 0.15,
         child: content,

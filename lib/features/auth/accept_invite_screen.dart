@@ -238,7 +238,7 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
             FilledButton(
               onPressed: _submitting ? null : _submit,
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: HiveLoader(strokeWidth: 2, color: AppColors.navy),

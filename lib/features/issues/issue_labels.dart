@@ -227,7 +227,7 @@ class _LabelPickerSheetState extends State<_LabelPickerSheet> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-                  borderSide: const BorderSide(color: AppColors.accentLine),
+                  borderSide: BorderSide(color: AppColors.accentLine),
                 ),
               ),
             ),

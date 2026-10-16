@@ -474,7 +474,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
               FilledButton.icon(
                 onPressed: _saving ? null : _save,
                 icon: _saving
-                    ? const HiveLoader(
+                    ? HiveLoader(
                         size: 16,
                         strokeWidth: 2,
                         color: AppColors.navy,

@@ -127,15 +127,15 @@ abstract final class _ViewerInk {
 
   /// Active / call-to-action fill. Carries its own translucency, so it stays a
   /// wash over the glass instead of a slab of amber.
-  static const accentSoft = AppColors.accentSoftDark;
+  static final accentSoft = AppColors.accentSoftDark;
 
   /// Foreground on [accentSoft]. The brighter amber, not [accentStrong]: the
   /// deep one sinks into a dark wash.
-  static const accentInk = AppColors.accent;
+  static final accentInk = AppColors.accent;
 
   // Constant across both app themes already — routed through here so that the
   // viewer has exactly one place colour comes from.
-  static const accentLine = AppColors.accentLine;
+  static final accentLine = AppColors.accentLine;
 }
 
 /// One entry shown in the viewer. [url] is the authenticated API download path

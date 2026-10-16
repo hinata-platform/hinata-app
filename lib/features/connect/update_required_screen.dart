@@ -59,7 +59,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       LucideIcons.cloudDownload,
                       size: 56,
                       color: AppColors.navy,

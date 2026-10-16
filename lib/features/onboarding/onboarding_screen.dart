@@ -36,8 +36,8 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 // ─── design palette (constant across themes — this screen is always dark) ───
-const _amber = AppColors.accent; // #D9A032
-const _amber2 = AppColors.accentStrong;
+final _amber = AppColors.accent; // #D9A032
+final _amber2 = AppColors.accentStrong;
 const _bgTop = Color(0xFF1D1B38);
 const _bgMid = Color(0xFF11102A);
 const _bgBot = Color(0xFF19152E);

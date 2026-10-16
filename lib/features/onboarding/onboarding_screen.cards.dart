@@ -109,12 +109,12 @@ class _ProjectsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.fromLTRB(14, 16, 14, 16),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 16, 14, 16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
+          const Expanded(
             child: _KanbanColumn(
               head: 'Backlog',
               cards: [
@@ -123,7 +123,7 @@ class _ProjectsCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
           Expanded(
             child: _KanbanColumn(
               head: 'In Progress',
@@ -134,7 +134,7 @@ class _ProjectsCard extends StatelessWidget {
                   _chipDoing,
                   _dotDoing,
                 ),
-                _KanbanItem(
+                const _KanbanItem(
                   'Liquid Glass nav',
                   'Review',
                   _chipReview,
@@ -143,8 +143,8 @@ class _ProjectsCard extends StatelessWidget {
               ],
             ),
           ),
-          SizedBox(width: 8),
-          Expanded(
+          const SizedBox(width: 8),
+          const Expanded(
             child: _KanbanColumn(
               head: 'Done',
               cards: [
@@ -160,7 +160,7 @@ class _ProjectsCard extends StatelessWidget {
 }
 
 const _dotTodo = Color(0xFF85B5FA);
-const _dotDoing = _amber;
+final _dotDoing = _amber;
 const _dotReview = Color(0xFFC49EF5);
 const _dotDone = Color(0xFF4CC894);
 const _chipTodo = Color(0x2E5B86D6);
@@ -295,7 +295,7 @@ class _SprintCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(6),
                   border: Border.all(color: const Color(0x38D9A032)),
                 ),
-                child: const Text(
+                child: Text(
                   'Sprint 12',
                   style: TextStyle(
                     fontFamily: AppTheme.fontUi,

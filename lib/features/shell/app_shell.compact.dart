@@ -265,7 +265,7 @@ class _CompactShellState extends State<_CompactShell> {
                     onTabSelected: _onTap,
                     // Black-tinted glass in dark mode (so it doesn't turn
                     // milky), clean white frost in light — see _kNavGlass*.
-                    settings: dark ? kNavGlassDark : kNavGlassLight,
+                    settings: navGlass(dark),
                     // Honey-amber indicator (translucent so the glass shows
                     // through).
                     indicatorColor: AppColors.accent.withValues(
@@ -461,7 +461,7 @@ class _GlassTopBar extends StatelessWidget {
                                 height: 42,
                                 iconSize: 18,
                                 useOwnLayer: true,
-                                settings: dark ? kNavGlassDark : kNavGlassLight,
+                                settings: navGlass(dark),
                                 iconColor: dark
                                     ? AppColors.inkDark
                                     : AppColors.ink,
@@ -486,8 +486,10 @@ class _GlassTopBar extends StatelessWidget {
                             // would shove the title off its own centre.
                             // Nothing on the leading side: the bar's padding
                             // already sets the logo on the page's gutter.
-                            child: const Padding(
-                              padding: EdgeInsetsDirectional.only(end: 10),
+                            child: Padding(
+                              padding: const EdgeInsetsDirectional.only(
+                                end: 10,
+                              ),
                               child: OrgLogo(
                                 height: 24,
                                 maxWidth: 72,
@@ -619,7 +621,7 @@ class _GlassTopActions extends StatelessWidget {
                   height: 42,
                   iconSize: 18,
                   useOwnLayer: true,
-                  settings: dark ? kNavGlassDark : kNavGlassLight,
+                  settings: navGlass(dark),
                   iconColor: dark ? AppColors.inkDark : AppColors.ink,
                   glowColor: AppColors.accent,
 
@@ -784,7 +786,7 @@ class _PageActionButton extends StatelessWidget {
           height: 42,
           iconSize: 18,
           useOwnLayer: true,
-          settings: dark ? kNavGlassDark : kNavGlassLight,
+          settings: navGlass(dark),
           iconColor: action.primary
               ? AppColors.accentStrong
               : (dark ? AppColors.inkDark : AppColors.ink),

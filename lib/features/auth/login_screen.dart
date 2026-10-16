@@ -311,8 +311,8 @@ class _LoginScreenState extends State<_LoginScreenBody>
                           child: AnimatedSwitcher(
                             duration: const Duration(milliseconds: 200),
                             child: passwordBusy
-                                ? const SizedBox(
-                                    key: ValueKey('loader'),
+                                ? SizedBox(
+                                    key: const ValueKey('loader'),
                                     width: 22,
                                     height: 22,
                                     child: HiveLoader(
@@ -510,7 +510,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
           FilledButton(
             onPressed: busy ? null : _submitOtp,
             child: busy
-                ? const SizedBox(
+                ? SizedBox(
                     width: 22,
                     height: 22,
                     child: HiveLoader(

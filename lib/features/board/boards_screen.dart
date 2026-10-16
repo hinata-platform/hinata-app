@@ -385,7 +385,7 @@ class _BoardListCard extends StatelessWidget {
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: AppType.caption,
                               color: AppColors.navy,

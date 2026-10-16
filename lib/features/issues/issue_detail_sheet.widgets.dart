@@ -330,7 +330,7 @@ class _RouteTopBar extends StatelessWidget {
                   ),
                   if (busy) ...[
                     const SizedBox(width: 10),
-                    const SizedBox(
+                    SizedBox(
                       width: 14,
                       height: 14,
                       child: HiveLoader(
@@ -1175,11 +1175,7 @@ class _PeoplePickerState extends State<_PeoplePicker> {
                       : AppColors.inkFaint,
                 )
               : (u.id == widget.meId
-                    ? const Icon(
-                        LucideIcons.star,
-                        size: 16,
-                        color: AppColors.accent,
-                      )
+                    ? Icon(LucideIcons.star, size: 16, color: AppColors.accent)
                     : null),
           onTap: widget.multiSelect
               ? () => _toggle(u.id)

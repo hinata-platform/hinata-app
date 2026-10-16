@@ -8,7 +8,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, showGlassToast, GlassToastKind;
 import 'account_widgets.dart';
@@ -169,7 +169,7 @@ class _OtpInputState extends State<OtpInput> {
                         borderRadius: BorderRadius.circular(
                           AppTheme.radiusControl,
                         ),
-                        borderSide: const BorderSide(
+                        borderSide: BorderSide(
                           color: AppColors.accent,
                           width: 1.6,
                         ),
@@ -509,7 +509,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                     },
               style: _primaryStyle(),
               icon: _busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 15,
                       height: 15,
                       child: CircularProgressIndicator(
@@ -831,9 +831,7 @@ class _MiniCheck extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: on ? AppColors.accent : AppColors.hairline),
       ),
-      child: on
-          ? const Icon(LucideIcons.check, size: 13, color: kOnAmber)
-          : null,
+      child: on ? Icon(LucideIcons.check, size: 13, color: onAccent) : null,
     );
   }
 }

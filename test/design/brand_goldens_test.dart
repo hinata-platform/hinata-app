@@ -31,7 +31,10 @@ void main() {
                     children: [
                       FilledButton(onPressed: () {}, child: const Text('Save')),
                       const SizedBox(height: 8),
-                      OutlinedButton(onPressed: () {}, child: const Text('Cancel')),
+                      OutlinedButton(
+                        onPressed: () {},
+                        child: const Text('Cancel'),
+                      ),
                       const SizedBox(height: 8),
                       TextButton(onPressed: () {}, child: const Text('More')),
                       const SizedBox(height: 8),
@@ -39,17 +42,28 @@ void main() {
                       const SizedBox(height: 8),
                       const HexMark(size: 32),
                       const SizedBox(height: 8),
-                      TextField(focusNode: focus, decoration: const InputDecoration(labelText: 'Title')),
+                      TextField(
+                        focusNode: focus,
+                        decoration: const InputDecoration(labelText: 'Title'),
+                      ),
                       const SizedBox(height: 8),
                       Container(
                         width: 120,
                         height: 24,
                         decoration: BoxDecoration(
-                          gradient: const LinearGradient(colors: [AppColors.rail, AppColors.rail2]),
+                          gradient: LinearGradient(
+                            colors: [AppColors.rail, AppColors.rail2],
+                          ),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Center(
-                          child: Text('rail', style: TextStyle(color: AppColors.railInk, fontSize: 12)),
+                          child: Text(
+                            'rail',
+                            style: TextStyle(
+                              color: AppColors.railInk,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -61,7 +75,13 @@ void main() {
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Center(
-                          child: Text('active', style: TextStyle(color: AppColors.accentInk, fontSize: 12)),
+                          child: Text(
+                            'active',
+                            style: TextStyle(
+                              color: AppColors.accentInk,
+                              fontSize: 12,
+                            ),
+                          ),
                         ),
                       ),
                     ],
