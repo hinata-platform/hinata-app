@@ -51,9 +51,15 @@ List<TimerSurface> buildTimerSurfaces(
         trayAvailable: tray.available,
       ),
   ];
+  // The widget buttons on iOS run App Intents (HIN-105); only Android's
+  // widget and tile go through home_widget's background callback.
   HomeWidgetSurface widgets() => HomeWidgetSurface(
     platform,
-    store: TimerWidgetStore(backgroundAction: background.widget),
+    store: TimerWidgetStore(
+      backgroundAction: platform == SurfacePlatform.android
+          ? background.widget
+          : null,
+    ),
   );
   LocalNotificationsSurface notifications() => LocalNotificationsSurface(
     platform,
