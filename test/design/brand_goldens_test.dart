@@ -7,6 +7,8 @@ import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/theme/app_theme.dart';
 import 'package:hinata/core/widgets/hex_mark.dart';
 
+import 'golden_platform.dart';
+
 void main() {
   for (final dark in const [false, true]) {
     final mode = dark ? 'dark' : 'light';
@@ -98,6 +100,6 @@ void main() {
         find.byKey(const ValueKey('brand')),
         matchesGoldenFile('goldens/brand_components_$mode.png'),
       );
-    });
+    }, skip: skipGoldensOffMac);
   }
 }

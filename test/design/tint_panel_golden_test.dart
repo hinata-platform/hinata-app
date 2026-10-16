@@ -16,6 +16,7 @@ import 'package:hinata/features/account/tint_customizer.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 import '../support/timer_surface_fakes.dart';
+import 'golden_platform.dart';
 import '../support/tint_fakes.dart';
 
 void main() {
@@ -88,7 +89,7 @@ void main() {
             find.byKey(const ValueKey('section')),
             matchesGoldenFile('goldens/$name.png'),
           );
-        });
+        }, skip: skipGoldensOffMac);
       }
     }
   }
