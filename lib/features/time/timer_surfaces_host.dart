@@ -9,6 +9,7 @@ import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/timer_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_models.dart';
+import '../../core/storage/app_storage.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/router/app_router.dart' show rootNavigatorKey;
 import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
@@ -138,6 +139,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   /// person expects after deleting a copy of it.
   void _clearNow() {
     _cleared = _derive();
+    unawaited(_intentProjects?.clear());
     _enqueue(_coordinator.clearAll);
   }
 
@@ -196,6 +198,22 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     return !signedIn || !module;
   }
 
+  /// Gated for good: signed out, or the module known to be off. The first
+  /// frames of a launch are gated as well while the session is read back, and
+  /// iOS starts the app like that for Siri or a control (HIN-105): the
+  /// snapshot the background action reads in that very moment must survive.
+  bool get _signedOutForGood {
+    final status = context.read<AuthBloc>().state.status;
+    final meta = context.read<AppConfigBloc>().state.meta;
+    return status == AuthStatus.unauthenticated ||
+        (meta != null && !meta.advancedTimeTracking);
+  }
+
+  /// Whose projects Siri may offer: another server or person reads them anew.
+  String get _owner =>
+      '${context.read<AppStorage>().serverUrl}|'
+      '${context.read<AuthBloc>().state.user?.id}';
+
   TimerSurfaceTexts _texts() => TimerSurfaceTexts(
     appName: _appTitle,
     countdownOver: context.t('time.signal.countdown'),
@@ -239,12 +257,15 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   void _sync() {
     if (!mounted) return;
     if (_gated) {
-      _keepSnapshot(null);
       _intentProjects?.invalidate();
+      if (_signedOutForGood) {
+        _keepSnapshot(null);
+        unawaited(_intentProjects?.clear());
+      }
       _enqueue(_coordinator.clearAll);
       return;
     }
-    unawaited(_intentProjects?.refresh());
+    unawaited(_intentProjects?.refresh(owner: _owner));
     _keepSnapshot(
       TimerSurfaceSnapshot(
         prefs: context.read<TimerSurfacePrefsCubit>().state,
