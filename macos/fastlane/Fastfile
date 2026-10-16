@@ -19,6 +19,11 @@ ENV["FASTLANE_XCODEBUILD_SETTINGS_TIMEOUT"] ||= "120"
 ENV["FASTLANE_XCODEBUILD_SETTINGS_RETRIES"] ||= "6"
 
 APP_IDENTIFIER = "com.ahmadre.hinata".freeze
+# The widget extension on a Mac (HIN-108). The same universal App ID as the
+# iPhone's extension (HIN-102), which carries the App Group already.
+WIDGETS_IDENTIFIER = "com.ahmadre.hinata.widgets".freeze
+APP_IDENTIFIERS = [APP_IDENTIFIER, WIDGETS_IDENTIFIER].freeze
+TARGETS = { "Runner" => APP_IDENTIFIER, "HinataWidgetsMac" => WIDGETS_IDENTIFIER }.freeze
 WORKSPACE = "Runner.xcworkspace".freeze
 SCHEME = "Runner".freeze
 # gym appends the ".pkg" extension to output_name, so the base name must NOT
@@ -109,9 +114,9 @@ platform :mac do
   lane :bootstrap do
     auth!
     # App ID + App Store Connect record already exist (shared with iOS).
-    match(type: "development", app_identifier: APP_IDENTIFIER,
+    match(type: "development", app_identifier: APP_IDENTIFIERS,
           platform: "macos", readonly: false)
-    match(type: "appstore", app_identifier: APP_IDENTIFIER,
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS,
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: false)
     UI.success("macOS signing assets are in the match repo. CI can now run read-only.")
@@ -122,9 +127,9 @@ platform :mac do
   # widgets, HIN-102) Apple invalidates the macOS profiles as well. Certificates stay.
   lane :widgets_profiles do
     auth!
-    match(type: "development", app_identifier: APP_IDENTIFIER,
+    match(type: "development", app_identifier: APP_IDENTIFIERS,
           platform: "macos", readonly: false, force: true)
-    match(type: "appstore", app_identifier: APP_IDENTIFIER,
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS,
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: false, force: true)
   end
@@ -132,9 +137,9 @@ platform :mac do
   desc "Fetch signing certificates & profiles (read-only on CI)"
   lane :signing do
     auth!
-    match(type: "development", app_identifier: APP_IDENTIFIER,
+    match(type: "development", app_identifier: APP_IDENTIFIERS,
           platform: "macos", readonly: ci?)
-    match(type: "appstore", app_identifier: APP_IDENTIFIER,
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS,
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: ci?)
   end
@@ -142,7 +147,7 @@ platform :mac do
   desc "Build a signed Mac App Store .pkg"
   lane :build do
     auth!
-    match(type: "appstore", app_identifier: APP_IDENTIFIER,
+    match(type: "appstore", app_identifier: APP_IDENTIFIERS,
           platform: "macos", additional_cert_types: ["mac_installer_distribution"],
           readonly: ci?)
 
@@ -157,14 +162,17 @@ platform :mac do
     # directly against it — and also gives the archive a team (avoids the later
     # "exportArchive No Team Found in Archive"). The ID in the profile name drifts on
     # regeneration, so resolve it from match's lane context instead of hardcoding.
-    update_code_signing_settings(
-      use_automatic_signing: false,
-      path: "Runner.xcodeproj",
-      team_id: "T852K29HWS",
-      targets: ["Runner"],
-      code_sign_identity: "Apple Distribution",
-      profile_name: lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING][APP_IDENTIFIER]
-    )
+    profiles = lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]
+    TARGETS.each do |target, id|
+      update_code_signing_settings(
+        use_automatic_signing: false,
+        path: "Runner.xcodeproj",
+        team_id: "T852K29HWS",
+        targets: [target],
+        code_sign_identity: "Apple Distribution",
+        profile_name: profiles[id]
+      )
+    end
 
     # No baked-in backend: the store app must NOT pin a backend. A fresh install asks
     # for the server URL on first launch, so no HINATA_DEFAULT_SERVER define.
