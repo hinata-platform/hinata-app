@@ -449,6 +449,9 @@ class _TileOptionButtonState<T> extends State<_TileOptionButton<T>> {
     final selected = widget.selected;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
     final ink = selected ? AppColors.accentInk : AppColors.inkSoft;
+    // A list row's hover: the ink at a whisper. `surfaceMuted` sat a shade
+    // off the card and could not be seen once the fade had settled.
+    final hoverWash = AppColors.ink.withValues(alpha: 0.06);
     final label = Text(
       widget.option.label,
       textAlign: TextAlign.center,
@@ -553,8 +556,11 @@ class _TileOptionButtonState<T> extends State<_TileOptionButton<T>> {
                 color: selected
                     ? AppColors.accentSoft
                     : _hovered
-                    ? AppColors.surfaceMuted
-                    : Colors.transparent,
+                    ? hoverWash
+                    // The same ink with no alpha, not Colors.transparent:
+                    // that is transparent black, and the fade towards it
+                    // passed through grey.
+                    : hoverWash.withValues(alpha: 0),
                 borderRadius: BorderRadius.circular(tile ? 14 : 10),
                 border: Border.all(
                   color: selected ? AppColors.stateBorder : AppColors.hairline,

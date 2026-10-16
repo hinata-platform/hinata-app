@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -94,4 +95,45 @@ void main() {
     );
     handle.dispose();
   });
+
+  testWidgets('hover shows a wash that stays visible and never dips grey', (
+    tester,
+  ) async {
+    await pump(tester, (_) {});
+    // The fill of the unselected option's pill, read from what is painted.
+    Color fill() {
+      final box = tester
+          .widgetList<DecoratedBox>(
+            find.ancestor(
+              of: find.text('Beta'),
+              matching: find.byType(DecoratedBox),
+            ),
+          )
+          .map((b) => b.decoration)
+          .whereType<BoxDecoration>()
+          .firstWhere((d) => d.borderRadius != null && d.color != null);
+      return Color.alphaBlend(box.color!, AppColors.surface);
+    }
+
+    final rest = fill();
+    final gesture = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await gesture.addPointer(location: Offset.zero);
+    addTearDown(gesture.removePointer);
+    await gesture.moveTo(tester.getCenter(find.text('Beta')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 80));
+    final midway = fill();
+    await tester.pumpAndSettle();
+    final hovered = fill();
+
+    double lum(Color c) => c.computeLuminance();
+    // Seen on the card: a wash at least as strong as a list row's hover.
+    expect(lum(rest) - lum(hovered), greaterThan(0.02));
+    // On its way there it passes between rest and hover, never through a
+    // darker grey: animating from Colors.transparent (transparent black)
+    // flashed grey for a moment, then left a wash nobody could see.
+    expect(lum(midway), lessThanOrEqualTo(lum(rest)));
+    expect(lum(midway), greaterThanOrEqualTo(lum(hovered)));
+    // Hover highlights follow the desktop's pointer mode.
+  }, variant: TargetPlatformVariant.only(TargetPlatform.macOS));
 }
