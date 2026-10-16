@@ -224,7 +224,7 @@ abstract final class AppColors {
   // palette solves the same targets for any tint). On dark, where
   // [accentSoft] is only a faint wash over a near-black surface, the brighter
   // [accent] reads.
-  static Color get accentInk => _dark ? accent : accentText;
+  static Color get accentInk => _dark ? palette.accentInkDark : accentText;
 
   // The wash behind weekends and holidays in the team absence calendar
   // (HIN-118). In dark mode the recessed canvas is nearly black against a card
