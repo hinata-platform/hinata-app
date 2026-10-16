@@ -22,7 +22,6 @@ import '../../core/notifications/fcm_service.dart'
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/util/file_pick.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/app_avatar.dart';
@@ -871,7 +870,7 @@ class _AccountScreenState extends State<_AccountBody> {
                   end: Alignment.bottomRight,
                   colors: [
                     AppColors.rail,
-                    AppColors.navy,
+                    AppColors.primary,
                     AppColors.accentStrong,
                   ],
                   stops: const [0, 0.55, 1.4],
@@ -1008,7 +1007,7 @@ class _AccountScreenState extends State<_AccountBody> {
       onPressed: _editProfile,
       style: FilledButton.styleFrom(
         backgroundColor: Colors.white,
-        foregroundColor: AppColors.navy,
+        foregroundColor: AppColors.primary,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       ),
       icon: const Icon(LucideIcons.pencil, size: 15),
@@ -1627,11 +1626,13 @@ class _AccountScreenState extends State<_AccountBody> {
       icon: LucideIcons.layers,
       title: context.t('account.access.title'),
       subtitle: context.t('account.access.subtitle'),
-      trailing: _AccessToggle(
-        teams: _accessTeams,
-        teamsLabel: context.t('account.access.teams'),
-        projectsLabel: context.t('account.access.projects'),
+      trailing: TileSelector<bool>(
+        value: _accessTeams,
         onChanged: (v) => setState(() => _accessTeams = v),
+        options: [
+          TileOption(value: true, label: context.t('account.access.teams')),
+          TileOption(value: false, label: context.t('account.access.projects')),
+        ],
       ),
       children: [
         if (_accessTeams)

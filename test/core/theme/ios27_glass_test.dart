@@ -61,10 +61,10 @@ void main() {
       });
 
       test('the honey keeps its colour and does not frost ($mode)', () {
-        final amber = accentFrost(dark);
-        expect(amber.frost, 0);
-        expect(amber.saturation, 1);
-        expect(amber.glassColor.a, greaterThan(0));
+        final frost = accentFrost(dark);
+        expect(frost.frost, 0);
+        expect(frost.saturation, 1);
+        expect(frost.glassColor.a, greaterThan(0));
       });
 
       test('panels frost on premium and leave the shadow to themselves '
@@ -137,7 +137,10 @@ void main() {
       for (final dark in const [false, true]) {
         final base = dark ? kNavGlassDark : kNavGlassLight;
         final chrome = navGlass(dark);
-        expect(chrome.glassColor, dark ? tinted.chromeTintDark : tinted.chromeTintLight);
+        expect(
+          chrome.glassColor,
+          dark ? tinted.chromeTintDark : tinted.chromeTintLight,
+        );
         expect(chrome.glassColor.a, greaterThan(0));
         // Everything but the colour is the neutral chrome: no frost pass, same
         // rim and lens, the tint is a uniform.
@@ -157,17 +160,20 @@ void main() {
       }
     });
 
-    test('level 0 and the standard brand are the clear chrome, same instance', () {
-      for (final prefs in const [
-        TintPreferences.standard,
-        TintPreferences(style: TintStyle.tinted, hue: 300, level: 0),
-      ]) {
-        AppColors.palette = TintPalette.of(prefs);
-        expect(navGlass(false), same(kNavGlassLight));
-        expect(navGlass(true), same(kNavGlassDark));
-        expect(navGlass(true, standard: true), same(kNavGlassStandardDark));
-      }
-    });
+    test(
+      'level 0 and the standard brand are the clear chrome, same instance',
+      () {
+        for (final prefs in const [
+          TintPreferences.standard,
+          TintPreferences(style: TintStyle.tinted, hue: 300, level: 0),
+        ]) {
+          AppColors.palette = TintPalette.of(prefs);
+          expect(navGlass(false), same(kNavGlassLight));
+          expect(navGlass(true), same(kNavGlassDark));
+          expect(navGlass(true, standard: true), same(kNavGlassStandardDark));
+        }
+      },
+    );
 
     test('panels stay neutral whatever the tint', () {
       AppColors.palette = TintPalette.of(

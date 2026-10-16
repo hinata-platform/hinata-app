@@ -292,7 +292,7 @@ class _PrimaryAction extends StatelessWidget {
               height: 15,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.navy,
+                color: AppColors.primary,
               ),
             )
           : Icon(icon, size: 15),

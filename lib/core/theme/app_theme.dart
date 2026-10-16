@@ -183,7 +183,7 @@ abstract final class AppTheme {
       ),
       snackBarTheme: SnackBarThemeData(
         backgroundColor: palette.primaryDeep,
-        // The surface is deep navy in both themes, so the content must stay
+        // The surface is deep in both themes, navy in the standard brand, so the content must stay
         // light — otherwise dark mode inherits a dark on-surface text colour and
         // the message reads near-invisible.
         contentTextStyle: const TextStyle(

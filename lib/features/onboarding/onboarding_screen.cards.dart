@@ -160,7 +160,7 @@ class _ProjectsCard extends StatelessWidget {
 }
 
 const _dotTodo = Color(0xFF85B5FA);
-final _dotDoing = _amber;
+Color get _dotDoing => _amber;
 const _dotReview = Color(0xFFC49EF5);
 const _dotDone = Color(0xFF4CC894);
 const _chipTodo = Color(0x2E5B86D6);

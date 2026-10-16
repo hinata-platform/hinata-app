@@ -873,7 +873,7 @@ class _EmailSendBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
             ),
             icon: busy
-                ? HiveLoader(size: 15, color: AppColors.navy)
+                ? HiveLoader(size: 15, color: AppColors.primary)
                 : const Icon(LucideIcons.send, size: 15),
             label: Text(context.t('issues.replyEmail.send')),
           ),

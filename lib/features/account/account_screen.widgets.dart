@@ -66,7 +66,11 @@ class _EditableAvatar extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: AppColors.rail, width: 2),
               ),
-              child: Icon(LucideIcons.camera, size: 12, color: onAccent),
+              child: Icon(
+                LucideIcons.camera,
+                size: 12,
+                color: AppColors.onAccent,
+              ),
             ),
           ),
           // The tap surface sits on top: an ink drawn under the opaque photo
@@ -78,71 +82,6 @@ class _EditableAvatar extends StatelessWidget {
               child: InkWell(onTap: onTap, customBorder: const CircleBorder()),
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AccessToggle extends StatelessWidget {
-  const _AccessToggle({
-    required this.teams,
-    required this.teamsLabel,
-    required this.projectsLabel,
-    required this.onChanged,
-  });
-  final bool teams;
-  final String teamsLabel;
-  final String projectsLabel;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget seg(String label, bool active, VoidCallback onTap) => Semantics(
-      button: true,
-      selected: active,
-      inMutuallyExclusiveGroup: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 140),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: active ? AppColors.surface : Colors.transparent,
-            borderRadius: BorderRadius.circular(7),
-            boxShadow: active
-                ? [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.06),
-                      blurRadius: 3,
-                      offset: const Offset(0, 1),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: AppType.caption,
-              fontWeight: FontWeight.w600,
-              color: active ? AppColors.ink : AppColors.inkSoft,
-            ),
-          ),
-        ),
-      ),
-    );
-    return Container(
-      padding: const EdgeInsets.all(3),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceMuted,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          seg(teamsLabel, teams, () => onChanged(true)),
-          seg(projectsLabel, !teams, () => onChanged(false)),
         ],
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart';
 
 import 'app_colors.dart';
+import 'tint_palette.dart';
 
 // Glass presets for the app's floating chrome.
 //
@@ -221,20 +222,6 @@ LiquidGlassSettings _accentFrostStandard(bool dark) => LiquidGlassSettings(
   glassColor: AppColors.accentVeil(dark),
 );
 
-/// The accent ground a primary action's glass floats on — three stops, honey
-/// in the standard brand, the same for the composer's send button so the
-/// app's accent circles are one thing. Lifted for a dark page: measured, the
-/// glass renders the identical ground about 22% darker over a dark page, so
-/// the dark stops have every channel raised by that much with the saturation
-/// left alone (a paler honey is a less saturated one). Both come from the
-/// active palette.
-LinearGradient accentGround(bool dark) => AppColors.accentGround(dark);
-
-/// The ink that sits on the accent glass. Near-black in the standard brand;
-/// the filled Material button keeps the primary as its ink instead (5.7:1 on
-/// honey), two inks by decision.
-Color get onAccent => AppColors.onAccent;
-
 /// The neutral chrome for [dark], on the premium tier unless [standard].
 ///
 /// Since HIN-150 the chrome carries the person's tint: the palette's
@@ -246,8 +233,21 @@ LiquidGlassSettings navGlass(bool dark, {bool standard = false}) {
       ? (dark ? kNavGlassStandardDark : kNavGlassStandardLight)
       : (dark ? kNavGlassDark : kNavGlassLight);
   final tint = AppColors.chromeTint(dark);
-  return tint.a == 0 ? base : base.copyWith(glassColor: tint);
+  if (tint.a == 0) return base;
+  // Four variants per palette, built once: a fresh copy per build would
+  // defeat the renderer's `identical` short cut on every frame.
+  if (!identical(_tintedChromeFor, AppColors.palette)) {
+    _tintedChromeFor = AppColors.palette;
+    _tintedChrome.clear();
+  }
+  return _tintedChrome.putIfAbsent((
+    dark,
+    standard,
+  ), () => base.copyWith(glassColor: tint));
 }
+
+TintPalette? _tintedChromeFor;
+final _tintedChrome = <(bool, bool), LiquidGlassSettings>{};
 
 /// A round Liquid Glass button, the shape the app's floating chrome is made of.
 ///
@@ -300,7 +300,7 @@ class GlassCircleButton extends StatelessWidget {
           ? accentFrost(dark, standard: true)
           : navGlass(dark, standard: true),
       iconColor: accent
-          ? onAccent
+          ? AppColors.onAccent
           : (dark ? AppColors.inkDark : AppColors.inkLight),
       glowColor: AppColors.accent,
       // Keep the tactile press-scale but damp the liquid drag-follow so an
@@ -328,7 +328,7 @@ class GlassCircleButton extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: accentGround(dark),
+                gradient: AppColors.accentGround(dark),
                 boxShadow: [
                   BoxShadow(
                     // An accent halo around an accent disc reads as a soft edge,

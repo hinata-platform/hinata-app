@@ -355,7 +355,7 @@ class _AuthHero extends StatelessWidget {
       label: label,
       textColor: AppColors.ink,
       bg: Colors.white.withValues(alpha: dark ? 0.06 : 0.55),
-      border: (dark ? Colors.white : AppColors.navy).withValues(
+      border: (dark ? Colors.white : AppColors.primary).withValues(
         alpha: dark ? 0.14 : 0.10,
       ),
       iconColor: AppColors.accent,
@@ -482,10 +482,10 @@ class _ImageHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textColor = dark ? Colors.white : AppColors.navyDeep;
+    final textColor = dark ? Colors.white : AppColors.primaryDeep;
     final subColor = dark
         ? Colors.white.withValues(alpha: 0.82)
-        : AppColors.navy.withValues(alpha: 0.72);
+        : AppColors.primary.withValues(alpha: 0.72);
     final scrim = dark
         ? const [
             Color(0xA6120F20),
@@ -508,7 +508,7 @@ class _ImageHero extends StatelessWidget {
           : Colors.white.withValues(alpha: 0.62),
       border: dark
           ? Colors.white.withValues(alpha: 0.28)
-          : AppColors.navy.withValues(alpha: 0.12),
+          : AppColors.primary.withValues(alpha: 0.12),
       iconColor: dark ? AppColors.accent : AppColors.accentStrong,
     );
 
@@ -612,7 +612,7 @@ class _BrandRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final wordColor = onImage
-        ? (dark ? Colors.white : AppColors.navyDeep)
+        ? (dark ? Colors.white : AppColors.primaryDeep)
         : AppColors.ink;
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -628,7 +628,7 @@ class _BrandRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(13),
             ),
             alignment: Alignment.center,
-            child: HexMark(size: 27, color: AppColors.navyDeep),
+            child: HexMark(size: 27, color: AppColors.primaryDeep),
           ),
         ),
         const SizedBox(width: 13),
@@ -743,7 +743,7 @@ class _AuroraLayers extends StatelessWidget {
             bottom: -170,
             left: -130,
             size: 520,
-            color: dark ? const Color(0xFF5E58BE) : AppColors.navy,
+            color: dark ? const Color(0xFF5E58BE) : AppColors.primary,
             alpha: dark ? 0.30 : 0.14,
           ),
           _glow(
@@ -757,9 +757,8 @@ class _AuroraLayers extends StatelessWidget {
             child: IgnorePointer(
               child: CustomPaint(
                 painter: _HexGridPainter(
-                  color: (dark ? AppColors.accent : AppColors.navy).withValues(
-                    alpha: dark ? 0.05 : 0.04,
-                  ),
+                  color: (dark ? AppColors.accent : AppColors.primary)
+                      .withValues(alpha: dark ? 0.05 : 0.04),
                 ),
               ),
             ),

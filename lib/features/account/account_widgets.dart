@@ -377,8 +377,8 @@ class TileOption<T> {
 
 /// A group of options of which exactly one is chosen, as tiles or pills.
 ///
-/// Replaces the account screen's private segment switches, which were bare
-/// `GestureDetector`s: unreachable by Tab, deaf to Space and Enter, their
+/// Replaces the account screen's private segment switches (`_ThemeSelector`,
+/// `_AccessToggle`), which were bare `GestureDetector`s: unreachable by Tab, deaf to Space and Enter, their
 /// active segment told apart by a wash of colour alone. Here every option is
 /// a focusable button with a visible focus ring, and the chosen one carries a
 /// check and a bold name as well as its colour (WCAG 1.4.1, 2.1.1, 2.4.7).

@@ -8,7 +8,6 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, showGlassToast, GlassToastKind;
 import 'account_widgets.dart';
@@ -514,7 +513,7 @@ class _TwoFactorWizardState extends State<_TwoFactorWizard> {
                       height: 15,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: AppColors.navy,
+                        color: AppColors.primary,
                       ),
                     )
                   : Icon(forwardArrow(context), size: 15),
@@ -703,7 +702,7 @@ class _CodeGatedActionState extends State<_CodeGatedAction> {
                             strokeWidth: 2,
                             color: widget.danger
                                 ? Colors.white
-                                : AppColors.navy,
+                                : AppColors.primary,
                           ),
                         )
                       : Icon(
@@ -831,7 +830,9 @@ class _MiniCheck extends StatelessWidget {
         borderRadius: BorderRadius.circular(6),
         border: Border.all(color: on ? AppColors.accent : AppColors.hairline),
       ),
-      child: on ? Icon(LucideIcons.check, size: 13, color: onAccent) : null,
+      child: on
+          ? Icon(LucideIcons.check, size: 13, color: AppColors.onAccent)
+          : null,
     );
   }
 }

@@ -140,7 +140,7 @@ class _SetupScreenState extends State<_SetupForm> {
                                 height: 22,
                                 child: HiveLoader(
                                   strokeWidth: 2,
-                                  color: AppColors.navy,
+                                  color: AppColors.primary,
                                 ),
                               )
                             : Text(context.t('setup.action')),

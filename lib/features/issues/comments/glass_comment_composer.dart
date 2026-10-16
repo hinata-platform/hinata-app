@@ -17,7 +17,6 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_chrome.dart' show onAccent;
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
     show TextFormat;
 

@@ -318,7 +318,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
                                     child: HiveLoader(
                                       size: 22,
                                       strokeWidth: 2,
-                                      color: AppColors.navy,
+                                      color: AppColors.primary,
                                     ),
                                   )
                                 : Text(
@@ -516,7 +516,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
                     child: HiveLoader(
                       size: 22,
                       strokeWidth: 2,
-                      color: AppColors.navy,
+                      color: AppColors.primary,
                     ),
                   )
                 : Text(context.t('auth.verify')),

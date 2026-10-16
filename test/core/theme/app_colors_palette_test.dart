@@ -50,7 +50,10 @@ void main() {
       const TintPreferences(style: TintStyle.tinted, hue: 120, level: 100),
     );
     expect(AppTheme.light().colorScheme.secondary, const Color(0xFFD9A032));
-    expect(AppTheme.light(palette: tinted).colorScheme.secondary, tinted.accent);
+    expect(
+      AppTheme.light(palette: tinted).colorScheme.secondary,
+      tinted.accent,
+    );
     expect(AppTheme.dark(palette: tinted).colorScheme.primary, tinted.accent);
     expect(AppTheme.light(palette: tinted).colorScheme.primary, tinted.primary);
   });
@@ -70,7 +73,7 @@ void main() {
     expect(navGlass(true).glassColor, tinted.chromeTintDark);
     expect(navGlass(true).rimLight, kNavGlassDark.rimLight);
     expect(navGlass(false, standard: true).glassColor, tinted.chromeTintLight);
-    expect(accentGround(true), tinted.accentGroundDark);
+    expect(AppColors.accentGround(true), tinted.accentGroundDark);
     expect(accentFrost(false).glassColor, tinted.accentVeilLight);
   });
 }

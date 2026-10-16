@@ -53,7 +53,7 @@ class _CircleButton extends StatelessWidget {
             width: size,
             height: size,
             decoration: decoration,
-            child: Icon(icon, size: 22, color: onAccent),
+            child: Icon(icon, size: 22, color: AppColors.onAccent),
           ),
         ),
       );

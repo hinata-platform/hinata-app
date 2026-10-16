@@ -6,7 +6,6 @@ import '../../../core/models/work_models.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_chrome.dart' show onAccent;
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/subtask_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
@@ -157,7 +156,7 @@ class _Checkbox extends StatelessWidget {
               ),
             ),
             child: selected
-                ? Icon(LucideIcons.check, size: 13, color: onAccent)
+                ? Icon(LucideIcons.check, size: 13, color: AppColors.onAccent)
                 : null,
           ),
         ),
