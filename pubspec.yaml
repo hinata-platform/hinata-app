@@ -62,7 +62,12 @@ dependencies:
   # published package; 1.12.0 is the first release with #417 (morph springs
   # stop once nothing visibly moves), 1.13.0 adds routeSettings on modal
   # sheets and the half-folded iPhone Duo.
-  liquid_glass_widgets: ^1.13.0
+  # Fork tag until the menu mouse-hover fix is released upstream; then back
+  # to the pub.dev version.
+  liquid_glass_widgets:
+    git:
+      url: https://github.com/hinata-platform/liquid_glass_widgets.git
+      ref: v1.13.0-hinata.1
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
   # and the renderer; there is no second markdown path any more. The bundle
