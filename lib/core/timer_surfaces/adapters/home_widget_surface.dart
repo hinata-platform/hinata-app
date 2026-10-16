@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:home_widget/home_widget.dart';
+import 'package:widgetkit_macos/widgetkit_macos.dart';
 
 import '../../models/time_models.dart';
 import '../surface_platform.dart';
@@ -8,14 +9,14 @@ import '../timer_surface.dart';
 import '../timer_surface_state.dart';
 import 'live_activity_surface.dart';
 
-/// The App Group the iOS widgets read from (`group.com.ahmadre.hinata`).
+/// The App Group the widgets on iOS and macOS read from.
 const String timerWidgetAppGroup = 'group.com.ahmadre.hinata';
 
 /// The one record the widgets read.
 const String timerWidgetKey = 'hinata_timer';
 
-/// The widget kind on iOS and the provider class on Android.
-const String timerWidgetIosKind = 'HinataTimerWidget';
+/// The widget kind on iOS and macOS, and the provider class on Android.
+const String timerWidgetKind = 'HinataTimerWidget';
 const String timerWidgetAndroidProvider =
     'com.ahmadre.hinata.TimerWidgetProvider';
 
@@ -42,14 +43,34 @@ class TimerWidgetStore {
   Future<void> write(String? record) async {
     await HomeWidget.saveWidgetData<String>(timerWidgetKey, record ?? '');
     await HomeWidget.updateWidget(
-      iOSName: timerWidgetIosKind,
+      iOSName: timerWidgetKind,
       qualifiedAndroidName: timerWidgetAndroidProvider,
     );
   }
 }
 
-/// The running timer in the home-screen widgets (iOS and Android) and the
-/// lock-screen widgets (iOS).
+/// The store of the Mac's widgets (HIN-108): home_widget has no macOS, so the
+/// same record goes into the same App Group through `widgetkit_macos`.
+class MacTimerWidgetStore extends TimerWidgetStore {
+  MacTimerWidgetStore({WidgetKitMacos? kit})
+    : _kit = kit ?? WidgetKitMacos(appGroup: timerWidgetAppGroup);
+
+  final WidgetKitMacos _kit;
+
+  @override
+  Future<void> init() async {}
+
+  /// An empty record for none, as on iOS: the widget reads the same way.
+  @override
+  Future<void> write(String? record) async {
+    await _kit.saveWidgetData(timerWidgetKey, record ?? '');
+    await _kit.reloadTimelines(timerWidgetKind);
+  }
+}
+
+/// The running timer in the home-screen widgets (iOS and Android), the
+/// lock-screen widgets (iOS), and the desktop and Notification Center widgets
+/// on a Mac (HIN-108).
 ///
 /// The widgets tick on their own (`Text(_, style: .timer)`, a `Chronometer`)
 /// and fall back to idle at `validUntil` without the app or the network, so

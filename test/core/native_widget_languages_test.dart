@@ -66,6 +66,30 @@ void main() {
     }
   });
 
+  // The Mac's extension (HIN-108) reads the same files: its project points at
+  // the iPhone extension's folder instead of keeping a copy.
+  test('macOS: every .lproj of the iPhone extension is in the Mac project', () {
+    final project = File(
+      'macos/Runner.xcodeproj/project.pbxproj',
+    ).readAsStringSync();
+    for (final language in languages) {
+      expect(
+        project,
+        contains(
+          'path = ../../ios/HinataWidgets/$language.lproj/Localizable.strings',
+        ),
+        reason: language,
+      );
+    }
+  });
+
+  test('macOS: the extension declares every language', () {
+    final plist = File('macos/HinataWidgetsMac/Info.plist').readAsStringSync();
+    for (final language in languages) {
+      expect(plist, contains('<string>$language</string>'), reason: language);
+    }
+  });
+
   test('Android: name and description of the widget in every language', () {
     for (final language in languages) {
       final folder = language == 'en' ? 'values' : 'values-$language';

@@ -1673,7 +1673,7 @@
         "switchOn": "开启",
         "later": "稍后",
         "denied": "通知已被阻止。你可以在系统设置中允许。",
-        "runningMenuBar": "计时器运行时，菜单栏显示时间，工作和休息时显示相同。",
+        "runningMenuBar": "计时器运行时，菜单栏显示时间，工作和休息时显示相同。你还可以把小组件放到桌面或通知中心。",
         "runningTray": "计时器运行时，通知区域的图标会显示它，工作和休息时显示相同。"
       },
       "device": {
@@ -1691,7 +1691,7 @@
         "vanish": "这些副本会在 24 小时后以及退出登录时消失。",
         "stored": "你的开关只保存在此设备上。",
         "settings": "在设置中更改",
-        "runningMenuBar": "计时器运行时，菜单栏中的时间。",
+        "runningMenuBar": "计时器运行时，菜单栏和小组件中显示的时间。",
         "keepRunning": "关闭窗口后，计时器会在那里继续运行。",
         "hotkeys": "两个全局快捷键。应用只接收这两个，从不接收其他按键。",
         "runningTray": "计时器运行时，通知区域中的图标。"
@@ -4415,8 +4415,8 @@
       "turnOff": "全部关闭",
       "turnOffHint": "应用外将不再显示任何内容。之后可以重新设置。",
       "turnOffButton": "关闭",
-      "runningMenuBar": "在菜单栏中",
-      "runningMenuBarHint": "菜单栏显示正在计时的时间，以及停止它的菜单。",
+      "runningMenuBar": "菜单栏和小组件",
+      "runningMenuBarHint": "菜单栏显示正在计时的时间以及停止它的菜单，小组件只显示时间和模式。应用启动过一次后，小组件就会出现在小组件库中。",
       "runningTray": "在通知区域中",
       "runningTrayHint": "通知区域中的图标表示计时器正在运行，并提供菜单。",
       "detailsMenu": "在菜单中显示描述",

@@ -1673,7 +1673,7 @@
         "switchOn": "Activar",
         "later": "Más tarde",
         "denied": "Las notificaciones están bloqueadas. Puedes permitirlas en los ajustes del sistema.",
-        "runningMenuBar": "Mientras el temporizador corre, la barra de menús muestra el tiempo, igual para trabajo y pausa.",
+        "runningMenuBar": "Mientras el temporizador corre, la barra de menús muestra el tiempo, igual para trabajo y pausa. También puedes poner un widget en el escritorio o en el Centro de notificaciones.",
         "runningTray": "Mientras el temporizador corre, un icono en el área de notificación lo muestra, igual para trabajo y pausa."
       },
       "device": {
@@ -1691,7 +1691,7 @@
         "vanish": "Estas copias desaparecen a las 24 horas y al cerrar sesión.",
         "stored": "Tus ajustes se quedan en este dispositivo.",
         "settings": "Cambiar en ajustes",
-        "runningMenuBar": "El tiempo en la barra de menús mientras corre el temporizador.",
+        "runningMenuBar": "El tiempo en la barra de menús y en tus widgets mientras corre el temporizador.",
         "keepRunning": "Al cerrar la ventana, el temporizador sigue ahí.",
         "hotkeys": "Dos atajos en todo el sistema. La app solo oye estos, nunca otras teclas.",
         "runningTray": "Un icono en el área de notificación mientras corre el temporizador."
@@ -4415,8 +4415,8 @@
       "turnOff": "Desactivar todo",
       "turnOffHint": "Fuera de la app ya no se ve nada. Puedes configurarlo de nuevo más tarde.",
       "turnOffButton": "Desactivar",
-      "runningMenuBar": "En la barra de menús",
-      "runningMenuBarHint": "La barra de menús muestra el tiempo en curso y un menú para detenerlo.",
+      "runningMenuBar": "Barra de menús y widgets",
+      "runningMenuBarHint": "La barra de menús muestra el tiempo en curso y un menú para detenerlo; los widgets, solo el tiempo y el modo. El widget aparece en la galería en cuanto la app se haya abierto una vez.",
       "runningTray": "En el área de notificación",
       "runningTrayHint": "Un icono en el área de notificación indica que el temporizador está en marcha y ofrece un menú.",
       "detailsMenu": "Descripción en el menú",

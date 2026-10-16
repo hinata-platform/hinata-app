@@ -1673,7 +1673,7 @@
         "switchOn": "Einschalten",
         "later": "Später",
         "denied": "Mitteilungen sind blockiert. Du kannst sie in den Systemeinstellungen erlauben.",
-        "runningMenuBar": "Solange der Timer läuft, zeigt die Menüleiste die Zeit, gleich für Arbeit und Pause.",
+        "runningMenuBar": "Solange der Timer läuft, zeigt die Menüleiste die Zeit, gleich für Arbeit und Pause. Dazu kannst du ein Widget auf den Schreibtisch oder in die Mitteilungszentrale legen.",
         "runningTray": "Solange der Timer läuft, zeigt ihn ein Symbol im Infobereich, gleich für Arbeit und Pause."
       },
       "device": {
@@ -1691,7 +1691,7 @@
         "vanish": "Diese Kopien verschwinden nach 24 Stunden und beim Abmelden.",
         "stored": "Deine Schalter bleiben auf diesem Gerät.",
         "settings": "In den Einstellungen ändern",
-        "runningMenuBar": "Die Zeit in der Menüleiste, solange der Timer läuft.",
+        "runningMenuBar": "Die Zeit in der Menüleiste und in deinen Widgets, solange der Timer läuft.",
         "keepRunning": "Ein geschlossenes Fenster lässt den Timer dort weiterlaufen.",
         "hotkeys": "Zwei systemweite Kürzel. Die App hört nur diese, nie andere Tasten.",
         "runningTray": "Ein Symbol im Infobereich, solange der Timer läuft."
@@ -4415,8 +4415,8 @@
       "turnOff": "Alles ausschalten",
       "turnOffHint": "Außerhalb der App zeigt sich nichts mehr. Du kannst es später wieder einrichten.",
       "turnOffButton": "Ausschalten",
-      "runningMenuBar": "In der Menüleiste",
-      "runningMenuBarHint": "Die Menüleiste zeigt die laufende Zeit und ein Menü zum Anhalten.",
+      "runningMenuBar": "Menüleiste und Widgets",
+      "runningMenuBarHint": "Die Menüleiste zeigt die laufende Zeit und ein Menü zum Anhalten, die Widgets nur Zeit und Modus. Das Widget steht in der Galerie, sobald die App einmal gestartet ist.",
       "runningTray": "Im Infobereich",
       "runningTrayHint": "Ein Symbol im Infobereich zeigt, dass der Timer läuft, und hat ein Menü dazu.",
       "detailsMenu": "Beschreibung im Menü",

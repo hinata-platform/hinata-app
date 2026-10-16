@@ -1673,7 +1673,7 @@
         "switchOn": "Switch on",
         "later": "Later",
         "denied": "Notifications are blocked. You can allow them in the system settings.",
-        "runningMenuBar": "While the timer runs, the menu bar shows the time, the same for work and breaks.",
+        "runningMenuBar": "While the timer runs, the menu bar shows the time, the same for work and breaks. You can also put a widget on the desktop or in Notification Center.",
         "runningTray": "While the timer runs, an icon in the notification area shows it, the same for work and breaks."
       },
       "device": {
@@ -1691,7 +1691,7 @@
         "vanish": "These copies disappear after 24 hours and when you sign out.",
         "stored": "Your switches stay on this device.",
         "settings": "Change in settings",
-        "runningMenuBar": "The time in the menu bar while the timer runs.",
+        "runningMenuBar": "The time in the menu bar and in your widgets while the timer runs.",
         "keepRunning": "A closed window leaves the timer running there.",
         "hotkeys": "Two system-wide shortcuts. The app hears only these, never other keys.",
         "runningTray": "An icon in the notification area while the timer runs."
@@ -4415,8 +4415,8 @@
       "turnOff": "Switch everything off",
       "turnOffHint": "Nothing shows outside the app anymore. You can set it up again later.",
       "turnOffButton": "Switch off",
-      "runningMenuBar": "In the menu bar",
-      "runningMenuBarHint": "The menu bar shows the running time and a menu to stop it.",
+      "runningMenuBar": "Menu bar and widgets",
+      "runningMenuBarHint": "The menu bar shows the running time and a menu to stop it, the widgets only time and mode. The widget is in the gallery once the app has started.",
       "runningTray": "In the notification area",
       "runningTrayHint": "An icon in the notification area shows that the timer runs and has a menu for it.",
       "detailsMenu": "Description in the menu",
