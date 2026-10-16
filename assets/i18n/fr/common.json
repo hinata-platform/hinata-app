@@ -50,7 +50,8 @@
       "orange": "Orange",
       "cyan": "Cyan",
       "blue": "Bleu",
-      "custom": "Personnalisée"
+      "custom": "Personnalisée",
+      "near": "Personnalisée, proche de {{name}}"
     },
     "pagination": {
       "previous": "Page précédente",
@@ -4451,6 +4452,21 @@
       "liveUpdateOff": "Les Live Updates sont désactivées pour cette app dans les réglages du système. La notification en cours reste quand même.",
       "reliability": "Mode fiabilité",
       "reliabilityHint": "Pour les appareils dont le gestionnaire de batterie ferme la notification en cours. Un service au premier plan la maintient tant que le minuteur tourne et ne collecte rien. Il ne démarre que lorsque l’app est ouverte."
+    },
+    "tint": {
+      "title": "Personnaliser",
+      "subtitle": "Une couleur pour toute l’application, comme sur votre téléphone.",
+      "styleDefault": "Standard",
+      "styleTinted": "Teinté",
+      "hue": "Couleur",
+      "hueValue": "{{degrees}} degrés, {{name}}",
+      "level": "Teinte",
+      "levelValue": "{{value}} pour cent, {{hint}}",
+      "levelClear": "verre clair",
+      "levelMid": "moyenne",
+      "levelStrong": "forte",
+      "reset": "Revenir au standard",
+      "saveFailed": "La couleur n’a pas pu être enregistrée. La dernière couleur enregistrée est affichée."
     }
   },
   "twofa": {

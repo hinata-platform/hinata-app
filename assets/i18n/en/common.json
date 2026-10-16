@@ -50,7 +50,8 @@
       "orange": "Orange",
       "cyan": "Cyan",
       "blue": "Blue",
-      "custom": "Custom"
+      "custom": "Custom",
+      "near": "Custom, near {{name}}"
     },
     "pagination": {
       "previous": "Previous page",
@@ -4451,6 +4452,21 @@
       "liveUpdateOff": "Live Updates are switched off for this app in the system settings. The ongoing notification stays anyway.",
       "reliability": "Reliability mode",
       "reliabilityHint": "For devices whose battery manager ends the ongoing notification. A foreground service holds it while the timer runs and collects nothing. It only starts while the app is open."
+    },
+    "tint": {
+      "title": "Customize",
+      "subtitle": "One colour for the whole app, as on your phone.",
+      "styleDefault": "Standard",
+      "styleTinted": "Tinted",
+      "hue": "Colour",
+      "hueValue": "{{degrees}} degrees, {{name}}",
+      "level": "Tint",
+      "levelValue": "{{value}} percent, {{hint}}",
+      "levelClear": "clear glass",
+      "levelMid": "medium",
+      "levelStrong": "strong",
+      "reset": "Reset to standard",
+      "saveFailed": "The colour could not be saved. Showing the last saved one."
     }
   },
   "twofa": {
