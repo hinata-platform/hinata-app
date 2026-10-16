@@ -56,8 +56,10 @@ const _cDone = Color(0xFF2E8B62);
 final _cProgress = AppColors.accent;
 const _cBacklog = Color(0xFF6B6890);
 const _cToday = Color(0xFF4E6FD0);
-const _cAmberHi = Color(0xFFF0C464);
-final _cAmberLo = AppColors.accent;
+// The ring's two stops: the light top of the accent ground and the accent
+// itself, read when painted so a tint (HIN-150) is followed.
+Color get _cAmberHi => AppColors.accentGround(false).colors.first;
+Color get _cAmberLo => AppColors.accent;
 const _heroInk = Color(0xF2FFFFFF); // ~95% white — hero text on navy glass
 
 /// Card-to-card gap on the dashboard grid.
