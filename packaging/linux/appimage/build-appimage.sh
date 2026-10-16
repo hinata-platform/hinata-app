@@ -120,6 +120,9 @@ for soname in libayatana-appindicator3.so.1 libayatana-indicator3.so.7 \
   patchelf --set-rpath '$ORIGIN' "$APPDIR/usr/bin/lib/$soname"
 done
 
+# The desktop entry under usr/share is what an integrator (Gear Lever,
+# AppImageLauncher) installs, and the GlobalShortcuts portal knows the app only
+# by an installed one: without it the system-wide shortcuts are unavailable.
 install -Dm644 "$PACKAGING_DIR/$APP_ID.desktop" \
   "$APPDIR/usr/share/applications/$APP_ID.desktop"
 install -Dm644 "$PACKAGING_DIR/$APP_ID.metainfo.xml" \
