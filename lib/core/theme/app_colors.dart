@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 
+import 'tint_palette.dart';
+
 /// Hinata "Hive" design tokens — redesign 2026.
 /// Navy nav-rail · warm-paper workspace · honey-amber signature accent.
 ///
 /// Neutral surface/ink tokens are theme-aware: they resolve against the
 /// currently active [brightness] (driven from the app's [ThemeMode] in
-/// `app.dart`). Brand/accent/status hues stay constant across light & dark so
-/// the honey-amber signature reads identically in both modes.
+/// `app.dart`). Brand and accent tokens read the active [palette] (HIN-150):
+/// the standard brand unless the person has tinted the app, and the same in
+/// light and dark so the signature reads identically in both modes. Status
+/// hues stay constant: they mean something.
 ///
 /// Hex values are derived from an oklch model (constant L/C, varied hue) so
-/// status & accent tints stay perceptually harmonious.
+/// status & accent tints stay perceptually harmonious. The brand honey
+/// `#D9A032` measures oklch(0.742, 0.137, 79), the navy `#2D2B55`
+/// oklch(0.314, 0.074, 284); [TintPalette] derives a tint from those.
 abstract final class AppColors {
   // ---- active brightness (drives the neutral getters below) ----
   // Set once per frame from the resolved theme in `app.dart`'s MaterialApp
@@ -18,9 +24,19 @@ abstract final class AppColors {
   static Brightness brightness = Brightness.light;
   static bool get _dark => brightness == Brightness.dark;
 
-  // ---- brand (constant across themes) ----
-  static const navy = Color(0xFF2D2B55); // primary action
-  static const navyDeep = Color(0xFF1E1C3A);
+  // ---- active palette (drives the brand and accent getters) ----
+  // A static like [brightness], and for the same reason: some 800 reading
+  // sites have no BuildContext. Set beside it in `app.dart`. A
+  // ThemeExtension remains a possible later step.
+  static TintPalette palette = TintPalette.standard;
+
+  /// One key for a widget memo that bakes colours in: changes when either
+  /// the brightness or the palette does.
+  static int get themeKey => Object.hash(brightness, identityHashCode(palette));
+
+  // ---- brand (from the palette; navy in the standard brand) ----
+  static Color get primary => palette.primary; // primary action
+  static Color get primaryDeep => palette.primaryDeep;
 
   // ---- ink / text (theme-aware) ----
   static const inkLight = Color(0xFF23223F);
@@ -104,28 +120,55 @@ abstract final class AppColors {
   static const fieldRimDark = Color(0x38FFFFFF);
   static Color get fieldRim => _dark ? fieldRimDark : fieldRimLight;
 
-  // ---- nav rail (deep navy in both themes) ----
-  static const rail = Color(0xFF211F3D);
-  static const rail2 = Color(0xFF1A1830);
-  static const railInk = Color(0xFFC9C7E0);
-  static const railFaint = Color(0xFF8A88A7); // 4.6:1 on the rail
+  // ---- nav rail (deep in both themes; navy in the standard brand) ----
+  static Color get rail => palette.rail;
+  static Color get rail2 => palette.rail2;
+  static Color get railInk => palette.railInk;
+  static Color get railFaint => palette.railFaint; // 4.6:1 on the rail
 
-  // ---- signature honey-amber accent (hue 70, constant across themes) ----
-  static const accent = Color(0xFFD9A032); // oklch(.74 .135 70)
-  static const accentStrong = Color(0xFFB9831F); // oklch(.66 .145 70)
-  static const accentLine = Color(0xFFE4CE96); // oklch(.86 .07 70)
+  // ---- signature accent (honey, hue 79, in the standard brand) ----
+  static Color get accent => palette.accent; // oklch(.742 .137 79)
+  static Color get accentStrong => palette.accentStrong; // oklch(.648 .126 77)
+  static Color get accentLine => palette.accentLine; // oklch(.856 .077 89)
   // White text on honey (the "today" chip of HIN-118): [accentStrong] reaches
   // only 3.3:1 under white, this deeper honey 4.85:1 (WCAG 1.4.3).
-  static const accentDeep = Color(0xFF946A16);
+  static Color get accentDeep => palette.accentDeep;
   // Amber text on an amber wash in the light theme, where [accentStrong] is too
   // light to read on its own tint.
-  static const accentText = Color(0xFF7A5410);
+  static Color get accentText => palette.accentText;
 
   // Soft accent fill (active pill / unread highlight). Theme-aware: an opaque
   // cream tint in light, a translucent amber wash on dark surfaces.
-  static const accentSoftLight = Color(0xFFF3E9D2); // oklch(.94 .045 70)
-  static const accentSoftDark = Color(0x29D9A032); // ~16% amber over dark
+  static Color get accentSoftLight => palette.accentSoftLight;
+  static Color get accentSoftDark => palette.accentSoftDark;
   static Color get accentSoft => _dark ? accentSoftDark : accentSoftLight;
+
+  /// The focus indicator (WCAG 1.4.11, 3:1 on every surface it sits on). Not
+  /// [accent]: honey on white reaches 2.3:1, and that holds for any hue at
+  /// its lightness, so focus takes the text shade in light and the accent in
+  /// dark.
+  static Color get focusRing =>
+      _dark ? palette.focusRingDark : palette.focusRingLight;
+
+  /// A border that carries a state (selected, active): 3:1 on the surface.
+  /// [accentLine] is decorative and reaches 1.6:1.
+  static Color get stateBorder =>
+      _dark ? palette.stateBorderDark : palette.stateBorderLight;
+
+  /// The ink on an accent-coloured glass surface.
+  static Color get onAccent => palette.onAccent;
+
+  /// The accent ground a glass primary action floats on.
+  static LinearGradient accentGround(bool dark) =>
+      dark ? palette.accentGroundDark : palette.accentGroundLight;
+
+  /// The accent veil that sits on that ground.
+  static Color accentVeil(bool dark) =>
+      dark ? palette.accentVeilDark : palette.accentVeilLight;
+
+  /// The tint the nav chrome takes; transparent in the standard brand.
+  static Color chromeTint(bool dark) =>
+      dark ? palette.chromeTintDark : palette.chromeTintLight;
 
   // ---- workflow status (varied hue, constant L/C ~ oklch .6 .13) ----
   static const stBacklog = Color(0xFF7E81AE); // hue 255, muted slate
@@ -159,15 +202,18 @@ abstract final class AppColors {
   static Color get textPrimary => ink;
   static Color get textSecondary => inkSoft;
   static const textOnDark = Colors.white;
-  static const navyDark = navyDeep;
+  @Deprecated('use primary')
+  static Color get navy => primary;
+  @Deprecated('use primaryDeep')
+  static Color get navyDeep => primaryDeep;
   static const lavender = stReview; // closest purple equivalent
   static Color get background => canvas;
   static Color get backgroundEnd => canvas2;
 
   // Brand-tinted foreground for icons/labels sitting ON a theme surface. The
-  // raw [navy] is a fixed dark brand colour and is unreadable on dark surfaces,
-  // so this lifts to a light lavender in dark mode.
-  static Color get brandInk => _dark ? railInk : navy;
+  // raw [primary] is a dark colour and is unreadable on dark surfaces, so
+  // this lifts to the rail ink in dark mode.
+  static Color get brandInk => _dark ? railInk : primary;
 
   // Amber foreground for the *active* state — an icon or label on [accentSoft]
   // or on a plain theme surface. In light that is [accentText]: [accentStrong]
@@ -198,7 +244,6 @@ abstract final class AppColors {
   static Color pastelFor(int index) =>
       (_dark ? pastelsDark : pastels)[index % pastels.length];
   // old accent names → new semantic equivalents
-  static const accentOrange = accent;
   static const accentPurple = stReview;
   static const accentBlue = stTodo;
   static const accentTeal = stDone;

@@ -21,7 +21,7 @@ import 'frosted_surface.dart';
 import 'glass_popup_menu.dart';
 import 'hive_widgets.dart' show backChevron, forwardChevron;
 import '../../features/shell/app_shell.dart' show isNativeApp;
-import '../theme/glass_chrome.dart' show kNavGlassDark, kNavGlassLight;
+import '../theme/glass_chrome.dart' show navGlass;
 import '../theme/app_type.dart';
 
 /// Height of a docked search field. A text input needs the room; a control
@@ -94,7 +94,7 @@ class GlassPill extends StatelessWidget {
         quality: GlassQuality.premium,
         clipBehavior: Clip.antiAlias,
         shape: LiquidRoundedSuperellipse(borderRadius: radius),
-        settings: dark ? kNavGlassDark : kNavGlassLight,
+        settings: navGlass(dark),
         child: inner,
       );
     } else {

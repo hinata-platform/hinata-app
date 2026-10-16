@@ -695,7 +695,8 @@ class _TargetRow extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(AppTheme.radiusControl),
               border: Border.all(
-                color: selected ? AppColors.accentLine : AppColors.hairline2,
+                // A border that carries the selection: 3:1, not the decorative line.
+                color: selected ? AppColors.stateBorder : AppColors.hairline2,
               ),
             ),
             child: Row(
@@ -710,7 +711,7 @@ class _TargetRow extends StatelessWidget {
                   ),
                   child: Text(
                     target.key.isNotEmpty ? target.key[0] : '?',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
                       color: AppColors.navy,
@@ -852,7 +853,7 @@ InputDecoration _fieldDecoration({String? hint}) => InputDecoration(
   ),
   focusedBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-    borderSide: const BorderSide(color: AppColors.accent, width: 1.5),
+    borderSide: BorderSide(color: AppColors.accent, width: 1.5),
   ),
 );
 

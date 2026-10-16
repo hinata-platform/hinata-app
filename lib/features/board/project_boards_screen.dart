@@ -16,7 +16,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../shell/page_chrome.dart';
@@ -308,7 +308,7 @@ class _BoardCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       LucideIcons.squareKanban,
                       size: 13,
                       color: AppColors.navy,
@@ -316,7 +316,7 @@ class _BoardCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Text(
                       context.t('board.boardLabel'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: AppType.caption,
                         color: AppColors.navy,
@@ -461,10 +461,10 @@ class _CreateBoardBodyState extends State<_CreateBoardBody> {
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(),
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
-                      child: HiveLoader(strokeWidth: 2, color: kOnAmber),
+                      child: HiveLoader(strokeWidth: 2, color: onAccent),
                     )
                   : Text(context.t('common.create')),
             ),

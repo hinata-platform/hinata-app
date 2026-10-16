@@ -9,7 +9,7 @@ import '../theme/app_type.dart';
 
 /// One segment of a switcher that rides on glass.
 ///
-/// The active segment is a translucent amber wash rather than an opaque fill:
+/// The active segment is a translucent accent wash rather than an opaque fill:
 /// an opaque chip on a lens reads as a sticker stuck to it instead of part of
 /// it. Lifted out of the Gantt screen when the time module grew a switcher of
 /// its own — two copies of a chip is how two switchers start looking like two

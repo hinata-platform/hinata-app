@@ -88,7 +88,7 @@ const _stdAmbientStrength = 1.0;
 
 /// The neutral chrome on the standard tier is clear like the premium one: no
 /// white tint, no desaturation and no ambient lift, the three things that
-/// turned it into frosted milk. The amber button keeps the tuned recipe above.
+/// turned it into frosted milk. The accent button keeps the tuned recipe above.
 const _stdClearSaturation = 1.0;
 const _stdClearAmbientStrength = 0.0;
 
@@ -167,15 +167,15 @@ LiquidGlassSettings ios27Glass({
   );
 }
 
-/// The frost that sits *on top of* the amber ground of a primary action.
+/// The frost that sits *on top of* the accent ground of a primary action.
 ///
 /// It shares the chrome's optics but not its colour handling, and the reason
 /// is the whole point of this preset. Neutral chrome frosts what it refracts
 /// and lays a white cloud over it, which is right for a surface whose job is to
-/// disappear. Over amber it is exactly wrong: the colour *is* the design, and a
-/// white wash leaves the beige button that shipped in 10.3.2. So: saturation
-/// left at 1, no frost, and the veil in amber rather than white — a white one
-/// dilutes the ground instead of sitting in it.
+/// disappear. Over the accent it is exactly wrong: the colour *is* the design,
+/// and a white wash leaves the beige button that shipped in 10.3.2. So:
+/// saturation left at 1, no frost, and the veil in the accent rather than
+/// white — a white one dilutes the ground instead of sitting in it.
 ///
 /// **The veil is much heavier over a dark page, and that is not a taste call.**
 /// Measured on the running app: the button is only ~64% opaque, so a third of
@@ -183,29 +183,27 @@ LiquidGlassSettings ios27Glass({
 /// brightness; over the dark one it drags the honey down to 0.72 value where
 /// light reads 0.82, which is the "washed out" everyone sees and nobody can
 /// name. Brightening the ground cannot fix it — the arithmetic asks for a red
-/// channel of 295. What fixes it is making the third that comes through *amber
-/// too*, which is this alpha. It lands at RGB(208,154,51) against light's
-/// (209,156,54).
-LiquidGlassSettings amberFrost(bool dark, {bool standard = false}) => standard
-    ? _amberFrostStandard(dark)
+/// channel of 295. What fixes it is making the third that comes through *the
+/// accent too*, which is this alpha. It lands at RGB(208,154,51) against
+/// light's (209,156,54) in the standard brand. The veil itself comes from the
+/// active palette ([AppColors.accentVeil]), so a tint carries it along.
+LiquidGlassSettings accentFrost(bool dark, {bool standard = false}) => standard
+    ? _accentFrostStandard(dark)
     : ios27Glass(
         dark: dark,
-        // Saturation stays at 1 and there is no frost: over amber the colour
-        // *is* the design, and a white frost cloud would dilute it just as the
-        // old white veil did. The iOS 27 rim light takes over from the white
-        // specular stroke that bloomed into a grey reif over a dark page.
-        glassColor: _amberVeil(dark),
+        // Saturation stays at 1 and there is no frost: over the accent the
+        // colour *is* the design, and a white frost cloud would dilute it just
+        // as the old white veil did. The iOS 27 rim light takes over from the
+        // white specular stroke that bloomed into a grey reif over a dark page.
+        glassColor: AppColors.accentVeil(dark),
       );
 
-Color _amberVeil(bool dark) =>
-    dark ? const Color(0x59FFBC3B) : const Color(0x1FD9A032);
-
-/// [amberFrost] on the standard tier: the white specular rim is a stroke drawn
+/// [accentFrost] on the standard tier: the white specular rim is a stroke drawn
 /// with BlendMode.overlay, so it wants opposite things over the two pages.
 /// Over a near-black page it blooms into a grey reif and has to stay narrow
 /// and faint; over the light page there is nothing to bloom against and the
 /// full stroke is what gives the disc its lit edge.
-LiquidGlassSettings _amberFrostStandard(bool dark) => LiquidGlassSettings(
+LiquidGlassSettings _accentFrostStandard(bool dark) => LiquidGlassSettings(
   thickness: _stdThickness,
   blur: _stdBlur,
   chromaticAberration: _stdChromaticAberration,
@@ -215,48 +213,36 @@ LiquidGlassSettings _amberFrostStandard(bool dark) => LiquidGlassSettings(
   saturation: 1,
   ambientStrength: dark ? 0.3 : _stdAmbientStrength,
   lightAngle: _stdLightAngle,
-  glassColor: _amberVeil(dark),
+  glassColor: AppColors.accentVeil(dark),
 );
 
-/// The honey-amber ground a primary action's glass floats on. Same three stops
-/// as the composer's send button, so the app's two amber circles are one thing.
-const kAmberGround = LinearGradient(
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-  colors: [Color(0xFFE7B24A), AppColors.accent, AppColors.accentStrong],
-);
+/// The accent ground a primary action's glass floats on — three stops, honey
+/// in the standard brand, the same for the composer's send button so the
+/// app's accent circles are one thing. Lifted for a dark page: measured, the
+/// glass renders the identical ground about 22% darker over a dark page, so
+/// the dark stops have every channel raised by that much with the saturation
+/// left alone (a paler honey is a less saturated one). Both come from the
+/// active palette.
+LinearGradient accentGround(bool dark) => AppColors.accentGround(dark);
 
-/// The same ground, lifted for a dark page.
-///
-/// Measured, not eyeballed: the glass renders the identical ground about 22%
-/// darker over a dark page than over a light one — the same hue at the same
-/// saturation, every channel multiplied by roughly 0.78. Light does not need
-/// the lift; dark does, or the primary action sits there dimmer than the page
-/// expects it to be.
-///
-/// These are the light stops with **value raised 20% and saturation left
-/// alone** — not paler ambers, which is the obvious way to brighten a colour
-/// and the wrong one. The first attempt walked the gradient up to lighter
-/// honeys and lost a tenth of the saturation doing it, because a lighter amber
-/// simply is a less saturated one. Brightness and saturation are separate axes
-/// and only one of them was the problem.
-const kAmberGroundDark = LinearGradient(
-  begin: Alignment.topLeft,
-  end: Alignment.bottomRight,
-  colors: [Color(0xFFFFC452), Color(0xFFFFBC3B), Color(0xFFDE9D25)],
-);
-
-LinearGradient amberGround(bool dark) => dark ? kAmberGroundDark : kAmberGround;
-
-/// The ink that sits on amber — the same near-black the solid accent button
-/// uses for its label, so the glyph reads identically whichever form the button
-/// is in.
-const kOnAmber = Color(0xFF2A2410);
+/// The ink that sits on the accent glass. Near-black in the standard brand;
+/// the filled Material button keeps the primary as its ink instead (5.7:1 on
+/// honey), two inks by decision.
+Color get onAccent => AppColors.onAccent;
 
 /// The neutral chrome for [dark], on the premium tier unless [standard].
-LiquidGlassSettings navGlass(bool dark, {bool standard = false}) => standard
-    ? (dark ? kNavGlassStandardDark : kNavGlassStandardLight)
-    : (dark ? kNavGlassDark : kNavGlassLight);
+///
+/// Since HIN-150 the chrome carries the person's tint: the palette's
+/// [AppColors.chromeTint], transparent in the standard brand and at level 0,
+/// where the constants come back untouched. The tint is the shader's colour
+/// uniform, not a pass of its own; the frost stays off (see [_withoutFrost]).
+LiquidGlassSettings navGlass(bool dark, {bool standard = false}) {
+  final base = standard
+      ? (dark ? kNavGlassStandardDark : kNavGlassStandardLight)
+      : (dark ? kNavGlassDark : kNavGlassLight);
+  final tint = AppColors.chromeTint(dark);
+  return tint.a == 0 ? base : base.copyWith(glassColor: tint);
+}
 
 /// A round Liquid Glass button, the shape the app's floating chrome is made of.
 ///
@@ -276,7 +262,7 @@ class GlassCircleButton extends StatelessWidget {
     required this.onTap,
     this.size = 46,
     this.iconSize = 20,
-    this.amber = false,
+    this.accent = false,
     this.tooltip,
   });
 
@@ -285,8 +271,8 @@ class GlassCircleButton extends StatelessWidget {
   final double size;
   final double iconSize;
 
-  /// Honey-amber tint, for a primary action. Neutral chrome otherwise.
-  final bool amber;
+  /// Accent tint, for a primary action. Neutral chrome otherwise.
+  final bool accent;
 
   final String? tooltip;
 
@@ -305,11 +291,11 @@ class GlassCircleButton extends StatelessWidget {
       shape: LiquidRoundedSuperellipse(borderRadius: size / 2),
       useOwnLayer: true,
       quality: GlassQuality.standard,
-      settings: amber
-          ? amberFrost(dark, standard: true)
+      settings: accent
+          ? accentFrost(dark, standard: true)
           : navGlass(dark, standard: true),
-      iconColor: amber
-          ? kOnAmber
+      iconColor: accent
+          ? onAccent
           : (dark ? AppColors.inkDark : AppColors.inkLight),
       glowColor: AppColors.accent,
       // Keep the tactile press-scale but damp the liquid drag-follow so an
@@ -317,15 +303,15 @@ class GlassCircleButton extends StatelessWidget {
       stretch: 0.15,
       // A pressed GlassButton lays a flat white sheet over its whole surface —
       // 0.3 opaque in light, 0.14 in dark. On neutral chrome that is the iOS 26
-      // lift and it is right. On amber it is a bleach: at 0.3 the honey button
+      // lift and it is right. On the accent it is a bleach: at 0.3 the honey button
       // turns beige for as long as the finger is down, which is what shipped in
       // 10.3.2 and what a screenshot taken mid-tap shows. An explicit value is
       // used unchanged in both themes, so this is one number: enough lift to
       // answer the touch, not enough to take the colour with it. The press
       // scale and the glow carry the rest of the feedback.
-      ambientBaseLight: amber ? 0.10 : null,
+      ambientBaseLight: accent ? 0.10 : null,
     );
-    if (amber) {
+    if (accent) {
       button = Stack(
         alignment: Alignment.center,
         children: [
@@ -337,10 +323,10 @@ class GlassCircleButton extends StatelessWidget {
               height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: amberGround(dark),
+                gradient: accentGround(dark),
                 boxShadow: [
                   BoxShadow(
-                    // An amber halo around an amber disc reads as a soft edge,
+                    // An accent halo around an accent disc reads as a soft edge,
                     // and over a dark page it is the only thing near it with
                     // any light in it — so it spreads and the button loses its
                     // outline. Over a light page the same glow is invisible.

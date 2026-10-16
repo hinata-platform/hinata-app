@@ -80,11 +80,7 @@ class HinataCodeBar extends StatelessWidget {
         padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
         child: Row(
           children: [
-            const Icon(
-              LucideIcons.squareCode,
-              size: 14,
-              color: AppColors.accent,
-            ),
+            Icon(LucideIcons.squareCode, size: 14, color: AppColors.accent),
             const SizedBox(width: 8),
             Text(
               context.t('md.codeBlock'),

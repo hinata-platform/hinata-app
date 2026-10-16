@@ -14,7 +14,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../../core/theme/glass_chrome.dart' show onAccent;
 import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/lexical/hinata_document.dart';

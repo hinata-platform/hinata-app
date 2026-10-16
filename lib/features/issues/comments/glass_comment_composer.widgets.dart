@@ -32,7 +32,7 @@ class _CircleButton extends StatelessWidget {
     if (send) {
       final decoration = BoxDecoration(
         shape: BoxShape.circle,
-        gradient: kAmberGround,
+        gradient: AppColors.accentGround(false),
         boxShadow: [
           BoxShadow(
             color: AppColors.accent.withValues(alpha: 0.5),
@@ -53,7 +53,7 @@ class _CircleButton extends StatelessWidget {
             width: size,
             height: size,
             decoration: decoration,
-            child: Icon(icon, size: 22, color: _onAccent),
+            child: Icon(icon, size: 22, color: onAccent),
           ),
         ),
       );
@@ -160,9 +160,7 @@ class _ReplyBanner extends StatelessWidget {
         decoration: BoxDecoration(
           color: dark ? Colors.white10 : Colors.black.withValues(alpha: 0.04),
           borderRadius: BorderRadius.circular(9),
-          border: const Border(
-            left: BorderSide(color: AppColors.accent, width: 3),
-          ),
+          border: Border(left: BorderSide(color: AppColors.accent, width: 3)),
         ),
         padding: const EdgeInsets.fromLTRB(10, 6, 4, 6),
         child: Row(

@@ -263,7 +263,7 @@ class _SprintHero extends StatelessWidget {
         children: [
           // Honeycomb watermark: large + pushed far off the bottom-right corner
           // so only a soft curve shows — reads as texture, never a cut-off logo.
-          const Positioned(
+          Positioned(
             right: -220,
             bottom: -240,
             child: IgnorePointer(
@@ -323,7 +323,7 @@ class _SprintHero extends StatelessWidget {
           Container(
             width: 6,
             height: 6,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.accent,
               shape: BoxShape.circle,
             ),
@@ -702,9 +702,9 @@ class _RingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round
-      ..shader = const SweepGradient(
+      ..shader = SweepGradient(
         colors: [_cAmberHi, _cAmberLo],
-        transform: GradientRotation(-math.pi / 2),
+        transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect);
     canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * pct, false, arc);
   }

@@ -8,7 +8,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'board_edit_cubit.dart';
@@ -257,7 +257,7 @@ class _TypeCard extends StatelessWidget {
                 child: Icon(
                   icon,
                   size: 19,
-                  color: selected ? kOnAmber : AppColors.inkSoft,
+                  color: selected ? onAccent : AppColors.inkSoft,
                 ),
               ),
               const SizedBox(width: 12),

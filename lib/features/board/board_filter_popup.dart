@@ -9,7 +9,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -698,7 +698,7 @@ class _ScopeChip extends StatelessWidget {
             color: active ? AppColors.accentSoft : tokens.field,
             borderRadius: BorderRadius.circular(AppTheme.radiusPill),
             border: Border.all(
-              color: active ? AppColors.accentLine : tokens.hairline,
+              color: active ? AppColors.stateBorder : tokens.hairline,
             ),
           ),
           child: Row(
@@ -721,17 +721,17 @@ class _ScopeChip extends StatelessWidget {
                   height: 16,
                   alignment: Alignment.center,
                   padding: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.accent,
                     shape: BoxShape.circle,
                   ),
                   child: Text(
                     '$count',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: AppTheme.fontMono,
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
-                      color: kOnAmber,
+                      color: onAccent,
                     ),
                   ),
                 ),

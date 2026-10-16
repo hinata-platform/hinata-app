@@ -265,7 +265,7 @@ class _GlassControlSurface extends StatelessWidget {
     if (isNativeApp) {
       return GlassContainer(
         useOwnLayer: true,
-        settings: dark ? kNavGlassDark : kNavGlassLight,
+        settings: navGlass(dark),
         shape: LiquidRoundedSuperellipse(borderRadius: radius),
         clipBehavior: Clip.antiAlias,
         child: child,
@@ -556,17 +556,17 @@ class _CountBadge extends StatelessWidget {
       height: 18,
       alignment: Alignment.center,
       padding: const EdgeInsets.symmetric(horizontal: 5),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.accent,
         shape: BoxShape.circle,
       ),
       child: Text(
         '$count',
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: AppTheme.fontMono,
           fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
-          color: kOnAmber,
+          color: onAccent,
         ),
       ),
     );

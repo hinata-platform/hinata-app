@@ -166,7 +166,7 @@ class _WorkLogFormState extends State<WorkLogForm> {
             FilledButton(
               onPressed: _saving ? null : _save,
               child: _saving
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 22,
                       height: 22,
                       child: HiveLoader(strokeWidth: 2, color: AppColors.navy),

@@ -521,7 +521,7 @@ class _Bars extends StatelessWidget {
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(6),
                             gradient: b.today
-                                ? const LinearGradient(
+                                ? LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
                                     colors: [_cAmberHi, _cAmberLo],
@@ -616,7 +616,7 @@ class _Segmented extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
-                      color: i == index ? kOnAmber : AppColors.inkSoft,
+                      color: i == index ? onAccent : AppColors.inkSoft,
                     ),
                   ),
                 ),

@@ -16,7 +16,7 @@ import '../../core/models/board_page_models.dart' show kBoardSearchMaxLength;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart' show SegmentItem;
@@ -141,11 +141,11 @@ class _CountBadge extends StatelessWidget {
     ),
     child: Text(
       '$count',
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: AppTheme.fontMono,
         fontSize: AppType.caption,
         fontWeight: FontWeight.w700,
-        color: kOnAmber,
+        color: onAccent,
       ),
     ),
   );

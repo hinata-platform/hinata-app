@@ -211,7 +211,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   /// held across a theme change keeps the colours it was born with — the docked
   /// week strip and the band layer's tint both do. Counting the brightness as
   /// an input is the only thing that makes a widget memo safe here.
-  Brightness? _brightness;
+  int? _themeKey;
 
   /// Which day a week starts on, held so a rebuild can tell a locale change
   /// from any other dependency.
@@ -262,9 +262,9 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
     // read from, which flips at once where `Theme.of` crossfades over two
     // hundred milliseconds.
     Theme.of(context);
-    final brightness = AppColors.brightness;
-    if (brightness != _brightness) {
-      _brightness = brightness;
+    final themeKey = AppColors.themeKey;
+    if (themeKey != _themeKey) {
+      _themeKey = themeKey;
       // The band layer's tint is `AppColors.inkFaint`, baked in when the layer
       // was built; the docked strip is a held widget.
       _layerMemo.clear();
@@ -1870,7 +1870,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
       _span,
       dayKey(_focused),
       dayKey(today),
-      AppColors.brightness,
+      AppColors.themeKey,
     );
     if (_dockKey == key) return _dock!;
     _dockKey = key;

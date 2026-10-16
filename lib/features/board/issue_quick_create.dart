@@ -15,7 +15,7 @@ import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/hive_widgets.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'issue_quick_create_cubit.dart';
@@ -606,7 +606,7 @@ class _QuickComposerState extends State<_QuickComposer> {
                     : Icon(
                         LucideIcons.cornerDownLeft,
                         size: 16,
-                        color: enabled ? kOnAmber : AppColors.inkFaint,
+                        color: enabled ? onAccent : AppColors.inkFaint,
                       ),
               ),
             ),
@@ -659,7 +659,7 @@ class _QuickToolState extends State<_QuickTool> {
   Widget build(BuildContext context) {
     final enabled = widget.onTap != null;
     final border = widget.active || _hovered || _pressed
-        ? AppColors.accentLine
+        ? AppColors.stateBorder
         : Colors.transparent;
     return Tooltip(
       message: widget.tooltip,

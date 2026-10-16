@@ -27,7 +27,7 @@ import '../../core/theme/app_type.dart';
 // Exact stat hues, harmonised with the dashboard "Liquid Glass" palette.
 const _cCompleted = Color(0xFF2E8B62);
 const _cCreated = Color(0xFF4E6FD0);
-const _cFocus = AppColors.accentStrong;
+final _cFocus = AppColors.accentStrong;
 const _cOverdue = Color(0xFFC0392B);
 const _heroInk = Color(0xF2FFFFFF); // ~95% white — text on navy glass
 
@@ -346,7 +346,7 @@ class _Hero extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          const Positioned(
+          Positioned(
             right: -210,
             bottom: -230,
             child: IgnorePointer(
