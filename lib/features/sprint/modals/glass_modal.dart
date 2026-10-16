@@ -828,7 +828,7 @@ ThemeData _glassCalendarTheme(BuildContext context) {
   final base = Theme.of(context);
   return base.copyWith(
     colorScheme: base.colorScheme.copyWith(
-      primary: AppColors.navy,
+      primary: AppColors.primary,
       onPrimary: Colors.white,
       surface: Colors.transparent,
       onSurface: AppColors.ink,
@@ -1353,7 +1353,7 @@ class _MonthGrid extends StatelessWidget {
 /// The colours a picked range is drawn in.
 ///
 /// Both halves were fixed values, and both went nearly invisible on a dark
-/// canvas: [AppColors.navy] is a dark brand colour, so the endpoint discs sank
+/// canvas: [AppColors.primary] is a dark brand colour, so the endpoint discs sank
 /// into the background, and [AppColors.accentSoft] is only a 16 % amber wash
 /// there, so the band between them could not be seen at all. What was left was
 /// two faint circles and no range.
@@ -1368,8 +1368,8 @@ class _MonthGrid extends StatelessWidget {
     // warm translucent wash, and a flat fill of nearly its own colour is what
     // made the band hard to pick out on a light canvas even where it was drawn.
     band: AppColors.accent.withValues(alpha: dark ? 0.32 : 0.30),
-    disc: dark ? AppColors.railInk : AppColors.navy,
-    onDisc: dark ? AppColors.navyDeep : Colors.white,
+    disc: dark ? AppColors.railInk : AppColors.primary,
+    onDisc: dark ? AppColors.primaryDeep : Colors.white,
   );
 }
 
@@ -1718,7 +1718,7 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
 }
 
 /// How blurred the app behind a modal stands at rest.
-double _kScrimSigma = 7;
+const double _kScrimSigma = 7;
 
 /// How much of the transition the blur takes to get there.
 ///
@@ -1730,7 +1730,7 @@ double _kScrimSigma = 7;
 /// move it buys nothing and costs every frame. It runs in whole pixels for the
 /// same reason: [ui.ImageFilter.blur] compares equal at the same sigma, so
 /// repeated values skip the repaint entirely.
-double _kScrimRamp = 0.5;
+const double _kScrimRamp = 0.5;
 
 double _scrimSigma(double t) {
   final ramp = Curves.easeOut.transform((t / _kScrimRamp).clamp(0.0, 1.0));

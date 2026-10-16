@@ -129,7 +129,7 @@ class _ForgotPasswordScreenState extends State<_ForgotPasswordScreenBody> {
                 ? SizedBox(
                     width: 22,
                     height: 22,
-                    child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
+                    child: HiveLoader(strokeWidth: 2, color: AppColors.primary),
                   )
                 : Text(context.t('forgotPassword.submit')),
           ),

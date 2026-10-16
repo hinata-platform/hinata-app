@@ -50,8 +50,7 @@
       "orange": "برتقالي",
       "cyan": "سماوي",
       "blue": "أزرق",
-      "custom": "مخصص",
-      "near": "مخصص، قريب من {{name}}"
+      "custom": "مخصص"
     },
     "pagination": {
       "previous": "الصفحة السابقة",
@@ -2887,7 +2886,6 @@
     "title": "الإعدادات",
     "logout": "تسجيل الخروج",
     "language": "اللغة",
-    "theme": "المظهر",
     "themeSystem": "النظام",
     "themeLight": "فاتح",
     "themeDark": "داكن",

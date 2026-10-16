@@ -50,8 +50,7 @@
       "orange": "Orange",
       "cyan": "Cyan",
       "blue": "Bleu",
-      "custom": "Personnalisée",
-      "near": "Personnalisée, proche de {{name}}"
+      "custom": "Personnalisée"
     },
     "pagination": {
       "previous": "Page précédente",
@@ -2887,7 +2886,6 @@
     "title": "Paramètres",
     "logout": "Se déconnecter",
     "language": "Langue",
-    "theme": "Apparence",
     "themeSystem": "Système",
     "themeLight": "Clair",
     "themeDark": "Sombre",

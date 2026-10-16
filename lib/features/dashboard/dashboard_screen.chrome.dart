@@ -146,7 +146,7 @@ class _CustomizeButton extends StatelessWidget {
         : (dark
               ? Colors.white.withValues(alpha: .09)
               : Colors.white.withValues(alpha: .6));
-    final fg = editing ? onAccent : AppColors.ink;
+    final fg = editing ? AppColors.onAccent : AppColors.ink;
     final border = editing
         ? Colors.transparent
         : (dark

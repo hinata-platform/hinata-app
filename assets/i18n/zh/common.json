@@ -50,8 +50,7 @@
       "orange": "橙色",
       "cyan": "青色",
       "blue": "蓝色",
-      "custom": "自定义",
-      "near": "自定义，接近{{name}}"
+      "custom": "自定义"
     },
     "pagination": {
       "previous": "上一页",
@@ -2887,7 +2886,6 @@
     "title": "设置",
     "logout": "退出登录",
     "language": "语言",
-    "theme": "外观",
     "themeSystem": "跟随系统",
     "themeLight": "浅色",
     "themeDark": "深色",

@@ -566,7 +566,7 @@ class _CountBadge extends StatelessWidget {
           fontFamily: AppTheme.fontMono,
           fontSize: AppType.caption,
           fontWeight: FontWeight.w700,
-          color: onAccent,
+          color: AppColors.onAccent,
         ),
       ),
     );

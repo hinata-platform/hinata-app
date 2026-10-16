@@ -261,7 +261,7 @@ class _NavRail extends StatelessWidget {
         border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: 0.34),
+            color: AppColors.primary.withValues(alpha: 0.34),
             blurRadius: 30,
             spreadRadius: -12,
             offset: const Offset(0, 14),
@@ -651,7 +651,7 @@ class _RailIconButton extends StatelessWidget {
           child: Icon(
             icon,
             size: 20,
-            color: accent ? onAccent : AppColors.railFaint,
+            color: accent ? AppColors.onAccent : AppColors.railFaint,
           ),
         ),
       ),
@@ -684,7 +684,7 @@ class _GlassFloatingTopBar extends StatelessWidget {
         border: Border.all(color: AppColors.hairline),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: dark ? .34 : .10),
+            color: AppColors.primary.withValues(alpha: dark ? .34 : .10),
             blurRadius: 26,
             spreadRadius: -10,
             offset: const Offset(0, 12),
@@ -713,7 +713,7 @@ class _GlassFloatingTopBar extends StatelessWidget {
                       maxWidth: 108,
                       fallback: HexMark(
                         size: 26,
-                        color: dark ? AppColors.accent : AppColors.navy,
+                        color: dark ? AppColors.accent : AppColors.primary,
                       ),
                     ),
                     const SizedBox(width: 11),

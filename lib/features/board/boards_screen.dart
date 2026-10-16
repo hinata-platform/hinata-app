@@ -373,7 +373,7 @@ class _BoardListCard extends StatelessWidget {
                               ? LucideIcons.zap
                               : LucideIcons.columns3,
                           size: 13,
-                          color: AppColors.navy,
+                          color: AppColors.primary,
                         ),
                         const SizedBox(width: 4),
                         Flexible(
@@ -388,7 +388,7 @@ class _BoardListCard extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: AppType.caption,
-                              color: AppColors.navy,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),

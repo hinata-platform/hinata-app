@@ -62,7 +62,7 @@ class UpdateRequiredScreen extends StatelessWidget {
                     Icon(
                       LucideIcons.cloudDownload,
                       size: 56,
-                      color: AppColors.navy,
+                      color: AppColors.primary,
                     ),
                     const SizedBox(height: 20),
                     Text(

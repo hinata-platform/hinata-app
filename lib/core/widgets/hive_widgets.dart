@@ -852,7 +852,7 @@ class SegmentedControl extends StatelessWidget {
             vertical: 6,
           ),
           decoration: BoxDecoration(
-            color: i == selected ? AppColors.navy : Colors.transparent,
+            color: i == selected ? AppColors.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(7),
           ),
           child: Row(

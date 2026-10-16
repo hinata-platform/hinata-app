@@ -5,7 +5,6 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/glass_chrome.dart' show onAccent;
 import '../../../core/widgets/hive_widgets.dart';
 import '../sprint_format.dart';
 import '../../../core/theme/app_type.dart';
@@ -42,14 +41,14 @@ class GlassSprintHeader extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.zap, size: 13, color: onAccent),
+          Icon(LucideIcons.zap, size: 13, color: AppColors.onAccent),
           const SizedBox(width: 4),
           Text(
             context.t('board.active'),
             style: TextStyle(
               fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
-              color: onAccent,
+              color: AppColors.onAccent,
             ),
           ),
         ],

@@ -10,7 +10,7 @@ import 'package:hinata/core/theme/tint_palette.dart';
 void main() {
   group('TintPalette.standard', () {
     test('is today\'s brand, byte for byte', () {
-      const p = TintPalette.standard;
+      final p = TintPalette.standard;
       expect(p.accent, const Color(0xFFD9A032));
       expect(p.accentStrong, const Color(0xFFB9831F));
       expect(p.accentLine, const Color(0xFFE4CE96));

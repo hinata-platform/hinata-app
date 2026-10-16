@@ -714,7 +714,7 @@ class _TargetRow extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
-                      color: AppColors.navy,
+                      color: AppColors.primary,
                     ),
                   ),
                 ),

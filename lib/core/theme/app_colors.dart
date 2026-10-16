@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'tint_palette.dart';
 
 /// Hinata "Hive" design tokens — redesign 2026.
-/// Navy nav-rail · warm-paper workspace · honey-amber signature accent.
+/// Navy nav-rail · warm-paper workspace · honey-amber signature accent in the
+/// standard brand; since HIN-150 a person's tint can replace navy and honey.
 ///
 /// Neutral surface/ink tokens are theme-aware: they resolve against the
 /// currently active [brightness] (driven from the app's [ThemeMode] in
@@ -31,8 +32,9 @@ abstract final class AppColors {
   static TintPalette palette = TintPalette.standard;
 
   /// One key for a widget memo that bakes colours in: changes when either
-  /// the brightness or the palette does.
-  static int get themeKey => Object.hash(brightness, identityHashCode(palette));
+  /// the brightness or the palette does. Exact, not a hash: two palettes
+  /// never share an id.
+  static int get themeKey => palette.id * 2 + brightness.index;
 
   // ---- brand (from the palette; navy in the standard brand) ----
   static Color get primary => palette.primary; // primary action
@@ -133,12 +135,12 @@ abstract final class AppColors {
   // White text on honey (the "today" chip of HIN-118): [accentStrong] reaches
   // only 3.3:1 under white, this deeper honey 4.85:1 (WCAG 1.4.3).
   static Color get accentDeep => palette.accentDeep;
-  // Amber text on an amber wash in the light theme, where [accentStrong] is too
-  // light to read on its own tint.
+  // Accent text on the accent wash in the light theme, where [accentStrong]
+  // is too light to read on its own tint.
   static Color get accentText => palette.accentText;
 
   // Soft accent fill (active pill / unread highlight). Theme-aware: an opaque
-  // cream tint in light, a translucent amber wash on dark surfaces.
+  // pale tint in light, a translucent accent wash on dark surfaces.
   static Color get accentSoftLight => palette.accentSoftLight;
   static Color get accentSoftDark => palette.accentSoftDark;
   static Color get accentSoft => _dark ? accentSoftDark : accentSoftLight;
@@ -215,11 +217,13 @@ abstract final class AppColors {
   // this lifts to the rail ink in dark mode.
   static Color get brandInk => _dark ? railInk : primary;
 
-  // Amber foreground for the *active* state — an icon or label on [accentSoft]
-  // or on a plain theme surface. In light that is [accentText]: [accentStrong]
-  // reaches only 3.0:1 on the canvas and 2.8:1 on the amber wash, the deeper
-  // honey 6.1:1 and 5.6:1 (HIN-110, measured). On dark, where [accentSoft] is
-  // only a faint wash over a near-black surface, the brighter [accent] reads.
+  // Accent foreground for the *active* state — an icon or label on
+  // [accentSoft] or on a plain theme surface. In light that is [accentText]:
+  // [accentStrong] reaches only 3.0:1 on the canvas and 2.8:1 on the accent
+  // wash, the deeper shade 6.1:1 and 5.6:1 (HIN-110, measured on honey; the
+  // palette solves the same targets for any tint). On dark, where
+  // [accentSoft] is only a faint wash over a near-black surface, the brighter
+  // [accent] reads.
   static Color get accentInk => _dark ? accent : accentText;
 
   // The wash behind weekends and holidays in the team absence calendar

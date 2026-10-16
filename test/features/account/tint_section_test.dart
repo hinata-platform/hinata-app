@@ -5,27 +5,29 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/theme_cubit.dart';
 import 'package:hinata/core/blocs/tint_cubit.dart';
 import 'package:hinata/core/models/account_models.dart';
-import 'package:hinata/core/repositories/account_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/theme/app_theme.dart';
 import 'package:hinata/core/widgets/hue_slider.dart';
 import 'package:hinata/features/account/tint_section.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
+import '../../support/timer_surface_fakes.dart';
+import '../../support/tint_fakes.dart';
+
 /// Settings → Darstellung → Anpassen (HIN-150): two style tiles, two sliders
 /// that appear with "Eingefärbt", the mode pills, and a reset. Widget tests
 /// render raw i18n keys.
 void main() {
-  late _MemoryStorage storage;
-  late _FakeAccountRepository account;
+  late MemoryStorage storage;
+  late FakeTintAccountRepository account;
   late TintCubit tint;
   late ThemeCubit theme;
 
   setUp(() {
     AppColors.brightness = Brightness.light;
-    storage = _MemoryStorage();
+    storage = MemoryStorage();
     HydratedBloc.storage = storage;
-    account = _FakeAccountRepository();
+    account = FakeTintAccountRepository();
     tint = TintCubit(account);
     theme = ThemeCubit();
   });
@@ -56,6 +58,7 @@ void main() {
 
   testWidgets('the standard style hides the sliders', (tester) async {
     await pump(tester);
+    expect(find.text('account.tint.hue'), findsNothing);
     expect(find.text('account.tint.styleDefault'), findsOneWidget);
     expect(find.text('account.tint.styleTinted'), findsOneWidget);
     expect(find.byType(HueSlider), findsNothing);
@@ -69,6 +72,11 @@ void main() {
     await tester.pump();
     expect(find.byType(HueSlider), findsOneWidget);
     expect(find.byType(LevelSlider), findsOneWidget);
+    // Each slider is named for a reader (4.1.2); the captions are decoration.
+    final handle = tester.ensureSemantics();
+    expect(find.bySemanticsLabel('account.tint.hue'), findsOneWidget);
+    expect(find.bySemanticsLabel('account.tint.level'), findsOneWidget);
+    handle.dispose();
     expect(tint.state.preferences.style, TintStyle.tinted);
     expect(account.saved.last.style, TintStyle.tinted);
   });
@@ -94,24 +102,31 @@ void main() {
     expect(tint.state.preferences.hue, isNot(79));
   });
 
-  testWidgets('a held arrow key commits once after the settle', (tester) async {
-    await tint.commit(
-      const TintPreferences(style: TintStyle.tinted, hue: 79, level: 100),
-    );
-    account.saved.clear();
-    await pump(tester);
-    // Tab reaches the first slider; a tap would move the thumb first.
-    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-    await tester.pump();
-    for (var i = 0; i < 4; i++) {
-      await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
-      await tester.pump(const Duration(milliseconds: 30));
-    }
-    expect(account.saved, isEmpty);
-    await tester.pump(TintCubit.settle + const Duration(milliseconds: 50));
-    expect(account.saved, hasLength(1));
-    expect(account.saved.single.hue, greaterThan(79));
-  });
+  testWidgets(
+    'a held arrow key previews at once and commits once after the settle',
+    (tester) async {
+      await tint.commit(
+        const TintPreferences(style: TintStyle.tinted, hue: 79, level: 100),
+      );
+      account.saved.clear();
+      await pump(tester);
+      // Tab reaches the first slider; a tap would move the thumb first.
+      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+      await tester.pump();
+      for (var i = 0; i < 4; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
+        await tester.pump(const Duration(milliseconds: 30));
+      }
+      expect(account.saved, isEmpty);
+      // Nothing app-wide until the settle: the preview moved, the state did not.
+      expect(tint.state.preferences.hue, 79);
+      expect(tint.previewPalette.value, isNot(same(tint.state.palette)));
+      await tester.pump(TintCubit.settle + const Duration(milliseconds: 50));
+      expect(account.saved, hasLength(1));
+      expect(account.saved.single.hue, greaterThan(79));
+      expect(tint.state.preferences.hue, greaterThan(79));
+    },
+  );
 
   testWidgets('the mode pills drive the theme cubit', (tester) async {
     await pump(tester);
@@ -158,56 +173,4 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.byType(LevelSlider), findsOneWidget);
   });
-}
-
-class _MemoryStorage implements Storage {
-  final Map<String, dynamic> values = {};
-  @override
-  dynamic read(String key) => values[key];
-  @override
-  Future<void> write(String key, dynamic value) async => values[key] = value;
-  @override
-  Future<void> delete(String key) async => values.remove(key);
-  @override
-  Future<void> clear() async => values.clear();
-  @override
-  Future<void> close() async {}
-}
-
-class _FakeAccountRepository implements AccountRepository {
-  final List<TintPreferences> saved = [];
-
-  @override
-  Future<Me> updateMyProfile({
-    String? displayName,
-    String? title,
-    String? pronouns,
-    String? locale,
-    String? timezone,
-    TimePreferences? timePreferences,
-    TintPreferences? tint,
-  }) async {
-    saved.add(tint!);
-    return Me(
-      id: 'u1',
-      displayName: 'Me',
-      username: 'me',
-      email: 'me@example.org',
-      emailVerified: true,
-      origin: AuthOrigin.local,
-      roles: const ['MEMBER'],
-      active: true,
-      twoFactor: const TwoFactor(
-        enabled: false,
-        method: 'TOTP',
-        recoveryRemaining: 0,
-      ),
-      notificationPreferences: NotifPrefs.fromJson(const {}),
-      tint: tint,
-    );
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName}');
 }

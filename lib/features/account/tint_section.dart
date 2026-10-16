@@ -39,43 +39,19 @@ class TintSection extends StatelessWidget {
   }
 }
 
-class _TintBody extends StatefulWidget {
+class _TintBody extends StatelessWidget {
   const _TintBody({required this.preferences, required this.mode});
 
   final TintPreferences preferences;
   final ThemeMode mode;
 
-  @override
-  State<_TintBody> createState() => _TintBodyState();
-}
-
-class _TintBodyState extends State<_TintBody> {
-  /// What the sliders show between a drag's first move and its release.
-  late TintPreferences _dragging = widget.preferences;
-
-  @override
-  void didUpdateWidget(covariant _TintBody old) {
-    super.didUpdateWidget(old);
-    if (old.preferences != widget.preferences) _dragging = widget.preferences;
-  }
-
-  TintCubit get _cubit => context.read<TintCubit>();
-
-  void _setStyle(TintStyle style) =>
-      _save(widget.preferences.copyWith(style: style));
-
-  void _preview(TintPreferences next) {
-    if (next.hue != _dragging.hue) tintSnapHaptic(_dragging.hue, next.hue);
-    setState(() => _dragging = next);
-    _cubit.preview(next);
-  }
-
-  void _end(TintPreferences next, {required bool pointer}) =>
-      _save(next, collect: !pointer);
-
-  Future<void> _save(TintPreferences next, {bool collect = false}) async {
-    final ok = await _cubit.commit(next, collect: collect);
-    if (!ok && mounted) {
+  Future<void> _save(
+    BuildContext context,
+    TintPreferences next, {
+    bool collect = false,
+  }) async {
+    final ok = await context.read<TintCubit>().commit(next, collect: collect);
+    if (!ok && context.mounted) {
       showGlassToast(
         context,
         context.t('account.tint.saveFailed'),
@@ -86,19 +62,28 @@ class _TintBodyState extends State<_TintBody> {
 
   @override
   Widget build(BuildContext context) {
-    final prefs = widget.preferences;
+    final prefs = preferences;
     final tinted = prefs.style == TintStyle.tinted;
     final compact = context.isCompact;
+    final cubit = context.read<TintCubit>();
     final tiles = _StyleTiles(
       preferences: prefs,
-      previewPalette: _cubit.previewPalette,
-      onChanged: _setStyle,
+      previewPalette: cubit.previewPalette,
+      onChanged: (style) => _save(context, prefs.copyWith(style: style)),
     );
     final sliders = tinted
-        ? _Sliders(dragging: _dragging, onPreview: _preview, onEnd: _end)
+        ? _Sliders(
+            // A new committed value (another device, a reset) starts the
+            // drag from it.
+            key: ValueKey(prefs),
+            committed: prefs,
+            onPreview: cubit.preview,
+            onEnd: (next, {required pointer}) =>
+                _save(context, next, collect: !pointer),
+          )
         : null;
     final modes = TileSelector<ThemeMode>(
-      value: widget.mode,
+      value: mode,
       onChanged: context.read<ThemeCubit>().setMode,
       options: [
         TileOption(
@@ -123,7 +108,7 @@ class _TintBodyState extends State<_TintBody> {
       child: TextButton.icon(
         onPressed: prefs == TintPreferences.standard
             ? null
-            : () => _save(TintPreferences.standard),
+            : () => _save(context, TintPreferences.standard),
         icon: const Icon(LucideIcons.rotateCcw, size: 16),
         label: Text(context.t('account.tint.reset')),
       ),
@@ -145,22 +130,21 @@ class _TintBodyState extends State<_TintBody> {
         ),
       ),
     );
-    final column = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        title,
-        tiles,
-        if (sliders != null) ...[const SizedBox(height: 16), sliders],
-        const SizedBox(height: 16),
-        modes,
-        const SizedBox(height: 4),
-        reset,
-      ],
-    );
     if (compact || sliders == null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 9),
-        child: column,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            title,
+            tiles,
+            if (sliders != null) ...[const SizedBox(height: 16), sliders],
+            const SizedBox(height: 16),
+            modes,
+            const SizedBox(height: 4),
+            reset,
+          ],
+        ),
       );
     }
     // Wide: tiles on the left, the sliders beside them, as the sheet reads on
@@ -214,7 +198,7 @@ class _StyleTiles extends StatelessWidget {
       TileOption(
         value: TintStyle.defaultStyle,
         label: context.t('account.tint.styleDefault'),
-        preview: const TintMiniPreview.standard(),
+        preview: TintMiniPreview.standard(),
       ),
       TileOption(
         value: TintStyle.tinted,
@@ -229,7 +213,7 @@ class _StyleTiles extends StatelessWidget {
 /// paper and a primary button, in one palette. Decorative; the tile's name
 /// says what it is.
 class TintMiniPreview extends StatelessWidget {
-  const TintMiniPreview.standard({super.key})
+  TintMiniPreview.standard({super.key})
     : palette = TintPalette.standard,
       live = null;
 
@@ -315,19 +299,38 @@ class TintMiniPreview extends StatelessWidget {
   }
 }
 
-class _Sliders extends StatelessWidget {
+/// The two sliders. They hold what is being dragged themselves, so a step
+/// rebuilds this widget and nothing around it: the tiles, the pills and the
+/// reset button above and below stay as they are.
+class _Sliders extends StatefulWidget {
   const _Sliders({
-    required this.dragging,
+    super.key,
+    required this.committed,
     required this.onPreview,
     required this.onEnd,
   });
 
-  final TintPreferences dragging;
+  /// What the account holds; a new value resets the drag (see the key).
+  final TintPreferences committed;
   final ValueChanged<TintPreferences> onPreview;
   final void Function(TintPreferences, {required bool pointer}) onEnd;
 
   @override
+  State<_Sliders> createState() => _SlidersState();
+}
+
+class _SlidersState extends State<_Sliders> {
+  late TintPreferences _dragging = widget.committed;
+
+  void _preview(TintPreferences next) {
+    if (next.hue != _dragging.hue) tintSnapHaptic(_dragging.hue, next.hue);
+    setState(() => _dragging = next);
+    widget.onPreview(next);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final dragging = _dragging;
     final labelStyle = TextStyle(
       fontSize: AppType.caption,
       fontWeight: FontWeight.w600,
@@ -336,53 +339,59 @@ class _Sliders extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Flexible(
-              child: Text(
-                context.t('account.tint.hue'),
-                style: labelStyle,
-                overflow: TextOverflow.ellipsis,
+        // Captions are decoration for a reader: each slider carries its own
+        // name, and the colour's name is in its spoken value.
+        ExcludeSemantics(
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  context.t('account.tint.hue'),
+                  style: labelStyle,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-            const SizedBox(width: 8),
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: TintPalette.of(dragging).accent,
-                border: Border.all(color: AppColors.hairline),
+              const SizedBox(width: 8),
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: TintPalette.of(dragging).accent,
+                  border: Border.all(color: AppColors.hairline),
+                ),
               ),
-            ),
-            const SizedBox(width: 6),
-            Flexible(
-              child: Text(
-                nearestHueLabel(context, dragging.hue),
-                style: labelStyle.copyWith(color: AppColors.ink),
-                overflow: TextOverflow.ellipsis,
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  hueFamilyLabel(context, dragging.hue),
+                  style: labelStyle.copyWith(color: AppColors.ink),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         RepaintBoundary(
           child: HueSlider(
             hue: dragging.hue,
             level: dragging.level,
-            onChanged: (hue) => onPreview(dragging.copyWith(hue: hue)),
+            onChanged: (hue) => _preview(dragging.copyWith(hue: hue)),
             onChangeEnd: (hue, {required pointer}) =>
-                onEnd(dragging.copyWith(hue: hue), pointer: pointer),
+                widget.onEnd(dragging.copyWith(hue: hue), pointer: pointer),
           ),
         ),
         const SizedBox(height: 6),
-        Text(context.t('account.tint.level'), style: labelStyle),
+        ExcludeSemantics(
+          child: Text(context.t('account.tint.level'), style: labelStyle),
+        ),
         RepaintBoundary(
           child: LevelSlider(
             hue: dragging.hue,
             level: dragging.level,
-            onChanged: (level) => onPreview(dragging.copyWith(level: level)),
+            onChanged: (level) => _preview(dragging.copyWith(level: level)),
             onChangeEnd: (level, {required pointer}) =>
-                onEnd(dragging.copyWith(level: level), pointer: pointer),
+                widget.onEnd(dragging.copyWith(level: level), pointer: pointer),
           ),
         ),
       ],
