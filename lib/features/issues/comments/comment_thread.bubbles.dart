@@ -262,7 +262,7 @@ class _CommentActionsState extends State<_CommentActions> {
         GlassPopover(
           alignment: GlassMenuAlignment.topLeft,
           popoverWidth: 236,
-          popoverBorderRadius: 22,
+          popoverBorderRadius: AppTheme.radiusPopover,
           settings: _navGlass(dark),
           quality: GlassQuality.standard,
           triggerBuilder: (context, toggle) => _ActionButton(

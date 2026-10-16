@@ -12,7 +12,11 @@ import '../../core/repositories/domain_providers.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../sprint/modals/glass_modal.dart'
-    show glassWoltSurface, showGlassConfirm;
+    show
+        glassWoltDialogShape,
+        glassWoltSheetShape,
+        glassWoltSurface,
+        showGlassConfirm;
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/sprint_repository.dart';
@@ -25,7 +29,7 @@ import '../../core/theme/app_type.dart';
 /// Centered create-issue dialog for wider screens — mirrors the issue detail
 /// sheet's modal chrome and width so the two-column create layout has room.
 class _CreateDialogType extends WoltDialogType {
-  const _CreateDialogType();
+  const _CreateDialogType() : super(shapeBorder: glassWoltDialogShape);
 
   @override
   BoxConstraints layoutModal(Size availableSize) {
@@ -91,7 +95,7 @@ Future<Issue?> showIssueForm(
     pageContentDecorator: glassWoltSurface,
     modalTypeBuilder: (ctx) => MediaQuery.sizeOf(ctx).width >= 760
         ? const _CreateDialogType()
-        : WoltModalType.bottomSheet(),
+        : const WoltBottomSheetType(shapeBorder: glassWoltSheetShape),
     pageListBuilder: (modalContext) => [
       WoltModalSheetPage(
         backgroundColor: Colors.transparent,

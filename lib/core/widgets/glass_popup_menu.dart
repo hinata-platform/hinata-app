@@ -7,6 +7,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart' as lg;
 
 import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../../features/search/search_tokens.dart';
 import 'glass_panel.dart';
 import 'hive_widgets.dart' show forwardChevron;
@@ -343,7 +344,7 @@ class _GlassMenuHost<T> extends StatefulWidget {
 
 class _GlassMenuHostState<T> extends State<_GlassMenuHost<T>> {
   static const double _margin = 12;
-  static const double _radius = 20;
+  static const double _radius = AppTheme.radiusPopover;
   static const double _rowHeight = 44;
 
   final lg.GlassMenuController _controller = lg.GlassMenuController();

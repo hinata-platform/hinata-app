@@ -19,6 +19,17 @@ abstract final class AppTheme {
   static const radiusControl = 10.0;
   static const radiusPill = 999.0;
 
+  /// The corners of every overlay, in one place to tweak.
+  ///
+  /// [radiusDialog]: modal dialogs, confirmations, pickers in a dialog,
+  /// bottom sheets, the search palette and side panels.
+  /// [radiusPopover]: what opens beside the thing that was clicked, the
+  /// anchored popovers, menus, filter panels and suggestion lists.
+  /// Rounder than the cards (14) on purpose: glass that floats over the page
+  /// reads as a separate layer, as in iOS 27.
+  static const radiusDialog = 34.0;
+  static const radiusPopover = 26.0;
+
   static const fontBrand = 'Sora'; // headings, wordmark
   static const fontUi = 'IBMPlexSans'; // body / dense UI
   static const fontMono = 'IBMPlexMono'; // ids, metrics
@@ -136,6 +147,25 @@ abstract final class AppTheme {
         labelStyle: TextStyle(color: inkSoft, fontSize: AppType.caption),
       ),
       dividerTheme: DividerThemeData(color: hairline, thickness: 1, space: 1),
+      // The few Material dialogs and menus left (an AlertDialog, a
+      // DropdownButton) wear the overlay corners of the glass ones.
+      dialogTheme: const DialogThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(radiusDialog)),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+            top: Radius.circular(radiusDialog),
+          ),
+        ),
+      ),
+      popupMenuTheme: const PopupMenuThemeData(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(radiusPopover)),
+        ),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surface,
         indicatorColor: accentSoft,

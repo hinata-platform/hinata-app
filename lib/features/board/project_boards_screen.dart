@@ -20,7 +20,12 @@ import '../../core/theme/glass_chrome.dart' show kOnAmber;
 import '../../core/widgets/soft_card.dart';
 import '../../core/widgets/status_widgets.dart';
 import '../shell/page_chrome.dart';
-import '../sprint/modals/glass_modal.dart' show glassWoltSurface;
+import '../sprint/modals/glass_modal.dart'
+    show
+        glassWoltDialogShape,
+        glassWoltSheetShape,
+        glassWoltSurface,
+        kGlassPopoverBreakpoint;
 import 'board_edit_cubit.dart';
 import 'board_links.dart';
 import 'board_manage_menu.dart';
@@ -90,6 +95,10 @@ class _ProjectBoardsState extends State<_ProjectBoards>
     await WoltModalSheet.show<AgileBoard?>(
       context: context,
       pageContentDecorator: glassWoltSurface,
+      modalTypeBuilder: (context) =>
+          MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint
+          ? const WoltDialogType(shapeBorder: glassWoltDialogShape)
+          : const WoltBottomSheetType(shapeBorder: glassWoltSheetShape),
       pageListBuilder: (modalContext) => [
         WoltModalSheetPage(
           backgroundColor: Colors.transparent,

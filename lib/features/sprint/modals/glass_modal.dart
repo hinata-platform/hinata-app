@@ -39,7 +39,7 @@ const double _kPhoneBreakpoint = 610;
 /// written for.
 ///
 /// Two shapes, one call. Above [_kPhoneBreakpoint] it is a centred card over a
-/// dimmed, blurred app (radius 26, spring entrance, and `prefers-reduced-motion`
+/// dimmed, blurred app (radius AppTheme.radiusDialog, spring entrance, and `prefers-reduced-motion`
 /// honoured with a cross-fade). Below it, a form is a bottom sheet instead —
 /// full width, as tall as it needs, draggable — because a centred card on a
 /// phone leaves a margin on all four sides and cannot use the height it has.
@@ -89,7 +89,10 @@ Future<T?> showGlassModal<T>(
       // underneath it — which puts it directly on top of every one of these
       // headers' close buttons. Dragging the sheet still works; `enableDrag` is
       // a separate thing.
-      modalTypeBuilder: (_) => const WoltBottomSheetType(showDragHandle: false),
+      modalTypeBuilder: (_) => const WoltBottomSheetType(
+        showDragHandle: false,
+        shapeBorder: glassWoltSheetShape,
+      ),
       pageListBuilder: (modalContext) => [
         WoltModalSheetPage(
           backgroundColor: Colors.transparent,
@@ -264,6 +267,19 @@ class _GlassConfirmHeader extends StatelessWidget {
   }
 }
 
+/// Wolt's own frame around [glassWoltSurface], cut to the same corners as
+/// the glass inside it. Wolt's default is 16, which clipped the glass.
+const ShapeBorder glassWoltDialogShape = RoundedRectangleBorder(
+  borderRadius: BorderRadius.all(Radius.circular(AppTheme.radiusDialog)),
+);
+
+/// The bottom-sheet twin of [glassWoltDialogShape]: top corners only.
+const ShapeBorder glassWoltSheetShape = RoundedRectangleBorder(
+  borderRadius: BorderRadius.vertical(
+    top: Radius.circular(AppTheme.radiusDialog),
+  ),
+);
+
 /// Opens a Liquid-Glass bottom sheet — the shared replacement for Material's
 /// [showModalBottomSheet]. Renders [builder]'s content on the app's signature
 /// glass panel (transparent transport, blurred glassFill, grab handle), riding
@@ -277,7 +293,7 @@ Future<T?> showGlassBottomSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,
   bool showHandle = true,
-  double radius = 24,
+  double radius = AppTheme.radiusDialog,
   double maxWidth = 560,
 }) {
   return showModalBottomSheet<T>(
@@ -564,7 +580,7 @@ class _AnchoredPanel extends StatelessWidget {
   final double maxHeightCap;
 
   static const double _margin = 12;
-  static const double _radius = 20;
+  static const double _radius = AppTheme.radiusPopover;
   static const double _gap = 6;
 
   @override
@@ -1490,7 +1506,7 @@ Widget glassWoltSurface(Widget pageContent) {
       final tokens = SearchTokens.of(Theme.of(context).brightness);
       final dark = Theme.of(context).brightness == Brightness.dark;
       return GlassPanelShadow(
-        radius: BorderRadius.circular(26),
+        radius: BorderRadius.circular(AppTheme.radiusDialog),
         shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
@@ -1501,7 +1517,9 @@ Widget glassWoltSurface(Widget pageContent) {
           // on every one of them — and on a drag it was paid per frame.
           quality: GlassQuality.standard,
           clipBehavior: Clip.antiAlias,
-          shape: const LiquidRoundedSuperellipse(borderRadius: 26),
+          shape: const LiquidRoundedSuperellipse(
+            borderRadius: AppTheme.radiusDialog,
+          ),
           settings: liquidGlassPanelSettings(
             glassFill: tokens.glassFill,
             dark: dark,
@@ -1612,13 +1630,15 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
     final panel = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: maxW, maxHeight: maxH),
       child: GlassPanelShadow(
-        radius: BorderRadius.circular(26),
+        radius: BorderRadius.circular(AppTheme.radiusDialog),
         shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
           quality: kPanelGlassQuality,
           clipBehavior: Clip.antiAlias,
-          shape: const LiquidRoundedSuperellipse(borderRadius: 26),
+          shape: const LiquidRoundedSuperellipse(
+            borderRadius: AppTheme.radiusDialog,
+          ),
           settings: liquidGlassPanelSettings(
             glassFill: tokens.glassFill,
             dark: dark,

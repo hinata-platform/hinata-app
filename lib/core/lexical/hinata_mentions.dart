@@ -14,6 +14,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 
 import '../i18n/i18n.dart';
 import '../theme/app_colors.dart';
+import '../theme/app_theme.dart';
 import '../widgets/app_avatar.dart';
 import '../widgets/glass_panel.dart';
 import '../../features/knowledge/data/knowledge_models.dart' show lucideIcon;
@@ -65,7 +66,7 @@ class _GlassPopover extends StatelessWidget {
 
   final Widget child;
 
-  static const double _radius = 16;
+  static const double _radius = AppTheme.radiusPopover;
 
   @override
   Widget build(BuildContext context) {

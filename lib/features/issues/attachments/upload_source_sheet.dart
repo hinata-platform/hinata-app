@@ -5,6 +5,7 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../search/search_tokens.dart';
 import '../../../core/widgets/hive_widgets.dart' show forwardChevron;
@@ -35,7 +36,7 @@ Future<UploadSource?> showUploadSourceSheet(BuildContext context) {
 class _UploadSourceSheet extends StatelessWidget {
   const _UploadSourceSheet();
 
-  static const double _radius = 24;
+  static const double _radius = AppTheme.radiusDialog;
 
   @override
   Widget build(BuildContext context) {

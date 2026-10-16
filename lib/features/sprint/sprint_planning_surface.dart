@@ -1021,7 +1021,7 @@ class _BulkBar extends StatelessWidget {
                 ),
               ),
               dropdownColor: AppColors.surface,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(AppTheme.radiusPopover),
               isDense: true,
               iconEnabledColor: tokens.inkSoft,
               style: TextStyle(color: tokens.ink, fontSize: AppType.label),

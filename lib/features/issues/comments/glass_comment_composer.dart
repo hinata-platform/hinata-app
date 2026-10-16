@@ -420,7 +420,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
     return GlassPopover(
       alignment: GlassMenuAlignment.bottomLeft,
       popoverWidth: 268,
-      popoverBorderRadius: 24,
+      popoverBorderRadius: AppTheme.radiusPopover,
       // Same near-opaque dark-slate / frost tint as the rest of the composer so
       // the morphing panel reads identically to the field pill and "+" menu of
       // old — the metaball just adds the liquid growth on top.
