@@ -1,9 +1,11 @@
 /// The glass dropdown, and the one thing about it that is not visual.
 library;
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/widgets/glass_popup_menu.dart';
+import 'package:hinata/features/search/search_tokens.dart';
 
 void main() {
   Future<void> pumpMenu(
@@ -211,5 +213,33 @@ void main() {
     // the anchor's top plus the menu's own inner padding.
     final firstRow = tester.getRect(find.text('Eins'));
     expect(firstRow.top, lessThan(74 + 40));
+  });
+
+  testWidgets('a mouse resting on a row lights it up', (tester) async {
+    // The rows' own hover was a white wash, invisible on light glass: a mouse
+    // moving down a menu got no feedback at all.
+    await pumpMenu(tester, onOpenChanged: (_) {}, onSelected: (_) {});
+    await tester.tap(find.text('trigger'));
+    await tester.pumpAndSettle();
+
+    final wash = SearchTokens.of(Brightness.light).rowHover;
+    final lit = find.byWidgetPredicate(
+      (w) =>
+          w is Container &&
+          w.decoration is BoxDecoration &&
+          (w.decoration! as BoxDecoration).color == wash,
+    );
+    expect(lit, findsNothing);
+
+    final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+    await mouse.addPointer(location: Offset.zero);
+    addTearDown(mouse.removePointer);
+    await mouse.moveTo(tester.getCenter(find.text('Zwei')));
+    await tester.pumpAndSettle();
+
+    expect(lit, findsOneWidget);
+    final row = tester.getRect(find.text('Zwei'));
+    expect(tester.getRect(lit).top, lessThanOrEqualTo(row.top));
+    expect(tester.getRect(lit).bottom, greaterThanOrEqualTo(row.bottom));
   });
 }
