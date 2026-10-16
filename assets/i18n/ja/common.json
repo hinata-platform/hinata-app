@@ -50,7 +50,8 @@
       "orange": "オレンジ",
       "cyan": "シアン",
       "blue": "ブルー",
-      "custom": "カスタム"
+      "custom": "カスタム",
+      "near": "カスタム（{{name}}に近い）"
     },
     "pagination": {
       "previous": "前のページ",
@@ -4451,6 +4452,21 @@
       "liveUpdateOff": "システム設定でこのアプリの Live Updates がオフになっています。実行中の通知はそのまま残ります。",
       "reliability": "信頼性モード",
       "reliabilityHint": "バッテリー管理が実行中の通知を終了してしまう端末向けです。タイマーの実行中はフォアグラウンドサービスが通知を保持し、何も収集しません。アプリを開いているときにだけ開始します。"
+    },
+    "tint": {
+      "title": "カスタマイズ",
+      "subtitle": "スマートフォンと同じように、アプリ全体をひとつの色に。",
+      "styleDefault": "標準",
+      "styleTinted": "ティント",
+      "hue": "色",
+      "hueValue": "{{degrees}}度、{{name}}",
+      "level": "濃さ",
+      "levelValue": "{{value}}パーセント、{{hint}}",
+      "levelClear": "透明なガラス",
+      "levelMid": "中くらい",
+      "levelStrong": "濃い",
+      "reset": "標準に戻す",
+      "saveFailed": "色を保存できませんでした。最後に保存した色を表示しています。"
     }
   },
   "twofa": {
