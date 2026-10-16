@@ -1,6 +1,6 @@
-// Settings → Darstellung → Anpassen (HIN-150) as the person meets it: the
-// tinted style light and dark, at text scale 1.0 and 2.0, on a phone and wide,
-// and the standard style once.
+// The Customize panel (HIN-150) as the person meets it in the popover and
+// the sheet: the tinted style light and dark, at text scale 1.0 and 2.0, and
+// the standard style once.
 // Widget tests render raw i18n keys; the goldens are about layout and colour.
 
 import 'package:flutter/material.dart';
@@ -12,7 +12,7 @@ import 'package:hinata/core/models/account_models.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/theme/app_theme.dart';
 import 'package:hinata/core/theme/tint_palette.dart';
-import 'package:hinata/features/account/tint_section.dart';
+import 'package:hinata/features/account/tint_customizer.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 import '../support/timer_surface_fakes.dart';
@@ -24,9 +24,9 @@ void main() {
   final cases = [
     for (final dark in const [false, true])
       for (final scale in const [1.0, 2.0])
-        for (final width in const [390.0, 1100.0])
+        for (final width in const [400.0])
           (dark: dark, scale: scale, width: width, prefs: tinted),
-    (dark: false, scale: 1.0, width: 390.0, prefs: TintPreferences.standard),
+    (dark: false, scale: 1.0, width: 400.0, prefs: TintPreferences.standard),
   ];
   for (final c in cases) {
     {
@@ -37,7 +37,7 @@ void main() {
         final mode = dark ? 'dark' : 'light';
         final style = c.prefs.style == TintStyle.tinted ? '' : '_standard';
         final name =
-            'tint_section_${mode}_x${scale.toInt()}_${width.toInt()}$style';
+            'tint_panel_${mode}_x${scale.toInt()}_${width.toInt()}$style';
         testWidgets(name, (tester) async {
           HydratedBloc.storage = MemoryStorage();
           AppColors.brightness = dark ? Brightness.dark : Brightness.light;
@@ -72,9 +72,8 @@ void main() {
                       child: RepaintBoundary(
                         key: const ValueKey('section'),
                         child: Container(
-                          color: AppColors.canvas,
-                          padding: const EdgeInsets.all(16),
-                          child: const TintSection(),
+                          color: AppColors.surface,
+                          child: const TintCustomizerPanel(),
                         ),
                       ),
                     ),

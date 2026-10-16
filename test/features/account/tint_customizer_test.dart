@@ -8,15 +8,17 @@ import 'package:hinata/core/models/account_models.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/theme/app_theme.dart';
 import 'package:hinata/core/widgets/hue_slider.dart';
-import 'package:hinata/features/account/tint_section.dart';
+import 'package:hinata/features/account/tint_customizer.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
 
 import '../../support/timer_surface_fakes.dart';
 import '../../support/tint_fakes.dart';
 
-/// Settings → Darstellung → Anpassen (HIN-150): two style tiles, two sliders
-/// that appear with "Eingefärbt", the mode pills, and a reset. Widget tests
-/// render raw i18n keys.
+/// Settings → Darstellung → Anpassen (HIN-150): a row that opens the
+/// Customize panel, a glass popover on wide screens and a glass sheet on
+/// compact ones; in it two style tiles, two sliders that appear with
+/// "Eingefärbt", and Light / Dark / Automatic. Widget tests render raw i18n
+/// keys.
 void main() {
   late MemoryStorage storage;
   late FakeTintAccountRepository account;
@@ -49,7 +51,9 @@ void main() {
                   BlocProvider<TintCubit>.value(value: tint),
                   BlocProvider<ThemeCubit>.value(value: theme),
                 ],
-                child: const SingleChildScrollView(child: TintSection()),
+                child: const SingleChildScrollView(
+                  child: TintCustomizerPanel(),
+                ),
               ),
             ),
           ),
@@ -58,12 +62,12 @@ void main() {
 
   testWidgets('the standard style hides the sliders', (tester) async {
     await pump(tester);
-    expect(find.text('account.tint.hue'), findsNothing);
+    expect(find.text('account.tint.title'), findsOneWidget);
     expect(find.text('account.tint.styleDefault'), findsOneWidget);
     expect(find.text('account.tint.styleTinted'), findsOneWidget);
     expect(find.byType(HueSlider), findsNothing);
     expect(find.byType(LevelSlider), findsNothing);
-    expect(find.text('settings.themeSystem'), findsOneWidget);
+    expect(find.text('account.tint.modeAuto'), findsOneWidget);
   });
 
   testWidgets('the tinted style shows hue and level', (tester) async {
@@ -72,7 +76,7 @@ void main() {
     await tester.pump();
     expect(find.byType(HueSlider), findsOneWidget);
     expect(find.byType(LevelSlider), findsOneWidget);
-    // Each slider is named for a reader (4.1.2); the captions are decoration.
+    // Each slider is named for a reader (4.1.2); the panel shows no caption.
     final handle = tester.ensureSemantics();
     expect(find.bySemanticsLabel('account.tint.hue'), findsOneWidget);
     expect(find.bySemanticsLabel('account.tint.level'), findsOneWidget);
@@ -110,9 +114,20 @@ void main() {
       );
       account.saved.clear();
       await pump(tester);
-      // Tab reaches the first slider; a tap would move the thumb first.
-      await tester.sendKeyEvent(LogicalKeyboardKey.tab);
-      await tester.pump();
+      // Tab past the two tiles to the first slider; a tap would move the
+      // thumb first.
+      final hue = find.descendant(
+        of: find.byType(HueSlider),
+        matching: find.byType(Focus),
+      );
+      for (var i = 0; i < 6; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pump();
+        final focused = FocusManager.instance.primaryFocus;
+        if (tester.widgetList<Focus>(hue).any((f) => f.focusNode == focused)) {
+          break;
+        }
+      }
       for (var i = 0; i < 4; i++) {
         await tester.sendKeyEvent(LogicalKeyboardKey.arrowRight);
         await tester.pump(const Duration(milliseconds: 30));
@@ -128,22 +143,61 @@ void main() {
     },
   );
 
-  testWidgets('the mode pills drive the theme cubit', (tester) async {
+  testWidgets('Light, Dark and Automatic drive the theme cubit', (
+    tester,
+  ) async {
     await pump(tester);
     await tester.tap(find.text('settings.themeDark'));
     await tester.pump();
     expect(theme.state, ThemeMode.dark);
+    await tester.tap(find.text('account.tint.modeAuto'));
+    await tester.pump();
+    expect(theme.state, ThemeMode.system);
   });
 
-  testWidgets('reset returns to the standard', (tester) async {
-    await tint.commit(
-      const TintPreferences(style: TintStyle.tinted, hue: 200, level: 30),
+  Future<void> pumpRow(WidgetTester tester, Size size) {
+    tester.view.physicalSize = size;
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    // The cubits sit above the app, as in app.dart: the panel opens on the
+    // root navigator and reads them from there.
+    return tester.pumpWidget(
+      MultiBlocProvider(
+        providers: [
+          BlocProvider<TintCubit>.value(value: tint),
+          BlocProvider<ThemeCubit>.value(value: theme),
+        ],
+        child: MaterialApp(
+          theme: AppTheme.light(),
+          home: const Scaffold(body: Center(child: TintCustomizeRow())),
+        ),
+      ),
     );
-    await pump(tester);
-    await tester.tap(find.text('account.tint.reset'));
-    await tester.pump();
-    expect(tint.state.preferences, TintPreferences.standard);
-    expect(account.saved.last, TintPreferences.standard);
+  }
+
+  testWidgets('the row says what is set and opens a popover when wide', (
+    tester,
+  ) async {
+    await tint.commit(
+      const TintPreferences(style: TintStyle.tinted, hue: 155, level: 100),
+    );
+    await pumpRow(tester, const Size(1280, 900));
+    expect(find.textContaining('account.tint.styleTinted'), findsOneWidget);
+    expect(find.textContaining('account.tint.modeAuto'), findsOneWidget);
+    expect(find.byType(TintCustomizerPanel), findsNothing);
+    await tester.tap(find.text('account.tint.title'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TintCustomizerPanel), findsOneWidget);
+    expect(find.byType(BottomSheet), findsNothing);
+    expect(find.byType(HueSlider), findsOneWidget);
+  });
+
+  testWidgets('the row opens a bottom sheet on a phone', (tester) async {
+    await pumpRow(tester, const Size(390, 844));
+    await tester.tap(find.text('account.tint.title'));
+    await tester.pumpAndSettle();
+    expect(find.byType(TintCustomizerPanel), findsOneWidget);
+    expect(find.byType(BottomSheet), findsOneWidget);
   });
 
   testWidgets('does not overflow at text scale 2 on a phone', (tester) async {
@@ -164,7 +218,7 @@ void main() {
                 BlocProvider<TintCubit>.value(value: tint),
                 BlocProvider<ThemeCubit>.value(value: theme),
               ],
-              child: const SingleChildScrollView(child: TintSection()),
+              child: const SingleChildScrollView(child: TintCustomizerPanel()),
             ),
           ),
         ),
