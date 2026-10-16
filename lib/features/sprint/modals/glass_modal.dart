@@ -24,6 +24,7 @@ import '../../../core/util/duration_input.dart';
 import '../../../core/util/time_input.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../../../core/widgets/hover_builder.dart';
 import '../../search/search_tokens.dart';
 import '../../../core/theme/app_type.dart';
 
@@ -1453,41 +1454,46 @@ class _DayCell extends StatelessWidget {
       enabled: !disabled,
       selected: isEndpoint,
       label: semanticLabel,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: SizedBox(
-          width: size,
-          height: size,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              if (band != null) Positioned.fill(child: band),
-              Container(
-                width: size - 8,
-                height: size - 8,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isEndpoint ? colors.disc : null,
-                  border: isToday && !isEndpoint
-                      ? Border.all(color: AppColors.accent, width: 1.5)
-                      : null,
-                ),
-                child: ExcludeSemantics(
-                  child: Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      fontWeight: isEndpoint
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: textColor,
+      child: HoverBuilder(
+        enabled: !disabled,
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          behavior: HitTestBehavior.opaque,
+          child: SizedBox(
+            width: size,
+            height: size,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                if (band != null) Positioned.fill(child: band),
+                Container(
+                  width: size - 8,
+                  height: size - 8,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: isEndpoint
+                        ? colors.disc
+                        : (hovered ? hoverWash() : null),
+                    border: isToday && !isEndpoint
+                        ? Border.all(color: AppColors.accent, width: 1.5)
+                        : null,
+                  ),
+                  child: ExcludeSemantics(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        fontWeight: isEndpoint
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: textColor,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -2433,7 +2439,9 @@ class _PresetChip extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(999),
-          child: Container(
+          // Ink, not Container: a Container paints over the InkWell's
+          // hover and hides it.
+          child: Ink(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
               color: selected

@@ -108,6 +108,7 @@ import 'issue_link_resolver.dart';
 import 'work_items_section.dart';
 import '../../core/widgets/folded_hint.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/hover_builder.dart';
 
 part 'issue_detail_sheet.view.dart';
 part 'issue_detail_sheet.dialogs.dart';

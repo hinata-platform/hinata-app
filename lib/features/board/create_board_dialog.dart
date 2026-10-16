@@ -12,6 +12,7 @@ import '../../core/widgets/project_picker.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'board_edit_cubit.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/hover_builder.dart';
 
 /// Liquid-Glass "Create board" modal. First asks the board type (Kanban —
 /// continuous flow, default; or Scrum — sprint planning), then name + the
@@ -228,68 +229,73 @@ class _TypeCard extends StatelessWidget {
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.accentSoft
-                : AppColors.surface.withValues(alpha: 0.55),
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-            border: Border.all(
-              color: selected ? AppColors.accent : AppColors.hairline,
-              width: 1.5,
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accentSoft
+                  : withHoverWash(
+                      AppColors.surface.withValues(alpha: 0.55),
+                      hovered,
+                    ),
+              borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+              border: Border.all(
+                color: selected ? AppColors.accent : AppColors.hairline,
+                width: 1.5,
+              ),
             ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 38,
-                height: 38,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected ? AppColors.accent : AppColors.canvas2,
-                  borderRadius: BorderRadius.circular(10),
+            child: Row(
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: selected ? AppColors.accent : AppColors.canvas2,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Icon(
+                    icon,
+                    size: 19,
+                    color: selected ? AppColors.onAccent : AppColors.inkSoft,
+                  ),
                 ),
-                child: Icon(
-                  icon,
-                  size: 19,
-                  color: selected ? AppColors.onAccent : AppColors.inkSoft,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: AppType.body,
-                        fontWeight: FontWeight.w700,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: AppType.body,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: AppType.caption,
-                        height: 1.35,
-                        color: AppColors.inkSoft,
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: AppType.caption,
+                          height: 1.35,
+                          color: AppColors.inkSoft,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              if (selected)
-                Icon(
-                  LucideIcons.circleCheckBig,
-                  size: 20,
-                  color: AppColors.accentInk,
-                ),
-            ],
+                if (selected)
+                  Icon(
+                    LucideIcons.circleCheckBig,
+                    size: 20,
+                    color: AppColors.accentInk,
+                  ),
+              ],
+            ),
           ),
         ),
       ),

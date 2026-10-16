@@ -146,29 +146,33 @@ class GlassSegmented extends StatelessWidget {
               button: true,
               selected: i == selected,
               inMutuallyExclusiveGroup: true,
-              child: GestureDetector(
-                onTap: () => onChanged(i),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 130),
-                  padding: const EdgeInsets.symmetric(vertical: 10),
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: i == selected ? AppColors.navy : null,
-                    borderRadius: GlassFieldStyle.radius,
-                    border: Border.all(
+              child: HoverBuilder(
+                builder: (context, hovered) => GestureDetector(
+                  onTap: () => onChanged(i),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 130),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
                       color: i == selected
                           ? AppColors.navy
-                          : GlassFieldStyle.rim,
+                          : (hovered ? hoverWash() : null),
+                      borderRadius: GlassFieldStyle.radius,
+                      border: Border.all(
+                        color: i == selected
+                            ? AppColors.navy
+                            : GlassFieldStyle.rim,
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    labels[i],
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      fontWeight: FontWeight.w600,
-                      color: i == selected ? Colors.white : AppColors.inkSoft,
+                    child: Text(
+                      labels[i],
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        fontWeight: FontWeight.w600,
+                        color: i == selected ? Colors.white : AppColors.inkSoft,
+                      ),
                     ),
                   ),
                 ),

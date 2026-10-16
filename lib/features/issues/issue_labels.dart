@@ -15,6 +15,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassConfirm,
         showGlassErrorToast;
 import '../../core/theme/app_type.dart';
+import '../../core/widgets/hover_builder.dart';
 
 /// Multi-select label ("Stichwort") picker. On tablet/desktop it opens as an
 /// anchored popover beside the field (like the other detail pickers); on phone
@@ -353,72 +354,78 @@ class _LabelChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          // With a delete button the padding gives way to its 24 dp hit area
-          // (WCAG 2.5.8), so the chip keeps its size and the × its place.
-          padding: onDelete != null
-              ? const EdgeInsets.fromLTRB(11, 3.5, 1.5, 3.5)
-              : const EdgeInsets.fromLTRB(11, 7, 11, 7),
-          decoration: BoxDecoration(
-            color: selected ? AppColors.accentSoft : AppColors.surfaceMuted,
-            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-            border: Border.all(
-              color: selected ? AppColors.accentLine : AppColors.hairline2,
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            // With a delete button the padding gives way to its 24 dp hit area
+            // (WCAG 2.5.8), so the chip keeps its size and the × its place.
+            padding: onDelete != null
+                ? const EdgeInsets.fromLTRB(11, 3.5, 1.5, 3.5)
+                : const EdgeInsets.fromLTRB(11, 7, 11, 7),
+            decoration: BoxDecoration(
+              color: selected
+                  ? AppColors.accentSoft
+                  : withHoverWash(AppColors.surfaceMuted, hovered),
+              borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+              border: Border.all(
+                color: selected ? AppColors.accentLine : AppColors.hairline2,
+              ),
             ),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 130),
-                child: selected
-                    ? Icon(
-                        LucideIcons.check,
-                        size: 14,
-                        color: selected
-                            ? AppColors.accentInk
-                            : AppColors.inkFaint,
-                      )
-                    : const SizedBox.shrink(),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: AppType.label,
-                  fontWeight: FontWeight.w600,
-                  color: selected ? AppColors.accentInk : AppColors.inkSoft,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 130),
+                  child: selected
+                      ? Icon(
+                          LucideIcons.check,
+                          size: 14,
+                          color: selected
+                              ? AppColors.accentInk
+                              : AppColors.inkFaint,
+                        )
+                      : const SizedBox.shrink(),
                 ),
-              ),
-              if (onDelete != null) ...[
-                const SizedBox(width: 0.5),
-                Semantics(
-                  container: true,
-                  button: true,
-                  label: context.t('issues.deleteLabel'),
-                  child: GestureDetector(
-                    onTap: onDelete,
-                    behavior: HitTestBehavior.opaque,
-                    child: Tooltip(
-                      message: context.t('issues.deleteLabel'),
-                      excludeFromSemantics: true,
-                      child: Container(
-                        padding: const EdgeInsets.all(5.5),
-                        decoration: const BoxDecoration(shape: BoxShape.circle),
-                        child: const Icon(
-                          LucideIcons.x,
-                          size: 13,
-                          color: AppColors.danger,
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    fontWeight: FontWeight.w600,
+                    color: selected ? AppColors.accentInk : AppColors.inkSoft,
+                  ),
+                ),
+                if (onDelete != null) ...[
+                  const SizedBox(width: 0.5),
+                  Semantics(
+                    container: true,
+                    button: true,
+                    label: context.t('issues.deleteLabel'),
+                    child: GestureDetector(
+                      onTap: onDelete,
+                      behavior: HitTestBehavior.opaque,
+                      child: Tooltip(
+                        message: context.t('issues.deleteLabel'),
+                        excludeFromSemantics: true,
+                        child: Container(
+                          padding: const EdgeInsets.all(5.5),
+                          decoration: const BoxDecoration(
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.x,
+                            size: 13,
+                            color: AppColors.danger,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),
