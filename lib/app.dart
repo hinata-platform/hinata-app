@@ -30,6 +30,7 @@ import 'core/shortcuts/global_shortcuts.dart';
 import 'core/storage/app_storage.dart';
 import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
+import 'core/theme/app_colors_refresh.dart';
 import 'core/theme/app_theme.dart';
 import 'core/blocs/my_absences_cubit.dart';
 import 'core/blocs/time_policy_cubit.dart';
@@ -820,98 +821,102 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _timePrivacy),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
-        child: BlocBuilder<ThemeCubit, ThemeMode>(
-          builder: (context, themeMode) {
-            return BlocBuilder<LocaleCubit, Locale>(
-              builder: (context, locale) {
-                // Keep the API client's Accept-Language in sync so the server
-                // localizes its error messages to the user's chosen language.
-                widget.apiClient.localeCode = locale.languageCode;
-                // The OS task switcher and the browser tab are chrome like any
-                // other: on a self-hosted instance they should name the
-                // organization. Resolved at runtime — never baked — because one
-                // web bundle serves every deployment. `select` so it follows the
-                // meta arriving after the first connect, rather than staying on
-                // whatever was known at boot.
-                final organization = context
-                    .select<AppConfigBloc, String?>(
-                      (bloc) => bloc.state.meta?.organizationName,
-                    )
-                    ?.trim();
-                return MaterialApp.router(
-                  title: (organization == null || organization.isEmpty)
-                      ? 'Hinata'
-                      : organization,
-                  debugShowCheckedModeBanner: false,
-                  theme: AppTheme.light(),
-                  darkTheme: AppTheme.dark(),
-                  themeMode: themeMode,
-                  locale: locale,
-                  supportedLocales: I18n.supportedLocales,
-                  localizationsDelegates: I18n.delegates(),
-                  routerConfig: _router,
-                  // Sync the runtime brightness that drives AppColors' neutral
-                  // getters with the user's chosen ThemeMode (following the OS
-                  // for ThemeMode.system). We resolve this from the mode/platform
-                  // directly rather than Theme.of(context).brightness: MaterialApp
-                  // *animates* between the light/dark ThemeData and that discrete
-                  // brightness flag only flips at the animation midpoint, which
-                  // would make AppColors' neutral colors lag the switch by ~100ms.
-                  // Runs above the router subtree each build, so screens that read
-                  // AppColors get the correct value on the very first frame.
-                  builder: (context, child) {
-                    AppColors.brightness = switch (themeMode) {
-                      ThemeMode.light => Brightness.light,
-                      ThemeMode.dark => Brightness.dark,
-                      ThemeMode.system => MediaQuery.platformBrightnessOf(
-                        context,
-                      ),
-                    };
-                    return LiquidGlassWidgets.wrap(
-                      adaptiveQuality: true,
-                      // iOS 27 glass for every widget without its own
-                      // settings, and the app's theme mode rather than the
-                      // device's deciding which of the two it wears.
-                      theme: ios27GlassTheme(),
-                      brightnessResolver: Theme.maybeBrightnessOf,
-                      // Deliberately using the package's experimental adaptive
-                      // quality API — it is the intended, supported way to gate
-                      // glass cost per device.
-                      // ignore: experimental_member_use
-                      adaptiveConfig: kGlassCeiling,
-                      // Above the router's navigator, so the keys and the
-                      // end-of-interval signal reach every route — the focus
-                      // screen included, which is deliberately not in the shell.
-                      // A shortcut needs a context *below* the navigator to push
-                      // or open anything, which is what the key is for.
-                      child: ShortcutHost(
-                        registry: _shortcuts,
-                        navigatorKey: rootNavigatorKey,
-                        child: _SignedInShortcuts(
-                          // Beside the signals, above the router: the surfaces
-                          // outside the app follow the same timer and have to
-                          // be cleared on frames no route is on screen for.
-                          child: TimerSurfacesHost(
-                            appTitle:
-                                (organization == null || organization.isEmpty)
-                                ? 'Hinata'
-                                : organization,
-                            openRoute: _router.go,
-                            clearSignal: _surfaceClear,
-                            hotkeys: _hotkeys,
-                            liveActivityRegistry: _liveActivityRegistry,
-                            child: TimerSignals(
-                              child: child ?? const SizedBox.shrink(),
+        // Light/dark reaches the widgets that read AppColors through a full
+        // rebuild, const subtrees included: see AppColorsRefresh.
+        child: AppColorsRefresh(
+          child: BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, themeMode) {
+              return BlocBuilder<LocaleCubit, Locale>(
+                builder: (context, locale) {
+                  // Keep the API client's Accept-Language in sync so the server
+                  // localizes its error messages to the user's chosen language.
+                  widget.apiClient.localeCode = locale.languageCode;
+                  // The OS task switcher and the browser tab are chrome like any
+                  // other: on a self-hosted instance they should name the
+                  // organization. Resolved at runtime — never baked — because one
+                  // web bundle serves every deployment. `select` so it follows the
+                  // meta arriving after the first connect, rather than staying on
+                  // whatever was known at boot.
+                  final organization = context
+                      .select<AppConfigBloc, String?>(
+                        (bloc) => bloc.state.meta?.organizationName,
+                      )
+                      ?.trim();
+                  return MaterialApp.router(
+                    title: (organization == null || organization.isEmpty)
+                        ? 'Hinata'
+                        : organization,
+                    debugShowCheckedModeBanner: false,
+                    theme: AppTheme.light(),
+                    darkTheme: AppTheme.dark(),
+                    themeMode: themeMode,
+                    locale: locale,
+                    supportedLocales: I18n.supportedLocales,
+                    localizationsDelegates: I18n.delegates(),
+                    routerConfig: _router,
+                    // Sync the runtime brightness that drives AppColors' neutral
+                    // getters with the user's chosen ThemeMode (following the OS
+                    // for ThemeMode.system). We resolve this from the mode/platform
+                    // directly rather than Theme.of(context).brightness: MaterialApp
+                    // *animates* between the light/dark ThemeData and that discrete
+                    // brightness flag only flips at the animation midpoint, which
+                    // would make AppColors' neutral colors lag the switch by ~100ms.
+                    // Runs above the router subtree each build, so screens that read
+                    // AppColors get the correct value on the very first frame.
+                    builder: (context, child) {
+                      AppColors.brightness = switch (themeMode) {
+                        ThemeMode.light => Brightness.light,
+                        ThemeMode.dark => Brightness.dark,
+                        ThemeMode.system => MediaQuery.platformBrightnessOf(
+                          context,
+                        ),
+                      };
+                      return LiquidGlassWidgets.wrap(
+                        adaptiveQuality: true,
+                        // iOS 27 glass for every widget without its own
+                        // settings, and the app's theme mode rather than the
+                        // device's deciding which of the two it wears.
+                        theme: ios27GlassTheme(),
+                        brightnessResolver: Theme.maybeBrightnessOf,
+                        // Deliberately using the package's experimental adaptive
+                        // quality API — it is the intended, supported way to gate
+                        // glass cost per device.
+                        // ignore: experimental_member_use
+                        adaptiveConfig: kGlassCeiling,
+                        // Above the router's navigator, so the keys and the
+                        // end-of-interval signal reach every route — the focus
+                        // screen included, which is deliberately not in the shell.
+                        // A shortcut needs a context *below* the navigator to push
+                        // or open anything, which is what the key is for.
+                        child: ShortcutHost(
+                          registry: _shortcuts,
+                          navigatorKey: rootNavigatorKey,
+                          child: _SignedInShortcuts(
+                            // Beside the signals, above the router: the surfaces
+                            // outside the app follow the same timer and have to
+                            // be cleared on frames no route is on screen for.
+                            child: TimerSurfacesHost(
+                              appTitle:
+                                  (organization == null || organization.isEmpty)
+                                  ? 'Hinata'
+                                  : organization,
+                              openRoute: _router.go,
+                              clearSignal: _surfaceClear,
+                              hotkeys: _hotkeys,
+                              liveActivityRegistry: _liveActivityRegistry,
+                              child: TimerSignals(
+                                child: child ?? const SizedBox.shrink(),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          },
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
         ),
       ),
     );
