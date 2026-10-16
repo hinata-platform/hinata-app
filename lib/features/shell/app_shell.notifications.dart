@@ -263,9 +263,10 @@ class _NotifPopoverCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Header
+          // Header. Wider insets than the rows: the action at the top
+          // right sits inside the popover's rounder corner.
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+            padding: const EdgeInsets.fromLTRB(20, 16, 18, 14),
             child: Row(
               children: [
                 Expanded(
@@ -353,7 +354,7 @@ class _NotifPopoverCard extends StatelessWidget {
             child: InkWell(
               onTap: onViewAll,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 14),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
