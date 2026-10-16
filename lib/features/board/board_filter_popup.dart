@@ -285,7 +285,11 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
 
     final panel = ConstrainedBox(
       constraints: BoxConstraints(maxWidth: panelWidth, maxHeight: maxHeight),
-      child: _shadowed(tokens, BorderRadius.circular(20), _glassPanel(tokens)),
+      child: _shadowed(
+        tokens,
+        BorderRadius.circular(AppTheme.radiusPopover),
+        _glassPanel(tokens),
+      ),
     );
 
     return Stack(
@@ -351,7 +355,7 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
           child: IgnorePointer(
             child: CustomPaint(
               painter: _RimPainter(
-                radius: 20,
+                radius: AppTheme.radiusPopover,
                 edge: tokens.edge,
                 edgeSoft: tokens.edgeSoft,
               ),
@@ -364,7 +368,9 @@ class _BoardFilterDialogState extends State<_BoardFilterDialog> {
       useOwnLayer: true,
       quality: kPanelGlassQuality,
       clipBehavior: Clip.antiAlias,
-      shape: const LiquidRoundedSuperellipse(borderRadius: 20),
+      shape: const LiquidRoundedSuperellipse(
+        borderRadius: AppTheme.radiusPopover,
+      ),
       settings: liquidGlassPanelSettings(
         glassFill: tokens.glassFill,
         dark: dark,

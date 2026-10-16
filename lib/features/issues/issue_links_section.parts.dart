@@ -821,13 +821,15 @@ class _GlassDropdownPanel extends StatelessWidget {
     return ConstrainedBox(
       constraints: BoxConstraints(maxWidth: width, maxHeight: 320),
       child: GlassPanelShadow(
-        radius: BorderRadius.circular(18),
+        radius: BorderRadius.circular(AppTheme.radiusPopover),
         shadows: tokens.panelShadow,
         child: GlassContainer(
           useOwnLayer: true,
           quality: kPanelGlassQuality,
           clipBehavior: Clip.antiAlias,
-          shape: const LiquidRoundedSuperellipse(borderRadius: 18),
+          shape: const LiquidRoundedSuperellipse(
+            borderRadius: AppTheme.radiusPopover,
+          ),
           settings: liquidGlassPanelSettings(
             glassFill: tokens.glassFill,
             dark: dark,

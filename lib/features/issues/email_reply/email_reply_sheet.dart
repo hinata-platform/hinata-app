@@ -18,7 +18,13 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show backArrow;
 import '../../sprint/modals/glass_modal.dart'
-    show GlassToastKind, glassWoltSurface, showGlassErrorToast, showGlassToast;
+    show
+        GlassToastKind,
+        glassWoltDialogShape,
+        glassWoltSheetShape,
+        glassWoltSurface,
+        showGlassErrorToast,
+        showGlassToast;
 import 'email_reply_cubit.dart';
 import '../../../core/theme/app_type.dart';
 
@@ -59,7 +65,7 @@ Future<void> showEmailReplySheet(
     pageContentDecorator: glassWoltSurface,
     modalTypeBuilder: (ctx) => MediaQuery.sizeOf(ctx).width >= 760
         ? const _EmailWideDialogType()
-        : WoltModalType.bottomSheet(),
+        : const WoltBottomSheetType(shapeBorder: glassWoltSheetShape),
     pageListBuilder: (modalContext) => [
       WoltModalSheetPage(
         backgroundColor: Colors.transparent,
@@ -190,7 +196,7 @@ class EmailReplyRouteArgs {
 /// Centred dialog sized like the issue detail's wide dialog, so the maximized
 /// email composer matches its proportions on desktop.
 class _EmailWideDialogType extends WoltDialogType {
-  const _EmailWideDialogType();
+  const _EmailWideDialogType() : super(shapeBorder: glassWoltDialogShape);
 
   @override
   BoxConstraints layoutModal(Size availableSize) {
