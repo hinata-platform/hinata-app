@@ -23,6 +23,7 @@ class TimerSurfacePrefs extends Equatable {
     this.backgroundLiveActivity = false,
     this.liveUpdate = false,
     this.reliabilityService = false,
+    this.alarmMode = false,
     this.toggleHotkey,
     this.focusHotkey,
   });
@@ -109,6 +110,12 @@ class TimerSurfacePrefs extends Equatable {
   /// and never part of the suggested set.
   final bool reliabilityService;
 
+  /// The end of a countdown or a Pomodoro phase rings as a system alarm
+  /// (iOS and iPadOS 26, HIN-106): through silent mode and Focus, also with
+  /// the app closed. Off by default and never part of the suggested set; it
+  /// replaces the phase-end notification while it is on.
+  final bool alarmMode;
+
   /// Start or stop the timer from anywhere; null until one is chosen.
   final HotKey? toggleHotkey;
 
@@ -128,6 +135,7 @@ class TimerSurfacePrefs extends Equatable {
     bool? backgroundLiveActivity,
     bool? liveUpdate,
     bool? reliabilityService,
+    bool? alarmMode,
     HotKey? toggleHotkey,
     HotKey? focusHotkey,
   }) => TimerSurfacePrefs(
@@ -144,6 +152,7 @@ class TimerSurfacePrefs extends Equatable {
         backgroundLiveActivity ?? this.backgroundLiveActivity,
     liveUpdate: liveUpdate ?? this.liveUpdate,
     reliabilityService: reliabilityService ?? this.reliabilityService,
+    alarmMode: alarmMode ?? this.alarmMode,
     toggleHotkey: toggleHotkey ?? this.toggleHotkey,
     focusHotkey: focusHotkey ?? this.focusHotkey,
   );
@@ -161,6 +170,7 @@ class TimerSurfacePrefs extends Equatable {
     'backgroundLiveActivity': backgroundLiveActivity,
     'liveUpdate': liveUpdate,
     'reliabilityService': reliabilityService,
+    'alarmMode': alarmMode,
     'toggleHotkey': toggleHotkey?.toMap(),
     'focusHotkey': focusHotkey?.toMap(),
   };
@@ -186,6 +196,7 @@ class TimerSurfacePrefs extends Equatable {
           ? on('liveUpdate')
           : on('runningSurface'),
       reliabilityService: on('reliabilityService'),
+      alarmMode: on('alarmMode'),
       toggleHotkey: _hotKey(json['toggleHotkey']),
       focusHotkey: _hotKey(json['focusHotkey']),
     );
@@ -216,6 +227,7 @@ class TimerSurfacePrefs extends Equatable {
     backgroundLiveActivity,
     liveUpdate,
     reliabilityService,
+    alarmMode,
     toggleHotkey,
     focusHotkey,
   ];

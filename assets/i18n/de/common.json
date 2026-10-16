@@ -1710,7 +1710,8 @@
       },
       "unlockToAct": "Entsperre dein Gerät und versuch es noch einmal.",
       "actionFailed": "Das hat nicht geklappt. Öffne Hinata und versuch es dort noch einmal.",
-      "timeLabel": "Zeit"
+      "timeLabel": "Zeit",
+      "alarmTitle": "Intervall"
     }
   },
   "availability": {
@@ -4381,6 +4382,10 @@
       "setUp": "Einrichten",
       "phaseEnd": "Intervallende",
       "phaseEndHint": "Eine Mitteilung, wenn ein Countdown oder ein Pomodoro-Intervall endet.",
+      "alarm": "Als Alarm klingeln",
+      "alarmHint": "Das Intervallende klingelt wie ein Wecker, auch im Stumm-Modus, im Fokus und bei geschlossener App. Der Countdown läuft auf dem Sperrbildschirm.",
+      "alarmDenied": "Alarme sind für diese App nicht erlaubt. Du kannst sie in den Systemeinstellungen erlauben.",
+      "alarmLimit": "Das System nimmt gerade keine weiteren Alarme an. Das Intervallende kommt wieder als Mitteilung.",
       "denied": "Mitteilungen sind für diese App blockiert. Du kannst sie in den Systemeinstellungen erlauben.",
       "openSettings": "Einstellungen öffnen",
       "exact": "Exakte Zeit",

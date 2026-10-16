@@ -35,6 +35,7 @@ class TimerSurfaceTexts extends Equatable {
     this.unlockToAct = '',
     this.actionFailed = '',
     this.timeLabel = '',
+    this.alarmTitle = '',
   });
 
   /// Empty texts: a surface that is handed these has nothing to show yet.
@@ -91,6 +92,10 @@ class TimerSurfaceTexts extends Equatable {
   /// same for work and a break.
   final String timeLabel;
 
+  /// The countdown's title of an alarm (iOS 26, HIN-106): one word, the same
+  /// for a countdown, work and a break.
+  final String alarmTitle;
+
   /// The words as a background isolate reads them back (HIN-103).
   Map<String, String> toJson() => {
     'appName': appName,
@@ -108,6 +113,7 @@ class TimerSurfaceTexts extends Equatable {
     'unlockToAct': unlockToAct,
     'actionFailed': actionFailed,
     'timeLabel': timeLabel,
+    'alarmTitle': alarmTitle,
   };
 
   /// Anything missing reads as empty; a surface then shows less, not wrong.
@@ -128,6 +134,7 @@ class TimerSurfaceTexts extends Equatable {
       unlockToAct: text('unlockToAct'),
       actionFailed: text('actionFailed'),
       timeLabel: text('timeLabel'),
+      alarmTitle: text('alarmTitle'),
     );
   }
 
@@ -155,6 +162,7 @@ class TimerSurfaceTexts extends Equatable {
     unlockToAct,
     actionFailed,
     timeLabel,
+    alarmTitle,
   ];
 }
 
@@ -230,6 +238,7 @@ class TimerSurfaceState extends Equatable {
     this.backgroundUpdates = false,
     this.liveUpdate = false,
     this.reliabilityService = false,
+    this.alarmMode = false,
     this.pomodoroSet,
     this.toggleHotkey,
     this.focusHotkey,
@@ -278,6 +287,12 @@ class TimerSurfaceState extends Equatable {
   /// A foreground service holds the running timer's notification (Android).
   final bool reliabilityService;
 
+  /// The end of this stretch rings as a system alarm (iOS 26, HIN-106)
+  /// instead of a notification, and the system's countdown replaces the app's
+  /// own Live Activity for a countdown or a Pomodoro. Only while the person
+  /// switched it on and the system lets the app set alarms.
+  final bool alarmMode;
+
   /// Where a Pomodoro stands in its set, for the Live Update's segments.
   final PomodoroSetPosition? pomodoroSet;
 
@@ -323,6 +338,7 @@ class TimerSurfaceState extends Equatable {
     backgroundUpdates,
     liveUpdate,
     reliabilityService,
+    alarmMode,
     pomodoroSet,
     toggleHotkey,
     focusHotkey,
@@ -340,10 +356,13 @@ const Duration timerSurfaceLifetime = Duration(hours: 24);
 /// without [TimerSurfacePrefs.consented] every switch reads as off, whatever
 /// is stored. [gated] is the host's verdict on everything else that has to
 /// hold (signed in, module on); a gated state is [TimerSurfaceState.idle].
+/// [alarmsUsable] says whether this device can ring alarms right now (iOS 26,
+/// allowed by the person, below the system's limit).
 TimerSurfaceState deriveTimerSurfaceState(
   RunningTimer? timer,
   TimerSurfacePrefs prefs, {
   required bool gated,
+  bool alarmsUsable = false,
   TimerSurfaceTexts texts = TimerSurfaceTexts.empty,
   bool confirmed = true,
   DateTime? now,
@@ -402,6 +421,12 @@ TimerSurfaceState deriveTimerSurfaceState(
         on &&
         prefs.runningSurface &&
         prefs.reliabilityService,
+    alarmMode:
+        alarmsUsable &&
+        on &&
+        prefs.phaseEndNotification &&
+        prefs.alarmMode &&
+        target != null,
     pomodoroSet: PomodoroSetPosition.of(timer),
     toggleHotkey: standing.toggleHotkey,
     focusHotkey: standing.focusHotkey,

@@ -1710,7 +1710,8 @@
       },
       "unlockToAct": "Desbloquea tu dispositivo y vuelve a intentarlo.",
       "actionFailed": "No ha funcionado. Abre Hinata y vuelve a intentarlo desde ahí.",
-      "timeLabel": "Tiempo"
+      "timeLabel": "Tiempo",
+      "alarmTitle": "Intervalo"
     }
   },
   "availability": {
@@ -4381,6 +4382,10 @@
       "setUp": "Configurar",
       "phaseEnd": "Fin del intervalo",
       "phaseEndHint": "Un aviso cuando termina una cuenta atrás o un intervalo Pomodoro.",
+      "alarm": "Sonar como alarma",
+      "alarmHint": "El final de un intervalo suena como un despertador, también en modo silencio, con un modo de concentración activo y con la app cerrada. La cuenta atrás se ve en la pantalla de bloqueo.",
+      "alarmDenied": "Las alarmas no están permitidas para esta app. Puedes permitirlas en los ajustes del sistema.",
+      "alarmLimit": "El sistema no acepta más alarmas por ahora. El final del intervalo vuelve a llegar como aviso.",
       "denied": "Las notificaciones están bloqueadas para esta app. Puedes permitirlas en los ajustes del sistema.",
       "openSettings": "Abrir ajustes",
       "exact": "Hora exacta",

@@ -110,6 +110,9 @@ class _SwitchesState extends State<_Switches> {
   /// Whether this Android shows Live Updates and lets them through. The
   /// row is left out until the answer is in, and on older versions.
   LiveUpdateSupport _liveUpdates = LiveUpdateSupport.unsupported;
+
+  /// Whether this device has system alarms (iOS 26); the row waits for it.
+  bool _alarms = false;
   late final AppLifecycleListener _lifecycle;
 
   @override
@@ -122,6 +125,12 @@ class _SwitchesState extends State<_Switches> {
   void _readSystem() {
     unawaited(_readActivities());
     unawaited(_readLiveUpdates());
+    unawaited(_readAlarms());
+  }
+
+  Future<void> _readAlarms() async {
+    final supported = await widget.gate.alarmsSupported(widget.platform);
+    if (mounted && supported != _alarms) setState(() => _alarms = supported);
   }
 
   Future<void> _readLiveUpdates() async {
@@ -145,8 +154,11 @@ class _SwitchesState extends State<_Switches> {
   }
 
   Future<void> _toggle(TimerSurfaceOption option, bool on) async {
-    if (on && option.needsPermission(widget.platform)) {
-      final granted = await widget.gate.request(widget.platform);
+    if (on && option.needsPermission(widget.platform) ||
+        on && option == TimerSurfaceOption.alarm) {
+      final granted = option == TimerSurfaceOption.alarm
+          ? await widget.gate.requestAlarms()
+          : await widget.gate.request(widget.platform);
       if (!mounted) return;
       if (!granted) {
         setState(() => _refused = option);
@@ -168,10 +180,14 @@ class _SwitchesState extends State<_Switches> {
     _ => false,
   };
 
-  /// Rows this device has nothing behind: no Live Update before Android 16.
-  bool _hidden(TimerSurfaceOption option) =>
-      option == TimerSurfaceOption.liveUpdate &&
-      _liveUpdates == LiveUpdateSupport.unsupported;
+  /// Rows this device has nothing behind: no Live Update before Android 16,
+  /// no alarm before iOS 26.
+  bool _hidden(TimerSurfaceOption option) => switch (option) {
+    TimerSurfaceOption.liveUpdate =>
+      _liveUpdates == LiveUpdateSupport.unsupported,
+    TimerSurfaceOption.alarm => !_alarms,
+    _ => false,
+  };
 
   void _clearCopies() {
     context.read<TimerSurfaceClearSignal>().request();
@@ -187,13 +203,16 @@ class _SwitchesState extends State<_Switches> {
     final state = widget.state;
     final platform = widget.platform;
     final running = TimerSurfaceOption.running.read(state);
+    final phaseEnd = TimerSurfaceOption.phaseEnd.read(state);
     final settings = widget.gate.settingsUri(platform);
     final divider = Divider(height: 1, color: AppColors.hairline2);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         for (final option in TimerSurfaceOption.offeredOn(platform))
-          if ((!option.dependsOnRunning || running) && !_hidden(option)) ...[
+          if ((!option.dependsOnRunning || running) &&
+              (!option.dependsOnPhaseEnd || phaseEnd) &&
+              !_hidden(option)) ...[
             SettingRow(
               label: context.t(option.labelKey(platform)),
               description: context.t(option.hintKey(platform)),
@@ -250,7 +269,11 @@ class _SwitchesState extends State<_Switches> {
             ],
             if (_refused == option) ...[
               AccountNote(
-                text: context.t('account.timerSurfaces.denied'),
+                text: context.t(
+                  option == TimerSurfaceOption.alarm
+                      ? 'account.timerSurfaces.alarmDenied'
+                      : 'account.timerSurfaces.denied',
+                ),
                 icon: LucideIcons.bellOff,
                 tone: AccountNoteTone.info,
               ),

@@ -1710,7 +1710,8 @@
       },
       "unlockToAct": "Unlock your device, then try again.",
       "actionFailed": "That didn’t work. Open Hinata and try again there.",
-      "timeLabel": "Time"
+      "timeLabel": "Time",
+      "alarmTitle": "Interval"
     }
   },
   "availability": {
@@ -4381,6 +4382,10 @@
       "setUp": "Set up",
       "phaseEnd": "Interval end",
       "phaseEndHint": "A notification when a countdown or Pomodoro interval ends.",
+      "alarm": "Ring as an alarm",
+      "alarmHint": "The end of an interval rings like an alarm clock, also in silent mode, during a Focus and with the app closed. The countdown shows on the lock screen.",
+      "alarmDenied": "Alarms are not allowed for this app. You can allow them in the system settings.",
+      "alarmLimit": "The system takes no more alarms right now. The end of the interval comes as a notification again.",
       "denied": "Notifications are blocked for this app. You can allow them in the system settings.",
       "openSettings": "Open settings",
       "exact": "Exact time",

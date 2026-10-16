@@ -243,6 +243,9 @@ Map<String, Object?>? liveActivityContent(
   final dismissAt = timerSurfaceDismissAt(state);
   if (!state.running ||
       !state.runningSurface ||
+      // A countdown or a Pomodoro phase that ends in an alarm has the
+      // system's countdown already (HIN-106); the stopwatch keeps this one.
+      (state.alarmMode && state.endsAt != null) ||
       startedAt == null ||
       dismissAt == null ||
       !dismissAt.isAfter((now ?? DateTime.now()).toUtc())) {

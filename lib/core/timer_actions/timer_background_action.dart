@@ -8,6 +8,7 @@ import '../api/api_client.dart';
 import '../models/time_models.dart';
 import '../repositories/time_repository.dart';
 import '../storage/app_storage.dart';
+import '../timer_surfaces/adapters/alarm_kit_surface.dart';
 import '../timer_surfaces/adapters/home_widget_surface.dart';
 import '../timer_surfaces/adapters/live_activity_surface.dart';
 import '../timer_surfaces/adapters/local_notifications_surface.dart';
@@ -89,6 +90,7 @@ class TimerBackgroundAction {
     required this.time,
     required this.surfaces,
     required this.snapshot,
+    this.alarms,
     this.lock = const HinataDeviceLock(),
     this.unlockGrace = const Duration(seconds: 3),
     this.unlockPoll = const Duration(milliseconds: 250),
@@ -100,6 +102,10 @@ class TimerBackgroundAction {
   /// and, on iOS, the Live Activity.
   final List<TimerSurface> surfaces;
   final TimerSurfaceSnapshot snapshot;
+
+  /// Whether alarms ring the end of an interval (iOS 26, HIN-106); read
+  /// before the redraw, so a phase turned from an alarm gets its own alarm.
+  final AlarmModeStatus? alarms;
   final HinataDeviceLock lock;
   final Duration unlockGrace;
   final Duration unlockPoll;
@@ -185,10 +191,12 @@ class TimerBackgroundAction {
   }
 
   Future<void> _redraw(RunningTimer? timer) async {
+    await alarms?.refresh();
     final state = deriveTimerSurfaceState(
       timer,
       snapshot.prefs,
       gated: false,
+      alarmsUsable: alarms?.usable ?? false,
       texts: snapshot.texts,
     );
     final host = _BackgroundHost();
@@ -251,11 +259,14 @@ Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
     resetOnStart: false,
     backgroundResponse: timerNotificationBackgroundResponse,
   );
+  final alarms = platform == SurfacePlatform.ios ? AlarmModeStatus() : null;
   final action = TimerBackgroundAction(
     time: TimeRepository(ApiClient(storage)),
     snapshot: snapshot,
+    alarms: alarms,
     surfaces: [
       if (platform == SurfacePlatform.android) notifications,
+      if (alarms != null) AlarmKitSurface(status: alarms, follow: false),
       if (platform == SurfacePlatform.ios) LiveActivitySurface(),
       // Without the action: registering it again from here would make
       // home_widget start a second background engine in the middle of this
