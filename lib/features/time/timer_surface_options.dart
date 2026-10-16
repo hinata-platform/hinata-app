@@ -1,3 +1,4 @@
+import 'package:alarm_kit/alarm_kit.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -18,6 +19,11 @@ import '../../core/timer_surfaces/timer_surface_prefs.dart';
 /// a switch the settings do not have, or the other way round.
 enum TimerSurfaceOption {
   phaseEnd,
+
+  /// The end of an interval rings as a system alarm (iOS and iPadOS 26):
+  /// through silent mode and Focus, also with the app closed. Below the
+  /// phase-end switch, which it replaces while it is on.
+  alarm,
   running,
 
   /// The running timer's notification as a Live Update (Android 16+): a chip
@@ -47,6 +53,7 @@ enum TimerSurfaceOption {
     final caps = capabilitiesForPlatform(platform);
     return switch (this) {
       phaseEnd => caps.phaseEndNotification,
+      alarm => platform == SurfacePlatform.ios,
       running => caps.runningSurface,
       liveUpdate => platform == SurfacePlatform.android,
       reliability =>
@@ -76,7 +83,10 @@ enum TimerSurfaceOption {
   /// with its explanation, never in passing. The Live Update is on in the
   /// suggested set already and only changes where the running notification
   /// shows, so the introduction stays short without it.
+  /// An alarm rings through silent mode and Focus; it is asked for on its
+  /// own, with that said, never in passing.
   bool get inIntro =>
+      this != alarm &&
       this != hotkeys &&
       this != backgroundUpdates &&
       this != reliability &&
@@ -92,6 +102,10 @@ enum TimerSurfaceOption {
     _ => false,
   };
 
+  /// Switches that only mean something while the end of an interval is
+  /// announced at all.
+  bool get dependsOnPhaseEnd => this == alarm;
+
   /// Switches that only mean something while the running timer is shown: the
   /// details, keeping it running when the window closes, and the shortcuts,
   /// which must never start a timer nothing outside the app shows.
@@ -106,6 +120,7 @@ enum TimerSurfaceOption {
 
   IconData get icon => switch (this) {
     phaseEnd => LucideIcons.bellRing,
+    alarm => LucideIcons.alarmClock,
     running => LucideIcons.timer,
     liveUpdate => LucideIcons.smartphone,
     reliability => LucideIcons.shieldCheck,
@@ -119,6 +134,7 @@ enum TimerSurfaceOption {
 
   String labelKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEnd',
+    alarm => 'account.timerSurfaces.alarm',
     running => 'account.timerSurfaces.running${surfacePlace(platform)}',
     liveUpdate => 'account.timerSurfaces.liveUpdate',
     reliability => 'account.timerSurfaces.reliability',
@@ -135,6 +151,7 @@ enum TimerSurfaceOption {
 
   String hintKey(SurfacePlatform platform) => switch (this) {
     phaseEnd => 'account.timerSurfaces.phaseEndHint',
+    alarm => 'account.timerSurfaces.alarmHint',
     running => 'account.timerSurfaces.running${surfacePlace(platform)}Hint',
     liveUpdate => 'account.timerSurfaces.liveUpdateHint',
     reliability => 'account.timerSurfaces.reliabilityHint',
@@ -152,6 +169,7 @@ enum TimerSurfaceOption {
 
   bool read(TimerSurfacePrefs prefs) => switch (this) {
     phaseEnd => prefs.phaseEndNotification,
+    alarm => prefs.alarmMode,
     running => prefs.runningSurface,
     liveUpdate => prefs.liveUpdate,
     reliability => prefs.reliabilityService,
@@ -165,6 +183,7 @@ enum TimerSurfaceOption {
 
   TimerSurfacePrefs write(TimerSurfacePrefs prefs, bool on) => switch (this) {
     phaseEnd => prefs.copyWith(phaseEndNotification: on),
+    alarm => prefs.copyWith(alarmMode: on),
     running => prefs.copyWith(runningSurface: on),
     liveUpdate => prefs.copyWith(liveUpdate: on),
     reliability => prefs.copyWith(reliabilityService: on),
@@ -184,13 +203,17 @@ enum TimerSurfaceOption {
 }
 
 /// [prefs] with [option] set to [on]. Switching the running timer off also
-/// switches its details off, so they do not come back unasked with it.
+/// switches its details off, so they do not come back unasked with it; the
+/// same for the alarm and the phase-end switch.
 TimerSurfacePrefs withOption(
   TimerSurfacePrefs prefs,
   TimerSurfaceOption option,
   bool on,
 ) {
   final next = option.write(prefs, on);
+  if (option == TimerSurfaceOption.phaseEnd && !on) {
+    return next.copyWith(alarmMode: false);
+  }
   if (option != TimerSurfaceOption.running || on) return next;
   return next.copyWith(
     surfaceDetails: false,
@@ -247,6 +270,21 @@ class TimerSurfacePermissionGate {
   /// Whether the system delivers on the minute (Android 12 and later).
   Future<bool> canScheduleExact(SurfacePlatform platform) =>
       LocalNotificationPermissions(platform).canScheduleExact();
+
+  /// Whether this device has system alarms (iOS and iPadOS 26).
+  Future<bool> alarmsSupported(SurfacePlatform platform) async =>
+      platform == SurfacePlatform.ios && await AlarmKit.instance.isSupported();
+
+  /// Asks the person to allow alarms, from the tap on the switch; true once
+  /// they are allowed.
+  Future<bool> requestAlarms() async {
+    try {
+      return await AlarmKit.instance.requestAuthorization() ==
+          AlarmAuthorization.authorized;
+    } on AlarmKitException {
+      return false;
+    }
+  }
 
   /// Whether the device shows Live Updates and lets this app post them.
   Future<LiveUpdateSupport> liveUpdates(SurfacePlatform platform) async =>

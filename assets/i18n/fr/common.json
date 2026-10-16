@@ -1710,7 +1710,8 @@
       },
       "unlockToAct": "Déverrouille ton appareil, puis réessaie.",
       "actionFailed": "Ça n’a pas marché. Ouvre Hinata et réessaie depuis l’app.",
-      "timeLabel": "Temps"
+      "timeLabel": "Temps",
+      "alarmTitle": "Intervalle"
     }
   },
   "availability": {
@@ -4381,6 +4382,10 @@
       "setUp": "Configurer",
       "phaseEnd": "Fin d'intervalle",
       "phaseEndHint": "Une notification quand un compte à rebours ou un intervalle Pomodoro se termine.",
+      "alarm": "Sonner comme une alarme",
+      "alarmHint": "La fin d’un intervalle sonne comme un réveil, même en mode silencieux, pendant une concentration et avec l’app fermée. Le compte à rebours s’affiche sur l’écran verrouillé.",
+      "alarmDenied": "Les alarmes ne sont pas autorisées pour cette app. Tu peux les autoriser dans les réglages du système.",
+      "alarmLimit": "Le système n’accepte plus d’alarmes pour le moment. La fin de l’intervalle arrive de nouveau en notification.",
       "denied": "Les notifications sont bloquées pour cette app. Tu peux les autoriser dans les réglages du système.",
       "openSettings": "Ouvrir les réglages",
       "exact": "Heure exacte",

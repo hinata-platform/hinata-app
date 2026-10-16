@@ -12,6 +12,7 @@ import '../../core/models/time_models.dart';
 import '../../core/storage/app_storage.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/router/app_router.dart' show rootNavigatorKey;
+import '../../core/timer_surfaces/adapters/alarm_kit_surface.dart';
 import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import '../../core/timer_surfaces/adapters/keep_running_surface.dart';
 import '../../core/timer_surfaces/adapters/local_notifications_surface.dart';
@@ -28,6 +29,7 @@ import '../../core/timer_surfaces/timer_surface_clear_signal.dart';
 import '../../core/timer_surfaces/timer_surface_coordinator.dart';
 import '../../core/timer_surfaces/timer_surface_prefs.dart';
 import '../../core/timer_surfaces/timer_surface_state.dart';
+import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import 'timer_surfaces_intro_sheet.dart';
 
 /// Keeps the timer outside the app in step with the timer inside it.
@@ -101,8 +103,21 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
             notification: timerNotificationBackgroundResponse,
             widget: timerSurfaceBackgroundAction,
           ),
+          alarms: _alarms,
+          alarmsMayClear: () => _clearRequested || _signedOutForGood,
         ),
   );
+
+  /// Whether alarms can ring the end of an interval (iOS 26, HIN-106).
+  late final AlarmModeStatus? _alarms =
+      SurfacePlatform.current == SurfacePlatform.ios ? AlarmModeStatus() : null;
+
+  /// "Delete now" asked for the clear that is queued; only that one, and a
+  /// real sign-out, take the alarms away.
+  bool _clearRequested = false;
+
+  /// Whether the system's limit was already said in this run.
+  bool _limitSaid = false;
 
   /// The projects Siri and Shortcuts offer, on iOS only (HIN-105).
   late final IntentProjectSnapshot? _intentProjects =
@@ -131,7 +146,28 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.clearSignal?.addListener(_clearNow);
+    _alarms?.addListener(_onAlarms);
     _enqueue(() => _coordinator.init(this));
+  }
+
+  /// The system's answer about alarms changed: the notification and the Live
+  /// Activity take over again, or step back for the alarm.
+  void _onAlarms() {
+    final alarms = _alarms;
+    if (alarms == null || !mounted) return;
+    if (alarms.limitReached && !_limitSaid) {
+      _limitSaid = true;
+      final navigatorContext = rootNavigatorKey.currentContext;
+      if (navigatorContext != null && navigatorContext.mounted) {
+        showGlassToast(
+          navigatorContext,
+          navigatorContext.t('account.timerSurfaces.alarmLimit'),
+          kind: GlassToastKind.info,
+        );
+      }
+    }
+    _coordinator.invalidate();
+    _sync();
   }
 
   /// Clears every surface now. They stay cleared, also after the app comes
@@ -140,7 +176,14 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   void _clearNow() {
     _cleared = _derive();
     unawaited(_intentProjects?.clear());
-    _enqueue(_coordinator.clearAll);
+    _clearRequested = true;
+    _enqueue(() async {
+      try {
+        await _coordinator.clearAll();
+      } finally {
+        _clearRequested = false;
+      }
+    });
   }
 
   /// The state "Delete now" took down; not drawn again while it holds.
@@ -180,6 +223,9 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     widget.clearSignal?.removeListener(_clearNow);
+    _alarms
+      ?..removeListener(_onAlarms)
+      ..dispose();
     unawaited(
       _coordinator.dispose().whenComplete(() => _ownHotkeys?.dispose()),
     );
@@ -237,6 +283,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     unlockToAct: context.t('time.surface.unlockToAct'),
     actionFailed: context.t('time.surface.actionFailed'),
     timeLabel: context.t('time.surface.timeLabel'),
+    alarmTitle: context.t('time.surface.alarmTitle'),
   );
 
   TimerSurfaceState _derive() {
@@ -245,6 +292,7 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
       timer.timer,
       context.read<TimerSurfacePrefsCubit>().state,
       gated: _gated,
+      alarmsUsable: _alarms?.usable ?? false,
       texts: _texts(),
       confirmed: timer.confirmed,
     );
