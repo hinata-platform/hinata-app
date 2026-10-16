@@ -127,7 +127,7 @@ them, other keys, or none:
 | Desktop | What happens |
 | --- | --- |
 | GNOME 48 and later | a dialog asks once which shortcuts to allow; the answer is kept |
-| KDE Plasma 5.27 and later | bound right away, changeable in System Settings → Shortcuts |
+| KDE Plasma 6 | a dialog asks once; until it is confirmed the suggestion is only the default and the shortcut has no keys ("no keys yet") |
 | Sway, Niri, other wlroots compositors | no portal backend: "not available", no error |
 
 So the settings show no recorder here. Each row shows the keys in the
@@ -139,8 +139,10 @@ com.ahmadre.hinata`, or the app's page in GNOME Settings).
 
 The portal needs to know which app is asking:
 
-- **Snap**: known by its sandbox (the `desktop` plug covers the portal); the
-  desktop matches it to `hinata_hinata.desktop`.
+- **Snap**: known by its sandbox. The `desktop` plug covers the portal and is
+  connected automatically, so unlike the keyring (`password-manager-service`)
+  nothing has to be connected by hand; the desktop matches the app to
+  `hinata_hinata.desktop`.
 - **AppImage and a hand-built bundle**: the app registers as
   `com.ahmadre.hinata` through `org.freedesktop.host.portal.Registry`
   (xdg-desktop-portal 1.20 and later), and that only counts when
