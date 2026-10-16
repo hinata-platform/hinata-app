@@ -52,6 +52,11 @@ const _clearGlass = Color(0x00FFFFFF);
 /// the warm paper it read as a milky film on every bar and button. What is
 /// behind the chrome now shows through in its own colours, and the rim shade,
 /// rim light and lens alone draw the edge.
+///
+/// Since HIN-150 a person's tint can colour this chrome ([navGlass] sets the
+/// palette's `chromeTint` as the glass colour). That is the shader's colour
+/// uniform, not a pass of its own, so the frost stays off and the cost stays
+/// where it was measured.
 LiquidGlassSettings _withoutFrost(LiquidGlassSettings preset) =>
     LiquidGlassSettings(
       glassColor: _clearGlass,
