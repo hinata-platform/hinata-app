@@ -7,6 +7,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/responsive.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../../../core/widgets/hover_builder.dart';
 import '../sprint_tokens.dart';
 import 'glass_modal.dart';
 import '../../../core/theme/app_type.dart';
@@ -123,31 +124,36 @@ class _PokerCard extends StatelessWidget {
       button: true,
       selected: selected,
       inMutuallyExclusiveGroup: true,
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 130),
-          curve: hiveEase,
-          decoration: BoxDecoration(
-            color: selected
-                ? AppColors.accent
-                : AppColors.surface.withValues(alpha: 0.62),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: selected ? AppColors.accentStrong : AppColors.hairline,
-              width: 1.5,
-            ),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: muted ? AppTheme.fontUi : AppTheme.fontBrand,
-              fontSize: muted ? AppType.body : AppType.display,
-              fontWeight: FontWeight.w700,
+      child: HoverBuilder(
+        builder: (context, hovered) => GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 130),
+            curve: hiveEase,
+            decoration: BoxDecoration(
               color: selected
-                  ? AppColors.onAccent
-                  : (muted ? AppColors.inkFaint : AppColors.ink),
+                  ? AppColors.accent
+                  : withHoverWash(
+                      AppColors.surface.withValues(alpha: 0.62),
+                      hovered,
+                    ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: selected ? AppColors.accentStrong : AppColors.hairline,
+                width: 1.5,
+              ),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontFamily: muted ? AppTheme.fontUi : AppTheme.fontBrand,
+                fontSize: muted ? AppType.body : AppType.display,
+                fontWeight: FontWeight.w700,
+                color: selected
+                    ? AppColors.onAccent
+                    : (muted ? AppColors.inkFaint : AppColors.ink),
+              ),
             ),
           ),
         ),
