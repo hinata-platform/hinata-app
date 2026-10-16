@@ -691,7 +691,7 @@ class PrimaryButton extends StatelessWidget {
       // passed.
       return GlassCircleButton(
         icon: icon ?? LucideIcons.plus,
-        amber: true,
+        accent: true,
         tooltip: label,
         onTap: onPressed,
       );

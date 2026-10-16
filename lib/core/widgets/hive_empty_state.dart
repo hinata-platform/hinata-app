@@ -39,7 +39,7 @@ class HiveEmptyState extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const HexMark(size: 40, color: AppColors.accentLine),
+            HexMark(size: 40, color: AppColors.accentLine),
             const SizedBox(height: 14),
             Text(
               title,

@@ -442,14 +442,15 @@ class HinataEditorState extends State<HinataEditor> {
   /// is where it costs the most.
   LexicalTheme? _themeCache;
   Map<String, DecoratorBuilder>? _decoratorCache;
-  ({double fontSize, Brightness brightness, ApiClient? api})? _styleKey;
+  ({double fontSize, int themeKey, ApiClient? api})? _styleKey;
 
   void _refreshStyling(ApiClient? api) {
     final key = (
       fontSize: widget.fontSize,
-      // The neutral tokens are theme-aware getters; a cached theme keeps the
-      // light colours after a switch to dark.
-      brightness: AppColors.brightness,
+      // The neutral tokens are theme-aware getters and the brand tokens read
+      // the tint palette; a cached theme keeps the old colours after either
+      // changes.
+      themeKey: AppColors.themeKey,
       api: api,
     );
     if (_styleKey == key && _themeCache != null && _decoratorCache != null) {

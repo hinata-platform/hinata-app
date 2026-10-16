@@ -4,6 +4,7 @@ import 'app_colors.dart';
 import 'field_border.dart';
 import 'glass_buttons.dart';
 import 'app_type.dart';
+import 'tint_palette.dart';
 
 /// Hinata "Hive" Material theme — redesign 2026.
 ///
@@ -34,14 +35,17 @@ abstract final class AppTheme {
   static const fontUi = 'IBMPlexSans'; // body / dense UI
   static const fontMono = 'IBMPlexMono'; // ids, metrics
 
-  static ThemeData light() => _build(Brightness.light);
-  static ThemeData dark() => _build(Brightness.dark);
+  static ThemeData light({TintPalette? palette}) =>
+      _build(Brightness.light, palette ?? TintPalette.standard);
+  static ThemeData dark({TintPalette? palette}) =>
+      _build(Brightness.dark, palette ?? TintPalette.standard);
 
-  /// Builds the Material theme for [brightness]. Neutral surface/ink values are
-  /// read from the explicit per-theme [AppColors] constants (NOT the runtime
-  /// `AppColors.<token>` getters) so each [ThemeData] is deterministic
-  /// regardless of which mode is currently active when it's constructed.
-  static ThemeData _build(Brightness brightness) {
+  /// Builds the Material theme for [brightness] and [palette]. Neutral
+  /// surface/ink values are read from the explicit per-theme [AppColors]
+  /// constants and the brand values from the palette handed in (NOT the
+  /// runtime `AppColors.<token>` getters) so each [ThemeData] is
+  /// deterministic regardless of what is active when it's constructed.
+  static ThemeData _build(Brightness brightness, TintPalette palette) {
     final dark = brightness == Brightness.dark;
 
     final canvas = dark ? AppColors.canvasDark : AppColors.canvasLight;
@@ -54,15 +58,14 @@ abstract final class AppTheme {
     final inkFaint = dark ? AppColors.inkFaintDark : AppColors.inkFaintLight;
     final hairline = dark ? AppColors.hairlineDark : AppColors.hairlineLight;
     final hairline2 = dark ? AppColors.hairline2Dark : AppColors.hairline2Light;
-    final accentSoft = dark
-        ? AppColors.accentSoftDark
-        : AppColors.accentSoftLight;
+    final accentSoft = dark ? palette.accentSoftDark : palette.accentSoftLight;
+    final focusRing = dark ? palette.focusRingDark : palette.focusRingLight;
 
     final scheme = ColorScheme.fromSeed(
-      seedColor: AppColors.navy,
+      seedColor: palette.primary,
       brightness: brightness,
-      primary: dark ? AppColors.accent : AppColors.navy,
-      secondary: AppColors.accent,
+      primary: dark ? palette.accent : palette.primary,
+      secondary: palette.accent,
       surface: surface,
       error: AppColors.danger,
     );
@@ -113,13 +116,13 @@ abstract final class AppTheme {
       ),
       // Capsules lit from above, one source for all three: [GlassButtons].
       filledButtonTheme: FilledButtonThemeData(
-        style: GlassButtons.filled(brightness),
+        style: GlassButtons.filled(brightness, palette),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: GlassButtons.outlined(brightness),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: GlassButtons.text(brightness),
+        style: GlassButtons.text(brightness, palette),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
@@ -130,7 +133,8 @@ abstract final class AppTheme {
         ),
         border: border(hairline),
         enabledBorder: border(hairline),
-        focusedBorder: border(AppColors.accent, 1.5),
+        // The focus ring, not the accent: honey on white is 2.3:1 (1.4.11).
+        focusedBorder: border(focusRing, 1.5),
         hintStyle: TextStyle(color: inkFaint),
         // The label rides inside the field (see [HiveFieldBorder]), so it wants
         // the size and weight of a caption rather than of a second value.
@@ -173,12 +177,12 @@ abstract final class AppTheme {
           text.labelSmall?.copyWith(fontWeight: FontWeight.w600),
         ),
       ),
-      navigationDrawerTheme: const NavigationDrawerThemeData(
-        backgroundColor: AppColors.rail,
-        indicatorColor: Color(0x14FFFFFF),
+      navigationDrawerTheme: NavigationDrawerThemeData(
+        backgroundColor: palette.rail,
+        indicatorColor: const Color(0x14FFFFFF),
       ),
       snackBarTheme: SnackBarThemeData(
-        backgroundColor: AppColors.navyDeep,
+        backgroundColor: palette.primaryDeep,
         // The surface is deep navy in both themes, so the content must stay
         // light — otherwise dark mode inherits a dark on-surface text colour and
         // the message reads near-invisible.
@@ -188,7 +192,7 @@ abstract final class AppTheme {
           fontSize: AppType.label,
           fontWeight: FontWeight.w500,
         ),
-        actionTextColor: AppColors.accent,
+        actionTextColor: palette.accent,
         behavior: SnackBarBehavior.floating,
         width: 360,
         shape: RoundedRectangleBorder(

@@ -196,7 +196,7 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
   /// it was born with. Held blocks came out in light ink on the dark canvas:
   /// the weekday numbers were very nearly invisible. Any memo of widgets in
   /// this app has to count the brightness among its inputs.
-  Brightness? _blocksBrightness;
+  int? _blocksThemeKey;
 
   /// Last reported, so the owner hears about a change and not about a frame.
   int? _reportedMonth;
@@ -365,12 +365,12 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
         // owner has no reason to bump [revision] for it.
         _blocksEvents != (widget.eventsForDay != null) ||
         _blocksToday != todayKey ||
-        _blocksBrightness != brightness) {
+        _blocksThemeKey != AppColors.themeKey) {
       _blocksRevision = widget.revision;
       _blocksTotals = widget.showTotals;
       _blocksEvents = widget.eventsForDay != null;
       _blocksToday = todayKey;
-      _blocksBrightness = brightness;
+      _blocksThemeKey = AppColors.themeKey;
       _blocks.clear();
     }
     final month = _monthAt(offset);
@@ -917,7 +917,7 @@ class _DayLine extends StatelessWidget {
         children: [
           if (today)
             DecoratedBox(
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: AppColors.accentStrong,
                 shape: BoxShape.circle,
               ),

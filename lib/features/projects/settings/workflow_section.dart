@@ -204,11 +204,11 @@ class _StateRow extends StatelessWidget {
                 ),
                 // Transparent field; only an accent underline appears on focus,
                 // matching the reference (`.st-in`).
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   isDense: true,
                   filled: false,
-                  contentPadding: EdgeInsets.symmetric(vertical: 4),
-                  enabledBorder: UnderlineInputBorder(
+                  contentPadding: const EdgeInsets.symmetric(vertical: 4),
+                  enabledBorder: const UnderlineInputBorder(
                     borderSide: BorderSide(color: Colors.transparent),
                   ),
                   focusedBorder: UnderlineInputBorder(

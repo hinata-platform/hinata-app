@@ -42,7 +42,7 @@ void main() {
 
       test('tinted surfaces share the rim and the lens ($mode)', () {
         for (final settings in [
-          amberFrost(dark),
+          accentFrost(dark),
           liquidGlassPanelSettings(
             glassFill: Colors.white,
             dark: dark,
@@ -58,7 +58,7 @@ void main() {
       });
 
       test('the honey keeps its colour and does not frost ($mode)', () {
-        final amber = amberFrost(dark);
+        final amber = accentFrost(dark);
         expect(amber.frost, 0);
         expect(amber.saturation, 1);
         expect(amber.glassColor.a, greaterThan(0));
@@ -91,7 +91,10 @@ void main() {
         // The standard shader cannot draw the iOS 27 rim, so the older white
         // specular stays on there.
         expect(navGlass(dark, standard: true).lightIntensity, greaterThan(0));
-        expect(amberFrost(dark, standard: true).lightIntensity, greaterThan(0));
+        expect(
+          accentFrost(dark, standard: true).lightIntensity,
+          greaterThan(0),
+        );
         expect(
           liquidGlassPanelSettings(
             glassFill: Colors.white,

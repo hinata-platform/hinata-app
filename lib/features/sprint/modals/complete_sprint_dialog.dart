@@ -302,7 +302,7 @@ class _DestOption extends StatelessWidget {
                     ? Container(
                         width: 9,
                         height: 9,
-                        decoration: const BoxDecoration(
+                        decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: AppColors.accentStrong,
                         ),

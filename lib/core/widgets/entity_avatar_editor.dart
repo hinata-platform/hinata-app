@@ -6,7 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../i18n/i18n.dart';
 import '../util/file_pick.dart';
 import '../theme/app_colors.dart';
-import '../theme/glass_chrome.dart' show kOnAmber;
+import '../theme/glass_chrome.dart' show onAccent;
 import '../../features/account/account_modals.dart'
     show AvatarAction, showAvatarActions;
 import '../../features/sprint/modals/glass_modal.dart'
@@ -113,7 +113,7 @@ class _CameraBadge extends StatelessWidget {
       shape: BoxShape.circle,
       border: Border.all(color: AppColors.surface, width: 2),
     ),
-    child: const Icon(LucideIcons.camera, size: 12, color: kOnAmber),
+    child: Icon(LucideIcons.camera, size: 12, color: onAccent),
   );
 }
 

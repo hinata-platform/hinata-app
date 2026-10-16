@@ -777,7 +777,7 @@ InputDecoration _inputDecoration(String hint) => InputDecoration(
   ),
   focusedBorder: OutlineInputBorder(
     borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-    borderSide: const BorderSide(color: AppColors.accent, width: 1.6),
+    borderSide: BorderSide(color: AppColors.accent, width: 1.6),
   ),
 );
 
@@ -873,7 +873,7 @@ class _EmailSendBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
             ),
             icon: busy
-                ? const HiveLoader(size: 15, color: AppColors.navy)
+                ? HiveLoader(size: 15, color: AppColors.navy)
                 : const Icon(LucideIcons.send, size: 15),
             label: Text(context.t('issues.replyEmail.send')),
           ),

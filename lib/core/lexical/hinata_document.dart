@@ -390,7 +390,7 @@ class _SmartLinkChip extends StatelessWidget {
     // The label is the denormalised copy; the id is the fallback so a chip is
     // never blank, which is the one thing worse than a stale title.
     final text = label ?? targetId;
-    const accent = AppColors.accent;
+    final accent = AppColors.accent;
 
     final radius = BorderRadius.circular(6);
     // A link role so a screen reader announces it as one; the label merges in
@@ -425,7 +425,7 @@ class _SmartLinkChip extends StatelessWidget {
                     text,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: accent,
                       fontSize: AppType.label,
                       fontWeight: FontWeight.w600,
@@ -560,7 +560,7 @@ class _HinataDocumentState extends State<HinataDocument> {
   ({
     double fontSize,
     double? blockSpacing,
-    Brightness brightness,
+    int themeKey,
     LexicalEditor? editor,
     bool tappable,
     ApiClient? api,
@@ -671,9 +671,10 @@ class _HinataDocumentState extends State<HinataDocument> {
     final key = (
       fontSize: widget.fontSize,
       blockSpacing: widget.blockSpacing,
-      // Every neutral token is a theme-aware getter, so a cached theme goes
-      // stale the moment the app switches to dark.
-      brightness: AppColors.brightness,
+      // Every neutral token is a theme-aware getter and the brand tokens read
+      // the tint palette, so a cached theme goes stale the moment either
+      // changes.
+      themeKey: AppColors.themeKey,
       editor: editor,
       tappable: widget.onTapSmartLink != null,
       api: api,

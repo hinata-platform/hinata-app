@@ -473,7 +473,7 @@ class _DeploymentPanelState extends State<_DeploymentPanelBody> {
     button: true,
     child: Material(
       color: AppColors.accentSoft,
-      shape: const StadiumBorder(side: BorderSide(color: AppColors.accentLine)),
+      shape: StadiumBorder(side: BorderSide(color: AppColors.accentLine)),
       child: InkWell(
         onTap: onTap,
         customBorder: const StadiumBorder(),

@@ -838,7 +838,7 @@ ThemeData _glassCalendarTheme(BuildContext context) {
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       todayForegroundColor: WidgetStateProperty.all(AppColors.accentStrong),
-      todayBorder: const BorderSide(color: AppColors.accent),
+      todayBorder: BorderSide(color: AppColors.accent),
     ),
   );
 }
@@ -1718,7 +1718,7 @@ class _GlassModalScaffoldState extends State<_GlassModalScaffold> {
 }
 
 /// How blurred the app behind a modal stands at rest.
-const double _kScrimSigma = 7;
+double _kScrimSigma = 7;
 
 /// How much of the transition the blur takes to get there.
 ///
@@ -1730,7 +1730,7 @@ const double _kScrimSigma = 7;
 /// move it buys nothing and costs every frame. It runs in whole pixels for the
 /// same reason: [ui.ImageFilter.blur] compares equal at the same sigma, so
 /// repeated values skip the repaint entirely.
-const double _kScrimRamp = 0.5;
+double _kScrimRamp = 0.5;
 
 double _scrimSigma(double t) {
   final ramp = Curves.easeOut.transform((t / _kScrimRamp).clamp(0.0, 1.0));
@@ -1741,22 +1741,29 @@ double _scrimSigma(double t) {
 /// Lucide glyph and tint; pass a custom [showGlassToast.icon] to override the
 /// glyph while keeping the kind's tint.
 enum GlassToastKind {
-  /// Neutral notice (default) — amber accent, info glyph.
-  info(LucideIcons.info, AppColors.accentStrong),
+  /// Neutral notice (default) — accent, info glyph.
+  info(LucideIcons.info),
 
   /// Positive confirmation ("saved", "copied", "sent").
-  success(LucideIcons.circleCheck, AppColors.success),
+  success(LucideIcons.circleCheck),
 
   /// Recoverable problem or missing input the user should act on.
-  warning(LucideIcons.triangleAlert, AppColors.warning),
+  warning(LucideIcons.triangleAlert),
 
   /// Failed operation (API errors, rejected uploads).
-  error(LucideIcons.circleAlert, AppColors.danger);
+  error(LucideIcons.circleAlert);
 
-  const GlassToastKind(this.icon, this.tint);
+  const GlassToastKind(this.icon);
 
   final IconData icon;
-  final Color tint;
+
+  /// Read, not stored: the accent follows the person's tint (HIN-150).
+  Color get tint => switch (this) {
+    GlassToastKind.info => AppColors.accentStrong,
+    GlassToastKind.success => AppColors.success,
+    GlassToastKind.warning => AppColors.warning,
+    GlassToastKind.error => AppColors.danger,
+  };
 }
 
 /// The single live toast — showing a new one replaces it instead of stacking.

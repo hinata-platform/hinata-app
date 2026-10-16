@@ -14,7 +14,7 @@ import '../../core/models/team_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../knowledge/team_pages_picker.dart';
@@ -639,7 +639,7 @@ class _Stepper extends StatelessWidget {
             style: TextStyle(
               fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
-              color: on ? kOnAmber : AppColors.inkFaint,
+              color: on ? onAccent : AppColors.inkFaint,
             ),
           ),
         ),

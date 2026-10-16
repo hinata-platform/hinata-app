@@ -1330,7 +1330,7 @@ class _SaveBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 18),
       ),
       icon: saving
-          ? const SizedBox(
+          ? SizedBox(
               width: 16,
               height: 16,
               child: HiveLoader(strokeWidth: 2, color: AppColors.navy),

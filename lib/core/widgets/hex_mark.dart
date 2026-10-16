@@ -10,15 +10,18 @@ import '../theme/app_theme.dart';
 ///   path d="M20.2 60h79.6"                           ← centre bar
 /// All stroked, fill: none, round caps & joins.
 class HexMark extends StatelessWidget {
-  const HexMark({super.key, this.size = 32, this.color = AppColors.accent});
+  const HexMark({super.key, this.size = 32, this.color});
   final double size;
-  final Color color;
+
+  /// The stroke; the accent when null (read in build, since the accent is a
+  /// palette getter and not a constant).
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
       size: Size(size, size),
-      painter: _HexMarkPainter(color: color),
+      painter: _HexMarkPainter(color: color ?? AppColors.accent),
     );
   }
 }
