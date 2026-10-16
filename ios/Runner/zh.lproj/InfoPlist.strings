@@ -2,3 +2,4 @@
    these .lproj folders, so every language the app speaks needs one. */
 CFBundleDisplayName = "Hinata";
 CFBundleName = "Hinata";
+NSAlarmKitUsageDescription = "如果你在设置中开启，Hinata 会在倒计时或番茄钟间隔结束时以闹钟响铃。";
