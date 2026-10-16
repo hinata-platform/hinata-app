@@ -332,6 +332,29 @@ void main() {
     final encoded = snapshot.encode();
 
     expect(TimerSurfaceSnapshot.decode(encoded)!.texts.stop, 'Stop');
+    // The idle widget keeps its start button after a stop from outside
+    // (HIN-105).
+    expect(
+      TimerSurfaceSnapshot.decode(
+        const TimerSurfaceSnapshot(
+          prefs: TimerSurfacePrefs.suggested,
+          texts: TimerSurfaceTexts(
+            appName: 'Hinata',
+            countdownOver: '',
+            workOver: '',
+            breakOver: '',
+            running: '',
+            onBreak: '',
+            stop: 'Stop',
+            takeBreak: '',
+            resume: '',
+            idle: 'No timer running',
+            start: 'Start',
+          ),
+        ).encode(),
+      )!.texts.start,
+      'Start',
+    );
     expect(
       TimerSurfaceSnapshot.decode(encoded)!.prefs,
       TimerSurfacePrefs.suggested,
