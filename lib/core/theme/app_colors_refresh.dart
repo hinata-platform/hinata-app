@@ -4,8 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../blocs/theme_cubit.dart';
+import '../blocs/tint_cubit.dart';
 
-/// Rebuilds the whole tree when light and dark switch.
+/// Rebuilds the whole tree when light and dark switch or the tint changes.
 ///
 /// The app's colours come from the `AppColors` getters, which read a static
 /// brightness and register no dependency. A widget that reads them rebuilds
@@ -14,7 +15,8 @@ import '../blocs/theme_cubit.dart';
 /// such subtrees (the settings cards among them) painted light until they
 /// happened to rebuild for another reason.
 ///
-/// Listens to the [ThemeCubit] and to the platform's brightness, and on a
+/// Listens to the [ThemeCubit], the [TintCubit] and the platform's
+/// brightness, and on a
 /// change marks every element for a rebuild before the next frame. That
 /// frame builds from the top down, so `MaterialApp.builder` sets the new
 /// brightness before any of them reads it. One full rebuild per switch, the
@@ -31,13 +33,18 @@ class AppColorsRefresh extends StatefulWidget {
 class _AppColorsRefreshState extends State<AppColorsRefresh>
     with WidgetsBindingObserver {
   late final ThemeCubit _theme = context.read<ThemeCubit>();
+  late final TintCubit _tint = context.read<TintCubit>();
   StreamSubscription<ThemeMode>? _modes;
+  StreamSubscription<TintState>? _tints;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _modes = _theme.stream.listen((_) => rebuildAllElements());
+    // A new palette only: equal states are not emitted, and the palette is
+    // a function of the preferences.
+    _tints = _tint.stream.listen((_) => rebuildAllElements());
   }
 
   @override
@@ -49,6 +56,7 @@ class _AppColorsRefreshState extends State<AppColorsRefresh>
   @override
   void dispose() {
     _modes?.cancel();
+    _tints?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
