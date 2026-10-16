@@ -1711,7 +1711,8 @@
       "unlockToAct": "افتح قفل جهازك ثم حاول مرة أخرى.",
       "actionFailed": "لم ينجح ذلك. افتح Hinata وحاول مرة أخرى من هناك.",
       "timeLabel": "الوقت",
-      "alarmTitle": "فترة"
+      "alarmTitle": "فترة",
+      "alarmBreakOver": "انتهت الاستراحة."
     }
   },
   "availability": {

@@ -1711,7 +1711,8 @@
       "unlockToAct": "Unlock your device, then try again.",
       "actionFailed": "That didn’t work. Open Hinata and try again there.",
       "timeLabel": "Time",
-      "alarmTitle": "Interval"
+      "alarmTitle": "Interval",
+      "alarmBreakOver": "Break over."
     }
   },
   "availability": {

@@ -1711,7 +1711,8 @@
       "unlockToAct": "Déverrouille ton appareil, puis réessaie.",
       "actionFailed": "Ça n’a pas marché. Ouvre Hinata et réessaie depuis l’app.",
       "timeLabel": "Temps",
-      "alarmTitle": "Intervalle"
+      "alarmTitle": "Intervalle",
+      "alarmBreakOver": "Pause terminée."
     }
   },
   "availability": {
