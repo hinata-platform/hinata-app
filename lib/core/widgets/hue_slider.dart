@@ -11,7 +11,7 @@ import '../theme/tint_palette.dart';
 
 /// The two sliders of the tint (HIN-150), after iOS 27's "Customize" sheet:
 /// a hue on a spectrum track and a level on a track that runs from white to
-/// the colour.
+/// the colour, both thick glass capsules with a thumb in the chosen colour.
 ///
 /// Material `Slider`s with their own shapes, not `GlassSlider`: the glass
 /// slider has no gradient track, and the Material one brings keyboard, focus
@@ -56,6 +56,7 @@ class _HueSliderState extends State<HueSlider> {
       child: SliderTheme(
         data: _theme(
           context,
+          TintPalette.accentFor(widget.hue, widget.level),
         ).copyWith(trackShape: SpectrumTrackShape(widget.level)),
         child: Slider(
           value:
@@ -116,7 +117,10 @@ class _LevelSliderState extends State<LevelSlider> {
       label: context.t('account.tint.level'),
       onPointer: (down) => _pointer = down,
       child: SliderTheme(
-        data: _theme(context).copyWith(trackShape: LevelTrackShape(widget.hue)),
+        data: _theme(
+          context,
+          TintPalette.accentFor(widget.hue, widget.level),
+        ).copyWith(trackShape: LevelTrackShape(widget.hue)),
         child: Slider(
           value:
               (widget.level.clamp(0, 100) / _levelStep).roundToDouble() *
@@ -146,10 +150,10 @@ const _levelStep = 5;
 /// The height both sliders take: the thumb's touch target.
 const kTintSliderHeight = 48.0;
 
-SliderThemeData _theme(BuildContext context) =>
+SliderThemeData _theme(BuildContext context, Color thumb) =>
     SliderTheme.of(context).copyWith(
-      trackHeight: 12,
-      thumbShape: const RingThumbShape(),
+      trackHeight: GlassThumbShape.radius * 2 - 6,
+      thumbShape: const GlassThumbShape(),
       overlayShape: const RoundSliderOverlayShape(overlayRadius: 24),
       overlayColor: AppColors.focusRing.withValues(alpha: 0.18),
       tickMarkShape: SliderTickMarkShape.noTickMark,
@@ -160,12 +164,13 @@ SliderThemeData _theme(BuildContext context) =>
       inactiveTrackColor: AppColors.hairline,
       // Shown as the value is spoken, not drawn: the colour is the label.
       showValueIndicator: ShowValueIndicator.never,
-      thumbColor: Colors.white,
+      // The thumb is filled with the colour it stands on, as on iOS.
+      thumbColor: thumb,
     );
 
 /// Names a slider for a reader, tells it whether a pointer is on it, and
-/// gives it its height. The visible caption beside it is excluded from the
-/// semantics tree (see `tint_section.dart`), so the name is heard once.
+/// gives it its height. The panel shows no caption beside it, so this is
+/// the slider's only name.
 class _TintSliderFrame extends StatelessWidget {
   const _TintSliderFrame({
     required this.label,
@@ -277,9 +282,60 @@ abstract class _GradientTrackShape extends SliderTrackShape
     });
     final radius = Radius.circular(rect.height / 2);
     final rrect = RRect.fromRectAndRadius(rect, radius);
-    context.canvas.drawRRect(rrect, Paint()..shader = shader);
-    context.canvas.drawRRect(
-      rrect,
+    final canvas = context.canvas;
+    canvas.drawRRect(rrect, Paint()..shader = shader);
+    // Glass over the colour: light from above on the upper half, a shade
+    // along the bottom, and a bright rim, as the capsules in iOS 27's sheet.
+    canvas.save();
+    canvas.clipRRect(rrect);
+    final upper = Rect.fromLTWH(
+      rect.left,
+      rect.top,
+      rect.width,
+      rect.height * 0.55,
+    );
+    canvas.drawRect(
+      upper,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.white.withValues(alpha: 0.38),
+            Colors.white.withValues(alpha: 0),
+          ],
+        ).createShader(upper),
+    );
+    final lower = Rect.fromLTWH(
+      rect.left,
+      rect.top + rect.height * 0.6,
+      rect.width,
+      rect.height * 0.4,
+    );
+    canvas.drawRect(
+      lower,
+      Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Colors.black.withValues(alpha: 0),
+            Colors.black.withValues(alpha: 0.10),
+          ],
+        ).createShader(lower),
+    );
+    canvas.restore();
+    canvas.drawRRect(
+      rrect.deflate(0.75),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = Colors.white.withValues(alpha: 0.55),
+    );
+    // A hairline outside the rim, so the white end of the level track keeps
+    // an edge on light paper.
+    canvas.drawRRect(
+      rrect.inflate(0.5),
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
@@ -288,12 +344,12 @@ abstract class _GradientTrackShape extends SliderTrackShape
   }
 }
 
-/// iOS 27's thumb: a white ring with a soft shadow, 28 across; the touch
-/// target is the overlay's 48.
-class RingThumbShape extends SliderComponentShape {
-  const RingThumbShape();
+/// iOS 27's thumb: a disc in the colour under it inside a thick white ring,
+/// lifted by a soft shadow, 26 across; the touch target is the overlay's 48.
+class GlassThumbShape extends SliderComponentShape {
+  const GlassThumbShape();
 
-  static const double radius = 14;
+  static const double radius = 13;
 
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) =>
@@ -315,20 +371,26 @@ class RingThumbShape extends SliderComponentShape {
     required Size sizeWithOverflow,
   }) {
     final canvas = context.canvas;
+    // Grows a little while held, as the iOS thumb does.
+    final r = radius * (1 + 0.08 * activationAnimation.value);
     canvas.drawCircle(
-      center,
-      radius,
+      center.translate(0, 1.5),
+      r,
       Paint()
-        ..color = Colors.black.withValues(alpha: 0.22)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4),
+        ..color = Colors.black.withValues(alpha: 0.28)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 5),
     );
+    canvas.drawCircle(center, r, Paint()..color = Colors.white);
+    final fill = sliderTheme.thumbColor ?? Colors.white;
+    final inner = r - 3;
     canvas.drawCircle(
       center,
-      radius,
+      inner,
       Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 3
-        ..color = Colors.white,
+        ..shader = RadialGradient(
+          center: const Alignment(-0.3, -0.45),
+          colors: [Color.lerp(fill, Colors.white, 0.22)!, fill],
+        ).createShader(Rect.fromCircle(center: center, radius: inner)),
     );
   }
 }

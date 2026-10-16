@@ -4453,9 +4453,9 @@
     },
     "tint": {
       "title": "カスタマイズ",
-      "subtitle": "スマートフォンと同じように、アプリ全体をひとつの色に。",
       "styleDefault": "標準",
       "styleTinted": "ティント",
+      "modeAuto": "自動",
       "hue": "色",
       "hueValue": "{{degrees}}度、{{name}}",
       "level": "濃さ",
@@ -4463,7 +4463,6 @@
       "levelClear": "透明なガラス",
       "levelMid": "中くらい",
       "levelStrong": "濃い",
-      "reset": "標準に戻す",
       "saveFailed": "色を保存できませんでした。最後に保存した色を表示しています。"
     }
   },

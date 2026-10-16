@@ -4453,9 +4453,9 @@
     },
     "tint": {
       "title": "自定义",
-      "subtitle": "整个应用使用一种颜色，就像手机上一样。",
       "styleDefault": "标准",
       "styleTinted": "着色",
+      "modeAuto": "自动",
       "hue": "颜色",
       "hueValue": "{{degrees}}度，{{name}}",
       "level": "色调",
@@ -4463,7 +4463,6 @@
       "levelClear": "透明玻璃",
       "levelMid": "中等",
       "levelStrong": "浓郁",
-      "reset": "恢复标准",
       "saveFailed": "无法保存颜色。显示的是上次保存的颜色。"
     }
   },

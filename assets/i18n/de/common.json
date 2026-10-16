@@ -4453,9 +4453,9 @@
     },
     "tint": {
       "title": "Anpassen",
-      "subtitle": "Eine Farbe für die ganze App, wie auf dem Handy.",
       "styleDefault": "Standard",
       "styleTinted": "Eingefärbt",
+      "modeAuto": "Automatisch",
       "hue": "Farbe",
       "hueValue": "{{degrees}} Grad, {{name}}",
       "level": "Tönung",
@@ -4463,7 +4463,6 @@
       "levelClear": "klares Glas",
       "levelMid": "mittel",
       "levelStrong": "kräftig",
-      "reset": "Auf Standard zurücksetzen",
       "saveFailed": "Die Farbe konnte nicht gespeichert werden. Angezeigt wird die zuletzt gespeicherte."
     }
   },
