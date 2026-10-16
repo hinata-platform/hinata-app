@@ -79,17 +79,19 @@ import '../sprint/modals/glass_modal.dart'
         GlassModalHeader,
         GlassOptionRow,
         GlassToastKind,
-        showGlassConfirm,
         glassInputDecoration,
+        glassWoltDialogShape,
+        glassWoltSheetShape,
         glassWoltSurface,
         kGlassPopoverBreakpoint,
-        showGlassErrorToast,
-        showGlassToast,
         showGlassAnchoredPopover,
         showGlassBottomSheet,
+        showGlassConfirm,
         showGlassDatePicker,
+        showGlassErrorToast,
         showGlassModal,
-        showGlassOptions;
+        showGlassOptions,
+        showGlassToast;
 import 'attachments/attachments_section.dart';
 import 'email_reply/email_reply_sheet.dart';
 import 'epic_search_popover.dart';
@@ -145,7 +147,7 @@ const double issueDialogWidth = 1180;
 /// Centered dialog that can grow much wider than the wolt default so the
 /// two-column issue detail has room on desktop.
 class _WideDialogType extends WoltDialogType {
-  const _WideDialogType();
+  const _WideDialogType() : super(shapeBorder: glassWoltDialogShape);
 
   @override
   BoxConstraints layoutModal(Size availableSize) {
@@ -206,7 +208,7 @@ Future<void> showIssueDetailSheet(
     pageContentDecorator: glassWoltSurface,
     modalTypeBuilder: (ctx) => MediaQuery.sizeOf(ctx).width >= 760
         ? const _WideDialogType()
-        : WoltModalType.bottomSheet(),
+        : const WoltBottomSheetType(shapeBorder: glassWoltSheetShape),
     pageListBuilder: (modalContext) => [
       WoltModalSheetPage(
         backgroundColor: Colors.transparent,

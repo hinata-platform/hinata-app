@@ -250,7 +250,9 @@ class _GlassEmojiPanel extends StatelessWidget {
       quality: GlassQuality.standard,
       settings: _navGlass(dark),
       clipBehavior: Clip.antiAlias,
-      shape: const LiquidRoundedSuperellipse(borderRadius: 24),
+      shape: const LiquidRoundedSuperellipse(
+        borderRadius: AppTheme.radiusPopover,
+      ),
       padding: const EdgeInsets.all(6),
       // EmojiPicker's search field + ink need a Material ancestor;
       // showGeneralDialog (unlike a bottom sheet) doesn't provide one.

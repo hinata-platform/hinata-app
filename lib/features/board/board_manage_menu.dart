@@ -153,11 +153,11 @@ class _MenuCardState extends State<_MenuCard>
     final curve = CurvedAnimation(parent: _c, curve: Curves.easeOutCubic);
     final card = Material(
       color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+      borderRadius: BorderRadius.circular(AppTheme.radiusPopover),
       clipBehavior: Clip.antiAlias,
       child: Container(
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          borderRadius: BorderRadius.circular(AppTheme.radiusPopover),
           border: Border.all(color: AppColors.hairline),
           boxShadow: [
             BoxShadow(

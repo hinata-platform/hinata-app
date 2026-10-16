@@ -174,7 +174,7 @@ class _NotificationBellState extends State<_NotificationBellBody> {
         // frame one — the perf fix that used to live in MorphBlurPopover.
         return GlassPopover(
           popoverWidth: (screenWidth - 24).clamp(0.0, 340.0),
-          popoverBorderRadius: AppTheme.radiusCard,
+          popoverBorderRadius: AppTheme.radiusPopover,
           settings: liquidGlassPanelSettings(
             glassFill: glassFill,
             dark: dark,

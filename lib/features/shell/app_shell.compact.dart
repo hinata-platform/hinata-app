@@ -854,7 +854,7 @@ class _MoreSheet extends StatelessWidget {
   final bool advancedTime;
   final AuthUser? user;
 
-  static const double _radius = 28;
+  static const double _radius = AppTheme.radiusDialog;
 
   @override
   Widget build(BuildContext context) {

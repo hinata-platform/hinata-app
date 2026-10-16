@@ -4,7 +4,7 @@ class _AuditDetailSheet extends StatelessWidget {
   const _AuditDetailSheet({required this.entry});
   final AuditEntry entry;
 
-  static const double _radius = 24;
+  static const double _radius = AppTheme.radiusDialog;
 
   @override
   Widget build(BuildContext context) {

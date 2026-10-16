@@ -94,7 +94,7 @@ class CommentSortButton extends StatelessWidget {
     return GlassPopover(
       alignment: GlassMenuAlignment.bottomRight,
       popoverWidth: 200,
-      popoverBorderRadius: 18,
+      popoverBorderRadius: AppTheme.radiusPopover,
       settings: _navGlass(dark),
       quality: GlassQuality.standard,
       triggerBuilder: (context, toggle) => Semantics(
