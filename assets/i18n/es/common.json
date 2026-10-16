@@ -50,7 +50,8 @@
       "orange": "Naranja",
       "cyan": "Cian",
       "blue": "Azul",
-      "custom": "Personalizado"
+      "custom": "Personalizado",
+      "near": "Personalizado, cerca de {{name}}"
     },
     "pagination": {
       "previous": "Página anterior",
@@ -4451,6 +4452,21 @@
       "liveUpdateOff": "Las Live Updates están desactivadas para esta app en los ajustes del sistema. La notificación en curso se mantiene igualmente.",
       "reliability": "Modo fiable",
       "reliabilityHint": "Para dispositivos cuyo gestor de batería cierra la notificación en curso. Un servicio en primer plano la mantiene mientras corre el temporizador y no recopila nada. Solo se inicia con la app abierta."
+    },
+    "tint": {
+      "title": "Personalizar",
+      "subtitle": "Un color para toda la app, como en tu móvil.",
+      "styleDefault": "Estándar",
+      "styleTinted": "Teñido",
+      "hue": "Color",
+      "hueValue": "{{degrees}} grados, {{name}}",
+      "level": "Tinte",
+      "levelValue": "{{value}} por ciento, {{hint}}",
+      "levelClear": "cristal transparente",
+      "levelMid": "medio",
+      "levelStrong": "intenso",
+      "reset": "Restablecer al estándar",
+      "saveFailed": "No se pudo guardar el color. Se muestra el último guardado."
     }
   },
   "twofa": {
