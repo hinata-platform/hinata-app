@@ -51,6 +51,7 @@ class _HueSliderState extends State<HueSlider> {
   Widget build(BuildContext context) {
     const max = 360 - _hueStep;
     return _TintSliderFrame(
+      label: context.t('account.tint.hue'),
       onPointer: (down) => _pointer = down,
       child: SliderTheme(
         data: _theme(
@@ -69,7 +70,7 @@ class _HueSliderState extends State<HueSlider> {
             'account.tint.hueValue',
             variables: {
               'degrees': v.round(),
-              'name': nearestHueLabel(context, v.round()),
+              'name': hueFamilyLabel(context, v.round()),
             },
           ),
         ),
@@ -112,6 +113,7 @@ class _LevelSliderState extends State<LevelSlider> {
   @override
   Widget build(BuildContext context) {
     return _TintSliderFrame(
+      label: context.t('account.tint.level'),
       onPointer: (down) => _pointer = down,
       child: SliderTheme(
         data: _theme(context).copyWith(trackShape: LevelTrackShape(widget.hue)),
@@ -141,9 +143,6 @@ class _LevelSliderState extends State<LevelSlider> {
 const _hueStep = 5;
 const _levelStep = 5;
 
-/// A step of the arrow keys and the screen reader, and the snap of a drag.
-const kTintSliderStep = _hueStep;
-
 /// The height both sliders take: the thumb's touch target.
 const kTintSliderHeight = 48.0;
 
@@ -164,21 +163,35 @@ SliderThemeData _theme(BuildContext context) =>
       thumbColor: Colors.white,
     );
 
-/// Tells a slider whether a pointer is on it, and gives it its height.
+/// Names a slider for a reader, tells it whether a pointer is on it, and
+/// gives it its height. The visible caption beside it is excluded from the
+/// semantics tree (see `tint_section.dart`), so the name is heard once.
 class _TintSliderFrame extends StatelessWidget {
-  const _TintSliderFrame({required this.onPointer, required this.child});
+  const _TintSliderFrame({
+    required this.label,
+    required this.onPointer,
+    required this.child,
+  });
 
+  final String label;
   final ValueChanged<bool> onPointer;
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => Listener(
-    onPointerDown: (_) => onPointer(true),
-    // Deferred: this listener hears the pointer go up before the slider's
-    // drag recogniser does, and the slider's onChangeEnd must still see it.
-    onPointerUp: (_) => scheduleMicrotask(() => onPointer(false)),
-    onPointerCancel: (_) => scheduleMicrotask(() => onPointer(false)),
-    child: SizedBox(height: kTintSliderHeight, child: child),
+  // Merged, so the name and the slider are one node for a reader rather than
+  // a named group around an unnamed control.
+  Widget build(BuildContext context) => MergeSemantics(
+    child: Semantics(
+      label: label,
+      child: Listener(
+        onPointerDown: (_) => onPointer(true),
+        // Deferred: this listener hears the pointer go up before the slider's
+        // drag recogniser does, and the slider's onChangeEnd must still see it.
+        onPointerUp: (_) => scheduleMicrotask(() => onPointer(false)),
+        onPointerCancel: (_) => scheduleMicrotask(() => onPointer(false)),
+        child: SizedBox(height: kTintSliderHeight, child: child),
+      ),
+    ),
   );
 }
 
@@ -324,10 +337,16 @@ class RingThumbShape extends SliderComponentShape {
   }
 }
 
-/// A snap of the haptics when a drag lands on a named hue.
+/// The hues a drag ticks on: the shared palette hues the projects and labels
+/// pick from, and the brand honey, rounded to the slider's five-degree grid
+/// (79 ticks at 80).
+final _hapticHues = {
+  for (final h in [79, ...kLabelHues]) (h / _hueStep).round() * _hueStep,
+};
+
+/// A tick of the haptics when a drag reaches a named hue; [previous] keeps a
+/// drag that rests on it from ticking every frame.
 void tintSnapHaptic(int previous, int next) {
   if (previous == next) return;
-  if (kTintSnapHues.any((h) => (h / _hueStep).round() * _hueStep == next)) {
-    HapticFeedback.selectionClick();
-  }
+  if (_hapticHues.contains(next)) HapticFeedback.selectionClick();
 }

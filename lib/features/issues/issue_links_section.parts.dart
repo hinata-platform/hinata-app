@@ -427,7 +427,7 @@ class _LinkEditorState extends State<_LinkEditor> {
                 ),
                 onPressed: _selected.isEmpty || _submitting ? null : _submit,
                 child: _submitting
-                    ? HiveLoader(size: 16, color: AppColors.navy)
+                    ? HiveLoader(size: 16, color: AppColors.primary)
                     : Text(context.t('issues.links.confirm')),
               );
               final cancel = TextButton(

@@ -20,7 +20,7 @@ import 'hue_colors.dart';
 /// Built on a change only, never in `build()`: [of] caches per rounded
 /// `(hue, level)`.
 class TintPalette {
-  const TintPalette._({
+  TintPalette._({
     required this.accent,
     required this.accentStrong,
     required this.accentLine,
@@ -46,6 +46,10 @@ class TintPalette {
     required this.railInk,
     required this.railFaint,
   });
+
+  /// Distinct per instance, exact rather than hashed, for memo keys.
+  final int id = _nextId++;
+  static int _nextId = 0;
 
   /// The signature accent (honey in the standard brand).
   final Color accent;
@@ -86,39 +90,39 @@ class TintPalette {
   final Color railFaint;
 
   /// Today's brand, exactly.
-  static const standard = TintPalette._(
-    accent: Color(0xFFD9A032),
-    accentStrong: Color(0xFFB9831F),
-    accentLine: Color(0xFFE4CE96),
-    accentDeep: Color(0xFF946A16),
-    accentText: Color(0xFF7A5410),
-    accentSoftLight: Color(0xFFF3E9D2),
-    accentSoftDark: Color(0x29D9A032),
-    onAccent: Color(0xFF2A2410),
-    focusRingLight: Color(0xFF7A5410),
-    focusRingDark: Color(0xFFD9A032),
-    stateBorderLight: Color(0xFFB9831F),
-    stateBorderDark: Color(0xFFD9A032),
-    accentGroundLight: LinearGradient(
+  static final standard = TintPalette._(
+    accent: const Color(0xFFD9A032),
+    accentStrong: const Color(0xFFB9831F),
+    accentLine: const Color(0xFFE4CE96),
+    accentDeep: const Color(0xFF946A16),
+    accentText: const Color(0xFF7A5410),
+    accentSoftLight: const Color(0xFFF3E9D2),
+    accentSoftDark: const Color(0x29D9A032),
+    onAccent: const Color(0xFF2A2410),
+    focusRingLight: const Color(0xFF7A5410),
+    focusRingDark: const Color(0xFFD9A032),
+    stateBorderLight: const Color(0xFFB9831F),
+    stateBorderDark: const Color(0xFFD9A032),
+    accentGroundLight: const LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [Color(0xFFE7B24A), Color(0xFFD9A032), Color(0xFFB9831F)],
     ),
-    accentGroundDark: LinearGradient(
+    accentGroundDark: const LinearGradient(
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [Color(0xFFFFC452), Color(0xFFFFBC3B), Color(0xFFDE9D25)],
     ),
-    accentVeilLight: Color(0x1FD9A032),
-    accentVeilDark: Color(0x59FFBC3B),
-    chromeTintLight: Color(0x00FFFFFF),
-    chromeTintDark: Color(0x00FFFFFF),
-    primary: Color(0xFF2D2B55),
-    primaryDeep: Color(0xFF1E1C3A),
-    rail: Color(0xFF211F3D),
-    rail2: Color(0xFF1A1830),
-    railInk: Color(0xFFC9C7E0),
-    railFaint: Color(0xFF8A88A7),
+    accentVeilLight: const Color(0x1FD9A032),
+    accentVeilDark: const Color(0x59FFBC3B),
+    chromeTintLight: const Color(0x00FFFFFF),
+    chromeTintDark: const Color(0x00FFFFFF),
+    primary: const Color(0xFF2D2B55),
+    primaryDeep: const Color(0xFF1E1C3A),
+    rail: const Color(0xFF211F3D),
+    rail2: const Color(0xFF1A1830),
+    railInk: const Color(0xFFC9C7E0),
+    railFaint: const Color(0xFF8A88A7),
   );
 
   /// The palette for [prefs]: [standard] for the default style, else a
@@ -452,7 +456,3 @@ List<ContrastPair> kTintContrastPairs(TintPalette p) {
     ),
   ];
 }
-
-/// Where the hue slider snaps with a tick of haptics: the brand honey and the
-/// shared palette hues the projects and labels pick from.
-const kTintSnapHues = [79, ...kLabelHues];

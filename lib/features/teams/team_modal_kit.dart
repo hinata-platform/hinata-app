@@ -5,7 +5,6 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/team_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/theme/hue_labels.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassModal;
 import 'team_widgets.dart';
@@ -245,7 +244,7 @@ class ModalFooter extends StatelessWidget {
                       height: 16,
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: danger ? Colors.white : AppColors.navy,
+                        color: danger ? Colors.white : AppColors.primary,
                       ),
                     )
                   : Icon(primaryIcon ?? LucideIcons.check, size: 16),
@@ -604,7 +603,9 @@ class _CheckBox extends StatelessWidget {
         borderRadius: BorderRadius.circular(7),
         border: Border.all(color: on ? AppColors.accent : AppColors.hairline),
       ),
-      child: on ? Icon(LucideIcons.check, size: 14, color: onAccent) : null,
+      child: on
+          ? Icon(LucideIcons.check, size: 14, color: AppColors.onAccent)
+          : null,
     );
   }
 }

@@ -10,7 +10,6 @@ import '../../core/models/team_models.dart';
 import '../../core/repositories/article_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/hive_loader.dart';
 import '../sprint/modals/glass_modal.dart'
     show
@@ -526,7 +525,7 @@ class _Check extends StatelessWidget {
           ? Icon(
               LucideIcons.check,
               size: 14,
-              color: on ? onAccent : AppColors.accentInk,
+              color: on ? AppColors.onAccent : AppColors.accentInk,
             )
           : null,
     );

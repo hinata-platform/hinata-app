@@ -58,7 +58,11 @@ class TintState extends Equatable {
 /// slider can finish a second burst while the first request is still out,
 /// and two requests in flight can land in either order.
 class TintCubit extends HydratedCubit<TintState> {
-  TintCubit(this._account) : super(TintState.of(TintPreferences.standard));
+  TintCubit(this._account) : super(TintState.of(TintPreferences.standard)) {
+    // Hydration happened in `super`; the preview starts on what it loaded,
+    // not on the standard brand.
+    previewPalette.value = state.palette;
+  }
 
   final AccountRepository _account;
 
@@ -78,9 +82,14 @@ class TintCubit extends HydratedCubit<TintState> {
 
   TintPreferences _confirmed = TintPreferences.standard;
   Timer? _collect;
+  TintPreferences? _collected;
   Completer<bool>? _collecting;
   Future<bool>? _inFlight;
   bool _again = false;
+
+  /// Bumped by [reset]: a request that started under an earlier generation
+  /// belongs to the account that just left, and its answer is dropped.
+  int _generation = 0;
 
   /// Takes preferences that arrived with an account read somebody else made.
   void adopt(TintPreferences preferences) {
@@ -94,42 +103,59 @@ class TintCubit extends HydratedCubit<TintState> {
   }
 
   /// Applies [preferences] to the app at once and writes them to the account.
-  /// With [collect], the write (and the app-wide change) waits [settle] for
-  /// more of the same.
+  /// With [collect], both the app-wide change and the write wait [settle]
+  /// for more of the same; only the preview moves at once.
   Future<bool> commit(TintPreferences preferences, {bool collect = false}) {
-    if (preferences == _confirmed && _collecting == null) {
-      _show(preferences);
-      return Future.value(true);
-    }
     if (!collect) {
       _collect?.cancel();
       _collect = null;
+      _collected = null;
       _show(preferences);
       final waiting = _collecting;
       _collecting = null;
+      if (preferences == _confirmed && _inFlight == null) {
+        waiting?.complete(true);
+        return Future.value(true);
+      }
       final result = _write();
       if (waiting != null) unawaited(result.then(waiting.complete));
       return result;
     }
-    _show(preferences);
+    preview(preferences);
+    _collected = preferences;
     _collect?.cancel();
     final waiting = _collecting ??= Completer<bool>();
     _collect = Timer(settle, () {
+      final next = _collected;
       _collecting = null;
       _collect = null;
+      _collected = null;
+      if (next == null) {
+        waiting.complete(true);
+        return;
+      }
+      _show(next);
+      if (next == _confirmed && _inFlight == null) {
+        waiting.complete(true);
+        return;
+      }
       unawaited(_write().then(waiting.complete));
     });
     return waiting.future;
   }
 
   /// Back to the standard, with nothing left of the person: at sign-out,
-  /// account deletion and a server switch. A pending save answers false.
+  /// account deletion and a server switch. A pending save answers false, and
+  /// a request still out is ignored when it answers.
   void reset() {
+    _generation++;
     _collect?.cancel();
     _collect = null;
+    _collected = null;
     _collecting?.complete(false);
     _collecting = null;
     _again = false;
+    _inFlight = null;
     _confirmed = TintPreferences.standard;
     _show(TintPreferences.standard);
   }
@@ -142,9 +168,10 @@ class TintCubit extends HydratedCubit<TintState> {
   Future<bool> _write() {
     final running = _inFlight;
     if (running != null) {
-      // One more after this one, with whatever is newest by then.
+      // One more after this one, with whatever is newest by then. The
+      // running future already resolves with the follow-up's result.
       _again = true;
-      return running.then((_) => _inFlight ?? Future.value(true));
+      return running;
     }
     final request = _send();
     _inFlight = request;
@@ -152,18 +179,21 @@ class TintCubit extends HydratedCubit<TintState> {
   }
 
   Future<bool> _send() async {
+    final generation = _generation;
     final asked = state.preferences;
     var ok = true;
     try {
       final saved = await _account.updateMyProfile(tint: asked);
+      if (generation != _generation) return false;
       _confirmed = saved.tint;
       if (asked == state.preferences) _show(_confirmed);
     } catch (_) {
+      if (generation != _generation) return false;
       ok = false;
       if (asked == state.preferences) _show(_confirmed);
     }
     _inFlight = null;
-    if (_again && isClosed == false) {
+    if (_again && !isClosed) {
       _again = false;
       if (state.preferences != _confirmed) {
         final next = _send();

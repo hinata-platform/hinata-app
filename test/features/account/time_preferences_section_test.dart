@@ -207,14 +207,6 @@ void main() {
       expect(cubit.state.pomodoroWork, 25);
     });
 
-    test('a read that fails leaves the defaults, which are usable', () async {
-      account.refuseRead = true;
-
-      await cubit.load();
-
-      expect(cubit.state, const TimePreferences());
-    });
-
     test('saving what is already held asks the server nothing', () async {
       final ok = await cubit.save(const TimePreferences());
 

@@ -50,8 +50,7 @@
       "orange": "नारंगी",
       "cyan": "सियान",
       "blue": "नीला",
-      "custom": "कस्टम",
-      "near": "कस्टम, {{name}} के पास"
+      "custom": "कस्टम"
     },
     "pagination": {
       "previous": "पिछला पृष्ठ",
@@ -2887,7 +2886,6 @@
     "title": "सेटिंग्स",
     "logout": "साइन आउट करें",
     "language": "भाषा",
-    "theme": "दिखावट",
     "themeSystem": "सिस्टम",
     "themeLight": "हल्का",
     "themeDark": "गहरा",

@@ -100,6 +100,7 @@ class _CompactShellState extends State<_CompactShell> {
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
+    final tintedChrome = AppColors.chromeTint(dark).a > 0;
     // Whether the timer bar is on screen — a scalar, so the shell rebuilds when
     // a timer starts or stops and not once a second as it counts.
     final timerRunning = context.select<TimerCubit, bool>(
@@ -263,20 +264,22 @@ class _CompactShellState extends State<_CompactShell> {
                     barHeight: kFloatingNavBarHeight,
                     selectedIndex: _selectedIndex,
                     onTabSelected: _onTap,
-                    // Black-tinted glass in dark mode (so it doesn't turn
-                    // milky), clean white frost in light — see _kNavGlass*.
+                    // The neutral chrome, or the person's tint on it —
+                    // see navGlass.
                     settings: navGlass(dark),
                     // Accent indicator (translucent so the glass shows
                     // through). On tinted chrome (HIN-150) the accent wash
                     // would vanish into the accent-coloured pill, so the
                     // active tab is a lighter capsule there, as iOS tints
-                    // its own tab bars, and its ink is the on-accent ink.
-                    indicatorColor: AppColors.chromeTint(dark).a > 0
+                    // its own tab bars, with the on-accent ink in light and
+                    // a bold label in both: the capsule alone is a colour
+                    // cue, and the label weight is not.
+                    indicatorColor: tintedChrome
                         ? Colors.white.withValues(alpha: dark ? 0.22 : 0.55)
                         : AppColors.accent.withValues(
                             alpha: dark ? 0.30 : 0.22,
                           ),
-                    selectedIconColor: AppColors.chromeTint(dark).a > 0
+                    selectedIconColor: tintedChrome
                         ? (dark ? AppColors.inkDark : AppColors.onAccent)
                         : dark
                         ? AppColors.accent
@@ -284,6 +287,12 @@ class _CompactShellState extends State<_CompactShell> {
                     unselectedIconColor: dark
                         ? AppColors.inkDark
                         : AppColors.ink,
+                    selectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontWeight: FontWeight.w500,
+                    ),
                     tabs: [
                       for (final d in bottomTabs)
                         GlassTab(
