@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/time_preferences_cubit.dart';
+import 'package:hinata/core/blocs/tint_cubit.dart';
 import 'package:hinata/core/models/account_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/account_repository.dart';
@@ -15,6 +16,7 @@ import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/widgets/settings_split.dart';
 import 'package:hinata/features/account/account_screen.dart';
 import 'package:hinata/features/connect/server_switcher.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Settings on a wide window (HIN-110): a rail of the phone's sections and
@@ -48,6 +50,9 @@ void main() {
     await storage.setServerUrl('https://hinata.example');
     final prefs = TimePreferencesCubit(account);
     addTearDown(prefs.close);
+    HydratedBloc.storage = _MemoryStorage();
+    final tint = TintCubit(account);
+    addTearDown(tint.close);
     await tester.pumpWidget(
       MaterialApp(
         localizationsDelegates: const [
@@ -64,6 +69,7 @@ void main() {
               BlocProvider<AuthBloc>.value(value: auth ?? _FakeAuthBloc(roles)),
               BlocProvider<AppConfigBloc>.value(value: _FakeAppConfig()),
               BlocProvider<TimePreferencesCubit>.value(value: prefs),
+              BlocProvider<TintCubit>.value(value: tint),
             ],
             child: Scaffold(body: AccountScreen(section: section)),
           ),
@@ -249,4 +255,18 @@ class _RecordingAuthBloc extends Bloc<AuthEvent, AuthState>
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+class _MemoryStorage implements Storage {
+  final Map<String, dynamic> _values = {};
+  @override
+  dynamic read(String key) => _values[key];
+  @override
+  Future<void> write(String key, dynamic value) async => _values[key] = value;
+  @override
+  Future<void> delete(String key) async => _values.remove(key);
+  @override
+  Future<void> clear() async => _values.clear();
+  @override
+  Future<void> close() async {}
 }
