@@ -524,14 +524,16 @@ class _Bars extends StatelessWidget {
                                 ? LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,
-                                    colors: [_cAmberHi, _cAmberLo],
+                                    colors: [_cRingHi, _cRingLo],
                                   )
                                 : null,
                             color: b.today
                                 ? null
                                 : (dark
                                       ? Colors.white.withValues(alpha: .22)
-                                      : AppColors.navy.withValues(alpha: .75)),
+                                      : AppColors.primary.withValues(
+                                          alpha: .75,
+                                        )),
                             boxShadow: b.today
                                 ? [
                                     BoxShadow(
@@ -616,7 +618,9 @@ class _Segmented extends StatelessWidget {
                     style: TextStyle(
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w600,
-                      color: i == index ? onAccent : AppColors.inkSoft,
+                      color: i == index
+                          ? AppColors.onAccent
+                          : AppColors.inkSoft,
                     ),
                   ),
                 ),

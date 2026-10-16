@@ -27,7 +27,7 @@ import '../../core/theme/app_type.dart';
 // Exact stat hues, harmonised with the dashboard "Liquid Glass" palette.
 const _cCompleted = Color(0xFF2E8B62);
 const _cCreated = Color(0xFF4E6FD0);
-final _cFocus = AppColors.accentStrong;
+Color get _cFocus => AppColors.accentStrong;
 const _cOverdue = Color(0xFFC0392B);
 const _heroInk = Color(0xF2FFFFFF); // ~95% white — text on navy glass
 
@@ -301,7 +301,7 @@ class _GlassCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(_radius),
         boxShadow: [
           BoxShadow(
-            color: AppColors.navy.withValues(alpha: dark ? .48 : .22),
+            color: AppColors.primary.withValues(alpha: dark ? .48 : .22),
             blurRadius: 38,
             spreadRadius: -24,
             offset: const Offset(0, 20),
@@ -338,8 +338,8 @@ class _Hero extends StatelessWidget {
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
         colors: [
-          AppColors.navyDeep.withAlpha(0xE0),
-          AppColors.navy.withAlpha(0xD1),
+          AppColors.primaryDeep.withAlpha(0xE0),
+          AppColors.primary.withAlpha(0xD1),
         ],
       ),
       borderColor: Colors.white.withValues(alpha: .14),

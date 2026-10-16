@@ -20,7 +20,6 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/hex_mark.dart' show HexMark;
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
@@ -53,14 +52,17 @@ part 'dashboard_screen.chrome.dart';
 
 /// Exact segment colours for the completion donut / KPIs (design "Liquid Glass").
 const _cDone = Color(0xFF2E8B62);
-final _cProgress = AppColors.accent;
+// Read when painted, not held: the accent follows the tint (HIN-150).
+Color get _cProgress => AppColors.accent;
 const _cBacklog = Color(0xFF6B6890);
 const _cToday = Color(0xFF4E6FD0);
 // The ring's two stops: the light top of the accent ground and the accent
 // itself, read when painted so a tint (HIN-150) is followed.
-Color get _cAmberHi => AppColors.accentGround(false).colors.first;
-Color get _cAmberLo => AppColors.accent;
-const _heroInk = Color(0xF2FFFFFF); // ~95% white — hero text on navy glass
+Color get _cRingHi => AppColors.accentGround(false).colors.first;
+Color get _cRingLo => AppColors.accent;
+const _heroInk = Color(
+  0xF2FFFFFF,
+); // ~95% white — hero text on the primary glass
 
 /// Card-to-card gap on the dashboard grid.
 const double _gap = 18;

@@ -9,7 +9,6 @@ import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
-import '../../core/theme/glass_chrome.dart' show onAccent;
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -709,7 +708,7 @@ class _ScopeChip extends StatelessWidget {
                       fontFamily: AppTheme.fontMono,
                       fontSize: AppType.caption,
                       fontWeight: FontWeight.w700,
-                      color: onAccent,
+                      color: AppColors.onAccent,
                     ),
                   ),
                 ),

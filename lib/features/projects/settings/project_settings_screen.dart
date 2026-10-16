@@ -1333,7 +1333,7 @@ class _SaveBar extends StatelessWidget {
           ? SizedBox(
               width: 16,
               height: 16,
-              child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
+              child: HiveLoader(strokeWidth: 2, color: AppColors.primary),
             )
           : const Icon(LucideIcons.check, size: 16),
       // Without the status beside it the short word says the same and fits

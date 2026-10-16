@@ -233,7 +233,7 @@ class _PlayButton extends StatelessWidget {
                       padding: const EdgeInsets.all(11),
                       child: CircularProgressIndicator(
                         strokeWidth: 2,
-                        color: onAccent,
+                        color: AppColors.onAccent,
                       ),
                     )
                   : Icon(
@@ -241,7 +241,7 @@ class _PlayButton extends StatelessWidget {
                           ? LucideIcons.rotateCw
                           : (playing ? LucideIcons.pause : LucideIcons.play),
                       size: 18,
-                      color: onAccent,
+                      color: AppColors.onAccent,
                     ),
             ),
           ),

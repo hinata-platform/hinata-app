@@ -50,8 +50,7 @@
       "orange": "Оранжевый",
       "cyan": "Голубой",
       "blue": "Синий",
-      "custom": "Свой",
-      "near": "Свой, близко к {{name}}"
+      "custom": "Свой"
     },
     "pagination": {
       "previous": "Предыдущая страница",
@@ -2887,7 +2886,6 @@
     "title": "Настройки",
     "logout": "Выйти",
     "language": "Язык",
-    "theme": "Оформление",
     "themeSystem": "Как в системе",
     "themeLight": "Светлое",
     "themeDark": "Тёмное",

@@ -169,7 +169,10 @@ class _WorkLogFormState extends State<WorkLogForm> {
                   ? SizedBox(
                       width: 22,
                       height: 22,
-                      child: HiveLoader(strokeWidth: 2, color: AppColors.navy),
+                      child: HiveLoader(
+                        strokeWidth: 2,
+                        color: AppColors.primary,
+                      ),
                     )
                   : Text(context.t('common.save')),
             ),

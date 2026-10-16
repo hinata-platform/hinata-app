@@ -161,6 +161,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
 
   /// The identity [_timer] was built for, so the rebuild happens once.
   String? _timerIdentity;
+
+  /// Whether this process has had a signed-in session yet; see [_syncTimer].
+  bool _sessionSeen = false;
   late final TimeZoneSync _timeZone;
   late final FcmService _fcm;
 
@@ -355,6 +358,13 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     final identity = userId == null
         ? null
         : '${widget.storage.serverUrl ?? ''}#$userId';
+    if (identity == null && !_sessionSeen) {
+      // A cold start with no session: the session may have been revoked or
+      // may have run out while the app was closed, and the hydrated tint is
+      // the previous person's. Nothing else below needs to run.
+      _tint.reset();
+    }
+    if (identity != null) _sessionSeen = true;
     if (identity == _timerIdentity) return;
     _timerIdentity = identity;
     // The knowledge base is held for the app's lifetime; what it loaded
@@ -398,8 +408,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       _timePrivacy.reset();
       _myAbsences.reset();
       // The colour is the person's, not the device's: a shared computer must
-      // not show the next person the last one's tint, and a pending save of
-      // the account that just left must not land under the next token.
+      // not show the next person the last one's tint. A collected save is
+      // dropped and the answer to a request still out is ignored; the
+      // request itself, once sent, is the API client's to finish.
       _tint.reset();
     }
   }
@@ -880,10 +891,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                     theme: tint.lightTheme,
                     darkTheme: tint.darkTheme,
                     themeMode: themeMode,
-                    // No cross-fade for a tint change: the tokens read through
-                    // AppColors jump at once, and a fade of the few Material
-                    // colours against them is 24 frames of mixed colours. Also
-                    // none under reduced motion.
+                    // No cross-fade, for a tint change and for light/dark
+                    // alike: the tokens read through AppColors jump at once,
+                    // and a fade of the few Material colours against them is
+                    // 24 frames of mixed colours.
                     themeAnimationDuration: Duration.zero,
                     locale: locale,
                     supportedLocales: I18n.supportedLocales,

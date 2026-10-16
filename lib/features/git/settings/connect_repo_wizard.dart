@@ -417,7 +417,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
     final bg = done
         ? AppColors.success
         : on
-        ? AppColors.navy
+        ? AppColors.primary
         : AppColors.canvas2;
     final fg = (done || on) ? Colors.white : AppColors.inkSoft;
     return Row(
@@ -592,7 +592,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
             height: 26,
             child: CircularProgressIndicator(
               strokeWidth: 2.4,
-              color: AppColors.navy,
+              color: AppColors.primary,
             ),
           ),
         ),
@@ -729,7 +729,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
               height: 46,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: AppColors.navy,
+                color: AppColors.primary,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: HexMark(size: 30, color: AppColors.accent),

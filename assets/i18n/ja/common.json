@@ -50,8 +50,7 @@
       "orange": "オレンジ",
       "cyan": "シアン",
       "blue": "ブルー",
-      "custom": "カスタム",
-      "near": "カスタム（{{name}}に近い）"
+      "custom": "カスタム"
     },
     "pagination": {
       "previous": "前のページ",
@@ -2887,7 +2886,6 @@
     "title": "設定",
     "logout": "ログアウト",
     "language": "言語",
-    "theme": "外観",
     "themeSystem": "システム",
     "themeLight": "ライト",
     "themeDark": "ダーク",

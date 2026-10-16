@@ -12,7 +12,7 @@ import 'package:hinata/core/widgets/hue_slider.dart';
 void main() {
   setUp(() => AppColors.brightness = Brightness.light);
 
-  testWidgets('hue steps five degrees per arrow key and speaks the family', (
+  testWidgets('hue steps five degrees per arrow key and speaks its value key', (
     tester,
   ) async {
     final handle = tester.ensureSemantics();
@@ -42,21 +42,26 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('level speaks clear glass at zero', (tester) async {
-    final handle = tester.ensureSemantics();
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(body: LevelSlider(hue: 79, level: 0, onChanged: (_) {})),
-      ),
-    );
-    final value = _spokenValue(tester);
-    expect(value, contains('account.tint.levelValue'));
-    handle.dispose();
-    // The hint the formatter interpolates (tests render raw keys).
-    expect(LevelSlider.hintKey(0), 'account.tint.levelClear');
-    expect(LevelSlider.hintKey(50), 'account.tint.levelMid');
-    expect(LevelSlider.hintKey(100), 'account.tint.levelStrong');
-  });
+  testWidgets(
+    'level speaks its value key, and the hint names clear glass at zero',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LevelSlider(hue: 79, level: 0, onChanged: (_) {}),
+          ),
+        ),
+      );
+      final value = _spokenValue(tester);
+      expect(value, contains('account.tint.levelValue'));
+      handle.dispose();
+      // The hint the formatter interpolates (tests render raw keys).
+      expect(LevelSlider.hintKey(0), 'account.tint.levelClear');
+      expect(LevelSlider.hintKey(50), 'account.tint.levelMid');
+      expect(LevelSlider.hintKey(100), 'account.tint.levelStrong');
+    },
+  );
 
   test('the spectrum track caches its stops per level', () {
     final a = SpectrumTrackShape.stopsFor(100);

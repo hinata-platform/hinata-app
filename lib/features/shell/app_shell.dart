@@ -63,7 +63,7 @@ import 'floating_nav.dart';
 import 'page_chrome.dart';
 import 'shell_nav.dart';
 import 'swipe_back.dart';
-import '../../core/theme/glass_chrome.dart' show navGlass, onAccent;
+import '../../core/theme/glass_chrome.dart' show navGlass;
 import '../../core/widgets/hive_widgets.dart' show backArrow, forwardArrow;
 import '../../core/theme/app_type.dart';
 

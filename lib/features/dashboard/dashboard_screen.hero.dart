@@ -687,8 +687,14 @@ class DashboardProgressRing extends StatelessWidget {
 }
 
 class _RingPainter extends CustomPainter {
-  _RingPainter(this.pct);
+  _RingPainter(this.pct) : hi = _cRingHi, lo = _cRingLo;
   final double pct;
+
+  /// Captured at construction so a tint change (HIN-150) repaints the ring:
+  /// the painter would otherwise keep the old colours until the progress
+  /// moved.
+  final Color hi;
+  final Color lo;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -708,14 +714,15 @@ class _RingPainter extends CustomPainter {
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.round
       ..shader = SweepGradient(
-        colors: [_cAmberHi, _cAmberLo],
+        colors: [hi, lo],
         transform: const GradientRotation(-math.pi / 2),
       ).createShader(rect);
     canvas.drawArc(rect, -math.pi / 2, 2 * math.pi * pct, false, arc);
   }
 
   @override
-  bool shouldRepaint(_RingPainter old) => old.pct != pct;
+  bool shouldRepaint(_RingPainter old) =>
+      old.pct != pct || old.hi != hi || old.lo != lo;
 }
 
 // ══════════════════════════ KPIs ═══════════════════════════════════════════

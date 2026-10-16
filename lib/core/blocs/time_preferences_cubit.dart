@@ -23,16 +23,6 @@ class TimePreferencesCubit extends Cubit<TimePreferences> {
 
   final AccountRepository _account;
 
-  /// Re-reads them from the account. A failure keeps what is held: nothing here
-  /// is worth an error message, and the defaults are usable.
-  Future<void> load() async {
-    try {
-      adopt((await _account.meAccount()).timePreferences);
-    } catch (_) {
-      // What we have stands.
-    }
-  }
-
   /// Takes preferences that arrived with an account read somebody else made.
   void adopt(TimePreferences preferences) {
     _confirmed = preferences;

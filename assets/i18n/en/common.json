@@ -50,8 +50,7 @@
       "orange": "Orange",
       "cyan": "Cyan",
       "blue": "Blue",
-      "custom": "Custom",
-      "near": "Custom, near {{name}}"
+      "custom": "Custom"
     },
     "pagination": {
       "previous": "Previous page",
@@ -2887,7 +2886,6 @@
     "title": "Settings",
     "logout": "Sign out",
     "language": "Language",
-    "theme": "Appearance",
     "themeSystem": "System",
     "themeLight": "Light",
     "themeDark": "Dark",

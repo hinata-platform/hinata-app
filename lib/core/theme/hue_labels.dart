@@ -27,10 +27,11 @@ String hueLabel(BuildContext context, int? hue) => context.t(switch (hue) {
 });
 
 /// The family a hue belongs to, for any degree on the circle: the slider's
-/// spoken value and the caption of a hue between the named ones. Bands, one
-/// per family, in the order of the circle from red; the server's
-/// `TintHueNames` cuts the same bands so the Art. 15 report agrees.
-String nearestHueKey(int hue) {
+/// spoken value and the caption of a hue between the named ones. A lookup in
+/// fixed bands, one per family, in the order of the circle from red; the
+/// server's `TintHueNames` cuts the same bands so the Art. 15 report agrees
+/// (`hue_labels_test.dart` and `TintHueNamesTest` pin the same table).
+String hueFamilyKey(int hue) {
   final degrees = hue % 360;
   for (var i = 0; i < _bandEnds.length; i++) {
     if (degrees <= _bandEnds[i]) return _bandKeys[i];
@@ -38,9 +39,9 @@ String nearestHueKey(int hue) {
   return _bandKeys.first;
 }
 
-/// [nearestHueKey], translated.
-String nearestHueLabel(BuildContext context, int hue) =>
-    context.t(nearestHueKey(hue));
+/// [hueFamilyKey], translated.
+String hueFamilyLabel(BuildContext context, int hue) =>
+    context.t(hueFamilyKey(hue));
 
 const _bandEnds = [12, 25, 37, 60, 90, 157, 185, 205, 237, 262, 310, 347];
 const _bandKeys = [

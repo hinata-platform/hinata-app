@@ -146,9 +146,22 @@ void main() {
       for (final node in _walk(owner.rootSemanticsNode!)) {
         final data = node.getSemanticsData();
         final isButton = data.flagsCollection.isButton;
+        final isSlider = data.flagsCollection.isSlider;
         final canTap = data.hasAction(SemanticsAction.tap);
-        if (!isButton && !canTap) continue;
-        final name = '${data.label}${data.tooltip}'.trim();
+        if (!isButton && !canTap && !isSlider) continue;
+        var name = '${data.label}${data.tooltip}'.trim();
+        if (name.isEmpty && isSlider) {
+          // A Material slider reports its thumb as a node of its own; the
+          // name sits on the merged node above it, which is what a reader
+          // announces.
+          for (
+            var up = node.parent;
+            up != null && name.isEmpty;
+            up = up.parent
+          ) {
+            name = up.label.trim();
+          }
+        }
         if (name.isEmpty) {
           failures.add('unnamed control at ${node.rect}');
         }
@@ -159,6 +172,7 @@ void main() {
             data.flagsCollection.isEnabled == Tristate.isTrue) {
           failures.add('"$name" announces as a button but cannot be tapped');
         }
+        // A slider is adjusted, not tapped; it still needs a name.
         if (canTap) controls.add(node);
       }
       expect(failures, isEmpty, reason: failures.join('\n'));
