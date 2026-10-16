@@ -16,8 +16,17 @@ abstract final class PhaseEndSchedule {
   static const Duration expiry = Duration(minutes: 10);
 
   /// When the notification for [state] fires, in UTC; null when there is
-  /// nothing to plan (no end, switched off, or already over at [now]).
-  static DateTime? fireAt(TimerSurfaceState state, DateTime now) {
+  /// nothing to plan (no end, switched off, or already over at [now]). Also
+  /// null while an alarm says it instead (iOS 26, HIN-106).
+  static DateTime? fireAt(TimerSurfaceState state, DateTime now) =>
+      state.alarmMode ? null : _endAt(state, now);
+
+  /// When the alarm for [state] rings: the same moment the notification
+  /// would come, so the app in front withdraws it first as well.
+  static DateTime? alarmAt(TimerSurfaceState state, DateTime now) =>
+      state.alarmMode ? _endAt(state, now) : null;
+
+  static DateTime? _endAt(TimerSurfaceState state, DateTime now) {
     final endsAt = state.endsAt;
     if (!state.running || !state.phaseEndNotification || endsAt == null) {
       return null;

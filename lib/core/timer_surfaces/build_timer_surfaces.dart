@@ -1,5 +1,6 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
+import 'adapters/alarm_kit_surface.dart';
 import 'adapters/app_intents_surface.dart';
 import 'adapters/global_hotkeys_surface.dart';
 import 'adapters/home_widget_surface.dart';
@@ -33,6 +34,8 @@ List<TimerSurface> buildTimerSurfaces(
   required HotkeyStatus hotkeys,
   LiveActivityPushRegistry? liveActivityRegistry,
   TimerBackgroundCallbacks background = const TimerBackgroundCallbacks(),
+  AlarmModeStatus? alarms,
+  bool Function()? alarmsMayClear,
 }) {
   final title = WindowTitleSurface(
     platform,
@@ -68,6 +71,10 @@ List<TimerSurface> buildTimerSurfaces(
   return switch (platform) {
     SurfacePlatform.ios => [
       notifications(),
+      // Before the Live Activity: with alarms on, the system's countdown
+      // takes its place for a countdown or a Pomodoro (HIN-106).
+      if (alarms != null)
+        AlarmKitSurface(status: alarms, mayClear: alarmsMayClear),
       LiveActivitySurface(registry: liveActivityRegistry),
       widgets(),
       // After the widgets: the controls read the record they just wrote.

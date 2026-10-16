@@ -1710,7 +1710,8 @@
       },
       "unlockToAct": "请解锁设备后重试。",
       "actionFailed": "操作未成功。请打开 Hinata 后重试。",
-      "timeLabel": "时间"
+      "timeLabel": "时间",
+      "alarmTitle": "时段"
     }
   },
   "availability": {
@@ -4381,6 +4382,10 @@
       "setUp": "设置",
       "phaseEnd": "间隔结束",
       "phaseEndHint": "倒计时或番茄钟间隔结束时发出通知。",
+      "alarm": "以闹钟响铃",
+      "alarmHint": "间隔结束时像闹钟一样响铃，静音模式、专注模式下以及应用关闭时也会响。倒计时显示在锁定屏幕上。",
+      "alarmDenied": "此应用不允许设置闹钟。你可以在系统设置中允许。",
+      "alarmLimit": "系统目前不再接受新的闹钟。间隔结束将重新以通知提醒。",
       "denied": "此应用的通知已被阻止。你可以在系统设置中允许。",
       "openSettings": "打开设置",
       "exact": "精确时间",
