@@ -20,9 +20,10 @@ packages:
   alarm_kit:
     dependency: "direct main"
     description:
-      path: "../alarm_kit"
-      relative: true
-    source: path
+      name: alarm_kit
+      sha256: "8b7818bef3918791a8069d0a7f2ded1bd0db3ef67bbcf7960ee06bc280dee89f"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.1.0"
   analyzer:
     dependency: transitive
