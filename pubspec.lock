@@ -1827,47 +1827,42 @@ packages:
   system_hotkeys:
     dependency: "direct main"
     description:
-      path: "packages/system_hotkeys"
-      ref: HIN-107-linux-shortcuts
-      resolved-ref: "1aa4b48508f0af61fa49273d8088a46e7e2685bf"
-      url: "https://github.com/hinata-platform/system_hotkeys.git"
-    source: git
+      name: system_hotkeys
+      sha256: "1b9e81cc28986f500ae2ddf10696825a70d45f964542d66a036fdcffc83e0d04"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.0"
   system_hotkeys_linux:
     dependency: "direct main"
     description:
-      path: "packages/system_hotkeys_linux"
-      ref: HIN-107-linux-shortcuts
-      resolved-ref: "1aa4b48508f0af61fa49273d8088a46e7e2685bf"
-      url: "https://github.com/hinata-platform/system_hotkeys.git"
-    source: git
+      name: system_hotkeys_linux
+      sha256: "6893917538f0b4f12789f228e5db43f84070a64ef110f091265f474c42eba4e6"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.0"
   system_hotkeys_macos:
     dependency: "direct main"
     description:
-      path: "packages/system_hotkeys_macos"
-      ref: HIN-107-linux-shortcuts
-      resolved-ref: "1aa4b48508f0af61fa49273d8088a46e7e2685bf"
-      url: "https://github.com/hinata-platform/system_hotkeys.git"
-    source: git
+      name: system_hotkeys_macos
+      sha256: "6fd6d2f9dc6c793bfa6dd4f42f72b89b3f6d279f98b5fe35b26d46605eff0253"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.0"
   system_hotkeys_platform_interface:
-    dependency: "direct overridden"
+    dependency: transitive
     description:
-      path: "packages/system_hotkeys_platform_interface"
-      ref: HIN-107-linux-shortcuts
-      resolved-ref: "1aa4b48508f0af61fa49273d8088a46e7e2685bf"
-      url: "https://github.com/hinata-platform/system_hotkeys.git"
-    source: git
+      name: system_hotkeys_platform_interface
+      sha256: "495b003705658097120b55cd0f6c9e6b6bf41d3fb236058ca05983d1ff833610"
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.0"
   system_hotkeys_windows:
     dependency: "direct main"
     description:
-      path: "packages/system_hotkeys_windows"
-      ref: HIN-107-linux-shortcuts
-      resolved-ref: "1aa4b48508f0af61fa49273d8088a46e7e2685bf"
-      url: "https://github.com/hinata-platform/system_hotkeys.git"
-    source: git
+      name: system_hotkeys_windows
+      sha256: a85b8d79e961cbba1d1b8a18d5fdddc751cff1800d2a5d82bed2832f4d18400f
+      url: "https://pub.dev"
+    source: hosted
     version: "0.2.0"
   term_glyph:
     dependency: transitive
