@@ -525,7 +525,7 @@ class UserDrawerBody extends StatelessWidget {
                     width: 9,
                     height: 9,
                     margin: const EdgeInsets.only(top: 3),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),

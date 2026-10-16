@@ -103,7 +103,7 @@ class _ConnectScreenState extends State<ConnectScreen> {
                           FilledButton(
                             onPressed: connecting ? null : _submit,
                             child: connecting
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 22,
                                     height: 22,
                                     child: HiveLoader(

@@ -685,10 +685,7 @@ class _WipFieldState extends State<_WipField> {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
-                borderSide: const BorderSide(
-                  color: AppColors.accent,
-                  width: 1.4,
-                ),
+                borderSide: BorderSide(color: AppColors.accent, width: 1.4),
               ),
             ),
           ),

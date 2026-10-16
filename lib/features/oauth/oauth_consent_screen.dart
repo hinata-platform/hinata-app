@@ -290,8 +290,8 @@ class _ConsentCard extends StatelessWidget {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 200),
               child: busy
-                  ? const SizedBox(
-                      key: ValueKey('loader'),
+                  ? SizedBox(
+                      key: const ValueKey('loader'),
                       width: 22,
                       height: 22,
                       child: HiveLoader(

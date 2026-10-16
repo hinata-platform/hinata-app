@@ -269,7 +269,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                         value: up.progress <= 0 ? null : up.progress,
                         strokeWidth: 4,
                         backgroundColor: AppColors.hairline,
-                        valueColor: const AlwaysStoppedAnimation(
+                        valueColor: AlwaysStoppedAnimation(
                           AppColors.accentStrong,
                         ),
                       ),
@@ -380,7 +380,7 @@ class _AddButton extends StatelessWidget {
         color: AppColors.accentSoft,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusControl),
-          side: const BorderSide(color: AppColors.accentLine),
+          side: BorderSide(color: AppColors.accentLine),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(AppTheme.radiusControl),

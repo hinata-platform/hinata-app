@@ -628,7 +628,7 @@ class _BrandRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(13),
             ),
             alignment: Alignment.center,
-            child: const HexMark(size: 27, color: AppColors.navyDeep),
+            child: HexMark(size: 27, color: AppColors.navyDeep),
           ),
         ),
         const SizedBox(width: 13),

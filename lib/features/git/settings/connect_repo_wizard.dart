@@ -586,7 +586,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
           ),
         ),
         const SizedBox(height: 22),
-        const Center(
+        Center(
           child: SizedBox(
             width: 26,
             height: 26,
@@ -732,7 +732,7 @@ class _ConnectRepoWizardState extends State<_ConnectRepoWizard> {
                 color: AppColors.navy,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const HexMark(size: 30, color: AppColors.accent),
+              child: HexMark(size: 30, color: AppColors.accent),
             ),
             const SizedBox(width: 14),
             Icon(

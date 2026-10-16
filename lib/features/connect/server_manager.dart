@@ -562,7 +562,7 @@ class _ServerRow extends StatelessWidget {
       return Container(
         width: 26,
         height: 26,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.accent,
           shape: BoxShape.circle,
         ),

@@ -6,7 +6,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/responsive/responsive.dart';
-import '../../../core/theme/glass_chrome.dart' show kOnAmber;
+import '../../../core/theme/glass_chrome.dart' show onAccent;
 import '../../../core/widgets/hive_widgets.dart';
 import '../sprint_tokens.dart';
 import 'glass_modal.dart';
@@ -147,7 +147,7 @@ class _PokerCard extends StatelessWidget {
               fontSize: muted ? AppType.body : AppType.display,
               fontWeight: FontWeight.w700,
               color: selected
-                  ? kOnAmber
+                  ? onAccent
                   : (muted ? AppColors.inkFaint : AppColors.ink),
             ),
           ),

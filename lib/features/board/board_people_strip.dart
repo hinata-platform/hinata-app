@@ -178,7 +178,7 @@ class _PersonAvatar extends StatelessWidget {
                       shape: BoxShape.circle,
                       boxShadow: [
                         if (selected)
-                          const BoxShadow(
+                          BoxShadow(
                             color: AppColors.accentStrong,
                             spreadRadius: 3.2,
                           ),

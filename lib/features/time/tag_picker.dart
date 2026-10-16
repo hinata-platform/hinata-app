@@ -353,11 +353,7 @@ class _TagRow extends StatelessWidget {
                 ),
               ),
               if (selected)
-                const Icon(
-                  LucideIcons.check,
-                  size: 16,
-                  color: AppColors.accent,
-                ),
+                Icon(LucideIcons.check, size: 16, color: AppColors.accent),
             ],
           ),
         ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'app_colors.dart';
 import 'app_type.dart';
+import 'tint_palette.dart';
 
 /// The app's buttons in the glass language: capsules lit from above.
 ///
@@ -18,11 +19,15 @@ abstract final class GlassButtons {
   /// The height a capsule keeps at least: the touch minimum.
   static const double minHeight = 44;
 
-  /// The primary action: a honey capsule with navy ink (5.7:1), in both
-  /// themes. Navy on the dark glass was 1.2:1.
-  static ButtonStyle filled(Brightness brightness) {
+  /// The primary action: an accent capsule with the primary as ink (honey
+  /// and navy in the standard brand, 5.7:1), in both themes. Navy on the dark
+  /// glass was 1.2:1. The palette's values are captured here, not read through
+  /// the getters, so a style built for one palette stays that palette's.
+  static ButtonStyle filled(Brightness brightness, TintPalette palette) {
     final dark = brightness == Brightness.dark;
     final inkSoft = dark ? AppColors.inkSoftDark : AppColors.inkSoftLight;
+    final accent = palette.accent;
+    final primary = palette.primary;
     return ButtonStyle(
       minimumSize: const WidgetStatePropertyAll(Size(minHeight, minHeight)),
       padding: const WidgetStatePropertyAll(
@@ -41,21 +46,18 @@ abstract final class GlassButtons {
       ),
       backgroundColor: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.disabled)
-            ? AppColors.accent.withValues(alpha: 0.24)
-            : AppColors.accent,
+            ? accent.withValues(alpha: 0.24)
+            : accent,
       ),
       foregroundColor: WidgetStateProperty.resolveWith(
-        (states) =>
-            states.contains(WidgetState.disabled) ? inkSoft : AppColors.navy,
+        (states) => states.contains(WidgetState.disabled) ? inkSoft : primary,
       ),
-      overlayColor: WidgetStatePropertyAll(
-        AppColors.navy.withValues(alpha: 0.08),
-      ),
+      overlayColor: WidgetStatePropertyAll(primary.withValues(alpha: 0.08)),
       elevation: WidgetStateProperty.resolveWith(
         (states) => states.contains(WidgetState.disabled) ? 0 : 2,
       ),
       shadowColor: WidgetStatePropertyAll(
-        AppColors.accent.withValues(alpha: dark ? 0.45 : 0.5),
+        accent.withValues(alpha: dark ? 0.45 : 0.5),
       ),
       textStyle: const WidgetStatePropertyAll(
         TextStyle(fontWeight: FontWeight.w700, fontSize: AppType.label),
@@ -99,9 +101,9 @@ abstract final class GlassButtons {
   }
 
   /// A quiet action: no surface until hovered or pressed, then a capsule wash.
-  static ButtonStyle text(Brightness brightness) {
+  static ButtonStyle text(Brightness brightness, TintPalette palette) {
     final dark = brightness == Brightness.dark;
-    final ink = dark ? AppColors.accent : AppColors.navy;
+    final ink = dark ? palette.accent : palette.primary;
     return ButtonStyle(
       padding: const WidgetStatePropertyAll(
         EdgeInsets.symmetric(horizontal: 14, vertical: 10),
