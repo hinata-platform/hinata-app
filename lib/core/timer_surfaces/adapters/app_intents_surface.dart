@@ -90,12 +90,12 @@ class AppIntentsSurface extends TimerSurface {
     required bool foreground,
   }) async {}
 
-  /// Signed out, or the local copies deleted: the projects go, and the
-  /// controls show nothing running.
+  /// The widgets' record is gone: the controls show nothing running. The
+  /// projects are the host's ([IntentProjectSnapshot]), removed only when
+  /// the person is signed out for good.
   @override
   Future<void> clear() async {
     _running = null;
-    await _channel.setProjects(null);
     await _channel.reloadControls();
   }
 

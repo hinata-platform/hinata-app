@@ -6,6 +6,7 @@ import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/time_models.dart';
+import 'package:hinata/core/timer_surfaces/background/timer_surface_snapshot.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_clear_signal.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/features/time/timer_surfaces_host.dart';
@@ -24,6 +25,7 @@ void main() {
   late _HeldAuthBloc auth;
   late _HeldConfigBloc config;
   late TimerSurfaceClearSignal clear;
+  late _RecordingSnapshots snapshots;
   final routes = <String>[];
 
   // Relative to now: the host shows nothing of a timer older than a day.
@@ -47,6 +49,7 @@ void main() {
     auth = _HeldAuthBloc(AuthStatus.authenticated);
     config = _HeldConfigBloc(advanced: true);
     clear = TimerSurfaceClearSignal();
+    snapshots = _RecordingSnapshots();
     routes.clear();
   });
 
@@ -65,6 +68,7 @@ void main() {
             openRoute: routes.add,
             clearSignal: clear,
             surfaces: [surface],
+            snapshots: snapshots,
             child: const SizedBox.shrink(),
           ),
         ),
@@ -115,6 +119,23 @@ void main() {
       expect(state.runningSurface, isFalse);
     },
   );
+
+  testWidgets('a launch still reading the session back keeps the snapshot '
+      'a background action needs; signing out removes it (HIN-105)', (
+    tester,
+  ) async {
+    auth = _HeldAuthBloc(AuthStatus.unknown);
+    await pump(tester);
+
+    expect(surface.clears, greaterThan(0));
+    expect(snapshots.writes, isNot(contains(null)));
+
+    auth.hold(AuthStatus.unauthenticated);
+    await tester.pump();
+    await tester.pump();
+
+    expect(snapshots.writes.last, isNull);
+  });
 
   testWidgets('signing out clears every surface', (tester) async {
     await pump(tester);
@@ -237,4 +258,15 @@ class _HeldConfigBloc extends Bloc<AppConfigEvent, AppConfigState>
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+class _RecordingSnapshots implements TimerSurfaceSnapshotStore {
+  final List<TimerSurfaceSnapshot?> writes = [];
+
+  @override
+  Future<TimerSurfaceSnapshot?> read() async => writes.lastOrNull;
+
+  @override
+  Future<void> write(TimerSurfaceSnapshot? snapshot) async =>
+      writes.add(snapshot);
 }

@@ -134,6 +134,24 @@ void main() {
       expect(channel.projects, isEmpty);
     });
 
+    test(
+      'another server or person reads at once; clear removes the list',
+      () async {
+        final projects = _Projects(total: 3);
+        final snapshot = IntentProjectSnapshot(projects, channel: channel);
+
+        await snapshot.refresh(owner: 'a|1');
+        await snapshot.refresh(owner: 'a|1');
+        await snapshot.refresh(owner: 'b|2');
+        expect(projects.pages, [0, 0]);
+
+        await snapshot.clear();
+        expect(channel.projects.last, isNull);
+        await snapshot.refresh(owner: 'b|2');
+        expect(projects.pages, [0, 0, 0]);
+      },
+    );
+
     test('a failed read writes nothing', () async {
       final projects = _Projects(total: 3, fail: true);
       await IntentProjectSnapshot(projects, channel: channel).refresh();
@@ -174,10 +192,11 @@ void main() {
       },
     );
 
-    test('signing out removes the projects and resets the controls', () async {
+    test('a cleared surface resets the controls and leaves the projects to '
+        'the host', () async {
       await surface.clear();
 
-      expect(channel.projects, [null]);
+      expect(channel.projects, isEmpty);
       expect(channel.reloads, 1);
     });
   });
