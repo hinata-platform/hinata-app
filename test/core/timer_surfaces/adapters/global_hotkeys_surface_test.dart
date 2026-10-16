@@ -12,12 +12,25 @@ import 'fake_host.dart';
 class _FakeBinder implements HotkeyBinder {
   final bound = <String, HotKey>{};
   final presses = StreamController<HotKeyEvent>.broadcast();
+  final triggerChanges = StreamController<Map<String, String>>.broadcast();
   HotKeyResult answer = HotKeyResult.bound;
+  final sets = <Map<String, HotKey>>[];
+  Map<String, String> descriptions = const {};
+  String? applicationId;
+  int configured = 0;
 
   @override
-  Future<HotKeyResult> register(String id, HotKey hotKey) async {
-    if (answer == HotKeyResult.bound) bound[id] = hotKey;
-    return answer;
+  void identify(String applicationId) => this.applicationId = applicationId;
+
+  @override
+  Future<Map<String, HotKeyResult>> registerAll(
+    Map<String, HotKey> hotKeys, {
+    Map<String, String> descriptions = const {},
+  }) async {
+    sets.add(hotKeys);
+    this.descriptions = descriptions;
+    if (answer == HotKeyResult.bound) bound.addAll(hotKeys);
+    return {for (final id in hotKeys.keys) id: answer};
   }
 
   @override
@@ -28,6 +41,15 @@ class _FakeBinder implements HotkeyBinder {
 
   @override
   Stream<HotKeyEvent> get events => presses.stream;
+
+  @override
+  Stream<Map<String, String>> get triggers => triggerChanges.stream;
+
+  @override
+  Future<bool> configure() async {
+    configured++;
+    return true;
+  }
 }
 
 void main() {
@@ -164,6 +186,99 @@ void main() {
     expect(calls, ['register ${GlobalHotkeysSurface.focusId}']);
   });
 
+  test('binds both in one go, so a desktop that asks asks once', () async {
+    await surface.apply(
+      TimerSurfaceState(
+        running: false,
+        toggleHotkey: toggle,
+        focusHotkey: focus,
+      ),
+    );
+    expect(binder.sets, hasLength(1));
+    expect(binder.sets.single.keys, [
+      GlobalHotkeysSurface.toggleId,
+      GlobalHotkeysSurface.focusId,
+    ]);
+  });
+
+  group('where the desktop picks the keys (Linux)', () {
+    late GlobalHotkeysSurface linux;
+    final linuxToggle = TimerSurfacePrefs.defaultToggleHotkey(
+      SurfacePlatform.linux,
+    );
+    final linuxFocus = TimerSurfacePrefs.defaultFocusHotkey(
+      SurfacePlatform.linux,
+    );
+    TimerSurfaceState bothOn() => TimerSurfaceState(
+      running: false,
+      toggleHotkey: linuxToggle,
+      focusHotkey: linuxFocus,
+      texts: const TimerSurfaceTexts(
+        appName: '',
+        countdownOver: '',
+        workOver: '',
+        breakOver: '',
+        running: '',
+        onBreak: '',
+        stop: '',
+        takeBreak: '',
+        resume: '',
+        hotkeyToggle: 'Start or stop the timer',
+        hotkeyFocus: 'Open the focus view',
+      ),
+    );
+
+    setUp(() async {
+      linux = GlobalHotkeysSurface(
+        SurfacePlatform.linux,
+        status: status,
+        binder: binder,
+      );
+      await linux.init(host);
+    });
+
+    tearDown(() => linux.dispose());
+
+    test('names the app and describes both shortcuts', () async {
+      await linux.apply(bothOn());
+      expect(binder.applicationId, GlobalHotkeysSurface.linuxApplicationId);
+      expect(binder.descriptions, {
+        GlobalHotkeysSurface.toggleId: 'Start or stop the timer',
+        GlobalHotkeysSurface.focusId: 'Open the focus view',
+      });
+    });
+
+    test('shows the keys the desktop reports', () async {
+      await linux.apply(bothOn());
+      binder.triggerChanges.add({GlobalHotkeysSurface.toggleId: 'Ctrl+Alt+T'});
+      await pumpEventQueue();
+      expect(status.triggers.value, {
+        GlobalHotkeysSurface.toggleId: 'Ctrl+Alt+T',
+      });
+    });
+
+    test('configure opens the desktop settings for a bound set', () async {
+      await linux.apply(bothOn());
+      expect(await status.configure(), isTrue);
+      expect(binder.configured, 1);
+      expect(binder.sets, hasLength(1));
+    });
+
+    test('configure asks again about a declined set', () async {
+      binder.answer = HotKeyResult.declined;
+      await linux.apply(bothOn());
+      binder.answer = HotKeyResult.bound;
+      expect(await status.configure(), isTrue);
+      expect(binder.configured, 0);
+      expect(binder.sets, hasLength(2));
+      expect(status.results.value.values, everyElement(HotKeyResult.bound));
+    });
+  });
+
+  test('configure does nothing where the app picks the keys', () async {
+    expect(await status.configure(), isFalse);
+  });
+
   test('a combination people type is never bound', () async {
     const shiftS = HotKey(
       key: PhysicalKeyboardKey.keyS,
@@ -187,9 +302,15 @@ class _SpyBinder implements HotkeyBinder {
   final List<String> calls;
 
   @override
-  Future<HotKeyResult> register(String id, HotKey hotKey) {
-    calls.add('register $id');
-    return inner.register(id, hotKey);
+  void identify(String applicationId) => inner.identify(applicationId);
+
+  @override
+  Future<Map<String, HotKeyResult>> registerAll(
+    Map<String, HotKey> hotKeys, {
+    Map<String, String> descriptions = const {},
+  }) {
+    calls.addAll(hotKeys.keys.map((id) => 'register $id'));
+    return inner.registerAll(hotKeys, descriptions: descriptions);
   }
 
   @override
@@ -203,4 +324,10 @@ class _SpyBinder implements HotkeyBinder {
 
   @override
   Stream<HotKeyEvent> get events => inner.events;
+
+  @override
+  Stream<Map<String, String>> get triggers => inner.triggers;
+
+  @override
+  Future<bool> configure() => inner.configure();
 }

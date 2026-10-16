@@ -8,6 +8,7 @@ import 'package:system_hotkeys/system_hotkeys.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/timer_surfaces/adapters/global_hotkeys_surface.dart';
 import '../../core/timer_surfaces/hotkey_rules.dart';
@@ -42,6 +43,9 @@ class TimerHotkeysRows extends StatelessWidget {
   Widget build(BuildContext context) {
     final state = prefs.state;
     final status = context.read<HotkeyStatus>();
+    if (capabilitiesForPlatform(platform).hotkeysBySystem) {
+      return _SystemHotkeysRows(status: status, stack: stack);
+    }
     final divider = Divider(height: 1, color: AppColors.hairline2);
     return ValueListenableBuilder<Map<String, HotKeyResult>>(
       valueListenable: status.results,
@@ -72,8 +76,10 @@ class TimerHotkeysRows extends StatelessWidget {
           divider,
           _SelfTestRow(
             status: status,
-            hotKeys: [?state.toggleHotkey, ?state.focusHotkey],
-            platform: platform,
+            combos: [
+              for (final k in [?state.toggleHotkey, ?state.focusHotkey])
+                hotkeyLabel(k, platform, names: keyNames(context)),
+            ],
             stack: stack,
           ),
         ],
@@ -108,6 +114,9 @@ class _HotkeyRow extends StatelessWidget {
       HotKeyResult.bound => 'account.timerSurfaces.hotkeyBound',
       HotKeyResult.conflict => 'account.timerSurfaces.hotkeyConflict',
       HotKeyResult.unsupported => 'account.timerSurfaces.hotkeyUnsupported',
+      // The desktop's dialog: only where the desktop picks the keys, which
+      // [_SystemHotkeysRows] shows instead.
+      HotKeyResult.declined => 'account.timerSurfaces.hotkeyDeclined',
       null => null,
     };
     return Column(
@@ -285,6 +294,205 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
   }
 }
 
+/// The shortcuts where the desktop picks the keys (Linux): what it bound for
+/// each, in its own words, and one way into its settings. There is nothing
+/// to record here: the app's combination was only a suggestion.
+class _SystemHotkeysRows extends StatelessWidget {
+  const _SystemHotkeysRows({required this.status, required this.stack});
+
+  final HotkeyStatus status;
+  final bool stack;
+
+  @override
+  Widget build(BuildContext context) {
+    final divider = Divider(height: 1, color: AppColors.hairline2);
+    return ListenableBuilder(
+      listenable: Listenable.merge([status.results, status.triggers]),
+      builder: (context, _) {
+        final results = status.results.value;
+        final triggers = status.triggers.value;
+        // No desktop backend (Sway, an AppImage outside the system): one
+        // note instead of two rows that both say so.
+        if (results.isNotEmpty &&
+            results.values.every((r) => r == HotKeyResult.unsupported)) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: AccountNote(
+              text: context.t('account.timerSurfaces.hotkeyUnsupportedLinux'),
+              icon: LucideIcons.info,
+              tone: AccountNoteTone.info,
+            ),
+          );
+        }
+        final active = [
+          for (final id in [
+            GlobalHotkeysSurface.toggleId,
+            GlobalHotkeysSurface.focusId,
+          ])
+            if (triggers[id] case final trigger? when trigger.isNotEmpty)
+              trigger,
+        ];
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _SystemHotkeyRow(
+              label: context.t('account.timerSurfaces.hotkeyToggle'),
+              icon: LucideIcons.squarePower,
+              result: results[GlobalHotkeysSurface.toggleId],
+              trigger: triggers[GlobalHotkeysSurface.toggleId],
+              stack: stack,
+            ),
+            divider,
+            _SystemHotkeyRow(
+              label: context.t('account.timerSurfaces.hotkeyFocus'),
+              icon: LucideIcons.target,
+              result: results[GlobalHotkeysSurface.focusId],
+              trigger: triggers[GlobalHotkeysSurface.focusId],
+              stack: stack,
+            ),
+            divider,
+            _ConfigureRow(
+              status: status,
+              enabled: results.isNotEmpty,
+              stack: stack,
+            ),
+            divider,
+            _SelfTestRow(status: status, combos: active, stack: stack),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SystemHotkeyRow extends StatelessWidget {
+  const _SystemHotkeyRow({
+    required this.label,
+    required this.icon,
+    required this.result,
+    required this.trigger,
+    required this.stack,
+  });
+
+  final String label;
+  final IconData icon;
+  final HotKeyResult? result;
+  final String? trigger;
+  final bool stack;
+
+  @override
+  Widget build(BuildContext context) {
+    final keys = trigger;
+    final hasKeys = keys != null && keys.isNotEmpty;
+    final status = switch (result) {
+      HotKeyResult.bound when hasKeys => 'account.timerSurfaces.hotkeyBound',
+      HotKeyResult.bound => 'account.timerSurfaces.hotkeyNoKeys',
+      HotKeyResult.declined => 'account.timerSurfaces.hotkeyDeclined',
+      HotKeyResult.conflict ||
+      HotKeyResult.unsupported => 'account.timerSurfaces.hotkeyUnsupported',
+      null => null,
+    };
+    return SettingRow(
+      label: label,
+      description: status == null ? null : context.t(status),
+      icon: icon,
+      stack: stack,
+      trailing: hasKeys && result == HotKeyResult.bound
+          ? _TriggerCap(keys)
+          : null,
+    );
+  }
+}
+
+/// The desktop's own words for a shortcut's keys, as a key cap. Read only:
+/// the desktop's settings change it.
+class _TriggerCap extends StatelessWidget {
+  const _TriggerCap(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(8),
+      border: Border.all(color: AppColors.hairline),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(
+        fontFamily: AppTheme.fontMono,
+        fontSize: AppType.label,
+        fontWeight: FontWeight.w600,
+        color: AppColors.ink,
+      ),
+    ),
+  );
+}
+
+/// "Configure in the system": the desktop's settings, or its dialog again
+/// for a set the person turned down.
+class _ConfigureRow extends StatefulWidget {
+  const _ConfigureRow({
+    required this.status,
+    required this.enabled,
+    required this.stack,
+  });
+
+  final HotkeyStatus status;
+  final bool enabled;
+  final bool stack;
+
+  @override
+  State<_ConfigureRow> createState() => _ConfigureRowState();
+}
+
+class _ConfigureRowState extends State<_ConfigureRow> {
+  bool _busy = false;
+  bool _noSettings = false;
+
+  Future<void> _open() async {
+    setState(() => _busy = true);
+    final opened = await widget.status.configure();
+    if (mounted) {
+      setState(() {
+        _busy = false;
+        _noSettings = !opened;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      SettingRow(
+        label: context.t('account.timerSurfaces.configure'),
+        description: context.t('account.timerSurfaces.configureHint'),
+        icon: LucideIcons.slidersHorizontal,
+        stack: widget.stack,
+        trailing: AccountActionButton(
+          label: context.t('account.timerSurfaces.configureButton'),
+          icon: LucideIcons.externalLink,
+          onPressed: widget.enabled && !_busy ? () => unawaited(_open()) : null,
+        ),
+      ),
+      if (_noSettings)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Semantics(
+            liveRegion: true,
+            child: AccountNote(
+              text: context.t('account.timerSurfaces.configureUnavailable'),
+              icon: LucideIcons.info,
+              tone: AccountNoteTone.info,
+            ),
+          ),
+        ),
+    ],
+  );
+}
+
 /// "Press it now": the one proof that a shortcut arrives, also from another
 /// app in front. On a Mac the system cannot say whether another app holds a
 /// combination; this can. Either shortcut counts, and the check names nothing
@@ -292,14 +500,14 @@ class _HotkeyRecorderState extends State<HotkeyRecorder> {
 class _SelfTestRow extends StatefulWidget {
   const _SelfTestRow({
     required this.status,
-    required this.hotKeys,
-    required this.platform,
+    required this.combos,
     required this.stack,
   });
 
   final HotkeyStatus status;
-  final List<HotKey> hotKeys;
-  final SurfacePlatform platform;
+
+  /// The shortcuts as the person presses them, already written out.
+  final List<String> combos;
   final bool stack;
 
   @override
@@ -352,10 +560,7 @@ class _SelfTestRowState extends State<_SelfTestRow> {
 
   @override
   Widget build(BuildContext context) {
-    final names = keyNames(context);
-    final combos = widget.hotKeys
-        .map((k) => hotkeyLabel(k, widget.platform, names: names))
-        .join(' / ');
+    final combos = widget.combos.join(' / ');
     final note = switch (_test) {
       _Test.idle => null,
       _Test.waiting => (
@@ -388,7 +593,7 @@ class _SelfTestRowState extends State<_SelfTestRow> {
           trailing: AccountActionButton(
             label: context.t('account.timerSurfaces.testButton'),
             icon: LucideIcons.play,
-            onPressed: widget.hotKeys.isEmpty || _test == _Test.waiting
+            onPressed: widget.combos.isEmpty || _test == _Test.waiting
                 ? null
                 : _start,
           ),

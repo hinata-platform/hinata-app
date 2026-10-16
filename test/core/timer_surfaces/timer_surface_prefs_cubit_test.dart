@@ -104,8 +104,13 @@ void main() {
     expect(mac.taskbar, isFalse);
     expect(windows.taskbar, isTrue);
     expect(windows.globalHotkeys, isTrue);
-    // Linux: the tray best effort, shortcuts with the portal in stage 25.
-    expect([linux.trayIcon, linux.globalHotkeys], [true, false]);
+    // Linux: the tray best effort, shortcuts through the portal, whose
+    // desktop picks the keys.
+    expect(
+      [linux.trayIcon, linux.globalHotkeys, linux.hotkeysBySystem],
+      [true, true, true],
+    );
+    expect(mac.hotkeysBySystem || windows.hotkeysBySystem, isFalse);
   });
 
   test('a Mac keeps the timer in the menu bar by default, others quit', () {

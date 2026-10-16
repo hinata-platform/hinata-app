@@ -1712,7 +1712,9 @@
       "actionFailed": "No ha funcionado. Abre Hinata y vuelve a intentarlo desde ahí.",
       "timeLabel": "Tiempo",
       "alarmTitle": "Intervalo",
-      "alarmBreakOver": "Se acabó la pausa."
+      "alarmBreakOver": "Se acabó la pausa.",
+      "hotkeyToggle": "Iniciar o detener el temporizador",
+      "hotkeyFocus": "Abrir la vista de enfoque"
     }
   },
   "availability": {
@@ -4429,7 +4431,14 @@
       "hotkeyBound": "Activo",
       "hotkeyConflict": "Otra app o el sistema ya usa esta combinación. Elige otra.",
       "hotkeyUnsupported": "No disponible en este dispositivo.",
+      "hotkeyDeclined": "Rechazado en el diálogo del sistema. Configurar en el sistema vuelve a preguntar.",
+      "hotkeyNoKeys": "Activo, pero aún sin teclas. Asígnalas en el sistema.",
+      "hotkeyUnsupportedLinux": "Este escritorio no ofrece atajos globales (Sway, por ejemplo), o la AppImage no está integrada en el sistema. Los atajos dentro de la app siguen funcionando.",
       "hotkeyChoose": "Elegir",
+      "configure": "Teclas en el sistema",
+      "configureHint": "Tu escritorio decide qué teclas los activan. También los cambias allí.",
+      "configureButton": "Configurar en el sistema",
+      "configureUnavailable": "Tu escritorio no abre sus ajustes de atajos desde aquí. Los encuentras en la configuración del sistema, en Teclado.",
       "keySpace": "Espacio",
       "recordPrompt": "Pulsa la nueva combinación",
       "recordHint": "Mantén Ctrl o la tecla Windows, por ejemplo {{example}}. Esc cancela.",
