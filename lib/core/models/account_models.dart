@@ -198,6 +198,77 @@ class TimePreferences extends Equatable {
   ];
 }
 
+/// Standard brand or one tint, as iOS 27's "Customize" sheet offers it.
+enum TintStyle {
+  defaultStyle('DEFAULT'),
+  tinted('TINTED');
+
+  const TintStyle(this.wire);
+  final String wire;
+
+  static TintStyle fromWire(String? value) => switch (value) {
+    'TINTED' => TintStyle.tinted,
+    _ => TintStyle.defaultStyle,
+  };
+}
+
+/// The colour this person gives the app (HIN-150): a hue and how strongly it
+/// tints the accent and the glass chrome. One tint; the rail and every dark
+/// step are derived from the same hue. Lives on the account so every device
+/// agrees, and is cached on the device for the first frame.
+class TintPreferences extends Equatable {
+  const TintPreferences({
+    this.style = TintStyle.defaultStyle,
+    this.hue = defaultHue,
+    this.level = defaultLevel,
+  });
+
+  /// The measured oklch hue of the brand honey `#D9A032`.
+  static const int defaultHue = 79;
+  static const int defaultLevel = 100;
+  static const int maxHue = 359;
+  static const int maxLevel = 100;
+
+  static const standard = TintPreferences();
+
+  final TintStyle style;
+
+  /// oklch hue, 0 to 359.
+  final int hue;
+
+  /// 0 leaves the glass clear and the accent pale; 100 is the full tint.
+  final int level;
+
+  TintPreferences copyWith({TintStyle? style, int? hue, int? level}) =>
+      TintPreferences(
+        style: style ?? this.style,
+        hue: hue ?? this.hue,
+        level: level ?? this.level,
+      );
+
+  /// Tolerant on purpose: a missing field is the standard, a value outside
+  /// its bounds is clamped, an unknown style is the standard. The server
+  /// sanitises the same way, so the two never disagree.
+  factory TintPreferences.fromJson(Map<String, dynamic> json) =>
+      TintPreferences(
+        style: TintStyle.fromWire(json['style'] as String?),
+        hue: ((json['hue'] as num?)?.toInt() ?? defaultHue).clamp(0, maxHue),
+        level: ((json['level'] as num?)?.toInt() ?? defaultLevel).clamp(
+          0,
+          maxLevel,
+        ),
+      );
+
+  Map<String, dynamic> toJson() => {
+    'style': style.wire,
+    'hue': hue,
+    'level': level,
+  };
+
+  @override
+  List<Object?> get props => [style, hue, level];
+}
+
 class Me extends Equatable {
   const Me({
     required this.id,
@@ -211,6 +282,7 @@ class Me extends Equatable {
     required this.twoFactor,
     required this.notificationPreferences,
     this.timePreferences = const TimePreferences(),
+    this.tint = TintPreferences.standard,
     this.pendingEmail,
     this.title,
     this.pronouns,
@@ -249,6 +321,9 @@ class Me extends Equatable {
   /// somebody's breaks.
   final TimePreferences timePreferences;
 
+  /// The colour this person gives the app; see [TintPreferences].
+  final TintPreferences tint;
+
   Me copyWith({
     String? displayName,
     String? title,
@@ -274,6 +349,8 @@ class Me extends Equatable {
     passwordChangedAt: passwordChangedAt,
     twoFactor: twoFactor,
     notificationPreferences: notificationPreferences,
+    timePreferences: timePreferences,
+    tint: tint,
   );
 
   String get initials {
@@ -316,6 +393,9 @@ class Me extends Equatable {
     timePreferences: TimePreferences.fromJson(
       (json['timePreferences'] as Map<String, dynamic>?) ?? const {},
     ),
+    tint: TintPreferences.fromJson(
+      (json['tint'] as Map<String, dynamic>?) ?? const {},
+    ),
   );
 
   @override
@@ -331,6 +411,7 @@ class Me extends Equatable {
     timezone,
     twoFactor,
     timePreferences,
+    tint,
   ];
 }
 
