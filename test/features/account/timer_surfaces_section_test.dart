@@ -156,6 +156,47 @@ void main() {
     expect(prefs.state.backgroundLiveActivity, isFalse);
   });
 
+  testWidgets('the alarm waits below the interval end and asks for alarms', (
+    tester,
+  ) async {
+    gate.alarms = true;
+    prefs.consent(const TimerSurfacePrefs(phaseEndNotification: true));
+    await pump(tester, SurfacePlatform.ios);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.alarm'));
+
+    expect(gate.alarmRequests, 1);
+    expect(gate.requests, 0);
+    expect(prefs.state.alarmMode, isTrue);
+
+    // Without the interval end there is nothing to ring, and it goes off.
+    await tapVisible(tester, switchOf('account.timerSurfaces.phaseEnd'));
+    expect(prefs.state.alarmMode, isFalse);
+    expect(find.text('account.timerSurfaces.alarm'), findsNothing);
+  });
+
+  testWidgets('alarms refused: the switch stays off and says why', (
+    tester,
+  ) async {
+    gate
+      ..alarms = true
+      ..alarmGrant = false;
+    prefs.consent(const TimerSurfacePrefs(phaseEndNotification: true));
+    await pump(tester, SurfacePlatform.ios);
+
+    await tapVisible(tester, switchOf('account.timerSurfaces.alarm'));
+
+    expect(prefs.state.alarmMode, isFalse);
+    expect(find.text('account.timerSurfaces.alarmDenied'), findsOneWidget);
+  });
+
+  testWidgets('before iOS 26 there is no alarm row', (tester) async {
+    prefs.consent(const TimerSurfacePrefs(phaseEndNotification: true));
+    await pump(tester, SurfacePlatform.ios);
+
+    expect(find.text('account.timerSurfaces.alarm'), findsNothing);
+  });
+
   testWidgets('the Live Activity asks the system for nothing', (tester) async {
     prefs.consent(const TimerSurfacePrefs(phaseEndNotification: true));
     await pump(tester, SurfacePlatform.ios);
