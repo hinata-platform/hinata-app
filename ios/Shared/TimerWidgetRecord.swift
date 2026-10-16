@@ -19,6 +19,8 @@ struct TimerWidgetRecord: Equatable {
   /// The words of the buttons (HIN-103); nil hides a button.
   var stop: String?
   var advance: String?
+  /// The word of the start button on the idle widget (HIN-105).
+  var start: String?
 
   var isRunning: Bool { startedAt != nil && validUntil != nil }
 
@@ -52,10 +54,11 @@ struct TimerWidgetRecord: Equatable {
       over: text("over"),
       idle: text("idle"),
       stop: text("stop"),
-      advance: text("advance")
+      advance: text("advance"),
+      start: text("start")
     )
   }
 
   /// The same record with nothing running: what it shows after [validUntil].
-  var idleOnly: TimerWidgetRecord { TimerWidgetRecord(idle: idle) }
+  var idleOnly: TimerWidgetRecord { TimerWidgetRecord(idle: idle, start: start) }
 }

@@ -1,4 +1,5 @@
 import ActivityKit
+import AppIntents
 import SwiftUI
 import WidgetKit
 
@@ -104,9 +105,62 @@ struct TimerIslandFooter: View {
         }
         Spacer(minLength: 0)
       }
-      TimerProgress(state: state, stale: stale)
+      HStack(spacing: 10) {
+        TimerProgress(state: state, stale: stale)
+        Spacer(minLength: 0)
+        TimerActivityButtons(state: state, size: 36)
+      }
     }
     .frame(maxWidth: .infinity, alignment: .leading)
+  }
+}
+
+/// Stop, and for a Pomodoro the next phase, right on the activity: in the
+/// expanded island, on the lock screen and in Notification Center (HIN-105,
+/// iOS 17), like the timer of the Clock app. The intents run in the app's
+/// process without opening it; a locked phone asks for the unlock first.
+@available(iOS 16.1, *)
+struct TimerActivityButtons: View {
+  let state: TimerActivityAttributes.ContentState
+  let size: CGFloat
+
+  var body: some View {
+    if #available(iOSApplicationExtension 17.0, *), !state.hidesTime {
+      HStack(spacing: 10) {
+        if state.mode == "pomodoro" {
+          TimerActivityButton(
+            title: intentText("intent.advance.title"),
+            symbol: state.isBreak ? "play.fill" : "cup.and.saucer.fill",
+            size: size, prominent: false, intent: AdvancePhaseIntent())
+        }
+        TimerActivityButton(
+          title: intentText("intent.stop.title"), symbol: "stop.fill",
+          size: size, prominent: true, intent: StopTimerIntent())
+      }
+    }
+  }
+}
+
+/// One round button of the activity; the word is its accessible name.
+@available(iOSApplicationExtension 17.0, *)
+private struct TimerActivityButton<Intent: AppIntent>: View {
+  let title: String
+  let symbol: String
+  let size: CGFloat
+  let prominent: Bool
+  let intent: Intent
+
+  var body: some View {
+    Button(intent: intent) {
+      Image(systemName: symbol)
+        .font(.system(size: size * 0.42, weight: .semibold))
+        .foregroundStyle(prominent ? HinataPalette.navy : HinataPalette.honey)
+        .frame(width: size, height: size)
+        .background(
+          prominent ? HinataPalette.honey : HinataPalette.honey.opacity(0.18), in: Circle())
+    }
+    .buttonStyle(.plain)
+    .accessibilityLabel(Text(title))
   }
 }
 
@@ -169,7 +223,11 @@ struct TimerLockScreenView: View {
           .multilineTextAlignment(.trailing)
           .frame(width: TimerClock.width(state, size: .large) + 16, alignment: .trailing)
       }
-      TimerProgress(state: state, stale: stale)
+      HStack(spacing: 12) {
+        TimerProgress(state: state, stale: stale)
+        Spacer(minLength: 0)
+        TimerActivityButtons(state: state, size: 40)
+      }
     }
     .padding(.horizontal, 18)
     .padding(.vertical, 14)

@@ -103,6 +103,8 @@ class TimerSurfaceTexts extends Equatable {
     'takeBreak': takeBreak,
     'resume': resume,
     'idle': idle,
+    // The idle widget's start button (iOS, HIN-105).
+    'start': start,
     'unlockToAct': unlockToAct,
     'actionFailed': actionFailed,
     'timeLabel': timeLabel,
@@ -122,6 +124,7 @@ class TimerSurfaceTexts extends Equatable {
       takeBreak: text('takeBreak'),
       resume: text('resume'),
       idle: text('idle'),
+      start: text('start'),
       unlockToAct: text('unlockToAct'),
       actionFailed: text('actionFailed'),
       timeLabel: text('timeLabel'),
