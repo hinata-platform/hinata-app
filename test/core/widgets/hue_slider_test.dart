@@ -3,6 +3,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/models/account_models.dart';
+import 'package:hinata/core/theme/tint_palette.dart';
 import 'package:hinata/core/widgets/hue_slider.dart';
 
 /// The two sliders of the tint (HIN-150). Flutter's Slider brings keyboard,
@@ -69,6 +71,19 @@ void main() {
     expect(identical(a, b), isTrue);
     expect(a.length, greaterThan(12));
     expect(identical(a, SpectrumTrackShape.stopsFor(50)), isFalse);
+  });
+
+  test('the spectrum shows the colour the tint will be', () {
+    // One stop every ten degrees: index 3 is 30 degrees, the red.
+    final red = SpectrumTrackShape.stopsFor(100)[3];
+    expect(red.r, greaterThanOrEqualTo(0.95));
+    expect(red.g, lessThanOrEqualTo(0.35));
+    expect(
+      red,
+      TintPalette.of(
+        const TintPreferences(style: TintStyle.tinted, hue: 30, level: 100),
+      ).accent,
+    );
   });
 }
 

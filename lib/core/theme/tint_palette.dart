@@ -26,6 +26,7 @@ class TintPalette {
     required this.accentLine,
     required this.accentDeep,
     required this.accentText,
+    required this.accentInkDark,
     required this.accentSoftLight,
     required this.accentSoftDark,
     required this.onAccent,
@@ -61,6 +62,11 @@ class TintPalette {
 
   /// Accent as text on light paper and on the accent wash.
   final Color accentText;
+
+  /// Accent as text in the dark theme, on the dark surface and on the accent
+  /// wash. The accent itself where it reads; a lighter shade of it where a
+  /// vivid accent (a real red) does not reach 4.5:1 on its own wash.
+  final Color accentInkDark;
   final Color accentSoftLight;
   final Color accentSoftDark;
 
@@ -96,6 +102,7 @@ class TintPalette {
     accentLine: const Color(0xFFE4CE96),
     accentDeep: const Color(0xFF946A16),
     accentText: const Color(0xFF7A5410),
+    accentInkDark: const Color(0xFFD9A032),
     accentSoftLight: const Color(0xFFF3E9D2),
     accentSoftDark: const Color(0x29D9A032),
     onAccent: const Color(0xFF2A2410),
@@ -153,10 +160,14 @@ class TintPalette {
 
   static TintPalette _derive(int hue, int level) {
     final h = hue.toDouble();
-    final c = chromaScale(level);
+    final vivid = _vividAccent(hue, level);
+    // Every other step takes the accent's chroma relative to the honey's
+    // (0.137), so a vivid red carries its strength into its washes and inks;
+    // the gamut fit trims whatever sRGB cannot show.
+    final c = vivid.chroma / 0.137;
     Color fit(double l, double chroma) => oklchFit(l, chroma * c, h);
 
-    final accent = fit(0.742, 0.137);
+    final accent = oklchFit(vivid.lightness, vivid.chroma, h);
     final accentStrong = _darkestOrLightest(
       chroma: 0.126 * c,
       hue: h,
@@ -183,10 +194,37 @@ class TintPalette {
           contrastRatio(color, AppColors.canvasLight) >= 6.0,
       lightest: true,
     );
-    final onAccent = fit(0.26, 0.034);
-
-    final primary = oklchFit(0.314, 0.074, h);
-    final primaryDeep = oklchFit(0.246, 0.056, h);
+    // The inks that sit on the accent: as light as the honey's, darker where
+    // a deeper accent (a real red sits at L 0.66) would otherwise drop them
+    // under 4.5:1.
+    final accentInkDark = _readsOnDark(accent)
+        ? accent
+        : _darkestOrLightest(
+            chroma: vivid.chroma,
+            hue: h,
+            reaches: _readsOnDark,
+            lightest: false,
+          );
+    final onAccent = _atMost(
+      0.26,
+      chroma: 0.034 * c,
+      hue: h,
+      reaches: (color) => contrastRatio(color, accent) >= 4.5,
+    );
+    final primary = _atMost(
+      0.314,
+      chroma: 0.074,
+      hue: h,
+      reaches: (color) =>
+          contrastRatio(color, accent) >= 4.5 &&
+          contrastRatio(const Color(0xFFFFFFFF), color) >= 4.5,
+    );
+    final primaryDeep = _atMost(
+      0.246,
+      chroma: 0.056,
+      hue: h,
+      reaches: (color) => contrastRatio(accent, color) >= 4.5,
+    );
     final rail = oklchFit(0.258, 0.055, h);
     final rail2 = oklchFit(0.225, 0.046, h);
     final railInk = oklchFit(0.839, 0.035, h);
@@ -222,6 +260,7 @@ class TintPalette {
       accentLine: accentLine,
       accentDeep: accentDeep,
       accentText: accentText,
+      accentInkDark: accentInkDark,
       accentSoftLight: accentSoftLight,
       accentSoftDark: accentSoftDark,
       onAccent: onAccent,
@@ -250,6 +289,97 @@ class TintPalette {
       railInk: railInk,
       railFaint: railFaint,
     );
+  }
+
+  /// How far the accent's chroma may go: a real red needs 0.22 and more, the
+  /// honey sits at 0.15. A cap keeps the loudest hues (magenta, cyan) from
+  /// turning into neon.
+  static const accentChromaCap = 0.22;
+
+  /// The accent's lightness never rises above the honey's: lighter tints
+  /// read as pastel on paper.
+  static const accentMaxLightness = 0.742;
+
+  /// The accent is read as text on the dark surface; this is its floor
+  /// there. On its own wash (the active pill) it owes the plain 4.5.
+  static const accentMinContrastOnDark = 4.6;
+
+  static final _vividCache =
+      <(int, int), ({double lightness, double chroma})>{};
+
+  /// The most saturated accent the hue allows at [level]: the lightness at
+  /// or below [accentMaxLightness] where the gamut-fitted chroma, up to
+  /// [accentChromaCap] scaled by the level, is largest while the colour still
+  /// reads at [accentMinContrastOnDark] on the dark surface. At a fixed
+  /// lightness of 0.742 a red can only be salmon; sRGB's red lives at 0.63.
+  /// Of equally saturated choices the lighter one wins, which keeps the
+  /// yellows and the honey where they were.
+  static ({double lightness, double chroma}) _vividAccent(int hue, int level) =>
+      _vividCache.putIfAbsent((hue, level), () {
+        final h = hue.toDouble();
+        final cap = accentChromaCap * chromaScale(level);
+        var bestL = accentMaxLightness;
+        var bestC = -1.0;
+        for (var step = 0; step <= 40; step++) {
+          final l = accentMaxLightness - step * 0.005;
+          final c = fitChroma(l, cap, h);
+          if (contrastRatio(oklch(l, c, h), AppColors.surfaceDark) <
+              accentMinContrastOnDark) {
+            continue;
+          }
+          // Strictly greater: walking down from the top, ties keep the
+          // lighter colour.
+          if (c > bestC + 0.0005) {
+            bestC = c;
+            bestL = l;
+          }
+        }
+        if (bestC < 0) bestC = fitChroma(bestL, cap, h);
+        return (lightness: bestL, chroma: bestC);
+      });
+
+  /// Whether [ink] reads as text in the dark theme: on the dark surface, and
+  /// on the accent wash laid over the dark surface and the dark canvas (the
+  /// active pill, where it is the label).
+  static bool _readsOnDark(Color ink) {
+    final accent = ink;
+    if (contrastRatio(accent, AppColors.surfaceDark) <
+        accentMinContrastOnDark) {
+      return false;
+    }
+    final wash = accent.withValues(alpha: 0x29 / 255);
+    return contrastRatio(
+              accent,
+              Color.alphaBlend(wash, AppColors.surfaceDark),
+            ) >=
+            4.5 &&
+        contrastRatio(accent, Color.alphaBlend(wash, AppColors.canvasDark)) >=
+            4.5;
+  }
+
+  /// The lightest colour at [chroma] and [hue], no lighter than [cap], for
+  /// which [reaches] holds.
+  static Color _atMost(
+    double cap, {
+    required double chroma,
+    required double hue,
+    required bool Function(Color) reaches,
+  }) {
+    final atCap = oklchFit(cap, chroma, hue);
+    if (reaches(atCap)) return atCap;
+    return _darkestOrLightest(
+      chroma: chroma,
+      hue: hue,
+      reaches: reaches,
+      lightest: true,
+    );
+  }
+
+  /// The colour the hue slider's track shows for [hue] at [level]: exactly
+  /// the accent a tint of that hue would get.
+  static Color accentFor(int hue, int level) {
+    final v = _vividAccent(hue % 360, level.clamp(0, 100));
+    return oklchFit(v.lightness, v.chroma, hue.toDouble());
   }
 
   /// The lightest (or darkest) oklch colour at [chroma] and [hue] for which
@@ -339,14 +469,20 @@ List<ContrastPair> kTintContrastPairs(TintPalette p) {
   return [
     ContrastPair('accent on surfaceDark', p.accent, AppColors.surfaceDark, 4.5),
     ContrastPair(
-      'accent on accentSoftDark/surfaceDark',
-      p.accent,
+      'accentInkDark on surfaceDark',
+      p.accentInkDark,
+      AppColors.surfaceDark,
+      4.5,
+    ),
+    ContrastPair(
+      'accentInkDark on accentSoftDark/surfaceDark',
+      p.accentInkDark,
       softOverSurfaceDark,
       4.5,
     ),
     ContrastPair(
-      'accent on accentSoftDark/canvasDark',
-      p.accent,
+      'accentInkDark on accentSoftDark/canvasDark',
+      p.accentInkDark,
       softOverCanvasDark,
       4.5,
     ),
