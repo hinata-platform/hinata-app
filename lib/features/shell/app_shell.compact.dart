@@ -266,12 +266,19 @@ class _CompactShellState extends State<_CompactShell> {
                     // Black-tinted glass in dark mode (so it doesn't turn
                     // milky), clean white frost in light — see _kNavGlass*.
                     settings: navGlass(dark),
-                    // Honey-amber indicator (translucent so the glass shows
-                    // through).
-                    indicatorColor: AppColors.accent.withValues(
-                      alpha: dark ? 0.30 : 0.22,
-                    ),
-                    selectedIconColor: dark
+                    // Accent indicator (translucent so the glass shows
+                    // through). On tinted chrome (HIN-150) the accent wash
+                    // would vanish into the accent-coloured pill, so the
+                    // active tab is a lighter capsule there, as iOS tints
+                    // its own tab bars, and its ink is the on-accent ink.
+                    indicatorColor: AppColors.chromeTint(dark).a > 0
+                        ? Colors.white.withValues(alpha: dark ? 0.22 : 0.55)
+                        : AppColors.accent.withValues(
+                            alpha: dark ? 0.30 : 0.22,
+                          ),
+                    selectedIconColor: AppColors.chromeTint(dark).a > 0
+                        ? (dark ? AppColors.inkDark : AppColors.onAccent)
+                        : dark
                         ? AppColors.accent
                         : AppColors.accentStrong,
                     unselectedIconColor: dark
