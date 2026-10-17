@@ -5099,5 +5099,38 @@
     "absences": "文档中的缺勤管理",
     "timeTrackingPrivacy": "文档中的隐私与劳动法",
     "codetermination": "劳资协议检查清单"
+  },
+  "budget": {
+    "timeBudget": "时间预算",
+    "estimate": "估算",
+    "usedOfLimit": "{{used}} / {{limit}}",
+    "left": "剩余 {{amount}}",
+    "overBy": "超出 {{amount}}",
+    "reached": "已用完",
+    "semantics": "{{label}}：{{percent}}，{{sums}}，{{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "项目预算剩余 {{amount}}",
+        "overTitle": "已超出项目预算",
+        "reachedTitle": "项目预算已用完"
+      },
+      "estimate": {
+        "nearTitle": "距离估算还剩 {{amount}}",
+        "overTitle": "已超出估算",
+        "reachedTitle": "已达到估算"
+      },
+      "sprint": {
+        "nearTitle": "冲刺预算剩余 {{amount}}",
+        "overTitle": "已超出冲刺预算",
+        "reachedTitle": "冲刺预算已用完"
+      },
+      "nearBody": "{{subject}} 当前为 {{sums}}。你可以照常保存。",
+      "overBody": "{{subject}} 当前为 {{sums}}。你的记录仍会保存。"
+    },
+    "dashboard": {
+      "title": "预算",
+      "empty": "没有设置预算的项目",
+      "emptyHint": "负责人可在项目设置中设定时间预算。"
+    }
   }
 }

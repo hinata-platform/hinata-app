@@ -5099,5 +5099,38 @@
     "absences": "Gestion des absences dans la documentation",
     "timeTrackingPrivacy": "Protection des données et droit du travail dans la documentation",
     "codetermination": "Liste de contrôle pour l'accord d'entreprise"
+  },
+  "budget": {
+    "timeBudget": "Budget temps",
+    "estimate": "Estimation",
+    "usedOfLimit": "{{used}} sur {{limit}}",
+    "left": "reste {{amount}}",
+    "overBy": "{{amount}} de dépassement",
+    "reached": "épuisé",
+    "semantics": "{{label}} : {{percent}}, {{sums}}, {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "Il reste {{amount}} au budget du projet",
+        "overTitle": "Budget du projet dépassé",
+        "reachedTitle": "Budget du projet épuisé"
+      },
+      "estimate": {
+        "nearTitle": "Il reste {{amount}} avant l’estimation",
+        "overTitle": "Estimation dépassée",
+        "reachedTitle": "Estimation atteinte"
+      },
+      "sprint": {
+        "nearTitle": "Il reste {{amount}} au budget du sprint",
+        "overTitle": "Budget du sprint dépassé",
+        "reachedTitle": "Budget du sprint épuisé"
+      },
+      "nearBody": "{{subject}} en est à {{sums}}. Vous pouvez enregistrer comme d’habitude.",
+      "overBody": "{{subject}} en est à {{sums}}. Votre saisie est tout de même enregistrée."
+    },
+    "dashboard": {
+      "title": "Budgets",
+      "empty": "Aucun projet avec budget",
+      "emptyHint": "Les responsables fixent un budget temps dans les paramètres du projet."
+    }
   }
 }

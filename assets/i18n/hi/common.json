@@ -5099,5 +5099,38 @@
     "absences": "अनुपस्थिति प्रबंधन दस्तावेज़ में",
     "timeTrackingPrivacy": "गोपनीयता और श्रम कानून दस्तावेज़ में",
     "codetermination": "कार्य समझौते के लिए चेकलिस्ट"
+  },
+  "budget": {
+    "timeBudget": "समय बजट",
+    "estimate": "अनुमान",
+    "usedOfLimit": "{{limit}} में से {{used}}",
+    "left": "{{amount}} बाकी",
+    "overBy": "{{amount}} अधिक",
+    "reached": "पूरा उपयोग हो गया",
+    "semantics": "{{label}}: {{percent}}, {{sums}}, {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "प्रोजेक्ट बजट में {{amount}} बाकी",
+        "overTitle": "प्रोजेक्ट बजट पार हो गया",
+        "reachedTitle": "प्रोजेक्ट बजट पूरा हो गया"
+      },
+      "estimate": {
+        "nearTitle": "अनुमान तक {{amount}} बाकी",
+        "overTitle": "अनुमान पार हो गया",
+        "reachedTitle": "अनुमान तक पहुँच गए"
+      },
+      "sprint": {
+        "nearTitle": "स्प्रिंट बजट में {{amount}} बाकी",
+        "overTitle": "स्प्रिंट बजट पार हो गया",
+        "reachedTitle": "स्प्रिंट बजट पूरा हो गया"
+      },
+      "nearBody": "{{subject}} अभी {{sums}} पर है। आप हमेशा की तरह सहेज सकते हैं।",
+      "overBody": "{{subject}} अभी {{sums}} पर है। आपकी प्रविष्टि फिर भी सहेजी जाएगी।"
+    },
+    "dashboard": {
+      "title": "बजट",
+      "empty": "किसी प्रोजेक्ट का बजट नहीं है",
+      "emptyHint": "लीड प्रोजेक्ट सेटिंग्स में समय बजट तय करते हैं।"
+    }
   }
 }

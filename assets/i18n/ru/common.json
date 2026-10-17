@@ -5099,5 +5099,38 @@
     "absences": "Управление отсутствиями в документации",
     "timeTrackingPrivacy": "Защита данных и трудовое право в документации",
     "codetermination": "Чек-лист для коллективного соглашения"
+  },
+  "budget": {
+    "timeBudget": "Бюджет времени",
+    "estimate": "Оценка",
+    "usedOfLimit": "{{used}} из {{limit}}",
+    "left": "осталось {{amount}}",
+    "overBy": "превышение {{amount}}",
+    "reached": "исчерпан",
+    "semantics": "{{label}}: {{percent}}, {{sums}}, {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "В бюджете проекта осталось {{amount}}",
+        "overTitle": "Бюджет проекта превышен",
+        "reachedTitle": "Бюджет проекта исчерпан"
+      },
+      "estimate": {
+        "nearTitle": "До оценки осталось {{amount}}",
+        "overTitle": "Оценка превышена",
+        "reachedTitle": "Оценка достигнута"
+      },
+      "sprint": {
+        "nearTitle": "В бюджете спринта осталось {{amount}}",
+        "overTitle": "Бюджет спринта превышен",
+        "reachedTitle": "Бюджет спринта исчерпан"
+      },
+      "nearBody": "{{subject}}: {{sums}}. Сохранить можно как обычно.",
+      "overBody": "{{subject}}: {{sums}}. Запись всё равно будет сохранена."
+    },
+    "dashboard": {
+      "title": "Бюджеты",
+      "empty": "Нет проектов с бюджетом",
+      "emptyHint": "Руководители задают бюджет времени в настройках проекта."
+    }
   }
 }

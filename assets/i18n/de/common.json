@@ -5099,5 +5099,38 @@
     "absences": "Abwesenheitsverwaltung in der Dokumentation",
     "timeTrackingPrivacy": "Datenschutz und Arbeitsrecht in der Dokumentation",
     "codetermination": "Checkliste für die Betriebsvereinbarung"
+  },
+  "budget": {
+    "timeBudget": "Zeitbudget",
+    "estimate": "Schätzung",
+    "usedOfLimit": "{{used}} von {{limit}}",
+    "left": "noch {{amount}}",
+    "overBy": "{{amount}} überschritten",
+    "reached": "ausgeschöpft",
+    "semantics": "{{label}}: {{percent}}, {{sums}}, {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "Noch {{amount}} im Projektbudget",
+        "overTitle": "Projektbudget überschritten",
+        "reachedTitle": "Projektbudget ausgeschöpft"
+      },
+      "estimate": {
+        "nearTitle": "Noch {{amount}} bis zur Schätzung",
+        "overTitle": "Schätzung überschritten",
+        "reachedTitle": "Schätzung erreicht"
+      },
+      "sprint": {
+        "nearTitle": "Noch {{amount}} im Sprintbudget",
+        "overTitle": "Sprintbudget überschritten",
+        "reachedTitle": "Sprintbudget ausgeschöpft"
+      },
+      "nearBody": "{{subject}} steht bei {{sums}}. Du kannst wie gewohnt speichern.",
+      "overBody": "{{subject}} steht bei {{sums}}. Dein Eintrag wird trotzdem gespeichert."
+    },
+    "dashboard": {
+      "title": "Budgets",
+      "empty": "Kein Projekt mit Budget",
+      "emptyHint": "Leitungen legen ein Zeitbudget in den Projekt-Einstellungen fest."
+    }
   }
 }
