@@ -3,11 +3,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/blocs/time_usage_cubit.dart';
+
 import '../../../core/blocs/timer_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/time_usage_models.dart';
-import '../../../core/repositories/time_usage_repository.dart';
 import '../../../core/widgets/budget/budget.dart';
 import 'project_usage.dart';
 
@@ -56,19 +56,13 @@ class _TimerBudgetState extends State<TimerBudget> {
     _asked = id;
     _issue = null;
     if (id == null) return;
-    try {
-      final on =
-          context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ??
-          false;
-      if (!on) return;
-      unawaited(
-        context.read<TimeUsageRepository>().issue(id).then((usage) {
-          if (mounted && _asked == id) setState(() => _issue = usage);
-        }, onError: (Object _) {}),
-      );
-    } on ProviderNotFoundException {
-      return;
-    }
+    final cubit = TimeUsageCubit.maybeOf(context);
+    if (cubit == null) return;
+    unawaited(
+      cubit.issue(id).then((usage) {
+        if (mounted && _asked == id) setState(() => _issue = usage);
+      }),
+    );
   }
 
   @override

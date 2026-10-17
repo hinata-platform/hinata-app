@@ -3,9 +3,10 @@
 // phone, tablet and desktop width, light and dark, at text scale 1.0 and 2.0.
 //
 // Unlike the other goldens in this folder this one loads the real fonts and
-// the German translations: it is the design preview Rebar signs off on before
-// the surfaces are wired (HIN-152, step 0), and a preview in placeholder boxes
-// cannot be judged for type or wording.
+// the German translations. It began as the design preview signed off before
+// the surfaces were wired (HIN-152); it now guards the shared budget widgets
+// it composes (meter, capsule, cell, notice, timer dot) against regressions
+// in type, wording and the 200 % layout. The wired screens are checked live.
 
 import 'dart:convert';
 import 'dart:io';

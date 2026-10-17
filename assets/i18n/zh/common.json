@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "报表",
-    "subtitle": "项目洞察",
-    "forProject": "洞察 · {{project}}",
     "totalIssues": "事项总数",
     "export": "导出",
     "exportPdf": "导出为 PDF",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "生成于",
     "page": "页",
     "copied": "{{format}} 已复制到剪贴板",
-    "burndown": "燃尽图 · 最近 30 天",
+    "burndown": "燃尽图 · 最近 {{days}} 天",
     "remaining": "剩余 {{count}} 个未完成",
-    "windowStart": "−30 天",
+    "windowStart": "−{{days}} 天",
     "windowEnd": "今天",
     "empty": "该报表暂无数据。",
     "issues-by-state": "按状态统计事项",
     "issues-by-priority": "按优先级统计事项",
     "issues-by-assignee": "按负责人统计事项",
-    "time-per-activity": "按活动统计工时（30 天）",
+    "time-per-activity": "按活动统计工时（{{days}} 天）",
     "pdf": {
       "title": "项目报表",
       "generated": "生成于 {{date}}",
-      "openLast30Days": "未完成（最近 30 天）",
+      "openOverDays": "未完成（最近 {{days}} 天）",
       "breakdowns": "分项统计",
       "pageFooter": "{{org}} · 第 {page}/{pages} 页"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "已修改标签",
       "TIME_TAG_DELETED": "已删除标签",
       "TIME_PROJECT_SETTINGS_CHANGED": "项目工时设置已更改",
+      "TIME_SPRINT_SETTINGS_CHANGED": "冲刺时间预算已更改",
       "TIMESHEET_SUBMITTED": "工时表已提交",
       "TIMESHEET_WITHDRAWN": "工时表已撤回",
       "TIMESHEET_APPROVED": "工时表已批准",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "项目预算已达 {{percent}}，剩余 {{left}}",
-        "ESTIMATE": "估算已达 {{percent}}，剩余 {{left}}"
+        "ESTIMATE": "估算已达 {{percent}}，剩余 {{left}}",
+        "SPRINT": "冲刺预算已用 {{percent}}，剩余 {{left}}"
       },
       "reached": {
         "BUDGET": "项目预算已用完（{{sums}}）",
-        "ESTIMATE": "已达到估算（{{sums}}）"
+        "ESTIMATE": "已达到估算（{{sums}}）",
+        "SPRINT": "冲刺预算已用完（{{sums}}）"
       },
       "over": {
         "BUDGET": "已超出项目预算：{{percent}}（{{sums}}）",
-        "ESTIMATE": "已超出估算：{{percent}}（{{sums}}）"
+        "ESTIMATE": "已超出估算：{{percent}}（{{sums}}）",
+        "SPRINT": "冲刺预算已超出：{{percent}}（{{sums}}）"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "还没有预算",
-      "sprints": "有预算的冲刺",
-      "onlyMoney": "只有你看不到的金额预算。"
+      "sprints": "有预算的冲刺"
     }
   }
 }

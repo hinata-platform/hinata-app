@@ -5,6 +5,9 @@ import 'content_models.dart' show TrendPoint;
 /// Everything the report overview draws for one project, in one answer
 /// (HIN-157): the three distributions, the trend and the time per activity.
 class ReportOverview extends Equatable {
+  /// The key the server counts issues without an assignee under.
+  static const unassigned = 'unassigned';
+
   const ReportOverview({
     required this.projectId,
     this.days = 30,

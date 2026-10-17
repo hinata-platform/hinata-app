@@ -399,9 +399,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
     final estimate = BudgetGauge.of(task.spentMinutes, task.estimateMinutes);
     final estimateLine = estimate == null
         ? ''
-        : '\n${context.t('budget.estimate')}: '
-              '${BudgetStyle.percent(context, estimate)} · '
-              '${BudgetStyle.remainder(context, estimate, budgetMinutes)}';
+        : '\n${EstimateFootLine.tooltip(context, estimate, context.t('budget.estimate'))}';
     final color = task.resolved
         ? AppColors.stDone
         : AppColors.stateColor(task.state.toUpperCase());
@@ -872,28 +870,7 @@ class _TimelineBar extends StatelessWidget {
               child: Container(color: Colors.white.withValues(alpha: 0.22)),
             ),
           ),
-          if (estimate != null)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 4,
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: FractionallySizedBox(
-                  widthFactor: estimate!.fraction.clamp(0.0, 1.0),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: HoneyGlass.liquid(estimate!.level),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+          if (estimate != null) EstimateFootLine(gauge: estimate!),
           if (width > 28)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9),

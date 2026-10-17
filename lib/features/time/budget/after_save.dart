@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/widgets.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/blocs/time_usage_cubit.dart';
 import '../../../core/i18n/i18n.dart';
@@ -20,11 +19,9 @@ import '../../sprint/modals/glass_modal.dart'
 void announceSavedEntry(BuildContext context, SavedTimeEntry saved) {
   final projectId = saved.entry.projectId;
   if (projectId != null) {
-    try {
-      unawaited(context.read<TimeUsageCubit>().refresh(projectId));
-    } on ProviderNotFoundException {
-      // No usage cubit in this tree (a test of one sheet): nothing to refresh.
-    }
+    // No usage cubit in this tree (a test of one sheet): nothing to refresh.
+    final usage = TimeUsageCubit.maybeOf(context);
+    if (usage != null) unawaited(usage.refresh(projectId));
   }
   final lines = <String>[
     if (saved.hasOverlaps)

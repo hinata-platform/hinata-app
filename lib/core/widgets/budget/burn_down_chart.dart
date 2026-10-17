@@ -138,7 +138,13 @@ class BurnDownChart extends StatelessWidget {
                 interval: math.max(1, (maxY / 4).ceilToDouble()),
                 getTitlesWidget: (value, meta) => SideTitleWidget(
                   meta: meta,
-                  child: Text('${value.round()} h', style: label),
+                  child: Text(
+                    context.t(
+                      'time.fmt.hours',
+                      variables: {'h': '${value.round()}'},
+                    ),
+                    style: label,
+                  ),
                 ),
               ),
             ),

@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../../models/time_usage_models.dart';
+import '../../theme/app_colors.dart';
 import '../../theme/app_theme.dart';
 import '../../theme/app_type.dart';
 import 'budget_meter.dart' show OverflowCapsule;
@@ -53,8 +54,8 @@ class BudgetCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final level = gauge.level;
-    final ink = onDark ? const Color(0xFFF3F1FA) : const Color(0xFF23223F);
-    final soft = onDark ? const Color(0xFFC9C6DC) : const Color(0xFF55546F);
+    final ink = onDark ? AppColors.inkOnNavy : AppColors.inkLight;
+    final soft = onDark ? AppColors.inkSoftOnNavy : AppColors.inkSoftOnGlass;
     final width = MediaQuery.textScalerOf(context).scale(columnWidth);
     final height = cellWidth * 2 / math.sqrt(3);
     Widget figure(Color color) => Center(
@@ -88,7 +89,14 @@ class BudgetCell extends StatelessWidget {
                   ? Duration.zero
                   : const Duration(milliseconds: 1100),
               curve: Curves.easeOutBack,
-              tween: Tween(begin: 0, end: gauge.fraction.clamp(0.0, 1.0)),
+              tween: Tween(
+                begin: BudgetFill.begin(
+                  label,
+                  gauge,
+                  gauge.fraction.clamp(0.0, 1.0),
+                ),
+                end: gauge.fraction.clamp(0.0, 1.0),
+              ),
               builder: (context, value, _) {
                 final painter = _CellPainter(
                   fill: value,

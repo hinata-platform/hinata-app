@@ -7,15 +7,15 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/time_usage_models.dart';
-import '../../core/repositories/time_usage_repository.dart';
+import '../../core/blocs/time_usage_cubit.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_type.dart';
 import '../../core/widgets/budget/budget.dart';
 import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../billing/billing_format.dart';
 import '../time/budget/budget_history_sheet.dart';
+import 'report_budgets_cubit.dart';
 
 /// Every budget the reader sees, fullest first (HIN-157): one frosted card
 /// per project with its tubes and its forecast, the way to its history, and
@@ -41,73 +41,50 @@ class ReportBudgetsView extends StatefulWidget {
 }
 
 class _ReportBudgetsViewState extends State<ReportBudgetsView> {
-  late final TimeUsageRepository _repository = context
-      .read<TimeUsageRepository>();
-  final Map<String, String> _names = {};
-  List<({String id, String name, String board, BudgetGauge? gauge})> _sprints =
-      const [];
+  ReportBudgetsCubit? _pages;
 
-  late PagedCubit<ProjectTimeUsage> _pages = _cubit();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pages ??= _cubit();
+  }
 
-  PagedCubit<ProjectTimeUsage> _cubit() => PagedCubit<ProjectTimeUsage>(
-    (page, size) async {
-      final result = await _repository.budgetReport(
-        page: page,
-        size: size,
-        projectIds: widget.projectIds,
-      );
-      _names.addAll(result.names);
-      if (page == 0 && mounted) setState(() => _sprints = result.sprints);
-      return (items: result.items, total: result.total);
-    },
-    pageSize: 20,
-    keyOf: (usage) => usage.projectId,
-  )..load();
+  ReportBudgetsCubit? _cubit() {
+    final usage = TimeUsageCubit.maybeOf(context);
+    if (usage == null) return null;
+    return ReportBudgetsCubit(usage, projectIds: widget.projectIds)..load();
+  }
 
   @override
   void didUpdateWidget(ReportBudgetsView old) {
     super.didUpdateWidget(old);
     if (old.projectIds.join(',') != widget.projectIds.join(',')) {
-      unawaited(_pages.close());
+      unawaited(_pages?.close());
       _pages = _cubit();
     }
   }
 
   @override
   void dispose() {
-    unawaited(_pages.close());
+    unawaited(_pages?.close());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<
-      PagedCubit<ProjectTimeUsage>,
-      PagedState<ProjectTimeUsage>
-    >(
-      bloc: _pages,
+    final pages = _pages;
+    if (pages == null) return _empty();
+    return BlocBuilder<ReportBudgetsCubit, PagedState<ProjectTimeUsage>>(
+      bloc: pages,
       builder: (context, state) {
         if (state.isLoading && state.items.isEmpty) {
           return const Center(child: HiveLoader());
         }
-        if (state.items.isEmpty && _sprints.isEmpty) {
-          return ListView(
-            padding: widget.padding,
-            children: [
-              HiveEmptyState(
-                title: context.t('budget.report.emptyTitle'),
-                message: context.t('budget.dashboard.emptyHint'),
-              ),
-            ],
-          );
-        }
-        final sprints = [
-          for (final sprint in _sprints)
-            if (sprint.gauge != null) sprint,
-        ];
+        final sprints = pages.sprints;
+        if (state.items.isEmpty && sprints.isEmpty) return _empty();
         final head = sprints.isEmpty ? 0 : 1;
         return RefreshIndicator(
-          onRefresh: _pages.load,
+          onRefresh: pages.load,
           child: ListView.builder(
             padding: widget.padding,
             itemCount: head + state.items.length + 1,
@@ -115,8 +92,8 @@ class _ReportBudgetsViewState extends State<ReportBudgetsView> {
               if (head == 1 && index == 0) return _sprintCard(sprints);
               final row = index - head;
               if (row == state.items.length) {
-                if (state.items.length < state.total) {
-                  unawaited(_pages.loadMore());
+                if (state.hasMore) {
+                  unawaited(pages.loadMore());
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 20),
                     child: Center(child: HiveLoader(size: 22)),
@@ -124,11 +101,12 @@ class _ReportBudgetsViewState extends State<ReportBudgetsView> {
                 }
                 return const SizedBox(height: 8);
               }
+              final usage = state.items[row];
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: _ProjectBudget(
-                  usage: state.items[row],
-                  name: _names[state.items[row].projectId] ?? '',
+                  usage: usage,
+                  name: pages.names[usage.projectId] ?? '',
                 ),
               );
             },
@@ -138,9 +116,17 @@ class _ReportBudgetsViewState extends State<ReportBudgetsView> {
     );
   }
 
-  Widget _sprintCard(
-    List<({String id, String name, String board, BudgetGauge? gauge})> sprints,
-  ) => Padding(
+  Widget _empty() => ListView(
+    padding: widget.padding,
+    children: [
+      HiveEmptyState(
+        title: context.t('budget.report.emptyTitle'),
+        message: context.t('budget.dashboard.emptyHint'),
+      ),
+    ],
+  );
+
+  Widget _sprintCard(List<BudgetedSprint> sprints) => Padding(
     padding: const EdgeInsets.only(bottom: 16),
     child: FrostedCard(
       title: context.t('budget.report.sprints'),
@@ -209,14 +195,6 @@ class _ProjectBudget extends StatelessWidget {
                   formatMoney(context, cents, usage.currency!),
             ),
           ],
-          if (usage.budget == null && money == null)
-            Text(
-              context.t('budget.report.onlyMoney'),
-              style: TextStyle(
-                fontSize: AppType.label,
-                color: AppColors.inkSoft,
-              ),
-            ),
         ],
       ),
     );

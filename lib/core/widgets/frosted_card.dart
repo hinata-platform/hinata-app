@@ -44,7 +44,7 @@ class FrostedCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(radius),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF2D2B55).withValues(alpha: dark ? .48 : .26),
+              color: AppColors.glassShade.withValues(alpha: dark ? .48 : .26),
               blurRadius: 40,
               spreadRadius: -24,
               offset: const Offset(0, 22),
@@ -82,7 +82,7 @@ class FrostedCard extends StatelessWidget {
                             fontSize: AppType.title,
                             fontWeight: FontWeight.w700,
                             color: onGradient
-                                ? const Color(0xFFF3F1FA)
+                                ? AppColors.inkOnNavy
                                 : AppColors.ink,
                           ),
                         ),

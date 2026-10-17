@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "Berichte",
-    "subtitle": "Projekt-Einblicke",
-    "forProject": "Einblicke · {{project}}",
     "totalIssues": "Aufgaben gesamt",
     "export": "Exportieren",
     "exportPdf": "Als PDF exportieren",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "Erstellt",
     "page": "Seite",
     "copied": "{{format}} in Zwischenablage kopiert",
-    "burndown": "Burndown · letzte 30 Tage",
+    "burndown": "Burndown · letzte {{days}} Tage",
     "remaining": "{{count}} offen verbleibend",
-    "windowStart": "−30T",
+    "windowStart": "−{{days}}T",
     "windowEnd": "heute",
     "empty": "Für diesen Bericht liegen noch keine Daten vor.",
     "issues-by-state": "Aufgaben nach Status",
     "issues-by-priority": "Aufgaben nach Priorität",
     "issues-by-assignee": "Aufgaben nach Bearbeiter",
-    "time-per-activity": "Zeit pro Tätigkeit (30 Tage)",
+    "time-per-activity": "Zeit pro Tätigkeit ({{days}} Tage)",
     "pdf": {
       "title": "Projektbericht",
       "generated": "Erstellt am {{date}}",
-      "openLast30Days": "Offen (letzte 30 Tage)",
+      "openOverDays": "Offen (letzte {{days}} Tage)",
       "breakdowns": "Auswertungen",
       "pageFooter": "{{org}} · Seite {page}/{pages}"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "Tag geändert",
       "TIME_TAG_DELETED": "Tag gelöscht",
       "TIME_PROJECT_SETTINGS_CHANGED": "Projekt-Zeiteinstellungen geändert",
+      "TIME_SPRINT_SETTINGS_CHANGED": "Zeitbudget eines Sprints geändert",
       "TIMESHEET_SUBMITTED": "Stundenzettel eingereicht",
       "TIMESHEET_WITHDRAWN": "Stundenzettel zurückgezogen",
       "TIMESHEET_APPROVED": "Stundenzettel freigegeben",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "Projektbudget bei {{percent}}, noch {{left}}",
-        "ESTIMATE": "Schätzung bei {{percent}}, noch {{left}}"
+        "ESTIMATE": "Schätzung bei {{percent}}, noch {{left}}",
+        "SPRINT": "Sprintbudget bei {{percent}}, noch {{left}}"
       },
       "reached": {
         "BUDGET": "Projektbudget ausgeschöpft ({{sums}})",
-        "ESTIMATE": "Schätzung erreicht ({{sums}})"
+        "ESTIMATE": "Schätzung erreicht ({{sums}})",
+        "SPRINT": "Sprintbudget ausgeschöpft ({{sums}})"
       },
       "over": {
         "BUDGET": "Projektbudget überschritten: {{percent}} ({{sums}})",
-        "ESTIMATE": "Schätzung überschritten: {{percent}} ({{sums}})"
+        "ESTIMATE": "Schätzung überschritten: {{percent}} ({{sums}})",
+        "SPRINT": "Sprintbudget überschritten: {{percent}} ({{sums}})"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "Noch keine Budgets",
-      "sprints": "Sprints mit Budget",
-      "onlyMoney": "Nur ein Geldbudget, das du nicht siehst."
+      "sprints": "Sprints mit Budget"
     }
   }
 }

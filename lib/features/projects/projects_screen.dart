@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../time/budget/project_budget_capsules.dart';
@@ -10,6 +12,7 @@ import '../../core/access/project_permissions.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/time_usage_cubit.dart';
 import '../../core/blocs/fetch_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/team_models.dart';
@@ -105,6 +108,25 @@ class _ProjectsViewState extends State<_ProjectsView> {
 
   @override
   Widget build(BuildContext context) {
+    // Every listed project's budget in one go, as the list arrives: the
+    // cards build lazily as the grid scrolls, and each asking for its own
+    // project would be a request per row of cards.
+    return BlocListener<ProjectsCubit, FetchState<ProjectsData>>(
+      listenWhen: (previous, next) => previous.data != next.data,
+      listener: (context, state) {
+        final listed = state.data?.active ?? const <Project>[];
+        if (listed.isEmpty) return;
+        unawaited(
+          TimeUsageCubit.maybeOf(
+            context,
+          )?.watch(listed.map((project) => project.id)),
+        );
+      },
+      child: _list(),
+    );
+  }
+
+  Widget _list() {
     return BlocBuilder<ProjectsCubit, FetchState<ProjectsData>>(
       builder: (context, state) {
         final all = state.data?.active ?? const <Project>[];

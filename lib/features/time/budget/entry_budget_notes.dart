@@ -1,11 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/blocs/time_usage_cubit.dart';
 import '../../../core/models/time_usage_models.dart';
-import '../../../core/repositories/time_usage_repository.dart';
 import '../../../core/widgets/budget/budget.dart';
 import '../../billing/billing_format.dart';
 import 'project_usage.dart';
@@ -64,37 +62,19 @@ class _EntryBudgetNotesState extends State<EntryBudgetNotes> {
     if (old.issueId != widget.issueId) _loadIssue();
   }
 
-  /// Whether the extended module is on; false where no config is provided,
-  /// as in a test of one sheet.
-  bool get _enabled {
-    try {
-      return context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ??
-          false;
-    } on ProviderNotFoundException {
-      return false;
-    }
-  }
-
   void _loadIssue() {
     final id = widget.issueId;
     if (id == _askedIssue) return;
     _askedIssue = id;
     _issue = null;
-    if (id == null || !_enabled) return;
-    TimeUsageRepository repository;
-    try {
-      repository = context.read<TimeUsageRepository>();
-    } on ProviderNotFoundException {
-      return;
-    }
+    if (id == null) return;
+    final cubit = TimeUsageCubit.maybeOf(context);
+    if (cubit == null) return;
+    // A side note: a failed read shows no note, never an error.
     unawaited(
-      repository.issue(id).then(
-        (usage) {
-          if (mounted && _askedIssue == id) setState(() => _issue = usage);
-        },
-        // A side note: a failed read shows no note, never an error.
-        onError: (Object _) {},
-      ),
+      cubit.issue(id).then((usage) {
+        if (mounted && _askedIssue == id) setState(() => _issue = usage);
+      }),
     );
   }
 

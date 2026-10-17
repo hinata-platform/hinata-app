@@ -213,6 +213,25 @@ abstract final class AppColors {
   static Color get warningInk =>
       _dark ? const Color(0xFFEFC163) : const Color(0xFF8A5A00);
 
+  /// Past-the-limit text on frosted glass (HIN-151): [dangerInk] reaches only
+  /// 3.7:1 on frosted glass over the dark ambient, this lighter red 4.9:1.
+  static Color get dangerInkOnGlass =>
+      _dark ? const Color(0xFFF9B4AA) : dangerInk;
+
+  /// Text on the navy surfaces the sprint and the budgets stand on, in both
+  /// themes: primary, secondary, and the honey of a label.
+  static const inkOnNavy = Color(0xFFF3F1FA);
+  static const inkSoftOnNavy = Color(0xFFC9C6DC);
+  static const honeyOnNavy = Color(0xFFEBCF8F);
+
+  /// Secondary text in a light glass vessel: a shade lighter than
+  /// [inkSoftLight], which reads too heavy beside the honey (6.6:1 on the
+  /// frost, measured, HIN-151).
+  static const inkSoftOnGlass = Color(0xFF55546F);
+
+  /// The navy every glass shadow and light hairline is cast in.
+  static const glassShade = Color(0xFF2D2B55);
+
   // ---- compatibility aliases (migrate screens progressively) ----
   static Color get textPrimary => ink;
   static Color get textSecondary => inkSoft;

@@ -40,7 +40,7 @@ import '../sprint/modals/glass_modal.dart'
         showGlassErrorToast,
         showGlassToast;
 import '../../core/repositories/admin_repository.dart';
-import '../../core/repositories/time_usage_repository.dart';
+import '../../core/blocs/time_usage_cubit.dart';
 import '../../core/models/time_usage_models.dart';
 import '../../core/widgets/budget/budget.dart';
 import '../../core/widgets/hive_loader.dart';

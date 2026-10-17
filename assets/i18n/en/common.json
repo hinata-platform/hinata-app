@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "Reports",
-    "subtitle": "Project insights",
-    "forProject": "Insights · {{project}}",
     "totalIssues": "Total issues",
     "export": "Export",
     "exportPdf": "Export as PDF",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "Generated",
     "page": "page",
     "copied": "{{format}} copied to clipboard",
-    "burndown": "Burndown · last 30 days",
+    "burndown": "Burndown · last {{days}} days",
     "remaining": "{{count}} open remaining",
-    "windowStart": "−30d",
+    "windowStart": "−{{days}}d",
     "windowEnd": "today",
     "empty": "No data for this report yet.",
     "issues-by-state": "Issues by state",
     "issues-by-priority": "Issues by priority",
     "issues-by-assignee": "Issues by assignee",
-    "time-per-activity": "Time per activity (30 days)",
+    "time-per-activity": "Time per activity ({{days}} days)",
     "pdf": {
       "title": "Project report",
       "generated": "Generated {{date}}",
-      "openLast30Days": "Open (last 30 days)",
+      "openOverDays": "Open (last {{days}} days)",
       "breakdowns": "Breakdowns",
       "pageFooter": "{{org}} · page {page}/{pages}"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "Tag changed",
       "TIME_TAG_DELETED": "Tag deleted",
       "TIME_PROJECT_SETTINGS_CHANGED": "Project time settings changed",
+      "TIME_SPRINT_SETTINGS_CHANGED": "Sprint time budget changed",
       "TIMESHEET_SUBMITTED": "Timesheet handed in",
       "TIMESHEET_WITHDRAWN": "Timesheet withdrawn",
       "TIMESHEET_APPROVED": "Timesheet approved",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "Project budget at {{percent}}, {{left}} left",
-        "ESTIMATE": "Estimate at {{percent}}, {{left}} left"
+        "ESTIMATE": "Estimate at {{percent}}, {{left}} left",
+        "SPRINT": "Sprint budget at {{percent}}, {{left}} left"
       },
       "reached": {
         "BUDGET": "Project budget used up ({{sums}})",
-        "ESTIMATE": "Estimate reached ({{sums}})"
+        "ESTIMATE": "Estimate reached ({{sums}})",
+        "SPRINT": "Sprint budget used up ({{sums}})"
       },
       "over": {
         "BUDGET": "Project budget exceeded: {{percent}} ({{sums}})",
-        "ESTIMATE": "Estimate exceeded: {{percent}} ({{sums}})"
+        "ESTIMATE": "Estimate exceeded: {{percent}} ({{sums}})",
+        "SPRINT": "Sprint budget exceeded: {{percent}} ({{sums}})"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "No budgets yet",
-      "sprints": "Sprints with a budget",
-      "onlyMoney": "Only a money budget you do not see."
+      "sprints": "Sprints with a budget"
     }
   }
 }
