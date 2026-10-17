@@ -1,3 +1,4 @@
+import 'budget/entry_budget_notes.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -549,6 +550,15 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// is not its own to decide.
   int? get _minutesShown => _isTimer && (_minutes ?? 0) < 1 ? 1 : _minutes;
 
+  /// What saving would add to the issue and the project: the whole entry, or
+  /// for an edit in place only the difference to what it had (HIN-153).
+  int get _pendingMinutes {
+    final minutes = _minutesShown ?? 0;
+    final before = widget.entry;
+    if (before == null) return minutes;
+    return minutes - before.durationMinutes;
+  }
+
   Future<void> _save() async {
     final minutes = _minutes;
     // Not for a timer: its length is the server's arithmetic, and the server
@@ -959,6 +969,25 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 ),
                 const SizedBox(height: 12),
                 _Summary(minutes: _minutesShown, error: _error),
+                // What this entry does to the issue's estimate and the
+                // project's budget, before it is saved (HIN-153). Advice only:
+                // the save button stays as it is.
+                Padding(
+                  padding: const EdgeInsets.only(top: 12),
+                  child: EntryBudgetNotes(
+                    projectId: _placement.projectId,
+                    issueId: _placement.issueId,
+                    issueLabel: _placement.issueId == null
+                        ? null
+                        : (_placement.label ??
+                              context.t('budget.subject.issue')),
+                    projectLabel: _placement.issueId == null
+                        ? (_placement.label ??
+                              context.t('budget.subject.project'))
+                        : context.t('budget.subject.project'),
+                    pendingMinutes: _pendingMinutes,
+                  ),
+                ),
                 if (lock != null) ...[
                   const SizedBox(height: 14),
                   LockNotice(

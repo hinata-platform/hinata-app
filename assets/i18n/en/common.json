@@ -4075,7 +4075,16 @@
       "estimateAlert": "Issue estimate warning",
       "estimateAlertHint": "The assignee is told once an issue reaches this share of its estimate.",
       "alertDefault": "Default ({{percent}} %)",
-      "percent": "{{percent}} %"
+      "percent": "{{percent}} %",
+      "budgetMode": "When the budget is reached",
+      "estimateMode": "When an estimate is reached",
+      "mode": {
+        "WARN": "Note while recording",
+        "OPEN": "Hourly alert only"
+      },
+      "modeDefault": "{{mode}} (default)",
+      "modeHint": "Recording is never blocked. With “Note while recording” everyone sees in the form how much is left, and leads hear about it at once.",
+      "modeHintNoAlerts": "Recording is never blocked. The note in the form always appears. Leads are not notified because budget alerts are off on this server."
     },
     "templates": {
       "title": "Templates and dates",
@@ -5135,6 +5144,24 @@
       "emptyHint": "Leads set a time budget in the project settings.",
       "all": "All {{count}}"
     },
-    "pending": "this entry +{{amount}}"
+    "pending": "this entry +{{amount}}",
+    "toast": {
+      "near": {
+        "BUDGET": "Project budget at {{percent}}, {{left}} left",
+        "ESTIMATE": "Estimate at {{percent}}, {{left}} left"
+      },
+      "reached": {
+        "BUDGET": "Project budget used up ({{sums}})",
+        "ESTIMATE": "Estimate reached ({{sums}})"
+      },
+      "over": {
+        "BUDGET": "Project budget exceeded: {{percent}} ({{sums}})",
+        "ESTIMATE": "Estimate exceeded: {{percent}} ({{sums}})"
+      }
+    },
+    "subject": {
+      "project": "The project",
+      "issue": "The issue"
+    }
   }
 }

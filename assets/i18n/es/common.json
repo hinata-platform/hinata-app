@@ -4075,7 +4075,16 @@
       "estimateAlert": "Aviso de estimación de una incidencia",
       "estimateAlertHint": "La persona asignada recibe un aviso cuando una incidencia alcanza este porcentaje de su estimación.",
       "alertDefault": "Predeterminado ({{percent}} %)",
-      "percent": "{{percent}} %"
+      "percent": "{{percent}} %",
+      "budgetMode": "Al alcanzar el presupuesto",
+      "estimateMode": "Al alcanzar una estimación",
+      "mode": {
+        "WARN": "Aviso al registrar",
+        "OPEN": "Solo aviso cada hora"
+      },
+      "modeDefault": "{{mode}} (predeterminado)",
+      "modeHint": "Registrar nunca se bloquea. Con «Aviso al registrar» cada persona ve en el formulario cuánto queda y los responsables lo saben al instante.",
+      "modeHintNoAlerts": "Registrar nunca se bloquea. El aviso en el formulario aparece siempre. No se notifica a los responsables porque los avisos de presupuesto están desactivados en este servidor."
     },
     "templates": {
       "title": "Plantillas y fecha",
@@ -5135,6 +5144,24 @@
       "emptyHint": "Los responsables fijan un presupuesto de tiempo en los ajustes del proyecto.",
       "all": "Los {{count}}"
     },
-    "pending": "este registro +{{amount}}"
+    "pending": "este registro +{{amount}}",
+    "toast": {
+      "near": {
+        "BUDGET": "Presupuesto del proyecto al {{percent}}, quedan {{left}}",
+        "ESTIMATE": "Estimación al {{percent}}, quedan {{left}}"
+      },
+      "reached": {
+        "BUDGET": "Presupuesto del proyecto agotado ({{sums}})",
+        "ESTIMATE": "Estimación alcanzada ({{sums}})"
+      },
+      "over": {
+        "BUDGET": "Presupuesto del proyecto superado: {{percent}} ({{sums}})",
+        "ESTIMATE": "Estimación superada: {{percent}} ({{sums}})"
+      }
+    },
+    "subject": {
+      "project": "El proyecto",
+      "issue": "La tarea"
+    }
   }
 }

@@ -4075,7 +4075,16 @@
       "estimateAlert": "事项预估提醒",
       "estimateAlertHint": "事项达到其预估的该比例时，通知被指派的人。",
       "alertDefault": "默认（{{percent}}%）",
-      "percent": "{{percent}}%"
+      "percent": "{{percent}}%",
+      "budgetMode": "达到预算时",
+      "estimateMode": "达到估算时",
+      "mode": {
+        "WARN": "记录时提示",
+        "OPEN": "仅每小时提醒"
+      },
+      "modeDefault": "{{mode}}（默认）",
+      "modeHint": "记录永远不会被阻止。选择“记录时提示”后，每个人都能在表单中看到剩余多少，负责人会立即收到通知。",
+      "modeHintNoAlerts": "记录永远不会被阻止。表单中的提示始终显示。由于此服务器已关闭预算提醒，负责人不会收到通知。"
     },
     "templates": {
       "title": "模板与日期",
@@ -5135,6 +5144,24 @@
       "emptyHint": "负责人可在项目设置中设定时间预算。",
       "all": "全部 {{count}} 个"
     },
-    "pending": "本条记录 +{{amount}}"
+    "pending": "本条记录 +{{amount}}",
+    "toast": {
+      "near": {
+        "BUDGET": "项目预算已达 {{percent}}，剩余 {{left}}",
+        "ESTIMATE": "估算已达 {{percent}}，剩余 {{left}}"
+      },
+      "reached": {
+        "BUDGET": "项目预算已用完（{{sums}}）",
+        "ESTIMATE": "已达到估算（{{sums}}）"
+      },
+      "over": {
+        "BUDGET": "已超出项目预算：{{percent}}（{{sums}}）",
+        "ESTIMATE": "已超出估算：{{percent}}（{{sums}}）"
+      }
+    },
+    "subject": {
+      "project": "该项目",
+      "issue": "该事项"
+    }
   }
 }

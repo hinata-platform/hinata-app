@@ -80,10 +80,15 @@ class ProjectTimeUsage extends Equatable {
     this.usedMinutes = 0,
     this.estimatedMinutes = 0,
     this.nearPercent = BudgetGauge.defaultNearPercent,
+    this.budgetWarns = true,
+    this.estimateWarns = true,
   });
 
   factory ProjectTimeUsage.fromJson(Map<String, dynamic> json) =>
       ProjectTimeUsage(
+        // Anything but an explicit OPEN warns: WARN is the server's default.
+        budgetWarns: json['budgetLimitMode'] != 'OPEN',
+        estimateWarns: json['estimateLimitMode'] != 'OPEN',
         projectId: json['projectId'] as String,
         budgetMinutes: (json['budgetMinutes'] as num?)?.toInt(),
         usedMinutes: (json['usedMinutes'] as num?)?.toInt() ?? 0,
@@ -106,6 +111,13 @@ class ProjectTimeUsage extends Equatable {
   /// threshold or the server's default.
   final int nearPercent;
 
+  /// Whether the form says so while recording (HIN-153): the project's budget
+  /// mode is WARN rather than OPEN. Recording is never refused either way.
+  final bool budgetWarns;
+
+  /// The same for its issues' estimates.
+  final bool estimateWarns;
+
   /// Recorded time against the budget, or null without one.
   BudgetGauge? get budget =>
       BudgetGauge.of(usedMinutes, budgetMinutes, nearPercent: nearPercent);
@@ -121,6 +133,8 @@ class ProjectTimeUsage extends Equatable {
     usedMinutes,
     estimatedMinutes,
     nearPercent,
+    budgetWarns,
+    estimateWarns,
   ];
 }
 
@@ -132,9 +146,11 @@ class IssueTimeUsage extends Equatable {
     this.estimateMinutes,
     this.spentMinutes = 0,
     this.nearPercent = BudgetGauge.defaultNearPercent,
+    this.warns = true,
   });
 
   factory IssueTimeUsage.fromJson(Map<String, dynamic> json) => IssueTimeUsage(
+    warns: json['estimateLimitMode'] != 'OPEN',
     issueId: json['issueId'] as String,
     projectId: json['projectId'] as String,
     estimateMinutes: (json['estimateMinutes'] as num?)?.toInt(),
@@ -152,6 +168,9 @@ class IssueTimeUsage extends Equatable {
   final int spentMinutes;
   final int nearPercent;
 
+  /// Whether the form says so while recording (HIN-153).
+  final bool warns;
+
   /// Spent time against the estimate, or null without one.
   BudgetGauge? get estimate =>
       BudgetGauge.of(spentMinutes, estimateMinutes, nearPercent: nearPercent);
@@ -163,6 +182,7 @@ class IssueTimeUsage extends Equatable {
     estimateMinutes,
     spentMinutes,
     nearPercent,
+    warns,
   ];
 }
 

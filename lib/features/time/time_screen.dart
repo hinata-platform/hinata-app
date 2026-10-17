@@ -1,3 +1,4 @@
+import 'budget/after_save.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -30,8 +31,7 @@ import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../shell/page_chrome.dart';
-import '../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassDateRangePicker, showGlassToast;
+import '../sprint/modals/glass_modal.dart' show showGlassDateRangePicker;
 import '../absences/absence_actions.dart';
 import 'day_marks.dart';
 import 'lock_notice.dart';
@@ -925,16 +925,7 @@ class _TimeViewState extends State<_TimeView> {
 
   void _afterSave(SavedTimeEntry saved) {
     unawaited(_reload());
-    if (saved.hasOverlaps) {
-      showGlassToast(
-        context,
-        // count: rather than a {'count': ...} variable. i18next casts the
-        // variable to int to pick a plural form; a string casts to null, so
-        // "overlaps 3 entries" silently read as the singular form.
-        context.t('time.overlapWarning', count: saved.overlaps.length),
-        kind: GlassToastKind.warning,
-      );
-    }
+    announceSavedEntry(context, saved);
   }
 
   Future<void> _deleteEntry(WorkItem entry) async {
