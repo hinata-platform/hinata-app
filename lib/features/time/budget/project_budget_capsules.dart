@@ -15,7 +15,12 @@ class ProjectBudgetCapsules extends StatelessWidget {
     required this.projectId,
     this.projectName,
     this.padding = EdgeInsets.zero,
+    this.singleLine = false,
   });
+
+  /// Side by side on one line, shrunk to fit rather than wrapped: for a card
+  /// of a fixed height, where a second line would push its foot out.
+  final bool singleLine;
 
   final String projectId;
 
@@ -33,38 +38,56 @@ class ProjectBudgetCapsules extends StatelessWidget {
         final time = usage?.budget;
         final money = usage?.money;
         if (time == null && money == null) return const SizedBox.shrink();
+        final capsules = [
+          if (time != null)
+            BudgetCapsule(
+              label: context.t('budget.timeBudget'),
+              gauge: time,
+              onTap: projectName == null
+                  ? null
+                  : () => showBudgetHistorySheet(
+                      context,
+                      projectId: projectId,
+                      projectName: projectName!,
+                    ),
+            ),
+          if (money != null)
+            BudgetCapsule(
+              label: context.t(
+                usage!.costBudget
+                    ? 'budget.money.cost'
+                    : 'budget.money.revenue',
+              ),
+              gauge: money,
+              format: (context, cents) =>
+                  formatMoney(context, cents, usage.currency!),
+            ),
+        ];
         return Padding(
           padding: padding,
-          child: Wrap(
-            spacing: 6,
-            runSpacing: 4,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              if (time != null)
-                BudgetCapsule(
-                  label: context.t('budget.timeBudget'),
-                  gauge: time,
-                  onTap: projectName == null
-                      ? null
-                      : () => showBudgetHistorySheet(
-                          context,
-                          projectId: projectId,
-                          projectName: projectName!,
-                        ),
-                ),
-              if (money != null)
-                BudgetCapsule(
-                  label: context.t(
-                    usage!.costBudget
-                        ? 'budget.money.cost'
-                        : 'budget.money.revenue',
+          child: singleLine
+              ? Align(
+                  alignment: AlignmentDirectional.centerEnd,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerEnd,
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        for (final (index, capsule) in capsules.indexed) ...[
+                          if (index > 0) const SizedBox(width: 6),
+                          capsule,
+                        ],
+                      ],
+                    ),
                   ),
-                  gauge: money,
-                  format: (context, cents) =>
-                      formatMoney(context, cents, usage.currency!),
+                )
+              : Wrap(
+                  spacing: 6,
+                  runSpacing: 4,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: capsules,
                 ),
-            ],
-          ),
         );
       },
     );

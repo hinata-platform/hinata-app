@@ -25,7 +25,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/budget/budget.dart';
 import '../../core/widgets/frosted_card.dart';
-import '../../core/widgets/glass_filter_bar.dart' show GlassPill;
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassPill, kGlassControlHeight;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
@@ -397,7 +398,7 @@ class _OverviewState extends State<_Overview> {
     crossAxisAlignment: WrapCrossAlignment.center,
     children: [
       Builder(
-        builder: (anchor) => GlassPill(
+        builder: (anchor) => _ControlPill(
           active: true,
           onTap: () => unawaited(_pickProject(anchor)),
           child: Row(
@@ -425,7 +426,7 @@ class _OverviewState extends State<_Overview> {
         ),
       ),
       for (final span in _Span.values)
-        GlassPill(
+        _ControlPill(
           active: _span == span,
           onTap: () {
             if (_span == span) return;
@@ -443,7 +444,7 @@ class _OverviewState extends State<_Overview> {
         ),
       if (_overview != null)
         Builder(
-          builder: (anchor) => GlassPill(
+          builder: (anchor) => _ControlPill(
             onTap: () => unawaited(_export(anchor)),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -611,5 +612,26 @@ class _OverviewState extends State<_Overview> {
   Widget _empty() => Text(
     context.t('reports.empty'),
     style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+  );
+}
+
+/// A control in the overview's row: a glass pill at the height of the app's
+/// other controls, its label padded and centred in it.
+class _ControlPill extends StatelessWidget {
+  const _ControlPill({required this.child, this.onTap, this.active = false});
+
+  final Widget child;
+  final VoidCallback? onTap;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) => GlassPill(
+    height: kGlassControlHeight,
+    active: active,
+    onTap: onTap,
+    child: Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      child: Center(widthFactor: 1, child: child),
+    ),
   );
 }

@@ -73,7 +73,7 @@ class _Figures extends StatelessWidget {
                               child: Icon(
                                 icon,
                                 size: 16,
-                                color: AppColors.accentText,
+                                color: AppColors.accentInk,
                               ),
                             ),
                             const SizedBox(width: 10),
@@ -162,10 +162,14 @@ class _Trend extends StatelessWidget {
                 showTitles: true,
                 reservedSize: 30,
                 interval: math.max(1, (top / 4).ceilToDouble()),
-                getTitlesWidget: (value, meta) => SideTitleWidget(
-                  meta: meta,
-                  child: Text('${value.round()}', style: label),
-                ),
+                // The chart's own top is headroom, not a step of the scale:
+                // labelled, it would sit on the last step's label.
+                getTitlesWidget: (value, meta) => value >= meta.max
+                    ? const SizedBox.shrink()
+                    : SideTitleWidget(
+                        meta: meta,
+                        child: Text('${value.round()}', style: label),
+                      ),
               ),
             ),
             bottomTitles: AxisTitles(
