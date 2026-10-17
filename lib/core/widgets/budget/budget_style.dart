@@ -29,11 +29,17 @@ abstract final class BudgetStyle {
     BudgetLevel.over => AppColors.danger,
   };
 
-  /// Small text in the level's colour; every one clears 4.5:1.
+  /// Small text in the level's colour; every one clears 4.5:1 on the frosted
+  /// glass the budget shapes sit on, in both themes. Past the limit in dark
+  /// a lighter red than [AppColors.dangerInk], which reaches only 3.7:1 on
+  /// frosted glass over the dark ambient (4.9:1 for this one, measured).
   static Color ink(BudgetLevel level) => switch (level) {
     BudgetLevel.within => AppColors.inkSoft,
     BudgetLevel.near => AppColors.warningInk,
-    BudgetLevel.over => AppColors.dangerInk,
+    BudgetLevel.over =>
+      AppColors.brightness == Brightness.dark
+          ? const Color(0xFFF9B4AA)
+          : AppColors.dangerInk,
   };
 
   static IconData icon(BudgetLevel level) => switch (level) {

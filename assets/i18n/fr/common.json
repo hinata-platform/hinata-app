@@ -5131,6 +5131,7 @@
       "title": "Budgets",
       "empty": "Aucun projet avec budget",
       "emptyHint": "Les responsables fixent un budget temps dans les paramètres du projet."
-    }
+    },
+    "pending": "cette saisie +{{amount}}"
   }
 }

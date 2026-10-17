@@ -4,8 +4,9 @@ library;
 
 export '../../models/time_usage_models.dart' show BudgetGauge, BudgetLevel;
 export 'budget_capsule.dart';
+export 'budget_cell.dart';
 export 'budget_meter.dart';
 export 'budget_notice.dart';
-export 'budget_ring.dart';
 export 'budget_style.dart';
+export 'honey_glass.dart';
 export 'timer_budget_dot.dart';
