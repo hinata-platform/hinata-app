@@ -6,9 +6,9 @@ part of 'dashboard_screen.dart';
 /// the navy card the sprint stands on (HIN-152, "Honigstand").
 ///
 /// Asks the server for the three fullest within the dashboard's own project
-/// scope, so a person in fifty projects still costs one request. A cell opens
-/// the project's issues, as a project card does; "all" opens the project list,
-/// where every project carries its capsule.
+/// scope, so a person in fifty projects still costs one request, forecasts
+/// included. A cell opens the budget's history; "all" opens the report's
+/// budgets, where every budget the reader sees is listed.
 class _BudgetsCard extends StatefulWidget {
   const _BudgetsCard({required this.projectIds});
 
@@ -23,9 +23,11 @@ class _BudgetsCardState extends State<_BudgetsCard> {
   late FetchCubit<TopBudgets> _top = _cubitFor(widget.projectIds);
 
   FetchCubit<TopBudgets> _cubitFor(List<String> projectIds) {
-    final repository = context.read<TimeUsageRepository>();
+    final usage = TimeUsageCubit.maybeOf(context);
     return FetchCubit<TopBudgets>(
-      () => repository.top(limit: 3, projectIds: projectIds),
+      () => usage == null
+          ? Future.value(const TopBudgets())
+          : usage.top(limit: 3, projectIds: projectIds),
     )..load();
   }
 
@@ -131,7 +133,7 @@ class _BudgetsCardState extends State<_BudgetsCard> {
               fontSize: AppType.caption,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
-              color: Color(0xFFEBCF8F),
+              color: AppColors.honeyOnNavy,
             ),
           ),
         ),
@@ -139,8 +141,8 @@ class _BudgetsCardState extends State<_BudgetsCard> {
       const Spacer(),
       if (top.total > top.items.length)
         TextButton(
-          onPressed: () => context.go('/projects'),
-          style: TextButton.styleFrom(foregroundColor: const Color(0xFFEBCF8F)),
+          onPressed: () => context.go('/time/reports?tab=budgets'),
+          style: TextButton.styleFrom(foregroundColor: AppColors.honeyOnNavy),
           child: Text(
             context.t(
               'budget.dashboard.all',
@@ -178,10 +180,8 @@ class _Honeycomb extends StatelessWidget {
         ),
       ),
     );
-    final items = [
-      for (final usage in top.items)
-        if (usage.budget != null) usage,
-    ];
+    // Time budgets only: the server ranks nothing else here.
+    final items = top.items;
     return LayoutBuilder(
       builder: (context, constraints) {
         final fits =

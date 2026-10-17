@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "रिपोर्ट",
-    "subtitle": "प्रोजेक्ट की अहम जानकारी",
-    "forProject": "अहम जानकारी · {{project}}",
     "totalIssues": "कुल इश्यू",
     "export": "निर्यात",
     "exportPdf": "PDF के रूप में निर्यात करें",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "तैयार किया गया",
     "page": "पृष्ठ",
     "copied": "{{format}} क्लिपबोर्ड पर कॉपी हो गया",
-    "burndown": "बर्नडाउन · पिछले 30 दिन",
+    "burndown": "बर्नडाउन · पिछले {{days}} दिन",
     "remaining": "{{count}} खुले शेष",
-    "windowStart": "−30 दिन",
+    "windowStart": "−{{days}} दिन",
     "windowEnd": "आज",
     "empty": "इस रिपोर्ट के लिए अभी कोई डेटा नहीं है।",
     "issues-by-state": "स्थिति के अनुसार इश्यू",
     "issues-by-priority": "प्राथमिकता के अनुसार इश्यू",
     "issues-by-assignee": "असाइनी के अनुसार इश्यू",
-    "time-per-activity": "प्रति गतिविधि समय (30 दिन)",
+    "time-per-activity": "प्रति गतिविधि समय ({{days}} दिन)",
     "pdf": {
       "title": "प्रोजेक्ट रिपोर्ट",
       "generated": "{{date}} को तैयार किया गया",
-      "openLast30Days": "खुले (पिछले 30 दिन)",
+      "openOverDays": "खुले (पिछले {{days}} दिन)",
       "breakdowns": "विश्लेषण",
       "pageFooter": "{{org}} · पृष्ठ {page}/{pages}"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "टैग बदला",
       "TIME_TAG_DELETED": "टैग हटाया",
       "TIME_PROJECT_SETTINGS_CHANGED": "प्रोजेक्ट समय-सेटिंग्स बदलीं",
+      "TIME_SPRINT_SETTINGS_CHANGED": "स्प्रिंट का समय बजट बदला गया",
       "TIMESHEET_SUBMITTED": "टाइमशीट प्रस्तुत",
       "TIMESHEET_WITHDRAWN": "टाइमशीट वापस ली",
       "TIMESHEET_APPROVED": "टाइमशीट स्वीकृत",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "प्रोजेक्ट बजट {{percent}} पर, {{left}} बाकी",
-        "ESTIMATE": "अनुमान {{percent}} पर, {{left}} बाकी"
+        "ESTIMATE": "अनुमान {{percent}} पर, {{left}} बाकी",
+        "SPRINT": "स्प्रिंट बजट {{percent}} पर, {{left}} बाकी"
       },
       "reached": {
         "BUDGET": "प्रोजेक्ट बजट पूरा हो गया ({{sums}})",
-        "ESTIMATE": "अनुमान तक पहुँच गए ({{sums}})"
+        "ESTIMATE": "अनुमान तक पहुँच गए ({{sums}})",
+        "SPRINT": "स्प्रिंट बजट पूरा हुआ ({{sums}})"
       },
       "over": {
         "BUDGET": "प्रोजेक्ट बजट पार: {{percent}} ({{sums}})",
-        "ESTIMATE": "अनुमान पार: {{percent}} ({{sums}})"
+        "ESTIMATE": "अनुमान पार: {{percent}} ({{sums}})",
+        "SPRINT": "स्प्रिंट बजट पार: {{percent}} ({{sums}})"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "अभी कोई बजट नहीं",
-      "sprints": "बजट वाले स्प्रिंट",
-      "onlyMoney": "केवल एक धन बजट, जो आपको नहीं दिखता।"
+      "sprints": "बजट वाले स्प्रिंट"
     }
   }
 }

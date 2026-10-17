@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
@@ -101,5 +104,30 @@ void main() {
     });
     expect(usage.budgetWarns, isFalse);
     expect(usage.estimateWarns, isTrue);
+  });
+
+  // Widget tests render keys, so a kind without a sentence would pass above
+  // and show its raw key in the app: every kind the server sends has one in
+  // every bundle, at every level.
+  test('every kind of warning has its sentence in every language', () {
+    for (final bundle in Directory(
+      'assets/i18n',
+    ).listSync().whereType<Directory>()) {
+      final json =
+          jsonDecode(File('${bundle.path}/common.json').readAsStringSync())
+              as Map<String, dynamic>;
+      final toast =
+          (json['budget'] as Map<String, dynamic>)['toast']
+              as Map<String, dynamic>;
+      for (final level in ['near', 'reached', 'over']) {
+        for (final kind in ['BUDGET', 'ESTIMATE', 'SPRINT']) {
+          expect(
+            (toast[level] as Map<String, dynamic>)[kind],
+            isA<String>(),
+            reason: '${bundle.path} $level $kind',
+          );
+        }
+      }
+    }
   });
 }

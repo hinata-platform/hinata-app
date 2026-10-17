@@ -6,7 +6,7 @@ import 'package:equatable/equatable.dart';
 enum BudgetLevel { within, near, over }
 
 /// One amount measured against one limit: recorded minutes against a budget or
-/// an estimate, or later cents against a money budget.
+/// an estimate, or cents against a money budget.
 ///
 /// A value, nothing more. Where the numbers come from is the repository's job;
 /// what they look like is the widget's. Both units are whole numbers, so the
@@ -218,6 +218,7 @@ class TopBudgets extends Equatable {
     this.items = const [],
     this.names = const {},
     this.total = 0,
+    this.forecasts = const {},
   });
 
   factory TopBudgets.fromJson(Map<String, dynamic> json) => TopBudgets(
@@ -231,6 +232,11 @@ class TopBudgets extends Equatable {
         entry.key: '${entry.value}',
     },
     total: (json['total'] as num?)?.toInt() ?? 0,
+    forecasts: {
+      for (final entry
+          in (json['forecasts'] as Map<String, dynamic>? ?? const {}).entries)
+        entry.key: BudgetForecast.fromJson(entry.value as Map<String, dynamic>),
+    },
   );
 
   /// Fullest first.
@@ -242,8 +248,12 @@ class TopBudgets extends Equatable {
   /// Every budget the reader can see, of which [items] are the first.
   final int total;
 
+  /// The forecast of each item by project, sent along so a card asks
+  /// nothing more (HIN-156). Empty from a server that does not send them.
+  final Map<String, BudgetForecast> forecasts;
+
   @override
-  List<Object?> get props => [items, names, total];
+  List<Object?> get props => [items, names, total, forecasts];
 }
 
 /// Recorded minutes per day for a project's burn-down (HIN-156): the days in
@@ -382,49 +392,57 @@ class SprintTimeUsage extends Equatable {
   ];
 }
 
-/// One page of the budget report (HIN-157), fullest first, and on the first
-/// page the active sprints with a budget.
+/// A running sprint with a budget, on a board the reader sees (HIN-157).
+class BudgetedSprint extends Equatable {
+  const BudgetedSprint({
+    required this.id,
+    required this.name,
+    required this.board,
+    this.gauge,
+  });
+
+  factory BudgetedSprint.fromJson(Map<String, dynamic> json) => BudgetedSprint(
+    id: json['sprintId'] as String,
+    name: json['name'] as String? ?? '',
+    board: json['boardName'] as String? ?? '',
+    gauge: BudgetGauge.of(
+      (json['usedMinutes'] as num?)?.toInt(),
+      (json['budgetMinutes'] as num?)?.toInt(),
+      nearPercent: (json['nearPercent'] as num?)?.toInt(),
+    ),
+  );
+
+  final String id;
+  final String name;
+
+  /// The board's name.
+  final String board;
+  final BudgetGauge? gauge;
+
+  @override
+  List<Object?> get props => [id, name, board, gauge];
+}
+
+/// One page of the budget report (HIN-157): budgets ranked like the
+/// dashboard's, and on the first page the running sprints with a budget.
 class BudgetReportPage extends Equatable {
   const BudgetReportPage({
-    this.items = const [],
-    this.names = const {},
-    this.total = 0,
+    this.budgets = const TopBudgets(),
     this.sprints = const [],
   });
 
   factory BudgetReportPage.fromJson(Map<String, dynamic> json) =>
       BudgetReportPage(
-        items: [
-          for (final row in (json['items'] as List<dynamic>? ?? const []))
-            ProjectTimeUsage.fromJson(row as Map<String, dynamic>),
-        ],
-        names: {
-          for (final entry
-              in (json['names'] as Map<String, dynamic>? ?? const {}).entries)
-            entry.key: '${entry.value}',
-        },
-        total: (json['total'] as num?)?.toInt() ?? 0,
+        budgets: TopBudgets.fromJson(json),
         sprints: [
           for (final row in (json['sprints'] as List<dynamic>? ?? const []))
-            (
-              id: (row as Map<String, dynamic>)['sprintId'] as String,
-              name: row['name'] as String? ?? '',
-              board: row['boardName'] as String? ?? '',
-              gauge: BudgetGauge.of(
-                (row['usedMinutes'] as num?)?.toInt(),
-                (row['budgetMinutes'] as num?)?.toInt(),
-                nearPercent: (row['nearPercent'] as num?)?.toInt(),
-              ),
-            ),
+            BudgetedSprint.fromJson(row as Map<String, dynamic>),
         ],
       );
 
-  final List<ProjectTimeUsage> items;
-  final Map<String, String> names;
-  final int total;
-  final List<({String id, String name, String board, BudgetGauge? gauge})>
-  sprints;
+  final TopBudgets budgets;
+  final List<BudgetedSprint> sprints;
 
   @override
-  List<Object?> get props => [items, names, total, sprints];
+  List<Object?> get props => [budgets, sprints];
 }

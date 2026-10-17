@@ -7,7 +7,7 @@ import '../../models/time_usage_models.dart';
 import '../../theme/app_colors.dart';
 import '../hive_widgets.dart' show fmtDuration;
 
-/// Turns a raw amount into words: minutes into "96 h", later cents into
+/// Turns a raw amount into words: minutes into "96 h", cents into
 /// "4.800 €". Every budget widget takes one so the same shapes serve both.
 typedef BudgetAmountFormat = String Function(BuildContext context, int amount);
 
@@ -30,16 +30,11 @@ abstract final class BudgetStyle {
   };
 
   /// Small text in the level's colour; every one clears 4.5:1 on the frosted
-  /// glass the budget shapes sit on, in both themes. Past the limit in dark
-  /// a lighter red than [AppColors.dangerInk], which reaches only 3.7:1 on
-  /// frosted glass over the dark ambient (4.9:1 for this one, measured).
+  /// glass the budget shapes sit on, in both themes.
   static Color ink(BudgetLevel level) => switch (level) {
     BudgetLevel.within => AppColors.inkSoft,
     BudgetLevel.near => AppColors.warningInk,
-    BudgetLevel.over =>
-      AppColors.brightness == Brightness.dark
-          ? const Color(0xFFF9B4AA)
-          : AppColors.dangerInk,
+    BudgetLevel.over => AppColors.dangerInkOnGlass,
   };
 
   static IconData icon(BudgetLevel level) => switch (level) {
@@ -99,4 +94,22 @@ abstract final class BudgetStyle {
       'remainder': remainder(context, gauge, format),
     },
   );
+}
+
+/// Where a budget shape's honey starts to fill from (HIN-151).
+///
+/// The first time a budget is drawn its honey rises from empty; that is the
+/// motion the shapes were designed with. A card that scrolls out of a lazy
+/// list and back is built anew, and rising again every time would be motion
+/// that says nothing new. So each budget, by its label and limit, rises once
+/// per session and is drawn at its level after that; a change of level still
+/// eases from the old one to the new.
+abstract final class BudgetFill {
+  static final Set<int> _risen = {};
+
+  /// 0 the first time [label] with [gauge] is drawn, [target] after that.
+  static double begin(String label, BudgetGauge? gauge, double target) {
+    if (_risen.length > 2000) _risen.clear();
+    return _risen.add(Object.hash(label, gauge?.limit)) ? 0 : target;
+  }
 }

@@ -9,6 +9,7 @@ export 'budget_meter.dart';
 export 'budget_notice.dart';
 export 'budget_style.dart';
 export 'burn_down_chart.dart';
+export 'estimate_foot_line.dart';
 export 'forecast_line.dart';
 export 'honey_glass.dart';
 export 'liquid_bars.dart';

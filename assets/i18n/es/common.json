@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "Informes",
-    "subtitle": "Datos del proyecto",
-    "forProject": "Datos · {{project}}",
     "totalIssues": "Incidencias en total",
     "export": "Exportar",
     "exportPdf": "Exportar como PDF",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "Generado",
     "page": "página",
     "copied": "{{format}} copiado al portapapeles",
-    "burndown": "Burndown · últimos 30 días",
+    "burndown": "Burndown · últimos {{days}} días",
     "remaining": "{{count}} abiertas pendientes",
-    "windowStart": "−30 d",
+    "windowStart": "−{{days}} d",
     "windowEnd": "hoy",
     "empty": "Todavía no hay datos para este informe.",
     "issues-by-state": "Incidencias por estado",
     "issues-by-priority": "Incidencias por prioridad",
     "issues-by-assignee": "Incidencias por responsable",
-    "time-per-activity": "Tiempo por actividad (30 días)",
+    "time-per-activity": "Tiempo por actividad ({{days}} días)",
     "pdf": {
       "title": "Informe del proyecto",
       "generated": "Generado el {{date}}",
-      "openLast30Days": "Abiertas (últimos 30 días)",
+      "openOverDays": "Abiertas (últimos {{days}} días)",
       "breakdowns": "Desgloses",
       "pageFooter": "{{org}} · página {page}/{pages}"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "Etiqueta modificada",
       "TIME_TAG_DELETED": "Etiqueta eliminada",
       "TIME_PROJECT_SETTINGS_CHANGED": "Ajustes de tiempo del proyecto modificados",
+      "TIME_SPRINT_SETTINGS_CHANGED": "Presupuesto de tiempo del sprint cambiado",
       "TIMESHEET_SUBMITTED": "Hoja de horas enviada",
       "TIMESHEET_WITHDRAWN": "Hoja de horas retirada",
       "TIMESHEET_APPROVED": "Hoja de horas aprobada",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "Presupuesto del proyecto al {{percent}}, quedan {{left}}",
-        "ESTIMATE": "Estimación al {{percent}}, quedan {{left}}"
+        "ESTIMATE": "Estimación al {{percent}}, quedan {{left}}",
+        "SPRINT": "Presupuesto del sprint al {{percent}}, quedan {{left}}"
       },
       "reached": {
         "BUDGET": "Presupuesto del proyecto agotado ({{sums}})",
-        "ESTIMATE": "Estimación alcanzada ({{sums}})"
+        "ESTIMATE": "Estimación alcanzada ({{sums}})",
+        "SPRINT": "Presupuesto del sprint agotado ({{sums}})"
       },
       "over": {
         "BUDGET": "Presupuesto del proyecto superado: {{percent}} ({{sums}})",
-        "ESTIMATE": "Estimación superada: {{percent}} ({{sums}})"
+        "ESTIMATE": "Estimación superada: {{percent}} ({{sums}})",
+        "SPRINT": "Presupuesto del sprint superado: {{percent}} ({{sums}})"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "Aún no hay presupuestos",
-      "sprints": "Sprints con presupuesto",
-      "onlyMoney": "Solo un presupuesto en dinero que no ves."
+      "sprints": "Sprints con presupuesto"
     }
   }
 }

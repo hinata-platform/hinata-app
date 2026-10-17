@@ -33,16 +33,6 @@ class DashboardRepository {
             as Map<String, dynamic>,
       );
 
-  Future<Map<String, int>> report(
-    String name,
-    Map<String, dynamic> query,
-  ) async =>
-      ((await _api.get('/api/v1/reports/$name', query: query))
-              as Map<String, dynamic>)
-          .map((k, v) => MapEntry(k, (v as num).toInt()));
-
-  /// Daily created/resolved counts for a project over the last [days] —
-  /// the basis for the burndown (cumulative remaining) trend.
   /// The report overview of one project in one call (HIN-157).
   Future<ReportOverview> overview(String projectId, {int days = 30}) async =>
       ReportOverview.fromJson(
@@ -52,16 +42,4 @@ class DashboardRepository {
             )
             as Map<String, dynamic>,
       );
-
-  Future<List<TrendPoint>> createdVsResolved(
-    String projectId, {
-    int days = 30,
-  }) async =>
-      ((await _api.get(
-                '/api/v1/reports/created-vs-resolved',
-                query: {'projectId': projectId, 'days': '$days'},
-              ))
-              as List<dynamic>)
-          .map((e) => TrendPoint.fromJson(e as Map<String, dynamic>))
-          .toList();
 }

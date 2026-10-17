@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math' as math;
 
 import 'package:fl_chart/fl_chart.dart';
@@ -38,7 +37,10 @@ import '../time/budget/budget_history_sheet.dart';
 import '../time/budget/project_usage.dart';
 import 'logo_raster.dart';
 import 'report_pdf.dart';
+import 'report_overview_figures.dart';
 import 'reports_cubit.dart';
+
+part 'report_overview_charts.dart';
 
 /// The report page's overview of one project (HIN-157): how many issues it
 /// holds and how that moved, where they stand, who works on them, where the
@@ -103,6 +105,10 @@ class _OverviewState extends State<_Overview> {
   String? _error;
   bool _noProjects = false;
 
+  /// Counts the loads; an answer to an older one, overtaken by a quicker
+  /// switch of project or span, is dropped.
+  int _request = 0;
+
   @override
   void initState() {
     super.initState();
@@ -134,6 +140,7 @@ class _OverviewState extends State<_Overview> {
   Future<void> _load() async {
     final project = _project;
     if (project == null) return;
+    final request = ++_request;
     setState(() {
       _loading = true;
       _error = null;
@@ -142,17 +149,17 @@ class _OverviewState extends State<_Overview> {
       final overview = await _reports.overview(project.id, days: _span.days);
       // Names only for the people this report names, never the directory.
       final ids = overview.byAssignee.keys
-          .where((id) => id.isNotEmpty)
+          .where((id) => id.isNotEmpty && id != ReportOverview.unassigned)
           .toList();
       final named = ids.isEmpty ? const [] : await _reports.usersByIds(ids);
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() {
         _overview = overview;
         _names = {for (final user in named) user.id: user.displayName};
         _loading = false;
       });
     } on ApiFailure catch (failure) {
-      if (!mounted) return;
+      if (!mounted || request != _request) return;
       setState(() {
         _loading = false;
         _error = failure.message;
@@ -209,7 +216,14 @@ class _OverviewState extends State<_Overview> {
     final project = _project;
     if (overview == null || project == null) return;
     if (format == 'pdf') return _exportPdf(overview, project);
-    final content = format == 'csv' ? _csv(overview) : _json(overview, project);
+    final content = format == 'csv'
+        ? overviewCsv(overview, _labelFor)
+        : overviewJson(
+            overview,
+            projectName: project.name,
+            label: _labelFor,
+            generatedAt: DateTime.now(),
+          );
     final mime = format == 'csv' ? 'text/csv' : 'application/json';
     if (kIsWeb) {
       await launchUrl(
@@ -239,49 +253,16 @@ class _OverviewState extends State<_Overview> {
     if (mounted) showGlassToast(context, message, kind: kind);
   }
 
-  Map<String, Map<String, int>> _sections(ReportOverview overview) => {
-    'issues-by-state': overview.byState,
-    'issues-by-priority': overview.byPriority,
-    'issues-by-assignee': overview.byAssignee,
-    'time-per-activity': overview.timePerActivity,
-  };
-
-  String _labelFor(String report, String key) => switch (report) {
-    'issues-by-state' => stateLabel(key),
-    'issues-by-priority' =>
+  String _labelFor(OverviewSection section, String key) => switch (section) {
+    OverviewSection.state => stateLabel(key),
+    OverviewSection.priority =>
       key.isEmpty ? key : key[0] + key.substring(1).toLowerCase(),
-    'issues-by-assignee' =>
-      key.isEmpty ? context.t('reports.unassigned') : (_names[key] ?? key),
-    _ => key,
+    OverviewSection.assignee =>
+      key == ReportOverview.unassigned || key.isEmpty
+          ? context.t('reports.unassigned')
+          : (_names[key] ?? key),
+    OverviewSection.activity => key,
   };
-
-  String _csv(ReportOverview overview) {
-    String esc(String s) =>
-        s.contains(',') || s.contains('"') ? '"${s.replaceAll('"', '""')}"' : s;
-    final out = StringBuffer('report,label,value\n');
-    _sections(overview).forEach((name, values) {
-      for (final entry in values.entries) {
-        out.writeln(
-          '${esc(name)},${esc(_labelFor(name, entry.key))},${entry.value}',
-        );
-      }
-    });
-    return out.toString();
-  }
-
-  String _json(ReportOverview overview, Project project) =>
-      const JsonEncoder.withIndent('  ').convert({
-        'project': project.name,
-        'days': overview.days,
-        'generatedAt': DateTime.now().toUtc().toIso8601String(),
-        'reports': {
-          for (final section in _sections(overview).entries)
-            section.key: {
-              for (final entry in section.value.entries)
-                _labelFor(section.key, entry.key): entry.value,
-            },
-        },
-      });
 
   Future<void> _exportPdf(ReportOverview overview, Project project) async {
     ServerMeta? server = context.read<AppConfigBloc>().state.meta;
@@ -304,18 +285,15 @@ class _OverviewState extends State<_Overview> {
     if (!mounted) return;
     final now = DateTime.now();
     final locale = Localizations.localeOf(context).toString();
-    final burn = _burndown(overview, project);
+    final burn = burndownOf(overview, project.resolvedStates.toSet());
     final org = (server?.organizationName?.trim().isNotEmpty ?? false)
         ? server!.organizationName!.trim()
         : 'Hinata';
-    PdfSection section(
-      String report,
-      String titleKey, {
-      bool minutes = false,
-    }) => (
-      title: context.t(titleKey),
+    final days = {'days': '${overview.days}'};
+    PdfSection section(OverviewSection report, {bool minutes = false}) => (
+      title: context.t(report.titleKey, variables: days),
       rows: [
-        for (final item in _items(report, _sections(overview)[report]!))
+        for (final item in _items(report, report.valuesOf(overview)))
           (
             label: item.label,
             value: item.value,
@@ -337,28 +315,24 @@ class _OverviewState extends State<_Overview> {
       ),
       totalIssues: overview.totalIssues,
       sections: [
-        section('issues-by-state', 'reports.issues-by-state'),
-        section('issues-by-priority', 'reports.issues-by-priority'),
-        section('issues-by-assignee', 'reports.issues-by-assignee'),
-        section(
-          'time-per-activity',
-          'reports.time-per-activity',
-          minutes: true,
-        ),
+        section(OverviewSection.state),
+        section(OverviewSection.priority),
+        section(OverviewSection.assignee),
+        section(OverviewSection.activity, minutes: true),
       ],
       burndown: burn.points,
       burndownRemaining: burn.remaining,
       pdfTitleLabel: context.t('reports.pdf.title'),
       totalIssuesLabel: context.t('reports.totalIssues'),
-      openLast30DaysLabel: context.t('reports.pdf.openLast30Days'),
+      openOverDaysLabel: context.t('reports.pdf.openOverDays', variables: days),
       breakdownsLabel: context.t('reports.pdf.breakdowns'),
-      burndownTitleLabel: context.t('reports.burndown'),
+      burndownTitleLabel: context.t('reports.burndown', variables: days),
       openRemainingLabel: context.t(
         'reports.remaining',
         variables: {'count': '${burn.remaining}'},
       ),
       noDataLabel: context.t('reports.empty'),
-      axis30dLabel: context.t('reports.windowStart'),
+      axisStartLabel: context.t('reports.windowStart', variables: days),
       axisTodayLabel: context.t('reports.windowEnd'),
       pageFooterTemplate: context.t(
         'reports.pdf.pageFooter',
@@ -373,45 +347,7 @@ class _OverviewState extends State<_Overview> {
     }
   }
 
-  // ── figures ───────────────────────────────────────────────────────────────
-
-  /// The open issues over the span, anchored to today's count, with a
-  /// straight line burning down to zero to read it against.
-  ({List<({int day, double remaining, double ideal})> points, int remaining})
-  _burndown(ReportOverview overview, Project project) {
-    final resolved = project.resolvedStates.toSet();
-    final openNow = overview.byState.entries
-        .where((entry) => !resolved.contains(entry.key))
-        .fold<int>(0, (sum, entry) => sum + entry.value);
-    if (overview.trend.length < 2) {
-      return (points: const [], remaining: openNow);
-    }
-    final running = <int>[];
-    var run = 0;
-    for (final point in overview.trend) {
-      run += point.created - point.resolved;
-      running.add(run);
-    }
-    final remaining = [
-      for (final value in running)
-        math.max(0, openNow - running.last + value).toDouble(),
-    ];
-    final start = remaining.first;
-    final n = remaining.length;
-    return (
-      points: [
-        for (var i = 0; i < n; i++)
-          (
-            day: i,
-            remaining: remaining[i],
-            ideal: n == 1 ? start : start * (1 - i / (n - 1)),
-          ),
-      ],
-      remaining: openNow,
-    );
-  }
-
-  List<LiquidItem> _items(String report, Map<String, int> values) {
+  List<LiquidItem> _items(OverviewSection report, Map<String, int> values) {
     final entries = values.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     return [
@@ -420,14 +356,16 @@ class _OverviewState extends State<_Overview> {
           label: _labelFor(report, entry.key),
           value: entry.value,
           color: switch (report) {
-            'issues-by-state' => AppColors.stateColor(entry.key.toUpperCase()),
-            'issues-by-priority' => AppColors.priorityColor(
+            OverviewSection.state => AppColors.stateColor(
               entry.key.toUpperCase(),
             ),
-            'issues-by-assignee' => hiveHueColor(
+            OverviewSection.priority => AppColors.priorityColor(
+              entry.key.toUpperCase(),
+            ),
+            OverviewSection.assignee => hiveHueColor(
               _names[entry.key] ?? entry.key,
             ),
-            _ => AppColors.accent,
+            OverviewSection.activity => AppColors.accent,
           },
         ),
     ];
@@ -560,7 +498,7 @@ class _OverviewState extends State<_Overview> {
     }
     final overview = _overview!;
     final project = _project!;
-    final burn = _burndown(overview, project);
+    final burn = burndownOf(overview, project.resolvedStates.toSet());
     final module =
         context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
     final cards = <Widget>[
@@ -574,7 +512,7 @@ class _OverviewState extends State<_Overview> {
             ),
             style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
-          child: _Trend(points: burn.points),
+          child: _Trend(points: burn.points, days: overview.days),
         ),
       if (module)
         ProjectUsage(
@@ -612,14 +550,16 @@ class _OverviewState extends State<_Overview> {
         title: context.t('reports.overview.states'),
         child: overview.byState.isEmpty
             ? _empty()
-            : LiquidColumns(items: _items('issues-by-state', overview.byState)),
+            : LiquidColumns(
+                items: _items(OverviewSection.state, overview.byState),
+              ),
       ),
       FrostedCard(
         title: context.t('reports.overview.priorities'),
         child: overview.byPriority.isEmpty
             ? _empty()
             : LiquidRows(
-                items: _items('issues-by-priority', overview.byPriority),
+                items: _items(OverviewSection.priority, overview.byPriority),
               ),
       ),
       FrostedCard(
@@ -627,7 +567,7 @@ class _OverviewState extends State<_Overview> {
         child: overview.byAssignee.isEmpty
             ? _empty()
             : LiquidRows(
-                items: _items('issues-by-assignee', overview.byAssignee),
+                items: _items(OverviewSection.assignee, overview.byAssignee),
               ),
       ),
       FrostedCard(
@@ -635,7 +575,10 @@ class _OverviewState extends State<_Overview> {
         child: overview.timePerActivity.isEmpty
             ? _empty()
             : LiquidRows(
-                items: _items('time-per-activity', overview.timePerActivity),
+                items: _items(
+                  OverviewSection.activity,
+                  overview.timePerActivity,
+                ),
                 format: (minutes) => fmtDuration(context, minutes),
               ),
       ),
@@ -669,224 +612,4 @@ class _OverviewState extends State<_Overview> {
     context.t('reports.empty'),
     style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
   );
-}
-
-/// The four figures over the cards: open, new and done in the span, and the
-/// time recorded in it.
-class _Figures extends StatelessWidget {
-  const _Figures({required this.overview, required this.open});
-
-  final ReportOverview overview;
-  final int open;
-
-  @override
-  Widget build(BuildContext context) {
-    final tiles = [
-      (LucideIcons.inbox, context.t('reports.overview.open'), '$open'),
-      (
-        LucideIcons.circlePlus,
-        context.t(
-          'reports.overview.created',
-          variables: {'days': '${overview.days}'},
-        ),
-        '${overview.createdInSpan}',
-      ),
-      (
-        LucideIcons.circleCheck,
-        context.t(
-          'reports.overview.resolved',
-          variables: {'days': '${overview.days}'},
-        ),
-        '${overview.resolvedInSpan}',
-      ),
-      (
-        LucideIcons.timer,
-        context.t(
-          'reports.overview.recorded',
-          variables: {'days': '${overview.days}'},
-        ),
-        fmtDuration(context, overview.minutesInSpan),
-      ),
-    ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 860
-            ? 4
-            : constraints.maxWidth >= 420
-            ? 2
-            : 1;
-        const gap = 14.0;
-        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: [
-            for (final (icon, label, value) in tiles)
-              SizedBox(
-                width: width,
-                child: Semantics(
-                  label: '$label: $value',
-                  excludeSemantics: true,
-                  child: FrostedCard(
-                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: AppColors.accentSoft,
-                                borderRadius: BorderRadius.circular(9),
-                              ),
-                              child: Icon(
-                                icon,
-                                size: 16,
-                                color: AppColors.accentText,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: AppType.label,
-                                  color: AppColors.inkSoft,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          value,
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontBrand,
-                            fontSize: AppType.hero,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.6,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-/// Open issues over the span as a honey area, with the straight line it would
-/// follow to zero dashed beside it.
-class _Trend extends StatelessWidget {
-  const _Trend({required this.points});
-
-  final List<({int day, double remaining, double ideal})> points;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = HoneyGlass.liquid(BudgetLevel.within);
-    final top = points
-        .map((p) => math.max(p.remaining, p.ideal))
-        .fold<double>(1, math.max);
-    final last = (points.length - 1).toDouble();
-    final label = TextStyle(
-      fontSize: AppType.caption,
-      color: AppColors.inkFaint,
-    );
-    return SizedBox(
-      height: 190,
-      child: LineChart(
-        duration: MediaQuery.disableAnimationsOf(context)
-            ? Duration.zero
-            : const Duration(milliseconds: 400),
-        LineChartData(
-          minX: 0,
-          maxX: last,
-          minY: 0,
-          maxY: top * 1.12,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: math.max(1, (top / 4).ceilToDouble()),
-            getDrawingHorizontalLine: (_) =>
-                FlLine(color: AppColors.hairline2, strokeWidth: 1),
-          ),
-          titlesData: FlTitlesData(
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            leftTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 30,
-                interval: math.max(1, (top / 4).ceilToDouble()),
-                getTitlesWidget: (value, meta) => SideTitleWidget(
-                  meta: meta,
-                  child: Text('${value.round()}', style: label),
-                ),
-              ),
-            ),
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                reservedSize: 22,
-                interval: last <= 0 ? 1 : last,
-                getTitlesWidget: (value, meta) => SideTitleWidget(
-                  meta: meta,
-                  child: Text(
-                    value <= 0
-                        ? context.t('reports.windowStart')
-                        : context.t('reports.windowEnd'),
-                    style: label,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          borderData: FlBorderData(show: false),
-          lineTouchData: const LineTouchData(enabled: false),
-          lineBarsData: [
-            LineChartBarData(
-              spots: [
-                for (final p in points) FlSpot(p.day.toDouble(), p.ideal),
-              ],
-              color: AppColors.inkFaint,
-              barWidth: 1.4,
-              dashArray: const [5, 5],
-              dotData: const FlDotData(show: false),
-            ),
-            LineChartBarData(
-              spots: [
-                for (final p in points) FlSpot(p.day.toDouble(), p.remaining),
-              ],
-              color: colors[2],
-              barWidth: 2.6,
-              dotData: const FlDotData(show: false),
-              belowBarData: BarAreaData(
-                show: true,
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    colors[0].withValues(alpha: 0.55),
-                    colors[1].withValues(alpha: 0.06),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
