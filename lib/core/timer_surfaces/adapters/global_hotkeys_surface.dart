@@ -87,6 +87,7 @@ class GlobalHotkeysSurface extends TimerSurface {
     final shown = trayAvailable?.value ?? true;
     final next = Map<String, HotKeyResult>.of(status.results.value);
     final bind = <String, HotKey>{};
+    final release = <String>[];
     var changed = false;
     // Only a combination that changed is bound again: releasing the other one
     // for a moment would hand it to whichever app asks first.
@@ -97,14 +98,23 @@ class GlobalHotkeysSurface extends TimerSurface {
       if (hotKey == bound) continue;
       changed = true;
       if (hotKey == null) {
-        await _binder.unregister(id);
+        release.add(id);
         next.remove(id);
       } else if (isSafeHotkey(hotKey, platform)) {
         bind[id] = hotKey;
       } else {
         // Released all the same: the id must not go on meaning the old one.
-        await _binder.unregister(id);
+        release.add(id);
         next[id] = HotKeyResult.unsupported;
+      }
+    }
+    // Both at once in one call: on Linux every release binds the rest in a
+    // new portal session, and one for the other shortcut alone is wasted.
+    if (release.length == 2) {
+      await _binder.unregisterAll();
+    } else {
+      for (final id in release) {
+        await _binder.unregister(id);
       }
     }
     _toggle = shown ? state.toggleHotkey : null;
