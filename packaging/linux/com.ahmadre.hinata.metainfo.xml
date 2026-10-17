@@ -150,32 +150,32 @@
   -->
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/dashboard.png</image>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/45298d58e47d3adf6b808aef71013def5316c8d0/docs/screenshots/linux/dashboard.png</image>
       <caption>Your projects, on your server</caption>
       <caption xml:lang="de">Deine Projekte, auf deinem Server</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/board.png</image>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/45298d58e47d3adf6b808aef71013def5316c8d0/docs/screenshots/linux/board.png</image>
       <caption>One board for the whole sprint</caption>
       <caption xml:lang="de">Ein Board für den ganzen Sprint</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/issues.png</image>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/45298d58e47d3adf6b808aef71013def5316c8d0/docs/screenshots/linux/issues.png</image>
       <caption>Find the issue you need</caption>
       <caption xml:lang="de">Das richtige Ticket schnell gefunden</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/gantt.png</image>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/45298d58e47d3adf6b808aef71013def5316c8d0/docs/screenshots/linux/gantt.png</image>
       <caption>Which task holds up the rest?</caption>
       <caption xml:lang="de">Welche Aufgabe bremst den Rest?</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/reports.png</image>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/45298d58e47d3adf6b808aef71013def5316c8d0/docs/screenshots/linux/reports.png</image>
       <caption>Will the team finish the sprint?</caption>
       <caption xml:lang="de">Schafft das Team den Sprint?</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/febbfeb9fa326f1ee19d144511cd0f09018d03b3/docs/screenshots/linux/comments.png</image>
+      <image>https://raw.githubusercontent.com/hinata-platform/hinata-app/45298d58e47d3adf6b808aef71013def5316c8d0/docs/screenshots/linux/comments.png</image>
       <caption>Sort it out on the issue</caption>
       <caption xml:lang="de">Fragen klären, direkt am Ticket</caption>
     </screenshot>
