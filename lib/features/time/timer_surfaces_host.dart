@@ -301,10 +301,14 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
     );
   }
 
-  /// Gated (signed out, module off) every surface is cleared. Otherwise even
-  /// "no timer" is a state the surfaces draw: a countdown stops itself the
-  /// moment it ends, and clearing then would also wipe the title's short flash
-  /// that says so.
+  /// Gated for good (signed out, module off) every surface is cleared. Gated
+  /// only while the session or the configuration is still read back, nothing
+  /// is touched: every launch starts like that, also the ones iOS makes for
+  /// Siri or a control, and clearing then would end the Live Activity and
+  /// blank the widgets a moment before the same state is drawn again.
+  /// Otherwise even "no timer" is a state the surfaces draw: a countdown stops
+  /// itself the moment it ends, and clearing then would also wipe the title's
+  /// short flash that says so.
   void _sync() {
     if (!mounted) return;
     if (_gated) {
@@ -312,8 +316,8 @@ class _TimerSurfacesHostState extends State<TimerSurfacesHost>
       if (_signedOutForGood) {
         _keepSnapshot(null);
         unawaited(_intentProjects?.clear());
+        _enqueue(_coordinator.clearAll);
       }
-      _enqueue(_coordinator.clearAll);
       return;
     }
     unawaited(_intentProjects?.refresh(owner: _owner));
