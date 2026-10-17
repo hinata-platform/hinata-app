@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/widgets/budget/budget.dart';
+import '../time/budget/project_usage.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
@@ -572,11 +574,38 @@ class _KanbanViewState extends State<_KanbanView>
   /// The same tools on a wide window: the search as a field on the leading
   /// edge, the people's faces, grouping and the filter against the trailing
   /// one, wrapping to the room the window leaves them.
+  /// The project's time budget beside the board's head (HIN-152), only for a
+  /// board of one project: on a board across several, one figure would be
+  /// the wrong one for most of the cards.
+  List<Widget> _budgetSlot(BoardWallState wall) {
+    final projects = wall.board?.projectIds ?? const <String>[];
+    if (projects.length != 1) return const [];
+    return [
+      ProjectUsage(
+        projectId: projects.single,
+        builder: (context, usage) {
+          final budget = usage?.budget;
+          if (budget == null) return const SizedBox.shrink();
+          return Padding(
+            padding: const EdgeInsetsDirectional.only(start: 12),
+            child: BudgetCapsule(
+              label: context.t('budget.timeBudget'),
+              gauge: budget,
+            ),
+          );
+        },
+      ),
+    ];
+  }
+
   Widget _wideControls(BoardHeadState headState) {
     final people = headPeople(headState);
+    final wall = _wall.state;
+    final sprintShown = _activeSprint(wall) != null;
     return WideToolbar(
       leading: [headSearchField()],
       trailing: [
+        if (!sprintShown) ..._budgetSlot(wall),
         if (people != null) BoardPeopleSlot(child: people),
         if (_mode == BoardViewMode.board)
           headGroupBy(headState, crossProject: _crossProject),
@@ -596,6 +625,7 @@ class _KanbanViewState extends State<_KanbanView>
   Widget _sprintRow(BoardWallState wall, Sprint sprint) => Row(
     children: [
       Expanded(child: _SprintHeader(sprint: sprint)),
+      ..._budgetSlot(wall),
       if (wall.sprints.length > 1) ...[
         const SizedBox(width: 12),
         _SprintSelector(

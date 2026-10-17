@@ -185,6 +185,7 @@ void main() {
       DashboardCard.kpis,
       DashboardCard.focus,
       DashboardCard.away,
+      DashboardCard.budgets,
       DashboardCard.completion,
       DashboardCard.tracker,
       DashboardCard.git,
@@ -254,6 +255,7 @@ void main() {
       () {
         const optional = [
           DashboardCard.away,
+          DashboardCard.budgets,
           DashboardCard.completion,
           DashboardCard.tracker,
           DashboardCard.git,

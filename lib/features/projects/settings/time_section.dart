@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/blocs/time_usage_cubit.dart';
+import '../../../core/widgets/budget/budget.dart';
+import '../../time/budget/project_usage.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/blocs/time_policy_cubit.dart';
 import '../../../core/i18n/i18n.dart';
@@ -159,6 +162,12 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
         _saving = false;
       });
       showGlassToast(context, context.t('common.saved'));
+      // A new budget or warning share changes what the bars say everywhere.
+      unawaited(
+        context.read<TimeUsageCubit>().refresh(
+          context.read<ProjectTimeSettingsCubit>().projectId,
+        ),
+      );
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       setState(() {
@@ -205,6 +214,39 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                       ),
                     ),
                   ),
+                ),
+                // What the project has used against it, under the field that
+                // sets it (HIN-152). Nothing while there is no budget and no
+                // estimate to measure against.
+                ProjectUsage(
+                  projectId: context.read<ProjectTimeSettingsCubit>().projectId,
+                  builder: (context, usage) {
+                    final budget = usage?.budget;
+                    final estimates = usage?.estimates;
+                    if (budget == null && estimates == null) {
+                      return const SizedBox.shrink();
+                    }
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (budget != null)
+                            BudgetMeter(
+                              label: context.t('budget.timeBudget'),
+                              gauge: budget,
+                            ),
+                          if (budget != null && estimates != null)
+                            const SizedBox(height: 18),
+                          if (estimates != null)
+                            BudgetMeter(
+                              label: context.t('budget.estimates'),
+                              gauge: estimates,
+                            ),
+                        ],
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 14),
                 _TriChoice(
