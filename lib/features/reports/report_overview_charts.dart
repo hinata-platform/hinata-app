@@ -37,76 +37,17 @@ class _Figures extends StatelessWidget {
         fmtDuration(context, overview.minutesInSpan),
       ),
     ];
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final columns = constraints.maxWidth >= 860
-            ? 4
-            : constraints.maxWidth >= 420
-            ? 2
-            : 1;
-        const gap = 14.0;
-        final width = (constraints.maxWidth - gap * (columns - 1)) / columns;
-        return Wrap(
-          spacing: gap,
-          runSpacing: gap,
-          children: [
-            for (final (icon, label, value) in tiles)
-              SizedBox(
-                width: width,
-                child: Semantics(
-                  label: '$label: $value',
-                  excludeSemantics: true,
-                  child: FrostedCard(
-                    padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                color: AppColors.accentSoft,
-                                borderRadius: BorderRadius.circular(9),
-                              ),
-                              child: Icon(
-                                icon,
-                                size: 16,
-                                color: AppColors.accentInk,
-                              ),
-                            ),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                label,
-                                style: TextStyle(
-                                  fontSize: AppType.label,
-                                  color: AppColors.inkSoft,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          value,
-                          style: TextStyle(
-                            fontFamily: AppTheme.fontBrand,
-                            fontSize: AppType.hero,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: -0.6,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
+    return FigureTiles(
+      tiles: [
+        for (final (icon, label, value) in tiles)
+          (
+            icon: icon,
+            label: label,
+            value: value,
+            note: null,
+            valueColor: null,
+          ),
+      ],
     );
   }
 }

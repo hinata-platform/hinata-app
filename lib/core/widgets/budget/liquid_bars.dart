@@ -10,6 +10,13 @@ import 'honey_glass.dart';
 /// One value of a distribution: what it is called, how much, in which colour.
 typedef LiquidItem = ({String label, int value, Color color});
 
+/// How full a vessel stands: against its own limit when there is one, else
+/// against the largest value.
+double fillOf(LiquidItem item, int top, int Function(LiquidItem)? limitOf) {
+  final limit = limitOf?.call(item) ?? top;
+  return limit <= 0 ? 0 : (item.value / limit).clamp(0.0, 1.0);
+}
+
 /// A distribution as glass capsules standing side by side, each filled from
 /// the bottom with its own colour, the figure over it and the name under it
 /// (HIN-157). Heights follow the largest value, so the fullest capsule is
@@ -19,12 +26,23 @@ class LiquidColumns extends StatelessWidget {
     super.key,
     required this.items,
     this.format,
+    this.limitOf,
     this.height = 132,
   });
 
   final List<LiquidItem> items;
   final String Function(int value)? format;
+
+  /// Each item's own limit, for a share rather than a distribution: the
+  /// vessel fills to value of limit, and the figure reads "value/limit".
+  final int Function(LiquidItem item)? limitOf;
   final double height;
+
+  String _figure(LiquidItem item) {
+    final value = format?.call(item.value) ?? '${item.value}';
+    final limit = limitOf?.call(item);
+    return limit == null ? value : '$value/${format?.call(limit) ?? limit}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,66 +54,72 @@ class LiquidColumns extends StatelessWidget {
         final width = (constraints.maxWidth / items.length).clamp(44.0, 84.0);
         return SingleChildScrollView(
           scrollDirection: Axis.horizontal,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              for (final item in items)
-                SizedBox(
-                  width: width,
-                  child: Semantics(
-                    label:
-                        '${item.label}: ${format?.call(item.value) ?? item.value}',
-                    excludeSemantics: true,
-                    child: Column(
-                      children: [
-                        Text(
-                          format?.call(item.value) ?? '${item.value}',
-                          style: TextStyle(
-                            fontSize: AppType.label,
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.ink,
-                            fontFeatures: const [FontFeature.tabularFigures()],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          width: width * 0.62,
-                          height: height,
-                          child: TweenAnimationBuilder<double>(
-                            duration: MediaQuery.disableAnimationsOf(context)
-                                ? Duration.zero
-                                : const Duration(milliseconds: 800),
-                            curve: Curves.easeOutBack,
-                            tween: Tween(
-                              begin: 0,
-                              end: top == 0 ? 0 : item.value / top,
+          // Spread over the card when they fit, scrolled when they do not.
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (final item in items)
+                  SizedBox(
+                    width: width,
+                    child: Semantics(
+                      label: '${item.label}: ${_figure(item)}',
+                      excludeSemantics: true,
+                      child: Column(
+                        children: [
+                          Text(
+                            _figure(item),
+                            style: TextStyle(
+                              fontSize: AppType.label,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.ink,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
                             ),
-                            builder: (context, fill, _) => CustomPaint(
-                              painter: _ColumnPainter(
-                                fill: fill,
-                                colors: HoneyGlass.tinted(item.color),
-                                dark: dark,
+                          ),
+                          const SizedBox(height: 6),
+                          SizedBox(
+                            width: width * 0.62,
+                            height: height,
+                            child: TweenAnimationBuilder<double>(
+                              duration: MediaQuery.disableAnimationsOf(context)
+                                  ? Duration.zero
+                                  : const Duration(milliseconds: 800),
+                              curve: Curves.easeOutBack,
+                              tween: Tween(
+                                begin: 0,
+                                end: fillOf(item, top, limitOf),
+                              ),
+                              builder: (context, fill, _) => CustomPaint(
+                                painter: _ColumnPainter(
+                                  fill: fill,
+                                  colors: HoneyGlass.tinted(item.color),
+                                  dark: dark,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          item.label,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: AppType.caption,
-                            height: 1.3,
-                            color: AppColors.inkSoft,
+                          const SizedBox(height: 8),
+                          Text(
+                            item.label,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: AppType.caption,
+                              height: 1.3,
+                              color: AppColors.inkSoft,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -144,10 +168,25 @@ class _ColumnPainter extends CustomPainter {
 /// share of the largest, the figure (HIN-157). For many values or long names,
 /// people or activities.
 class LiquidRows extends StatelessWidget {
-  const LiquidRows({super.key, required this.items, this.format});
+  const LiquidRows({
+    super.key,
+    required this.items,
+    this.format,
+    this.limitOf,
+    this.figure,
+  });
 
   final List<LiquidItem> items;
   final String Function(int value)? format;
+
+  /// As [LiquidColumns.limitOf]: each tube filled to its own limit.
+  final int Function(LiquidItem item)? limitOf;
+
+  /// The figure beside a tube, when it says more than the value.
+  final String Function(LiquidItem item)? figure;
+
+  String _figure(LiquidItem item) =>
+      figure?.call(item) ?? format?.call(item.value) ?? '${item.value}';
 
   @override
   Widget build(BuildContext context) {
@@ -160,7 +199,7 @@ class LiquidRows extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
             child: Semantics(
-              label: '${item.label}: ${format?.call(item.value) ?? item.value}',
+              label: '${item.label}: ${_figure(item)}',
               excludeSemantics: true,
               child: Row(
                 children: [
@@ -185,7 +224,7 @@ class LiquidRows extends StatelessWidget {
                         flipX: Directionality.of(context) == TextDirection.rtl,
                         child: CustomPaint(
                           painter: _RowPainter(
-                            fill: top == 0 ? 0 : item.value / top,
+                            fill: fillOf(item, top, limitOf),
                             colors: HoneyGlass.tinted(item.color),
                             dark: dark,
                           ),
@@ -199,9 +238,9 @@ class LiquidRows extends StatelessWidget {
                     // both grow with the text size so neither wraps.
                     width: MediaQuery.textScalerOf(
                       context,
-                    ).scale(format == null ? 44 : 92),
+                    ).scale(format == null && figure == null ? 44 : 92),
                     child: Text(
-                      format?.call(item.value) ?? '${item.value}',
+                      _figure(item),
                       textAlign: TextAlign.end,
                       style: TextStyle(
                         fontSize: AppType.label,

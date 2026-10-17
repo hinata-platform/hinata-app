@@ -21,9 +21,9 @@ import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/budget/budget.dart';
+import '../../core/widgets/figure_tiles.dart';
 import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/glass_filter_bar.dart'
     show GlassPill, kGlassControlHeight;
