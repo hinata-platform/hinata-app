@@ -5131,6 +5131,7 @@
       "title": "Budgets",
       "empty": "Kein Projekt mit Budget",
       "emptyHint": "Leitungen legen ein Zeitbudget in den Projekt-Einstellungen fest."
-    }
+    },
+    "pending": "dieser Eintrag +{{amount}}"
   }
 }

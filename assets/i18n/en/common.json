@@ -5131,6 +5131,7 @@
       "title": "Budgets",
       "empty": "No project with a budget",
       "emptyHint": "Leads set a time budget in the project settings."
-    }
+    },
+    "pending": "this entry +{{amount}}"
   }
 }

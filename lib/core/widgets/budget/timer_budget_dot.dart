@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../models/time_usage_models.dart';
 import '../../theme/app_type.dart';
+import 'budget_meter.dart' show HoneyTubePainter;
 import 'budget_style.dart';
 
-/// The running timer's issue or project as a dot and a percent, for the timer
-/// bar where every pixel of width is spoken for (HIN-151). The figure is always
-/// there: the dot's colour only repeats it.
+/// The running timer's issue or project as a tiny honey tube and a percent,
+/// for the timer bar where every pixel of width is spoken for (HIN-151). The
+/// figure is always there; the tube only repeats it.
 class TimerBudgetDot extends StatelessWidget {
   const TimerBudgetDot({
     super.key,
@@ -28,27 +29,27 @@ class TimerBudgetDot extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (level == BudgetLevel.over)
-            Icon(
-              BudgetStyle.icon(level),
-              size: 12,
-              color: BudgetStyle.ink(level),
-            )
-          else
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                color: BudgetStyle.fill(level),
-                shape: BoxShape.circle,
+          SizedBox(
+            width: 30,
+            height: 10,
+            child: Transform.flip(
+              flipX: Directionality.of(context) == TextDirection.rtl,
+              child: CustomPaint(
+                painter: HoneyTubePainter(
+                  fill: gauge.fraction.clamp(0.0, 1.0),
+                  level: level,
+                  nearAt: gauge.nearPercent / 100,
+                  dark: Theme.of(context).brightness == Brightness.dark,
+                ),
               ),
             ),
-          const SizedBox(width: 5),
+          ),
+          const SizedBox(width: 6),
           Text(
             BudgetStyle.percent(context, gauge),
             style: TextStyle(
               fontSize: AppType.caption,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w700,
               color: BudgetStyle.ink(level),
               fontFeatures: const [FontFeature.tabularFigures()],
             ),

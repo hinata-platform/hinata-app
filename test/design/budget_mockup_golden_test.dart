@@ -326,7 +326,8 @@ class _EntryForm extends StatelessWidget {
         const BudgetNotice(
           kind: BudgetNoticeKind.issueEstimate,
           subject: 'HIN-142',
-          gauge: BudgetGauge(used: 7 * 60, limit: 8 * 60),
+          gauge: BudgetGauge(used: 5 * 60, limit: 8 * 60),
+          pending: 150,
         ),
         const SizedBox(height: 8),
         const BudgetNotice(
@@ -440,36 +441,29 @@ class _Dashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          context.t('budget.dashboard.title'),
-          style: TextStyle(
-            fontFamily: AppTheme.fontBrand,
-            fontSize: AppType.title,
-            fontWeight: FontWeight.w600,
-            color: AppColors.ink,
-          ),
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [AppColors.primaryDeep, AppColors.primary],
         ),
-        const SizedBox(height: 14),
-        Wrap(
-          alignment: WrapAlignment.spaceAround,
-          spacing: 8,
-          runSpacing: 16,
-          children: [
-            for (final (name, gauge) in const [
-              ('Mitgliederportal', BudgetGauge(used: 64 * 60, limit: 50 * 60)),
-              (
-                'Website-Relaunch',
-                BudgetGauge(used: 101 * 60, limit: 120 * 60),
-              ),
-              ('Interne Tools', BudgetGauge(used: 31 * 60, limit: 80 * 60)),
-            ])
-              BudgetRing(label: name, gauge: gauge, onTap: () {}),
-          ],
-        ),
-      ],
+        borderRadius: BorderRadius.circular(22),
+      ),
+      child: Wrap(
+        alignment: WrapAlignment.spaceAround,
+        spacing: 8,
+        runSpacing: 16,
+        children: [
+          for (final (name, gauge) in const [
+            ('Mitgliederportal', BudgetGauge(used: 64 * 60, limit: 50 * 60)),
+            ('Website-Relaunch', BudgetGauge(used: 101 * 60, limit: 120 * 60)),
+            ('Interne Tools', BudgetGauge(used: 31 * 60, limit: 80 * 60)),
+          ])
+            BudgetCell(label: name, gauge: gauge, onTap: () {}),
+        ],
+      ),
     );
   }
 }
