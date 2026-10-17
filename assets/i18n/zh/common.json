@@ -638,7 +638,7 @@
       "dropHere": "松开即可添加附件",
       "download": "下载",
       "remove": "移除",
-      "bulkActions": "更多操作",
+      "bulkActions": "附件操作",
       "downloadAll": "全部下载（{{count}}）",
       "deleteAll": "全部删除（{{count}}）",
       "archivePreparing": "正在准备压缩包…",

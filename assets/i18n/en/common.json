@@ -638,7 +638,7 @@
       "dropHere": "Drop to attach",
       "download": "Download",
       "remove": "Remove",
-      "bulkActions": "More actions",
+      "bulkActions": "Attachment actions",
       "downloadAll": "Download all ({{count}})",
       "deleteAll": "Delete all ({{count}})",
       "archivePreparing": "Preparing archive…",

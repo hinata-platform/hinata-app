@@ -638,7 +638,7 @@
       "dropHere": "Отпустите, чтобы прикрепить",
       "download": "Скачать",
       "remove": "Удалить",
-      "bulkActions": "Другие действия",
+      "bulkActions": "Действия с вложениями",
       "downloadAll": "Скачать все ({{count}})",
       "deleteAll": "Удалить все ({{count}})",
       "archivePreparing": "Готовим архив…",

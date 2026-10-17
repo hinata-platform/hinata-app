@@ -638,7 +638,7 @@
       "dropHere": "Déposez pour joindre",
       "download": "Télécharger",
       "remove": "Retirer",
-      "bulkActions": "Autres actions",
+      "bulkActions": "Actions sur les pièces jointes",
       "downloadAll": "Tout télécharger ({{count}})",
       "deleteAll": "Tout supprimer ({{count}})",
       "archivePreparing": "Préparation de l'archive…",

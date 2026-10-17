@@ -638,7 +638,7 @@
       "dropHere": "Suelta para adjuntar",
       "download": "Descargar",
       "remove": "Quitar",
-      "bulkActions": "Más acciones",
+      "bulkActions": "Acciones de adjuntos",
       "downloadAll": "Descargar todo ({{count}})",
       "deleteAll": "Eliminar todo ({{count}})",
       "archivePreparing": "Preparando el archivo comprimido…",
