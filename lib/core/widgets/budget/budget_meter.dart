@@ -95,6 +95,7 @@ class BudgetMeter extends StatelessWidget {
               child: SizedBox(
                 height: tubeHeight,
                 child: _AnimatedTube(
+                  label: label,
                   gauge: gauge,
                   pending: pending,
                   dark: Theme.of(context).brightness == Brightness.dark,
@@ -173,11 +174,14 @@ class BudgetMeter extends StatelessWidget {
 /// still when the reader asks for less motion.
 class _AnimatedTube extends StatelessWidget {
   const _AnimatedTube({
+    required this.label,
     required this.gauge,
     required this.pending,
     required this.dark,
   });
 
+  /// Whose tube this is, so it rises from empty only the first time.
+  final String label;
   final BudgetGauge? gauge;
   final int pending;
   final bool dark;
@@ -194,7 +198,7 @@ class _AnimatedTube extends StatelessWidget {
           ? Duration.zero
           : const Duration(milliseconds: 900),
       curve: Curves.easeOutBack,
-      tween: Tween(begin: 0, end: target),
+      tween: Tween(begin: BudgetFill.begin(label, gauge, target), end: target),
       // Honey fills from where reading starts: from the right in Arabic.
       builder: (context, value, _) => Transform.flip(
         flipX: Directionality.of(context) == TextDirection.rtl,
@@ -277,7 +281,9 @@ class HoneyTubePainter extends CustomPainter {
     if (showScale) {
       final tick = Paint()
         ..strokeWidth = 1
-        ..color = (dark ? const Color(0x59FFFFFF) : const Color(0x332D2B55));
+        ..color = dark
+            ? Colors.white.withValues(alpha: 0x59 / 255)
+            : AppColors.glassShade.withValues(alpha: 0x33 / 255);
       for (final at in const [0.25, 0.5, 0.75]) {
         if ((at - nearAt).abs() < 0.04) continue;
         final x = inner.left + inner.width * at;

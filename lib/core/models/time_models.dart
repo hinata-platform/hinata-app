@@ -333,7 +333,7 @@ class BudgetWarning extends Equatable {
     percent: (json['percent'] as num?)?.toInt() ?? 0,
   );
 
-  /// `BUDGET` or `ESTIMATE`.
+  /// `BUDGET`, `ESTIMATE` or `SPRINT`.
   final String kind;
 
   /// From the limit on, rather than from the warning share.

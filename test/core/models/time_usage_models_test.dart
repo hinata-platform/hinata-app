@@ -84,4 +84,37 @@ void main() {
     final member = ProjectTimeUsage.fromJson(const {'projectId': 'p'});
     expect(member.money, isNull);
   });
+
+  test('a report page reads its ranked budgets, forecasts and sprints', () {
+    final page = BudgetReportPage.fromJson(const {
+      'items': [
+        {'projectId': 'p1', 'budgetMinutes': 600, 'usedMinutes': 540},
+      ],
+      'names': {'p1': 'Hinata'},
+      'total': 7,
+      'forecasts': {
+        'p1': {'dailyMinutes': 30, 'dataDays': 5, 'confidence': 'OK'},
+      },
+      'sprints': [
+        {
+          'sprintId': 's1',
+          'name': 'Sprint 1',
+          'boardName': 'Board',
+          'budgetMinutes': 120,
+          'usedMinutes': 60,
+          'nearPercent': 80,
+        },
+      ],
+    });
+
+    expect(page.budgets.total, 7);
+    expect(page.budgets.names['p1'], 'Hinata');
+    expect(page.budgets.forecasts['p1']?.lowConfidence, isFalse);
+    expect(page.sprints.single.board, 'Board');
+    expect(page.sprints.single.gauge?.percent, 50);
+  });
+
+  test('a server that sends no forecasts leaves none', () {
+    expect(TopBudgets.fromJson(const {'items': []}).forecasts, isEmpty);
+  });
 }

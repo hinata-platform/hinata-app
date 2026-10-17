@@ -62,7 +62,7 @@ class BudgetCapsule extends StatelessWidget {
           ? Duration.zero
           : const Duration(milliseconds: 700),
       curve: Curves.easeOutCubic,
-      tween: Tween(begin: 0, end: fill),
+      tween: Tween(begin: BudgetFill.begin(label, gauge, fill), end: fill),
       builder: (context, value, _) => CustomPaint(
         painter: _CapsulePainter(
           fill: value,

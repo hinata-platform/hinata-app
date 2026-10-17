@@ -29,12 +29,12 @@ class ReportPdfData {
     required this.burndownRemaining,
     required this.pdfTitleLabel,
     required this.totalIssuesLabel,
-    required this.openLast30DaysLabel,
+    required this.openOverDaysLabel,
     required this.breakdownsLabel,
     required this.burndownTitleLabel,
     required this.openRemainingLabel,
     required this.noDataLabel,
-    required this.axis30dLabel,
+    required this.axisStartLabel,
     required this.axisTodayLabel,
     required this.pageFooterTemplate,
     this.logoBytes,
@@ -59,12 +59,12 @@ class ReportPdfData {
 
   final String pdfTitleLabel;
   final String totalIssuesLabel;
-  final String openLast30DaysLabel;
+  final String openOverDaysLabel;
   final String breakdownsLabel;
   final String burndownTitleLabel;
   final String openRemainingLabel;
   final String noDataLabel;
-  final String axis30dLabel;
+  final String axisStartLabel;
   final String axisTodayLabel;
   final String pageFooterTemplate;
 }
@@ -276,7 +276,7 @@ pw.Widget _summaryRow(ReportPdfData data) {
   return pw.Row(
     children: [
       stat('${data.totalIssues}', data.totalIssuesLabel),
-      stat('${data.burndownRemaining}', data.openLast30DaysLabel),
+      stat('${data.burndownRemaining}', data.openOverDaysLabel),
       stat('${data.sections.length}', data.breakdownsLabel),
     ],
   );
@@ -335,7 +335,7 @@ pw.Widget _burndownSection(ReportPdfData data) {
                 [0, lastDay],
                 divisions: false,
                 buildLabel: (v) => pw.Text(
-                  v == 0 ? data.axis30dLabel : data.axisTodayLabel,
+                  v == 0 ? data.axisStartLabel : data.axisTodayLabel,
                   style: const pw.TextStyle(fontSize: 8, color: _inkFaint),
                 ),
               ),

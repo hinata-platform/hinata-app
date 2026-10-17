@@ -5,10 +5,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/api/api_client.dart';
-import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/blocs/time_usage_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/time_usage_models.dart';
-import '../../../core/repositories/time_usage_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/util/duration_input.dart';
@@ -38,10 +37,23 @@ class _SprintBudgetState extends State<SprintBudget> {
   SprintTimeUsage? _usage;
   String? _asked;
 
+  /// A saved entry may have moved the sprint: read it again then.
+  StreamSubscription<int>? _saves;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    _saves ??= TimeUsageCubit.maybeOf(context)?.stream
+        .map((state) => state.saves)
+        .distinct()
+        .listen((_) => _load(again: true));
     _load();
+  }
+
+  @override
+  void dispose() {
+    unawaited(_saves?.cancel());
+    super.dispose();
   }
 
   @override
@@ -54,19 +66,15 @@ class _SprintBudgetState extends State<SprintBudget> {
     final id = widget.sprintId;
     if (id == _asked && !again) return;
     _asked = id;
-    try {
-      final on =
-          context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ??
-          false;
-      if (!on) return;
-      unawaited(
-        context.read<TimeUsageRepository>().sprint(id).then((usage) {
-          if (mounted && _asked == id) setState(() => _usage = usage);
-        }, onError: (Object _) {}),
-      );
-    } on ProviderNotFoundException {
-      return;
-    }
+    final cubit = TimeUsageCubit.maybeOf(context);
+    if (cubit == null) return;
+    unawaited(
+      cubit.sprint(id).then((usage) {
+        if (mounted && _asked == id && usage != null) {
+          setState(() => _usage = usage);
+        }
+      }),
+    );
   }
 
   Future<void> _edit() async {
@@ -137,7 +145,7 @@ class _SprintBudgetFormState extends State<_SprintBudgetForm> {
       _error = null;
     });
     try {
-      final saved = await context.read<TimeUsageRepository>().setSprintBudget(
+      final saved = await context.read<TimeUsageCubit>().setSprintBudget(
         widget.usage.sprintId,
         minutes,
       );
