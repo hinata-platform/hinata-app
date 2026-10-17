@@ -5137,7 +5137,12 @@
         "reachedTitle": "Sprintbudget ausgeschöpft"
       },
       "nearBody": "{{subject}} steht bei {{sums}}. Du kannst wie gewohnt speichern.",
-      "overBody": "{{subject}} steht bei {{sums}}. Dein Eintrag wird trotzdem gespeichert."
+      "overBody": "{{subject}} steht bei {{sums}}. Dein Eintrag wird trotzdem gespeichert.",
+      "money": {
+        "nearTitle": "Noch {{amount}} im Geldbudget",
+        "overTitle": "Geldbudget überschritten",
+        "reachedTitle": "Geldbudget ausgeschöpft"
+      }
     },
     "dashboard": {
       "title": "Budgets",
@@ -5163,6 +5168,18 @@
     "subject": {
       "project": "Das Projekt",
       "issue": "Der Vorgang"
+    },
+    "money": {
+      "label": "Geldbudget",
+      "hint": "z. B. 6.000 — leer für kein Geldbudget",
+      "invalid": "Das ist kein Betrag",
+      "kind": "Gemessen an",
+      "kinds": {
+        "BILLABLE": "Erlös (abrechenbare Einträge)",
+        "COST": "Kosten (alle Einträge)"
+      },
+      "revenue": "Geldbudget (Erlös)",
+      "cost": "Geldbudget (Kosten)"
     }
   }
 }

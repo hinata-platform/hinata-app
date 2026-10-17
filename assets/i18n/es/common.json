@@ -5137,7 +5137,12 @@
         "reachedTitle": "Presupuesto del sprint agotado"
       },
       "nearBody": "{{subject}} está en {{sums}}. Puedes guardar como siempre.",
-      "overBody": "{{subject}} está en {{sums}}. Tu registro se guarda igualmente."
+      "overBody": "{{subject}} está en {{sums}}. Tu registro se guarda igualmente.",
+      "money": {
+        "nearTitle": "Quedan {{amount}} del presupuesto en dinero",
+        "overTitle": "Presupuesto en dinero superado",
+        "reachedTitle": "Presupuesto en dinero agotado"
+      }
     },
     "dashboard": {
       "title": "Presupuestos",
@@ -5163,6 +5168,18 @@
     "subject": {
       "project": "El proyecto",
       "issue": "La tarea"
+    },
+    "money": {
+      "label": "Presupuesto en dinero",
+      "hint": "p. ej. 6.000 — vacío si no hay",
+      "invalid": "Eso no es un importe",
+      "kind": "Medido por",
+      "kinds": {
+        "BILLABLE": "Ingresos (registros facturables)",
+        "COST": "Costes (todos los registros)"
+      },
+      "revenue": "Presupuesto en dinero (ingresos)",
+      "cost": "Presupuesto en dinero (costes)"
     }
   }
 }
