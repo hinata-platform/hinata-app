@@ -152,6 +152,33 @@ void main() {
       },
     );
 
+    test('the same list is not written again', () async {
+      var now = DateTime(2026, 10, 16, 9);
+      final snapshot = IntentProjectSnapshot(
+        _Projects(total: 3),
+        channel: channel,
+        clock: () => now,
+      );
+
+      await snapshot.refresh(owner: 'a|1');
+      now = now.add(const Duration(minutes: 16));
+      await snapshot.refresh(owner: 'a|1');
+
+      expect(channel.projects, hasLength(1));
+    });
+
+    test('a switch of account removes the last list before it reads, so a '
+        'failed read never offers the other account\'s projects', () async {
+      final snapshot = IntentProjectSnapshot(
+        _Projects(total: 3),
+        channel: channel,
+      );
+      await snapshot.refresh(owner: 'a|1');
+      await snapshot.refresh(owner: 'b|2');
+
+      expect(channel.projects, [isNotNull, isNull, isNotNull]);
+    });
+
     test('a failed read writes nothing', () async {
       final projects = _Projects(total: 3, fail: true);
       await IntentProjectSnapshot(projects, channel: channel).refresh();
