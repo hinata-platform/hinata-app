@@ -120,20 +120,20 @@ void main() {
     },
   );
 
-  testWidgets('a launch still reading the session back keeps the snapshot '
-      'a background action needs; signing out removes it (HIN-105)', (
-    tester,
-  ) async {
+  testWidgets('a launch still reading the session back touches neither the '
+      'surfaces nor the snapshot a background action needs; signing out '
+      'clears both (HIN-105)', (tester) async {
     auth = _HeldAuthBloc(AuthStatus.unknown);
     await pump(tester);
 
-    expect(surface.clears, greaterThan(0));
+    expect(surface.clears, 0);
     expect(snapshots.writes, isNot(contains(null)));
 
     auth.hold(AuthStatus.unauthenticated);
     await tester.pump();
     await tester.pump();
 
+    expect(surface.clears, greaterThan(0));
     expect(snapshots.writes.last, isNull);
   });
 
