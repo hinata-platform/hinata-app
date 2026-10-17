@@ -1375,6 +1375,8 @@
     },
     "reports": {
       "tab": {
+        "overview": "概览",
+        "budgets": "预算",
         "summary": "汇总",
         "detailed": "条目",
         "workload": "工作量",
@@ -2573,7 +2575,25 @@
       "openLast30Days": "未完成（最近 30 天）",
       "breakdowns": "分项统计",
       "pageFooter": "{{org}} · 第 {page}/{pages} 页"
-    }
+    },
+    "pickProject": "选择项目",
+    "span": {
+      "month": "30 天",
+      "quarter": "90 天"
+    },
+    "overview": {
+      "trend": "未完成事项如何变化？",
+      "budget": "预算消耗得怎样？",
+      "states": "事项处于什么状态？",
+      "priorities": "工作有多紧急？",
+      "people": "谁在做什么？",
+      "activities": "时间花在哪里？",
+      "open": "未完成",
+      "created": "{{days}} 天内新建",
+      "resolved": "{{days}} 天内完成",
+      "recorded": "{{days}} 天内记录"
+    },
+    "unassigned": "未分配"
   },
   "knowledge": {
     "title": "知识库",
@@ -5198,6 +5218,11 @@
       "label": "冲刺预算",
       "set": "设置冲刺预算",
       "hint": "例如 80h — 留空表示无"
+    },
+    "report": {
+      "emptyTitle": "还没有预算",
+      "sprints": "有预算的冲刺",
+      "onlyMoney": "只有你看不到的金额预算。"
     }
   }
 }

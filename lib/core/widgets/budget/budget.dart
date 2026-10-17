@@ -11,4 +11,5 @@ export 'budget_style.dart';
 export 'burn_down_chart.dart';
 export 'forecast_line.dart';
 export 'honey_glass.dart';
+export 'liquid_bars.dart';
 export 'timer_budget_dot.dart';

@@ -1,20 +1,20 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../core/models/content_models.dart';
 import '../../core/models/core_models.dart';
+import '../../core/models/report_overview_models.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/meta_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/user_repository.dart';
 
-/// The requests of the reports page: the projects to pick from, the directory
-/// that names assignees, the distributions and the trend of one project, and
-/// the branding a PDF export carries.
+/// The requests of the report overview (HIN-157): the project it opens on,
+/// that project's figures, the names of the people they mention, and the
+/// branding a PDF export carries.
 ///
-/// The page keeps what it loaded and its loading and error flags itself, as it
-/// did before; this stands between it and the repositories. Every method
-/// answers what the repository answered and throws what it threw.
+/// The view keeps what it loaded and its loading and error flags itself; this
+/// stands between it and the repositories. Every method answers what the
+/// repository answered and throws what it threw.
 class ReportsCubit extends Cubit<void> {
   ReportsCubit({
     required ProjectRepository projects,
@@ -32,24 +32,19 @@ class ReportsCubit extends Cubit<void> {
   final DashboardRepository _dashboard;
   final MetaRepository _meta;
 
-  /// The projects and the directory, at once.
-  Future<({List<Project> projects, List<DirectoryUser> users})>
-  projectsAndUsers() async {
-    final results = await Future.wait([_projects.projects(), _users.users()]);
-    return (
-      projects: results[0] as List<Project>,
-      users: results[1] as List<DirectoryUser>,
-    );
-  }
+  /// The project [id] names, or the first the reader sees when it names none;
+  /// null when there is no project at all. One page of one, never the list.
+  Future<Project?> project(String? id) async => id != null
+      ? await _projects.project(id)
+      : (await _projects.searchProjects(size: 1)).projects.firstOrNull;
 
-  /// One distribution report: `report name → (key → count)`.
-  Future<Map<String, int>> report(String name, Map<String, dynamic> query) =>
-      _dashboard.report(name, query);
+  /// Every figure of one project over the last [days], in one request.
+  Future<ReportOverview> overview(String projectId, {required int days}) =>
+      _dashboard.overview(projectId, days: days);
 
-  Future<List<TrendPoint>> createdVsResolved(
-    String projectId, {
-    required int days,
-  }) => _dashboard.createdVsResolved(projectId, days: days);
+  /// The people the report names, and only those.
+  Future<List<DirectoryUser>> usersByIds(List<String> ids) =>
+      _users.usersByIds(ids);
 
   /// The freshest server meta, for the branding of a PDF.
   Future<ServerMeta> meta() => _meta.meta();

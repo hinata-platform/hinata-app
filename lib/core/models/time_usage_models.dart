@@ -381,3 +381,50 @@ class SprintTimeUsage extends Equatable {
     canEdit,
   ];
 }
+
+/// One page of the budget report (HIN-157), fullest first, and on the first
+/// page the active sprints with a budget.
+class BudgetReportPage extends Equatable {
+  const BudgetReportPage({
+    this.items = const [],
+    this.names = const {},
+    this.total = 0,
+    this.sprints = const [],
+  });
+
+  factory BudgetReportPage.fromJson(Map<String, dynamic> json) =>
+      BudgetReportPage(
+        items: [
+          for (final row in (json['items'] as List<dynamic>? ?? const []))
+            ProjectTimeUsage.fromJson(row as Map<String, dynamic>),
+        ],
+        names: {
+          for (final entry
+              in (json['names'] as Map<String, dynamic>? ?? const {}).entries)
+            entry.key: '${entry.value}',
+        },
+        total: (json['total'] as num?)?.toInt() ?? 0,
+        sprints: [
+          for (final row in (json['sprints'] as List<dynamic>? ?? const []))
+            (
+              id: (row as Map<String, dynamic>)['sprintId'] as String,
+              name: row['name'] as String? ?? '',
+              board: row['boardName'] as String? ?? '',
+              gauge: BudgetGauge.of(
+                (row['usedMinutes'] as num?)?.toInt(),
+                (row['budgetMinutes'] as num?)?.toInt(),
+                nearPercent: (row['nearPercent'] as num?)?.toInt(),
+              ),
+            ),
+        ],
+      );
+
+  final List<ProjectTimeUsage> items;
+  final Map<String, String> names;
+  final int total;
+  final List<({String id, String name, String board, BudgetGauge? gauge})>
+  sprints;
+
+  @override
+  List<Object?> get props => [items, names, total, sprints];
+}
