@@ -2364,7 +2364,8 @@
       "makeTemplate": "إنشاء قالب",
       "makeTemplateConfirm": "إنشاء القالب",
       "templateName": "{{name}} (قالب)",
-      "pickSource": "من أي مشروع تريد إنشاءه؟"
+      "pickSource": "من أي مشروع تريد إنشاءه؟",
+      "timeSettingsBudget": "مع ميزانية وقت قدرها {{budget}}"
     },
     "schedule": {
       "title": "نقل تاريخ المشروع",

@@ -2364,7 +2364,8 @@
       "makeTemplate": "テンプレートを作成",
       "makeTemplateConfirm": "テンプレートを作成",
       "templateName": "{{name}}（テンプレート）",
-      "pickSource": "どのプロジェクトから作成しますか"
+      "pickSource": "どのプロジェクトから作成しますか",
+      "timeSettingsBudget": "時間予算 {{budget}} を含む"
     },
     "schedule": {
       "title": "プロジェクトの日付を動かす",

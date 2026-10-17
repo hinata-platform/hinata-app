@@ -2364,7 +2364,8 @@
       "makeTemplate": "Crear una plantilla",
       "makeTemplateConfirm": "Crear plantilla",
       "templateName": "{{name}} (plantilla)",
-      "pickSource": "¿De qué proyecto quieres crearla?"
+      "pickSource": "¿De qué proyecto quieres crearla?",
+      "timeSettingsBudget": "con presupuesto de tiempo de {{budget}}"
     },
     "schedule": {
       "title": "Mover la fecha del proyecto",
