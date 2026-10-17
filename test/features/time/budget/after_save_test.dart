@@ -66,7 +66,7 @@ void main() {
   });
 
   test('a saved entry reads the warnings it came with', () {
-    final saved = SavedTimeEntry.fromJson({
+    final saved = SavedTimeEntry.fromJson(const {
       'entry': {
         'id': 'w1',
         'userId': 'u1',
@@ -90,10 +90,12 @@ void main() {
   });
 
   test('the modes travel, and only an explicit OPEN stops the note', () {
-    final settings = ProjectTimeSettings.fromJson({'budgetLimitMode': 'OPEN'});
+    final settings = ProjectTimeSettings.fromJson(const {
+      'budgetLimitMode': 'OPEN',
+    });
     expect(settings.toJson()['budgetLimitMode'], 'OPEN');
     expect(settings.toJson().containsKey('estimateLimitMode'), isFalse);
-    final usage = ProjectTimeUsage.fromJson({
+    final usage = ProjectTimeUsage.fromJson(const {
       'projectId': 'p',
       'budgetLimitMode': 'OPEN',
     });
