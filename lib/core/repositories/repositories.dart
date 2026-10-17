@@ -26,6 +26,7 @@ import 'sprint_repository.dart';
 import 'team_repository.dart';
 import 'time_report_repository.dart';
 import 'time_repository.dart';
+import 'time_usage_repository.dart';
 import 'timesheet_repository.dart';
 import 'user_repository.dart';
 import 'weekly_summary_repository.dart';
@@ -52,6 +53,7 @@ export 'sprint_repository.dart';
 export 'team_repository.dart';
 export 'time_report_repository.dart';
 export 'time_repository.dart';
+export 'time_usage_repository.dart';
 export 'timesheet_repository.dart';
 export 'user_repository.dart';
 export 'weekly_summary_repository.dart';
@@ -74,6 +76,7 @@ class HinataRepositories {
       sprints: SprintRepository(api, boards: boards),
       timesheet: TimesheetRepository(api),
       time: TimeRepository(api),
+      timeUsage: TimeUsageRepository(api),
       timeReports: TimeReportRepository(api),
       billing: BillingRepository(api),
       availability: AvailabilityRepository(api),
@@ -103,6 +106,7 @@ class HinataRepositories {
     required this.sprints,
     required this.timesheet,
     required this.time,
+    required this.timeUsage,
     required this.timeReports,
     required this.billing,
     required this.availability,
@@ -130,6 +134,9 @@ class HinataRepositories {
   final SprintRepository sprints;
   final TimesheetRepository timesheet;
   final TimeRepository time;
+
+  /// Budget and estimate usage of projects and issues (HIN-152).
+  final TimeUsageRepository timeUsage;
 
   /// Summary, detailed and workload reports, their files, the CSV import and
   /// saved reports (HIN-93).
