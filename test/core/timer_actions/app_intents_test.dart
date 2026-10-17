@@ -179,11 +179,14 @@ void main() {
       expect(channel.projects, [isNotNull, isNull, isNotNull]);
     });
 
-    test('a failed read writes nothing', () async {
-      final projects = _Projects(total: 3, fail: true);
-      await IntentProjectSnapshot(projects, channel: channel).refresh();
-      expect(channel.projects, isEmpty);
-    });
+    test(
+      'a failed first read removes a list a former run may have left',
+      () async {
+        final projects = _Projects(total: 3, fail: true);
+        await IntentProjectSnapshot(projects, channel: channel).refresh();
+        expect(channel.projects, [isNull]);
+      },
+    );
   });
 
   group('the surface', () {

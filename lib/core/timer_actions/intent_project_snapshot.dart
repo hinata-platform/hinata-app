@@ -67,6 +67,13 @@ class IntentProjectSnapshot {
       _owner = owner;
     } catch (error) {
       debugPrint('Intent projects not refreshed: $error');
+      // The first read of this run failed: the list on the device may be
+      // another account's from the run before, and offline a start fails
+      // anyway, so none is offered until a read succeeds.
+      if (_owner == null && generation == _generation) {
+        _written = null;
+        await _channel.setProjects(null);
+      }
     } finally {
       _loading = false;
     }
