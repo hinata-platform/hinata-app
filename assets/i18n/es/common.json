@@ -5099,5 +5099,38 @@
     "absences": "Gestión de ausencias en la documentación",
     "timeTrackingPrivacy": "Privacidad y derecho laboral en la documentación",
     "codetermination": "Lista de comprobación para el acuerdo de empresa"
+  },
+  "budget": {
+    "timeBudget": "Presupuesto de tiempo",
+    "estimate": "Estimación",
+    "usedOfLimit": "{{used}} de {{limit}}",
+    "left": "quedan {{amount}}",
+    "overBy": "{{amount}} por encima",
+    "reached": "agotado",
+    "semantics": "{{label}}: {{percent}}, {{sums}}, {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "Quedan {{amount}} del presupuesto del proyecto",
+        "overTitle": "Presupuesto del proyecto superado",
+        "reachedTitle": "Presupuesto del proyecto agotado"
+      },
+      "estimate": {
+        "nearTitle": "Quedan {{amount}} hasta la estimación",
+        "overTitle": "Estimación superada",
+        "reachedTitle": "Estimación alcanzada"
+      },
+      "sprint": {
+        "nearTitle": "Quedan {{amount}} del presupuesto del sprint",
+        "overTitle": "Presupuesto del sprint superado",
+        "reachedTitle": "Presupuesto del sprint agotado"
+      },
+      "nearBody": "{{subject}} está en {{sums}}. Puedes guardar como siempre.",
+      "overBody": "{{subject}} está en {{sums}}. Tu registro se guarda igualmente."
+    },
+    "dashboard": {
+      "title": "Presupuestos",
+      "empty": "Ningún proyecto con presupuesto",
+      "emptyHint": "Los responsables fijan un presupuesto de tiempo en los ajustes del proyecto."
+    }
   }
 }

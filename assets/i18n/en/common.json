@@ -5099,5 +5099,38 @@
     "absences": "Absence management in the documentation",
     "timeTrackingPrivacy": "Privacy and labour law in the documentation",
     "codetermination": "Checklist for the works agreement"
+  },
+  "budget": {
+    "timeBudget": "Time budget",
+    "estimate": "Estimate",
+    "usedOfLimit": "{{used}} of {{limit}}",
+    "left": "{{amount}} left",
+    "overBy": "{{amount}} over",
+    "reached": "used up",
+    "semantics": "{{label}}: {{percent}}, {{sums}}, {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "{{amount}} left in the project budget",
+        "overTitle": "Project budget exceeded",
+        "reachedTitle": "Project budget used up"
+      },
+      "estimate": {
+        "nearTitle": "{{amount}} left until the estimate",
+        "overTitle": "Estimate exceeded",
+        "reachedTitle": "Estimate reached"
+      },
+      "sprint": {
+        "nearTitle": "{{amount}} left in the sprint budget",
+        "overTitle": "Sprint budget exceeded",
+        "reachedTitle": "Sprint budget used up"
+      },
+      "nearBody": "{{subject}} stands at {{sums}}. You can save as usual.",
+      "overBody": "{{subject}} stands at {{sums}}. Your entry is still saved."
+    },
+    "dashboard": {
+      "title": "Budgets",
+      "empty": "No project with a budget",
+      "emptyHint": "Leads set a time budget in the project settings."
+    }
   }
 }
