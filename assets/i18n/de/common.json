@@ -638,7 +638,7 @@
       "dropHere": "Zum Anhängen ablegen",
       "download": "Herunterladen",
       "remove": "Entfernen",
-      "bulkActions": "Weitere Aktionen",
+      "bulkActions": "Aktionen für Anhänge",
       "downloadAll": "Alle herunterladen ({{count}})",
       "deleteAll": "Alle löschen ({{count}})",
       "archivePreparing": "Archiv wird vorbereitet…",

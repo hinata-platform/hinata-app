@@ -638,7 +638,7 @@
       "dropHere": "ドロップして添付",
       "download": "ダウンロード",
       "remove": "削除",
-      "bulkActions": "その他の操作",
+      "bulkActions": "添付ファイルの操作",
       "downloadAll": "すべてダウンロード（{{count}}）",
       "deleteAll": "すべて削除（{{count}}）",
       "archivePreparing": "アーカイブを準備しています…",

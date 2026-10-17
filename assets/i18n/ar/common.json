@@ -638,7 +638,7 @@
       "dropHere": "أفلت للإرفاق",
       "download": "تنزيل",
       "remove": "إزالة",
-      "bulkActions": "إجراءات أخرى",
+      "bulkActions": "إجراءات المرفقات",
       "downloadAll": "تنزيل الكل ({{count}})",
       "deleteAll": "حذف الكل ({{count}})",
       "archivePreparing": "جارٍ تجهيز الأرشيف…",
