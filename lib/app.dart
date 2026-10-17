@@ -823,6 +823,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         RepositoryProvider<SprintRepository>.value(value: domains.sprints),
         RepositoryProvider<TimesheetRepository>.value(value: domains.timesheet),
         RepositoryProvider<TimeRepository>.value(value: domains.time),
+        RepositoryProvider<TimeUsageRepository>.value(value: domains.timeUsage),
         RepositoryProvider<AvailabilityRepository>.value(
           value: domains.availability,
         ),
