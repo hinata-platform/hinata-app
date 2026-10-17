@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import '../../core/widgets/budget/budget.dart';
-import '../time/budget/project_usage.dart';
+import '../time/budget/project_budget_capsules.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -700,18 +699,8 @@ class _ProjectCard extends StatelessWidget {
                 label: context.t('projects.statesLabel'),
               ),
               const Spacer(),
-              // The time budget at a glance (HIN-152); nothing without one.
-              ProjectUsage(
-                projectId: project.id,
-                builder: (context, usage) {
-                  final budget = usage?.budget;
-                  if (budget == null) return const SizedBox.shrink();
-                  return BudgetCapsule(
-                    label: context.t('budget.timeBudget'),
-                    gauge: budget,
-                  );
-                },
-              ),
+              // The budgets at a glance (HIN-152, HIN-155); nothing without.
+              Flexible(child: ProjectBudgetCapsules(projectId: project.id)),
             ],
           ),
           const SizedBox(height: 14),

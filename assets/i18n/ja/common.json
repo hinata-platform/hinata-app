@@ -5137,7 +5137,12 @@
         "reachedTitle": "スプリント予算を使い切りました"
       },
       "nearBody": "{{subject}} は {{sums}} です。いつもどおり保存できます。",
-      "overBody": "{{subject}} は {{sums}} です。記録はそのまま保存されます。"
+      "overBody": "{{subject}} は {{sums}} です。記録はそのまま保存されます。",
+      "money": {
+        "nearTitle": "金額予算の残り {{amount}}",
+        "overTitle": "金額予算を超えました",
+        "reachedTitle": "金額予算を使い切りました"
+      }
     },
     "dashboard": {
       "title": "予算",
@@ -5163,6 +5168,18 @@
     "subject": {
       "project": "このプロジェクト",
       "issue": "この課題"
+    },
+    "money": {
+      "label": "金額予算",
+      "hint": "例：6,000 — なしの場合は空欄",
+      "invalid": "金額ではありません",
+      "kind": "算出の基準",
+      "kinds": {
+        "BILLABLE": "売上（請求対象の記録）",
+        "COST": "コスト（すべての記録）"
+      },
+      "revenue": "金額予算（売上）",
+      "cost": "金額予算（コスト）"
     }
   }
 }

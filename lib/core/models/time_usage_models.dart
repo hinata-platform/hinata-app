@@ -82,6 +82,10 @@ class ProjectTimeUsage extends Equatable {
     this.nearPercent = BudgetGauge.defaultNearPercent,
     this.budgetWarns = true,
     this.estimateWarns = true,
+    this.budgetCents,
+    this.usedCents,
+    this.currency,
+    this.costBudget = false,
   });
 
   factory ProjectTimeUsage.fromJson(Map<String, dynamic> json) =>
@@ -89,6 +93,10 @@ class ProjectTimeUsage extends Equatable {
         // Anything but an explicit OPEN warns: WARN is the server's default.
         budgetWarns: json['budgetLimitMode'] != 'OPEN',
         estimateWarns: json['estimateLimitMode'] != 'OPEN',
+        budgetCents: (json['budgetCents'] as num?)?.toInt(),
+        usedCents: (json['usedCents'] as num?)?.toInt(),
+        currency: json['currency'] as String?,
+        costBudget: json['budgetRateKind'] == 'COST',
         projectId: json['projectId'] as String,
         budgetMinutes: (json['budgetMinutes'] as num?)?.toInt(),
         usedMinutes: (json['usedMinutes'] as num?)?.toInt() ?? 0,
@@ -118,6 +126,20 @@ class ProjectTimeUsage extends Equatable {
   /// The same for its issues' estimates.
   final bool estimateWarns;
 
+  /// The money budget and what it has used, in cents of [currency]
+  /// (HIN-155); null for a reader who may not see them, and without one.
+  final int? budgetCents;
+  final int? usedCents;
+  final String? currency;
+
+  /// Valued at cost rates rather than revenue.
+  final bool costBudget;
+
+  /// Used against the money budget, or null.
+  BudgetGauge? get money => currency == null
+      ? null
+      : BudgetGauge.of(usedCents, budgetCents, nearPercent: nearPercent);
+
   /// Recorded time against the budget, or null without one.
   BudgetGauge? get budget =>
       BudgetGauge.of(usedMinutes, budgetMinutes, nearPercent: nearPercent);
@@ -135,6 +157,10 @@ class ProjectTimeUsage extends Equatable {
     nearPercent,
     budgetWarns,
     estimateWarns,
+    budgetCents,
+    usedCents,
+    currency,
+    costBudget,
   ];
 }
 
