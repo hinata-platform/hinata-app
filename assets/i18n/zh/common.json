@@ -376,7 +376,8 @@
       "completion": "项目进度",
       "tracker": "专注时间",
       "ranking": "团队排名",
-      "away": "今日缺勤"
+      "away": "今日缺勤",
+      "budgets": "预算"
     },
     "saveError": "无法保存仪表板。请重试。",
     "saved": "仪表板已保存",
@@ -5103,6 +5104,7 @@
   "budget": {
     "timeBudget": "时间预算",
     "estimate": "估算",
+    "estimates": "估算总和",
     "usedOfLimit": "{{used}} / {{limit}}",
     "left": "剩余 {{amount}}",
     "overBy": "超出 {{amount}}",
@@ -5130,7 +5132,8 @@
     "dashboard": {
       "title": "预算",
       "empty": "没有设置预算的项目",
-      "emptyHint": "负责人可在项目设置中设定时间预算。"
+      "emptyHint": "负责人可在项目设置中设定时间预算。",
+      "all": "全部 {{count}} 个"
     },
     "pending": "本条记录 +{{amount}}"
   }

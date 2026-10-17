@@ -48,6 +48,24 @@ class TimeUsageRepository {
     return found;
   }
 
+  /// The fullest budgets the reader sees, at most [limit], optionally only
+  /// among [projectIds] (the dashboard's own scope).
+  Future<TopBudgets> top({
+    int limit = 3,
+    List<String> projectIds = const [],
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/projects/time-usage/top',
+              query: {
+                'limit': '$limit',
+                if (projectIds.isNotEmpty) 'projectIds': projectIds.join(','),
+              },
+            )
+            as Map<String, dynamic>;
+    return TopBudgets.fromJson(data);
+  }
+
   Future<IssueTimeUsage> issue(String issueIdOrKey) async {
     final data =
         await _api.get('/api/v1/issues/$issueIdOrKey/time-usage')

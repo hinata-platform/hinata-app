@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -39,6 +40,10 @@ import '../sprint/modals/glass_modal.dart'
         showGlassErrorToast,
         showGlassToast;
 import '../../core/repositories/admin_repository.dart';
+import '../../core/repositories/time_usage_repository.dart';
+import '../../core/models/time_usage_models.dart';
+import '../../core/widgets/budget/budget.dart';
+import '../../core/widgets/hive_loader.dart';
 import '../../core/repositories/dashboard_repository.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/team_repository.dart';
@@ -49,6 +54,7 @@ import '../../core/theme/app_type.dart';
 part 'dashboard_screen.hero.dart';
 part 'dashboard_screen.panels.dart';
 part 'dashboard_screen.chrome.dart';
+part 'dashboard_screen.budgets.dart';
 
 /// Exact segment colours for the completion donut / KPIs (design "Liquid Glass").
 const _cDone = Color(0xFF2E8B62);
@@ -329,6 +335,10 @@ class _DashboardViewState extends State<_DashboardView> {
     // whenever absence management is, so one question covers both.
     if (context.read<TimePolicyCubit>().state.absenceCalendar.isOn)
       DashboardCard.away: const _AwayTodayCard(),
+    // Only with the extended module on (HIN-152): without it there are no
+    // budgets to show and no route to ask.
+    if (context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false)
+      DashboardCard.budgets: _BudgetsCard(projectIds: prefs.projectIds),
   };
 
   Widget _editableCard(String key, Widget child, bool hidden) {

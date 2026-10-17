@@ -14,6 +14,8 @@ class GanttTask extends Equatable {
     this.startDate,
     this.dueDate,
     this.dependsOnIds = const [],
+    this.estimateMinutes,
+    this.spentMinutes = 0,
   });
 
   final String id;
@@ -25,6 +27,11 @@ class GanttTask extends Equatable {
   final String? parentId;
   final bool resolved;
   final int progressPercent;
+
+  /// The issue's estimate and recorded time (HIN-152), for the bar's honey
+  /// line; null and zero from a server that does not send them yet.
+  final int? estimateMinutes;
+  final int spentMinutes;
   final DateTime? startDate;
   final DateTime? dueDate;
   final List<String> dependsOnIds;
@@ -51,13 +58,22 @@ class GanttTask extends Equatable {
     parentId: json['parentId'] as String?,
     resolved: json['resolved'] as bool? ?? false,
     progressPercent: json['progressPercent'] as int? ?? 0,
+    estimateMinutes: (json['estimateMinutes'] as num?)?.toInt(),
+    spentMinutes: (json['spentMinutes'] as num?)?.toInt() ?? 0,
     startDate: _date(json['startDate']),
     dueDate: _date(json['dueDate']),
     dependsOnIds: _stringList(json['dependsOnIds']),
   );
 
   @override
-  List<Object?> get props => [id, readableId, state, progressPercent];
+  List<Object?> get props => [
+    id,
+    readableId,
+    state,
+    progressPercent,
+    estimateMinutes,
+    spentMinutes,
+  ];
 }
 
 /// One connector on the timeline, stated in the link's own direction: [sourceId]

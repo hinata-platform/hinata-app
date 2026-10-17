@@ -165,3 +165,37 @@ class IssueTimeUsage extends Equatable {
     nearPercent,
   ];
 }
+
+/// The fullest budgets the reader can see, for the dashboard (HIN-152).
+class TopBudgets extends Equatable {
+  const TopBudgets({
+    this.items = const [],
+    this.names = const {},
+    this.total = 0,
+  });
+
+  factory TopBudgets.fromJson(Map<String, dynamic> json) => TopBudgets(
+    items: [
+      for (final row in (json['items'] as List<dynamic>? ?? const []))
+        ProjectTimeUsage.fromJson(row as Map<String, dynamic>),
+    ],
+    names: {
+      for (final entry
+          in (json['names'] as Map<String, dynamic>? ?? const {}).entries)
+        entry.key: '${entry.value}',
+    },
+    total: (json['total'] as num?)?.toInt() ?? 0,
+  );
+
+  /// Fullest first.
+  final List<ProjectTimeUsage> items;
+
+  /// Project names by id, for the items.
+  final Map<String, String> names;
+
+  /// Every budget the reader can see, of which [items] are the first.
+  final int total;
+
+  @override
+  List<Object?> get props => [items, names, total];
+}
