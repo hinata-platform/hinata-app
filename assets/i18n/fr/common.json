@@ -1375,7 +1375,7 @@
     },
     "reports": {
       "tab": {
-        "overview": "Vue d’ensemble",
+        "overview": "Projet",
         "budgets": "Budgets",
         "summary": "Synthèse",
         "detailed": "Entrées",
