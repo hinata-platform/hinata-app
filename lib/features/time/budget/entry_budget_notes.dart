@@ -7,6 +7,7 @@ import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/models/time_usage_models.dart';
 import '../../../core/repositories/time_usage_repository.dart';
 import '../../../core/widgets/budget/budget.dart';
+import '../../billing/billing_format.dart';
 import 'project_usage.dart';
 
 /// What the entry being typed does to its issue's estimate and its project's
@@ -118,15 +119,37 @@ class _EntryBudgetNotesState extends State<EntryBudgetNotes> {
             projectId: projectId,
             builder: (context, usage) {
               final budget = usage?.budget;
-              if (usage == null || !usage.budgetWarns || budget == null) {
+              final money = usage?.money;
+              if (usage == null || !usage.budgetWarns) {
                 return const SizedBox.shrink();
               }
-              return BudgetNotice(
-                kind: BudgetNoticeKind.projectBudget,
-                subject: widget.projectLabel ?? '',
-                gauge: budget,
-                pending: pending,
-                compact: widget.compact,
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (budget != null)
+                    BudgetNotice(
+                      kind: BudgetNoticeKind.projectBudget,
+                      subject: widget.projectLabel ?? '',
+                      gauge: budget,
+                      pending: pending,
+                      compact: widget.compact,
+                    ),
+                  // The money budget for a reader who may see it (HIN-155).
+                  // Without the entry counted: what it is worth depends on
+                  // a rate only the server resolves.
+                  if (money != null && money.level != BudgetLevel.within) ...[
+                    if (budget != null) const SizedBox(height: 8),
+                    BudgetNotice(
+                      kind: BudgetNoticeKind.moneyBudget,
+                      subject: widget.projectLabel ?? '',
+                      gauge: money,
+                      format: (context, cents) =>
+                          formatMoney(context, cents, usage.currency!),
+                      compact: widget.compact,
+                    ),
+                  ],
+                ],
               );
             },
           );

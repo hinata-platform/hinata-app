@@ -4,6 +4,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/models/billing_models.dart';
+import '../../../core/repositories/billing_repository.dart';
+import '../../billing/billing_format.dart';
 import '../../../core/blocs/time_usage_cubit.dart';
 import '../../../core/widgets/budget/budget.dart';
 import '../../time/budget/project_usage.dart';
@@ -76,6 +80,13 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
 
   final _budget = TextEditingController();
 
+  /// The money budget (HIN-155), in the instance's currency.
+  final _money = TextEditingController();
+
+  /// Billing's answer for this reader: the currency and whether they may set
+  /// a cost budget. Null while billing is off, and then there is no field.
+  BillingAccess? _billing;
+
   ProjectTimeSettings _saved = const ProjectTimeSettings();
   ProjectTimeSettings _draft = const ProjectTimeSettings();
   bool _loading = true;
@@ -93,10 +104,17 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
   @override
   void dispose() {
     _budget.dispose();
+    _money.dispose();
     super.dispose();
   }
 
-  bool get _dirty => _draft != _saved || _budgetMinutes != _saved.budgetMinutes;
+  bool get _dirty =>
+      _draft != _saved ||
+      _budgetMinutes != _saved.budgetMinutes ||
+      (_billing != null && _moneyCents != _saved.budgetCents);
+
+  /// The money budget the field describes, or null for none.
+  int? get _moneyCents => parseCents(_money.text);
 
   /// The budget the text field currently describes, or null when it describes
   /// none. A blank field is "no budget", which is different from a zero.
@@ -110,21 +128,41 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
   bool _budgetWasSaved = true;
 
   void _budgetChanged(String value) {
-    final saved = _budgetMinutes == _saved.budgetMinutes;
+    final saved =
+        _budgetMinutes == _saved.budgetMinutes &&
+        (_billing == null || _moneyCents == _saved.budgetCents);
     if (saved == _budgetWasSaved) return;
     setState(() => _budgetWasSaved = saved);
   }
 
   Future<void> _load() async {
     try {
-      final settings = await context.read<ProjectTimeSettingsCubit>().load();
+      // Read before the first await, so no context crosses a gap.
+      final cubit = context.read<ProjectTimeSettingsCubit>();
+      // A money budget exists only while billing is on (HIN-155).
+      final billingOn =
+          context.read<AppConfigBloc>().state.meta?.billing ?? false;
+      final billingRepository = context.read<BillingRepository>();
+      final settings = await cubit.load();
+      BillingAccess? billing;
+      if (billingOn) {
+        try {
+          billing = await billingRepository.access();
+        } on ApiFailure {
+          billing = null;
+        }
+      }
       if (!mounted) return;
       setState(() {
         _saved = settings;
         _draft = settings;
+        _billing = billing;
         _budget.text = settings.budgetMinutes == null
             ? ''
             : formatDurationInput(settings.budgetMinutes!);
+        _money.text = billing == null || settings.budgetCents == null
+            ? ''
+            : basisPointsText(context, settings.budgetCents!);
         _loading = false;
       });
     } on ApiFailure catch (failure) {
@@ -144,6 +182,13 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
       setState(() => _error = 'time.error.duration');
       return;
     }
+    if (_billing != null &&
+        _money.text.trim().isNotEmpty &&
+        _moneyCents == null) {
+      // The same rule for money: a typo never deletes a budget.
+      setState(() => _error = 'budget.money.invalid');
+      return;
+    }
     setState(() {
       _saving = true;
       _error = null;
@@ -153,6 +198,10 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
         _draft.copyWith(
           budgetMinutes: _budgetMinutes,
           clearBudget: _budgetMinutes == null,
+          // Without billing the stored figure travels back untouched, so a
+          // save here never removes a budget set while billing was on.
+          budgetCents: _billing == null ? _saved.budgetCents : _moneyCents,
+          clearBudgetCents: _billing != null && _moneyCents == null,
         ),
       );
       if (!mounted) return;
@@ -215,6 +264,49 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                     ),
                   ),
                 ),
+                // A money budget beside it while billing is on (HIN-155).
+                if (_billing case final billing?) ...[
+                  const SizedBox(height: 14),
+                  FieldLabel(text: context.t('budget.money.label')),
+                  const SizedBox(height: 6),
+                  Semantics(
+                    label: context.t('budget.money.label'),
+                    textField: true,
+                    child: TextField(
+                      controller: _money,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      onChanged: _budgetChanged,
+                      decoration: InputDecoration(
+                        isDense: true,
+                        prefixText:
+                            '${currencySymbol(context, billing.currency)} ',
+                        hintText: context.t('budget.money.hint'),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(
+                            AppTheme.radiusControl,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Revenue or cost: the second only for an administrator,
+                  // because cost rates can reveal a salary.
+                  if (billing.costs) ...[
+                    const SizedBox(height: 10),
+                    _RateKindChoice(
+                      label: context.t('budget.money.kind'),
+                      value: _draft.budgetRateKind,
+                      onChanged: (value) => setState(
+                        () => _draft = _draft.copyWith(
+                          budgetRateKind: value,
+                          clearBudgetRateKind: value == null,
+                        ),
+                      ),
+                    ),
+                  ],
+                ],
                 // What the project has used against it, under the field that
                 // sets it (HIN-152). Nothing while there is no budget and no
                 // estimate to measure against.
@@ -223,7 +315,8 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                   builder: (context, usage) {
                     final budget = usage?.budget;
                     final estimates = usage?.estimates;
-                    if (budget == null && estimates == null) {
+                    final money = usage?.money;
+                    if (budget == null && estimates == null && money == null) {
                       return const SizedBox.shrink();
                     }
                     return Padding(
@@ -243,6 +336,19 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                               label: context.t('budget.estimates'),
                               gauge: estimates,
                             ),
+                          if (money != null) ...[
+                            const SizedBox(height: 18),
+                            BudgetMeter(
+                              label: context.t(
+                                usage!.costBudget
+                                    ? 'budget.money.cost'
+                                    : 'budget.money.revenue',
+                              ),
+                              gauge: money,
+                              format: (context, cents) =>
+                                  formatMoney(context, cents, usage.currency!),
+                            ),
+                          ],
                         ],
                       ),
                     );
@@ -517,6 +623,40 @@ class _TriChoice extends StatelessWidget {
           'no' => false,
           _ => null,
         });
+      },
+    );
+  }
+}
+
+/// Which rates value the money budget (HIN-155): revenue, or labour cost.
+class _RateKindChoice extends StatelessWidget {
+  const _RateKindChoice({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final current = value ?? 'BILLABLE';
+    return _ChoiceRow(
+      label: label,
+      value: context.t('budget.money.kinds.$current'),
+      onTap: () async {
+        final picked = await showGlassOptions<String>(
+          context,
+          title: label,
+          options: [
+            for (final kind in ProjectTimeSettings.rateKinds)
+              (value: kind, child: Text(context.t('budget.money.kinds.$kind'))),
+          ],
+        );
+        if (picked == null) return;
+        onChanged(picked == 'BILLABLE' ? null : picked);
       },
     );
   }

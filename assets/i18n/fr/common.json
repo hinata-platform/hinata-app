@@ -5137,7 +5137,12 @@
         "reachedTitle": "Budget du sprint épuisé"
       },
       "nearBody": "{{subject}} en est à {{sums}}. Vous pouvez enregistrer comme d’habitude.",
-      "overBody": "{{subject}} en est à {{sums}}. Votre saisie est tout de même enregistrée."
+      "overBody": "{{subject}} en est à {{sums}}. Votre saisie est tout de même enregistrée.",
+      "money": {
+        "nearTitle": "Il reste {{amount}} au budget financier",
+        "overTitle": "Budget financier dépassé",
+        "reachedTitle": "Budget financier épuisé"
+      }
     },
     "dashboard": {
       "title": "Budgets",
@@ -5163,6 +5168,18 @@
     "subject": {
       "project": "Le projet",
       "issue": "Le ticket"
+    },
+    "money": {
+      "label": "Budget financier",
+      "hint": "p. ex. 6 000 — vide pour aucun",
+      "invalid": "Ce n’est pas un montant",
+      "kind": "Mesuré par",
+      "kinds": {
+        "BILLABLE": "Chiffre d’affaires (saisies facturables)",
+        "COST": "Coûts (toutes les saisies)"
+      },
+      "revenue": "Budget financier (chiffre d’affaires)",
+      "cost": "Budget financier (coûts)"
     }
   }
 }

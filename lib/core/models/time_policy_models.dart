@@ -520,9 +520,15 @@ class ProjectTimeSettings extends Equatable {
     this.estimateAlertPercent,
     this.budgetLimitMode,
     this.estimateLimitMode,
+    this.budgetCents,
+    this.budgetRateKind,
     this.updatedAt,
     this.updatedBy,
   });
+
+  /// Which rates value a money budget (HIN-155). `COST` only an
+  /// administrator who runs the project sets.
+  static const rateKinds = ['BILLABLE', 'COST'];
 
   /// What reaching a limit does (HIN-153): `OPEN` only the hourly alert,
   /// `WARN` a note while recording and the leads hear at once. Null is the
@@ -567,6 +573,13 @@ class ProjectTimeSettings extends Equatable {
 
   /// Every issue estimate's mode; null means [defaultLimitMode].
   final String? estimateLimitMode;
+
+  /// A money budget in cents of the instance's currency (HIN-155); null for
+  /// none. Members never receive it.
+  final int? budgetCents;
+
+  /// `BILLABLE` (default) or `COST`.
+  final String? budgetRateKind;
   final DateTime? updatedAt;
   final String? updatedBy;
 
@@ -579,7 +592,9 @@ class ProjectTimeSettings extends Equatable {
       budgetAlertPercent == null &&
       estimateAlertPercent == null &&
       budgetLimitMode == null &&
-      estimateLimitMode == null;
+      estimateLimitMode == null &&
+      budgetCents == null &&
+      budgetRateKind == null;
 
   ProjectTimeSettings copyWith({
     int? budgetMinutes,
@@ -591,6 +606,8 @@ class ProjectTimeSettings extends Equatable {
     int? estimateAlertPercent,
     String? budgetLimitMode,
     String? estimateLimitMode,
+    int? budgetCents,
+    String? budgetRateKind,
     bool clearBudget = false,
     bool clearDefaultBillable = false,
     bool clearApprovalRequired = false,
@@ -600,6 +617,8 @@ class ProjectTimeSettings extends Equatable {
     bool clearEstimateAlert = false,
     bool clearBudgetLimitMode = false,
     bool clearEstimateLimitMode = false,
+    bool clearBudgetCents = false,
+    bool clearBudgetRateKind = false,
   }) => ProjectTimeSettings(
     budgetMinutes: clearBudget ? null : (budgetMinutes ?? this.budgetMinutes),
     defaultBillable: clearDefaultBillable
@@ -624,6 +643,10 @@ class ProjectTimeSettings extends Equatable {
     estimateLimitMode: clearEstimateLimitMode
         ? null
         : (estimateLimitMode ?? this.estimateLimitMode),
+    budgetCents: clearBudgetCents ? null : (budgetCents ?? this.budgetCents),
+    budgetRateKind: clearBudgetRateKind
+        ? null
+        : (budgetRateKind ?? this.budgetRateKind),
     updatedAt: updatedAt,
     updatedBy: updatedBy,
   );
@@ -641,6 +664,8 @@ class ProjectTimeSettings extends Equatable {
       estimateAlertPercent: (alerts?['estimatePercent'] as num?)?.toInt(),
       budgetLimitMode: json['budgetLimitMode'] as String?,
       estimateLimitMode: json['estimateLimitMode'] as String?,
+      budgetCents: (json['budgetCents'] as num?)?.toInt(),
+      budgetRateKind: json['budgetRateKind'] as String?,
       updatedAt: parseInstant(json['updatedAt']),
       updatedBy: json['updatedBy'] as String?,
     );
@@ -661,6 +686,8 @@ class ProjectTimeSettings extends Equatable {
       },
     'budgetLimitMode': ?budgetLimitMode,
     'estimateLimitMode': ?estimateLimitMode,
+    'budgetCents': ?budgetCents,
+    'budgetRateKind': ?budgetRateKind,
   };
 
   @override
@@ -674,6 +701,8 @@ class ProjectTimeSettings extends Equatable {
     estimateAlertPercent,
     budgetLimitMode,
     estimateLimitMode,
+    budgetCents,
+    budgetRateKind,
     updatedAt,
     updatedBy,
   ];
