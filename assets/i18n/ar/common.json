@@ -3901,6 +3901,7 @@
     "attachExisting": "إرفاق قائم",
     "createNew": "إنشاء جديد",
     "allProjectsAttached": "كل المشاريع في هذا الفريق بالفعل.",
+    "noProjectsYouLead": "المشاريع التي لا يملكها هذا الفريق بعد يقودها آخرون. لا يضيف المشروع إلا قادته.",
     "attachCta": "إرفاق {{count}}",
     "createProjectCta": "إنشاء مشروع",
     "projectName": "اسم المشروع",

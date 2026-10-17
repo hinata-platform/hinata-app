@@ -3901,6 +3901,7 @@
     "attachExisting": "Bestehendes anhängen",
     "createNew": "Neu erstellen",
     "allProjectsAttached": "Alle Projekte sind bereits in diesem Team.",
+    "noProjectsYouLead": "Die Projekte, die diesem Team noch fehlen, leiten andere. Anhängen können nur die Leads eines Projekts.",
     "attachCta": "{{count}} anhängen",
     "createProjectCta": "Projekt erstellen",
     "projectName": "Projektname",
