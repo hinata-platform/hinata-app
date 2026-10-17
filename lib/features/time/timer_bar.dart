@@ -1,3 +1,4 @@
+import 'budget/timer_budget.dart';
 import 'budget/after_save.dart';
 import 'dart:async';
 
@@ -147,6 +148,15 @@ class _TimerBarBody extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
+          // How far the running work has taken its estimate or budget,
+          // counting the minutes running now (HIN-154). Not during a break,
+          // which is nobody's project time.
+          if (running && !timer.isBreak)
+            TimerBudget(
+              projectId: timer.projectId,
+              issueId: timer.issueId,
+              onlyWhenNear: compact,
+            ),
           if (running) ...[
             // A pomodoro's own button: end this half and begin the next. It is
             // what somebody keeping the rhythm presses most, so it sits where

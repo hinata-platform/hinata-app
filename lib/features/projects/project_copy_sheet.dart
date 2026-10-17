@@ -1,3 +1,5 @@
+import '../../core/widgets/budget/budget.dart' show budgetMinutes;
+import '../time/budget/project_usage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -330,10 +332,28 @@ class _ProjectCopyBodyState extends State<_ProjectCopyBody> {
                         ? null
                         : (v) => setState(() => _includeAttachments = v),
                   ),
-                  _Toggle(
-                    label: context.t('projects.copy.timeSettings'),
-                    value: _includeTimeSettings,
-                    onChanged: (v) => setState(() => _includeTimeSettings = v),
+                  // Says what travels with the time settings when there is a
+                  // budget, so a copy of a budgeted project is not a surprise
+                  // in either direction (HIN-154).
+                  ProjectUsage(
+                    projectId: widget.source.id,
+                    builder: (context, usage) => _Toggle(
+                      label: context.t('projects.copy.timeSettings'),
+                      detail: usage?.budgetMinutes == null
+                          ? null
+                          : context.t(
+                              'projects.copy.timeSettingsBudget',
+                              variables: {
+                                'budget': budgetMinutes(
+                                  context,
+                                  usage!.budgetMinutes!,
+                                ),
+                              },
+                            ),
+                      value: _includeTimeSettings,
+                      onChanged: (v) =>
+                          setState(() => _includeTimeSettings = v),
+                    ),
                   ),
                   _Toggle(
                     label: context.t('projects.copy.board'),

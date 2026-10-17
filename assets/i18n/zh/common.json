@@ -2364,7 +2364,8 @@
       "makeTemplate": "创建模板",
       "makeTemplateConfirm": "创建模板",
       "templateName": "{{name}}（模板）",
-      "pickSource": "要从哪个项目创建？"
+      "pickSource": "要从哪个项目创建？",
+      "timeSettingsBudget": "含时间预算 {{budget}}"
     },
     "schedule": {
       "title": "调整项目日期",

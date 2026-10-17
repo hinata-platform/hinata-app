@@ -2364,7 +2364,8 @@
       "makeTemplate": "Créer un modèle",
       "makeTemplateConfirm": "Créer le modèle",
       "templateName": "{{name}} (modèle)",
-      "pickSource": "À partir de quel projet la créer ?"
+      "pickSource": "À partir de quel projet la créer ?",
+      "timeSettingsBudget": "avec un budget temps de {{budget}}"
     },
     "schedule": {
       "title": "Déplacer la date du projet",
