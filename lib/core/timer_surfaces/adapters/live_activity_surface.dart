@@ -235,17 +235,21 @@ class LiveActivitySurface extends TimerSurface {
 /// The words come from the app in the reader's language; the activity itself
 /// has no strings but its gallery name. No ids: the activity is a display of
 /// the timer and never needs to know which record it is.
+///
+/// A countdown or a Pomodoro phase that ends in an alarm has the system's
+/// countdown instead (HIN-106), so the activity steps aside for it. The
+/// widgets read the same content with [yieldToAlarm] off: they show the timer
+/// whether or not an alarm rings at its end.
 Map<String, Object?>? liveActivityContent(
   TimerSurfaceState state, {
   DateTime? now,
+  bool yieldToAlarm = true,
 }) {
   final startedAt = state.startedAt;
   final dismissAt = timerSurfaceDismissAt(state);
   if (!state.running ||
       !state.runningSurface ||
-      // A countdown or a Pomodoro phase that ends in an alarm has the
-      // system's countdown already (HIN-106); the stopwatch keeps this one.
-      (state.alarmMode && state.endsAt != null) ||
+      (yieldToAlarm && state.alarmMode && state.endsAt != null) ||
       startedAt == null ||
       dismissAt == null ||
       !dismissAt.isAfter((now ?? DateTime.now()).toUtc())) {
