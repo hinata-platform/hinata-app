@@ -591,7 +591,7 @@ packages:
     dependency: "direct main"
     description:
       path: flutter_local_notifications
-      ref: hinata
+      ref: "89f6021db49c918d51219f83d7eb51e2f1b7ef6f"
       resolved-ref: "89f6021db49c918d51219f83d7eb51e2f1b7ef6f"
       url: "https://github.com/hinata-platform/flutter_local_notifications.git"
     source: git

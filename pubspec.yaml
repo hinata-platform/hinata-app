@@ -231,7 +231,9 @@ dependencies:
   flutter_local_notifications:
     git:
       url: https://github.com/hinata-platform/flutter_local_notifications.git
-      ref: hinata
+      # A commit of the branch `hinata`, not the branch: an upgrade must never
+      # pull native notification code nobody looked at.
+      ref: 89f6021db49c918d51219f83d7eb51e2f1b7ef6f
       path: flutter_local_notifications
   # Home and lock-screen widgets (HIN-102): App Group store on iOS, the
   # plugin's preferences on Android, and the reload of both.
