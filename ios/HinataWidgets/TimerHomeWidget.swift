@@ -249,10 +249,7 @@ private struct WidgetBackground: ViewModifier {
   func body(content: Content) -> some View {
     #if os(iOS)
     let accessory = [.accessoryCircular, .accessoryRectangular, .accessoryInline].contains(family)
-    #else
-    let accessory = false
-    #endif
-    if #available(iOSApplicationExtension 17.0, macOSApplicationExtension 14.0, *) {
+    if #available(iOSApplicationExtension 17.0, *) {
       content.containerBackground(for: .widget) {
         if accessory { Color.clear } else { HinataPalette.navy }
       }
@@ -261,5 +258,10 @@ private struct WidgetBackground: ViewModifier {
     } else {
       content.padding().background(HinataPalette.navy)
     }
+    #else
+    // The Mac's extension starts at macOS 14, where every widget has a
+    // container background and there is no lock screen.
+    content.containerBackground(HinataPalette.navy, for: .widget)
+    #endif
   }
 }
