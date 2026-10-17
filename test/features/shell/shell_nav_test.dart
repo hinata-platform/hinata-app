@@ -108,6 +108,19 @@ void main() {
       expect(isNavActive('/timesheet', '/time', advancedTime: on), isTrue);
     });
 
+    // `/reports` leads to the module's report page (HIN-157); there the
+    // reports entry is lit, not the module's, so one place lights one entry.
+    test('its report page belongs to the reports entry', () {
+      for (final page in ['/time/reports', '/time/reports?tab=budgets']) {
+        expect(isNavActive(page, '/reports', advancedTime: on), isTrue);
+        expect(isNavActive(page, '/time', advancedTime: on), isFalse);
+      }
+      expect(
+        isNavActive('/time/reports', '/reports', advancedTime: false),
+        isFalse,
+      );
+    });
+
     test('all three of the module\'s pages are top-level, not sub-pages', () {
       // They are one destination seen three ways, and the switcher is how a
       // reader moves between them — so none of them wears a back button, and

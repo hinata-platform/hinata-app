@@ -534,6 +534,7 @@ GoRouter buildRouter({
                 scope: switch (state.uri.queryParameters) {
                   {'shared': final token} => 'shared:$token',
                   {'saved': final id} => 'saved:$id',
+                  {'tab': final tab} => 'tab:$tab',
                   _ => null,
                 },
               ),
@@ -599,6 +600,13 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/reports',
+            // With the extended module on there is one report page (HIN-157):
+            // the module's, opened on its overview. Without it the overview
+            // stands alone here.
+            redirect: (_, _) =>
+                (appConfig.state.meta?.advancedTimeTracking ?? false)
+                ? '/time/reports?tab=overview'
+                : null,
             pageBuilder: (_, state) =>
                 _transition(state, const ReportsScreen()),
           ),

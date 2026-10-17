@@ -1375,6 +1375,8 @@
     },
     "reports": {
       "tab": {
+        "overview": "Resumen",
+        "budgets": "Presupuestos",
         "summary": "Resumen",
         "detailed": "Entradas",
         "workload": "Carga",
@@ -2573,7 +2575,25 @@
       "openLast30Days": "Abiertas (últimos 30 días)",
       "breakdowns": "Desgloses",
       "pageFooter": "{{org}} · página {page}/{pages}"
-    }
+    },
+    "pickProject": "Elegir proyecto",
+    "span": {
+      "month": "30 días",
+      "quarter": "90 días"
+    },
+    "overview": {
+      "trend": "¿Cómo evolucionan las tareas abiertas?",
+      "budget": "¿Cómo se llena el presupuesto?",
+      "states": "¿Dónde están las tareas?",
+      "priorities": "¿Qué urgencia tiene el trabajo?",
+      "people": "¿Quién trabaja en qué?",
+      "activities": "¿En qué se va el tiempo?",
+      "open": "Abiertas",
+      "created": "Nuevas en {{days}} días",
+      "resolved": "Hechas en {{days}} días",
+      "recorded": "Registrado en {{days}} días"
+    },
+    "unassigned": "Sin asignar"
   },
   "knowledge": {
     "title": "Base de conocimiento",
@@ -5198,6 +5218,11 @@
       "label": "Presupuesto del sprint",
       "set": "Fijar presupuesto del sprint",
       "hint": "p. ej. 80h — vacío si no hay"
+    },
+    "report": {
+      "emptyTitle": "Aún no hay presupuestos",
+      "sprints": "Sprints con presupuesto",
+      "onlyMoney": "Solo un presupuesto en dinero que no ves."
     }
   }
 }

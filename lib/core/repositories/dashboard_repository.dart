@@ -1,4 +1,5 @@
 import '../api/api_client.dart';
+import '../models/report_overview_models.dart';
 import '../models/content_models.dart';
 
 /// The dashboard aggregate, its personalisation prefs, and report queries.
@@ -42,6 +43,16 @@ class DashboardRepository {
 
   /// Daily created/resolved counts for a project over the last [days] —
   /// the basis for the burndown (cumulative remaining) trend.
+  /// The report overview of one project in one call (HIN-157).
+  Future<ReportOverview> overview(String projectId, {int days = 30}) async =>
+      ReportOverview.fromJson(
+        await _api.get(
+              '/api/v1/reports/overview',
+              query: {'projectId': projectId, 'days': '$days'},
+            )
+            as Map<String, dynamic>,
+      );
+
   Future<List<TrendPoint>> createdVsResolved(
     String projectId, {
     int days = 30,

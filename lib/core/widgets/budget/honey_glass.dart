@@ -35,6 +35,17 @@ abstract final class HoneyGlass {
     ],
   };
 
+  /// A liquid of any colour, for a distribution drawn in the same glass
+  /// (HIN-157): a lighter surface, the colour itself, a deeper foot.
+  static List<Color> tinted(Color base) {
+    final hsl = HSLColor.fromColor(base);
+    return [
+      hsl.withLightness((hsl.lightness + 0.16).clamp(0, 0.92)).toColor(),
+      base,
+      hsl.withLightness((hsl.lightness - 0.12).clamp(0.08, 1)).toColor(),
+    ];
+  }
+
   /// Ink on the liquid. Navy on every honey and on the light half of ember,
   /// which is where a figure sits in a vessel (measured: 6.9:1 on the honey
   /// middle stop, 4.6:1 on the ember middle stop).
@@ -131,10 +142,12 @@ abstract final class HoneyGlass {
     HoneySurface surface = HoneySurface.side,
     double alpha = 1,
     bool bubbles = true,
+    List<Color>? colorsOverride,
   }) {
     if (liquidRect.isEmpty) return;
     final colors = [
-      for (final c in liquid(level)) c.withValues(alpha: c.a * alpha),
+      for (final c in colorsOverride ?? liquid(level))
+        c.withValues(alpha: c.a * alpha),
     ];
     canvas.save();
     canvas.clipPath(shape);

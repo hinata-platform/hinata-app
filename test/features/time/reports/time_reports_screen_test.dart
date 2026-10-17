@@ -47,7 +47,8 @@ void main() {
   /// on the root navigator inherits them only from there.
   Widget host(
     _FakeReports reports, {
-    Widget child = const TimeReportsScreen(),
+    // The time report itself; the page opens on the overview otherwise.
+    Widget child = const TimeReportsScreen(link: 'tab:summary'),
     TimePolicySnapshot policy = TimePolicySnapshot.none,
     bool admin = false,
   }) => MultiRepositoryProvider(
