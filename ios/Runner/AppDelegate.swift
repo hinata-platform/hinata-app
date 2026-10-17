@@ -35,9 +35,10 @@ import flutter_local_notifications
     // Dart side names; they run in this process like the ones above.
     if #available(iOS 17.0, *) {
       AlarmKitIntents.register { key in
-        switch key {
-        case "stop": return StopTimerIntent()
-        case "advancePhase": return AdvancePhaseIntent()
+        // The keys are the commands' names, as the app hands them over.
+        switch TimerIntentRequest.Command(rawValue: key) {
+        case .stop: return StopTimerIntent()
+        case .advancePhase: return AdvancePhaseIntent()
         default: return nil
         }
       }
@@ -48,14 +49,14 @@ import flutter_local_notifications
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
 
-    // Hinata: PDF-Anhänge zeigen ihre Formularfelder erst, wenn wir die
-    // Annotationen vorher in die Seiten zeichnen (siehe HinataPdfChannel).
+    // Hinata: PDF attachments show their form fields only once the
+    // annotations are drawn into the pages first (see HinataPdfChannel).
     HinataPdfChannel.register(with: engineBridge.applicationRegistrar.messenger())
 
-    // Hinata: der laufende Timer als Live Activity (HIN-102).
+    // Hinata: the running timer as a Live Activity (HIN-102).
     HinataLiveActivityChannel.register(with: engineBridge.applicationRegistrar.messenger())
 
-    // Hinata: Siri, Shortcuts und Controls (HIN-105).
+    // Hinata: Siri, Shortcuts and the controls (HIN-105).
     HinataAppIntentsChannel.register(with: engineBridge.applicationRegistrar.messenger())
   }
 

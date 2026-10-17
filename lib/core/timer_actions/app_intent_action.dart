@@ -26,12 +26,8 @@ class AppIntentRequest {
   /// Null for anything that is not one of our three commands.
   static AppIntentRequest? fromArguments(Object? arguments) {
     if (arguments is! Map) return null;
-    final command = switch (arguments['command']) {
-      'start' => TimerBackgroundCommand.start,
-      'stop' => TimerBackgroundCommand.stop,
-      'advancePhase' => TimerBackgroundCommand.advancePhase,
-      _ => null,
-    };
+    final command = TimerBackgroundCommand.values
+        .asNameMap()[arguments['command']];
     if (command == null) return null;
     String? text(Object? value) =>
         value is String && value.trim().isNotEmpty ? value.trim() : null;
