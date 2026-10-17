@@ -33,11 +33,19 @@ class _FakeBinder implements HotkeyBinder {
     return {for (final id in hotKeys.keys) id: answer};
   }
 
-  @override
-  Future<void> unregister(String id) async => bound.remove(id);
+  final released = <String>[];
 
   @override
-  Future<void> unregisterAll() async => bound.clear();
+  Future<void> unregister(String id) async {
+    released.add(id);
+    bound.remove(id);
+  }
+
+  @override
+  Future<void> unregisterAll() async {
+    released.add('*');
+    bound.clear();
+  }
 
   @override
   Stream<HotKeyEvent> get events => presses.stream;
@@ -146,6 +154,18 @@ void main() {
     await surface.apply(const TimerSurfaceState(running: false));
     expect(binder.bound, isEmpty);
     expect(status.results.value, isEmpty);
+  });
+
+  test('switching both off releases them in one call', () async {
+    await surface.apply(
+      TimerSurfaceState(
+        running: false,
+        toggleHotkey: toggle,
+        focusHotkey: focus,
+      ),
+    );
+    await surface.apply(const TimerSurfaceState(running: false));
+    expect(binder.released, ['*']);
   });
 
   test('changing one shortcut leaves the other bound', () async {
