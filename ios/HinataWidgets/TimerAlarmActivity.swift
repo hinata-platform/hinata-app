@@ -135,10 +135,7 @@ struct AlarmClock: View {
     case .paused(let paused): hours = paused.totalCountdownDuration >= 3600
     default: hours = false
     }
-    switch size {
-    case .compact: return hours ? 66 : 52
-    case .large: return hours ? 124 : 88
-    }
+    return timerClockWidth(hours: hours, large: size == .large)
   }
 
   var body: some View {

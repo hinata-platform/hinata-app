@@ -1,7 +1,7 @@
 import AppIntents
 
 /// The phrases Siri and Spotlight know for the timer (HIN-105), in
-/// `AppShortcuts.xcstrings` in nine languages. Apple extracts the phrases at
+/// `<lang>.lproj/AppShortcuts.strings` in nine languages. Apple extracts the phrases at
 /// build time; nothing of the person's goes with them.
 @available(iOS 17.0, *)
 struct HinataAppShortcuts: AppShortcutsProvider {

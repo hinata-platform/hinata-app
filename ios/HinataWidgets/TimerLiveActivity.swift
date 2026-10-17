@@ -248,10 +248,7 @@ struct TimerClock: View {
   /// room for hours only where the stretch can reach them.
   static func width(_ state: TimerActivityAttributes.ContentState, size: Size) -> CGFloat {
     let hours = state.endsAt.map { $0.timeIntervalSince(state.startedAt) >= 3600 } ?? true
-    switch size {
-    case .compact: return hours ? 66 : 52
-    case .large: return hours ? 124 : 88
-    }
+    return timerClockWidth(hours: hours, large: size == .large)
   }
 
   var body: some View {
@@ -267,6 +264,12 @@ struct TimerClock: View {
       Text(timerInterval: state.startedAt...state.displayEnd, countsDown: false)
     }
   }
+}
+
+/// The fixed width of a running clock, the same on the timer's activity and
+/// on an alarm's countdown (HIN-106).
+func timerClockWidth(hours: Bool, large: Bool) -> CGFloat {
+  large ? (hours ? 124 : 88) : (hours ? 66 : 52)
 }
 
 @available(iOS 16.1, *)

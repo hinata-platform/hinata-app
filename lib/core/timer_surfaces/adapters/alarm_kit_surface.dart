@@ -202,7 +202,6 @@ class AlarmKitSurface extends TimerSurface {
     DateTime at,
     TimerSurfaceState state,
   ) async {
-    final texts = state.texts;
     final pomodoro = state.mode == TimerMode.pomodoro;
     try {
       await _kit.scheduleTimer(
@@ -211,6 +210,7 @@ class AlarmKitSurface extends TimerSurface {
         tint: alarmTint,
         sound: alarmSound,
         metadataKind: alarmKind(state),
+        // The names of TimerBackgroundCommand, which AppDelegate maps back.
         stopIntent: 'stop',
         secondaryIntent: pomodoro ? 'advancePhase' : null,
         presentation: alarmPresentation(state),
@@ -222,7 +222,7 @@ class AlarmKitSurface extends TimerSurface {
         case AlarmKitErrorCode.notAuthorized:
           await status.refresh();
         default:
-          debugPrint('Alarm not planned: ${error.code.name} ${texts.appName}');
+          debugPrint('Alarm not planned: ${error.code.name}');
       }
     }
   }
