@@ -245,3 +245,139 @@ class TopBudgets extends Equatable {
   @override
   List<Object?> get props => [items, names, total];
 }
+
+/// Recorded minutes per day for a project's burn-down (HIN-156): the days in
+/// a span with time on them, and the sum of everything before it.
+class BudgetHistory extends Equatable {
+  const BudgetHistory({
+    required this.from,
+    required this.to,
+    this.before = 0,
+    this.days = const [],
+  });
+
+  factory BudgetHistory.fromJson(Map<String, dynamic> json) => BudgetHistory(
+    from: DateTime.parse(json['from'] as String),
+    to: DateTime.parse(json['to'] as String),
+    before: (json['before'] as num?)?.toInt() ?? 0,
+    days: [
+      for (final row in (json['days'] as List<dynamic>? ?? const []))
+        (
+          date: DateTime.parse((row as Map<String, dynamic>)['date'] as String),
+          minutes: (row['minutes'] as num).toInt(),
+        ),
+    ],
+  );
+
+  final DateTime from;
+  final DateTime to;
+
+  /// Everything recorded before [from].
+  final int before;
+  final List<({DateTime date, int minutes})> days;
+
+  /// The running total at the end of each day of the span, every day
+  /// included, so a line drawn from it has no gaps.
+  List<({DateTime date, int total})> get cumulative {
+    final byDay = {for (final day in days) _key(day.date): day.minutes};
+    final out = <({DateTime date, int total})>[];
+    var total = before;
+    for (
+      var day = DateTime(from.year, from.month, from.day);
+      !day.isAfter(to);
+      day = DateTime(day.year, day.month, day.day + 1)
+    ) {
+      total += byDay[_key(day)] ?? 0;
+      out.add((date: day, total: total));
+    }
+    return out;
+  }
+
+  static String _key(DateTime day) => '${day.year}-${day.month}-${day.day}';
+
+  @override
+  List<Object?> get props => [from, to, before, days];
+}
+
+/// When a budget runs out at the present pace (HIN-156).
+class BudgetForecast extends Equatable {
+  const BudgetForecast({
+    this.dailyMinutes = 0,
+    this.dataDays = 0,
+    this.leftMinutes,
+    this.exhaustedOn,
+    this.lowConfidence = true,
+  });
+
+  factory BudgetForecast.fromJson(Map<String, dynamic> json) => BudgetForecast(
+    dailyMinutes: (json['dailyMinutes'] as num?)?.toInt() ?? 0,
+    dataDays: (json['dataDays'] as num?)?.toInt() ?? 0,
+    leftMinutes: (json['leftMinutes'] as num?)?.toInt(),
+    exhaustedOn: json['exhaustedOn'] == null
+        ? null
+        : DateTime.parse(json['exhaustedOn'] as String),
+    lowConfidence: json['confidence'] != 'OK',
+  );
+
+  /// Recorded per working day, over the last fourteen days.
+  final int dailyMinutes;
+  final int dataDays;
+
+  /// Null without a budget.
+  final int? leftMinutes;
+  final DateTime? exhaustedOn;
+
+  /// Fewer than three days with time: too little to say.
+  final bool lowConfidence;
+
+  @override
+  List<Object?> get props => [
+    dailyMinutes,
+    dataDays,
+    leftMinutes,
+    exhaustedOn,
+    lowConfidence,
+  ];
+}
+
+/// A sprint's budget and what it has used (HIN-156).
+class SprintTimeUsage extends Equatable {
+  const SprintTimeUsage({
+    required this.sprintId,
+    this.budgetMinutes,
+    this.usedMinutes = 0,
+    this.nearPercent = BudgetGauge.defaultNearPercent,
+    this.canEdit = false,
+  });
+
+  factory SprintTimeUsage.fromJson(Map<String, dynamic> json) =>
+      SprintTimeUsage(
+        sprintId: json['sprintId'] as String,
+        budgetMinutes: (json['budgetMinutes'] as num?)?.toInt(),
+        usedMinutes: (json['usedMinutes'] as num?)?.toInt() ?? 0,
+        nearPercent:
+            (json['nearPercent'] as num?)?.toInt() ??
+            BudgetGauge.defaultNearPercent,
+        canEdit: json['canEdit'] as bool? ?? false,
+      );
+
+  final String sprintId;
+  final int? budgetMinutes;
+  final int usedMinutes;
+  final int nearPercent;
+
+  /// Whether the reader leads one of the board's projects and may set it.
+  final bool canEdit;
+
+  BudgetGauge? get gauge =>
+      BudgetGauge.of(usedMinutes, budgetMinutes, nearPercent: nearPercent);
+
+  @override
+  List<Object?> get props => [
+    sprintId,
+    budgetMinutes,
+    usedMinutes,
+    nearPercent,
+    canEdit,
+  ];
+}

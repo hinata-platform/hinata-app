@@ -66,6 +66,52 @@ class TimeUsageRepository {
     return TopBudgets.fromJson(data);
   }
 
+  /// Recorded minutes per day for the burn-down (HIN-156); the server's
+  /// default span, the last 90 days, unless [from] and [to] say otherwise.
+  Future<BudgetHistory> history(
+    String projectId, {
+    DateTime? from,
+    DateTime? to,
+  }) async {
+    String day(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+    final data =
+        await _api.get(
+              '/api/v1/projects/$projectId/time-usage/history',
+              query: {
+                'from': ?(from == null ? null : day(from)),
+                'to': ?(to == null ? null : day(to)),
+              },
+            )
+            as Map<String, dynamic>;
+    return BudgetHistory.fromJson(data);
+  }
+
+  Future<BudgetForecast> forecast(String projectId) async {
+    final data =
+        await _api.get('/api/v1/projects/$projectId/time-usage/forecast')
+            as Map<String, dynamic>;
+    return BudgetForecast.fromJson(data);
+  }
+
+  Future<SprintTimeUsage> sprint(String sprintId) async {
+    final data =
+        await _api.get('/api/v1/sprints/$sprintId/time-usage')
+            as Map<String, dynamic>;
+    return SprintTimeUsage.fromJson(data);
+  }
+
+  /// Sets or, with null, removes a sprint's budget.
+  Future<SprintTimeUsage> setSprintBudget(String sprintId, int? minutes) async {
+    final data =
+        await _api.put(
+              '/api/v1/sprints/$sprintId/time-settings',
+              body: {'budgetMinutes': minutes},
+            )
+            as Map<String, dynamic>;
+    return SprintTimeUsage.fromJson(data);
+  }
+
   Future<IssueTimeUsage> issue(String issueIdOrKey) async {
     final data =
         await _api.get('/api/v1/issues/$issueIdOrKey/time-usage')

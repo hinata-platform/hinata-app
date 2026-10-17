@@ -5180,6 +5180,24 @@
       },
       "revenue": "Money budget (revenue)",
       "cost": "Money budget (cost)"
+    },
+    "history": {
+      "title": "Budget history",
+      "recorded": "Recorded",
+      "summary": "{{sums}}, {{percent}}, from {{from}} to {{to}}",
+      "summaryNoBudget": "{{used}} recorded",
+      "open": "View history"
+    },
+    "forecast": {
+      "lastsUntil": "At the same pace the budget lasts until {{date}}",
+      "tooLittle": "Too little data for a forecast yet",
+      "noPace": "No time was recorded lately",
+      "spent": "The budget is used up"
+    },
+    "sprint": {
+      "label": "Sprint budget",
+      "set": "Set sprint budget",
+      "hint": "e.g. 80h — empty for no budget"
     }
   }
 }

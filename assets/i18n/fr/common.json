@@ -5180,6 +5180,24 @@
       },
       "revenue": "Budget financier (chiffre d’affaires)",
       "cost": "Budget financier (coûts)"
+    },
+    "history": {
+      "title": "Historique du budget",
+      "recorded": "Saisi",
+      "summary": "{{sums}}, {{percent}}, du {{from}} au {{to}}",
+      "summaryNoBudget": "{{used}} saisis",
+      "open": "Voir l’historique"
+    },
+    "forecast": {
+      "lastsUntil": "Au même rythme, le budget tient jusqu’au {{date}}",
+      "tooLittle": "Encore trop peu de données pour une prévision",
+      "noPace": "Aucun temps saisi récemment",
+      "spent": "Le budget est épuisé"
+    },
+    "sprint": {
+      "label": "Budget du sprint",
+      "set": "Fixer le budget du sprint",
+      "hint": "p. ex. 80h — vide pour aucun"
     }
   }
 }

@@ -72,6 +72,7 @@ class _SprintHeader extends StatelessWidget {
                     const _ActivePill(),
                     const SizedBox(width: 12),
                     Expanded(child: nameBlock),
+                    SprintBudget(sprintId: sprint.id),
                   ],
                 ),
                 if (progress != null) ...[const SizedBox(height: 12), progress],
@@ -82,6 +83,8 @@ class _SprintHeader extends StatelessWidget {
                 const _ActivePill(),
                 const SizedBox(width: 12),
                 Expanded(child: nameBlock),
+                // The sprint's own time budget (HIN-156).
+                SprintBudget(sprintId: sprint.id),
                 if (progress != null) ...[
                   const SizedBox(width: 16),
                   SizedBox(width: 170, child: progress),
