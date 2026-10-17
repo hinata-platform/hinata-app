@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/widgets/budget/budget.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
@@ -393,6 +394,14 @@ class _BoardTimelineState extends State<BoardTimeline> {
         ? (task.spentMinutes / task.estimateMinutes!).clamp(0.0, 1.0)
         : (task.resolved ? 1.0 : 0.0);
     final conflict = graph.conflictIds.contains(task.id);
+    // Spent against the estimate, for the honey line under the bar and the
+    // tooltip (HIN-152).
+    final estimate = BudgetGauge.of(task.spentMinutes, task.estimateMinutes);
+    final estimateLine = estimate == null
+        ? ''
+        : '\n${context.t('budget.estimate')}: '
+              '${BudgetStyle.percent(context, estimate)} · '
+              '${BudgetStyle.remainder(context, estimate, budgetMinutes)}';
     final color = task.resolved
         ? AppColors.stDone
         : AppColors.stateColor(task.state.toUpperCase());
@@ -411,8 +420,10 @@ class _BoardTimelineState extends State<BoardTimeline> {
             child: Tooltip(
               message: conflict
                   ? '${task.readableId} · ${stateLabel(task.state)}'
+                        '$estimateLine'
                         '\n⚠ ${context.t('gantt.conflictHint')}'
-                  : '${task.readableId} · ${stateLabel(task.state)}',
+                  : '${task.readableId} · ${stateLabel(task.state)}'
+                        '$estimateLine',
               child: slot.isMilestone
                   ? GanttMilestone(
                       color: conflict ? AppColors.danger : color,
@@ -423,6 +434,7 @@ class _BoardTimelineState extends State<BoardTimeline> {
                       width: width,
                       fraction: fraction.toDouble(),
                       conflict: conflict,
+                      estimate: estimate,
                     ),
             ),
           ),
@@ -823,11 +835,16 @@ class _TimelineBar extends StatelessWidget {
     required this.width,
     required this.fraction,
     this.conflict = false,
+    this.estimate,
   });
 
   final Issue task;
   final double width;
   final double fraction;
+
+  /// Spent against the estimate: a honey line along the bar's foot that turns
+  /// amber from the warning share and ember past the estimate.
+  final BudgetGauge? estimate;
 
   /// Starts before the issue blocking it is finished.
   final bool conflict;
@@ -855,6 +872,28 @@ class _TimelineBar extends StatelessWidget {
               child: Container(color: Colors.white.withValues(alpha: 0.22)),
             ),
           ),
+          if (estimate != null)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 4,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FractionallySizedBox(
+                  widthFactor: estimate!.fraction.clamp(0.0, 1.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: HoneyGlass.liquid(estimate!.level),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (width > 28)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9),

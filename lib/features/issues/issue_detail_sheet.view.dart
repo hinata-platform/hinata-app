@@ -2932,16 +2932,36 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               ),
           ],
           const SizedBox(height: 12),
-          Text(
-            context.t(
-              'issues.spent',
-              variables: {
-                'spent': fmtDuration(context, issue.spentMinutes),
-                'estimate': fmtDuration(context, issue.estimateMinutes),
-              },
+          // Spent time against the estimate as honey in a tube (HIN-152),
+          // warning from the project's own share; without an estimate the
+          // plain sentence, since there is nothing to fill.
+          if ((issue.estimateMinutes ?? 0) > 0)
+            ProjectUsage(
+              projectId: issue.projectId,
+              builder: (context, usage) => BudgetMeter(
+                label: context.t('budget.estimate'),
+                gauge: BudgetGauge(
+                  used: issue.spentMinutes,
+                  limit: issue.estimateMinutes!,
+                  nearPercent:
+                      usage?.nearPercent ?? BudgetGauge.defaultNearPercent,
+                ),
+              ),
+            )
+          else
+            Text(
+              context.t(
+                'issues.spent',
+                variables: {
+                  'spent': fmtDuration(context, issue.spentMinutes),
+                  'estimate': fmtDuration(context, issue.estimateMinutes),
+                },
+              ),
+              style: TextStyle(
+                color: AppColors.inkSoft,
+                fontSize: AppType.label,
+              ),
             ),
-            style: TextStyle(color: AppColors.inkSoft, fontSize: AppType.label),
-          ),
           // The issue's own rate (HIN-96), for whoever prices the project.
           if (_pricesIssue)
             IssueRateButton(

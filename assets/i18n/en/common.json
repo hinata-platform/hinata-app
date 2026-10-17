@@ -376,7 +376,8 @@
       "completion": "Project progress",
       "tracker": "Focus time",
       "ranking": "Team ranking",
-      "away": "Away today"
+      "away": "Away today",
+      "budgets": "Budgets"
     },
     "saveError": "Couldn't save your dashboard. Please try again.",
     "saved": "Dashboard saved",
@@ -5103,6 +5104,7 @@
   "budget": {
     "timeBudget": "Time budget",
     "estimate": "Estimate",
+    "estimates": "Sum of estimates",
     "usedOfLimit": "{{used}} of {{limit}}",
     "left": "{{amount}} left",
     "overBy": "{{amount}} over",
@@ -5130,7 +5132,8 @@
     "dashboard": {
       "title": "Budgets",
       "empty": "No project with a budget",
-      "emptyHint": "Leads set a time budget in the project settings."
+      "emptyHint": "Leads set a time budget in the project settings.",
+      "all": "All {{count}}"
     },
     "pending": "this entry +{{amount}}"
   }

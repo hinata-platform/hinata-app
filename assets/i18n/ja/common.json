@@ -376,7 +376,8 @@
       "completion": "プロジェクトの進捗",
       "tracker": "集中した時間",
       "ranking": "チームランキング",
-      "away": "本日の不在"
+      "away": "本日の不在",
+      "budgets": "予算"
     },
     "saveError": "ダッシュボードを保存できませんでした。もう一度お試しください。",
     "saved": "ダッシュボードを保存しました",
@@ -5103,6 +5104,7 @@
   "budget": {
     "timeBudget": "時間予算",
     "estimate": "見積もり",
+    "estimates": "見積もりの合計",
     "usedOfLimit": "{{used}} / {{limit}}",
     "left": "残り {{amount}}",
     "overBy": "{{amount}} 超過",
@@ -5130,7 +5132,8 @@
     "dashboard": {
       "title": "予算",
       "empty": "予算のあるプロジェクトはありません",
-      "emptyHint": "リーダーがプロジェクト設定で時間予算を設定します。"
+      "emptyHint": "リーダーがプロジェクト設定で時間予算を設定します。",
+      "all": "すべて {{count}} 件"
     },
     "pending": "この記録 +{{amount}}"
   }

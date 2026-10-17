@@ -376,7 +376,8 @@
       "completion": "Projektfortschritt",
       "tracker": "Fokuszeit",
       "ranking": "Team-Ranking",
-      "away": "Heute abwesend"
+      "away": "Heute abwesend",
+      "budgets": "Budgets"
     },
     "saveError": "Dashboard konnte nicht gespeichert werden. Bitte erneut versuchen.",
     "saved": "Dashboard gespeichert",
@@ -5103,6 +5104,7 @@
   "budget": {
     "timeBudget": "Zeitbudget",
     "estimate": "Schätzung",
+    "estimates": "Summe der Schätzungen",
     "usedOfLimit": "{{used}} von {{limit}}",
     "left": "noch {{amount}}",
     "overBy": "{{amount}} überschritten",
@@ -5130,7 +5132,8 @@
     "dashboard": {
       "title": "Budgets",
       "empty": "Kein Projekt mit Budget",
-      "emptyHint": "Leitungen legen ein Zeitbudget in den Projekt-Einstellungen fest."
+      "emptyHint": "Leitungen legen ein Zeitbudget in den Projekt-Einstellungen fest.",
+      "all": "Alle {{count}}"
     },
     "pending": "dieser Eintrag +{{amount}}"
   }

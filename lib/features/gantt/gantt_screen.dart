@@ -5,6 +5,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/widgets/budget/budget.dart';
 import '../../core/api/api_client.dart';
 import '../../core/repositories/project_repository.dart';
 import '../../core/i18n/i18n.dart';
@@ -618,6 +619,14 @@ class _GanttState extends State<_Gantt> {
     final buffer = StringBuffer(
       '${task.readableId} · ${stateLabel(task.state)} · ${task.progressPercent}%',
     );
+    final estimate = BudgetGauge.of(task.spentMinutes, task.estimateMinutes);
+    if (estimate != null) {
+      buffer.write(
+        '\n${context.t('budget.estimate')}: '
+        '${BudgetStyle.percent(context, estimate)} · '
+        '${BudgetStyle.remainder(context, estimate, budgetMinutes)}',
+      );
+    }
     final byId = {for (final t in _tasks) t.id: t};
     final relations = <String>[];
     for (final edge in graph.edges) {
@@ -1144,6 +1153,31 @@ class _GanttBar extends StatelessWidget {
               child: Container(color: Colors.white.withValues(alpha: 0.22)),
             ),
           ),
+          // Spent against the estimate (HIN-152): a honey line along the
+          // bar's foot, amber from the warning share, ember past the estimate.
+          if (BudgetGauge.of(task.spentMinutes, task.estimateMinutes)
+              case final estimate?)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: 4,
+              child: Align(
+                alignment: AlignmentDirectional.centerStart,
+                child: FractionallySizedBox(
+                  widthFactor: estimate.fraction.clamp(0.0, 1.0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: HoneyGlass.liquid(estimate.level),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (showLabel && width > 28)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9),
