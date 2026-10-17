@@ -236,6 +236,8 @@ void main() {
       calls.clear();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async {
+            // A Mac with WidgetKit; the question is not one of the writes.
+            if (call.method == 'isSupported') return true;
             calls.add(call);
             return null;
           });
