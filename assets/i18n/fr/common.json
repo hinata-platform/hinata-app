@@ -1375,6 +1375,8 @@
     },
     "reports": {
       "tab": {
+        "overview": "Vue d’ensemble",
+        "budgets": "Budgets",
         "summary": "Synthèse",
         "detailed": "Entrées",
         "workload": "Charge",
@@ -2573,7 +2575,25 @@
       "openLast30Days": "Ouverts (30 derniers jours)",
       "breakdowns": "Répartitions",
       "pageFooter": "{{org}} · page {page}/{pages}"
-    }
+    },
+    "pickProject": "Choisir un projet",
+    "span": {
+      "month": "30 jours",
+      "quarter": "90 jours"
+    },
+    "overview": {
+      "trend": "Comment évoluent les tickets ouverts ?",
+      "budget": "Comment se remplit le budget ?",
+      "states": "Où en sont les tickets ?",
+      "priorities": "Quelle est l’urgence du travail ?",
+      "people": "Qui travaille sur quoi ?",
+      "activities": "Où va le temps ?",
+      "open": "Ouverts",
+      "created": "Nouveaux en {{days}} jours",
+      "resolved": "Terminés en {{days}} jours",
+      "recorded": "Saisi en {{days}} jours"
+    },
+    "unassigned": "Non attribué"
   },
   "knowledge": {
     "title": "Base de connaissances",
@@ -5198,6 +5218,11 @@
       "label": "Budget du sprint",
       "set": "Fixer le budget du sprint",
       "hint": "p. ex. 80h — vide pour aucun"
+    },
+    "report": {
+      "emptyTitle": "Pas encore de budgets",
+      "sprints": "Sprints avec budget",
+      "onlyMoney": "Seulement un budget financier que tu ne vois pas."
     }
   }
 }

@@ -1375,6 +1375,8 @@
     },
     "reports": {
       "tab": {
+        "overview": "Overview",
+        "budgets": "Budgets",
         "summary": "Summary",
         "detailed": "Entries",
         "workload": "Workload",
@@ -2573,7 +2575,25 @@
       "openLast30Days": "Open (last 30 days)",
       "breakdowns": "Breakdowns",
       "pageFooter": "{{org}} · page {page}/{pages}"
-    }
+    },
+    "pickProject": "Pick a project",
+    "span": {
+      "month": "30 days",
+      "quarter": "90 days"
+    },
+    "overview": {
+      "trend": "How do the open issues develop?",
+      "budget": "How does the budget fill?",
+      "states": "Where do the issues stand?",
+      "priorities": "How urgent is the work?",
+      "people": "Who works on what?",
+      "activities": "Where does the time go?",
+      "open": "Open",
+      "created": "New in {{days}} days",
+      "resolved": "Done in {{days}} days",
+      "recorded": "Recorded in {{days}} days"
+    },
+    "unassigned": "Unassigned"
   },
   "knowledge": {
     "title": "Knowledge base",
@@ -5198,6 +5218,11 @@
       "label": "Sprint budget",
       "set": "Set sprint budget",
       "hint": "e.g. 80h — empty for no budget"
+    },
+    "report": {
+      "emptyTitle": "No budgets yet",
+      "sprints": "Sprints with a budget",
+      "onlyMoney": "Only a money budget you do not see."
     }
   }
 }

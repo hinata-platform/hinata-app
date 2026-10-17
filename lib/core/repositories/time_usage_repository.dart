@@ -112,6 +112,25 @@ class TimeUsageRepository {
     return SprintTimeUsage.fromJson(data);
   }
 
+  /// One page of the budget report (HIN-157).
+  Future<BudgetReportPage> budgetReport({
+    int page = 0,
+    int size = 20,
+    List<String> projectIds = const [],
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/time/reports/budgets',
+              query: {
+                'page': '$page',
+                'size': '$size',
+                if (projectIds.isNotEmpty) 'projectIds': projectIds.join(','),
+              },
+            )
+            as Map<String, dynamic>;
+    return BudgetReportPage.fromJson(data);
+  }
+
   Future<IssueTimeUsage> issue(String issueIdOrKey) async {
     final data =
         await _api.get('/api/v1/issues/$issueIdOrKey/time-usage')

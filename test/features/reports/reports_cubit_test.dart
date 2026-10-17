@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
-import 'package:hinata/core/models/content_models.dart';
 import 'package:hinata/core/models/core_models.dart';
+import 'package:hinata/core/models/report_overview_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/reports/reports_cubit.dart';
 
@@ -30,46 +30,58 @@ void main() {
   });
   tearDown(() => cubit.close());
 
-  test('reads the projects and the people together', () async {
+  test('opens on the project the link names', () async {
     const project = Project(id: 'p1', key: 'KULT', name: 'Kultur');
-    const uma = DirectoryUser(id: 'u1', username: 'uma', displayName: 'Uma');
-    projects.answer(#projects, const [project]);
-    users.answer(#users, const [uma]);
+    projects.answer<Project>(#project, project);
 
-    final answer = await cubit.projectsAndUsers();
-
-    expect(answer.projects, [project]);
-    expect(answer.users, [uma]);
+    expect(await cubit.project('p1'), project);
+    expect(projects.callTo(#project).positionalArguments, ['p1']);
   });
 
-  test('a failed read passes the failure on', () async {
-    projects.answer(#projects, const <Project>[]);
-    users.fail(#users, ApiFailure('errors.forbidden'));
+  test(
+    'without a link, on the first project, asked as a page of one',
+    () async {
+      const project = Project(id: 'p1', key: 'KULT', name: 'Kultur');
+      projects.answer<({List<Project> projects, int total})>(#searchProjects, (
+        projects: const [project],
+        total: 7,
+      ));
 
-    await expectLater(cubit.projectsAndUsers(), throwsA(isA<ApiFailure>()));
+      expect(await cubit.project(null), project);
+      expect(projects.callTo(#searchProjects).namedArguments[#size], 1);
+    },
+  );
+
+  test('no project at all is null, not a failure', () async {
+    projects.answer<({List<Project> projects, int total})>(#searchProjects, (
+      projects: const <Project>[],
+      total: 0,
+    ));
+
+    expect(await cubit.project(null), isNull);
   });
 
-  test('asks one report with its query', () async {
-    dashboard.answer(#report, const {'OPEN': 4});
-    final query = <String, dynamic>{'projectId': 'p1'};
+  test('asks the overview over the given days', () async {
+    const overview = ReportOverview(projectId: 'p1', days: 90);
+    dashboard.answer(#overview, overview);
 
-    expect(await cubit.report('issues-by-state', query), {'OPEN': 4});
-    expect(dashboard.callTo(#report).positionalArguments, [
-      'issues-by-state',
-      query,
-    ]);
-  });
-
-  test('asks the trend over the given days', () async {
-    final points = [
-      TrendPoint(date: DateTime(2026, 10, 1), created: 2, resolved: 1),
-    ];
-    dashboard.answer(#createdVsResolved, points);
-
-    expect(await cubit.createdVsResolved('p1', days: 30), points);
-    final call = dashboard.callTo(#createdVsResolved);
+    expect(await cubit.overview('p1', days: 90), overview);
+    final call = dashboard.callTo(#overview);
     expect(call.positionalArguments, ['p1']);
-    expect(call.namedArguments, {#days: 30});
+    expect(call.namedArguments, {#days: 90});
+  });
+
+  test('names only the people asked for, and passes a failure on', () async {
+    const uma = DirectoryUser(id: 'u1', username: 'uma', displayName: 'Uma');
+    users.answer(#usersByIds, const [uma]);
+
+    expect(await cubit.usersByIds(['u1']), [uma]);
+    expect(users.callTo(#usersByIds).positionalArguments, [
+      ['u1'],
+    ]);
+
+    users.fail(#usersByIds, ApiFailure('errors.forbidden'));
+    await expectLater(cubit.usersByIds(['u1']), throwsA(isA<ApiFailure>()));
   });
 
   test('reads the meta and the logo for a PDF', () async {

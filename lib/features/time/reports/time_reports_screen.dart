@@ -37,6 +37,8 @@ import '../../billing/billing_access_cubit.dart';
 import 'absence_report_tab.dart';
 import 'billing_report_tab.dart';
 import 'report_absences_cubit.dart';
+import '../../reports/report_budgets.dart';
+import '../../reports/report_overview.dart';
 import 'report_actions.dart';
 import 'report_controls.dart';
 import 'report_detail_views.dart';
@@ -50,6 +52,12 @@ import '../../../core/theme/app_type.dart';
 
 /// The tabs of the report page (HIN-93).
 enum ReportTab {
+  /// One project at a glance (HIN-157): figures, trend, distributions and its
+  /// budget. The page's first view, and the only one the old report page had.
+  overview('overview', LucideIcons.layoutDashboard),
+
+  /// Every budget the reader sees, fullest first (HIN-157).
+  budgets('budgets', LucideIcons.gauge),
   summary('summary', LucideIcons.chartColumn),
   detailed('detailed', LucideIcons.list),
   workload('workload', LucideIcons.gauge),
@@ -167,7 +175,22 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
   /// chart of the same answer.
   ReportQuery _asked = const ReportQuery();
 
-  ReportTab _tab = ReportTab.summary;
+  /// Where the page opens: the overview, unless a link names another view. A
+  /// saved or shared report opens the time report it describes.
+  late ReportTab _tab = _initialTab();
+
+  ReportTab _initialTab() {
+    final link = widget.link;
+    if (link == null) return ReportTab.overview;
+    if (link.startsWith('tab:')) {
+      final key = link.substring('tab:'.length);
+      return ReportTab.values.firstWhere(
+        (tab) => tab.key == key,
+        orElse: () => ReportTab.overview,
+      );
+    }
+    return ReportTab.summary;
+  }
 
   /// The tabs whose lists answer the current question.
   final Set<ReportTab> _fresh = {};
@@ -206,7 +229,7 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
       context.read<TimePolicyCubit>().ensureLoaded().whenComplete(() {
         if (!mounted) return;
         final link = widget.link;
-        if (link != null) {
+        if (link != null && !link.startsWith('tab:')) {
           unawaited(_openLink(link));
         } else {
           _loadTab();
@@ -259,8 +282,11 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
       ReportTab.summary => _groups.load(),
       ReportTab.detailed => _entries.load(),
       ReportTab.workload => _workload.load(),
-      // The absence and billing reports read their own lists.
-      ReportTab.absences || ReportTab.billing => Future<void>.value(),
+      // These read their own figures.
+      ReportTab.absences ||
+      ReportTab.billing ||
+      ReportTab.overview ||
+      ReportTab.budgets => Future<void>.value(),
       ReportTab.saved => _saved.load(),
     });
   }
@@ -540,8 +566,14 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
     if (_tab == ReportTab.workload && !workload ||
         _tab == ReportTab.absences && !absences ||
         _tab == ReportTab.billing && !billing) {
-      _tab = ReportTab.summary;
+      _tab = ReportTab.overview;
     }
+    // The overview and the budgets carry their own controls and their own
+    // file; the time report's import, export and save are not theirs.
+    final ownControls =
+        _tab == ReportTab.overview ||
+        _tab == ReportTab.budgets ||
+        _tab == ReportTab.billing;
     final tabs = GlassScopeRow(
       scopes: _tabs(workload: workload, absences: absences, billing: billing),
       active: _tab.key,
@@ -558,7 +590,7 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
             )
           : null,
       titleLeading: true,
-      actions: compact && _tab != ReportTab.billing
+      actions: compact && !ownControls
           ? [
               PageAction(
                 icon: LucideIcons.ellipsis,
@@ -590,7 +622,7 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
                       actions: [
                         // The money report has its own ways out: invoices and
                         // rates, in the tab. The time report's files are not it.
-                        if (_tab == ReportTab.billing)
+                        if (ownControls)
                           const SizedBox.shrink()
                         else if (_tab == ReportTab.absences)
                           // The absence report has one way out: its files.
@@ -669,6 +701,22 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
 
   Widget _body() {
     final padding = _padding();
+    if (_tab == ReportTab.overview) {
+      // The report's project filter picks the project when it names one.
+      final projects = _query.state.projectIds;
+      final project = projects.length == 1 ? projects.single : null;
+      return ReportOverviewView(
+        key: ValueKey(project),
+        padding: padding,
+        initialProjectId: project,
+      );
+    }
+    if (_tab == ReportTab.budgets) {
+      return ReportBudgetsView(
+        padding: padding,
+        projectIds: _query.state.projectIds,
+      );
+    }
     if (_tab == ReportTab.absences) {
       return AbsenceReportTab(query: _absenceQuery, padding: padding);
     }
@@ -687,7 +735,10 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
         ReportTab.detailed => _detailed(padding),
         ReportTab.workload => _workloadTab(padding),
         ReportTab.saved => _savedTab(padding),
-        ReportTab.absences || ReportTab.billing => const SizedBox.shrink(),
+        ReportTab.absences ||
+        ReportTab.billing ||
+        ReportTab.overview ||
+        ReportTab.budgets => const SizedBox.shrink(),
       },
     );
   }

@@ -1375,6 +1375,8 @@
     },
     "reports": {
       "tab": {
+        "overview": "概要",
+        "budgets": "予算",
         "summary": "サマリー",
         "detailed": "エントリー",
         "workload": "稼働状況",
@@ -2573,7 +2575,25 @@
       "openLast30Days": "未完了（過去 30 日間）",
       "breakdowns": "内訳",
       "pageFooter": "{{org}} · {page}/{pages} ページ"
-    }
+    },
+    "pickProject": "プロジェクトを選択",
+    "span": {
+      "month": "30 日",
+      "quarter": "90 日"
+    },
+    "overview": {
+      "trend": "未完了の課題はどう推移している？",
+      "budget": "予算はどれだけ埋まった？",
+      "states": "課題はどの段階にある？",
+      "priorities": "作業の緊急度は？",
+      "people": "誰が何に取り組んでいる？",
+      "activities": "時間は何に使われている？",
+      "open": "未完了",
+      "created": "{{days}} 日間の新規",
+      "resolved": "{{days}} 日間の完了",
+      "recorded": "{{days}} 日間の記録"
+    },
+    "unassigned": "未割り当て"
   },
   "knowledge": {
     "title": "ナレッジベース",
@@ -5198,6 +5218,11 @@
       "label": "スプリント予算",
       "set": "スプリント予算を設定",
       "hint": "例：80h — なしの場合は空欄"
+    },
+    "report": {
+      "emptyTitle": "予算はまだありません",
+      "sprints": "予算のあるスプリント",
+      "onlyMoney": "あなたには見えない金額予算のみです。"
     }
   }
 }
