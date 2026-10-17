@@ -166,7 +166,7 @@ dependencies:
   system_hotkeys_windows: ^0.2.0
   # Imported for its app id registration (an AppImage is not known to the
   # portal by a sandbox).
-  system_hotkeys_linux: ^0.2.0
+  system_hotkeys_linux: ^0.2.1
   # Our own (hinata-platform/alarm_kit, HIN-106): the end of an interval as a
   # system alarm on iOS and iPadOS 26. Below that it answers "unsupported".
   alarm_kit: ^0.1.1
@@ -240,7 +240,7 @@ dependencies:
   home_widget: ^0.9.4
   # Our own (hinata-platform/widgetkit_macos, HIN-108): the same record for
   # the Mac's widgets, which home_widget cannot reach.
-  widgetkit_macos: ^0.1.0
+  widgetkit_macos: ^0.1.1
   # HIN-103: whether the keyguard is up, in the background engines too.
   hinata_device_lock:
     path: packages/hinata_device_lock
