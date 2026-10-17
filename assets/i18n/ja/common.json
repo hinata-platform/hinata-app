@@ -5180,6 +5180,24 @@
       },
       "revenue": "金額予算（売上）",
       "cost": "金額予算（コスト）"
+    },
+    "history": {
+      "title": "予算の推移",
+      "recorded": "記録済み",
+      "summary": "{{sums}}、{{percent}}、{{from}}〜{{to}}",
+      "summaryNoBudget": "{{used}} 記録済み",
+      "open": "推移を見る"
+    },
+    "forecast": {
+      "lastsUntil": "同じペースなら予算は {{date}} まで持ちます",
+      "tooLittle": "予測にはまだデータが足りません",
+      "noPace": "最近は時間が記録されていません",
+      "spent": "予算を使い切りました"
+    },
+    "sprint": {
+      "label": "スプリント予算",
+      "set": "スプリント予算を設定",
+      "hint": "例：80h — なしの場合は空欄"
     }
   }
 }

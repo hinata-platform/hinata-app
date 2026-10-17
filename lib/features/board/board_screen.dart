@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../time/budget/project_budget_capsules.dart';
+import '../time/budget/sprint_budget.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
@@ -582,6 +583,7 @@ class _KanbanViewState extends State<_KanbanView>
     return [
       ProjectBudgetCapsules(
         projectId: projects.single,
+        projectName: wall.board?.name,
         padding: const EdgeInsetsDirectional.only(start: 12),
       ),
     ];
