@@ -4020,6 +4020,7 @@
     "attachExisting": "既存を紐づける",
     "createNew": "新規作成",
     "allProjectsAttached": "すべてのプロジェクトがすでにこのチームに紐づいています。",
+    "noProjectsYouLead": "このチームにまだないプロジェクトは、ほかの人がリードしています。追加できるのはプロジェクトのリードだけです。",
     "attachCta": "{{count}} 件を紐づける",
     "createProjectCta": "プロジェクトを作成",
     "projectName": "プロジェクト名",

@@ -51,6 +51,7 @@ Future<bool?> showAddProjectModal(
       child: _AddProjectBody(
         team: team,
         available: attachable,
+        ledByOthers: available.length - attachable.length,
         leadCandidates: leadCandidates,
         currentUserId: currentUserId,
         takenKeys: takenKeys,
@@ -64,6 +65,7 @@ class _AddProjectBody extends StatefulWidget {
   const _AddProjectBody({
     required this.team,
     required this.available,
+    this.ledByOthers = 0,
     required this.leadCandidates,
     required this.currentUserId,
     required this.takenKeys,
@@ -72,6 +74,10 @@ class _AddProjectBody extends StatefulWidget {
 
   final Team team;
   final List<Project> available;
+
+  /// Projects the team does not have yet that someone else leads: hidden,
+  /// since only a project's leads may attach it, but not "already attached".
+  final int ledByOthers;
 
   /// Only the attach tab needs these: it names each available project's lead.
   final List<DirectoryUser> leadCandidates;
@@ -216,7 +222,11 @@ class _AddProjectBodyState extends State<_AddProjectBody> {
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 12),
           child: Text(
-            context.t('teams.allProjectsAttached'),
+            context.t(
+              widget.ledByOthers > 0
+                  ? 'teams.noProjectsYouLead'
+                  : 'teams.allProjectsAttached',
+            ),
             style: TextStyle(
               fontSize: AppType.label,
               color: AppColors.inkFaint,

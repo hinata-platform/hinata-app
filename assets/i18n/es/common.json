@@ -3901,6 +3901,7 @@
     "attachExisting": "Vincular existente",
     "createNew": "Crear nuevo",
     "allProjectsAttached": "Todos los proyectos ya están en este equipo.",
+    "noProjectsYouLead": "Los proyectos que aún no tiene este equipo los dirigen otras personas. Solo quien dirige un proyecto puede añadirlo.",
     "attachCta": "Vincular {{count}}",
     "createProjectCta": "Crear proyecto",
     "projectName": "Nombre del proyecto",
