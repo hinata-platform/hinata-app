@@ -1837,10 +1837,10 @@ packages:
     dependency: "direct main"
     description:
       name: system_hotkeys_linux
-      sha256: "6893917538f0b4f12789f228e5db43f84070a64ef110f091265f474c42eba4e6"
+      sha256: "9503fd4e9a903573c9b4cd95f6e31ce36f49a97ca528d2109bf7be834a7ebc46"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.0"
+    version: "0.2.1"
   system_hotkeys_macos:
     dependency: "direct main"
     description:
@@ -2101,10 +2101,10 @@ packages:
     dependency: "direct main"
     description:
       name: widgetkit_macos
-      sha256: a75f2b840e97bf195031c63397932f23b6b83708c165d1a1a555ef042f376646
+      sha256: "615ed9ed519afba7fc66fbb3306942a596adc49d6b48441659ae2c2126bb10fa"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.0"
+    version: "0.1.1"
   win32:
     dependency: transitive
     description:
