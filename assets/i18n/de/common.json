@@ -1375,6 +1375,8 @@
     },
     "reports": {
       "tab": {
+        "overview": "Übersicht",
+        "budgets": "Budgets",
         "summary": "Übersicht",
         "detailed": "Einträge",
         "workload": "Auslastung",
@@ -2573,7 +2575,25 @@
       "openLast30Days": "Offen (letzte 30 Tage)",
       "breakdowns": "Auswertungen",
       "pageFooter": "{{org}} · Seite {page}/{pages}"
-    }
+    },
+    "pickProject": "Projekt wählen",
+    "span": {
+      "month": "30 Tage",
+      "quarter": "90 Tage"
+    },
+    "overview": {
+      "trend": "Wie entwickeln sich die offenen Aufgaben?",
+      "budget": "Wie füllt sich das Budget?",
+      "states": "Wo stehen die Aufgaben?",
+      "priorities": "Wie dringend ist die Arbeit?",
+      "people": "Wer arbeitet woran?",
+      "activities": "Wofür geht die Zeit?",
+      "open": "Offen",
+      "created": "Neu in {{days}} Tagen",
+      "resolved": "Erledigt in {{days}} Tagen",
+      "recorded": "Erfasst in {{days}} Tagen"
+    },
+    "unassigned": "Niemand zugewiesen"
   },
   "knowledge": {
     "title": "Wissensdatenbank",
@@ -5198,6 +5218,11 @@
       "label": "Sprintbudget",
       "set": "Sprintbudget festlegen",
       "hint": "z. B. 80h — leer für kein Budget"
+    },
+    "report": {
+      "emptyTitle": "Noch keine Budgets",
+      "sprints": "Sprints mit Budget",
+      "onlyMoney": "Nur ein Geldbudget, das du nicht siehst."
     }
   }
 }

@@ -108,8 +108,15 @@ bool isNavActive(
   // flag decides. With the module on, the timesheet is one of its pages and
   // keeps the module's entry lit; with it off there is no module at all, and a
   // stray `/time` belongs to no entry rather than lighting up the timesheet.
+  // With the module on, its report page is where the reports entry leads
+  // (HIN-157), so that entry is the one lit there, not the module's.
+  if (navRoute == '/reports') {
+    return location.startsWith('/reports') ||
+        advancedTime && location.startsWith('/time/reports');
+  }
   if (navRoute == '/time') {
     return advancedTime &&
+        !location.startsWith('/time/reports') &&
         (location == '/time' ||
             location.startsWith('/time/') ||
             location == '/timesheet');
