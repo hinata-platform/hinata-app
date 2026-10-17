@@ -238,8 +238,7 @@ dependencies:
   home_widget: ^0.9.4
   # Our own (hinata-platform/widgetkit_macos, HIN-108): the same record for
   # the Mac's widgets, which home_widget cannot reach.
-  widgetkit_macos:
-    path: ../widgetkit_macos
+  widgetkit_macos: ^0.1.0
   # HIN-103: whether the keyguard is up, in the background engines too.
   hinata_device_lock:
     path: packages/hinata_device_lock
