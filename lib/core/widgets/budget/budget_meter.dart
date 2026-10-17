@@ -1,22 +1,28 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 
+import '../../i18n/i18n.dart';
 import '../../models/time_usage_models.dart';
 import '../../theme/app_colors.dart';
+import '../../theme/app_theme.dart';
 import '../../theme/app_type.dart';
-import '../hive_widgets.dart' show hiveEase;
 import 'budget_style.dart';
+import 'honey_glass.dart';
 
-/// A budget or an estimate as a bar with its sums: the large form, for the
-/// places where somebody decides how much more to spend (HIN-151).
+/// A budget or an estimate as a glass tube filling with honey: the large
+/// form, for the places where somebody decides how much more to spend
+/// (HIN-151, "Honigstand").
 ///
-/// The bar keeps its meaning past the limit. Instead of stopping full, the
-/// track then stands for everything recorded: the part up to the limit is
-/// solid, the overhang hatched, and a tick marks where the limit was. "125 h of
-/// 100 h" so reads as a fifth over rather than as a bar that merely filled up.
+/// The tube is the budget. Fine marks stand at a quarter, half and three
+/// quarters, and a notch at the project's warning share. From the limit on
+/// the honey turns to ember, and whatever lies beyond it hangs off the end as
+/// a small capsule of its own that names the overhang, so "125 h of 100 h"
+/// reads as "full, and 25 h spilled" rather than as a bar that merely filled.
 ///
-/// [gauge] null renders the loading state: an empty track and a dash, the same
+/// [pending] shows time that is about to be recorded, as translucent hatched
+/// honey after what is already there: the entry in the form, before it is
+/// saved.
+///
+/// [gauge] null is the loading state: the empty tube and a dash, the same
 /// height as the finished meter so nothing jumps when the numbers arrive.
 class BudgetMeter extends StatelessWidget {
   const BudgetMeter({
@@ -24,6 +30,7 @@ class BudgetMeter extends StatelessWidget {
     required this.label,
     required this.gauge,
     this.format = budgetMinutes,
+    this.pending = 0,
     this.showRemainder = true,
     this.footer,
   });
@@ -31,28 +38,21 @@ class BudgetMeter extends StatelessWidget {
   final String label;
   final BudgetGauge? gauge;
   final BudgetAmountFormat format;
-
-  /// The "24 h left" line under the bar.
+  final int pending;
   final bool showRemainder;
 
   /// An extra line under the remainder, e.g. a forecast (HIN-156).
   final Widget? footer;
 
-  static const _barHeight = 6.0;
+  static const tubeHeight = 22.0;
 
   @override
   Widget build(BuildContext context) {
     final gauge = this.gauge;
     final level = gauge?.level ?? BudgetLevel.within;
-    final labelStyle = TextStyle(
+    final sums = TextStyle(
       fontSize: AppType.label,
-      height: 1.4,
-      fontWeight: FontWeight.w600,
-      color: AppColors.ink,
-    );
-    final sumsStyle = TextStyle(
-      fontSize: AppType.label,
-      height: 1.4,
+      height: 1.35,
       color: AppColors.inkSoft,
       fontFeatures: const [FontFeature.tabularFigures()],
     );
@@ -60,69 +60,99 @@ class BudgetMeter extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        // Label and sums share a line while they fit, and wrap under each
-        // other at a large text size instead of clipping.
-        Wrap(
-          alignment: WrapAlignment.spaceBetween,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 12,
-          runSpacing: 2,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
-            Text(label, style: labelStyle),
+            Expanded(
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: AppType.label,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.ink,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
             Text(
-              gauge == null
-                  ? '–'
-                  : '${BudgetStyle.usedOfLimit(context, gauge, format)} · '
-                        '${BudgetStyle.percent(context, gauge)}',
-              style: sumsStyle,
+              gauge == null ? '–' : BudgetStyle.percent(context, gauge),
+              style: TextStyle(
+                fontFamily: AppTheme.fontBrand,
+                fontSize: AppType.heading,
+                height: 1.1,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.4,
+                color: gauge == null ? AppColors.inkFaint : AppColors.ink,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: _barHeight,
-          child: TweenAnimationBuilder<double>(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 600),
-            curve: hiveEase,
-            tween: Tween(begin: 0, end: gauge?.fraction ?? 0),
-            builder: (context, fraction, _) => CustomPaint(
-              painter: _BarPainter(
-                fraction: fraction,
-                fill: BudgetStyle.fill(level),
-                track: AppColors.canvas2,
-                rim: AppColors.hairline,
-                tick: AppColors.ink,
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: SizedBox(
+                height: tubeHeight,
+                child: _AnimatedTube(
+                  gauge: gauge,
+                  pending: pending,
+                  dark: Theme.of(context).brightness == Brightness.dark,
+                ),
               ),
             ),
-          ),
+            if (gauge != null && gauge.overBy > 0) ...[
+              const SizedBox(width: 8),
+              OverflowCapsule(text: '+${format(context, gauge.overBy)}'),
+            ],
+          ],
         ),
-        if (showRemainder && gauge != null) ...[
-          const SizedBox(height: 6),
-          Row(
+        if (gauge != null && showRemainder) ...[
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 10,
+            runSpacing: 2,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              if (level != BudgetLevel.within) ...[
-                Icon(
-                  BudgetStyle.icon(level),
-                  size: 14,
-                  color: BudgetStyle.ink(level),
-                ),
-                const SizedBox(width: 6),
-              ],
-              Flexible(
-                child: Text(
-                  BudgetStyle.remainder(context, gauge, format),
-                  style: TextStyle(
+              Text(
+                BudgetStyle.usedOfLimit(context, gauge, format),
+                style: sums,
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (level != BudgetLevel.within) ...[
+                    Icon(
+                      BudgetStyle.icon(level),
+                      size: 14,
+                      color: BudgetStyle.ink(level),
+                    ),
+                    const SizedBox(width: 5),
+                  ],
+                  Text(
+                    BudgetStyle.remainder(context, gauge, format),
+                    style: TextStyle(
+                      fontSize: AppType.caption,
+                      height: 1.35,
+                      fontWeight: level == BudgetLevel.within
+                          ? FontWeight.w500
+                          : FontWeight.w700,
+                      color: BudgetStyle.ink(level),
+                    ),
+                  ),
+                ],
+              ),
+              if (pending > 0)
+                Text(
+                  context.t(
+                    'budget.pending',
+                    variables: {'amount': format(context, pending)},
+                  ),
+                  style: sums.copyWith(
                     fontSize: AppType.caption,
-                    height: 1.4,
-                    fontWeight: level == BudgetLevel.within
-                        ? FontWeight.w400
-                        : FontWeight.w600,
                     color: BudgetStyle.ink(level),
                   ),
                 ),
-              ),
             ],
           ),
         ],
@@ -139,80 +169,201 @@ class BudgetMeter extends StatelessWidget {
   }
 }
 
-class _BarPainter extends CustomPainter {
-  const _BarPainter({
-    required this.fraction,
-    required this.fill,
-    required this.track,
-    required this.rim,
-    required this.tick,
+/// The tube, eased to a new level whenever its value changes, and drawn
+/// still when the reader asks for less motion.
+class _AnimatedTube extends StatelessWidget {
+  const _AnimatedTube({
+    required this.gauge,
+    required this.pending,
+    required this.dark,
   });
 
-  final double fraction;
-  final Color fill;
-  final Color track;
-  final Color rim;
-  final Color tick;
+  final BudgetGauge? gauge;
+  final int pending;
+  final bool dark;
+
+  @override
+  Widget build(BuildContext context) {
+    final gauge = this.gauge;
+    final target = gauge == null ? 0.0 : gauge.fraction.clamp(0.0, 1.0);
+    final pendingTarget = gauge == null
+        ? 0.0
+        : ((gauge.used + pending) / gauge.limit).clamp(0.0, 1.0);
+    return TweenAnimationBuilder<double>(
+      duration: MediaQuery.disableAnimationsOf(context)
+          ? Duration.zero
+          : const Duration(milliseconds: 900),
+      curve: Curves.easeOutBack,
+      tween: Tween(begin: 0, end: target),
+      // Honey fills from where reading starts: from the right in Arabic.
+      builder: (context, value, _) => Transform.flip(
+        flipX: Directionality.of(context) == TextDirection.rtl,
+        child: CustomPaint(
+          painter: HoneyTubePainter(
+            fill: value,
+            pendingTo: pendingTarget,
+            level: gauge == null
+                ? BudgetLevel.within
+                : BudgetGauge(
+                    used: gauge.used + pending,
+                    limit: gauge.limit,
+                    nearPercent: gauge.nearPercent,
+                  ).level,
+            nearAt:
+                (gauge?.nearPercent ?? BudgetGauge.defaultNearPercent) / 100,
+            dark: dark,
+            showScale: gauge != null,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A horizontal glass tube with honey up to [fill] (0..1) and, beyond it,
+/// pending honey up to [pendingTo].
+class HoneyTubePainter extends CustomPainter {
+  const HoneyTubePainter({
+    required this.fill,
+    required this.level,
+    required this.dark,
+    this.pendingTo = 0,
+    this.nearAt = 0.8,
+    this.showScale = false,
+  });
+
+  final double fill;
+  final double pendingTo;
+  final BudgetLevel level;
+  final double nearAt;
+  final bool dark;
+  final bool showScale;
 
   @override
   void paint(Canvas canvas, Size size) {
-    final radius = Radius.circular(size.height / 2);
-    final whole = RRect.fromRectAndRadius(Offset.zero & size, radius);
-    canvas.drawRRect(whole, Paint()..color = track);
-    canvas.drawRRect(
-      whole.deflate(0.5),
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1
-        ..color = rim,
+    final bounds = Offset.zero & size;
+    final shape = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(bounds, Radius.circular(size.height / 2)),
+      );
+    HoneyGlass.paintVessel(canvas, shape, bounds, dark);
+    final inner = bounds.deflate(2.5);
+    final innerShape = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(inner, Radius.circular(inner.height / 2)),
+      );
+    final liquidLevel = fill >= 1 ? BudgetLevel.over : level;
+    final filled = Rect.fromLTWH(
+      inner.left,
+      inner.top,
+      inner.width * fill.clamp(0.0, 1.0),
+      inner.height,
     );
-    if (fraction <= 0) return;
-
-    canvas.save();
-    canvas.clipRRect(whole);
-    if (fraction <= 1) {
-      canvas.drawRect(
-        Rect.fromLTWH(0, 0, size.width * fraction, size.height),
-        Paint()..color = fill,
-      );
-    } else {
-      // The track now stands for everything recorded; the limit sits at
-      // 1 / fraction of it.
-      final limitX = size.width / fraction;
-      canvas.drawRect(
-        Rect.fromLTWH(0, 0, limitX, size.height),
-        Paint()..color = fill,
-      );
-      final over = Rect.fromLTWH(limitX, 0, size.width - limitX, size.height);
-      canvas.drawRect(over, Paint()..color = fill.withValues(alpha: 0.28));
-      final hatch = Paint()
-        ..color = fill
-        ..strokeWidth = 2;
-      canvas.clipRect(over);
-      for (var x = limitX - size.height; x < size.width; x += 5) {
-        canvas.drawLine(
-          Offset(x, size.height),
-          Offset(x + size.height, 0),
-          hatch,
-        );
-      }
-      canvas.restore();
-      canvas.save();
-      // The limit's tick stands a little proud of the bar so it reads even
-      // where both sides of it are the same colour.
-      canvas.drawRect(
-        Rect.fromLTWH(math.max(0, limitX - 1), -2, 2, size.height + 4),
-        Paint()..color = tick,
+    HoneyGlass.paintHoney(canvas, innerShape, filled, liquidLevel);
+    if (pendingTo > fill) {
+      HoneyGlass.paintPending(
+        canvas,
+        innerShape,
+        Rect.fromLTRB(
+          filled.right,
+          inner.top,
+          inner.left + inner.width * pendingTo,
+          inner.bottom,
+        ),
+        level,
+        dark: dark,
       );
     }
-    canvas.restore();
+    if (showScale) {
+      final tick = Paint()
+        ..strokeWidth = 1
+        ..color = (dark ? const Color(0x59FFFFFF) : const Color(0x332D2B55));
+      for (final at in const [0.25, 0.5, 0.75]) {
+        if ((at - nearAt).abs() < 0.04) continue;
+        final x = inner.left + inner.width * at;
+        canvas.drawLine(
+          Offset(x, inner.bottom - inner.height * 0.32),
+          Offset(x, inner.bottom - 1),
+          tick,
+        );
+      }
+      // The warning share: a notch from top to bottom, in the warning amber.
+      if (nearAt > 0 && nearAt < 1) {
+        final x = inner.left + inner.width * nearAt;
+        canvas.drawLine(
+          Offset(x, inner.top + 1),
+          Offset(x, inner.bottom - 1),
+          Paint()
+            ..strokeWidth = 1.6
+            ..color = AppColors.warningBar.withValues(alpha: 0.9),
+        );
+      }
+    }
+    HoneyGlass.paintRim(canvas, shape, bounds, dark);
   }
 
   @override
-  bool shouldRepaint(_BarPainter old) =>
-      old.fraction != fraction ||
+  bool shouldRepaint(HoneyTubePainter old) =>
       old.fill != fill ||
-      old.track != track ||
-      old.rim != rim ||
-      old.tick != tick;
+      old.pendingTo != pendingTo ||
+      old.level != level ||
+      old.nearAt != nearAt ||
+      old.dark != dark ||
+      old.showScale != showScale;
+}
+
+/// The honey that went over: a small ember capsule hanging off a full
+/// vessel, naming the overhang ("+25 h").
+class OverflowCapsule extends StatelessWidget {
+  const OverflowCapsule({super.key, required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    return CustomPaint(
+      painter: _CapsulePainter(dark: dark),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: AppType.caption,
+            height: 1.35,
+            fontWeight: FontWeight.w700,
+            color: HoneyGlass.onLiquid,
+            fontFeatures: [FontFeature.tabularFigures()],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CapsulePainter extends CustomPainter {
+  const _CapsulePainter({required this.dark});
+
+  final bool dark;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final bounds = Offset.zero & size;
+    final shape = Path()
+      ..addRRect(
+        RRect.fromRectAndRadius(bounds, Radius.circular(size.height / 2)),
+      );
+    HoneyGlass.paintVessel(canvas, shape, bounds, dark);
+    HoneyGlass.paintHoney(
+      canvas,
+      shape,
+      bounds,
+      BudgetLevel.over,
+      bubbles: false,
+    );
+    HoneyGlass.paintRim(canvas, shape, bounds, dark);
+  }
+
+  @override
+  bool shouldRepaint(_CapsulePainter old) => old.dark != dark;
 }
