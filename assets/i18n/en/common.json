@@ -2364,7 +2364,8 @@
       "makeTemplate": "Make a template",
       "makeTemplateConfirm": "Create template",
       "templateName": "{{name}} (template)",
-      "pickSource": "Which project should it be made from?"
+      "pickSource": "Which project should it be made from?",
+      "timeSettingsBudget": "with a time budget of {{budget}}"
     },
     "schedule": {
       "title": "Move the project date",

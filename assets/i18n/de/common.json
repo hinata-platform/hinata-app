@@ -2364,7 +2364,8 @@
       "makeTemplate": "Vorlage erstellen",
       "makeTemplateConfirm": "Vorlage anlegen",
       "templateName": "{{name}} (Vorlage)",
-      "pickSource": "Aus welchem Projekt soll sie entstehen?"
+      "pickSource": "Aus welchem Projekt soll sie entstehen?",
+      "timeSettingsBudget": "mit Zeitbudget {{budget}}"
     },
     "schedule": {
       "title": "Termin verschieben",

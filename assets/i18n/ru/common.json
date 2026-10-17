@@ -2364,7 +2364,8 @@
       "makeTemplate": "Создать шаблон",
       "makeTemplateConfirm": "Создать шаблон",
       "templateName": "{{name}} (шаблон)",
-      "pickSource": "Из какого проекта его создать?"
+      "pickSource": "Из какого проекта его создать?",
+      "timeSettingsBudget": "с бюджетом времени {{budget}}"
     },
     "schedule": {
       "title": "Перенести дату проекта",
