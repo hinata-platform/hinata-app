@@ -3745,7 +3745,9 @@
       "cta": "Complete sprint"
     },
     "estimate": {
-      "title": "Estimate"
+      "title": "Estimate",
+      "value": "{{count}} point",
+      "value_plural": "{{count}} points"
     },
     "name": "Sprint name",
     "goal": "Sprint goal",
