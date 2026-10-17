@@ -3822,7 +3822,6 @@
     "guideline": "Richtlinie",
     "noBurndown": "Sprint-Daten setzen, um den Burndown zu sehen.",
     "velocity": "Velocity",
-    "committedDone": "committed · erledigt",
     "noVelocity": "Noch keine abgeschlossenen Sprints.",
     "workBreakdown": "Arbeitsverteilung nach Bearbeiter",
     "noBreakdown": "Keine geschätzte Arbeit in diesem Sprint.",
@@ -3844,7 +3843,8 @@
     "selectedCount": "{{count}} ausgewählt",
     "collapse": "Einklappen",
     "expand": "Ausklappen",
-    "selectIssue": "{{issue}} auswählen"
+    "selectIssue": "{{issue}} auswählen",
+    "doneOfCommitted": "erledigt von committed"
   },
   "teams": {
     "avatar": {
