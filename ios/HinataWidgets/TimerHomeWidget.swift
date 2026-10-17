@@ -196,14 +196,16 @@ struct TimerWidgetView: View {
       if running, !entry.over, let stop = record.stop {
         layout {
           if let advance = record.advance {
-            TimerWidgetButton(
+            TimerActivityButton(
               title: advance, symbol: record.isBreak ? "play.fill" : "cup.and.saucer.fill",
-              intent: AdvancePhaseIntent())
+              size: 36, prominent: true, intent: AdvancePhaseIntent())
           }
-          TimerWidgetButton(title: stop, symbol: "stop.fill", intent: StopTimerIntent())
+          TimerActivityButton(
+            title: stop, symbol: "stop.fill", size: 36, prominent: true, intent: StopTimerIntent())
         }
       } else if !running, let start = record.start {
-        TimerWidgetButton(title: start, symbol: "play.fill", intent: StartTimerIntent())
+        TimerActivityButton(
+          title: start, symbol: "play.fill", size: 36, prominent: true, intent: StartTimerIntent())
       }
     }
     #endif
@@ -239,28 +241,6 @@ struct TimerWidgetView: View {
   }
 }
 
-#if os(iOS)
-/// One round button of the widget. The word is its accessible name; the
-/// glyph alone is drawn, so it fits the small widget in every language.
-@available(iOSApplicationExtension 17.0, *)
-private struct TimerWidgetButton<Intent: AppIntent>: View {
-  let title: String
-  let symbol: String
-  let intent: Intent
-
-  var body: some View {
-    Button(intent: intent) {
-      Image(systemName: symbol)
-        .font(.system(size: 15, weight: .semibold))
-        .foregroundStyle(HinataPalette.navy)
-        .frame(width: 36, height: 36)
-        .background(HinataPalette.honey, in: Circle())
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel(Text(title))
-  }
-}
-#endif
 
 /// The navy card of the home screen widgets; the lock screen draws its own.
 private struct WidgetBackground: ViewModifier {
