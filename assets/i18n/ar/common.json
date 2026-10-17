@@ -5099,5 +5099,38 @@
     "absences": "إدارة الغياب في الوثائق",
     "timeTrackingPrivacy": "الخصوصية وقانون العمل في الوثائق",
     "codetermination": "قائمة التحقق لاتفاقية العمل"
+  },
+  "budget": {
+    "timeBudget": "ميزانية الوقت",
+    "estimate": "التقدير",
+    "usedOfLimit": "{{used}} من {{limit}}",
+    "left": "المتبقي {{amount}}",
+    "overBy": "تجاوز بمقدار {{amount}}",
+    "reached": "استُنفدت",
+    "semantics": "{{label}}: {{percent}}، {{sums}}، {{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "المتبقي من ميزانية المشروع {{amount}}",
+        "overTitle": "تم تجاوز ميزانية المشروع",
+        "reachedTitle": "استُنفدت ميزانية المشروع"
+      },
+      "estimate": {
+        "nearTitle": "المتبقي حتى التقدير {{amount}}",
+        "overTitle": "تم تجاوز التقدير",
+        "reachedTitle": "تم بلوغ التقدير"
+      },
+      "sprint": {
+        "nearTitle": "المتبقي من ميزانية السبرنت {{amount}}",
+        "overTitle": "تم تجاوز ميزانية السبرنت",
+        "reachedTitle": "استُنفدت ميزانية السبرنت"
+      },
+      "nearBody": "{{subject}} عند {{sums}}. يمكنك الحفظ كالمعتاد.",
+      "overBody": "{{subject}} عند {{sums}}. سيُحفظ إدخالك رغم ذلك."
+    },
+    "dashboard": {
+      "title": "الميزانيات",
+      "empty": "لا يوجد مشروع بميزانية",
+      "emptyHint": "يحدد المسؤولون ميزانية الوقت في إعدادات المشروع."
+    }
   }
 }

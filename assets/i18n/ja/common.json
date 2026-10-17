@@ -5099,5 +5099,38 @@
     "absences": "休暇管理（ドキュメント）",
     "timeTrackingPrivacy": "プライバシーと労働法（ドキュメント）",
     "codetermination": "労使協定のチェックリスト"
+  },
+  "budget": {
+    "timeBudget": "時間予算",
+    "estimate": "見積もり",
+    "usedOfLimit": "{{used}} / {{limit}}",
+    "left": "残り {{amount}}",
+    "overBy": "{{amount}} 超過",
+    "reached": "使い切りました",
+    "semantics": "{{label}}：{{percent}}、{{sums}}、{{remainder}}",
+    "notice": {
+      "project": {
+        "nearTitle": "プロジェクト予算の残り {{amount}}",
+        "overTitle": "プロジェクト予算を超えました",
+        "reachedTitle": "プロジェクト予算を使い切りました"
+      },
+      "estimate": {
+        "nearTitle": "見積もりまで残り {{amount}}",
+        "overTitle": "見積もりを超えました",
+        "reachedTitle": "見積もりに達しました"
+      },
+      "sprint": {
+        "nearTitle": "スプリント予算の残り {{amount}}",
+        "overTitle": "スプリント予算を超えました",
+        "reachedTitle": "スプリント予算を使い切りました"
+      },
+      "nearBody": "{{subject}} は {{sums}} です。いつもどおり保存できます。",
+      "overBody": "{{subject}} は {{sums}} です。記録はそのまま保存されます。"
+    },
+    "dashboard": {
+      "title": "予算",
+      "empty": "予算のあるプロジェクトはありません",
+      "emptyHint": "リーダーがプロジェクト設定で時間予算を設定します。"
+    }
   }
 }
