@@ -155,7 +155,7 @@ String timerWidgetRecord(
   String idle = '',
   String start = '',
 }) {
-  final content = liveActivityContent(state);
+  final content = liveActivityContent(state, yieldToAlarm: false);
   final startedAt = state.startedAt;
   if (content == null || startedAt == null) {
     return jsonEncode({'idle': idle, if (start.isNotEmpty) 'start': start});

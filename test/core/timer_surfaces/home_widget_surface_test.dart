@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/timer_surfaces/adapters/home_widget_surface.dart';
+import 'package:hinata/core/timer_surfaces/adapters/live_activity_surface.dart';
 import 'package:hinata/core/timer_surfaces/surface_platform.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_state.dart';
@@ -190,6 +191,26 @@ void main() {
       expect(read(store.records.last), isNot(contains('start')));
     },
   );
+
+  // HIN-106 hands a countdown that ends in an alarm to the system's countdown
+  // instead of the Live Activity; the widgets, the controls and Siri read
+  // this record and must keep seeing the timer.
+  test('with the alarm mode on a countdown stays in the record', () async {
+    final alarmed = deriveTimerSurfaceState(
+      timer(mode: TimerMode.countdown, planned: 25),
+      TimerSurfacePrefs.suggested.copyWith(alarmMode: true),
+      gated: false,
+      alarmsUsable: true,
+      texts: texts,
+    );
+    expect(alarmed.alarmMode, isTrue);
+    expect(liveActivityContent(alarmed), isNull);
+
+    await surface.apply(alarmed);
+    final record = read(store.records.single);
+    expect(record['startedAt'], start.millisecondsSinceEpoch);
+    expect(record['countsDown'], isTrue);
+  });
 
   test('an unchanged record is not written again', () async {
     await surface.apply(state(timer()));
