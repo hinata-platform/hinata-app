@@ -1,3 +1,4 @@
+import 'budget/after_save.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -860,7 +861,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
           each.movedTo(span.start, span.end, day: day, keepMinutes: false),
     );
     try {
-      await context.read<TimeCalendarCubit>().update(
+      final saved = await context.read<TimeCalendarCubit>().update(
         entry.id,
         TimeEntryDraft(
           startedAt: span.start,
@@ -870,7 +871,10 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
           activityType: entry.activityType,
         ),
       );
-      if (mounted) unawaited(_reload());
+      if (mounted) {
+        unawaited(_reload());
+        announceSavedEntry(context, saved);
+      }
     } on ApiFailure catch (failure) {
       if (!mounted) return;
       // Only this entry back, not the whole cache. A snapshot restored wholesale
