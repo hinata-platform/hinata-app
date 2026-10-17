@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/widgets.dart';
 
 import '../../models/time_usage_models.dart';
+import '../../theme/app_colors.dart';
 
 /// The two materials every budget shape is made of (HIN-151, "Honigstand"):
 /// a glass vessel and the honey inside it.
@@ -49,7 +50,7 @@ abstract final class HoneyGlass {
   /// Ink on the liquid. Navy on every honey and on the light half of ember,
   /// which is where a figure sits in a vessel (measured: 6.9:1 on the honey
   /// middle stop, 4.6:1 on the ember middle stop).
-  static const onLiquid = Color(0xFF23223F);
+  static const onLiquid = AppColors.inkLight;
 
   static Color frost(bool dark) => dark
       ? const Color(0x14FFFFFF) // white 8 %
@@ -60,11 +61,13 @@ abstract final class HoneyGlass {
 
   /// The hairline outside the rim, so a light vessel still has an edge on a
   /// light card.
-  static Color outline(bool dark) =>
-      dark ? const Color(0x52000000) : const Color(0x1F2D2B55);
+  static Color outline(bool dark) => dark
+      ? const Color(0x52000000)
+      : AppColors.glassShade.withValues(alpha: 0x1F / 255);
 
-  static Color innerShade(bool dark) =>
-      dark ? const Color(0x59000000) : const Color(0x1A2D2B55);
+  static Color innerShade(bool dark) => dark
+      ? const Color(0x59000000)
+      : AppColors.glassShade.withValues(alpha: 0x1A / 255);
 
   /// Paints an empty vessel of [shape] within [bounds].
   static void paintVessel(Canvas canvas, Path shape, Rect bounds, bool dark) {

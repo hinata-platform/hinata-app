@@ -1,13 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/blocs/time_usage_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/time_usage_models.dart';
-import '../../../core/repositories/time_usage_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/budget/budget.dart';
@@ -52,16 +50,20 @@ class _BudgetHistoryState extends State<_BudgetHistory> {
   }
 
   Future<void> _load() async {
-    final repository = context.read<TimeUsageRepository>();
+    final usage = TimeUsageCubit.maybeOf(context);
+    if (usage == null) {
+      setState(() => _failed = true);
+      return;
+    }
     try {
-      final results = await Future.wait([
-        repository.history(widget.projectId),
-        repository.forecast(widget.projectId),
+      final results = await Future.wait<Object?>([
+        usage.history(widget.projectId),
+        usage.forecast(widget.projectId),
       ]);
       if (!mounted) return;
       setState(() {
-        _history = results[0] as BudgetHistory;
-        _forecast = results[1] as BudgetForecast;
+        _history = results[0] as BudgetHistory?;
+        _forecast = results[1] as BudgetForecast?;
       });
     } on Object {
       if (mounted) setState(() => _failed = true);
@@ -161,22 +163,15 @@ class _ProjectForecastState extends State<ProjectForecast> {
     final id = widget.projectId;
     if (id == _asked) return;
     _asked = id;
-    _forecast = null;
-    try {
-      final on =
-          context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ??
-          false;
-      if (!on) return;
-      unawaited(
-        context.read<TimeUsageRepository>().forecast(id).then((forecast) {
-          if (mounted && _asked == id) {
-            setState(() => _forecast = forecast);
-          }
-        }, onError: (Object _) {}),
-      );
-    } on ProviderNotFoundException {
-      return;
-    }
+    final cubit = TimeUsageCubit.maybeOf(context);
+    // A forecast the report or the dashboard brought along is used as it is.
+    _forecast = cubit?.heldForecast(id);
+    if (cubit == null || _forecast != null) return;
+    unawaited(
+      cubit.forecast(id).then((forecast) {
+        if (mounted && _asked == id) setState(() => _forecast = forecast);
+      }),
+    );
   }
 
   @override

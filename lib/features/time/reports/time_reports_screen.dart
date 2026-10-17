@@ -57,7 +57,7 @@ enum ReportTab {
   overview('overview', LucideIcons.layoutDashboard),
 
   /// Every budget the reader sees, fullest first (HIN-157).
-  budgets('budgets', LucideIcons.gauge),
+  budgets('budgets', LucideIcons.hourglass),
   summary('summary', LucideIcons.chartColumn),
   detailed('detailed', LucideIcons.list),
   workload('workload', LucideIcons.gauge),
@@ -620,8 +620,9 @@ class _TimeReportsViewState extends State<_TimeReportsView> {
                     builder: (context, constraints) => TimeHead(
                       current: TimeView.reports,
                       actions: [
-                        // The money report has its own ways out: invoices and
-                        // rates, in the tab. The time report's files are not it.
+                        // The overview, the budgets and the money report carry
+                        // their own ways out; the time report's files are not
+                        // theirs.
                         if (ownControls)
                           const SizedBox.shrink()
                         else if (_tab == ReportTab.absences)

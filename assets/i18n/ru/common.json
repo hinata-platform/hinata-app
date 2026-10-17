@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "Отчёты",
-    "subtitle": "Аналитика по проектам",
-    "forProject": "Аналитика · {{project}}",
     "totalIssues": "Всего задач",
     "export": "Экспорт",
     "exportPdf": "Экспорт в PDF",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "Создано",
     "page": "стр.",
     "copied": "{{format}} скопирован в буфер обмена",
-    "burndown": "Диаграмма сгорания · последние 30 дней",
+    "burndown": "Диаграмма сгорания · последние {{days}} дней",
     "remaining": "Осталось открытых: {{count}}",
-    "windowStart": "−30 дн.",
+    "windowStart": "−{{days}} дн.",
     "windowEnd": "сегодня",
     "empty": "Для этого отчёта пока нет данных.",
     "issues-by-state": "Задачи по статусам",
     "issues-by-priority": "Задачи по приоритетам",
     "issues-by-assignee": "Задачи по исполнителям",
-    "time-per-activity": "Время по видам работ (30 дней)",
+    "time-per-activity": "Время по видам работ ({{days}} дней)",
     "pdf": {
       "title": "Отчёт по проекту",
       "generated": "Создано {{date}}",
-      "openLast30Days": "Открытые (последние 30 дней)",
+      "openOverDays": "Открытые (последние {{days}} дней)",
       "breakdowns": "Разрезы",
       "pageFooter": "{{org}} · стр. {page}/{pages}"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "Тег изменён",
       "TIME_TAG_DELETED": "Тег удалён",
       "TIME_PROJECT_SETTINGS_CHANGED": "Настройки времени проекта изменены",
+      "TIME_SPRINT_SETTINGS_CHANGED": "Бюджет времени спринта изменён",
       "TIMESHEET_SUBMITTED": "Табель отправлен",
       "TIMESHEET_WITHDRAWN": "Табель отозван",
       "TIMESHEET_APPROVED": "Табель утверждён",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "Бюджет проекта: {{percent}}, осталось {{left}}",
-        "ESTIMATE": "Оценка: {{percent}}, осталось {{left}}"
+        "ESTIMATE": "Оценка: {{percent}}, осталось {{left}}",
+        "SPRINT": "Бюджет спринта: {{percent}}, осталось {{left}}"
       },
       "reached": {
         "BUDGET": "Бюджет проекта исчерпан ({{sums}})",
-        "ESTIMATE": "Оценка достигнута ({{sums}})"
+        "ESTIMATE": "Оценка достигнута ({{sums}})",
+        "SPRINT": "Бюджет спринта исчерпан ({{sums}})"
       },
       "over": {
         "BUDGET": "Бюджет проекта превышен: {{percent}} ({{sums}})",
-        "ESTIMATE": "Оценка превышена: {{percent}} ({{sums}})"
+        "ESTIMATE": "Оценка превышена: {{percent}} ({{sums}})",
+        "SPRINT": "Бюджет спринта превышен: {{percent}} ({{sums}})"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "Бюджетов пока нет",
-      "sprints": "Спринты с бюджетом",
-      "onlyMoney": "Только денежный бюджет, который вам не виден."
+      "sprints": "Спринты с бюджетом"
     }
   }
 }

@@ -622,9 +622,7 @@ class _GanttState extends State<_Gantt> {
     final estimate = BudgetGauge.of(task.spentMinutes, task.estimateMinutes);
     if (estimate != null) {
       buffer.write(
-        '\n${context.t('budget.estimate')}: '
-        '${BudgetStyle.percent(context, estimate)} · '
-        '${BudgetStyle.remainder(context, estimate, budgetMinutes)}',
+        '\n${EstimateFootLine.tooltip(context, estimate, context.t('budget.estimate'))}',
       );
     }
     final byId = {for (final t in _tasks) t.id: t};
@@ -1157,27 +1155,7 @@ class _GanttBar extends StatelessWidget {
           // bar's foot, amber from the warning share, ember past the estimate.
           if (BudgetGauge.of(task.spentMinutes, task.estimateMinutes)
               case final estimate?)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: 4,
-              child: Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: FractionallySizedBox(
-                  widthFactor: estimate.fraction.clamp(0.0, 1.0),
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: HoneyGlass.liquid(estimate.level),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            EstimateFootLine(gauge: estimate),
           if (showLabel && width > 28)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 9),

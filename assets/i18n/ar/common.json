@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "التقارير",
-    "subtitle": "رؤى المشاريع",
-    "forProject": "رؤى · {{project}}",
     "totalIssues": "إجمالي المهام",
     "export": "تصدير",
     "exportPdf": "تصدير بصيغة PDF",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "أُنشئ",
     "page": "صفحة",
     "copied": "نُسخ بصيغة {{format}} إلى الحافظة",
-    "burndown": "مخطط الإنجاز · آخر 30 يومًا",
+    "burndown": "مخطط الإنجاز · آخر {{days}} يومًا",
     "remaining": "بقيت {{count}} مهمة مفتوحة",
-    "windowStart": "−30 ي",
+    "windowStart": "−{{days}} ي",
     "windowEnd": "اليوم",
     "empty": "لا توجد بيانات لهذا التقرير بعد.",
     "issues-by-state": "المهام حسب الحالة",
     "issues-by-priority": "المهام حسب الأولوية",
     "issues-by-assignee": "المهام حسب المسؤول",
-    "time-per-activity": "الوقت حسب النشاط (30 يومًا)",
+    "time-per-activity": "الوقت حسب النشاط ({{days}} يومًا)",
     "pdf": {
       "title": "تقرير المشروع",
       "generated": "أُنشئ في {{date}}",
-      "openLast30Days": "المفتوحة (آخر 30 يومًا)",
+      "openOverDays": "المفتوحة (آخر {{days}} يومًا)",
       "breakdowns": "التفصيلات",
       "pageFooter": "{{org}} · صفحة {page}/{pages}"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "تعديل وسم",
       "TIME_TAG_DELETED": "حذف وسم",
       "TIME_PROJECT_SETTINGS_CHANGED": "تغيير إعدادات وقت المشروع",
+      "TIME_SPRINT_SETTINGS_CHANGED": "تم تغيير ميزانية وقت السبرنت",
       "TIMESHEET_SUBMITTED": "تم تسليم كشف الساعات",
       "TIMESHEET_WITHDRAWN": "تم سحب كشف الساعات",
       "TIMESHEET_APPROVED": "تم اعتماد كشف الساعات",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "ميزانية المشروع عند {{percent}}، المتبقي {{left}}",
-        "ESTIMATE": "التقدير عند {{percent}}، المتبقي {{left}}"
+        "ESTIMATE": "التقدير عند {{percent}}، المتبقي {{left}}",
+        "SPRINT": "ميزانية السبرنت عند {{percent}}، يتبقى {{left}}"
       },
       "reached": {
         "BUDGET": "استُنفدت ميزانية المشروع ({{sums}})",
-        "ESTIMATE": "تم بلوغ التقدير ({{sums}})"
+        "ESTIMATE": "تم بلوغ التقدير ({{sums}})",
+        "SPRINT": "استُنفدت ميزانية السبرنت ({{sums}})"
       },
       "over": {
         "BUDGET": "تم تجاوز ميزانية المشروع: {{percent}} ({{sums}})",
-        "ESTIMATE": "تم تجاوز التقدير: {{percent}} ({{sums}})"
+        "ESTIMATE": "تم تجاوز التقدير: {{percent}} ({{sums}})",
+        "SPRINT": "تجاوزت ميزانية السبرنت: {{percent}} ({{sums}})"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "لا توجد ميزانيات بعد",
-      "sprints": "سبرنتات ذات ميزانية",
-      "onlyMoney": "ميزانية مالية فقط لا تراها."
+      "sprints": "سبرنتات ذات ميزانية"
     }
   }
 }

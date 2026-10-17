@@ -2547,8 +2547,6 @@
   },
   "reports": {
     "title": "レポート",
-    "subtitle": "プロジェクトの分析",
-    "forProject": "分析 · {{project}}",
     "totalIssues": "課題の合計",
     "export": "エクスポート",
     "exportPdf": "PDF でエクスポート",
@@ -2560,19 +2558,19 @@
     "generatedPrefix": "作成",
     "page": "ページ",
     "copied": "{{format}} をクリップボードにコピーしました",
-    "burndown": "バーンダウン · 過去 30 日間",
+    "burndown": "バーンダウン · 過去 {{days}} 日間",
     "remaining": "未完了 {{count}} 件",
-    "windowStart": "−30 日",
+    "windowStart": "−{{days}} 日",
     "windowEnd": "今日",
     "empty": "このレポートのデータはまだありません。",
     "issues-by-state": "ステータス別の課題",
     "issues-by-priority": "優先度別の課題",
     "issues-by-assignee": "担当者別の課題",
-    "time-per-activity": "作業の種類別の時間（30 日間）",
+    "time-per-activity": "作業の種類別の時間（{{days}} 日間）",
     "pdf": {
       "title": "プロジェクトレポート",
       "generated": "作成日 {{date}}",
-      "openLast30Days": "未完了（過去 30 日間）",
+      "openOverDays": "未完了（過去 {{days}} 日間）",
       "breakdowns": "内訳",
       "pageFooter": "{{org}} · {page}/{pages} ページ"
     },
@@ -3672,6 +3670,7 @@
       "TIME_TAG_UPDATED": "タグを変更",
       "TIME_TAG_DELETED": "タグを削除",
       "TIME_PROJECT_SETTINGS_CHANGED": "プロジェクトの時間設定を変更",
+      "TIME_SPRINT_SETTINGS_CHANGED": "スプリントの時間予算を変更",
       "TIMESHEET_SUBMITTED": "タイムシート提出",
       "TIMESHEET_WITHDRAWN": "タイムシート取り下げ",
       "TIMESHEET_APPROVED": "タイムシート承認",
@@ -5174,15 +5173,18 @@
     "toast": {
       "near": {
         "BUDGET": "プロジェクト予算 {{percent}}、残り {{left}}",
-        "ESTIMATE": "見積もり {{percent}}、残り {{left}}"
+        "ESTIMATE": "見積もり {{percent}}、残り {{left}}",
+        "SPRINT": "スプリント予算 {{percent}}、残り {{left}}"
       },
       "reached": {
         "BUDGET": "プロジェクト予算を使い切りました（{{sums}}）",
-        "ESTIMATE": "見積もりに達しました（{{sums}}）"
+        "ESTIMATE": "見積もりに達しました（{{sums}}）",
+        "SPRINT": "スプリント予算を使い切りました（{{sums}}）"
       },
       "over": {
         "BUDGET": "プロジェクト予算超過：{{percent}}（{{sums}}）",
-        "ESTIMATE": "見積もり超過：{{percent}}（{{sums}}）"
+        "ESTIMATE": "見積もり超過：{{percent}}（{{sums}}）",
+        "SPRINT": "スプリント予算を超過：{{percent}}（{{sums}}）"
       }
     },
     "subject": {
@@ -5221,8 +5223,7 @@
     },
     "report": {
       "emptyTitle": "予算はまだありません",
-      "sprints": "予算のあるスプリント",
-      "onlyMoney": "あなたには見えない金額予算のみです。"
+      "sprints": "予算のあるスプリント"
     }
   }
 }

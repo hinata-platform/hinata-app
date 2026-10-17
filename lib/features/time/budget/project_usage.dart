@@ -47,18 +47,7 @@ class _ProjectUsageState extends State<ProjectUsage> {
     if (old.projectId != widget.projectId) _ask();
   }
 
-  /// The app-wide cubit, or null where none is provided: a test of one sheet,
-  /// or a tree outside the app. The surface then simply shows no figures.
-  TimeUsageCubit? _lookUp() {
-    try {
-      return BlocProvider.of<TimeUsageCubit>(context, listen: false);
-    } on FlutterError {
-      // BlocProvider.of reports a missing provider as a FlutterError.
-      return null;
-    } on ProviderNotFoundException {
-      return null;
-    }
-  }
+  TimeUsageCubit? _lookUp() => TimeUsageCubit.maybeOf(context);
 
   void _ask() {
     final cubit = _cubit;
