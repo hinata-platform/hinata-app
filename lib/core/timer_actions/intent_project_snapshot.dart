@@ -33,6 +33,10 @@ class IntentProjectSnapshot {
   String? _owner;
   bool _loading = false;
 
+  /// The list last handed to the system, so an unchanged one is not written
+  /// again (each write rebuilds the App Shortcuts' parameters).
+  List<IntentProject>? _written;
+
   /// Bumped by [invalidate]; an answer read under an older one is dropped.
   int _generation = 0;
 
@@ -46,9 +50,19 @@ class IntentProjectSnapshot {
     _loading = true;
     final generation = _generation;
     try {
+      // Another server or person: the last one's projects go first, so a
+      // failed read never leaves them offered under the new account.
+      if (_owner != null && owner != _owner) {
+        _owner = null;
+        _written = null;
+        await _channel.setProjects(null);
+      }
       final projects = await _read();
       if (generation != _generation) return;
-      await _channel.setProjects(projects);
+      if (!listEquals(projects, _written)) {
+        await _channel.setProjects(projects);
+        _written = projects;
+      }
       _at = _clock();
       _owner = owner;
     } catch (error) {
@@ -69,6 +83,7 @@ class IntentProjectSnapshot {
   Future<void> clear() async {
     invalidate();
     _owner = null;
+    _written = null;
     try {
       await _channel.setProjects(null);
     } catch (error) {
