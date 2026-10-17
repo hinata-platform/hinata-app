@@ -2101,10 +2101,10 @@ packages:
     dependency: "direct main"
     description:
       name: widgetkit_macos
-      sha256: "615ed9ed519afba7fc66fbb3306942a596adc49d6b48441659ae2c2126bb10fa"
+      sha256: "9b5c2959a66c04fb2d09d7e6507d20e4b8a190f289b4c3c91956a4f3432da367"
       url: "https://pub.dev"
     source: hosted
-    version: "0.1.1"
+    version: "0.1.2"
   win32:
     dependency: transitive
     description:

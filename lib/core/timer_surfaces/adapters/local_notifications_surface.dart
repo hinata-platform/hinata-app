@@ -454,13 +454,13 @@ class LocalNotificationsSurface extends TimerSurface {
   bool get _mayStartService =>
       kTimerReliabilityService && (_host?.isForeground ?? false);
 
-  /// Ends the reliability mode's service. Also when this run did not start
-  /// it: a background action ends the timer in an isolate of its own.
   /// Whether a service from before this surface may still run: a former
   /// process, or the app's engine while this one is a background action. The
   /// first release stops it in any case, later ones only what this one holds.
   bool _mayHoldFromBefore = true;
 
+  /// Ends the reliability mode's service. Also when this run did not start
+  /// it: a background action ends the timer in an isolate of its own.
   Future<void> _release() async {
     if (!_android || !kTimerReliabilityService) return;
     if (!_holding && !_mayHoldFromBefore) return;

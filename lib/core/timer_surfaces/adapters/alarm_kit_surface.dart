@@ -210,7 +210,8 @@ class AlarmKitSurface extends TimerSurface {
         tint: alarmTint,
         sound: alarmSound,
         metadataKind: alarmKind(state),
-        // The names of TimerBackgroundCommand, which AppDelegate maps back.
+        // The commands' names, as AppDelegate maps them back to the intents
+        // (TimerIntentRequest.Command); the same as TimerBackgroundCommand's.
         stopIntent: 'stop',
         secondaryIntent: pomodoro ? 'advancePhase' : null,
         presentation: alarmPresentation(state),
