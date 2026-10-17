@@ -195,7 +195,11 @@ class LiquidRows extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   SizedBox(
-                    width: 64,
+                    // A count needs a few digits, a duration "27 h 9 min";
+                    // both grow with the text size so neither wraps.
+                    width: MediaQuery.textScalerOf(
+                      context,
+                    ).scale(format == null ? 44 : 92),
                     child: Text(
                       format?.call(item.value) ?? '${item.value}',
                       textAlign: TextAlign.end,
