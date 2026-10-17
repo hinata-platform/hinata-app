@@ -2364,7 +2364,8 @@
       "makeTemplate": "टेम्पलेट बनाएँ",
       "makeTemplateConfirm": "टेम्पलेट बनाएँ",
       "templateName": "{{name}} (टेम्पलेट)",
-      "pickSource": "यह किस परियोजना से बनाई जाए?"
+      "pickSource": "यह किस परियोजना से बनाई जाए?",
+      "timeSettingsBudget": "{{budget}} के समय बजट के साथ"
     },
     "schedule": {
       "title": "परियोजना की तिथि खिसकाएं",

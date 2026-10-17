@@ -1,3 +1,4 @@
+import 'budget/entry_budget_notes.dart';
 import 'budget/after_save.dart';
 import 'dart:async';
 
@@ -326,6 +327,23 @@ class _CellFormState extends State<_CellForm> {
                         // box.
                         hintText: '1h 30m · 90m · 1:30',
                         prefixIcon: const Icon(LucideIcons.clock, size: 16),
+                      ),
+                    ),
+                  // What the minutes being typed do to the project's budget
+                  // (HIN-154): one line, the cell's sheet is small.
+                  if (widget.projectId case final projectId?)
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _duration,
+                      builder: (context, value, _) => Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: EntryBudgetNotes(
+                          projectId: projectId,
+                          issueId: null,
+                          issueLabel: null,
+                          projectLabel: widget.projectLabel,
+                          pendingMinutes: parseDurationInput(value.text) ?? 0,
+                          compact: true,
+                        ),
                       ),
                     ),
                   const SizedBox(height: 10),
