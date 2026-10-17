@@ -3911,7 +3911,16 @@
       "estimateAlert": "課題の見積もりの警告",
       "estimateAlertHint": "課題が見積もりのこの割合に達すると担当者に通知します。",
       "alertDefault": "既定 ({{percent}} %)",
-      "percent": "{{percent}} %"
+      "percent": "{{percent}} %",
+      "budgetMode": "予算に達したとき",
+      "estimateMode": "見積もりに達したとき",
+      "mode": {
+        "WARN": "記録時に表示",
+        "OPEN": "1時間ごとの通知のみ"
+      },
+      "modeDefault": "{{mode}}（既定）",
+      "modeHint": "記録がブロックされることはありません。「記録時に表示」では、フォームで残りが分かり、リーダーにすぐ通知されます。",
+      "modeHintNoAlerts": "記録がブロックされることはありません。フォームの表示は常に出ます。このサーバーでは予算アラートがオフのため、リーダーには通知されません。"
     },
     "templates": {
       "title": "テンプレートと日付",
@@ -5135,6 +5144,24 @@
       "emptyHint": "リーダーがプロジェクト設定で時間予算を設定します。",
       "all": "すべて {{count}} 件"
     },
-    "pending": "この記録 +{{amount}}"
+    "pending": "この記録 +{{amount}}",
+    "toast": {
+      "near": {
+        "BUDGET": "プロジェクト予算 {{percent}}、残り {{left}}",
+        "ESTIMATE": "見積もり {{percent}}、残り {{left}}"
+      },
+      "reached": {
+        "BUDGET": "プロジェクト予算を使い切りました（{{sums}}）",
+        "ESTIMATE": "見積もりに達しました（{{sums}}）"
+      },
+      "over": {
+        "BUDGET": "プロジェクト予算超過：{{percent}}（{{sums}}）",
+        "ESTIMATE": "見積もり超過：{{percent}}（{{sums}}）"
+      }
+    },
+    "subject": {
+      "project": "このプロジェクト",
+      "issue": "この課題"
+    }
   }
 }

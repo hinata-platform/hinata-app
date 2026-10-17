@@ -249,6 +249,43 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                   },
                 ),
                 const SizedBox(height: 14),
+                _ModeChoice(
+                  label: context.t('projectSettings.time.budgetMode'),
+                  value: _draft.budgetLimitMode,
+                  onChanged: (value) => setState(
+                    () => _draft = _draft.copyWith(
+                      budgetLimitMode: value,
+                      clearBudgetLimitMode: value == null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                _ModeChoice(
+                  label: context.t('projectSettings.time.estimateMode'),
+                  value: _draft.estimateLimitMode,
+                  onChanged: (value) => setState(
+                    () => _draft = _draft.copyWith(
+                      estimateLimitMode: value,
+                      clearEstimateLimitMode: value == null,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  context.t(
+                    context.select<TimePolicyCubit, bool>(
+                          (cubit) => cubit.state.alertsEnabled,
+                        )
+                        ? 'projectSettings.time.modeHint'
+                        : 'projectSettings.time.modeHintNoAlerts',
+                  ),
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    height: 1.45,
+                    color: AppColors.inkSoft,
+                  ),
+                ),
+                const SizedBox(height: 14),
                 _TriChoice(
                   label: context.t('projectSettings.time.billable'),
                   value: _draft.defaultBillable,
@@ -480,6 +517,54 @@ class _TriChoice extends StatelessWidget {
           'no' => false,
           _ => null,
         });
+      },
+    );
+  }
+}
+
+/// What reaching a limit does (HIN-153), or the server's default. Never a
+/// refusal: both modes let every entry through.
+class _ModeChoice extends StatelessWidget {
+  const _ModeChoice({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final String label;
+  final String? value;
+  final ValueChanged<String?> onChanged;
+
+  String _name(BuildContext context, String mode) =>
+      context.t('projectSettings.time.mode.$mode');
+
+  @override
+  Widget build(BuildContext context) {
+    final current = value;
+    return _ChoiceRow(
+      label: label,
+      value: current == null
+          ? context.t(
+              'projectSettings.time.modeDefault',
+              variables: {
+                'mode': _name(context, ProjectTimeSettings.defaultLimitMode),
+              },
+            )
+          : _name(context, current),
+      onTap: () async {
+        final picked = await showGlassOptions<String>(
+          context,
+          title: label,
+          options: [
+            for (final mode in ProjectTimeSettings.limitModes)
+              (value: mode, child: Text(_name(context, mode))),
+          ],
+        );
+        if (picked == null) return;
+        // The default is stored as no override, so it follows the server's.
+        onChanged(
+          picked == ProjectTimeSettings.defaultLimitMode ? null : picked,
+        );
       },
     );
   }

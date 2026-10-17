@@ -1,3 +1,4 @@
+import 'budget/after_save.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -144,7 +145,7 @@ class _CellFormState extends State<_CellForm> {
       _error = null;
     });
     try {
-      await context.read<TimesheetCellCubit>().create(
+      final saved = await context.read<TimesheetCellCubit>().create(
         TimeEntryDraft(
           projectId: widget.projectId,
           durationMinutes: minutes,
@@ -155,6 +156,7 @@ class _CellFormState extends State<_CellForm> {
         ),
       );
       if (!mounted) return;
+      announceSavedEntry(context, saved);
       _duration.clear();
       _description.clear();
       _changed = true;

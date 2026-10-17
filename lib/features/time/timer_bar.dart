@@ -1,3 +1,4 @@
+import 'budget/after_save.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -14,8 +15,7 @@ import '../../core/widgets/hive_widgets.dart' show fmtClock;
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/glass_popup_menu.dart';
-import '../sprint/modals/glass_modal.dart'
-    show GlassToastKind, anchorRectOfContext, showGlassToast;
+import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
 import 'placement_picker.dart';
 import 'time_entry_sheet.dart';
 import '../../core/theme/app_type.dart';
@@ -325,16 +325,10 @@ Future<void> endTimerAndAdvise(
   }
   if (saved == null || !context.mounted) return;
   onStopped?.call();
-  // The overlap advice, said once, where the decision was made. It is not a
-  // failure and nothing is undone: two entries may legitimately share time,
-  // and the person is the one who knows.
-  if (saved.hasOverlaps) {
-    showGlassToast(
-      context,
-      context.t('time.overlapWarning', count: saved.overlaps.length),
-      kind: GlassToastKind.warning,
-    );
-  }
+  // The overlap and budget advice, said once, where the decision was made. It
+  // is not a failure and nothing is undone: two entries may legitimately share
+  // time, a budget never refuses one, and the person is the one who knows.
+  announceSavedEntry(context, saved);
 }
 
 /// Whether stopping [timer] is a question for the person before it is a

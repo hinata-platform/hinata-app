@@ -4075,7 +4075,16 @@
       "estimateAlert": "Alerte sur l’estimation d’un ticket",
       "estimateAlertHint": "La personne assignée est prévenue dès qu’un ticket atteint ce seuil de son estimation.",
       "alertDefault": "Par défaut ({{percent}} %)",
-      "percent": "{{percent}} %"
+      "percent": "{{percent}} %",
+      "budgetMode": "Quand le budget est atteint",
+      "estimateMode": "Quand une estimation est atteinte",
+      "mode": {
+        "WARN": "Indication lors de la saisie",
+        "OPEN": "Alerte horaire uniquement"
+      },
+      "modeDefault": "{{mode}} (par défaut)",
+      "modeHint": "La saisie n’est jamais bloquée. Avec « Indication lors de la saisie », chacun voit dans le formulaire ce qu’il reste, et les responsables sont prévenus aussitôt.",
+      "modeHintNoAlerts": "La saisie n’est jamais bloquée. L’indication dans le formulaire apparaît toujours. Les responsables ne sont pas prévenus, car les alertes de budget sont désactivées sur ce serveur."
     },
     "templates": {
       "title": "Modèles et date",
@@ -5135,6 +5144,24 @@
       "emptyHint": "Les responsables fixent un budget temps dans les paramètres du projet.",
       "all": "Les {{count}}"
     },
-    "pending": "cette saisie +{{amount}}"
+    "pending": "cette saisie +{{amount}}",
+    "toast": {
+      "near": {
+        "BUDGET": "Budget du projet à {{percent}}, reste {{left}}",
+        "ESTIMATE": "Estimation à {{percent}}, reste {{left}}"
+      },
+      "reached": {
+        "BUDGET": "Budget du projet épuisé ({{sums}})",
+        "ESTIMATE": "Estimation atteinte ({{sums}})"
+      },
+      "over": {
+        "BUDGET": "Budget du projet dépassé : {{percent}} ({{sums}})",
+        "ESTIMATE": "Estimation dépassée : {{percent}} ({{sums}})"
+      }
+    },
+    "subject": {
+      "project": "Le projet",
+      "issue": "Le ticket"
+    }
   }
 }
