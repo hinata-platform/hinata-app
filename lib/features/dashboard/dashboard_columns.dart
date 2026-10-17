@@ -14,6 +14,7 @@ abstract final class DashboardCard {
   static const tracker = 'tracker';
   static const ranking = 'ranking';
   static const away = 'away';
+  static const budgets = 'budgets';
 }
 
 /// Content at least this wide holds a third column of panels.
@@ -45,6 +46,7 @@ const _panels = <GoldenGroup<String>>[
   GoldenGroup([DashboardCard.hero], weight: 7, wide: true, lead: true),
   GoldenGroup([DashboardCard.focus], weight: 7),
   GoldenGroup([DashboardCard.away], weight: 4),
+  GoldenGroup([DashboardCard.budgets], weight: 5),
   GoldenGroup([DashboardCard.completion], weight: 3),
   GoldenGroup([DashboardCard.tracker], weight: 5, wide: true),
   GoldenGroup([DashboardCard.git], weight: 6),
@@ -63,6 +65,7 @@ const dashboardStackOrder = [
   DashboardCard.kpis,
   DashboardCard.focus,
   DashboardCard.away,
+  DashboardCard.budgets,
   DashboardCard.completion,
   DashboardCard.tracker,
   DashboardCard.git,

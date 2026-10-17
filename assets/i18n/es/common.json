@@ -376,7 +376,8 @@
       "completion": "Progreso del proyecto",
       "tracker": "Tiempo de concentración",
       "ranking": "Ranking del equipo",
-      "away": "Ausentes hoy"
+      "away": "Ausentes hoy",
+      "budgets": "Presupuestos"
     },
     "saveError": "No se pudo guardar tu panel. Inténtalo de nuevo.",
     "saved": "Panel guardado",
@@ -5103,6 +5104,7 @@
   "budget": {
     "timeBudget": "Presupuesto de tiempo",
     "estimate": "Estimación",
+    "estimates": "Suma de estimaciones",
     "usedOfLimit": "{{used}} de {{limit}}",
     "left": "quedan {{amount}}",
     "overBy": "{{amount}} por encima",
@@ -5130,7 +5132,8 @@
     "dashboard": {
       "title": "Presupuestos",
       "empty": "Ningún proyecto con presupuesto",
-      "emptyHint": "Los responsables fijan un presupuesto de tiempo en los ajustes del proyecto."
+      "emptyHint": "Los responsables fijan un presupuesto de tiempo en los ajustes del proyecto.",
+      "all": "Los {{count}}"
     },
     "pending": "este registro +{{amount}}"
   }

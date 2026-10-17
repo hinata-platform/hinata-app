@@ -17,6 +17,7 @@ import 'core/branding/org_logo_store.dart';
 import 'core/blocs/auth_bloc.dart';
 import 'core/timer_actions/api_live_activity_push_registry.dart';
 import 'core/blocs/locale_cubit.dart';
+import 'core/blocs/time_usage_cubit.dart';
 import 'core/blocs/theme_cubit.dart';
 import 'core/blocs/timer_cubit.dart';
 import 'core/i18n/i18n.dart';
@@ -157,6 +158,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// [TimePrivacyCubit].
   late final TimePrivacyCubit _timePrivacy = TimePrivacyCubit(
     widget.repositories.time,
+  );
+
+  /// Budget and estimate usage of the projects on screen (HIN-152). App-wide
+  /// so a board head, the project list and the dashboard ask once and agree;
+  /// see [TimeUsageCubit].
+  late final TimeUsageCubit _timeUsage = TimeUsageCubit(
+    widget.repositories.timeUsage,
+    enabled: () => _appConfig.state.meta?.advancedTimeTracking ?? false,
   );
 
   /// The identity [_timer] was built for, so the rebuild happens once.
@@ -418,6 +427,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       _timePolicy.reset();
       _timePrivacy.reset();
       _myAbsences.reset();
+      _timeUsage.reset();
     }
   }
 
@@ -798,6 +808,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _auth.close();
     _locale.close();
     _orgLogo.close();
+    unawaited(_timeUsage.close());
     super.dispose();
   }
 
@@ -863,6 +874,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _timePolicy),
           BlocProvider.value(value: _myAbsences),
           BlocProvider.value(value: _timePrivacy),
+          BlocProvider.value(value: _timeUsage),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         // Light/dark and the tint reach the widgets that read AppColors

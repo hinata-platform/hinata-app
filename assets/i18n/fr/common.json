@@ -376,7 +376,8 @@
       "completion": "Avancement des projets",
       "tracker": "Temps de concentration",
       "ranking": "Classement de l'équipe",
-      "away": "Absents aujourd'hui"
+      "away": "Absents aujourd'hui",
+      "budgets": "Budgets"
     },
     "saveError": "Impossible d'enregistrer votre tableau de bord. Réessayez.",
     "saved": "Tableau de bord enregistré",
@@ -5103,6 +5104,7 @@
   "budget": {
     "timeBudget": "Budget temps",
     "estimate": "Estimation",
+    "estimates": "Somme des estimations",
     "usedOfLimit": "{{used}} sur {{limit}}",
     "left": "reste {{amount}}",
     "overBy": "{{amount}} de dépassement",
@@ -5130,7 +5132,8 @@
     "dashboard": {
       "title": "Budgets",
       "empty": "Aucun projet avec budget",
-      "emptyHint": "Les responsables fixent un budget temps dans les paramètres du projet."
+      "emptyHint": "Les responsables fixent un budget temps dans les paramètres du projet.",
+      "all": "Les {{count}}"
     },
     "pending": "cette saisie +{{amount}}"
   }
