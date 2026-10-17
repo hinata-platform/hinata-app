@@ -720,12 +720,15 @@ class _ProjectCard extends StatelessWidget {
                 value: '${project.workflowStates.length}',
                 label: context.t('projects.statesLabel'),
               ),
-              const Spacer(),
+              const SizedBox(width: 12),
               // The budgets at a glance (HIN-152, HIN-155); nothing without.
-              Flexible(
+              // All the room right of the figures, so two capsules keep their
+              // size and only shrink where there is truly no room.
+              Expanded(
                 child: ProjectBudgetCapsules(
                   projectId: project.id,
                   projectName: project.name,
+                  singleLine: true,
                 ),
               ),
             ],

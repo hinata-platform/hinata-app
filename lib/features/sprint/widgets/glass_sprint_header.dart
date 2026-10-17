@@ -6,6 +6,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../../time/budget/sprint_budget.dart';
 import '../sprint_format.dart';
 import '../../../core/theme/app_type.dart';
 
@@ -137,6 +138,8 @@ class GlassSprintHeader extends StatelessWidget {
                     ),
                     const SizedBox(width: 12),
                     Expanded(child: id),
+                    // The sprint's time budget (HIN-156); nothing without.
+                    SprintBudget(sprintId: sprint.id),
                   ],
                 ),
                 if (dayTotal > 0) ...[
@@ -182,6 +185,8 @@ class GlassSprintHeader extends StatelessWidget {
                 const SizedBox(width: 12),
                 dayLabel,
               ],
+              const SizedBox(width: 14),
+              SprintBudget(sprintId: sprint.id),
             ],
           ),
         );

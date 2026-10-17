@@ -9,6 +9,7 @@ import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../time/budget/sprint_budget.dart';
 import '../../core/widgets/glass_bulk_bar.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/read_on_trigger.dart' show ReadOnTrigger;
@@ -491,6 +492,10 @@ class _SprintGroupHeader extends StatelessWidget {
                     issuesLabel,
                     const SizedBox(width: 12),
                     PointBuckets(points: points),
+                    const Spacer(),
+                    // Its time budget (HIN-156), or for a lead the way to set
+                    // one; nothing otherwise.
+                    SprintBudget(sprintId: sprint.id),
                   ],
                 ),
                 const SizedBox(height: 10),
@@ -527,6 +532,8 @@ class _SprintGroupHeader extends StatelessWidget {
                   capacity: sprint.capacityPoints,
                   width: context.isExpanded ? 188 : 150,
                 ),
+                const SizedBox(width: 10),
+                SprintBudget(sprintId: sprint.id),
                 const SizedBox(width: 14),
                 action,
               ],

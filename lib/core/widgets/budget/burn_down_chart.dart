@@ -195,17 +195,30 @@ class BurnDownChart extends StatelessWidget {
       ),
     );
 
+    Widget stroke(Color color, double width, double height) => Container(
+      width: width,
+      height: height,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+    // Drawn the way the line is drawn: the estimates dashed, like the chart.
     Widget key(Color color, String text, {bool dashed = false}) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Container(
-          width: 16,
-          height: dashed ? 2 : 4,
-          decoration: BoxDecoration(
-            color: color,
-            borderRadius: BorderRadius.circular(2),
-          ),
-        ),
+        if (dashed)
+          Row(
+            children: [
+              stroke(color, 5, 2),
+              const SizedBox(width: 3),
+              stroke(color, 5, 2),
+              const SizedBox(width: 3),
+              stroke(color, 5, 2),
+            ],
+          )
+        else
+          stroke(color, 21, 4),
         const SizedBox(width: 6),
         Text(
           text,
