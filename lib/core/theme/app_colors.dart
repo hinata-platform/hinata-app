@@ -200,6 +200,19 @@ abstract final class AppColors {
   static Color get successInk => _dark ? success : const Color(0xFF257C56);
   static const warning = Color(0xFFD9A032);
 
+  /// A bar between the warning share and the limit (HIN-151). [warning]
+  /// itself reaches only 2.1:1 on the paper canvas, short of the 3:1 a
+  /// graphic needs (WCAG 1.4.11); this deeper amber reaches 3.8:1 on the
+  /// canvas and 3.7:1 in a recessed track. The dark surfaces already clear it
+  /// with [warning] (8.0:1).
+  static Color get warningBar =>
+      _dark ? warning : const Color(0xFFA86F05);
+
+  /// Warning as small text: 5.3:1 on the canvas, 5.9:1 on white; [warning]
+  /// on the dark canvas reaches 8.0:1 (measured, HIN-151).
+  static Color get warningInk =>
+      _dark ? warning : const Color(0xFF8A5A00);
+
   // ---- compatibility aliases (migrate screens progressively) ----
   static Color get textPrimary => ink;
   static Color get textSecondary => inkSoft;
