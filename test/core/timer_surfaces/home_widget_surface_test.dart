@@ -278,9 +278,22 @@ void main() {
         );
         final record = read(saved(0)['value'] as String?);
         expect(record['startedAt'], start.millisecondsSinceEpoch);
+        // No buttons on a Mac, so none of their words.
         expect(record, isNot(contains('start')));
+        expect(record, isNot(contains('stop')));
       },
     );
+
+    test('a Mac gets the widgetkit_macos store by default', () {
+      expect(
+        TimerWidgetStore.forPlatform(SurfacePlatform.macos),
+        isA<MacTimerWidgetStore>(),
+      );
+      expect(
+        TimerWidgetStore.forPlatform(SurfacePlatform.ios),
+        isA<HomeWidgetTimerStore>(),
+      );
+    });
 
     test('minimal: no ids and no description', () async {
       await mac().apply(state(timer()));
@@ -314,7 +327,7 @@ void main() {
   });
 }
 
-class FakeWidgetStore extends TimerWidgetStore {
+class FakeWidgetStore implements TimerWidgetStore {
   final List<String?> records = [];
 
   @override

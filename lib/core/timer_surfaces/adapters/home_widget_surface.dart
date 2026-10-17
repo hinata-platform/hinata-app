@@ -21,25 +21,42 @@ const String timerWidgetAndroidProvider =
     'com.ahmadre.hinata.TimerWidgetProvider';
 
 /// The shared store of the widgets, behind one seam so tests hand a fake.
-class TimerWidgetStore {
-  const TimerWidgetStore({this.backgroundAction});
+abstract interface class TimerWidgetStore {
+  /// home_widget on iOS and Android, `widgetkit_macos` on a Mac (HIN-108).
+  factory TimerWidgetStore.forPlatform(
+    SurfacePlatform platform, {
+    Future<void> Function(Uri?)? backgroundAction,
+  }) => platform == SurfacePlatform.macos
+      ? MacTimerWidgetStore()
+      : HomeWidgetTimerStore(backgroundAction: backgroundAction);
 
-  /// The action behind the widget buttons and the Quick Settings tile
-  /// (HIN-103): a top-level function home_widget runs in a background engine
-  /// with a `hinata://timer/<command>` link. Null leaves the buttons inert.
+  Future<void> init();
+
+  /// Writes [record] (an empty one with null) and asks the widgets to draw.
+  Future<void> write(String? record);
+}
+
+/// The store of the widgets on iOS and Android, through home_widget.
+class HomeWidgetTimerStore implements TimerWidgetStore {
+  const HomeWidgetTimerStore({this.backgroundAction});
+
+  /// Android only: the action behind the widget buttons and the Quick
+  /// Settings tile (HIN-103), a top-level function home_widget runs in a
+  /// background engine with a `hinata://timer/<command>` link. The iOS
+  /// buttons run App Intents (HIN-105), so it is null there.
   final Future<void> Function(Uri?)? backgroundAction;
 
+  @override
   Future<void> init() async {
     await HomeWidget.setAppGroupId(timerWidgetAppGroup);
     final action = backgroundAction;
     if (action != null) await HomeWidget.registerInteractivityCallback(action);
   }
 
-  /// Writes [record] (an empty one with null) and asks the widgets to draw.
-  ///
   /// Never a null: home_widget 0.9.4 hands it to iOS as `NSNull`, and
   /// `UserDefaults` throws on that, which takes the whole app down. Both
   /// native readers take an empty record for none.
+  @override
   Future<void> write(String? record) async {
     await HomeWidget.saveWidgetData<String>(timerWidgetKey, record ?? '');
     await HomeWidget.updateWidget(
@@ -51,7 +68,7 @@ class TimerWidgetStore {
 
 /// The store of the Mac's widgets (HIN-108): home_widget has no macOS, so the
 /// same record goes into the same App Group through `widgetkit_macos`.
-class MacTimerWidgetStore extends TimerWidgetStore {
+class MacTimerWidgetStore implements TimerWidgetStore {
   MacTimerWidgetStore({WidgetKitMacos? kit})
     : _kit = kit ?? WidgetKitMacos(appGroup: timerWidgetAppGroup);
 
@@ -77,7 +94,7 @@ class MacTimerWidgetStore extends TimerWidgetStore {
 /// the app writes on a change of state only.
 class HomeWidgetSurface extends TimerSurface {
   HomeWidgetSurface(this.platform, {TimerWidgetStore? store})
-    : _store = store ?? const TimerWidgetStore();
+    : _store = store ?? TimerWidgetStore.forPlatform(platform);
 
   final SurfacePlatform platform;
   final TimerWidgetStore _store;
@@ -113,6 +130,8 @@ class HomeWidgetSurface extends TimerSurface {
         state,
         idle: _idle,
         start: platform == SurfacePlatform.ios ? _start : '',
+        // A Mac widget in v1 only opens the focus screen.
+        buttons: platform != SurfacePlatform.macos,
       ),
     );
   }
@@ -150,10 +169,12 @@ class HomeWidgetSurface extends TimerSurface {
 /// the description. No timer id and no other id, so nothing on the device
 /// links the widget to a record on the server. Idle, [start] names the
 /// button that starts a stopwatch (iOS, HIN-105); empty leaves it out.
+/// Without [buttons] (a Mac) the words of stop and the next phase stay out.
 String timerWidgetRecord(
   TimerSurfaceState state, {
   String idle = '',
   String start = '',
+  bool buttons = true,
 }) {
   final content = liveActivityContent(state, yieldToAlarm: false);
   final startedAt = state.startedAt;
@@ -173,8 +194,8 @@ String timerWidgetRecord(
     if (endsAt != null) 'over': state.endText,
     // The buttons (HIN-103): they act in the background, the words are the
     // app's. A phase button only where there are phases.
-    'stop': texts.stop,
-    if (state.mode == TimerMode.pomodoro)
+    if (buttons) 'stop': texts.stop,
+    if (buttons && state.mode == TimerMode.pomodoro)
       'advance': state.isBreak ? texts.resume : texts.takeBreak,
     'idle': idle,
     // What the widget offers once this copy expires.
