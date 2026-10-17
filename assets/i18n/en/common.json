@@ -5137,7 +5137,12 @@
         "reachedTitle": "Sprint budget used up"
       },
       "nearBody": "{{subject}} stands at {{sums}}. You can save as usual.",
-      "overBody": "{{subject}} stands at {{sums}}. Your entry is still saved."
+      "overBody": "{{subject}} stands at {{sums}}. Your entry is still saved.",
+      "money": {
+        "nearTitle": "{{amount}} left in the money budget",
+        "overTitle": "Money budget exceeded",
+        "reachedTitle": "Money budget used up"
+      }
     },
     "dashboard": {
       "title": "Budgets",
@@ -5163,6 +5168,18 @@
     "subject": {
       "project": "The project",
       "issue": "The issue"
+    },
+    "money": {
+      "label": "Money budget",
+      "hint": "e.g. 6,000 — empty for no money budget",
+      "invalid": "That is not an amount",
+      "kind": "Measured by",
+      "kinds": {
+        "BILLABLE": "Revenue (billable entries)",
+        "COST": "Cost (all entries)"
+      },
+      "revenue": "Money budget (revenue)",
+      "cost": "Money budget (cost)"
     }
   }
 }

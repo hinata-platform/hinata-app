@@ -70,4 +70,18 @@ void main() {
     expect(usage.estimate, isNull);
     expect(usage.nearPercent, BudgetGauge.defaultNearPercent);
   });
+
+  test('money is a gauge only for a reader the server gave it to', () {
+    final lead = ProjectTimeUsage.fromJson(const {
+      'projectId': 'p',
+      'budgetCents': 600000,
+      'usedCents': 480000,
+      'currency': 'EUR',
+      'budgetRateKind': 'BILLABLE',
+    });
+    expect(lead.money?.percent, 80);
+    expect(lead.costBudget, isFalse);
+    final member = ProjectTimeUsage.fromJson(const {'projectId': 'p'});
+    expect(member.money, isNull);
+  });
 }

@@ -212,7 +212,8 @@ class BudgetNotice extends StatelessWidget {
 enum BudgetNoticeKind {
   projectBudget('project'),
   issueEstimate('estimate'),
-  sprintBudget('sprint');
+  sprintBudget('sprint'),
+  moneyBudget('money');
 
   const BudgetNoticeKind(this.key);
   final String key;

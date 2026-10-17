@@ -4,8 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../core/widgets/budget/budget.dart';
-import '../time/budget/project_usage.dart';
+import '../time/budget/project_budget_capsules.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
@@ -581,19 +580,9 @@ class _KanbanViewState extends State<_KanbanView>
     final projects = wall.board?.projectIds ?? const <String>[];
     if (projects.length != 1) return const [];
     return [
-      ProjectUsage(
+      ProjectBudgetCapsules(
         projectId: projects.single,
-        builder: (context, usage) {
-          final budget = usage?.budget;
-          if (budget == null) return const SizedBox.shrink();
-          return Padding(
-            padding: const EdgeInsetsDirectional.only(start: 12),
-            child: BudgetCapsule(
-              label: context.t('budget.timeBudget'),
-              gauge: budget,
-            ),
-          );
-        },
+        padding: const EdgeInsetsDirectional.only(start: 12),
       ),
     ];
   }
