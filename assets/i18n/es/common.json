@@ -5131,6 +5131,7 @@
       "title": "Presupuestos",
       "empty": "Ningún proyecto con presupuesto",
       "emptyHint": "Los responsables fijan un presupuesto de tiempo en los ajustes del proyecto."
-    }
+    },
+    "pending": "este registro +{{amount}}"
   }
 }

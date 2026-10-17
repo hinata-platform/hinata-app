@@ -33,8 +33,11 @@ class BudgetGauge extends Equatable {
   /// Used against the limit; above 1 once the limit is passed.
   double get fraction => used / limit;
 
-  /// Whole percent, rounded down, so 99.6 % never reads as a reached 100 %.
-  int get percent => (used * 100) ~/ limit;
+  /// Whole percent, rounded towards the limit's side: down below it, so
+  /// 99.6 % never reads as a reached 100 %, and up past it, so 100.4 % never
+  /// reads as "exactly used up".
+  int get percent =>
+      used > limit ? (used * 100 + limit - 1) ~/ limit : (used * 100) ~/ limit;
 
   /// What is still available; zero once the limit is reached.
   int get left => used >= limit ? 0 : limit - used;

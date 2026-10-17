@@ -208,10 +208,11 @@ abstract final class AppColors {
   static Color get warningBar =>
       _dark ? warning : const Color(0xFFA86F05);
 
-  /// Warning as small text: 5.3:1 on the canvas, 5.9:1 on white; [warning]
-  /// on the dark canvas reaches 8.0:1 (measured, HIN-151).
+  /// Warning as small text: 5.3:1 on the canvas, 5.9:1 on white. Dark takes a
+  /// lighter amber than [warning]: on a frosted glass surface over the dark
+  /// ambient [warning] reached only 4.2:1, this one 5.0:1 (measured, HIN-151).
   static Color get warningInk =>
-      _dark ? warning : const Color(0xFF8A5A00);
+      _dark ? const Color(0xFFEFC163) : const Color(0xFF8A5A00);
 
   // ---- compatibility aliases (migrate screens progressively) ----
   static Color get textPrimary => ink;
