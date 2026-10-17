@@ -6,9 +6,12 @@ import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/timer_surfaces/adapters/home_widget_surface.dart';
 import 'package:hinata/core/timer_surfaces/adapters/live_activity_surface.dart';
 import 'package:hinata/core/timer_surfaces/surface_platform.dart';
+import 'package:hinata/core/timer_surfaces/timer_surface.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_prefs.dart';
 import 'package:hinata/core/timer_surfaces/timer_surface_state.dart';
 import 'package:widgetkit_macos/widgetkit_macos.dart';
+
+import 'adapters/fake_host.dart';
 
 /// The widgets' shared store (HIN-102): one record, no ids, the description
 /// only with details on the lock screen, and gone on clear.
@@ -230,15 +233,25 @@ void main() {
   // HIN-108: the same record for the Mac's widgets, through widgetkit_macos.
   group('on a Mac', () {
     const channel = MethodChannel('widgetkit_macos');
+    const commands = MethodChannel('test/widget_commands');
     final calls = <MethodCall>[];
+    // The App Group, as far as the tests read it back.
+    final stored = <String, Object?>{};
+    final now = DateTime.utc(2026, 10, 17, 9);
 
     setUp(() {
       calls.clear();
+      stored.clear();
       TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
           .setMockMethodCallHandler(channel, (call) async {
             // A Mac with WidgetKit; the question is not one of the writes.
             if (call.method == 'isSupported') return true;
+            final args = call.arguments as Map<Object?, Object?>;
+            if (call.method == 'getWidgetData') return stored[args['key']];
             calls.add(call);
+            if (call.method == 'saveWidgetData') {
+              stored[args['key']! as String] = args['value'];
+            }
             return null;
           });
     });
@@ -248,16 +261,24 @@ void main() {
           .setMockMethodCallHandler(channel, null),
     );
 
-    HomeWidgetSurface mac() => HomeWidgetSurface(
-      SurfacePlatform.macos,
-      store: MacTimerWidgetStore(
-        kit: WidgetKitMacos(
-          appGroup: timerWidgetAppGroup,
-          channel: channel,
-          isMacOS: true,
-        ),
+    MacTimerWidgetStore macStore() => MacTimerWidgetStore(
+      kit: WidgetKitMacos(
+        appGroup: timerWidgetAppGroup,
+        channel: channel,
+        isMacOS: true,
       ),
+      commands: commands,
+      now: () => now,
     );
+
+    HomeWidgetSurface mac() =>
+        HomeWidgetSurface(SurfacePlatform.macos, store: macStore());
+
+    /// What the extension leaves when a button is pressed [ago].
+    String command(String name, {Duration ago = Duration.zero}) => jsonEncode({
+      'command': name,
+      'at': now.subtract(ago).millisecondsSinceEpoch,
+    });
 
     Map<Object?, Object?> saved(int i) =>
         calls.where((c) => c.method == 'saveWidgetData').elementAt(i).arguments
@@ -280,11 +301,90 @@ void main() {
         );
         final record = read(saved(0)['value'] as String?);
         expect(record['startedAt'], start.millisecondsSinceEpoch);
-        // No buttons on a Mac, so none of their words.
-        expect(record, isNot(contains('start')));
-        expect(record, isNot(contains('stop')));
+        // The widget's buttons carry the app's words, as on an iPhone.
+        expect(record['stop'], 'Stop');
       },
     );
+
+    test('idle, the record names the start button', () async {
+      final surface = mac();
+      await surface.apply(
+        deriveTimerSurfaceState(
+          null,
+          TimerSurfacePrefs.suggested,
+          gated: false,
+          texts: const TimerSurfaceTexts(
+            appName: 'Hinata',
+            countdownOver: 'Countdown over',
+            workOver: 'Interval over',
+            breakOver: 'Break over',
+            running: 'Timer running',
+            onBreak: 'Break',
+            stop: 'Stop',
+            takeBreak: 'Take a break',
+            resume: 'Resume',
+            idle: 'No timer running',
+            start: 'Start',
+          ),
+        ),
+      );
+
+      expect(read(saved(0)['value'] as String?), {
+        'idle': 'No timer running',
+        'start': 'Start',
+      });
+    });
+
+    group('a button of the widget', () {
+      test('runs the waiting command once and removes it', () async {
+        final host = FakeHost();
+        final store = macStore();
+        stored[timerWidgetCommandKey] = command('stop');
+
+        await store.init(host);
+        await store.takeCommand();
+
+        expect(host.calls, ['end']);
+        expect(stored[timerWidgetCommandKey], isNull);
+      });
+
+      test('the runner\'s word makes the app look again', () async {
+        final host = FakeHost();
+        final store = macStore();
+        await store.init(host);
+
+        stored[timerWidgetCommandKey] = command('start');
+        await TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+            .handlePlatformMessage(
+              commands.name,
+              commands.codec.encodeMethodCall(const MethodCall('command')),
+              (_) {},
+            );
+        await store.takeCommand();
+        stored[timerWidgetCommandKey] = command('advancePhase');
+        await store.takeCommand();
+
+        expect(host.calls, ['start', 'advance']);
+      });
+
+      test('an old, a future or an unknown command does nothing', () async {
+        final host = FakeHost();
+        final store = macStore();
+        await store.init(host);
+
+        for (final raw in [
+          command('start', ago: const Duration(minutes: 1)),
+          command('start', ago: const Duration(seconds: -30)),
+          command('delete'),
+          'not json',
+        ]) {
+          stored[timerWidgetCommandKey] = raw;
+          await store.takeCommand();
+          expect(stored[timerWidgetCommandKey], isNull, reason: raw);
+        }
+        expect(host.calls, isEmpty);
+      });
+    });
 
     test('a Mac gets the widgetkit_macos store by default', () {
       expect(
@@ -333,7 +433,7 @@ class FakeWidgetStore implements TimerWidgetStore {
   final List<String?> records = [];
 
   @override
-  Future<void> init() async {}
+  Future<void> init(TimerSurfaceHost host) async {}
 
   @override
   Future<void> write(String? record) async => records.add(record);

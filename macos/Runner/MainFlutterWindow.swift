@@ -14,6 +14,9 @@ class MainFlutterWindow: NSWindow {
     // Annotationen vorher in die Seiten zeichnen (siehe HinataPdfChannel).
     HinataPdfChannel.register(with: flutterViewController.engine.binaryMessenger)
 
+    // Hinata: the buttons of the widget hand their command to the app (HIN-108).
+    HinataWidgetCommandChannel.register(with: flutterViewController.engine.binaryMessenger)
+
     // Hinata: whether a running timer keeps the app in the menu bar (HIN-101).
     let windowChannel = FlutterMethodChannel(
       name: "hinata/window", binaryMessenger: flutterViewController.engine.binaryMessenger)
