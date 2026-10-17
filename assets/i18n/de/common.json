@@ -4075,7 +4075,16 @@
       "estimateAlert": "Warnung bei der Schätzung eines Vorgangs",
       "estimateAlertHint": "Die zugewiesene Person erfährt es, sobald ein Vorgang diesen Anteil seiner Schätzung erreicht.",
       "alertDefault": "Standard ({{percent}} %)",
-      "percent": "{{percent}} %"
+      "percent": "{{percent}} %",
+      "budgetMode": "Bei Erreichen des Budgets",
+      "estimateMode": "Bei Erreichen einer Schätzung",
+      "mode": {
+        "WARN": "Hinweis beim Erfassen",
+        "OPEN": "Nur stündliche Meldung"
+      },
+      "modeDefault": "{{mode}} (Standard)",
+      "modeHint": "Erfassen wird nie gesperrt. Mit „Hinweis beim Erfassen“ sieht jede Person im Formular, wie viel noch übrig ist, und die Leitungen erfahren es sofort.",
+      "modeHintNoAlerts": "Erfassen wird nie gesperrt. Der Hinweis im Formular erscheint immer. Leitungen werden nicht benachrichtigt, weil Budget-Warnungen auf diesem Server ausgeschaltet sind."
     },
     "templates": {
       "title": "Vorlagen und Termin",
@@ -5135,6 +5144,24 @@
       "emptyHint": "Leitungen legen ein Zeitbudget in den Projekt-Einstellungen fest.",
       "all": "Alle {{count}}"
     },
-    "pending": "dieser Eintrag +{{amount}}"
+    "pending": "dieser Eintrag +{{amount}}",
+    "toast": {
+      "near": {
+        "BUDGET": "Projektbudget bei {{percent}}, noch {{left}}",
+        "ESTIMATE": "Schätzung bei {{percent}}, noch {{left}}"
+      },
+      "reached": {
+        "BUDGET": "Projektbudget ausgeschöpft ({{sums}})",
+        "ESTIMATE": "Schätzung erreicht ({{sums}})"
+      },
+      "over": {
+        "BUDGET": "Projektbudget überschritten: {{percent}} ({{sums}})",
+        "ESTIMATE": "Schätzung überschritten: {{percent}} ({{sums}})"
+      }
+    },
+    "subject": {
+      "project": "Das Projekt",
+      "issue": "Der Vorgang"
+    }
   }
 }

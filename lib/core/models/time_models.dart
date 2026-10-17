@@ -282,10 +282,18 @@ class RunningTimer extends Equatable {
 /// what it was told and reports what it saw, and the person decides. Empty
 /// whenever the entry has no start and end to compare.
 class SavedTimeEntry extends Equatable {
-  const SavedTimeEntry({required this.entry, this.overlaps = const []});
+  const SavedTimeEntry({
+    required this.entry,
+    this.overlaps = const [],
+    this.budgetWarnings = const [],
+  });
 
   final WorkItem entry;
   final List<String> overlaps;
+
+  /// The budget and estimate this save brought near or past their limit
+  /// (HIN-153). Advice: the entry is saved either way.
+  final List<BudgetWarning> budgetWarnings;
 
   bool get hasOverlaps => overlaps.isNotEmpty;
 
@@ -294,10 +302,48 @@ class SavedTimeEntry extends Equatable {
     overlaps: ((json['overlaps'] as List<dynamic>?) ?? const [])
         .whereType<String>()
         .toList(),
+    budgetWarnings: [
+      for (final row
+          in (json['budgetWarnings'] as List<dynamic>? ?? const [])
+              .whereType<Map<String, dynamic>>())
+        BudgetWarning.fromJson(row),
+    ],
   );
 
   @override
-  List<Object?> get props => [entry, overlaps];
+  List<Object?> get props => [entry, overlaps, budgetWarnings];
+}
+
+/// One limit a save brought near or past (HIN-153): the project's budget or
+/// the issue's estimate, as sums that name nobody.
+class BudgetWarning extends Equatable {
+  const BudgetWarning({
+    required this.kind,
+    required this.over,
+    required this.used,
+    required this.limit,
+    required this.percent,
+  });
+
+  factory BudgetWarning.fromJson(Map<String, dynamic> json) => BudgetWarning(
+    kind: json['kind'] as String? ?? 'BUDGET',
+    over: json['level'] == 'OVER',
+    used: (json['used'] as num?)?.toInt() ?? 0,
+    limit: (json['limit'] as num?)?.toInt() ?? 0,
+    percent: (json['percent'] as num?)?.toInt() ?? 0,
+  );
+
+  /// `BUDGET` or `ESTIMATE`.
+  final String kind;
+
+  /// From the limit on, rather than from the warning share.
+  final bool over;
+  final int used;
+  final int limit;
+  final int percent;
+
+  @override
+  List<Object?> get props => [kind, over, used, limit, percent];
 }
 
 /// What a new or edited entry says. Either [startedAt] + [endedAt] or
