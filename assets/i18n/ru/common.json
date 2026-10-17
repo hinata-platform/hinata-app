@@ -3822,7 +3822,6 @@
     "guideline": "Ориентир",
     "noBurndown": "Задайте даты спринта, чтобы увидеть диаграмму сгорания.",
     "velocity": "Скорость",
-    "committedDone": "взято · сделано",
     "noVelocity": "Завершённых спринтов пока нет.",
     "workBreakdown": "Распределение работ по исполнителям",
     "noBreakdown": "В этом спринте нет оценённых работ.",
@@ -3844,7 +3843,8 @@
     "selectedCount": "Выбрано: {{count}}",
     "collapse": "Свернуть",
     "expand": "Развернуть",
-    "selectIssue": "Выбрать {{issue}}"
+    "selectIssue": "Выбрать {{issue}}",
+    "doneOfCommitted": "сделано из запланированного"
   },
   "teams": {
     "avatar": {

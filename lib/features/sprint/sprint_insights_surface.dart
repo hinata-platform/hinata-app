@@ -5,17 +5,20 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../../core/widgets/budget/budget.dart';
+import '../../core/widgets/figure_tiles.dart';
+import '../../core/widgets/frosted_card.dart';
 import '../../core/widgets/hive_widgets.dart';
 import 'sprint_format.dart';
-import 'sprint_tokens.dart';
 import 'widgets/burndown_chart.dart';
 import '../../core/theme/app_type.dart';
 
-/// Insights surface: summary stats, an animated burndown, velocity history,
-/// per-assignee work breakdown and the scope-change log — all from the
-/// server-computed [SprintReport].
+/// Insights surface: summary figures, the burndown as a honey area, velocity
+/// as glass vessels filled to what each sprint got done of what it committed,
+/// the work per person and the scope-change log, all from the server-computed
+/// [SprintReport]. Drawn like the report page (HIN-157): frosted cards on the
+/// ambient background, the same figure tiles, the same vessels.
 class SprintInsightsSurface extends StatelessWidget {
   const SprintInsightsSurface({
     super.key,
@@ -129,181 +132,58 @@ class SprintInsightsSurface extends StatelessWidget {
     );
   }
 
-  Widget _summary(BuildContext context, SprintSummary s) {
-    final cards = [
-      _StatCard(
+  Widget _summary(BuildContext context, SprintSummary s) => FigureTiles(
+    tiles: [
+      (
         icon: LucideIcons.circleDot,
         label: context.t('sprint.committed'),
         value: '${s.committed}',
-        sub: context.t('sprint.storyPoints'),
+        note: context.t('sprint.storyPoints'),
+        valueColor: null,
       ),
-      _StatCard(
+      (
         icon: LucideIcons.circleCheck,
         label: context.t('sprint.completed'),
         value: '${s.completed}',
-        valueColor: SprintTokens.done,
-        sub: context.t(
+        note: context.t(
           'sprint.percentOfCommitment',
           variables: {
             'percent':
                 '${s.committed == 0 ? 0 : (s.completed / s.committed * 100).round()}',
           },
         ),
+        valueColor: AppColors.successInk,
       ),
-      _StatCard(
+      (
         icon: LucideIcons.flame,
         label: context.t('sprint.remaining'),
         value: '${s.remaining}',
-        sub: context.t('sprint.pointsWord'),
+        note: context.t('sprint.pointsWord'),
+        valueColor: null,
       ),
-      _StatCard(
+      (
         icon: LucideIcons.gauge,
         label: context.t('sprint.avgVelocity'),
         value: '${s.avgVelocity}',
-        sub: context.t('sprint.lastSprints'),
+        note: context.t('sprint.lastSprints'),
+        valueColor: null,
       ),
-    ];
-    // 4-up on wide, 2-up otherwise — never overflows.
-    final perRow = context.isExpanded ? 4 : 2;
-    return LayoutBuilder(
-      builder: (context, c) {
-        const spacing = 14.0;
-        final width = (c.maxWidth - spacing * (perRow - 1)) / perRow;
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final card in cards) SizedBox(width: width, child: card),
-          ],
-        );
-      },
-    );
-  }
+    ],
+  );
 }
 
-class _Card extends StatelessWidget {
-  const _Card({required this.child, this.padding = const EdgeInsets.all(18)});
+Widget _quiet(BuildContext context, String key) => Padding(
+  padding: const EdgeInsets.symmetric(vertical: 18),
+  child: Text(
+    context.t(key),
+    style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+  ),
+);
 
-  final Widget child;
-  final EdgeInsets padding;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: padding,
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        border: Border.all(color: AppColors.hairline),
-      ),
-      child: child,
-    );
-  }
-}
-
-class _SectionHead extends StatelessWidget {
-  const _SectionHead({required this.title, this.trailing});
-
-  final String title;
-  final String? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              title,
-              style: const TextStyle(
-                fontFamily: AppTheme.fontBrand,
-                fontSize: AppType.body,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          if (trailing != null)
-            Text(
-              trailing!,
-              style: TextStyle(
-                fontSize: AppType.caption,
-                color: AppColors.inkFaint,
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatCard extends StatelessWidget {
-  const _StatCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.sub,
-    this.valueColor,
-  });
-
-  final IconData icon;
-  final String label;
-  final String value;
-  final String sub;
-  final Color? valueColor;
-
-  @override
-  Widget build(BuildContext context) {
-    return _Card(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Row(
-            children: [
-              Icon(icon, size: 14, color: AppColors.inkSoft),
-              const SizedBox(width: 7),
-              Flexible(
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: AppType.caption,
-                    fontWeight: FontWeight.w500,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              fontFamily: AppTheme.fontBrand,
-              fontSize: AppType.hero,
-              fontWeight: FontWeight.w700,
-              letterSpacing: -0.5,
-              color: valueColor ?? AppColors.ink,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            sub,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: AppType.caption,
-              color: AppColors.inkFaint,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+Widget _trailing(String text) => Text(
+  text,
+  style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+);
 
 class _BurndownCard extends StatelessWidget {
   const _BurndownCard({
@@ -318,30 +198,37 @@ class _BurndownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Card(
+    final left = context.t(
+      'sprint.ptsRemaining',
+      variables: {'points': '$remaining'},
+    );
+    return FrostedCard(
+      title: context.t('sprint.burndown'),
+      trailing: _trailing(left),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _SectionHead(
-            title: context.t('sprint.burndown'),
-            trailing: context.t(
-              'sprint.ptsRemaining',
-              variables: {'points': '$remaining'},
-            ),
-          ),
           if (points.isEmpty)
-            _noData(context)
+            SizedBox(
+              height: 200,
+              child: Center(child: _quiet(context, 'sprint.noBurndown')),
+            )
           else
-            BurndownChart(points: points, top: top),
-          const SizedBox(height: 8),
-          Row(
+            Semantics(
+              label: '${context.t('sprint.burndown')}: $left',
+              excludeSemantics: true,
+              child: BurndownChart(points: points, top: top),
+            ),
+          const SizedBox(height: 10),
+          Wrap(
+            spacing: 18,
+            runSpacing: 6,
             children: [
               _legend(
                 context.t('sprint.actual'),
-                AppColors.accentStrong,
+                HoneyGlass.liquid(BudgetLevel.within)[2],
                 false,
               ),
-              const SizedBox(width: 18),
               _legend(context.t('sprint.guideline'), AppColors.inkFaint, true),
             ],
           ),
@@ -369,16 +256,6 @@ class _BurndownCard extends StatelessWidget {
       ],
     );
   }
-
-  Widget _noData(BuildContext context) => SizedBox(
-    height: 200,
-    child: Center(
-      child: Text(
-        context.t('sprint.noBurndown'),
-        style: TextStyle(fontSize: AppType.label, color: AppColors.inkFaint),
-      ),
-    ),
-  );
 }
 
 class _DashLegendPainter extends CustomPainter {
@@ -404,6 +281,8 @@ class _DashLegendPainter extends CustomPainter {
   bool shouldRepaint(_DashLegendPainter old) => old.color != color;
 }
 
+/// Each completed sprint a vessel, filled to what it got done of what it
+/// committed, the figure over it reading done of committed.
 class _VelocityCard extends StatelessWidget {
   const _VelocityCard({required this.points});
 
@@ -411,123 +290,36 @@ class _VelocityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final maxVal = points.fold<int>(
-      1,
-      (m, v) => [m, v.committed, v.completed].reduce((a, b) => a > b ? a : b),
-    );
-    return _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHead(
-            title: context.t('sprint.velocity'),
-            trailing: context.t('sprint.committedDone'),
-          ),
-          SizedBox(
-            height: 170,
-            child: points.isEmpty
-                ? Center(
-                    child: Text(
-                      context.t('sprint.noVelocity'),
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        color: AppColors.inkFaint,
-                      ),
-                    ),
-                  )
-                : Row(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      for (final v in points)
-                        Expanded(
-                          child: _VelocityBar(
-                            committed: v.committed,
-                            completed: v.completed,
-                            maxVal: maxVal,
-                            label: _shortLabel(v.name),
-                          ),
-                        ),
-                    ],
+    final committed = {for (final v in points) _label(v): v.committed};
+    return FrostedCard(
+      title: context.t('sprint.velocity'),
+      trailing: _trailing(context.t('sprint.doneOfCommitted')),
+      child: points.isEmpty
+          ? _quiet(context, 'sprint.noVelocity')
+          : LiquidColumns(
+              items: [
+                for (final v in points)
+                  (
+                    label: _label(v),
+                    value: v.completed,
+                    color: v.completed >= v.committed
+                        ? AppColors.success
+                        : AppColors.accent,
                   ),
-          ),
-        ],
-      ),
+              ],
+              limitOf: (item) => committed[item.label] ?? 0,
+              height: 150,
+            ),
     );
   }
 
-  String _shortLabel(String name) {
-    final m = RegExp(r'(\d+)').allMatches(name).lastOrNull;
-    return m != null ? 'S${m.group(1)}' : name;
+  String _label(VelocityPoint v) {
+    final m = RegExp(r'(\d+)').allMatches(v.name).lastOrNull;
+    return m != null ? 'S${m.group(1)}' : v.name;
   }
 }
 
-class _VelocityBar extends StatelessWidget {
-  const _VelocityBar({
-    required this.committed,
-    required this.completed,
-    required this.maxVal,
-    required this.label,
-  });
-
-  final int committed;
-  final int completed;
-  final int maxVal;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        Expanded(
-          child: LayoutBuilder(
-            builder: (context, c) {
-              final h = c.maxHeight;
-              return Stack(
-                alignment: Alignment.bottomCenter,
-                children: [
-                  Container(
-                    width: 18,
-                    height: (committed / maxVal) * h,
-                    decoration: BoxDecoration(
-                      color: AppColors.canvas2,
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  TweenAnimationBuilder<double>(
-                    duration: const Duration(milliseconds: 700),
-                    curve: hiveEase,
-                    tween: Tween(begin: 0, end: (completed / maxVal) * h),
-                    builder: (_, value, _) => Container(
-                      width: 18,
-                      height: value,
-                      decoration: BoxDecoration(
-                        color: AppColors.accent,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          label,
-          maxLines: 1,
-          overflow: TextOverflow.clip,
-          style: TextStyle(
-            fontFamily: AppTheme.fontMono,
-            fontSize: AppType.caption,
-            color: AppColors.inkSoft,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
+/// Points done of points held, per person, as tubes in each person's hue.
 class _BreakdownCard extends StatelessWidget {
   const _BreakdownCard({required this.breakdown, required this.names});
 
@@ -536,79 +328,30 @@ class _BreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHead(title: context.t('sprint.workBreakdown')),
-          if (breakdown.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Text(
-                context.t('sprint.noBreakdown'),
-                style: TextStyle(
-                  fontSize: AppType.label,
-                  color: AppColors.inkFaint,
-                ),
-              ),
-            )
-          else
-            for (final a in breakdown)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 7),
-                child: Row(
-                  children: [
-                    if (a.userId.isEmpty)
-                      CircleAvatar(
-                        radius: 13,
-                        backgroundColor: AppColors.canvas2,
-                        child: Icon(
-                          LucideIcons.user,
-                          size: 15,
-                          color: AppColors.inkFaint,
-                        ),
-                      )
-                    else
-                      // The label beside it already resolves the name; the
-                      // avatar must not fall back to the raw id, whose
-                      // "initial" is a digit shared by every user.
-                      HiveAvatar(name: names[a.userId] ?? a.userId, size: 26),
-                    const SizedBox(width: 12),
-                    SizedBox(
-                      width: 110,
-                      child: Text(
-                        a.userId.isEmpty
-                            ? context.t('sprint.unassigned')
-                            : (names[a.userId] ?? a.userId),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: AppType.label,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: HiveProgress(
-                        value: a.total == 0 ? 0 : a.done / a.total,
-                        height: 7,
-                        color: SprintTokens.done,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '${a.done}/${a.total} pts',
-                      style: TextStyle(
-                        fontFamily: AppTheme.fontMono,
-                        fontSize: AppType.caption,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-        ],
-      ),
+    String nameOf(AssigneeLoad a) => a.userId.isEmpty
+        ? context.t('sprint.unassigned')
+        : (names[a.userId] ?? a.userId);
+    final totals = {for (final a in breakdown) nameOf(a): a.total};
+    final points = context.t('sprint.pointsWord');
+    return FrostedCard(
+      title: context.t('sprint.workBreakdown'),
+      child: breakdown.isEmpty
+          ? _quiet(context, 'sprint.noBreakdown')
+          : LiquidRows(
+              items: [
+                for (final a in breakdown)
+                  (
+                    label: nameOf(a),
+                    value: a.done,
+                    color: a.userId.isEmpty
+                        ? AppColors.inkFaint
+                        : hiveHueColor(nameOf(a)),
+                  ),
+              ],
+              limitOf: (item) => totals[item.label] ?? 0,
+              figure: (item) =>
+                  '${item.value}/${totals[item.label] ?? 0} $points',
+            ),
     );
   }
 }
@@ -621,82 +364,75 @@ class _ScopeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final net = scope.fold<int>(0, (s, c) => s + c.delta);
-    return _Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _SectionHead(title: context.t('sprint.scopeChanges')),
-          if (scope.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              child: Text(
-                context.t('sprint.noScope'),
-                style: TextStyle(
-                  fontSize: AppType.label,
-                  color: AppColors.inkFaint,
+    return FrostedCard(
+      title: context.t('sprint.scopeChanges'),
+      child: scope.isEmpty
+          ? _quiet(context, 'sprint.noScope')
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (final c in scope)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 7),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: MediaQuery.textScalerOf(context).scale(52),
+                          child: Text(
+                            c.date != null ? shortDate(c.date!) : '—',
+                            style: TextStyle(
+                              fontSize: AppType.caption,
+                              color: AppColors.inkSoft,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: MediaQuery.textScalerOf(context).scale(40),
+                          child: Text(
+                            '${c.delta > 0 ? '+' : ''}${c.delta}',
+                            style: TextStyle(
+                              fontSize: AppType.label,
+                              fontWeight: FontWeight.w700,
+                              // Added scope is more work; removed is less.
+                              color: c.delta > 0
+                                  ? AppColors.dangerInkOnGlass
+                                  : AppColors.successInk,
+                              fontFeatures: const [
+                                FontFeature.tabularFigures(),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            c.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: AppType.label,
+                              color: AppColors.ink,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                const SizedBox(height: 10),
+                Text(
+                  context.t(
+                    'sprint.netScope',
+                    variables: {'delta': '${net > 0 ? '+' : ''}$net'},
+                  ),
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    color: AppColors.inkSoft,
+                  ),
                 ),
-              ),
-            )
-          else ...[
-            for (final c in scope)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 7),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 52,
-                      child: Text(
-                        c.date != null ? shortDate(c.date!) : '—',
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontMono,
-                          fontSize: AppType.caption,
-                          color: AppColors.inkFaint,
-                        ),
-                      ),
-                    ),
-                    SizedBox(
-                      width: 38,
-                      child: Text(
-                        '${c.delta > 0 ? '+' : ''}${c.delta}',
-                        style: TextStyle(
-                          fontFamily: AppTheme.fontMono,
-                          fontSize: AppType.caption,
-                          fontWeight: FontWeight.w700,
-                          // Added scope = red (more work); removed = green.
-                          color: c.delta > 0
-                              ? AppColors.danger
-                              : AppColors.success,
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: Text(
-                        c.label,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: AppType.label,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 10),
-            Text(
-              context.t(
-                'sprint.netScope',
-                variables: {'delta': '${net > 0 ? '+' : ''}$net'},
-              ),
-              style: TextStyle(
-                fontSize: AppType.caption,
-                color: AppColors.inkFaint,
-              ),
+              ],
             ),
-          ],
-        ],
-      ),
     );
   }
 }

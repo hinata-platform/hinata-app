@@ -3822,7 +3822,6 @@
     "guideline": "理想線",
     "noBurndown": "スプリントの日付を設定するとバーンダウンが表示されます。",
     "velocity": "ベロシティ",
-    "committedDone": "コミット · 完了",
     "noVelocity": "完了したスプリントはまだありません。",
     "workBreakdown": "担当者別の作業内訳",
     "noBreakdown": "このスプリントに見積り済みの作業はありません。",
@@ -3844,7 +3843,8 @@
     "selectedCount": "{{count}} 件選択中",
     "collapse": "折りたたむ",
     "expand": "展開",
-    "selectIssue": "{{issue}} を選択"
+    "selectIssue": "{{issue}} を選択",
+    "doneOfCommitted": "完了 / コミット"
   },
   "projectSettings": {
     "avatar": {

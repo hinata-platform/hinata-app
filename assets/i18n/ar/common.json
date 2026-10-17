@@ -3822,7 +3822,6 @@
     "guideline": "المسار الإرشادي",
     "noBurndown": "حدّد تاريخي السبرنت لعرض مخطط الإنجاز.",
     "velocity": "السرعة",
-    "committedDone": "الملتزَم به · المنجَز",
     "noVelocity": "لا توجد سبرنتات مكتملة بعد.",
     "workBreakdown": "توزيع العمل حسب المسؤول",
     "noBreakdown": "لا يوجد عمل مقدَّر في هذا السبرنت.",
@@ -3844,7 +3843,8 @@
     "selectedCount": "تم تحديد {{count}}",
     "collapse": "طي",
     "expand": "توسيع",
-    "selectIssue": "تحديد {{issue}}"
+    "selectIssue": "تحديد {{issue}}",
+    "doneOfCommitted": "المنجز من الملتزم به"
   },
   "teams": {
     "avatar": {

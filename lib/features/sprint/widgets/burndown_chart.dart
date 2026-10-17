@@ -5,6 +5,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/budget/budget.dart' show BudgetLevel, HoneyGlass;
 
 /// Sprint burndown: dashed guideline (committed → 0) with the solid actual line
 /// drawn only up to today, animated in via a stroke reveal. Honours
@@ -63,7 +64,14 @@ class _BurndownChartState extends State<BurndownChart>
             grid: AppColors.hairline,
             axis: AppColors.inkFaint,
             ideal: AppColors.inkFaint,
-            actual: AppColors.accentStrong,
+            // The app's honey, as in every other trend (HIN-157).
+            actual: HoneyGlass.liquid(BudgetLevel.within)[2],
+            areaTop: HoneyGlass.liquid(
+              BudgetLevel.within,
+            )[0].withValues(alpha: 0.55),
+            areaBottom: HoneyGlass.liquid(
+              BudgetLevel.within,
+            )[1].withValues(alpha: 0.06),
             textColor: AppColors.inkFaint,
             startTick: context.t('sprint.burndownStart'),
           ),
@@ -83,6 +91,8 @@ class _BurndownPainter extends CustomPainter {
     required this.axis,
     required this.ideal,
     required this.actual,
+    required this.areaTop,
+    required this.areaBottom,
     required this.textColor,
     required this.startTick,
   });
@@ -94,6 +104,8 @@ class _BurndownPainter extends CustomPainter {
   final Color axis;
   final Color ideal;
   final Color actual;
+  final Color areaTop;
+  final Color areaBottom;
   final Color textColor;
 
   /// Localised one-letter tick for the sprint's first day (`S`, `A`, `н` …).
@@ -134,7 +146,11 @@ class _BurndownPainter extends CustomPainter {
       _text(canvas, '${(top * g).round()}', Offset(0, y - 6), textStyle);
     }
     // X ticks: S, 1..n
+    // At most eight day labels, the last always: a month-long sprint would
+    // otherwise print its days on top of each other.
+    final every = (points.length / 8).ceil().clamp(1, points.length);
     for (final p in points) {
+      if (p.day % every != 0 && p != points.last) continue;
       final label = p.day == 0 ? startTick : '${p.day}';
       _text(
         canvas,
@@ -173,13 +189,30 @@ class _BurndownPainter extends CustomPainter {
     if (actualPts.length >= 2) {
       final reveal = (actualPts.length - 1) * progress;
       final path = Path()..moveTo(actualPts.first.dx, actualPts.first.dy);
+      var end = actualPts.first;
       for (var i = 1; i < actualPts.length; i++) {
         final seg = (reveal - (i - 1)).clamp(0.0, 1.0);
         if (seg <= 0) break;
         final a = actualPts[i - 1];
         final b = actualPts[i];
-        path.lineTo(a.dx + (b.dx - a.dx) * seg, a.dy + (b.dy - a.dy) * seg);
+        end = Offset(a.dx + (b.dx - a.dx) * seg, a.dy + (b.dy - a.dy) * seg);
+        path.lineTo(end.dx, end.dy);
       }
+      // The honey under the line, as the open work it still stands for.
+      final baseline = yOf(0);
+      final area = Path.from(path)
+        ..lineTo(end.dx, baseline)
+        ..lineTo(actualPts.first.dx, baseline)
+        ..close();
+      canvas.drawPath(
+        area,
+        Paint()
+          ..shader = LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [areaTop, areaBottom],
+          ).createShader(Rect.fromLTRB(0, padTop, size.width, baseline)),
+      );
       canvas.drawPath(
         path,
         Paint()
@@ -233,5 +266,8 @@ class _BurndownPainter extends CustomPainter {
       old.progress != progress ||
       old.points != points ||
       old.top != top ||
+      old.actual != actual ||
+      old.grid != grid ||
+      old.textColor != textColor ||
       old.startTick != startTick;
 }
