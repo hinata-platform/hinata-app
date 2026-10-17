@@ -274,11 +274,18 @@ Future<TimerBackgroundOutcome> runTimerBackgroundCommand(
       HomeWidgetSurface(platform),
     ],
   );
-  final outcome = await action.run(
-    command,
-    description: description,
-    projectId: projectId,
-  );
+  final TimerBackgroundOutcome outcome;
+  try {
+    outcome = await action.run(
+      command,
+      description: description,
+      projectId: projectId,
+    );
+  } finally {
+    // The intents' engine lives on for the next request: nothing of this one
+    // may keep listening.
+    alarms?.dispose();
+  }
   final hint = switch (outcome) {
     TimerBackgroundOutcome.locked => snapshot.texts.unlockToAct,
     TimerBackgroundOutcome.signedOut ||
