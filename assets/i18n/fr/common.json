@@ -3901,6 +3901,7 @@
     "attachExisting": "Rattacher un projet existant",
     "createNew": "Créer un projet",
     "allProjectsAttached": "Tous les projets font déjà partie de cette équipe.",
+    "noProjectsYouLead": "Les projets que cette équipe n’a pas encore sont dirigés par d’autres. Seuls les responsables d’un projet peuvent l’ajouter.",
     "attachCta": "Rattacher {{count}}",
     "createProjectCta": "Créer le projet",
     "projectName": "Nom du projet",

@@ -3901,6 +3901,7 @@
     "attachExisting": "关联现有项目",
     "createNew": "新建项目",
     "allProjectsAttached": "所有项目都已加入该团队。",
+    "noProjectsYouLead": "该团队尚未拥有的项目由其他人负责。只有项目负责人才能将其加入。",
     "attachCta": "关联 {{count}} 个",
     "createProjectCta": "创建项目",
     "projectName": "项目名称",
