@@ -5180,6 +5180,24 @@
       },
       "revenue": "金额预算（收入）",
       "cost": "金额预算（成本）"
+    },
+    "history": {
+      "title": "预算历史",
+      "recorded": "已记录",
+      "summary": "{{sums}}，{{percent}}，{{from}} 至 {{to}}",
+      "summaryNoBudget": "已记录 {{used}}",
+      "open": "查看历史"
+    },
+    "forecast": {
+      "lastsUntil": "按当前速度，预算可用到 {{date}}",
+      "tooLittle": "数据太少，暂无法预测",
+      "noPace": "最近没有记录时间",
+      "spent": "预算已用完"
+    },
+    "sprint": {
+      "label": "冲刺预算",
+      "set": "设置冲刺预算",
+      "hint": "例如 80h — 留空表示无"
     }
   }
 }

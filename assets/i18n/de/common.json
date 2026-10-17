@@ -5180,6 +5180,24 @@
       },
       "revenue": "Geldbudget (Erlös)",
       "cost": "Geldbudget (Kosten)"
+    },
+    "history": {
+      "title": "Budgetverlauf",
+      "recorded": "Erfasst",
+      "summary": "{{sums}}, {{percent}}, vom {{from}} bis {{to}}",
+      "summaryNoBudget": "{{used}} erfasst",
+      "open": "Verlauf ansehen"
+    },
+    "forecast": {
+      "lastsUntil": "Bei gleichem Tempo reicht das Budget bis {{date}}",
+      "tooLittle": "Für eine Prognose gibt es noch zu wenig Daten",
+      "noPace": "Zuletzt wurde keine Zeit erfasst",
+      "spent": "Das Budget ist aufgebraucht"
+    },
+    "sprint": {
+      "label": "Sprintbudget",
+      "set": "Sprintbudget festlegen",
+      "hint": "z. B. 80h — leer für kein Budget"
     }
   }
 }

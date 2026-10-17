@@ -8,5 +8,7 @@ export 'budget_cell.dart';
 export 'budget_meter.dart';
 export 'budget_notice.dart';
 export 'budget_style.dart';
+export 'burn_down_chart.dart';
+export 'forecast_line.dart';
 export 'honey_glass.dart';
 export 'timer_budget_dot.dart';

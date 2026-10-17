@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/widgets/budget/budget.dart';
 import '../../billing/billing_format.dart';
+import 'budget_history_sheet.dart';
 import 'project_usage.dart';
 
 /// A project's budgets as capsules for a head or a card (HIN-152, HIN-155):
@@ -12,10 +13,14 @@ class ProjectBudgetCapsules extends StatelessWidget {
   const ProjectBudgetCapsules({
     super.key,
     required this.projectId,
+    this.projectName,
     this.padding = EdgeInsets.zero,
   });
 
   final String projectId;
+
+  /// With a name the time capsule opens the burn-down (HIN-156).
+  final String? projectName;
 
   /// Around the capsules when there are any, so an empty slot takes no room.
   final EdgeInsetsGeometry padding;
@@ -39,6 +44,13 @@ class ProjectBudgetCapsules extends StatelessWidget {
                 BudgetCapsule(
                   label: context.t('budget.timeBudget'),
                   gauge: time,
+                  onTap: projectName == null
+                      ? null
+                      : () => showBudgetHistorySheet(
+                          context,
+                          projectId: projectId,
+                          projectName: projectName!,
+                        ),
                 ),
               if (money != null)
                 BudgetCapsule(

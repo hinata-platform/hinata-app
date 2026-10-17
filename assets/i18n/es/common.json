@@ -5180,6 +5180,24 @@
       },
       "revenue": "Presupuesto en dinero (ingresos)",
       "cost": "Presupuesto en dinero (costes)"
+    },
+    "history": {
+      "title": "Historial del presupuesto",
+      "recorded": "Registrado",
+      "summary": "{{sums}}, {{percent}}, del {{from}} al {{to}}",
+      "summaryNoBudget": "{{used}} registrados",
+      "open": "Ver historial"
+    },
+    "forecast": {
+      "lastsUntil": "Al mismo ritmo, el presupuesto alcanza hasta el {{date}}",
+      "tooLittle": "Aún hay pocos datos para una previsión",
+      "noPace": "No se ha registrado tiempo últimamente",
+      "spent": "El presupuesto está agotado"
+    },
+    "sprint": {
+      "label": "Presupuesto del sprint",
+      "set": "Fijar presupuesto del sprint",
+      "hint": "p. ej. 80h — vacío si no hay"
     }
   }
 }
