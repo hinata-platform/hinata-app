@@ -3745,7 +3745,9 @@
       "cta": "结束迭代"
     },
     "estimate": {
-      "title": "估算"
+      "title": "估算",
+      "value": "{{count}} 点",
+      "value_plural": "{{count}} 点"
     },
     "name": "迭代名称",
     "goal": "迭代目标",
