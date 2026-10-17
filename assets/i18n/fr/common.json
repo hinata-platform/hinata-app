@@ -3745,7 +3745,9 @@
       "cta": "Terminer le sprint"
     },
     "estimate": {
-      "title": "Estimation"
+      "title": "Estimation",
+      "value": "{{count}} point",
+      "value_plural": "{{count}} points"
     },
     "name": "Nom du sprint",
     "goal": "Objectif du sprint",

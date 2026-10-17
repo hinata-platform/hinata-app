@@ -3745,7 +3745,9 @@
       "cta": "スプリントを完了"
     },
     "estimate": {
-      "title": "見積り"
+      "title": "見積り",
+      "value": "{{count}} ポイント",
+      "value_plural": "{{count}} ポイント"
     },
     "name": "スプリント名",
     "goal": "スプリントゴール",

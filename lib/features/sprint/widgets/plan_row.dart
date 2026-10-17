@@ -177,7 +177,7 @@ class _PointsBadge extends StatelessWidget {
     return Semantics(
       button: true,
       label: context.t('sprint.estimate.title'),
-      value: empty ? null : '$points ${context.t('sprint.pointsWord')}',
+      value: empty ? null : context.t('sprint.estimate.value', count: points),
       child: GestureDetector(
         onTap: onTap,
         behavior: HitTestBehavior.opaque,

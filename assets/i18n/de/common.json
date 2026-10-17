@@ -3745,7 +3745,9 @@
       "cta": "Sprint abschließen"
     },
     "estimate": {
-      "title": "Schätzen"
+      "title": "Schätzen",
+      "value": "{{count}} Punkt",
+      "value_plural": "{{count}} Punkte"
     },
     "name": "Sprint-Name",
     "goal": "Sprint-Ziel",
