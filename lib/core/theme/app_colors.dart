@@ -205,8 +205,7 @@ abstract final class AppColors {
   /// graphic needs (WCAG 1.4.11); this deeper amber reaches 3.8:1 on the
   /// canvas and 3.7:1 in a recessed track. The dark surfaces already clear it
   /// with [warning] (8.0:1).
-  static Color get warningBar =>
-      _dark ? warning : const Color(0xFFA86F05);
+  static Color get warningBar => _dark ? warning : const Color(0xFFA86F05);
 
   /// Warning as small text: 5.3:1 on the canvas, 5.9:1 on white. Dark takes a
   /// lighter amber than [warning]: on a frosted glass surface over the dark

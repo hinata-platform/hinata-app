@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../time/budget/budget_history_sheet.dart';
 import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/models/billing_models.dart';
 import '../../../core/repositories/billing_repository.dart';
@@ -328,6 +329,34 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                             BudgetMeter(
                               label: context.t('budget.timeBudget'),
                               gauge: budget,
+                              // When it runs out at the present pace, and the
+                              // way to the burn-down (HIN-156).
+                              footer: ProjectForecast(
+                                projectId: usage!.projectId,
+                                builder: (context, forecast) => Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (forecast != null)
+                                      ForecastLine(forecast: forecast),
+                                    TextButton.icon(
+                                      onPressed: () => showBudgetHistorySheet(
+                                        context,
+                                        projectId: usage.projectId,
+                                        projectName: context.t(
+                                          'budget.subject.project',
+                                        ),
+                                      ),
+                                      icon: const Icon(
+                                        LucideIcons.chartArea,
+                                        size: 16,
+                                      ),
+                                      label: Text(
+                                        context.t('budget.history.open'),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           if (budget != null && estimates != null)
                             const SizedBox(height: 18),

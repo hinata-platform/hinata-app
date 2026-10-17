@@ -700,7 +700,12 @@ class _ProjectCard extends StatelessWidget {
               ),
               const Spacer(),
               // The budgets at a glance (HIN-152, HIN-155); nothing without.
-              Flexible(child: ProjectBudgetCapsules(projectId: project.id)),
+              Flexible(
+                child: ProjectBudgetCapsules(
+                  projectId: project.id,
+                  projectName: project.name,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 14),

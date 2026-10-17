@@ -161,10 +161,22 @@ class _Honeycomb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget cell(ProjectTimeUsage usage) => BudgetCell(
-      label: top.names[usage.projectId] ?? '',
-      gauge: usage.budget!,
-      onTap: () => context.go('/issues?projectId=${usage.projectId}'),
+    Widget cell(ProjectTimeUsage usage) => ProjectForecast(
+      projectId: usage.projectId,
+      builder: (context, forecast) => BudgetCell(
+        label: top.names[usage.projectId] ?? '',
+        gauge: usage.budget!,
+        footer: forecast == null
+            ? null
+            : ForecastLine.sentence(context, forecast),
+        // The cell opens the budget's history, where the same figures have
+        // room to explain themselves (HIN-156).
+        onTap: () => showBudgetHistorySheet(
+          context,
+          projectId: usage.projectId,
+          projectName: top.names[usage.projectId] ?? '',
+        ),
+      ),
     );
     final items = [
       for (final usage in top.items)
