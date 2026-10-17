@@ -1,5 +1,6 @@
 import Flutter
 import Foundation
+import UIKit
 import WidgetKit
 
 /// `hinata/app_intents`: the app's side of Siri, Shortcuts and the controls
@@ -80,7 +81,9 @@ enum HinataAppIntentsChannel {
 }
 
 /// The engine that runs an intent's request in Dart (HIN-105): headless, in
-/// the app's process, started on the first request and kept for the next.
+/// the app's process, started on the first request, kept for the ones that
+/// follow and ended a minute after the last, so a second engine does not stay
+/// in memory for the rest of the process.
 ///
 /// Not home_widget's worker. That one only starts once the app's own engine
 /// registered a callback, which a launch in the background for Siri or a
@@ -98,7 +101,22 @@ enum HinataIntentEngine {
   /// Longer than a request takes, shorter than the system grants an intent.
   private static let patience: TimeInterval = 25
 
+  /// How long the engine waits for another request before it ends.
+  private static let idle: TimeInterval = 60
+  private static var requests = 0
+  private static var running = 0
+
   static func perform(_ request: TimerIntentRequest) async -> TimerIntentOutcome {
+    // A locked phone never acts. iOS asks for the unlock before an intent that
+    // requires it; this holds also where a system surface might not ask, such
+    // as an alarm's stop button on the lock screen (HIN-106).
+    guard UIApplication.shared.isProtectedDataAvailable else { return .locked }
+    requests += 1
+    running += 1
+    defer {
+      running -= 1
+      endWhenIdle(after: requests)
+    }
     guard await started(), let channel else { return .failed }
     var arguments: [String: Any] = ["command": request.command.rawValue]
     arguments["description"] = request.description
@@ -109,6 +127,20 @@ enum HinataIntentEngine {
       }
     }
     return raw.flatMap(TimerIntentOutcome.init(rawValue:)) ?? .failed
+  }
+
+  /// Ends the engine once [idle] passed without another request.
+  private static func endWhenIdle(after request: Int) {
+    DispatchQueue.main.asyncAfter(deadline: .now() + idle) {
+      MainActor.assumeIsolated {
+        guard requests == request, running == 0, let engine else { return }
+        channel?.setMethodCallHandler(nil)
+        engine.destroyContext()
+        self.engine = nil
+        channel = nil
+        ready = false
+      }
+    }
   }
 
   /// Whether the Dart side listens; starts it on the first call.
