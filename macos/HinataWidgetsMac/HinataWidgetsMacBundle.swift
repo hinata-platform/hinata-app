@@ -6,8 +6,9 @@ import WidgetKit
 ///
 /// The views are the iPhone's (`ios/HinataWidgets/TimerHomeWidget.swift`, the
 /// record in `ios/Shared/TimerWidgetRecord.swift`), compiled into this target
-/// too. No buttons in v1: a tap opens the focus screen. No Flutter in here;
-/// the app writes everything the widget says, in the reader's language.
+/// too. A tap opens the focus screen; the buttons hand their command to the
+/// app (`MacTimerIntents.swift`). No Flutter in here; the app writes
+/// everything the widget says, in the reader's language.
 @main
 struct HinataWidgetsMacBundle: WidgetBundle {
   var body: some Widget {

@@ -1,5 +1,8 @@
+import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:widgetkit_macos/widgetkit_macos.dart';
 
@@ -30,7 +33,9 @@ abstract interface class TimerWidgetStore {
       ? MacTimerWidgetStore()
       : HomeWidgetTimerStore(backgroundAction: backgroundAction);
 
-  Future<void> init();
+  /// [host] runs what a widget button asks for, on a Mac, where the app
+  /// takes those requests itself.
+  Future<void> init(TimerSurfaceHost host);
 
   /// Writes [record] (an empty one with null) and asks the widgets to draw.
   Future<void> write(String? record);
@@ -47,7 +52,7 @@ class HomeWidgetTimerStore implements TimerWidgetStore {
   final Future<void> Function(Uri?)? backgroundAction;
 
   @override
-  Future<void> init() async {
+  Future<void> init(TimerSurfaceHost host) async {
     await HomeWidget.setAppGroupId(timerWidgetAppGroup);
     final action = backgroundAction;
     if (action != null) await HomeWidget.registerInteractivityCallback(action);
@@ -66,16 +71,76 @@ class HomeWidgetTimerStore implements TimerWidgetStore {
   }
 }
 
+/// Where a button of the Mac's widget leaves its request in the App Group.
+const String timerWidgetCommandKey = 'hinata_widget_command';
+
+/// The runner's word that a request waits under [timerWidgetCommandKey].
+const MethodChannel timerWidgetCommandChannel = MethodChannel(
+  'hinata/widget_commands',
+);
+
 /// The store of the Mac's widgets (HIN-108): home_widget has no macOS, so the
 /// same record goes into the same App Group through `widgetkit_macos`.
+///
+/// It also takes the requests of the widget's buttons. macOS runs a widget's
+/// intent in the extension, which has neither the network nor the session,
+/// so the intent leaves the command in the App Group and wakes the app
+/// (`HinataWidgetCommandChannel` in the runner); the app then makes the same
+/// request as its own button. A request found at launch is the press that
+/// opened the app.
 class MacTimerWidgetStore implements TimerWidgetStore {
-  MacTimerWidgetStore({WidgetKitMacos? kit})
-    : _kit = kit ?? WidgetKitMacos(appGroup: timerWidgetAppGroup);
+  MacTimerWidgetStore({
+    WidgetKitMacos? kit,
+    @visibleForTesting MethodChannel commands = timerWidgetCommandChannel,
+    @visibleForTesting DateTime Function()? now,
+  }) : _kit = kit ?? WidgetKitMacos(appGroup: timerWidgetAppGroup),
+       _commands = commands,
+       _now = now ?? DateTime.now;
+
+  /// How old a request may be and still act: a press from before a long
+  /// launch or a sign-in never starts a timer by surprise.
+  static const commandPatience = Duration(seconds: 30);
 
   final WidgetKitMacos _kit;
+  final MethodChannel _commands;
+  final DateTime Function() _now;
+  TimerSurfaceHost? _host;
+
+  /// One request at a time, so two quick presses never read the same one.
+  Future<void> _taking = Future.value();
 
   @override
-  Future<void> init() async {}
+  Future<void> init(TimerSurfaceHost host) async {
+    _host = host;
+    _commands.setMethodCallHandler((call) async {
+      if (call.method == 'command') await takeCommand();
+    });
+    await takeCommand();
+  }
+
+  /// Reads, removes and runs the waiting request, if any.
+  @visibleForTesting
+  Future<void> takeCommand() => _taking = _taking.then((_) async {
+    final raw = await _kit.getWidgetData<String>(timerWidgetCommandKey);
+    if (raw == null || raw.isEmpty) return;
+    await _kit.saveWidgetData(timerWidgetCommandKey, null);
+    final host = _host;
+    if (host == null) return;
+    switch (parseTimerWidgetCommand(
+      raw,
+      now: _now(),
+      patience: commandPatience,
+    )) {
+      case TimerWidgetCommand.start:
+        await host.start();
+      case TimerWidgetCommand.stop:
+        await host.end();
+      case TimerWidgetCommand.advancePhase:
+        await host.advancePhase();
+      case null:
+        break;
+    }
+  });
 
   /// An empty record for none, as on iOS: the widget reads the same way.
   @override
@@ -83,6 +148,32 @@ class MacTimerWidgetStore implements TimerWidgetStore {
     await _kit.saveWidgetData(timerWidgetKey, record ?? '');
     await _kit.reloadTimelines(timerWidgetKind);
   }
+}
+
+/// What a button of the Mac's widget asks for.
+enum TimerWidgetCommand { start, stop, advancePhase }
+
+/// The command in [raw] (`{"command": "stop", "at": <ms>}`, as the extension
+/// writes it), or null when it is unknown, malformed, from the future or
+/// older than [patience].
+TimerWidgetCommand? parseTimerWidgetCommand(
+  String raw, {
+  required DateTime now,
+  required Duration patience,
+}) {
+  final Object? decoded;
+  try {
+    decoded = jsonDecode(raw);
+  } on FormatException {
+    return null;
+  }
+  if (decoded case {'command': final String name, 'at': final int at}) {
+    final age = now.difference(DateTime.fromMillisecondsSinceEpoch(at));
+    // A little slack for a clock read a moment apart in two processes.
+    if (age > patience || age < const Duration(seconds: -5)) return null;
+    return TimerWidgetCommand.values.asNameMap()[name];
+  }
+  return null;
 }
 
 /// The running timer in the home-screen widgets (iOS and Android), the
@@ -107,8 +198,8 @@ class HomeWidgetSurface extends TimerSurface {
   /// idle state carries none, and the widget has to say something then too.
   String _idle = '';
 
-  /// The word of the idle widget's start button (iOS, HIN-105), kept the same
-  /// way as [_idle].
+  /// The word of the idle widget's start button (iOS, HIN-105; a Mac), kept
+  /// the same way as [_idle].
   String _start = '';
 
   @override
@@ -119,7 +210,7 @@ class HomeWidgetSurface extends TimerSurface {
       capabilitiesForPlatform(platform);
 
   @override
-  Future<void> init(TimerSurfaceHost host) => _store.init();
+  Future<void> init(TimerSurfaceHost host) => _store.init(host);
 
   @override
   Future<void> apply(TimerSurfaceState state) async {
@@ -129,9 +220,7 @@ class HomeWidgetSurface extends TimerSurface {
       timerWidgetRecord(
         state,
         idle: _idle,
-        start: platform == SurfacePlatform.ios ? _start : '',
-        // A Mac widget in v1 only opens the focus screen.
-        buttons: platform != SurfacePlatform.macos,
+        start: platform == SurfacePlatform.android ? '' : _start,
       ),
     );
   }
@@ -168,13 +257,12 @@ class HomeWidgetSurface extends TimerSurface {
 /// the copy expires and, only with details on the lock screen switched on,
 /// the description. No timer id and no other id, so nothing on the device
 /// links the widget to a record on the server. Idle, [start] names the
-/// button that starts a stopwatch (iOS, HIN-105); empty leaves it out.
-/// Without [buttons] (a Mac) the words of stop and the next phase stay out.
+/// button that starts a stopwatch (iOS, HIN-105, and a Mac); empty leaves
+/// it out.
 String timerWidgetRecord(
   TimerSurfaceState state, {
   String idle = '',
   String start = '',
-  bool buttons = true,
 }) {
   final content = liveActivityContent(state, yieldToAlarm: false);
   final startedAt = state.startedAt;
@@ -194,8 +282,8 @@ String timerWidgetRecord(
     if (endsAt != null) 'over': state.endText,
     // The buttons (HIN-103): they act in the background, the words are the
     // app's. A phase button only where there are phases.
-    if (buttons) 'stop': texts.stop,
-    if (buttons && state.mode == TimerMode.pomodoro)
+    'stop': texts.stop,
+    if (state.mode == TimerMode.pomodoro)
       'advance': state.isBreak ? texts.resume : texts.takeBreak,
     'idle': idle,
     // What the widget offers once this copy expires.

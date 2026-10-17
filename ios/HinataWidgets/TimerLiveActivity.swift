@@ -141,29 +141,6 @@ struct TimerActivityButtons: View {
   }
 }
 
-/// One round button of the activity; the word is its accessible name.
-@available(iOSApplicationExtension 17.0, *)
-struct TimerActivityButton<Intent: AppIntent>: View {
-  let title: String
-  let symbol: String
-  let size: CGFloat
-  let prominent: Bool
-  let intent: Intent
-
-  var body: some View {
-    Button(intent: intent) {
-      Image(systemName: symbol)
-        .font(.system(size: size * 0.42, weight: .semibold))
-        .foregroundStyle(prominent ? HinataPalette.navy : HinataPalette.honey)
-        .frame(width: size, height: size)
-        .background(
-          prominent ? HinataPalette.honey : HinataPalette.honey.opacity(0.18), in: Circle())
-    }
-    .buttonStyle(.plain)
-    .accessibilityLabel(Text(title))
-  }
-}
-
 /// A thin bar from the start to the end of a countdown or a phase. It runs by
 /// itself like the clock; the expanded island and the lock screen can carry it,
 /// the compact and minimal ones cannot (known to be unstable there).

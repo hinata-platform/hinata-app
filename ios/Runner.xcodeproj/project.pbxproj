@@ -29,6 +29,7 @@
 		4C35087E81A54C0A9ADE22A5 /* TimerActivityStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8134EE2C2E6713FC47CE6DBE /* TimerActivityStore.swift */; };
 		4FF96745AEE83069607E76C5 /* TimerAlarmActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A2ECA91CDA9B32ABE23DBB9 /* TimerAlarmActivity.swift */; };
 		65D2F81EC34257767B40E31A /* TimerActivityAttributes.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32BE194E08BDC83C48B38A91 /* TimerActivityAttributes.swift */; };
+		6A34E7A4CBD9F23832B2D18F /* TimerActivityButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A65FBB4841ACED809E71A81 /* TimerActivityButton.swift */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		7884E8682EC3CC0700C636F2 /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7884E8672EC3CC0400C636F2 /* SceneDelegate.swift */; };
 		78A318202AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage in Frameworks */ = {isa = PBXBuildFile; productRef = 78A3181F2AECB46A00862997 /* FlutterGeneratedPluginSwiftPackage */; };
@@ -125,6 +126,7 @@
 		4F4B465A67D4D192B67BA77D /* Pods-Runner.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.release.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"; sourceTree = "<group>"; };
 		544E277C029F438CEE337E21 /* ru */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/AppShortcuts.strings; sourceTree = "<group>"; };
 		590D0A2E176CD0D2CFBA91AA /* HinataPalette.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = HinataPalette.swift; sourceTree = "<group>"; };
+		5A65FBB4841ACED809E71A81 /* TimerActivityButton.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = TimerActivityButton.swift; sourceTree = "<group>"; };
 		5D552507177754D3285DBF6D /* fr */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		67410BB23F78FAB2E535E54E /* zh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.strings; name = zh; path = zh.lproj/Localizable.strings; sourceTree = "<group>"; };
 		67F817F25D2552AFE4A2371E /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
@@ -228,6 +230,7 @@
 				AA871D397DEC94AA4BFBA12A /* AlarmKitMetadata.swift */,
 				4A2ECA91CDA9B32ABE23DBB9 /* TimerAlarmActivity.swift */,
 				590D0A2E176CD0D2CFBA91AA /* HinataPalette.swift */,
+				5A65FBB4841ACED809E71A81 /* TimerActivityButton.swift */,
 			);
 			name = HinataWidgets;
 			path = HinataWidgets;
@@ -646,6 +649,7 @@
 				281B3AF6A59FD7A24DC7AF71 /* AlarmKitMetadata.swift in Sources */,
 				4FF96745AEE83069607E76C5 /* TimerAlarmActivity.swift in Sources */,
 				327A8CD578CA488B7B2EDF81 /* HinataPalette.swift in Sources */,
+				6A34E7A4CBD9F23832B2D18F /* TimerActivityButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

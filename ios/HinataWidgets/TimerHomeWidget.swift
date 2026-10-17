@@ -1,6 +1,4 @@
-#if os(iOS)
 import AppIntents
-#endif
 import SwiftUI
 import WidgetKit
 
@@ -8,8 +6,8 @@ import WidgetKit
 /// the desktop and in Notification Center (HIN-108).
 ///
 /// The Mac's extension (`macos/HinataWidgetsMac`) compiles this file too. It
-/// has no lock screen and no buttons: a Mac widget in v1 only opens the focus
-/// screen.
+/// has no lock screen; its buttons hand their request to the app
+/// (`MacTimerIntents.swift`).
 ///
 /// The app writes one record when the timer changes and asks for a reload;
 /// in between nothing reloads. The time ticks by itself, and the timeline
@@ -187,10 +185,9 @@ struct TimerWidgetView: View {
   /// Stop, and for a Pomodoro the next phase, without opening the app
   /// (HIN-103, iOS 17). Only while the stretch runs; over, a tap on the widget
   /// opens the focus screen as before. Idle, a start button starts a stopwatch
-  /// (HIN-105).
+  /// (HIN-105). The same buttons on a Mac (HIN-108).
   @ViewBuilder private func actions(axis: Axis) -> some View {
-    #if os(iOS)
-    if #available(iOSApplicationExtension 17.0, *), let record {
+    if #available(iOSApplicationExtension 17.0, macOS 14.0, *), let record {
       let layout = axis == .vertical
         ? AnyLayout(VStackLayout(spacing: 8)) : AnyLayout(HStackLayout(spacing: 6))
       if running, !entry.over, let stop = record.stop {
@@ -208,7 +205,6 @@ struct TimerWidgetView: View {
           title: start, symbol: "play.fill", size: 36, prominent: true, intent: StartTimerIntent())
       }
     }
-    #endif
   }
 
   private var glyph: some View {
