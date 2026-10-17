@@ -3822,7 +3822,6 @@
     "guideline": "आदर्श रेखा",
     "noBurndown": "बर्नडाउन देखने के लिए स्प्रिंट की तिथियाँ सेट करें।",
     "velocity": "वेलोसिटी",
-    "committedDone": "कमिट किया गया · पूर्ण",
     "noVelocity": "अभी तक कोई स्प्रिंट पूरा नहीं हुआ है।",
     "workBreakdown": "असाइनी के अनुसार काम का वितरण",
     "noBreakdown": "इस स्प्रिंट में कोई अनुमानित काम नहीं है।",
@@ -3844,7 +3843,8 @@
     "selectedCount": "{{count}} चयनित",
     "collapse": "समेटें",
     "expand": "विस्तृत करें",
-    "selectIssue": "{{issue}} चुनें"
+    "selectIssue": "{{issue}} चुनें",
+    "doneOfCommitted": "प्रतिबद्ध में से पूरे"
   },
   "teams": {
     "avatar": {

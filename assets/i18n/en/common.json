@@ -3822,7 +3822,6 @@
     "guideline": "Guideline",
     "noBurndown": "Set sprint dates to see the burndown.",
     "velocity": "Velocity",
-    "committedDone": "committed · done",
     "noVelocity": "No completed sprints yet.",
     "workBreakdown": "Work breakdown by assignee",
     "noBreakdown": "No estimated work in this sprint.",
@@ -3844,7 +3843,8 @@
     "selectedCount": "{{count}} selected",
     "collapse": "Collapse",
     "expand": "Expand",
-    "selectIssue": "Select {{issue}}"
+    "selectIssue": "Select {{issue}}",
+    "doneOfCommitted": "done of committed"
   },
   "teams": {
     "avatar": {

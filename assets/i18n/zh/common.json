@@ -3822,7 +3822,6 @@
     "guideline": "参考线",
     "noBurndown": "设置迭代日期后即可查看燃尽图。",
     "velocity": "速率",
-    "committedDone": "已承诺 · 已完成",
     "noVelocity": "还没有已完成的迭代。",
     "workBreakdown": "按负责人统计的工作分布",
     "noBreakdown": "该迭代中没有已估算的工作。",
@@ -3844,7 +3843,8 @@
     "selectedCount": "已选择 {{count}} 项",
     "collapse": "收起",
     "expand": "展开",
-    "selectIssue": "选择 {{issue}}"
+    "selectIssue": "选择 {{issue}}",
+    "doneOfCommitted": "完成 / 承诺"
   },
   "teams": {
     "avatar": {

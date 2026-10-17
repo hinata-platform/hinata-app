@@ -3822,7 +3822,6 @@
     "guideline": "Referencia",
     "noBurndown": "Define las fechas del sprint para ver el burndown.",
     "velocity": "Velocidad",
-    "committedDone": "comprometido · hecho",
     "noVelocity": "Todavía no hay sprints completados.",
     "workBreakdown": "Reparto del trabajo por responsable",
     "noBreakdown": "No hay trabajo estimado en este sprint.",
@@ -3844,7 +3843,8 @@
     "selectedCount": "{{count}} seleccionadas",
     "collapse": "Contraer",
     "expand": "Desplegar",
-    "selectIssue": "Seleccionar {{issue}}"
+    "selectIssue": "Seleccionar {{issue}}",
+    "doneOfCommitted": "hechos de comprometidos"
   },
   "teams": {
     "avatar": {
