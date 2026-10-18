@@ -241,7 +241,7 @@ platform :mac do
 
   desc "Sync fastlane/screenshots to the Mac App Store without a build"
   #
-  # Separate, opt-in lane for the same reason as on iOS: `overwrite_screenshots`
+  # Synced for the same reason as on iOS (here and in `release`): `overwrite_screenshots`
   # is a one-shot pre-clean, while the duplicates are produced afterwards by
   # deliver's retry loop, which matches screenshots on `source_file_checksum` —
   # a field App Store Connect regularly returns as nil, so already-uploaded
