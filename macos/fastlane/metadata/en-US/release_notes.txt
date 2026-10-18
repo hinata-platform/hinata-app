@@ -1,5 +1,5 @@
-• The running timer on your lock screen and in a home screen widget, kept current with end-to-end encryption
-• Stop the timer or start the next Pomodoro phase from a notification or widget, without opening the app
-• The timer always in sight on your desktop, with shortcuts that work in every app
-• Knowledge base: page versions, favourites and recently opened pages
+• Budgets for time and money per project, sprint and issue, with a forecast and a warning before the limit
+• A new reports page with burn-down and a clearer sprint review
+• Control the timer by voice, with shortcuts and from controls
+• Add participants to an issue and change many issues at once
 • Many smaller fixes and improvements
