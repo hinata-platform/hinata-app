@@ -7,42 +7,49 @@ import '../../theme/app_type.dart';
 import '../../models/time_usage_models.dart' show BudgetLevel;
 import 'honey_glass.dart';
 
-/// One value of a distribution: what it is called, how much, in which colour.
-typedef LiquidItem = ({String label, int value, Color color});
+/// One value of a distribution: what it is called, how much, in which colour,
+/// and, for a share rather than a distribution, its own limit.
+typedef LiquidItem = ({String label, int value, Color color, int? limit});
 
-/// How full a vessel stands: against its own limit when there is one, else
+/// How full a vessel stands: against its own limit when it has one, else
 /// against the largest value.
-double fillOf(LiquidItem item, int top, int Function(LiquidItem)? limitOf) {
-  final limit = limitOf?.call(item) ?? top;
+double _fillOf(LiquidItem item, int top) {
+  final limit = item.limit ?? top;
   return limit <= 0 ? 0 : (item.value / limit).clamp(0.0, 1.0);
+}
+
+/// The figure of an item: the value, or "value/limit" for a share, and the
+/// unit after it when there is one.
+String _figureOf(
+  LiquidItem item,
+  String Function(int value)? format,
+  String? unit,
+) {
+  String shown(int value) => format?.call(value) ?? '$value';
+  final figure = item.limit == null
+      ? shown(item.value)
+      : '${shown(item.value)}/${shown(item.limit!)}';
+  return unit == null ? figure : '$figure $unit';
 }
 
 /// A distribution as glass capsules standing side by side, each filled from
 /// the bottom with its own colour, the figure over it and the name under it
 /// (HIN-157). Heights follow the largest value, so the fullest capsule is
-/// full. Made for a handful of values, the states of a workflow, say.
+/// full, or, where an item carries its own limit, its share of that. Made
+/// for a handful of values, the states of a workflow, say.
 class LiquidColumns extends StatelessWidget {
   const LiquidColumns({
     super.key,
     required this.items,
     this.format,
-    this.limitOf,
     this.height = 132,
   });
 
   final List<LiquidItem> items;
   final String Function(int value)? format;
-
-  /// Each item's own limit, for a share rather than a distribution: the
-  /// vessel fills to value of limit, and the figure reads "value/limit".
-  final int Function(LiquidItem item)? limitOf;
   final double height;
 
-  String _figure(LiquidItem item) {
-    final value = format?.call(item.value) ?? '${item.value}';
-    final limit = limitOf?.call(item);
-    return limit == null ? value : '$value/${format?.call(limit) ?? limit}';
-  }
+  String _figure(LiquidItem item) => _figureOf(item, format, null);
 
   @override
   Widget build(BuildContext context) {
@@ -89,10 +96,7 @@ class LiquidColumns extends StatelessWidget {
                                   ? Duration.zero
                                   : const Duration(milliseconds: 800),
                               curve: Curves.easeOutBack,
-                              tween: Tween(
-                                begin: 0,
-                                end: fillOf(item, top, limitOf),
-                              ),
+                              tween: Tween(begin: 0, end: _fillOf(item, top)),
                               builder: (context, fill, _) => CustomPaint(
                                 painter: _ColumnPainter(
                                   fill: fill,
@@ -165,28 +169,18 @@ class _ColumnPainter extends CustomPainter {
 }
 
 /// A distribution as rows: the name, a glass tube with its colour up to the
-/// share of the largest, the figure (HIN-157). For many values or long names,
-/// people or activities.
+/// share of the largest, or of its own limit where it carries one, the figure
+/// (HIN-157). For many values or long names, people or activities.
 class LiquidRows extends StatelessWidget {
-  const LiquidRows({
-    super.key,
-    required this.items,
-    this.format,
-    this.limitOf,
-    this.figure,
-  });
+  const LiquidRows({super.key, required this.items, this.format, this.unit});
 
   final List<LiquidItem> items;
   final String Function(int value)? format;
 
-  /// As [LiquidColumns.limitOf]: each tube filled to its own limit.
-  final int Function(LiquidItem item)? limitOf;
+  /// Said after each figure, "points" say.
+  final String? unit;
 
-  /// The figure beside a tube, when it says more than the value.
-  final String Function(LiquidItem item)? figure;
-
-  String _figure(LiquidItem item) =>
-      figure?.call(item) ?? format?.call(item.value) ?? '${item.value}';
+  String _figure(LiquidItem item) => _figureOf(item, format, unit);
 
   @override
   Widget build(BuildContext context) {
@@ -224,7 +218,7 @@ class LiquidRows extends StatelessWidget {
                         flipX: Directionality.of(context) == TextDirection.rtl,
                         child: CustomPaint(
                           painter: _RowPainter(
-                            fill: fillOf(item, top, limitOf),
+                            fill: _fillOf(item, top),
                             colors: HoneyGlass.tinted(item.color),
                             dark: dark,
                           ),
@@ -238,7 +232,7 @@ class LiquidRows extends StatelessWidget {
                     // both grow with the text size so neither wraps.
                     width: MediaQuery.textScalerOf(
                       context,
-                    ).scale(format == null && figure == null ? 44 : 92),
+                    ).scale(format == null && unit == null ? 44 : 92),
                     child: Text(
                       _figure(item),
                       textAlign: TextAlign.end,

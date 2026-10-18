@@ -226,7 +226,7 @@ class _BurndownCard extends StatelessWidget {
             children: [
               _legend(
                 context.t('sprint.actual'),
-                HoneyGlass.liquid(BudgetLevel.within)[2],
+                BurndownChart.lineColor,
                 false,
               ),
               _legend(context.t('sprint.guideline'), AppColors.inkFaint, true),
@@ -290,7 +290,6 @@ class _VelocityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final committed = {for (final v in points) _label(v): v.committed};
     return FrostedCard(
       title: context.t('sprint.velocity'),
       trailing: _trailing(context.t('sprint.doneOfCommitted')),
@@ -300,22 +299,26 @@ class _VelocityCard extends StatelessWidget {
               items: [
                 for (final v in points)
                   (
-                    label: _label(v),
+                    label: _label(context, v),
                     value: v.completed,
                     color: v.completed >= v.committed
                         ? AppColors.success
                         : AppColors.accent,
+                    limit: v.committed,
                   ),
               ],
-              limitOf: (item) => committed[item.label] ?? 0,
               height: 150,
             ),
     );
   }
 
-  String _label(VelocityPoint v) {
+  /// "S23" for "Sprint 23", in the reader's language; the name as it is
+  /// where it carries no number.
+  String _label(BuildContext context, VelocityPoint v) {
     final m = RegExp(r'(\d+)').allMatches(v.name).lastOrNull;
-    return m != null ? 'S${m.group(1)}' : v.name;
+    return m != null
+        ? context.t('sprint.shortName', variables: {'n': m.group(1)!})
+        : v.name;
   }
 }
 
@@ -331,8 +334,7 @@ class _BreakdownCard extends StatelessWidget {
     String nameOf(AssigneeLoad a) => a.userId.isEmpty
         ? context.t('sprint.unassigned')
         : (names[a.userId] ?? a.userId);
-    final totals = {for (final a in breakdown) nameOf(a): a.total};
-    final points = context.t('sprint.pointsWord');
+
     return FrostedCard(
       title: context.t('sprint.workBreakdown'),
       child: breakdown.isEmpty
@@ -346,11 +348,10 @@ class _BreakdownCard extends StatelessWidget {
                     color: a.userId.isEmpty
                         ? AppColors.inkFaint
                         : hiveHueColor(nameOf(a)),
+                    limit: a.total,
                   ),
               ],
-              limitOf: (item) => totals[item.label] ?? 0,
-              figure: (item) =>
-                  '${item.value}/${totals[item.label] ?? 0} $points',
+              unit: context.t('sprint.pointsWord'),
             ),
     );
   }

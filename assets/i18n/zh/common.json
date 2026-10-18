@@ -3844,7 +3844,8 @@
     "collapse": "收起",
     "expand": "展开",
     "selectIssue": "选择 {{issue}}",
-    "doneOfCommitted": "完成 / 承诺"
+    "doneOfCommitted": "完成 / 承诺",
+    "shortName": "冲刺{{n}}"
   },
   "teams": {
     "avatar": {
