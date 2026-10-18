@@ -368,6 +368,7 @@ class _OverviewState extends State<_Overview> {
             ),
             OverviewSection.activity => AppColors.accent,
           },
+          limit: null,
         ),
     ];
   }

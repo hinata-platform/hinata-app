@@ -3844,7 +3844,8 @@
     "collapse": "Свернуть",
     "expand": "Развернуть",
     "selectIssue": "Выбрать {{issue}}",
-    "doneOfCommitted": "сделано из запланированного"
+    "doneOfCommitted": "сделано из запланированного",
+    "shortName": "С{{n}}"
   },
   "teams": {
     "avatar": {
