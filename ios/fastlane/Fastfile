@@ -231,6 +231,8 @@ platform :ios do
   # the "Publish (button)" flow only — plain TestFlight drops go through `beta`,
   # which has no such requirement.
   lane :release do
+    # sync_screenshots is still behind fastlane's beta feature flag.
+    ENV["FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS"] = "1"
     build
     submit = ENV["SUBMIT"] == "true"
     upload_to_app_store(
@@ -244,9 +246,12 @@ platform :ios do
       # Upload the localized listing (fastlane/metadata: name, subtitle, keywords,
       # description, promo, what's-new, URLs, copyright, categories, review info).
       skip_metadata: false,
-      # Screenshots are NOT part of a release — see the `screenshots` lane below
-      # for why `overwrite_screenshots` cannot keep them duplicate-free.
-      skip_screenshots: true,
+      # The screenshots in fastlane/screenshots travel with every release, so a
+      # version can never go out with an older set than the repo holds. Synced,
+      # not overwritten: see the `screenshots` lane below for why
+      # `overwrite_screenshots` piles up duplicates and `sync_screenshots` does not.
+      skip_screenshots: false,
+      sync_screenshots: true,
       # deliver keeps retrying while it waits for App Store Connect to settle.
       # The default of 7 backs off up to ~20 minutes before it gives up — far too
       # long when the app is simply locked and no amount of waiting will help.
@@ -259,9 +264,9 @@ platform :ios do
     UI.user_error!(LOCKED_APP_HINT)
   end
 
-  desc "Sync fastlane/screenshots to App Store Connect (run by hand when they change)"
+  desc "Sync fastlane/screenshots to App Store Connect without a build"
   #
-  # Why this is a separate, opt-in lane instead of part of `release`:
+  # Why `sync_screenshots` and not `overwrite_screenshots` (here and in `release`):
   #
   # `overwrite_screenshots` is a ONE-SHOT pre-clean — deliver deletes the remote
   # screenshot sets once, before uploading, and never again. The duplicates come
