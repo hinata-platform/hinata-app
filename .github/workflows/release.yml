@@ -37,8 +37,8 @@ on:
         default: "false"
       platforms:
         description: >-
-          "all", or a single platform (android|ios|macos|windows|linux|snap) to
-          run just that store. "linux" has no store — it attaches an AppImage to
+          "all", or a comma-separated list of platforms
+          (android,ios,macos,windows,linux,snap) to run just those stores. "linux" has no store — it attaches an AppImage to
           the run; "snap" is the Linux store lane.
         type: string
         required: false
@@ -83,7 +83,7 @@ env:
 jobs:
   android:
     # Empty on a tag push, where `inputs` does not exist — that path runs all.
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'android' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',android,') }}
     name: Android → Play ${{ inputs.submit == 'true' && 'production (review)' || 'internal track' }}
     runs-on: ubuntu-latest
     steps:
@@ -153,7 +153,7 @@ jobs:
           bundle exec fastlane internal
 
   ios:
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'ios' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',ios,') }}
     name: iOS → ${{ inputs.submit == 'true' && 'App Store (review)' || 'TestFlight' }}
     runs-on: macos-26
     steps:
@@ -210,7 +210,7 @@ jobs:
           fi
 
   macos:
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'macos' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',macos,') }}
     name: macOS → ${{ inputs.submit == 'true' && 'Mac App Store (review)' || 'TestFlight' }}
     runs-on: macos-26
     steps:
@@ -248,7 +248,7 @@ jobs:
           fi
 
   windows:
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'windows' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',windows,') }}
     name: Windows → Microsoft Store ${{ inputs.submit == 'true' && '(submitted)' || '(package only)' }}
     # Pinned, not `windows-latest`: in June 2026 both that label AND
     # `windows-2025` were migrated to Visual Studio 2026, whose MSVC 14.5x STL
@@ -402,7 +402,7 @@ jobs:
           retention-days: 30
 
   linux:
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'linux' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',linux,') }}
     name: Linux → AppImage (run artifact)
     # `submit` is ignored here on purpose. The Linux store lane is the `snap`
     # job below; this one publishes nothing and has no account to publish to.
@@ -487,7 +487,7 @@ jobs:
           retention-days: 30
 
   snap:
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'snap' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',snap,') }}
     name: Snap → Snap Store (${{ matrix.arch }})
     # The Linux store lane. Unlike the AppImage job above this one publishes,
     # because the Snap Store is the channel Hinata ships Linux through.
@@ -625,7 +625,7 @@ jobs:
   # both architectures, in order — and the channel release happens once, after
   # both revisions exist, so a channel never carries one architecture alone.
   snap-publish:
-    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || inputs.platforms == 'snap' }}
+    if: ${{ inputs.platforms == '' || inputs.platforms == 'all' || contains(format(',{0},', inputs.platforms), ',snap,') }}
     name: Snap → publish both architectures
     needs: snap
     runs-on: ubuntu-24.04

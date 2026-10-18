@@ -63,6 +63,12 @@ class ASC:
             die(f"GET {path} -> {r.status_code}: {r.text[:600]}")
         return r.json()
 
+    def patch(self, path, body):
+        r = self.s.patch(f"{API}/{path}", json=body, timeout=60)
+        if r.status_code >= 400:
+            die(f"PATCH {path} -> {r.status_code}: {r.text[:600]}")
+        return r.json()
+
 
 def ago(stamp):
     if not stamp:
@@ -79,6 +85,11 @@ def main(argv=None):
                     help="also report whether a submission for this platform "
                          "(IOS / MAC_OS) is already waiting or in review — as "
                          "`queued` on stdout and in GITHUB_OUTPUT")
+    ap.add_argument("--cancel-platform", default="", metavar="PLATFORM",
+                    help="take the waiting submission for this platform "
+                         "(IOS / MAC_OS) out of App Review, so its version can "
+                         "be edited again; it rejoins the queue at the back "
+                         "when it is submitted next")
     args = ap.parse_args(argv)
 
     asc = ASC()
@@ -115,6 +126,19 @@ def main(argv=None):
                   f"{' '.join(kinds)}")
         if a.get("canceled"):
             print("      ! canceled")
+
+    if args.cancel_platform:
+        waiting = [s for s in subs["data"]
+                   if s["attributes"]["platform"] == args.cancel_platform
+                   and s["attributes"]["state"] in ("WAITING_FOR_REVIEW",
+                                                    "IN_REVIEW")]
+        if not waiting:
+            die(f"no {args.cancel_platform} submission is waiting for review")
+        for s in waiting:
+            asc.patch(f"reviewSubmissions/{s['id']}", {"data": {
+                "type": "reviewSubmissions", "id": s["id"],
+                "attributes": {"canceled": True}}})
+            print(f"\ncanceled {args.cancel_platform} submission {s['id']}")
 
     if args.queued_platform:
         # Re-submitting a version that is already queued removes it from its
