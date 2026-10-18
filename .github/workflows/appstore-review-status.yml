@@ -12,6 +12,10 @@ on:
         description: 'Bundle id to inspect'
         type: string
         default: 'com.ahmadre.hinata'
+      cancel_platform:
+        description: 'Take this platform out of App Review (IOS / MAC_OS), empty = only report'
+        type: string
+        default: ''
 
 jobs:
   status:
@@ -30,4 +34,4 @@ jobs:
           APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
           APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
-        run: python ios/fastlane/review_status.py --bundle-id "${{ inputs.bundle_id }}"
+        run: python ios/fastlane/review_status.py --bundle-id "${{ inputs.bundle_id }}" --cancel-platform "${{ inputs.cancel_platform }}"

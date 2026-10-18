@@ -35,6 +35,10 @@ on:
         description: 'Exact version X.Y.Z (optional — overrides the bump above)'
         type: string
         default: ''
+      platforms:
+        description: 'Stores to submit to: all, or a comma-separated list (android,ios,macos,windows,linux,snap)'
+        type: string
+        default: all
 
 jobs:
   prepare:
@@ -133,3 +137,4 @@ jobs:
     with:
       ref: ${{ needs.prepare.outputs.tag }}
       submit: "true"
+      platforms: ${{ inputs.platforms }}
