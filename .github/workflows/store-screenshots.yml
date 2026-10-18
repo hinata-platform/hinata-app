@@ -17,8 +17,12 @@ on:
       platforms:
         description: Which store to update.
         type: choice
-        options: [all, android, ios, macos]
+        options: [all, android, ios, macos, snap]
         default: all
+      snap_apply:
+        description: Snap only reports what it holds unless this is set.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -71,3 +75,15 @@ jobs:
         run: |
           cd ${{ matrix.platform }}
           bundle exec fastlane ${{ matrix.platform == 'macos' && 'mac' || 'ios' }} screenshots
+
+  snap:
+    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'snap' }}
+    name: Snap Store screenshots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: pip install requests
+      - name: Replace the screenshots
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.SNAPCRAFT_STORE_CREDENTIALS }}
+        run: python3 tool/snap_media.py ${{ inputs.snap_apply && '--apply' || '' }}
