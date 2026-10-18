@@ -43,7 +43,14 @@ def auth_header():
     value = creds.get("v", creds)
     if isinstance(value, str):
         value = json.loads(value)
-    return f'Macaroon root="{value["r"]}", discharge="{value["d"]}"'
+    # The discharge ages out long before the exported login does; snapcraft
+    # renews it on every call the same way, so this is not a new login.
+    r = requests.post("https://login.ubuntu.com/api/v2/tokens/refresh",
+                      json={"discharge_macaroon": value["d"]}, timeout=60)
+    if r.status_code >= 400:
+        die(f"refreshing the store login -> {r.status_code}: {r.text[:400]}")
+    discharge = r.json()["discharge_macaroon"]
+    return f'Macaroon root="{value["r"]}", discharge="{discharge}"'
 
 
 def snap_id(session):
