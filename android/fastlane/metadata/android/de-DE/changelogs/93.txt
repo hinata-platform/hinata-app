@@ -1,0 +1,5 @@
+• Budgets für Zeit und Geld je Projekt, Sprint und Vorgang, mit Prognose und Hinweis vor dem Limit
+• Neue Berichte-Seite mit Burn-down und übersichtlicherer Sprint-Auswertung
+• Den Timer per Sprache, mit Kurzbefehlen und über Steuerelemente bedienen
+• Beteiligte zu einem Vorgang hinzufügen und viele Vorgänge auf einmal ändern
+• Viele kleinere Korrekturen und Verbesserungen
