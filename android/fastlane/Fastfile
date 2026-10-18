@@ -35,6 +35,23 @@ platform :android do
     )
   end
 
+  desc "Push the store listing (texts, icon, feature graphic, screenshots) without a build"
+  # The listing is global on Play and otherwise only travels with a successful
+  # publish run. When that run fails and the build reaches production another
+  # way, nothing else would ever carry new screenshots across.
+  lane :listing do
+    upload_to_play_store(
+      json_key_data: ENV["PLAY_JSON_KEY"],
+      skip_upload_apk: true,
+      skip_upload_aab: true,
+      skip_upload_changelogs: true,
+      skip_upload_metadata: false,
+      skip_upload_images: false,
+      skip_upload_screenshots: false,
+      sync_image_upload: false
+    )
+  end
+
   desc "Promote the latest internal build to production"
   lane :promote do
     upload_to_play_store(

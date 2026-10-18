@@ -1,0 +1,73 @@
+name: Store screenshots
+
+# Pushes the screenshots that live in the repo to the stores, without a build.
+#
+# The publish run deliberately leaves Apple's screenshots alone (see the
+# `screenshots` lanes in ios/ and macos/), and Play only takes the listing
+# along when its own publish step succeeds. New shots in the repo therefore
+# reach no store until this runs.
+#
+# Apple only accepts screenshots on a version that is still editable
+# ("Prepare for Submission"); on a version that is in review or live the lane
+# stops with a plain message. Windows has its own workflow, "Windows listing
+# (screenshots)".
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        description: Which store to update.
+        type: choice
+        options: [all, android, ios, macos]
+        default: all
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'android' }}
+    name: Play listing
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: android
+      - name: Upload listing via Fastlane
+        env:
+          PLAY_JSON_KEY: ${{ secrets.PLAY_JSON_KEY }}
+        run: |
+          cd android
+          bundle exec fastlane listing
+
+  apple:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ios, macos]
+    if: ${{ inputs.platforms == 'all' || inputs.platforms == 'ios' || inputs.platforms == 'macos' }}
+    name: ${{ matrix.platform }} screenshots
+    runs-on: macos-26
+    steps:
+      - name: Skip what was not asked for
+        id: gate
+        run: echo "run=${{ inputs.platforms == 'all' || inputs.platforms == matrix.platform }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        if: ${{ steps.gate.outputs.run == 'true' }}
+      - uses: ruby/setup-ruby@651ff0d62c5c79bed6d53ec518387aae20e72c1a # v1
+        if: ${{ steps.gate.outputs.run == 'true' }}
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: ${{ matrix.platform }}
+      - name: Sync screenshots via Fastlane
+        if: ${{ steps.gate.outputs.run == 'true' }}
+        env:
+          APP_STORE_CONNECT_API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}
+          APP_STORE_CONNECT_ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+          APP_STORE_CONNECT_API_KEY_CONTENT: ${{ secrets.APP_STORE_CONNECT_API_KEY_CONTENT }}
+        run: |
+          cd ${{ matrix.platform }}
+          bundle exec fastlane ${{ matrix.platform == 'macos' && 'mac' || 'ios' }} screenshots
