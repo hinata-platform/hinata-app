@@ -21,6 +21,7 @@ import pathlib
 import sys
 
 import requests
+from pymacaroons import Macaroon
 
 SNAP = "hinata"
 DASHBOARD = "https://dashboard.snapcraft.io/dev/api"
@@ -50,7 +51,10 @@ def auth_header():
     if r.status_code >= 400:
         die(f"refreshing the store login -> {r.status_code}: {r.text[:400]}")
     discharge = r.json()["discharge_macaroon"]
-    return f'Macaroon root="{value["r"]}", discharge="{discharge}"'
+    # The discharge has to be bound to this root before the store takes it.
+    bound = Macaroon.deserialize(value["r"]).prepare_for_request(
+        Macaroon.deserialize(discharge)).serialize()
+    return f'Macaroon root="{value["r"]}", discharge="{bound}"'
 
 
 def snap_id(session):
