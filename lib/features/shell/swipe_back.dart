@@ -112,15 +112,19 @@ class _SwipeBackGestureState extends State<SwipeBackGesture>
             AnimatedBuilder(
               animation: _progress,
               child: widget.child,
-              // A translating render object in a hover path floods
-              // !debugNeedsLayout asserts on web during layout churn, so the
-              // page is only wrapped while a drag is actually in flight.
-              builder: (context, child) => _progress.value == 0
-                  ? child!
-                  : FractionalTranslation(
-                      translation: Offset(_progress.value, 0),
-                      child: child,
-                    ),
+              // Always the same wrapper around the page. Switching between the
+              // bare page and a wrapped one changed the page's parent, so its
+              // whole subtree, the navigator's GlobalKey with it, was moved
+              // mid-layout the moment a drag started (a trackpad swipe at the
+              // window's left edge): "Duplicate GlobalKey", then every
+              // dependent lost its ancestor and the app went red. A pixel
+              // Transform rather than FractionalTranslation: it needs no size
+              // to hit-test, so the mouse tracker never trips the
+              // !debugNeedsLayout assert on web during layout churn.
+              builder: (context, child) => Transform.translate(
+                offset: Offset(_progress.value * width, 0),
+                child: child,
+              ),
             ),
             // Fixed edge strip that owns the gesture. Being on top of the
             // page it wins the gesture arena against inner horizontal
