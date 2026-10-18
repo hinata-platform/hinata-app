@@ -3844,7 +3844,8 @@
     "collapse": "समेटें",
     "expand": "विस्तृत करें",
     "selectIssue": "{{issue}} चुनें",
-    "doneOfCommitted": "प्रतिबद्ध में से पूरे"
+    "doneOfCommitted": "प्रतिबद्ध में से पूरे",
+    "shortName": "S{{n}}"
   },
   "teams": {
     "avatar": {

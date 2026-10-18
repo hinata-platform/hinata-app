@@ -8,10 +8,14 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/budget/budget.dart' show BudgetLevel, HoneyGlass;
 
 /// Sprint burndown: dashed guideline (committed → 0) with the solid actual line
-/// drawn only up to today, animated in via a stroke reveal. Honours
+/// over a honey area for the open work, drawn only up to today, animated in via
+/// a stroke reveal. Honours
 /// `prefers-reduced-motion` (no draw-on). Mirrors `view_sprint.jsx` insights.
 class BurndownChart extends StatefulWidget {
   const BurndownChart({super.key, required this.points, required this.top});
+
+  /// The open work's line, also drawn in the chart's legend.
+  static Color get lineColor => HoneyGlass.liquid(BudgetLevel.within)[2];
 
   final List<BurndownPoint> points;
 
@@ -52,6 +56,7 @@ class _BurndownChartState extends State<BurndownChart>
   @override
   Widget build(BuildContext context) {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
+    final honey = HoneyGlass.liquid(BudgetLevel.within);
     return SizedBox(
       height: 240,
       child: AnimatedBuilder(
@@ -65,13 +70,9 @@ class _BurndownChartState extends State<BurndownChart>
             axis: AppColors.inkFaint,
             ideal: AppColors.inkFaint,
             // The app's honey, as in every other trend (HIN-157).
-            actual: HoneyGlass.liquid(BudgetLevel.within)[2],
-            areaTop: HoneyGlass.liquid(
-              BudgetLevel.within,
-            )[0].withValues(alpha: 0.55),
-            areaBottom: HoneyGlass.liquid(
-              BudgetLevel.within,
-            )[1].withValues(alpha: 0.06),
+            actual: honey[2],
+            areaTop: honey[0].withValues(alpha: 0.55),
+            areaBottom: honey[1].withValues(alpha: 0.06),
             textColor: AppColors.inkFaint,
             startTick: context.t('sprint.burndownStart'),
           ),
@@ -146,11 +147,15 @@ class _BurndownPainter extends CustomPainter {
       _text(canvas, '${(top * g).round()}', Offset(0, y - 6), textStyle);
     }
     // X ticks: S, 1..n
-    // At most eight day labels, the last always: a month-long sprint would
-    // otherwise print its days on top of each other.
+    // About eight day labels, the last always: a month-long sprint would
+    // otherwise print its days on top of each other. A step that would sit
+    // right beside the last gives way to it.
     final every = (points.length / 8).ceil().clamp(1, points.length);
     for (final p in points) {
-      if (p.day % every != 0 && p != points.last) continue;
+      final isLast = p == points.last;
+      if (!isLast && (p.day % every != 0 || points.last.day - p.day < every)) {
+        continue;
+      }
       final label = p.day == 0 ? startTick : '${p.day}';
       _text(
         canvas,
@@ -267,6 +272,10 @@ class _BurndownPainter extends CustomPainter {
       old.points != points ||
       old.top != top ||
       old.actual != actual ||
+      old.areaTop != areaTop ||
+      old.areaBottom != areaBottom ||
+      old.ideal != ideal ||
+      old.axis != axis ||
       old.grid != grid ||
       old.textColor != textColor ||
       old.startTick != startTick;
