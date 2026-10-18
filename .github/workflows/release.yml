@@ -308,6 +308,11 @@ jobs:
           bundler-cache: true
           working-directory: windows
       - run: flutter config --enable-windows-desktop
+      # The flutter_local_notifications fork is a git dependency, and its iOS
+      # sources nest deeper than Windows' 260-character path limit inside the
+      # pub cache: without long paths `git checkout` fails with "Filename too
+      # long" and pub get never finishes.
+      - run: git config --global core.longpaths true
       - run: flutter pub get
       # Installs the Microsoft Store Developer CLI (msstore) onto the runner.
       #
