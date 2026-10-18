@@ -3844,7 +3844,8 @@
     "collapse": "Collapse",
     "expand": "Expand",
     "selectIssue": "Select {{issue}}",
-    "doneOfCommitted": "done of committed"
+    "doneOfCommitted": "done of committed",
+    "shortName": "S{{n}}"
   },
   "teams": {
     "avatar": {

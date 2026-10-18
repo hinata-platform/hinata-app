@@ -3844,7 +3844,8 @@
     "collapse": "طي",
     "expand": "توسيع",
     "selectIssue": "تحديد {{issue}}",
-    "doneOfCommitted": "المنجز من الملتزم به"
+    "doneOfCommitted": "المنجز من الملتزم به",
+    "shortName": "س{{n}}"
   },
   "teams": {
     "avatar": {

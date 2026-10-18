@@ -3844,7 +3844,8 @@
     "collapse": "折りたたむ",
     "expand": "展開",
     "selectIssue": "{{issue}} を選択",
-    "doneOfCommitted": "完了 / コミット"
+    "doneOfCommitted": "完了 / コミット",
+    "shortName": "S{{n}}"
   },
   "projectSettings": {
     "avatar": {

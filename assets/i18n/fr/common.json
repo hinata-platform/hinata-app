@@ -3844,7 +3844,8 @@
     "collapse": "Réduire",
     "expand": "Déployer",
     "selectIssue": "Sélectionner {{issue}}",
-    "doneOfCommitted": "faits sur engagés"
+    "doneOfCommitted": "faits sur engagés",
+    "shortName": "S{{n}}"
   },
   "teams": {
     "avatar": {
