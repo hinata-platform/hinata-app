@@ -25,6 +25,7 @@ import '../../core/theme/glass_field.dart';
 import '../../core/util/duration_input.dart';
 import '../../core/widgets/field_button.dart';
 import '../../core/widgets/hive_widgets.dart';
+import '../account/account_widgets.dart' show SettingRow;
 import '../sprint/modals/glass_modal.dart';
 import 'approval_actions.dart';
 import 'correction_requests.dart' show OwnCorrectionRequests;
@@ -296,6 +297,22 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// with no way through but to delete the label off their own record.
   bool _tagsTouched = false;
 
+  /// What the billable switch was set to, or null while nobody touched it.
+  ///
+  /// Untouched, the save does not mention it, and the server applies the
+  /// project's default (HIN-158) — the same rule [_tagsTouched] follows, and
+  /// for the same reason: an edit that only fixes the duration must not pin a
+  /// flag it never showed being changed.
+  bool? _billable;
+
+  /// The project's own default for the placement, once read; null while it
+  /// follows the instance or has not been read yet.
+  bool? _projectBillable;
+
+  /// The project [_projectBillable] belongs to, so a late answer for a
+  /// project the person has since left is dropped.
+  String? _billableReadFor;
+
   bool _saving = false;
   String? _error;
 
@@ -432,6 +449,51 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   }
 
   TimePolicySnapshot get _policy => context.watch<TimePolicyCubit>().state;
+
+  @override
+  void initState() {
+    super.initState();
+    _readProjectBillable();
+  }
+
+  /// Reads the default of the project a new entry or a finishing timer is
+  /// filed in. Not where the switch would not show it: an edit shows the
+  /// entry's own flag, a timer still filed where it ran shows its own, and an
+  /// event has no switch.
+  void _readProjectBillable() {
+    final projectId = _placement.projectId;
+    _billableReadFor = projectId;
+    _projectBillable = null;
+    if (_isEdit || projectId == null) return;
+    final timer = widget.timer;
+    if (timer != null &&
+        (timer.billableChosen || timer.projectId == projectId)) {
+      return;
+    }
+    final entries = context.read<TimeEntrySheetCubit>();
+    unawaited(
+      entries.projectDefaultBillable(projectId).then((billable) {
+        if (!mounted || _billableReadFor != projectId) return;
+        setState(() => _projectBillable = billable);
+      }),
+    );
+  }
+
+  /// What the switch shows: the person's choice, else what the server will
+  /// store without one — the entry's flag on an edit, the timer's when
+  /// somebody set it or while it is filed where it ran, otherwise the
+  /// project's default or the instance's.
+  bool _billableShown(TimePolicySnapshot policy) {
+    final timer = widget.timer;
+    return _billable ??
+        (_isEdit
+            ? widget.entry!.billable
+            : timer != null &&
+                  (timer.billableChosen ||
+                      timer.projectId == _placement.projectId)
+            ? timer.billable
+            : _projectBillable ?? policy.defaultBillable);
+  }
 
   /// The day this entry will be filed on — the interval's start day when there
   /// is one, the picked day otherwise. The same rule the save applies, so the
@@ -613,6 +675,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       // Only what this sheet was asked to change: see [_tagsTouched]. On a
       // create every field is mentioned anyway.
       tags: _isEdit && !_tagsTouched ? null : _tags,
+      billable: _billable,
     );
     try {
       final saved = _isTimer
@@ -625,6 +688,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                   projectId: _placement.projectId,
                   issueId: _placement.issueId,
                   tags: _tags,
+                  billable: _billable,
                   description: _description.text.trim(),
                 ),
               ),
@@ -664,8 +728,8 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// by hand and then throwing the timer away would give that up — and would
   /// leave a duplicate behind whenever the second of the two calls failed.
   ///
-  /// Billable is not sent, so the timer's own flag survives; there is no control
-  /// for it on this form.
+  /// Billable only once the switch was touched, so an untouched one leaves the
+  /// server to apply the timer's own flag or the default of where it is filed.
   Future<SavedTimeEntry?> _stopTimer() async {
     final cubit = context.read<TimerCubit>();
     final saved = await cubit.stop(
@@ -683,6 +747,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       // mid-run refuses every stop with no way to answer at all. The timer
       // resolved them when it started; re-resolving them buys nothing.
       tags: _tagsTouched ? _tags : null,
+      billable: _billable,
     );
     if (saved == null && mounted) {
       // Inline, although [TimerSignals] toasts the same sentence app-wide. A
@@ -967,7 +1032,18 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                     onTap: () => _pickTags(policy),
                   ),
                 ),
-                const SizedBox(height: 12),
+                // Whether the hours count as revenue: the money budget and
+                // the billing report read it (HIN-158).
+                SettingRow(
+                  icon: LucideIcons.banknote,
+                  label: context.t('time.billable'),
+                  trailing: HiveSwitch(
+                    value: _billableShown(policy),
+                    onChanged: _saving
+                        ? null
+                        : (value) => setState(() => _billable = value),
+                  ),
+                ),
                 _Summary(minutes: _minutesShown, error: _error),
                 // What this entry does to the issue's estimate and the
                 // project's budget, before it is saved (HIN-153). Advice only:
@@ -1068,8 +1144,10 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     setState(() {
       // The people named with `+` were found in the project the entry had;
       // another project may not have them.
-      if (picked.projectId != _placement.projectId) _mentioned.clear();
+      final moved = picked.projectId != _placement.projectId;
+      if (moved) _mentioned.clear();
       _placement = picked;
+      if (moved) _readProjectBillable();
     });
   }
 

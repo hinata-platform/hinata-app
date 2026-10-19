@@ -470,6 +470,7 @@ class TimerCubit extends HydratedCubit<TimerState> {
         'activityType': timer.activityType,
         'tags': timer.tags,
         'billable': timer.billable,
+        'billableChosen': timer.billableChosen,
         'mode': timer.mode.wire,
         'plannedMinutes': timer.plannedMinutes,
         'pomodoro': timer.pomodoro?.toJson(),
@@ -494,6 +495,7 @@ class TimerCubit extends HydratedCubit<TimerState> {
           timer.activityType,
           timer.tags.join(','),
           timer.billable,
+          timer.billableChosen,
           timer.mode.name,
           timer.plannedMinutes,
           // Spelled out, not the object: `Equatable.toString` expands its

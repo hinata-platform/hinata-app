@@ -119,10 +119,13 @@ class _SprintBudgetForm extends StatefulWidget {
 }
 
 class _SprintBudgetFormState extends State<_SprintBudgetForm> {
-  late final _field = TextEditingController(
+  late final TextEditingController _field = TextEditingController(
     text: widget.usage.budgetMinutes == null
         ? ''
-        : formatDurationInput(widget.usage.budgetMinutes!),
+        : formatHoursInput(
+            widget.usage.budgetMinutes!,
+            Localizations.localeOf(context).toLanguageTag(),
+          ),
   );
   bool _saving = false;
   String? _error;
@@ -135,7 +138,8 @@ class _SprintBudgetFormState extends State<_SprintBudgetForm> {
 
   Future<void> _save() async {
     final text = _field.text.trim();
-    final minutes = text.isEmpty ? null : parseDurationInput(text);
+    // Hours, as the field's unit says: "80" is eighty of them (HIN-158).
+    final minutes = text.isEmpty ? null : parseHoursInput(text);
     if (text.isNotEmpty && minutes == null) {
       setState(() => _error = 'time.error.duration');
       return;
@@ -185,10 +189,14 @@ class _SprintBudgetFormState extends State<_SprintBudgetForm> {
               TextField(
                 controller: _field,
                 autofocus: true,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
                 onSubmitted: (_) => _saving ? null : _save(),
                 decoration: InputDecoration(
                   labelText: context.t('budget.sprint.label'),
                   hintText: context.t('budget.sprint.hint'),
+                  suffixText: 'h',
                   prefixIcon: const Icon(LucideIcons.timer, size: 16),
                 ),
               ),

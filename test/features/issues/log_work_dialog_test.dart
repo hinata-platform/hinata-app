@@ -161,6 +161,11 @@ class _UnusedStorage implements AppStorage {
 }
 
 class _FakeTimeRepository implements TimeRepository {
+  // The entry sheet reads the project's default billability (HIN-158).
+  @override
+  Future<ProjectTimeSettings> projectSettings(String projectId) async =>
+      const ProjectTimeSettings();
+
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');

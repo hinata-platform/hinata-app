@@ -86,6 +86,8 @@ class ProjectTimeUsage extends Equatable {
     this.usedCents,
     this.currency,
     this.costBudget = false,
+    this.unbilledMinutes = 0,
+    this.unratedMinutes = 0,
   });
 
   factory ProjectTimeUsage.fromJson(Map<String, dynamic> json) =>
@@ -97,6 +99,8 @@ class ProjectTimeUsage extends Equatable {
         usedCents: (json['usedCents'] as num?)?.toInt(),
         currency: json['currency'] as String?,
         costBudget: json['budgetRateKind'] == 'COST',
+        unbilledMinutes: (json['unbilledMinutes'] as num?)?.toInt() ?? 0,
+        unratedMinutes: (json['unratedMinutes'] as num?)?.toInt() ?? 0,
         projectId: json['projectId'] as String,
         budgetMinutes: (json['budgetMinutes'] as num?)?.toInt(),
         usedMinutes: (json['usedMinutes'] as num?)?.toInt() ?? 0,
@@ -135,6 +139,12 @@ class ProjectTimeUsage extends Equatable {
   /// Valued at cost rates rather than revenue.
   final bool costBudget;
 
+  /// Recorded minutes the money budget does not count (HIN-158): entries
+  /// that are not billable, which a revenue budget leaves out, and entries no
+  /// rate was in force for on their day. Zero without a money budget.
+  final int unbilledMinutes;
+  final int unratedMinutes;
+
   /// Used against the money budget, or null.
   BudgetGauge? get money => currency == null
       ? null
@@ -161,6 +171,8 @@ class ProjectTimeUsage extends Equatable {
     usedCents,
     currency,
     costBudget,
+    unbilledMinutes,
+    unratedMinutes,
   ];
 }
 

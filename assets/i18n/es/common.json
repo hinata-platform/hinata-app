@@ -4083,7 +4083,7 @@
       "title": "Registro de tiempo",
       "note": "Lo que este proyecto decide por sí mismo. Todo lo que quede en el valor del servidor sigue la política de la instancia.",
       "budget": "Presupuesto",
-      "budgetHint": "p. ej. 120h — vacío para ningún presupuesto",
+      "budgetHint": "En horas, p. ej. 120. Déjalo vacío si no hay presupuesto",
       "billable": "Facturable por defecto",
       "approvalRequired": "Las hojas de horas necesitan aprobación",
       "approvalPeriod": "Periodo de entrega",
@@ -5202,7 +5202,9 @@
         "COST": "Costes (todos los registros)"
       },
       "revenue": "Presupuesto en dinero (ingresos)",
-      "cost": "Presupuesto en dinero (costes)"
+      "cost": "Presupuesto en dinero (costes)",
+      "unbilled": "No facturable, por eso no cuenta aquí: {{duration}}",
+      "unrated": "Sin tarifa vigente el día de la entrada, por eso no cuenta aquí: {{duration}}"
     },
     "history": {
       "title": "Historial del presupuesto",
@@ -5220,7 +5222,7 @@
     "sprint": {
       "label": "Presupuesto del sprint",
       "set": "Fijar presupuesto del sprint",
-      "hint": "p. ej. 80h — vacío si no hay"
+      "hint": "En horas, p. ej. 80. Déjalo vacío si no hay presupuesto"
     },
     "report": {
       "emptyTitle": "Aún no hay presupuestos",
