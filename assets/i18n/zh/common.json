@@ -5204,7 +5204,8 @@
       "revenue": "金额预算（收入）",
       "cost": "金额预算（成本）",
       "unbilled": "不可计费，因此此处不计入：{{duration}}",
-      "unrated": "记录当日没有有效费率，因此此处不计入：{{duration}}"
+      "unrated": "记录当日没有有效费率，因此此处不计入：{{duration}}",
+      "unratedCost": "记录当日没有成本费率，因此此处不计入：{{duration}}。成本费率由组织管理员设置；项目的收入费率不计入此处。"
     },
     "history": {
       "title": "预算历史",
