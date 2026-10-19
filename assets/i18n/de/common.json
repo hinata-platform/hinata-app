@@ -4083,7 +4083,7 @@
       "title": "Zeiterfassung",
       "note": "Was dieses Projekt für sich entscheidet. Alles auf Server-Vorgabe folgt der Richtlinie der Instanz.",
       "budget": "Budget",
-      "budgetHint": "z. B. 120h — leer für kein Budget",
+      "budgetHint": "In Stunden, z. B. 120. Leer lassen für kein Budget",
       "billable": "Standardmäßig abrechenbar",
       "approvalRequired": "Timesheets brauchen eine Freigabe",
       "approvalPeriod": "Einreichungszeitraum",
@@ -5202,7 +5202,9 @@
         "COST": "Kosten (alle Einträge)"
       },
       "revenue": "Geldbudget (Erlös)",
-      "cost": "Geldbudget (Kosten)"
+      "cost": "Geldbudget (Kosten)",
+      "unbilled": "Nicht abrechenbar, daher hier nicht gezählt: {{duration}}",
+      "unrated": "Ohne gültigen Satz am Tag des Eintrags, daher hier nicht gezählt: {{duration}}"
     },
     "history": {
       "title": "Budgetverlauf",
@@ -5220,7 +5222,7 @@
     "sprint": {
       "label": "Sprintbudget",
       "set": "Sprintbudget festlegen",
-      "hint": "z. B. 80h — leer für kein Budget"
+      "hint": "In Stunden, z. B. 80. Leer lassen für kein Budget"
     },
     "report": {
       "emptyTitle": "Noch keine Budgets",

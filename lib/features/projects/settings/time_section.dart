@@ -118,11 +118,12 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
   int? get _moneyCents => parseCents(_money.text);
 
   /// The budget the text field currently describes, or null when it describes
-  /// none. A blank field is "no budget", which is different from a zero.
+  /// none. A blank field is "no budget", which is different from a zero. The
+  /// field is in hours: "120" is a hundred and twenty of them (HIN-158).
   int? get _budgetMinutes {
     final text = _budget.text.trim();
     if (text.isEmpty) return null;
-    return parseDurationInput(text);
+    return parseHoursInput(text);
   }
 
   /// Whether the budget field matched what is stored at the last rebuild.
@@ -160,7 +161,10 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
         _billing = billing;
         _budget.text = settings.budgetMinutes == null
             ? ''
-            : formatDurationInput(settings.budgetMinutes!);
+            : formatHoursInput(
+                settings.budgetMinutes!,
+                Localizations.localeOf(context).toLanguageTag(),
+              );
         _money.text = billing == null || settings.budgetCents == null
             ? ''
             : basisPointsText(context, settings.budgetCents!);
@@ -177,7 +181,7 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
 
   Future<void> _save() async {
     if (_budget.text.trim().isNotEmpty && _budgetMinutes == null) {
-      // parseDurationInput answers null both for "nothing here" and for "I
+      // parseHoursInput answers null both for "nothing here" and for "I
       // cannot read that". Treating the second as the first would delete the
       // budget over a typo and report success in a green toast.
       setState(() => _error = 'time.error.duration');
@@ -249,6 +253,9 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                   textField: true,
                   child: TextField(
                     controller: _budget,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     // The save button depends on whether the field differs from
                     // what is stored, which flips two or three times in an entry —
                     // not thirty. Rebuilding the card on every character would
@@ -256,6 +263,9 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                     onChanged: _budgetChanged,
                     decoration: InputDecoration(
                       isDense: true,
+                      // The unit stays in the field, as the currency does in
+                      // the money field below: what is typed is hours.
+                      suffixText: 'h',
                       hintText: context.t('projectSettings.time.budgetHint'),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(
@@ -376,6 +386,12 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                               gauge: money,
                               format: (context, cents) =>
                                   formatMoney(context, cents, usage.currency!),
+                              // Why the figure is lower than the hours above
+                              // suggest, when it is (HIN-158).
+                              footer: UncountedLine(
+                                unbilledMinutes: usage.unbilledMinutes,
+                                unratedMinutes: usage.unratedMinutes,
+                              ),
                             ),
                           ],
                         ],

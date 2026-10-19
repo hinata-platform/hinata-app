@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../core/api/api_client.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/models/core_models.dart' show DirectoryUser;
 import '../../core/models/time_models.dart';
@@ -35,6 +36,17 @@ class TimeEntrySheetCubit extends Cubit<void> {
     int page,
     int size,
   ) => _time.shareCandidates(projectId, query: query, page: page, size: size);
+
+  /// Whether [projectId] bills its entries by default, or null when it follows
+  /// the instance (HIN-158). Null too when the settings cannot be read: the
+  /// switch then shows the instance's default, and the server decides anyway.
+  Future<bool?> projectDefaultBillable(String projectId) async {
+    try {
+      return (await _time.projectSettings(projectId)).defaultBillable;
+    } on ApiFailure {
+      return null;
+    }
+  }
 
   /// Takes a calendar event over as an entry (HIN-94).
   Future<WorkItem> convert(String eventId, CalendarConversion conversion) =>

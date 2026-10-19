@@ -17,6 +17,10 @@
 /// What *is* localized is how a duration is shown — `fmtDuration`.
 library;
 
+import 'package:intl/intl.dart';
+
+import 'decimal_input.dart';
+
 /// Minutes meant by [input], or null when it says nothing usable.
 ///
 /// Accepted, case- and space-insensitively:
@@ -86,4 +90,32 @@ String formatDurationInput(int minutes) {
   if (h == 0) return '${m}m';
   if (m == 0) return '${h}h';
   return '${h}h ${m}m';
+}
+
+/// Minutes meant by a budget typed in hours, or null when it says nothing
+/// usable (HIN-158).
+///
+/// A budget field shows its unit, `h`, beside the number, so the number is
+/// hours: `120` is a hundred and twenty hours, never the two that
+/// [parseDurationInput] reads, where a bare number is minutes because a work
+/// log means "45" as minutes. The number is read as [parseHundredths] reads a
+/// money amount, so `7,5` is seven and a half and a German `1.000` a thousand.
+/// A unit typed anyway is understood: `120h`, `1h 30m`, `90m` and `1:30` mean
+/// what they say.
+int? parseHoursInput(String? input) {
+  if (input == null) return null;
+  final hundredths = parseHundredths(
+    input.toLowerCase(),
+    unit: r'h|hrs?|hours?',
+    maxWholeDigits: 7,
+  );
+  if (hundredths != null) return (hundredths * 60 / 100).round();
+  return parseDurationInput(input);
+}
+
+/// [minutes] as the hours a budget field holds, in [locale]'s digits: `120`,
+/// `7,5`, `2,08`. Round-trips through [parseHoursInput] to the minute.
+String formatHoursInput(int minutes, String locale) {
+  final safe = minutes < 0 ? 0 : minutes;
+  return NumberFormat('0.##', locale).format(safe / 60);
 }

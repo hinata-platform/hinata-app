@@ -166,6 +166,7 @@ class RunningTimer extends Equatable {
     this.activityType,
     this.tags = const [],
     this.billable = false,
+    this.billableChosen = false,
     this.mode = TimerMode.stopwatch,
     this.plannedMinutes,
     this.pomodoro,
@@ -185,6 +186,11 @@ class RunningTimer extends Equatable {
   final String? activityType;
   final List<String> tags;
   final bool billable;
+
+  /// Whether somebody set [billable] rather than the timer inheriting it
+  /// (HIN-158). An inherited flag follows the entry to the project it is
+  /// finally filed in; a chosen one stays.
+  final bool billableChosen;
   final TimerMode mode;
 
   /// A countdown's target, in minutes; null for the other two modes.
@@ -246,6 +252,7 @@ class RunningTimer extends Equatable {
         .whereType<String>()
         .toList(),
     billable: json['billable'] as bool? ?? false,
+    billableChosen: json['billableChosen'] as bool? ?? false,
     mode: TimerMode.parse(json['mode'] as String?),
     plannedMinutes: (json['plannedMinutes'] as num?)?.toInt(),
     pomodoro: json['pomodoro'] is Map<String, dynamic>
@@ -266,6 +273,7 @@ class RunningTimer extends Equatable {
     activityType,
     tags,
     billable,
+    billableChosen,
     mode,
     plannedMinutes,
     pomodoro,
