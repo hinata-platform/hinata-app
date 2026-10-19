@@ -27,7 +27,7 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassConfirm, showGlassToast;
+    show GlassToastKind, anchorRectOf, showGlassConfirm, showGlassToast;
 import 'attachment_grid.dart';
 import 'attachments_cubit.dart';
 import 'attachment_kind.dart';
@@ -197,6 +197,10 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   /// on web) or a full issue reload.
   Future<void> pickFiles() => _pickFiles();
 
+  /// The add control — the header button, or the empty dropzone while there
+  /// is nothing yet; never both — so the source menu hangs off what was tapped.
+  final _addKey = GlobalKey();
+
   /// Entry point for every "add" affordance (header button + empty dropzone).
   /// On mobile it asks the user where to source from; elsewhere it opens the
   /// document picker directly.
@@ -205,7 +209,10 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       await _pickFiles();
       return;
     }
-    final source = await showUploadSourceSheet(context);
+    final source = await showUploadSourceSheet(
+      context,
+      anchorRect: anchorRectOf(_addKey),
+    );
     if (source == null || _disposed) return;
     switch (source) {
       case UploadSource.gallery:
@@ -723,7 +730,13 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
         // Always-available add affordance (the empty dropzone only shows when
         // there are no attachments yet).
         if (count > 0)
-          _AddButton(onTap: _add, label: context.t('issues.attachments.add')),
+          KeyedSubtree(
+            key: _addKey,
+            child: _AddButton(
+              onTap: _add,
+              label: context.t('issues.attachments.add'),
+            ),
+          ),
         // Bulk actions apply to the uploaded files only — in-flight uploads have
         // nothing to download or delete yet.
         if (_server.isNotEmpty) ...[
@@ -742,6 +755,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   Widget _empty() {
     // The whole empty card is the upload control; its title names it.
     return Semantics(
+      key: _addKey,
       button: true,
       child: InkWell(
         borderRadius: BorderRadius.circular(AppTheme.radiusCard),

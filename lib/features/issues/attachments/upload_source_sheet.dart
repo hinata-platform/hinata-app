@@ -8,6 +8,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_panel.dart';
 import '../../search/search_tokens.dart';
+import '../../sprint/modals/glass_modal.dart'
+    show kGlassPopoverBreakpoint, showGlassOptions;
 import '../../../core/widgets/hive_widgets.dart' show forwardChevron;
 import '../../../core/theme/app_type.dart';
 
@@ -22,7 +24,45 @@ enum UploadSource { gallery, photo, video, files }
 ///
 /// Returns the chosen [UploadSource], or `null` if dismissed. Only meaningful on
 /// touch platforms — desktop/web go straight to the file picker.
-Future<UploadSource?> showUploadSourceSheet(BuildContext context) {
+///
+/// On a wide screen (an iPad) the same choice hangs off [anchorRect], the
+/// control that was tapped, as a glass menu rather than a sheet.
+Future<UploadSource?> showUploadSourceSheet(
+  BuildContext context, {
+  Rect? anchorRect,
+}) {
+  if (MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint) {
+    Widget row(IconData icon, String key) => Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.inkSoft),
+        const SizedBox(width: 10),
+        Flexible(child: Text(context.t(key))),
+      ],
+    );
+    return showGlassOptions<UploadSource>(
+      context,
+      title: context.t('issues.attachments.source.title'),
+      anchorRect: anchorRect,
+      options: [
+        (
+          value: UploadSource.gallery,
+          child: row(LucideIcons.images, 'issues.attachments.source.gallery'),
+        ),
+        (
+          value: UploadSource.photo,
+          child: row(LucideIcons.camera, 'issues.attachments.source.photo'),
+        ),
+        (
+          value: UploadSource.video,
+          child: row(LucideIcons.video, 'issues.attachments.source.video'),
+        ),
+        (
+          value: UploadSource.files,
+          child: row(LucideIcons.folder, 'issues.attachments.source.files'),
+        ),
+      ],
+    );
+  }
   return showModalBottomSheet<UploadSource>(
     context: context,
     useRootNavigator: true,
