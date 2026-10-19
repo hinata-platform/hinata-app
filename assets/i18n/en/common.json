@@ -5204,7 +5204,8 @@
       "revenue": "Money budget (revenue)",
       "cost": "Money budget (cost)",
       "unbilled": "Not billable, so not counted here: {{duration}}",
-      "unrated": "No rate in force on the entry's day, so not counted here: {{duration}}"
+      "unrated": "No rate in force on the entry's day, so not counted here: {{duration}}",
+      "unratedCost": "No cost rate on the entry's day, so not counted here: {{duration}}. Organization admins set cost rates; the project's revenue rate does not count here."
     },
     "history": {
       "title": "Budget history",

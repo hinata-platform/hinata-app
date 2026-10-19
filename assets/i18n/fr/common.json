@@ -5204,7 +5204,8 @@
       "revenue": "Budget financier (chiffre d’affaires)",
       "cost": "Budget financier (coûts)",
       "unbilled": "Non facturable, donc non compté ici : {{duration}}",
-      "unrated": "Aucun taux en vigueur le jour de la saisie, donc non compté ici : {{duration}}"
+      "unrated": "Aucun taux en vigueur le jour de la saisie, donc non compté ici : {{duration}}",
+      "unratedCost": "Aucun taux de coût le jour de la saisie, donc non compté ici : {{duration}}. Les administrateurs de l'organisation fixent les taux de coût ; le taux de revenu du projet ne compte pas ici."
     },
     "history": {
       "title": "Historique du budget",
