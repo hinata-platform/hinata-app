@@ -5204,7 +5204,8 @@
       "revenue": "Presupuesto en dinero (ingresos)",
       "cost": "Presupuesto en dinero (costes)",
       "unbilled": "No facturable, por eso no cuenta aquí: {{duration}}",
-      "unrated": "Sin tarifa vigente el día de la entrada, por eso no cuenta aquí: {{duration}}"
+      "unrated": "Sin tarifa vigente el día de la entrada, por eso no cuenta aquí: {{duration}}",
+      "unratedCost": "Sin tarifa de coste el día de la entrada, por eso no cuenta aquí: {{duration}}. Las tarifas de coste las fijan los administradores de la organización; la tarifa de ingresos del proyecto no cuenta aquí."
     },
     "history": {
       "title": "Historial del presupuesto",

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../time/budget/budget_history_sheet.dart';
@@ -9,6 +10,7 @@ import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/models/billing_models.dart';
 import '../../../core/repositories/billing_repository.dart';
 import '../../billing/billing_format.dart';
+import '../../billing/invoices_screen.dart' show ratesRoute;
 import '../../../core/blocs/time_usage_cubit.dart';
 import '../../../core/widgets/budget/budget.dart';
 import '../../time/budget/project_usage.dart';
@@ -391,6 +393,8 @@ class _ProjectTimeSectionBodyState extends State<_ProjectTimeSectionBody> {
                               footer: UncountedLine(
                                 unbilledMinutes: usage.unbilledMinutes,
                                 unratedMinutes: usage.unratedMinutes,
+                                costBudget: usage.costBudget,
+                                onOpenRates: () => context.push(ratesRoute),
                               ),
                             ),
                           ],

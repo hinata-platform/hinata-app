@@ -17,10 +17,20 @@ class UncountedLine extends StatelessWidget {
     super.key,
     required this.unbilledMinutes,
     required this.unratedMinutes,
+    this.costBudget = false,
+    this.onOpenRates,
   });
 
   final int unbilledMinutes;
   final int unratedMinutes;
+
+  /// Valued at cost rates: the missing rate is a cost rate, which only an
+  /// organization admin sets, and a project's revenue rate does not stand in
+  /// for it.
+  final bool costBudget;
+
+  /// The way to the rates, offered while hours lack one. Null leaves it out.
+  final VoidCallback? onOpenRates;
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +42,7 @@ class UncountedLine extends StatelessWidget {
         ),
       if (unratedMinutes > 0)
         context.t(
-          'budget.money.unrated',
+          costBudget ? 'budget.money.unratedCost' : 'budget.money.unrated',
           variables: {'duration': fmtDuration(context, unratedMinutes)},
         ),
     ];
@@ -66,6 +76,15 @@ class UncountedLine extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+          ),
+        if (unratedMinutes > 0 && onOpenRates != null)
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: onOpenRates,
+              icon: const Icon(LucideIcons.badgePercent, size: 16),
+              label: Text(context.t('billing.rates.title')),
             ),
           ),
       ],

@@ -5204,7 +5204,8 @@
       "revenue": "Geldbudget (Erlös)",
       "cost": "Geldbudget (Kosten)",
       "unbilled": "Nicht abrechenbar, daher hier nicht gezählt: {{duration}}",
-      "unrated": "Ohne gültigen Satz am Tag des Eintrags, daher hier nicht gezählt: {{duration}}"
+      "unrated": "Ohne gültigen Satz am Tag des Eintrags, daher hier nicht gezählt: {{duration}}",
+      "unratedCost": "Ohne Kostensatz am Tag des Eintrags, daher hier nicht gezählt: {{duration}}. Kostensätze legen Organisations-Admins fest; der Erlössatz des Projekts zählt hier nicht."
     },
     "history": {
       "title": "Budgetverlauf",
