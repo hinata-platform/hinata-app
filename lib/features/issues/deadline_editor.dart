@@ -98,6 +98,16 @@ Future<DeadlineChoice?> showDeadlineEditor(
       builder: body,
     );
   }
+  // Wide without a rectangle to hang off (the bulk bar's menu): a card in the
+  // middle rather than a sheet from the bottom of a desktop window.
+  if (wide) {
+    return showGlassModal<DeadlineChoice>(
+      context,
+      adaptive: false,
+      width: 360,
+      builder: body,
+    );
+  }
   return showGlassBottomSheet<DeadlineChoice>(context, builder: body);
 }
 

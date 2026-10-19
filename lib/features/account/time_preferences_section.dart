@@ -22,6 +22,7 @@ import '../../core/widgets/hive_widgets.dart' show HiveSwitch, fmtDuration;
 import '../sprint/modals/glass_modal.dart'
     show
         GlassToastKind,
+        anchorRectOfContext,
         showGlassDurationPicker,
         showGlassOptions,
         showGlassTimePicker,
@@ -446,9 +447,10 @@ class _TargetGroup extends StatelessWidget {
     if (picked != null) onRemindAt(picked.hour * 60 + picked.minute);
   }
 
-  Future<void> _pickWeekday(BuildContext context) async {
+  Future<void> _pickWeekday(BuildContext context, Rect? anchor) async {
     final picked = await showGlassOptions<int>(
       context,
+      anchorRect: anchor,
       title: context.t('account.timeTracking.remindOn'),
       options: [
         for (var day = DateTime.monday; day <= DateTime.sunday; day++)
@@ -483,7 +485,7 @@ class _TargetGroup extends StatelessWidget {
             value: fmtDuration(context, current),
             icon: LucideIcons.hourglass,
             stack: stack,
-            onTap: () => unawaited(_pickTarget(context, current)),
+            onTap: (_) => unawaited(_pickTarget(context, current)),
           ),
           if (day != null && onWeekday != null) ...[
             divider,
@@ -492,7 +494,7 @@ class _TargetGroup extends StatelessWidget {
               value: weekdayName(context, day),
               icon: LucideIcons.calendarDays,
               stack: stack,
-              onTap: () => unawaited(_pickWeekday(context)),
+              onTap: (anchor) => unawaited(_pickWeekday(context, anchor)),
             ),
           ],
           divider,
@@ -506,7 +508,7 @@ class _TargetGroup extends StatelessWidget {
             ),
             icon: LucideIcons.clock,
             stack: stack,
-            onTap: () => unawaited(_pickTime(context)),
+            onTap: (_) => unawaited(_pickTime(context)),
           ),
           if (offer != null && offer != current) ...[
             divider,
@@ -544,13 +546,21 @@ class _PickRow extends StatelessWidget {
   final String value;
   final IconData icon;
   final bool stack;
-  final VoidCallback onTap;
+
+  /// Opens the picker, with the button's rectangle for an anchored one.
+  final ValueChanged<Rect?> onTap;
 
   @override
   Widget build(BuildContext context) => SettingRow(
     label: label,
     stack: stack,
-    trailing: AccountActionButton(label: value, icon: icon, onPressed: onTap),
+    trailing: Builder(
+      builder: (button) => AccountActionButton(
+        label: value,
+        icon: icon,
+        onPressed: () => onTap(anchorRectOfContext(button)),
+      ),
+    ),
   );
 }
 

@@ -23,7 +23,7 @@ import '../../../core/widgets/user_pronouns.dart';
 import '../../search/search_tokens.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show showGlassToast, GlassToastKind;
+    show showGlassToast, GlassToastKind, kGlassPopoverBreakpoint;
 import '../../../core/widgets/glass_filter_bar.dart';
 import 'audit_log_cubit.dart';
 import '../../../core/theme/app_type.dart';
