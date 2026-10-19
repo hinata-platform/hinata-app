@@ -4083,7 +4083,7 @@
       "title": "Time tracking",
       "note": "What this project decides for itself. Everything left on the server default follows the instance policy.",
       "budget": "Budget",
-      "budgetHint": "e.g. 120h — empty for no budget",
+      "budgetHint": "In hours, e.g. 120. Leave empty for no budget",
       "billable": "Billable by default",
       "approvalRequired": "Timesheets need approval",
       "approvalPeriod": "Submission period",
@@ -5202,7 +5202,9 @@
         "COST": "Cost (all entries)"
       },
       "revenue": "Money budget (revenue)",
-      "cost": "Money budget (cost)"
+      "cost": "Money budget (cost)",
+      "unbilled": "Not billable, so not counted here: {{duration}}",
+      "unrated": "No rate in force on the entry's day, so not counted here: {{duration}}"
     },
     "history": {
       "title": "Budget history",
@@ -5220,7 +5222,7 @@
     "sprint": {
       "label": "Sprint budget",
       "set": "Set sprint budget",
-      "hint": "e.g. 80h — empty for no budget"
+      "hint": "In hours, e.g. 80. Leave empty for no budget"
     },
     "report": {
       "emptyTitle": "No budgets yet",

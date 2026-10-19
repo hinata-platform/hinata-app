@@ -4083,7 +4083,7 @@
       "title": "Suivi du temps",
       "note": "Ce que ce projet décide pour lui-même. Tout ce qui reste sur la valeur du serveur suit la politique de l'instance.",
       "budget": "Budget",
-      "budgetHint": "p. ex. 120h — vide pour aucun budget",
+      "budgetHint": "En heures, p. ex. 120. Laisser vide pour aucun budget",
       "billable": "Facturable par défaut",
       "approvalRequired": "Les feuilles de temps doivent être approuvées",
       "approvalPeriod": "Période de soumission",
@@ -5202,7 +5202,9 @@
         "COST": "Coûts (toutes les saisies)"
       },
       "revenue": "Budget financier (chiffre d’affaires)",
-      "cost": "Budget financier (coûts)"
+      "cost": "Budget financier (coûts)",
+      "unbilled": "Non facturable, donc non compté ici : {{duration}}",
+      "unrated": "Aucun taux en vigueur le jour de la saisie, donc non compté ici : {{duration}}"
     },
     "history": {
       "title": "Historique du budget",
@@ -5220,7 +5222,7 @@
     "sprint": {
       "label": "Budget du sprint",
       "set": "Fixer le budget du sprint",
-      "hint": "p. ex. 80h — vide pour aucun"
+      "hint": "En heures, p. ex. 80. Laisser vide pour aucun budget"
     },
     "report": {
       "emptyTitle": "Pas encore de budgets",

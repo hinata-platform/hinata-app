@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:intl/intl.dart';
 
+import '../../core/util/decimal_input.dart';
+
 /// How money, hours and shares read in billing (HIN-96): in the reader's
 /// locale, with the instance's one currency. Amounts arrive in cents.
 
@@ -50,16 +52,7 @@ String currencySymbol(BuildContext context, String currency) =>
 /// Cents from what somebody typed — `95`, `95,5`, `1.234,56`, `95.50` — or
 /// null when it is no amount. Both separators are accepted, the last one is
 /// the decimal mark when it is followed by one or two digits.
-int? parseCents(String raw) {
-  final text = raw.trim().replaceAll(RegExp(r'[\s  ]'), '');
-  if (text.isEmpty) return null;
-  final match = RegExp(r'^(\d[\d.,]*?)(?:[.,](\d{1,2}))?$').firstMatch(text);
-  if (match == null) return null;
-  final whole = match.group(1)!.replaceAll(RegExp(r'[.,]'), '');
-  final fraction = (match.group(2) ?? '').padRight(2, '0');
-  if (whole.isEmpty || whole.length > 9) return null;
-  return int.parse(whole) * 100 + int.parse(fraction);
-}
+int? parseCents(String raw) => parseHundredths(raw);
 
 /// Basis points from a typed percentage (`19`, `7,5`), or null.
 int? parseBasisPoints(String raw) {

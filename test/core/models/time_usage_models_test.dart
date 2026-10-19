@@ -117,4 +117,22 @@ void main() {
   test('a server that sends no forecasts leaves none', () {
     expect(TopBudgets.fromJson(const {'items': []}).forecasts, isEmpty);
   });
+
+  test('a money budget says which recorded minutes it leaves out', () {
+    final usage = ProjectTimeUsage.fromJson(const {
+      'projectId': 'p1',
+      'budgetCents': 1680000,
+      'usedCents': 0,
+      'currency': 'EUR',
+      'unbilledMinutes': 60,
+      'unratedMinutes': 15,
+    });
+    expect(usage.unbilledMinutes, 60);
+    expect(usage.unratedMinutes, 15);
+    // An older server says nothing, and nothing is left out.
+    expect(
+      ProjectTimeUsage.fromJson(const {'projectId': 'p1'}).unbilledMinutes,
+      0,
+    );
+  });
 }

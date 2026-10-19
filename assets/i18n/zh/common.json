@@ -4083,7 +4083,7 @@
       "title": "工时记录",
       "note": "这个项目自己的决定。保持服务器默认的项目遵循实例策略。",
       "budget": "预算",
-      "budgetHint": "例如 120h — 留空表示不设预算",
+      "budgetHint": "以小时为单位，例如 120。留空表示不设预算",
       "billable": "默认可计费",
       "approvalRequired": "工时表需要审批",
       "approvalPeriod": "提交周期",
@@ -5202,7 +5202,9 @@
         "COST": "成本（全部记录）"
       },
       "revenue": "金额预算（收入）",
-      "cost": "金额预算（成本）"
+      "cost": "金额预算（成本）",
+      "unbilled": "不可计费，因此此处不计入：{{duration}}",
+      "unrated": "记录当日没有有效费率，因此此处不计入：{{duration}}"
     },
     "history": {
       "title": "预算历史",
@@ -5220,7 +5222,7 @@
     "sprint": {
       "label": "冲刺预算",
       "set": "设置冲刺预算",
-      "hint": "例如 80h — 留空表示无"
+      "hint": "以小时为单位，例如 80。留空表示不设预算"
     },
     "report": {
       "emptyTitle": "还没有预算",

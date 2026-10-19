@@ -107,4 +107,46 @@ void main() {
       expect(formatDurationInput(61), '1h 1m');
     });
   });
+
+  // HIN-158: a budget field carries the unit `h`, so its number is hours. Read
+  // as a work log reads it, "120" became two hours and was saved as such.
+  group('a budget typed in hours', () {
+    test('a bare number is hours, never minutes', () {
+      expect(parseHoursInput('120'), 120 * 60);
+      expect(parseHoursInput('2'), 120);
+      expect(parseHoursInput(' 80 '), 80 * 60);
+    });
+
+    test('both decimal marks, and grouping is not a decimal', () {
+      expect(parseHoursInput('7,5'), 450);
+      expect(parseHoursInput('7.5'), 450);
+      expect(parseHoursInput('1.000'), 1000 * 60);
+      expect(parseHoursInput('1,000'), 1000 * 60);
+      expect(parseHoursInput('1.000,5'), 1000 * 60 + 30);
+    });
+
+    test('a unit typed anyway means what it says', () {
+      expect(parseHoursInput('120h'), 120 * 60);
+      expect(parseHoursInput('120 h'), 120 * 60);
+      expect(parseHoursInput('1h 30m'), 90);
+      expect(parseHoursInput('90m'), 90);
+      expect(parseHoursInput('1:30'), 90);
+    });
+
+    test('nothing usable is null, so a typo never deletes a budget', () {
+      expect(parseHoursInput(''), isNull);
+      expect(parseHoursInput('abc'), isNull);
+      expect(parseHoursInput('12x'), isNull);
+    });
+
+    test('what the field shows reads back to the same minute', () {
+      for (final minutes in [0, 1, 45, 90, 125, 7200, 60000]) {
+        expect(parseHoursInput(formatHoursInput(minutes, 'de')), minutes);
+        expect(parseHoursInput(formatHoursInput(minutes, 'en')), minutes);
+      }
+      expect(formatHoursInput(7200, 'de'), '120');
+      expect(formatHoursInput(450, 'de'), '7,5');
+      expect(formatHoursInput(450, 'en'), '7.5');
+    });
+  });
 }

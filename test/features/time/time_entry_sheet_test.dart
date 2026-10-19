@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
+import 'package:hinata/core/blocs/timer_cubit.dart';
 import 'package:hinata/core/models/time_models.dart';
 import 'package:hinata/core/models/time_policy_models.dart';
 import 'package:hinata/core/models/time_privacy_models.dart';
@@ -11,6 +12,7 @@ import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/time_repository.dart';
+import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/time/placement_picker.dart' show TimePlacement;
 import 'package:hinata/features/time/time_entry_sheet.dart';
 
@@ -33,6 +35,7 @@ void main() {
     WorkItem? entry,
     TimePlacement? placement,
     CalendarEventSuggestion? event,
+    RunningTimer? timer,
     Size size = const Size(900, 1200),
     TimePolicySnapshot policy = TimePolicySnapshot.none,
   }) async {
@@ -52,8 +55,13 @@ void main() {
             value: _FakeIssueRepository(),
           ),
         ],
-        child: BlocProvider<TimePolicyCubit>.value(
-          value: FakeTimePolicyCubit(policy, repository),
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<TimePolicyCubit>.value(
+              value: FakeTimePolicyCubit(policy, repository),
+            ),
+            BlocProvider<TimerCubit>(create: (_) => _IdleTimerCubit()),
+          ],
           child: MaterialApp(
             debugShowCheckedModeBanner: false,
             home: Builder(
@@ -65,6 +73,7 @@ void main() {
                       entry: entry,
                       placement: placement,
                       event: event,
+                      timer: timer,
                       onDeleted: () => deletions++,
                     ),
                     child: const Text('open'),
@@ -109,6 +118,8 @@ void main() {
     final (eventId, conversion) = repository.converted.single;
     expect(eventId, 'e1');
     expect(conversion.description, 'Sprint review');
+    // Untouched, the switch leaves billability to the project's default.
+    expect(conversion.toJson(), isNot(contains('billable')));
     expect(find.text('time.calendarEvents.takeOverTitle'), findsNothing);
   });
 
@@ -484,6 +495,108 @@ void main() {
     expect(repository.updated.single.$2.durationMinutes, 45);
   });
 
+  // HIN-158: the money budget values billable hours only, and nothing in the
+  // form said whether an entry was one.
+  group('the billable switch', () {
+    bool shown(WidgetTester tester) =>
+        tester.widget<HiveSwitch>(find.byType(HiveSwitch)).value;
+
+    testWidgets('a new entry shows the project\'s default and leaves it to the '
+        'server until touched', (tester) async {
+      repository.settings = const ProjectTimeSettings(defaultBillable: true);
+      await open(tester, placement: const TimePlacement(projectId: 'p1'));
+
+      expect(shown(tester), isTrue);
+      await save(tester);
+
+      expect(
+        repository.created.single.toCreateJson(),
+        isNot(contains('billable')),
+      );
+    });
+
+    testWidgets('without a project default it shows the instance\'s', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        placement: const TimePlacement(projectId: 'p1'),
+        policy: const TimePolicySnapshot(defaultBillable: true),
+      );
+
+      expect(shown(tester), isTrue);
+    });
+
+    testWidgets('touched, the choice is sent', (tester) async {
+      repository.settings = const ProjectTimeSettings(defaultBillable: true);
+      await open(tester, placement: const TimePlacement(projectId: 'p1'));
+
+      await tester.tap(find.byType(HiveSwitch));
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      expect(repository.created.single.billable, isFalse);
+    });
+
+    testWidgets('an edit shows the entry\'s own flag and changes it only when '
+        'touched', (tester) async {
+      final entry = WorkItem(
+        id: 'w1',
+        projectId: 'p1',
+        durationMinutes: 60,
+        activityType: 'Development',
+        date: DateTime.now(),
+      );
+      await open(tester, entry: entry);
+
+      expect(shown(tester), isFalse);
+      await save(tester);
+      expect(
+        repository.updated.single.$2.toPatchJson(),
+        isNot(contains('billable')),
+      );
+
+      repository.updated.clear();
+      await open(tester, entry: entry);
+      await tester.tap(find.byType(HiveSwitch));
+      await tester.pumpAndSettle();
+      await save(tester);
+
+      expect(repository.updated.single.$2.toPatchJson()['billable'], isTrue);
+    });
+  });
+
+  group('the billable switch while a timer is finished', () {
+    bool shown(WidgetTester tester) =>
+        tester.widget<HiveSwitch>(find.byType(HiveSwitch)).value;
+
+    RunningTimer timer({required bool billable, bool chosen = false}) =>
+        RunningTimer(
+          id: 't1',
+          startedAt: DateTime.now().subtract(const Duration(minutes: 30)),
+          projectId: 'p1',
+          billable: billable,
+          billableChosen: chosen,
+        );
+
+    testWidgets('filed where it ran, it shows the timer\'s own flag', (
+      tester,
+    ) async {
+      // The project now bills by default, but the timer inherited "no" and
+      // stays where it ran: the stop files what the timer says.
+      repository.settings = const ProjectTimeSettings(defaultBillable: true);
+      await open(tester, timer: timer(billable: false));
+
+      expect(shown(tester), isFalse);
+    });
+
+    testWidgets('a flag somebody chose shows as chosen', (tester) async {
+      await open(tester, timer: timer(billable: true, chosen: true));
+
+      expect(shown(tester), isTrue);
+    });
+  });
+
   group('deleting from the sheet', () {
     final entry = WorkItem(
       id: 'w1',
@@ -553,6 +666,12 @@ void main() {
 
 class _FakeTimeRepository implements TimeRepository {
   List<TimeCorrectionRequest> requests = const [];
+
+  ProjectTimeSettings settings = const ProjectTimeSettings();
+
+  @override
+  Future<ProjectTimeSettings> projectSettings(String projectId) async =>
+      settings;
 
   @override
   Future<List<TimeCorrectionRequest>> entryCorrectionRequests(
@@ -628,6 +747,15 @@ class _FakeProjectRepository implements ProjectRepository {
 }
 
 class _FakeIssueRepository implements IssueRepository {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      throw UnimplementedError('${invocation.memberName} is not faked');
+}
+
+/// The sheet carries the timer cubit across to its route; nothing here stops.
+class _IdleTimerCubit extends Cubit<TimerState> implements TimerCubit {
+  _IdleTimerCubit() : super(const TimerState());
+
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');
