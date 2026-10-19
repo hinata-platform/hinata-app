@@ -653,9 +653,10 @@ class _TriChoice extends StatelessWidget {
         true => context.t('common.yes'),
         false => context.t('common.no'),
       },
-      onTap: () async {
+      onTap: (anchor) async {
         final picked = await showGlassOptions<String>(
           context,
+          anchorRect: anchor,
           title: label,
           options: [
             (
@@ -695,9 +696,10 @@ class _RateKindChoice extends StatelessWidget {
     return _ChoiceRow(
       label: label,
       value: context.t('budget.money.kinds.$current'),
-      onTap: () async {
+      onTap: (anchor) async {
         final picked = await showGlassOptions<String>(
           context,
+          anchorRect: anchor,
           title: label,
           options: [
             for (final kind in ProjectTimeSettings.rateKinds)
@@ -740,9 +742,10 @@ class _ModeChoice extends StatelessWidget {
               },
             )
           : _name(context, current),
-      onTap: () async {
+      onTap: (anchor) async {
         final picked = await showGlassOptions<String>(
           context,
+          anchorRect: anchor,
           title: label,
           options: [
             for (final mode in ProjectTimeSettings.limitModes)
@@ -795,9 +798,10 @@ class _PercentChoice extends StatelessWidget {
         _ChoiceRow(
           label: label,
           value: value == null ? defaultLabel : percent(value!),
-          onTap: () async {
+          onTap: (anchor) async {
             final picked = await showGlassOptions<int>(
               context,
+              anchorRect: anchor,
               title: label,
               options: [
                 (value: 0, child: Text(defaultLabel)),
@@ -846,9 +850,10 @@ class _PeriodChoice extends StatelessWidget {
       value: value == null
           ? context.t('projectSettings.time.inherit')
           : context.t('admin.timeTracking.period.${_key(value!)}'),
-      onTap: () async {
+      onTap: (anchor) async {
         final picked = await showGlassOptions<String>(
           context,
+          anchorRect: anchor,
           title: label,
           options: [
             (
@@ -893,7 +898,9 @@ class _ChoiceRow extends StatelessWidget {
 
   final String label;
   final String value;
-  final VoidCallback onTap;
+
+  /// Opens the picker, hung off this row on a wide screen.
+  final ValueChanged<Rect?> onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -901,7 +908,7 @@ class _ChoiceRow extends StatelessWidget {
     return Semantics(
       button: true,
       child: InkWell(
-        onTap: onTap,
+        onTap: () => onTap(anchorRectOfContext(context)),
         borderRadius: BorderRadius.circular(AppTheme.radiusControl),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),

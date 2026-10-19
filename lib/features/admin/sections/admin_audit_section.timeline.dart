@@ -306,8 +306,23 @@ class _ErrorView extends StatelessWidget {
 
 // ─────────────────────────── Detail sheet ────────────────────────────────
 
-/// Opens a liquid-glass bottom sheet with the full record for [entry].
+/// Opens the full record for [entry]: a liquid-glass bottom sheet on a phone,
+/// a centred card on a wide screen, where a sheet rising from the bottom edge
+/// of a desktop window would be far from the row that was clicked.
 Future<void> showAuditDetailSheet(BuildContext context, AuditEntry entry) {
+  if (MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint) {
+    return showDialog<void>(
+      context: context,
+      useRootNavigator: true,
+      barrierColor: Colors.black.withValues(alpha: 0.32),
+      builder: (_) => Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 560),
+          child: _AuditDetailSheet(entry: entry, sheet: false),
+        ),
+      ),
+    );
+  }
   return showModalBottomSheet<void>(
     context: context,
     useRootNavigator: true,

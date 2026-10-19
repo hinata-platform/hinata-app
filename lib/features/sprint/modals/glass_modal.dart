@@ -450,6 +450,17 @@ Future<T?> showGlassOptions<T>(
       ),
     );
   }
+  // Wide without a rectangle to hang off: a card in the middle, never a sheet
+  // rising from the bottom edge of a desktop window.
+  if (wide) {
+    return showGlassModal<T>(
+      context,
+      adaptive: false,
+      width: 360,
+      builder: (modalContext) =>
+          _OptionsList<T>(title: title, options: options),
+    );
+  }
   return showGlassBottomSheet<T>(
     context,
     builder: (sheetContext) => _OptionsList<T>(title: title, options: options),

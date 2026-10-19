@@ -185,7 +185,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
       _columns.isNotEmpty &&
       _columns.every((c) => c.controller.text.trim().isNotEmpty);
 
-  Future<void> _assign(_StateGroup group) async {
+  Future<void> _assign(_StateGroup group, Rect? anchor) async {
     final groupProjects = {for (final p in group.projects) p.id};
     final options = <({int value, Widget child})>[
       for (var i = 0; i < _columns.length; i++)
@@ -212,6 +212,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
       context,
       title: context.t('board.columns.assignTo'),
       options: options,
+      anchorRect: anchor,
     );
     if (chosen == null || !mounted) return;
     setState(() => _columns[chosen].states.add(group.name));
@@ -396,7 +397,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                   group: group,
                   icon: LucideIcons.plus,
                   actionLabel: context.t('board.columns.assignState'),
-                  onAction: () => _assign(group),
+                  onAction: (anchor) => _assign(group, anchor),
                 ),
             ],
           ),
@@ -502,7 +503,7 @@ class _ColumnsEditorBodyState extends State<_ColumnsEditorBody> {
                           group: _groupFor(state) ?? _StateGroup(state),
                           icon: LucideIcons.x,
                           actionLabel: context.t('board.columns.unassignState'),
-                          onAction: () => _unassignState(column, state),
+                          onAction: (_) => _unassignState(column, state),
                         ),
                     ],
                   ),
@@ -547,7 +548,9 @@ class _StateChip extends StatelessWidget {
 
   /// What [onAction] does, for screen readers and the hover tooltip.
   final String actionLabel;
-  final VoidCallback onAction;
+
+  /// Gets the chip's rectangle, so a picker can hang off it.
+  final ValueChanged<Rect?> onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -599,7 +602,7 @@ class _StateChip extends StatelessWidget {
               excludeFromSemantics: true,
               child: InkWell(
                 borderRadius: BorderRadius.circular(999),
-                onTap: onAction,
+                onTap: () => onAction(anchorRectOfContext(context)),
                 child: Padding(
                   padding: const EdgeInsets.all(4),
                   child: Icon(icon, size: 13, color: AppColors.textSecondary),
