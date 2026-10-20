@@ -584,7 +584,9 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
       if (!mounted) return;
       WidgetsBinding.instance.addPostFrameCallback((_) => _jumpPager(on));
     }
-    final hour = (_now.hour + 1).clamp(0, 23);
+    // Today the next full hour; any other day 9:00. "Next full hour" on a
+    // later day read the clock of now, and at 21:55 offered a shift at 22:00.
+    final hour = dayKey(on) == dayKey(_now) ? (_now.hour + 1).clamp(0, 23) : 9;
     final start = DateTime(on.year, on.month, on.day, hour);
     final target = await _cubit.resolveTarget(
       start,
