@@ -34,19 +34,33 @@ import '../theme/app_type.dart';
 /// nothing more than a label — the row is picked like any other. [search]
 /// narrows the people to a list of the caller's choosing; the directory
 /// otherwise. Resolves to the chosen person, or null when dismissed.
+///
+/// [first] puts one person at the top of the list under a label of its own —
+/// "Mich eintragen" when a planner puts people on a shift — while the search
+/// is empty. [disabledIds] are listed greyed out and cannot be picked, with
+/// [disabledLabel] beside them (people already on that shift).
 Future<DirectoryUser?> showPersonPicker(
   BuildContext context, {
   required Rect anchorRect,
   String? selectedId,
   String? meId,
   PersonSearch? search,
+  ({DirectoryUser user, String label})? first,
+  Set<String> disabledIds = const {},
+  String? disabledLabel,
 }) {
   // The popover is a root-navigator route and so inherits none of the caller's
   // providers — hand the repository across explicitly, to the picker's cubit.
   final repo = search == null ? context.read<UserRepository>() : null;
   Widget panel(bool sheet) => BlocProvider<PersonPickerCubit>(
     create: (_) => PersonPickerCubit(repo, source: search),
-    child: _PersonPickerPanel(selectedId: selectedId, meId: meId),
+    child: _PersonPickerPanel(
+      selectedId: selectedId,
+      meId: meId,
+      first: first,
+      disabledIds: disabledIds,
+      disabledLabel: disabledLabel,
+    ),
   );
 
   if (MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint) {
@@ -167,10 +181,19 @@ String _nameOf(BuildContext context, DirectoryUser user, bool isMe) {
 /// that downloads every account in the org to fill a list is a list that stops
 /// working exactly when the org is big enough to need a search.
 class _PersonPickerPanel extends StatefulWidget {
-  const _PersonPickerPanel({required this.selectedId, required this.meId});
+  const _PersonPickerPanel({
+    required this.selectedId,
+    required this.meId,
+    this.first,
+    this.disabledIds = const {},
+    this.disabledLabel,
+  });
 
   final String? selectedId;
   final String? meId;
+  final ({DirectoryUser user, String label})? first;
+  final Set<String> disabledIds;
+  final String? disabledLabel;
 
   @override
   State<_PersonPickerPanel> createState() => _PersonPickerPanelState();
@@ -347,14 +370,23 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
       );
     }
 
+    final first = _searchCtrl.text.isEmpty ? widget.first : null;
+    Widget row(DirectoryUser user, {String? label}) {
+      final disabled = widget.disabledIds.contains(user.id);
+      return _PersonRow(
+        user: user,
+        selected: user.id == widget.selectedId,
+        isMe: user.id == widget.meId,
+        label: label,
+        disabledLabel: disabled ? widget.disabledLabel : null,
+        onTap: disabled ? null : () => Navigator.of(context).pop(user),
+      );
+    }
+
     final rows = <Widget>[
+      if (first != null) row(first.user, label: first.label),
       for (final user in results)
-        _PersonRow(
-          user: user,
-          selected: user.id == widget.selectedId,
-          isMe: user.id == widget.meId,
-          onTap: () => Navigator.of(context).pop(user),
-        ),
+        if (user.id != first?.user.id) row(user),
       if (results.isEmpty && !_pager.loadingMore)
         Padding(
           padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
@@ -389,12 +421,22 @@ class _PersonRow extends StatelessWidget {
     required this.selected,
     required this.isMe,
     required this.onTap,
+    this.label,
+    this.disabledLabel,
   });
 
   final DirectoryUser user;
   final bool selected;
   final bool isMe;
-  final VoidCallback onTap;
+
+  /// Null for a row that cannot be picked.
+  final VoidCallback? onTap;
+
+  /// Written instead of the name: the pinned first row's own words.
+  final String? label;
+
+  /// Why the row cannot be picked, beside the name.
+  final String? disabledLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -403,56 +445,61 @@ class _PersonRow extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          child: Row(
-            children: [
-              Icon(
-                selected ? LucideIcons.circleCheck : LucideIcons.circle,
-                size: 18,
-                color: selected
-                    ? AppColors.accentInk
-                    : AppColors.textSecondary.withValues(alpha: 0.7),
-              ),
-              const SizedBox(width: 10),
-              HiveAvatar(
-                name: name,
-                imageUrl: user.avatarUrl,
-                pronouns: user.pronouns,
-                size: 28,
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _nameOf(context, user, isMe),
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        fontWeight: selected
-                            ? FontWeight.w600
-                            : FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    if ((user.title ?? '').isNotEmpty)
+      enabled: onTap != null,
+      child: Opacity(
+        opacity: onTap == null ? 0.5 : 1,
+        child: InkWell(
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  selected ? LucideIcons.circleCheck : LucideIcons.circle,
+                  size: 18,
+                  color: selected
+                      ? AppColors.accentInk
+                      : AppColors.textSecondary.withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 10),
+                HiveAvatar(
+                  name: name,
+                  imageUrl: user.avatarUrl,
+                  pronouns: user.pronouns,
+                  size: 28,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                       Text(
-                        user.title!,
+                        label ?? _nameOf(context, user, isMe),
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
-                          fontSize: AppType.caption,
-                          color: AppColors.textSecondary,
+                          fontSize: AppType.label,
+                          fontWeight: selected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: AppColors.textPrimary,
                         ),
                       ),
-                  ],
+                      if (disabledLabel != null ||
+                          (user.title ?? '').isNotEmpty)
+                        Text(
+                          disabledLabel ?? user.title!,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: AppType.caption,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

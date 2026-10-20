@@ -66,6 +66,18 @@ class ShiftSheetCubit extends Cubit<ShiftSheetState> {
     errorKey: key,
   );
 
+  /// The shift's event in full, for the editor (which needs the event's span
+  /// and zone). Null when it cannot be read.
+  Future<ShiftEventSummary?> eventSummary() async {
+    final eventId = state.detail?.shift.eventId;
+    if (eventId == null) return null;
+    try {
+      return (await _shifts.event(eventId)).summary;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Takes the caller's place from an action's answer, before the reload.
   void adoptAssignment(ShiftAssignmentRef? assignment) => emit(
     ShiftSheetState(

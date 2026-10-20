@@ -230,7 +230,7 @@ void main() {
       expect(find.text('Alles besetzt'), findsOneWidget);
       expect(find.text('1 eigene'), findsOneWidget);
       expect(find.text('Abgesagt'), findsOneWidget);
-      expect(repo.calls.first, 'events:all:0');
+      expect(repo.calls, contains('events:all:0'));
     });
 
     testWidgets('none yet', (tester) async {
@@ -321,7 +321,8 @@ void main() {
         findsOneWidget,
       );
       expect(find.text('Eintragen'), findsNothing);
-      expect(find.text('Bestätigt'), findsOneWidget);
+      // The place is named (`myAssignment`), so giving it up is right there.
+      expect(find.text('Abgeben'), findsOneWidget);
       await tester.pump(const Duration(seconds: 6));
       await tester.pump(const Duration(seconds: 1));
     });

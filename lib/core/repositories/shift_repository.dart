@@ -58,6 +58,55 @@ abstract class ShiftRepository {
   Future<void> addPlanner(String projectId, String userId);
 
   Future<void> removePlanner(String projectId, String userId);
+
+  // --- planning (HIN-160) ---------------------------------------------------
+
+  /// Every shift touching [from] to [to] (at most 62 days), across every
+  /// visible project or within [projectId], with the projects the caller
+  /// plans.
+  Future<ShiftCalendar> calendar({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  });
+
+  /// The projects the caller may plan, as far as the server says for a day's
+  /// window. Empty for a helper.
+  Future<Set<String>> plannableProjectIds();
+
+  Future<ShiftEventDetail> createEvent(String projectId, ShiftEventInput input);
+
+  /// Changes an event; [patch] holds only what changed.
+  Future<ShiftEventChange> updateEvent(String id, Map<String, dynamic> patch);
+
+  Future<ShiftEventDetail> cancelEvent(String id);
+
+  Future<void> deleteEvent(String id);
+
+  /// The same shift on each of [days] (wall-clock dates in the event's zone),
+  /// all or none. A refusal names each failed day in its details.
+  Future<List<Shift>> createShifts(
+    String eventId,
+    ShiftInput template,
+    List<DateTime> days,
+  );
+
+  /// Changes a shift; [patch] holds only what changed.
+  Future<ShiftEdit> updateShift(String id, Map<String, dynamic> patch);
+
+  Future<void> deleteShift(String id);
+
+  /// A planner puts [userId] on [shiftId].
+  Future<ShiftAssignResult> assign(String shiftId, String userId);
+
+  // --- the personal feed (HIN-47) -------------------------------------------
+
+  Future<ShiftFeedStatus> feed();
+
+  /// Makes a new feed address; an existing one stops working in the same step.
+  Future<ShiftFeedAddress> createFeed();
+
+  Future<void> deleteFeed();
 }
 
 /// [ShiftRepository] over the app's [ApiClient].
@@ -212,4 +261,127 @@ class ApiShiftRepository implements ShiftRepository {
     '/api/v1/projects/${Uri.encodeComponent(projectId)}/shifts/planners/'
     '${Uri.encodeComponent(userId)}',
   );
+
+  static String _event(String id) =>
+      '/api/v1/shifts/events/${Uri.encodeComponent(id)}';
+
+  static String _shift(String id) =>
+      '/api/v1/shifts/shifts/${Uri.encodeComponent(id)}';
+
+  static String _day(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  @override
+  Future<ShiftCalendar> calendar({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  }) async => ShiftCalendar.fromJson(
+    await _api.get(
+          '/api/v1/shifts/calendar',
+          query: {
+            'from': _instant(from),
+            'to': _instant(to),
+            'projectId': ?projectId,
+          },
+        )
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<Set<String>> plannableProjectIds() async {
+    final now = DateTime.now();
+    final window = await _api.get(
+      '/api/v1/shifts/calendar',
+      query: {
+        'from': _instant(now),
+        'to': _instant(now.add(const Duration(days: 1))),
+        'limit': 1,
+      },
+    );
+    return ShiftCalendar.fromJson(
+      window is Map<String, dynamic> ? window : const {},
+    ).plannableProjectIds;
+  }
+
+  @override
+  Future<ShiftEventDetail> createEvent(
+    String projectId,
+    ShiftEventInput input,
+  ) async => ShiftEventDetail.fromJson(
+    await _api.post(
+          '/api/v1/projects/${Uri.encodeComponent(projectId)}/shifts/events',
+          body: input.toDraftJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<ShiftEventChange> updateEvent(
+    String id,
+    Map<String, dynamic> patch,
+  ) async => ShiftEventChange.fromJson(
+    await _api.patch(_event(id), body: patch) as Map<String, dynamic>,
+  );
+
+  @override
+  Future<ShiftEventDetail> cancelEvent(String id) async =>
+      ShiftEventDetail.fromJson(
+        await _api.post('${_event(id)}/cancel') as Map<String, dynamic>,
+      );
+
+  @override
+  Future<void> deleteEvent(String id) => _api.delete(_event(id));
+
+  @override
+  Future<List<Shift>> createShifts(
+    String eventId,
+    ShiftInput template,
+    List<DateTime> days,
+  ) async {
+    final body = await _api.post(
+      '${_event(eventId)}/shifts:batch',
+      body: {
+        'template': template.toDraftJson(),
+        'days': [for (final d in days) _day(d)],
+      },
+    );
+    return [
+      if (body is List)
+        for (final row in body)
+          if (row is Map<String, dynamic>) Shift.fromJson(row),
+    ];
+  }
+
+  @override
+  Future<ShiftEdit> updateShift(String id, Map<String, dynamic> patch) async =>
+      ShiftEdit.fromJson(
+        await _api.patch(_shift(id), body: patch) as Map<String, dynamic>,
+      );
+
+  @override
+  Future<void> deleteShift(String id) => _api.delete(_shift(id));
+
+  @override
+  Future<ShiftAssignResult> assign(String shiftId, String userId) async =>
+      ShiftAssignResult.forOther(
+        await _api.post(
+              '${_shift(shiftId)}/assignments',
+              body: {'userId': userId},
+            )
+            as Map<String, dynamic>,
+      );
+
+  @override
+  Future<ShiftFeedStatus> feed() async =>
+      ShiftFeedStatus.fromJson(await _api.get('/api/v1/me/shifts/feed'));
+
+  @override
+  Future<ShiftFeedAddress> createFeed() async =>
+      ShiftFeedAddress.fromJson(await _api.post('/api/v1/me/shifts/feed'));
+
+  @override
+  Future<void> deleteFeed() => _api.delete('/api/v1/me/shifts/feed');
 }
