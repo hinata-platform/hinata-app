@@ -762,8 +762,35 @@ void main() {
       expect(find.text('Alle künftigen'), findsOneWidget);
     });
 
+    testWidgets('a shift from the "+" today starts at the next full hour', (
+      tester,
+    ) async {
+      final cubit = await pumpCalendar(
+        tester,
+        events: [
+          event(
+            'today',
+            start: DateTime(2026, 10, 20, 6),
+            end: DateTime(2026, 10, 20, 23),
+          ),
+        ],
+      );
+      cubit.focus(DateTime(2026, 10, 20));
+      await settle(tester);
+      await tester.tap(find.byTooltip('Hinzufügen'));
+      await settle(tester);
+      await tester.tap(find.text('Schicht anlegen'));
+      await settle(tester);
+      // Today, with the clock at 9:20: the next full hour, ten.
+      expect(editor(tester).state.day, DateTime(2026, 10, 20));
+      expect(editor(tester).state.fromMinutes, 10 * 60);
+      expect(editor(tester).state.toMinutes, 11 * 60);
+      Navigator.of(tester.element(find.byType(ShiftEditorBody))).pop();
+      await settle(tester);
+    });
+
     testWidgets('the "+" opens its menu at the pill on a wide window and as a '
-        'sheet on a phone; a shift from it goes at the next full hour', (
+        'sheet on a phone; a shift from it on another day starts at nine', (
       tester,
     ) async {
       await pumpCalendar(
@@ -782,10 +809,10 @@ void main() {
       expect(find.text('Neues Event'), findsOneWidget);
       await tester.tap(find.text('Schicht anlegen'));
       await settle(tester);
-      // The day in focus, at ten: the next full hour after 9:20.
+      // The day in focus is not today (the clock reads the 20th): at nine.
       expect(editor(tester).state.day, DateTime(2026, 10, 24));
-      expect(editor(tester).state.fromMinutes, 10 * 60);
-      expect(editor(tester).state.toMinutes, 11 * 60);
+      expect(editor(tester).state.fromMinutes, 9 * 60);
+      expect(editor(tester).state.toMinutes, 10 * 60);
       Navigator.of(tester.element(find.byType(ShiftEditorBody))).pop();
       await settle(tester);
 
