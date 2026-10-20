@@ -790,7 +790,8 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
     final month = state.months[key];
     // Not held: it is read with the month when the month is next shown.
     if (month == null) return !state.loading.contains(key);
-    final head = month.events[shift.eventId] ?? _headOf(shift.eventId);
+    // Any held month's head, else the event as a planner's event.
+    final head = eventOf(shift) ?? _known[shift.eventId]?.toHead();
     if (head == null) return false;
     emit(
       state.copyWith(
@@ -807,27 +808,6 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
       ),
     );
     return true;
-  }
-
-  /// The head of an event the calendar knows as a planner's event.
-  ShiftEventHead? _headOf(String eventId) {
-    for (final month in state.months.values) {
-      final head = month.events[eventId];
-      if (head != null) return head;
-    }
-    final e = _known[eventId];
-    if (e == null) return null;
-    return ShiftEventHead(
-      id: e.id,
-      title: e.title,
-      location: e.location,
-      timezone: e.timezone,
-      selfAssignable: e.selfAssignable,
-      cancelled: e.cancelled,
-      seriesId: e.seriesId,
-      recurrenceLabel: e.recurrenceLabel,
-      detached: e.detached,
-    );
   }
 
   void _onChanges(List<ShiftChange> changes) {
