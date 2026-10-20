@@ -73,10 +73,16 @@ class ShiftEditorBody extends StatefulWidget {
 }
 
 class _ShiftEditorBodyState extends State<ShiftEditorBody> {
-  late final TextEditingController _title = TextEditingController(
-    text: context.read<ShiftEditorCubit>().state.title,
-  );
+  late final TextEditingController _title;
   bool _daysOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _title = TextEditingController(
+      text: context.read<ShiftEditorCubit>().state.title,
+    );
+  }
 
   @override
   void dispose() {
@@ -462,18 +468,21 @@ class ShiftStepper extends StatelessWidget {
                 ),
                 Expanded(
                   child: ExcludeSemantics(
-                    child: Text(
-                      shown,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: value == null ? null : AppTheme.fontBrand,
-                        fontSize: value == null
-                            ? AppType.label
-                            : AppType.heading,
-                        fontWeight: FontWeight.w700,
-                        color: value == null
-                            ? AppColors.inkSoft
-                            : AppColors.ink,
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        shown,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: value == null ? null : AppTheme.fontBrand,
+                          fontSize: value == null
+                              ? AppType.label
+                              : AppType.heading,
+                          fontWeight: FontWeight.w700,
+                          color: value == null
+                              ? AppColors.inkSoft
+                              : AppColors.ink,
+                        ),
                       ),
                     ),
                   ),
