@@ -99,23 +99,25 @@ class ShiftPlanningCubit extends Cubit<ShiftPlanningState> {
         );
       });
 
-  Future<ShiftPlanOutcome> deleteShift(Shift shift) => _run(shift.id, () async {
-    await _shifts.deleteShift(shift.id);
-    return const ShiftPlanOutcome.done('shifts.plan.done.shiftDeleted');
-  });
+  /// [scope] where the shift's event is an occurrence of a series.
+  Future<ShiftPlanOutcome> deleteShift(Shift shift, {ShiftScope? scope}) =>
+      _run(shift.id, () async {
+        await _shifts.deleteShift(shift.id, scope: scope);
+        return const ShiftPlanOutcome.done('shifts.plan.done.shiftDeleted');
+      }, eventWide: scope == ShiftScope.future);
 
-  Future<ShiftPlanOutcome> cancelEvent(String eventId) =>
+  Future<ShiftPlanOutcome> cancelEvent(String eventId, {ShiftScope? scope}) =>
       _run(eventId, () async {
-        final event = await _shifts.cancelEvent(eventId);
+        final event = await _shifts.cancelEvent(eventId, scope: scope);
         return ShiftPlanOutcome.done(
           'shifts.plan.done.eventCancelled',
           event: event,
         );
       }, eventWide: true);
 
-  Future<ShiftPlanOutcome> deleteEvent(String eventId) =>
+  Future<ShiftPlanOutcome> deleteEvent(String eventId, {ShiftScope? scope}) =>
       _run(eventId, () async {
-        await _shifts.deleteEvent(eventId);
+        await _shifts.deleteEvent(eventId, scope: scope);
         return const ShiftPlanOutcome.done('shifts.plan.done.eventDeleted');
       }, eventWide: true);
 

@@ -318,6 +318,21 @@ String _wallClock(DateTime t) {
       'T${two(t.hour)}:${two(t.minute)}:${two(t.second)}';
 }
 
+/// Which occurrences of a series a write applies to (HIN-161). Every write to
+/// an event with a series names one; the server refuses it otherwise.
+enum ShiftScope {
+  /// Only this occurrence, which then no longer follows its series.
+  single('this'),
+
+  /// This occurrence and every later one: the series is split here.
+  future('future');
+
+  const ShiftScope(this.wire);
+
+  /// The value of the `scope` query parameter.
+  final String wire;
+}
+
 /// What a row pointing at an event needs (`EventHead`).
 class ShiftEventHead extends Equatable {
   const ShiftEventHead({
@@ -327,6 +342,9 @@ class ShiftEventHead extends Equatable {
     this.timezone,
     this.selfAssignable = true,
     this.cancelled = false,
+    this.seriesId,
+    this.recurrenceLabel,
+    this.detached = false,
   });
 
   final String id;
@@ -336,6 +354,18 @@ class ShiftEventHead extends Equatable {
   final bool selfAssignable;
   final bool cancelled;
 
+  /// The series the event is an occurrence of (HIN-161), or null.
+  final String? seriesId;
+
+  /// The series' rule in the reader's words, as the server wrote it.
+  final String? recurrenceLabel;
+
+  /// An occurrence that no longer follows its series.
+  final bool detached;
+
+  /// Whether every write to it has to say its scope ([ShiftScope]).
+  bool get inSeries => seriesId != null;
+
   factory ShiftEventHead.fromJson(Map<String, dynamic> json) => ShiftEventHead(
     id: json['id'] as String? ?? '',
     title: json['title'] as String? ?? '',
@@ -343,6 +373,9 @@ class ShiftEventHead extends Equatable {
     timezone: _text(json['timezone']),
     selfAssignable: _bool(json['selfAssignable'], true),
     cancelled: _bool(json['cancelled']),
+    seriesId: _text(json['seriesId']),
+    recurrenceLabel: _text(json['recurrenceLabel']),
+    detached: _bool(json['detached']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -352,6 +385,9 @@ class ShiftEventHead extends Equatable {
     'timezone': timezone,
     'selfAssignable': selfAssignable,
     'cancelled': cancelled,
+    'seriesId': seriesId,
+    'recurrenceLabel': recurrenceLabel,
+    'detached': detached,
   };
 
   @override
@@ -362,6 +398,9 @@ class ShiftEventHead extends Equatable {
     timezone,
     selfAssignable,
     cancelled,
+    seriesId,
+    recurrenceLabel,
+    detached,
   ];
 }
 
@@ -385,6 +424,9 @@ class ShiftEventSummary extends Equatable {
     this.shiftsUnderstaffed = 0,
     this.mineCount = 0,
     this.canPlan = false,
+    this.seriesId,
+    this.recurrenceLabel,
+    this.detached = false,
   });
 
   final String id;
@@ -407,6 +449,14 @@ class ShiftEventSummary extends Equatable {
   final int shiftsUnderstaffed;
   final int mineCount;
   final bool canPlan;
+
+  /// See [ShiftEventHead.seriesId], [ShiftEventHead.recurrenceLabel] and
+  /// [ShiftEventHead.detached].
+  final String? seriesId;
+  final String? recurrenceLabel;
+  final bool detached;
+
+  bool get inSeries => seriesId != null;
 
   Coverage get coverage =>
       Coverage(assigned: placesTaken, required: placesRequired);
@@ -432,6 +482,9 @@ class ShiftEventSummary extends Equatable {
       shiftsUnderstaffed: _int(json['shiftsUnderstaffed']),
       mineCount: _int(json['mineCount']),
       canPlan: _bool(json['canPlan']),
+      seriesId: _text(json['seriesId']),
+      recurrenceLabel: _text(json['recurrenceLabel']),
+      detached: _bool(json['detached']),
     );
   }
 
@@ -454,6 +507,9 @@ class ShiftEventSummary extends Equatable {
     shiftsUnderstaffed,
     mineCount,
     canPlan,
+    seriesId,
+    recurrenceLabel,
+    detached,
   ];
 }
 

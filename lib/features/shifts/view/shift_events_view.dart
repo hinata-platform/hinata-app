@@ -129,10 +129,9 @@ class _ShiftEventsViewState extends State<ShiftEventsView> {
       projectName: project?.name,
       plannable: plannable,
     );
-    if (saved != null && mounted) {
-      unawaited(
-        context.push('${ShiftsView.events.route}/${saved.event.summary.id}'),
-      );
+    final id = saved?.eventId;
+    if (id != null && mounted) {
+      unawaited(context.push('${ShiftsView.events.route}/$id'));
     }
   }
 

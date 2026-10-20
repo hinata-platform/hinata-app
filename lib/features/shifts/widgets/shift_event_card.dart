@@ -30,6 +30,12 @@ class ShiftEventCard extends StatelessWidget {
     final staffing = eventStaffingLabel(context, event.shiftsUnderstaffed);
     final when = eventSpanLabel(context, event.startsLocal, event.endsLocal);
     final where = [when, if (event.location != null) event.location!];
+    final series = seriesLine(
+      context,
+      seriesId: event.seriesId,
+      recurrenceLabel: event.recurrenceLabel,
+      detached: event.detached,
+    );
     final large = MediaQuery.textScalerOf(context).scale(10) >= 15;
     final card = SoftCard(
       padding: const EdgeInsets.all(16),
@@ -72,6 +78,15 @@ class ShiftEventCard extends StatelessWidget {
                     color: AppColors.inkSoft,
                   ),
                 ),
+                if (series != null) ...[
+                  const SizedBox(height: 3),
+                  _Tag(
+                    icon: LucideIcons.repeat,
+                    text: series,
+                    color: AppColors.inkSoft,
+                    weight: FontWeight.w400,
+                  ),
+                ],
                 const SizedBox(height: 8),
                 Wrap(
                   spacing: 12,
@@ -136,11 +151,17 @@ class ShiftEventCard extends StatelessWidget {
 }
 
 class _Tag extends StatelessWidget {
-  const _Tag({required this.icon, required this.text, required this.color});
+  const _Tag({
+    required this.icon,
+    required this.text,
+    required this.color,
+    this.weight = FontWeight.w600,
+  });
 
   final IconData icon;
   final String text;
   final Color color;
+  final FontWeight weight;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -153,7 +174,7 @@ class _Tag extends StatelessWidget {
           text,
           style: TextStyle(
             fontSize: AppType.label,
-            fontWeight: FontWeight.w600,
+            fontWeight: weight,
             color: color,
           ),
         ),

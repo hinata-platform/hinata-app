@@ -26,6 +26,7 @@ import '../bloc/shift_planning_cubit.dart';
 import '../shift_views.dart';
 import '../widgets/shift_editor.dart';
 import '../widgets/shift_event_editor.dart';
+import '../widgets/series_scope_dialog.dart';
 import '../widgets/shift_plan_actions.dart';
 import '../shift_texts.dart';
 import '../widgets/coverage_hex.dart';
@@ -120,6 +121,7 @@ Future<void> _eventMenu(
 ) async {
   final cubit = context.read<ShiftEventCubit>();
   final planning = context.read<ShiftPlanningCubit>();
+  final summary = detail.summary;
   final rect = anchor ?? anchorRectOfContext(context) ?? Rect.zero;
   final picked = await showGlassMenu<_EventMenu>(
     context: context,
@@ -157,34 +159,59 @@ Future<void> _eventMenu(
   switch (picked) {
     case _EventMenu.edit:
       final saved = await showShiftEventEditor(context, existing: detail);
-      if (saved != null) cubit.applyEvent(saved.event);
+      if (saved?.event case final event?) cubit.applyEvent(event);
     case _EventMenu.cancel:
-      final sure = await showGlassConfirm(
-        context,
-        icon: LucideIcons.ban,
-        title: context.t('shifts.plan.event.cancelTitle'),
-        message: context.t('shifts.plan.event.cancelMessage'),
-        confirmLabel: context.t('shifts.plan.event.cancel'),
-        confirmIcon: LucideIcons.ban,
-        destructive: true,
-      );
-      if (sure != true || !context.mounted) return;
-      final outcome = await planning.cancelEvent(detail.summary.id);
+      final ShiftScope? scope;
+      if (summary.inSeries) {
+        // The scope dialog is the confirmation: one question, not two.
+        scope = await askSeriesScope(
+          context,
+          write: SeriesWrite.cancel,
+          day: summary.startsLocal,
+          recurrenceLabel: summary.recurrenceLabel,
+        );
+        if (scope == null || !context.mounted) return;
+      } else {
+        scope = null;
+        final sure = await showGlassConfirm(
+          context,
+          icon: LucideIcons.ban,
+          title: context.t('shifts.plan.event.cancelTitle'),
+          message: context.t('shifts.plan.event.cancelMessage'),
+          confirmLabel: context.t('shifts.plan.event.cancel'),
+          confirmIcon: LucideIcons.ban,
+          destructive: true,
+        );
+        if (sure != true || !context.mounted) return;
+      }
+      final outcome = await planning.cancelEvent(summary.id, scope: scope);
       if (!context.mounted) return;
       announcePlanOutcome(context, outcome);
       if (outcome.event case final event?) cubit.applyEvent(event);
     case _EventMenu.delete:
-      final sure = await showGlassConfirm(
-        context,
-        icon: LucideIcons.trash2,
-        title: context.t('shifts.plan.event.deleteTitle'),
-        message: context.t('shifts.plan.event.deleteMessage'),
-        confirmLabel: context.t('shifts.plan.delete'),
-        confirmIcon: LucideIcons.trash2,
-        destructive: true,
-      );
-      if (sure != true || !context.mounted) return;
-      final outcome = await planning.deleteEvent(detail.summary.id);
+      final ShiftScope? scope;
+      if (summary.inSeries) {
+        scope = await askSeriesScope(
+          context,
+          write: SeriesWrite.delete,
+          day: summary.startsLocal,
+          recurrenceLabel: summary.recurrenceLabel,
+        );
+        if (scope == null || !context.mounted) return;
+      } else {
+        scope = null;
+        final sure = await showGlassConfirm(
+          context,
+          icon: LucideIcons.trash2,
+          title: context.t('shifts.plan.event.deleteTitle'),
+          message: context.t('shifts.plan.event.deleteMessage'),
+          confirmLabel: context.t('shifts.plan.delete'),
+          confirmIcon: LucideIcons.trash2,
+          destructive: true,
+        );
+        if (sure != true || !context.mounted) return;
+      }
+      final outcome = await planning.deleteEvent(summary.id, scope: scope);
       if (!context.mounted) return;
       announcePlanOutcome(context, outcome);
       if (outcome.ok) context.go(ShiftsView.events.route);
@@ -389,6 +416,12 @@ class _Head extends StatelessWidget {
       eventSpanLabel(context, summary.startsLocal, summary.endsLocal),
       if (summary.location != null) summary.location!,
     ].join(' · ');
+    final series = seriesLine(
+      context,
+      seriesId: summary.seriesId,
+      recurrenceLabel: summary.recurrenceLabel,
+      detached: summary.detached,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -410,6 +443,14 @@ class _Head extends StatelessWidget {
           where,
           style: TextStyle(fontSize: AppType.body, color: AppColors.inkSoft),
         ),
+        if (series != null) ...[
+          const SizedBox(height: 8),
+          _Line(
+            icon: LucideIcons.repeat,
+            text: series,
+            color: AppColors.inkSoft,
+          ),
+        ],
         if (summary.cancelled) ...[
           const SizedBox(height: 10),
           _Line(

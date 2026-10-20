@@ -13,6 +13,7 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/i18n/i18n.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/shift_models.dart';
+import 'package:hinata/core/models/shift_series.dart';
 import 'package:hinata/core/repositories/shift_repository.dart';
 import 'package:hinata/core/theme/app_theme.dart';
 import 'package:i18next/i18next.dart';
@@ -137,6 +138,17 @@ class FakeShiftRepository implements ShiftRepository {
   ShiftInput? lastTemplate;
   List<DateTime>? lastDays;
 
+  // --- series (HIN-161) ---
+  Shift? createdShift;
+  ShiftSeries? createdSeries;
+  SeriesPreview preview = const SeriesPreview(recurrenceLabel: 'wöchentlich');
+  ShiftSeries? seriesAnswer;
+  SeriesDraft? lastDraft;
+
+  /// A write's name, with its scope where it has one: `updateEvent:e1:future`.
+  static String _scoped(String name, ShiftScope? scope) =>
+      scope == null ? name : '$name:${scope.wire}';
+
   @override
   Future<ShiftCalendar> calendar({
     required DateTime from,
@@ -166,37 +178,77 @@ class FakeShiftRepository implements ShiftRepository {
   }
 
   @override
-  Future<ShiftEventChange> updateEvent(String id, Map<String, dynamic> patch) {
+  Future<ShiftEventChange> updateEvent(
+    String id,
+    Map<String, dynamic> patch, {
+    ShiftScope? scope,
+  }) {
     lastPatch = patch;
-    return _answer('updateEvent:$id', () => eventChange!);
+    return _answer(_scoped('updateEvent:$id', scope), () => eventChange!);
   }
 
   @override
-  Future<ShiftEventDetail> cancelEvent(String id) =>
-      _answer('cancelEvent:$id', () => eventDetail!);
+  Future<ShiftEventDetail> cancelEvent(String id, {ShiftScope? scope}) =>
+      _answer(_scoped('cancelEvent:$id', scope), () => eventDetail!);
 
   @override
-  Future<void> deleteEvent(String id) => _answer('deleteEvent:$id', () {});
+  Future<void> deleteEvent(String id, {ShiftScope? scope}) =>
+      _answer(_scoped('deleteEvent:$id', scope), () {});
 
   @override
   Future<List<Shift>> createShifts(
     String eventId,
     ShiftInput template,
-    List<DateTime> days,
-  ) {
+    List<DateTime> days, {
+    ShiftScope? scope,
+  }) {
     lastTemplate = template;
     lastDays = days;
-    return _answer('createShifts:$eventId:${days.length}', () => createdShifts);
+    return _answer(
+      _scoped('createShifts:$eventId:${days.length}', scope),
+      () => createdShifts,
+    );
   }
 
   @override
-  Future<ShiftEdit> updateShift(String id, Map<String, dynamic> patch) {
+  Future<Shift> createShift(
+    String eventId,
+    ShiftInput input, {
+    ShiftScope? scope,
+  }) {
+    lastTemplate = input;
+    return _answer(_scoped('createShift:$eventId', scope), () => createdShift!);
+  }
+
+  @override
+  Future<ShiftEdit> updateShift(
+    String id,
+    Map<String, dynamic> patch, {
+    ShiftScope? scope,
+  }) {
     lastPatch = patch;
-    return _answer('updateShift:$id', () => shiftEdit!);
+    return _answer(_scoped('updateShift:$id', scope), () => shiftEdit!);
   }
 
   @override
-  Future<void> deleteShift(String id) => _answer('deleteShift:$id', () {});
+  Future<void> deleteShift(String id, {ShiftScope? scope}) =>
+      _answer(_scoped('deleteShift:$id', scope), () {});
+
+  @override
+  Future<ShiftSeries> createSeries(String projectId, SeriesDraft draft) {
+    lastDraft = draft;
+    return _answer('createSeries:$projectId', () => createdSeries!);
+  }
+
+  @override
+  Future<SeriesPreview> previewSeries(String projectId, SeriesDraft draft) {
+    lastDraft = draft;
+    return _answer('previewSeries:$projectId', () => preview);
+  }
+
+  @override
+  Future<ShiftSeries> series(String id) =>
+      _answer('series:$id', () => seriesAnswer!);
 
   @override
   Future<ShiftAssignResult> assign(String shiftId, String userId) =>
@@ -281,6 +333,9 @@ ShiftEventSummary sampleSummary({
   bool cancelled = false,
   int mine = 1,
   bool selfAssignable = true,
+  String? seriesId,
+  String? recurrenceLabel,
+  bool detached = false,
 }) => ShiftEventSummary(
   id: id,
   projectId: 'p1',
@@ -297,6 +352,9 @@ ShiftEventSummary sampleSummary({
   mineCount: mine,
   cancelled: cancelled,
   selfAssignable: selfAssignable,
+  seriesId: seriesId,
+  recurrenceLabel: recurrenceLabel,
+  detached: detached,
 );
 
 /// The real bundle of [code], handed over synchronously: the asset bundle
