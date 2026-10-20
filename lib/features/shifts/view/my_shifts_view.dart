@@ -135,6 +135,12 @@ class _Widget extends _Entry {
   final Widget child;
 }
 
+/// The page's frame: which of loading, failure, offline and the list it is.
+///
+/// It reads only what decides that, so the three cubits behind the page
+/// rebuild their own part and nothing else: the hero, the waiting lists, the
+/// own rows and the open shifts are slivers of their own, each with its own
+/// selector. The snapshot is read only while offline.
 class _Body extends StatelessWidget {
   const _Body({required this.now, required this.compact});
 
@@ -143,22 +149,23 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final paged = context.watch<MyShiftsCubit>().state;
-    final head = context.watch<NextShiftCubit>().state;
-    final snapshot = context.watch<MyShiftsSnapshotCubit>().state;
-    final selfId = context.select<AuthBloc, String?>(
-      (bloc) => bloc.state.user?.id,
+    final hasData = context.select<MyShiftsCubit, bool>((c) => c.state.hasData);
+    final errorKey = context.select<MyShiftsCubit, String?>(
+      (c) => c.state.errorKey,
+    );
+    final snapshotEmpty = context.select<MyShiftsSnapshotCubit, bool>(
+      (c) => c.state.isEmpty,
     );
 
     // Offline: the list could not be read and there is a snapshot to show.
-    final failed = paged.errorKey != null && !paged.hasData;
-    final offline = failed && !snapshot.isEmpty;
-    if (!paged.hasData && !failed) {
+    final failed = errorKey != null && !hasData;
+    final offline = failed && !snapshotEmpty;
+    if (!hasData && !failed) {
       return const Center(child: HiveLoader());
     }
     if (failed && !offline) {
       return _Failure(
-        errorKey: paged.errorKey!,
+        errorKey: errorKey,
         onRetry: () {
           unawaited(context.read<MyShiftsCubit>().load());
           unawaited(context.read<NextShiftCubit>().load());
@@ -166,44 +173,10 @@ class _Body extends StatelessWidget {
       );
     }
 
-    final next = offline ? snapshot.next : head.next;
-    final rows = offline ? snapshot.rows : paged.items;
-    final listed = [
-      for (final row in rows)
-        if (row.assignmentId != next?.assignmentId) row,
-    ];
-    final clock = now();
-    final hero = next == null
-        ? null
-        : NextShiftHero(
-            next: next,
-            now: clock,
-            detail: offline ? null : head.nextDetail,
-            selfId: selfId,
-            offline: offline,
-            large: !compact,
-            onOpen: offline ? null : () => _openSheet(context, next, null),
-            onAction: (action) => _act(context, action, next),
-          );
-
-    final entries = <_Entry>[
-      if (offline) _Widget(_Note(text: context.t('shifts.mine.offline'))),
-      if (next == null && listed.isEmpty)
-        _Widget(
-          HiveEmptyState(
-            title: context.t('shifts.empty.title'),
-            message: context.t('shifts.empty.message'),
-            action: GhostButton(
-              label: context.t('shifts.mine.toEvents'),
-              icon: LucideIcons.partyPopper,
-              onPressed: () => context.go(ShiftsView.events.route),
-            ),
-          ),
-        ),
-      if (!offline) ..._waiting(context, head),
-      ..._byDay(context, listed),
-      if (!offline) ..._open(context, head),
-    ];
+    final rows = _Rows(now: now, compact: compact, offline: offline);
+    final heroSliver = compact
+        ? SliverToBoxAdapter(child: _HeroSlot(rows: rows, gap: 28))
+        : null;
 
     final list = NotificationListener<ScrollNotification>(
       onNotification: (n) {
@@ -229,34 +202,93 @@ class _Body extends StatelessWidget {
                 // The last row scrolls clear of the floating nav.
                 context.pageGutter + context.bottomGutter,
               ),
-              sliver: SliverList.builder(
-                itemCount:
-                    entries.length +
-                    (compact && hero != null ? 2 : 0) +
-                    (paged.isLoadingMore ? 1 : 0),
-                itemBuilder: (context, index) {
-                  var i = index;
-                  if (compact && hero != null) {
-                    if (i == 0) return hero;
-                    if (i == 1) return const SizedBox(height: 28);
-                    i -= 2;
-                  }
-                  if (i >= entries.length) {
-                    return const Padding(
-                      padding: EdgeInsets.all(16),
-                      child: Center(child: HiveLoader(size: 26)),
-                    );
-                  }
-                  return _entry(context, entries[i], offline);
-                },
+              sliver: SliverMainAxisGroup(
+                slivers: [
+                  ?heroSliver,
+                  if (offline)
+                    _OfflineRows(rows: rows)
+                  else ...[
+                    _MineRows(rows: rows, emptyOnly: true),
+                    _WaitingRows(rows: rows),
+                    _MineRows(rows: rows),
+                    _OpenRows(rows: rows),
+                  ],
+                ],
               ),
             ),
           ],
         ),
       ),
     );
-    if (compact || hero == null) return list;
-    // Wide: the list beside the hero, 62 to 38.
+    if (compact) return list;
+    // Wide: the list beside the hero, 62 to 38, once there is a hero.
+    return _HeroBeside(rows: rows, list: list);
+  }
+}
+
+/// Lays [entries] out lazily, one sliver.
+class _EntrySliver extends StatelessWidget {
+  const _EntrySliver({required this.rows, required this.entries});
+
+  final _Rows rows;
+  final List<_Entry> entries;
+
+  @override
+  Widget build(BuildContext context) => SliverList.builder(
+    itemCount: entries.length,
+    itemBuilder: (context, i) => rows.entry(context, entries[i]),
+  );
+}
+
+/// The next shift, from the next-shift cubit alone; offline from the
+/// snapshot.
+class _HeroSlot extends StatelessWidget {
+  const _HeroSlot({required this.rows, this.gap = 0});
+
+  final _Rows rows;
+  final double gap;
+
+  @override
+  Widget build(BuildContext context) {
+    final MyShift? next;
+    final ShiftDetail? detail;
+    if (rows.offline) {
+      next = context.select<MyShiftsSnapshotCubit, MyShift?>(
+        (c) => c.state.next,
+      );
+      detail = null;
+    } else {
+      next = context.select<NextShiftCubit, MyShift?>((c) => c.state.next);
+      detail = context.select<NextShiftCubit, ShiftDetail?>(
+        (c) => c.state.nextDetail,
+      );
+    }
+    if (next == null) return const SizedBox.shrink();
+    final hero = rows.hero(context, next, detail);
+    return gap == 0
+        ? hero
+        : Padding(
+            padding: EdgeInsets.only(bottom: gap),
+            child: hero,
+          );
+  }
+}
+
+/// Wide: the list, and the hero beside it once there is one.
+class _HeroBeside extends StatelessWidget {
+  const _HeroBeside({required this.rows, required this.list});
+
+  final _Rows rows;
+  final Widget list;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasNext = rows.offline
+        ? context.select<MyShiftsSnapshotCubit, bool>(
+            (c) => c.state.next != null,
+          )
+        : context.select<NextShiftCubit, bool>((c) => c.state.next != null);
+    if (!hasNext) return list;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -271,30 +303,203 @@ class _Body extends StatelessWidget {
               context.pageGutter,
               context.pageGutter + context.bottomGutter,
             ),
-            child: hero,
+            child: _HeroSlot(rows: rows),
           ),
         ),
       ],
     );
   }
+}
 
-  /// The compact group above the list: the shifts the caller waits for.
-  List<_Entry> _waiting(BuildContext context, NextShiftState head) {
-    final waiting = head.waiting;
-    if (waiting.isEmpty && !head.waitingFailed) return const [];
+/// The compact group above the list: the shifts the caller waits for.
+class _WaitingRows extends StatelessWidget {
+  const _WaitingRows({required this.rows});
+
+  final _Rows rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final waiting = context.select<NextShiftCubit, List<MyShift>>(
+      (c) => c.state.waiting,
+    );
+    final failed = context.select<NextShiftCubit, bool>(
+      (c) => c.state.waitingFailed,
+    );
+    if (waiting.isEmpty && !failed) {
+      return const SliverToBoxAdapter(child: SizedBox.shrink());
+    }
+    return _EntrySliver(
+      rows: rows,
+      entries: [
+        _Header(context.t('shifts.mine.waitlist')),
+        if (failed)
+          _Widget(_Note(text: context.t('shifts.mine.waitlistFailed'))),
+        for (final row in waiting) ...[_Waiting(row), const _Gap(10)],
+        const _Gap(18),
+      ],
+    );
+  }
+}
+
+/// The caller's own rows by day, the empty state when there are none, and
+/// the spinner while a page is on its way.
+class _MineRows extends StatelessWidget {
+  const _MineRows({required this.rows, this.emptyOnly = false});
+
+  final _Rows rows;
+
+  /// Only the empty state, which stands above the waiting lists.
+  final bool emptyOnly;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = context.select<MyShiftsCubit, List<MyShift>>(
+      (c) => c.state.items,
+    );
+    final loadingMore = context.select<MyShiftsCubit, bool>(
+      (c) => c.state.isLoadingMore,
+    );
+    final nextId = context.select<NextShiftCubit, String?>(
+      (c) => c.state.next?.assignmentId,
+    );
+    if (emptyOnly) {
+      return _EntrySliver(
+        rows: rows,
+        entries: rows.empty(context, items, nextId),
+      );
+    }
+    return _EntrySliver(
+      rows: rows,
+      entries: [
+        ...rows.mine(context, items, nextId),
+        if (loadingMore)
+          const _Widget(
+            Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(child: HiveLoader(size: 26)),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The open shifts in the caller's projects.
+class _OpenRows extends StatelessWidget {
+  const _OpenRows({required this.rows});
+
+  final _Rows rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final loaded = context.select<NextShiftCubit, bool>((c) => c.state.loaded);
+    final open = context.select<NextShiftCubit, ShiftCalendar>(
+      (c) => c.state.open,
+    );
+    if (!loaded) return const SliverToBoxAdapter(child: SizedBox.shrink());
+    return _EntrySliver(
+      rows: rows,
+      entries: [
+        _Header(
+          context.t('shifts.mine.open'),
+          trailing: open.shifts.isEmpty
+              ? null
+              : context.t('shifts.mine.openCount', count: open.shifts.length),
+        ),
+        if (open.shifts.isEmpty)
+          _Widget(_Note(text: context.t('shifts.mine.openEmpty'))),
+        for (final shift in open.shifts) ...[
+          _Open(shift, open.events[shift.eventId]),
+          const _Gap(10),
+        ],
+        _Widget(
+          Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: TextButton.icon(
+              onPressed: () => context.go(ShiftsView.events.route),
+              icon: const Icon(LucideIcons.arrowRight, size: 16),
+              label: Text(context.t('shifts.mine.toEvents')),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Offline: what the snapshot kept, said to be the last state loaded.
+class _OfflineRows extends StatelessWidget {
+  const _OfflineRows({required this.rows});
+
+  final _Rows rows;
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = context.watch<MyShiftsSnapshotCubit>().state;
+    return _EntrySliver(
+      rows: rows,
+      entries: [
+        _Widget(_Note(text: context.t('shifts.mine.offline'))),
+        ...rows.empty(context, snapshot.rows, snapshot.next?.assignmentId),
+        ...rows.mine(context, snapshot.rows, snapshot.next?.assignmentId),
+      ],
+    );
+  }
+}
+
+/// How the page draws its rows; shared by the slivers.
+class _Rows {
+  const _Rows({
+    required this.now,
+    required this.compact,
+    required this.offline,
+  });
+
+  final DateTime Function() now;
+  final bool compact;
+  final bool offline;
+
+  Widget hero(BuildContext context, MyShift next, ShiftDetail? detail) =>
+      NextShiftHero(
+        next: next,
+        now: now(),
+        detail: offline ? null : detail,
+        selfId: context.select<AuthBloc, String?>((b) => b.state.user?.id),
+        offline: offline,
+        large: !compact,
+        onOpen: offline ? null : () => _openSheet(context, next, null),
+        onAction: (action) => _act(context, action, next),
+      );
+
+  /// The empty state, when there is neither a next shift nor a row.
+  List<_Entry> empty(BuildContext context, List<MyShift> rows, String? nextId) {
+    if (nextId != null || rows.any((r) => r.assignmentId != nextId)) {
+      return const [];
+    }
     return [
-      _Header(context.t('shifts.mine.waitlist')),
-      if (head.waitingFailed)
-        _Widget(_Note(text: context.t('shifts.mine.waitlistFailed'))),
-      for (final row in waiting) ...[_Waiting(row), const _Gap(10)],
-      const _Gap(18),
+      _Widget(
+        HiveEmptyState(
+          title: context.t('shifts.empty.title'),
+          message: context.t('shifts.empty.message'),
+          action: GhostButton(
+            label: context.t('shifts.mine.toEvents'),
+            icon: LucideIcons.partyPopper,
+            onPressed: () => context.go(ShiftsView.events.route),
+          ),
+        ),
+      ),
     ];
   }
 
-  List<_Entry> _byDay(BuildContext context, List<MyShift> rows) {
+  /// The own rows by day, without the hero's.
+  List<_Entry> mine(BuildContext context, List<MyShift> rows, String? nextId) {
+    final listed = [
+      for (final row in rows)
+        if (row.assignmentId != nextId) row,
+    ];
     final out = <_Entry>[];
     DateTime? day;
-    for (final row in rows) {
+    for (final row in listed) {
       final start = row.shift.startsLocal;
       final d = DateTime(start.year, start.month, start.day);
       if (day != d) {
@@ -306,40 +511,11 @@ class _Body extends StatelessWidget {
         ..add(_Mine(row))
         ..add(const _Gap(10));
     }
-    if (rows.isNotEmpty) out.add(const _Gap(18));
+    if (listed.isNotEmpty) out.add(const _Gap(18));
     return out;
   }
 
-  List<_Entry> _open(BuildContext context, NextShiftState head) {
-    if (!head.loaded) return const [];
-    final open = head.open.shifts;
-    return [
-      _Header(
-        context.t('shifts.mine.open'),
-        trailing: open.isEmpty
-            ? null
-            : context.t('shifts.mine.openCount', count: open.length),
-      ),
-      if (open.isEmpty)
-        _Widget(_Note(text: context.t('shifts.mine.openEmpty'))),
-      for (final shift in open) ...[
-        _Open(shift, head.open.events[shift.eventId]),
-        const _Gap(10),
-      ],
-      _Widget(
-        Align(
-          alignment: AlignmentDirectional.centerStart,
-          child: TextButton.icon(
-            onPressed: () => context.go(ShiftsView.events.route),
-            icon: const Icon(LucideIcons.arrowRight, size: 16),
-            label: Text(context.t('shifts.mine.toEvents')),
-          ),
-        ),
-      ),
-    ];
-  }
-
-  Widget _entry(BuildContext context, _Entry entry, bool offline) {
+  Widget entry(BuildContext context, _Entry entry) {
     switch (entry) {
       case _Header(:final text, :final trailing):
         return ShiftSectionLabel(text, trailing: trailing);
