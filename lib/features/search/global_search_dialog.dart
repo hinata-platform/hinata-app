@@ -125,7 +125,8 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
   final _text = TextEditingController();
   late final FocusNode _fieldNode;
   final _scroll = ScrollController();
-  final _rowKeys = <int, GlobalKey>{};
+  final _rowKeys = <String, GlobalKey>{};
+  final _rowOrder = <String>[];
 
   @override
   void initState() {
@@ -153,7 +154,10 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
     }
     // Keep the selected row in view.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rowCtx = _rowKeys[_c.selected]?.currentContext;
+      final selected = _c.selected;
+      final rowCtx = selected < _rowOrder.length
+          ? _rowKeys[_rowOrder[selected]]?.currentContext
+          : null;
       if (rowCtx != null) {
         Scrollable.ensureVisible(
           rowCtx,
@@ -434,6 +438,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
       scroll: _scroll,
       tokens: tokens,
       rowKeys: _rowKeys,
+      rowOrder: _rowOrder,
       onActivateEntry: _activateEntry,
       onApplyRecent: _applyRecent,
       onHoverIndex: _c.setSelected,
