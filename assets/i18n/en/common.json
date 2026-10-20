@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "Timer started via MCP",
       "MCP_TIMER_STOPPED": "Timer stopped via MCP",
       "MCP_TIMER_DISCARDED": "Timer discarded via MCP",
+      "MCP_SHIFT_SELF_ASSIGNED": "Signed up for a shift via MCP",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Shift assigned via MCP",
+      "MCP_SHIFT_RELEASED": "Shift given up via MCP",
+      "MCP_SHIFT_CONFIRMED": "Shift confirmed via MCP",
+      "MCP_SHIFT_DECLINED": "Shift declined via MCP",
+      "MCP_SHIFT_REMOVED": "Taken off a shift via MCP",
       "MCP_SPRINT_CREATED": "Sprint created via MCP",
       "MCP_SPRINT_UPDATED": "Sprint updated via MCP",
       "MCP_SPRINT_STARTED": "Sprint started via MCP",
@@ -4955,6 +4961,9 @@
       "worklog_write": "Log and change own time, run timers, request leave",
       "search_read": "Search",
       "notifications_read": "Read own notifications",
+      "shifts_read": "Read shifts and own sign-ups",
+      "shifts_write": "Sign up for shifts, confirm, decline or give them up",
+      "shifts_plan": "Plan shifts: assign people and take them off",
       "projects_write": "Create projects"
     }
   },
