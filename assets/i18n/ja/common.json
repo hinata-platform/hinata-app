@@ -164,6 +164,21 @@
         "project": "請求するプロジェクトを選択してください。",
         "tax": "0〜100 % の消費税率を入力してください。"
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "このシフトにはすでに登録されています。",
+      "assigneeNotMember": "この人は割り当てられません。有効なアカウントとプロジェクトへのアクセスが必要です。",
+      "assignmentNotPending": "この割り当てはもう回答を待っていません。",
+      "batchInvalid": "一部の日を作成できませんでした。何も保存されていません。",
+      "busy": "多くの人が同時に登録しています。少ししてからもう一度お試しください。",
+      "eventHasAssignments": "このイベントのシフトにはまだ人が登録されています。先に中止してから削除してください。",
+      "maxBelowAssigned": "このシフトにはすでに新しい上限より多くの人がいます。",
+      "notPlanner": "これを変更できるのは、このプロジェクトの計画担当だけです。",
+      "overlappingAssignment": "同じ時間にすでにシフトがあります。",
+      "plannerNotMember": "この人はここでシフトを計画できません。有効なアカウントとプロジェクトへのアクセスが必要です。",
+      "selfAssignDisabled": "このイベントは運営側が割り当てます。ここでは自分で登録できません。",
+      "shiftFull": "このシフトはすでに満員です。",
+      "shiftUnavailable": "このシフトはもうありません。"
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "請求書を取消",
       "INVOICE_EXPORTED": "請求書をエクスポート",
       "ISSUE_PARTICIPANT_ADDED": "課題をユーザーと共有",
-      "ISSUE_PARTICIPANT_REMOVED": "ユーザーを課題から削除"
+      "ISSUE_PARTICIPANT_REMOVED": "ユーザーを課題から削除",
+      "SHIFT_EVENT_CREATED": "イベントを作成",
+      "SHIFT_EVENT_UPDATED": "イベントを変更",
+      "SHIFT_EVENT_CANCELLED": "イベントを中止",
+      "SHIFT_EVENT_DELETED": "イベントを削除",
+      "SHIFT_CREATED": "シフトを作成",
+      "SHIFT_UPDATED": "シフトを変更",
+      "SHIFT_DELETED": "シフトを削除",
+      "SHIFT_ASSIGNMENT_CREATED": "シフトに割り当て",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "シフトを確認",
+      "SHIFT_ASSIGNMENT_DECLINED": "シフトを辞退",
+      "SHIFT_ASSIGNMENT_RELEASED": "シフトを譲渡",
+      "SHIFT_PLANNER_GRANTED": "シフト計画の権限を付与",
+      "SHIFT_PLANNER_REVOKED": "シフト計画の権限を取り消し"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -3979,6 +4007,20 @@
       "noMemberRates": "このプロジェクトで個別の単価を持つメンバーはいません。",
       "addMember": "メンバーの単価",
       "notLead": "単価を設定できるのはプロジェクトリーダーだけです。"
+    },
+    "shifts": {
+      "title": "シフト計画",
+      "note": "計画担当はイベントとシフトを作成し、人を割り当てます。プロジェクト設定は変更できません。",
+      "leadsAlways": "リーダーとチーム管理者はいつでも計画できます。",
+      "add": "計画担当を追加",
+      "remove": "外す",
+      "removeNamed": "{{name}} を計画担当から外す",
+      "removeTitle": "計画担当を外しますか？",
+      "removeMessage": "{{name}} はシフトを計画できなくなります。",
+      "empty": "計画担当はまだいません。リーダーとチーム管理者は計画できます。",
+      "added": "計画担当を追加しました",
+      "removed": "計画担当を外しました",
+      "noCandidates": "すべてのメンバーがすでに計画担当です。"
     }
   },
   "teams": {
@@ -5239,7 +5281,121 @@
   "shifts": {
     "empty": {
       "title": "シフトはまだありません",
-      "message": "シフト付きのイベントが計画されると、ここに表示されます。"
+      "message": "シフトに登録するか割り当てられると、ここに表示されます。空きのあるシフトはイベントで探せます。"
+    },
+    "loadFailed": "今は読み込めませんでした",
+    "view": {
+      "mine": "自分",
+      "calendar": "カレンダー",
+      "events": "イベント",
+      "menu": "表示を切り替え"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · 最大 {{max}}",
+      "missing": "あと {{count}} 人必要",
+      "missing_plural": "あと {{count}} 人必要",
+      "met": "充足",
+      "over": "必要数より {{count}} 人多い",
+      "over_plural": "必要数より {{count}} 人多い",
+      "full": "満員、{{max}} 人中 {{assigned}} 人",
+      "semantics": "{{required}} 人中 {{assigned}} 人、{{state}}"
+    },
+    "status": {
+      "assigned": "割り当て済み",
+      "confirmed": "確認済み",
+      "declined": "辞退",
+      "released": "譲渡済み",
+      "waiting": "キャンセル待ち",
+      "mine": "登録済み"
+    },
+    "action": {
+      "join": "登録する",
+      "confirm": "確認する",
+      "decline": "辞退する",
+      "release": "譲る",
+      "toEvent": "イベントへ",
+      "busy": "少々お待ちください。処理中です。"
+    },
+    "done": {
+      "joined": "登録しました",
+      "confirmed": "シフトを確認しました",
+      "declined": "割り当てを辞退しました",
+      "released": "シフトを譲りました"
+    },
+    "ask": {
+      "releaseTitle": "このシフトを譲りますか？",
+      "releaseMessage": "あなたの枠が空き、ほかの人が登録できるようになります。",
+      "declineTitle": "この割り当てを辞退しますか？",
+      "declineMessage": "枠が空き、運営側がほかの人を割り当てられるようになります。"
+    },
+    "absentHint": "その日は不在として登録されています",
+    "next": {
+      "badge": "次のシフト",
+      "with": "{{names}} と一緒",
+      "and": "{{first}}、{{last}}",
+      "withOthers": "ほか {{count}} 人と一緒",
+      "withOthers_plural": "ほか {{count}} 人と一緒",
+      "alone": "今のところあなただけ"
+    },
+    "time": {
+      "until": "{{time}} まで",
+      "span": "{{from}} 〜 {{to}}",
+      "hours": "{{count}} 時間",
+      "hours_plural": "{{count}} 時間",
+      "minutes": "{{count}} 分",
+      "minutes_plural": "{{count}} 分",
+      "inMinutes": "{{count}} 分後",
+      "inMinutes_plural": "{{count}} 分後",
+      "inHours": "{{count}} 時間後",
+      "inHours_plural": "{{count}} 時間後",
+      "inDays": "{{count}} 日後",
+      "inDays_plural": "{{count}} 日後",
+      "running": "実施中"
+    },
+    "zone": "時刻は {{zone}}",
+    "mine": {
+      "open": "あなたのプロジェクトの空きシフト",
+      "openCount": "{{count}} 件で人手が必要",
+      "openCount_plural": "{{count}} 件で人手が必要",
+      "openEmpty": "今は人手を探しているプロジェクトはありません。",
+      "toEvents": "すべてのイベントを見る",
+      "offline": "接続がありません。最後に読み込んだ内容を表示しています。"
+    },
+    "event": {
+      "title": "イベント",
+      "understaffed": "{{count}} 件のシフトで人手が必要",
+      "understaffed_plural": "{{count}} 件のシフトで人手が必要",
+      "allStaffed": "すべて充足",
+      "places": "{{taken}} / {{required}} 枠",
+      "placesTaken": "{{required}} 枠中 {{taken}} 枠が埋まっています",
+      "mine": "自分の分 {{count}}",
+      "mine_plural": "自分の分 {{count}}",
+      "selfAssignOpen": "自由登録可",
+      "plannersOnly": "運営側のみが割り当て",
+      "cancelled": "中止",
+      "onlyUnderstaffed": "人手不足のみ",
+      "noUnderstaffed": "今はどこも人手が足りています。",
+      "noShifts": "このイベントにはまだシフトがありません。"
+    },
+    "events": {
+      "upcoming": "近日予定",
+      "allProjects": "すべてのプロジェクト",
+      "pickProject": "プロジェクトを選択",
+      "emptyTitle": "イベントはまだありません",
+      "emptyMessage": "プロジェクトがシフト付きのイベントを計画すると、ここに表示されます。"
+    },
+    "offer": {
+      "full": "満員、{{max}} 人中 {{assigned}} 人",
+      "cancelled": "中止",
+      "plannersOnly": "運営側が割り当て"
+    },
+    "sheet": {
+      "freeSpot": "空き枠"
+    },
+    "calendar": {
+      "soonTitle": "カレンダーは近日公開",
+      "soonMessage": "週表示と月表示はこのあと追加されます。それまでは「自分」と「イベント」をご利用ください。"
     }
   }
 }

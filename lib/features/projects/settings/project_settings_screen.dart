@@ -32,6 +32,7 @@ import 'general_section.dart';
 import 'labels_section.dart';
 import 'members_section.dart';
 import 'settings_common.dart';
+import 'shifts_section.dart';
 import '../../../core/responsive/golden_columns.dart';
 import 'project_settings_cubit.dart';
 import 'project_settings_layout.dart';
@@ -800,6 +801,18 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
                 _mutate((d) => d.copyWith(deadlineBasis: basis)),
           )
         : null;
+    // Only while shift planning is on (HIN-45): who plans the shifts.
+    final shifts = meta?.shiftPlanning ?? false
+        ? ShiftPlannersSection(
+            projectId: widget.projectId,
+            projectName: (_saved ?? draft).name,
+            members: [
+              for (final id in draft.memberIds)
+                if (_users[id] != null) _users[id]!,
+            ],
+            leadIds: draft.leadIds,
+          )
+        : null;
     final archive = ArchiveSection(
       archived: draft.archived,
       onChanged: (v) => _mutate((d) => d.copyWith(archived: v)),
@@ -813,6 +826,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           templates: templates != null,
           lead: _isLead,
           billing: billing != null,
+          shifts: shifts != null,
         ),
         card: (card) => switch (card) {
           ProjectSettingsCard.general => general,
@@ -823,6 +837,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           ProjectSettingsCard.git => git,
           ProjectSettingsCard.timeTracking => timeTracking!,
           ProjectSettingsCard.billing => billing!,
+          ProjectSettingsCard.shifts => shifts!,
           ProjectSettingsCard.archive => archive,
           ProjectSettingsCard.danger => DangerSection(
             onDelete: _deleteProject,
@@ -851,6 +866,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
           git: git,
           timeTracking: timeTracking,
           billing: billing,
+          shifts: shifts,
           archive: archive,
           danger: danger,
         );
@@ -870,6 +886,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     required Widget git,
     required Widget? timeTracking,
     required Widget? billing,
+    required Widget? shifts,
     required Widget archive,
     required Widget danger,
   }) {
@@ -902,6 +919,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
                   templates: templates != null,
                   lead: _isLead,
                   billing: billing != null,
+                  shifts: shifts != null,
                 ),
                 card: (card) => switch (card) {
                   ProjectSettingsCard.general => general,
@@ -912,6 +930,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
                   ProjectSettingsCard.git => git,
                   ProjectSettingsCard.timeTracking => timeTracking!,
                   ProjectSettingsCard.billing => billing!,
+                  ProjectSettingsCard.shifts => shifts!,
                   ProjectSettingsCard.archive => archive,
                   ProjectSettingsCard.danger => danger,
                 },
@@ -1033,6 +1052,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
         ProjectSettingsCard.workflow => LucideIcons.listChecks,
         ProjectSettingsCard.timeTracking => LucideIcons.timer,
         ProjectSettingsCard.billing => LucideIcons.coins,
+        ProjectSettingsCard.shifts => LucideIcons.calendarClock,
         ProjectSettingsCard.git => LucideIcons.gitBranch,
         ProjectSettingsCard.archive => LucideIcons.archive,
         ProjectSettingsCard.danger => LucideIcons.triangleAlert,
@@ -1050,6 +1070,7 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     ProjectSettingsCard.workflow => 'projectSettings.workflow',
     ProjectSettingsCard.timeTracking => 'projectSettings.time.title',
     ProjectSettingsCard.billing => 'projectSettings.billing.title',
+    ProjectSettingsCard.shifts => 'projectSettings.shifts.title',
     ProjectSettingsCard.git => 'git.title',
     ProjectSettingsCard.archive => 'projectSettings.archive',
     ProjectSettingsCard.danger => 'projectSettings.dangerZone',
@@ -1067,7 +1088,8 @@ class _ProjectSettingsViewState extends State<_ProjectSettingsView> {
     ProjectSettingsCard.labels ||
     ProjectSettingsCard.workflow ||
     ProjectSettingsCard.timeTracking ||
-    ProjectSettingsCard.billing => 'projectSettings.nav.work',
+    ProjectSettingsCard.billing ||
+    ProjectSettingsCard.shifts => 'projectSettings.nav.work',
     ProjectSettingsCard.git => 'admin.navIntegrations',
     ProjectSettingsCard.archive ||
     ProjectSettingsCard.danger => 'projectSettings.nav.manage',

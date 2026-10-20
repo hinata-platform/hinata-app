@@ -164,6 +164,21 @@
         "project": "اختر المشروع المراد فوترته.",
         "tax": "أدخل نسبة ضريبة القيمة المضافة بين 0 و100 بالمئة."
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "أنت مسجَّل في هذه النوبة بالفعل.",
+      "assigneeNotMember": "لا يمكن تعيين هذا الشخص. يلزمه حساب نشط ووصول إلى المشروع.",
+      "assignmentNotPending": "هذا التعيين لم يعد ينتظر ردًا.",
+      "batchInvalid": "تعذّر إنشاء بعض الأيام. لم يُحفظ أي شيء.",
+      "busy": "كثيرون يسجّلون في الوقت نفسه. حاول مرة أخرى بعد قليل.",
+      "eventHasAssignments": "ما زال هناك أشخاص في نوبات هذه الفعالية. ألغها أولًا ثم احذفها.",
+      "maxBelowAssigned": "في هذه النوبة أشخاص أكثر مما يسمح به الحد الجديد.",
+      "notPlanner": "لا يغيّر هذا إلا من يخطط لهذا المشروع.",
+      "overlappingAssignment": "لديك نوبة أخرى في الوقت نفسه.",
+      "plannerNotMember": "لا يمكن لهذا الشخص تخطيط النوبات هنا. يلزمه حساب نشط ووصول إلى المشروع.",
+      "selfAssignDisabled": "المنظمون يعيّنون الأشخاص في هذه الفعالية. لا يمكنك التسجيل بنفسك هنا.",
+      "shiftFull": "هذه النوبة ممتلئة بالفعل.",
+      "shiftUnavailable": "هذه النوبة لم تعد موجودة."
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "تم إلغاء فاتورة",
       "INVOICE_EXPORTED": "تم تصدير فاتورة",
       "ISSUE_PARTICIPANT_ADDED": "مشاركة مهمة مع شخص",
-      "ISSUE_PARTICIPANT_REMOVED": "إزالة شخص من مهمة"
+      "ISSUE_PARTICIPANT_REMOVED": "إزالة شخص من مهمة",
+      "SHIFT_EVENT_CREATED": "تم إنشاء فعالية",
+      "SHIFT_EVENT_UPDATED": "تم تعديل فعالية",
+      "SHIFT_EVENT_CANCELLED": "تم إلغاء فعالية",
+      "SHIFT_EVENT_DELETED": "تم حذف فعالية",
+      "SHIFT_CREATED": "تم إنشاء نوبة",
+      "SHIFT_UPDATED": "تم تعديل نوبة",
+      "SHIFT_DELETED": "تم حذف نوبة",
+      "SHIFT_ASSIGNMENT_CREATED": "تم التعيين في نوبة",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "تم تأكيد نوبة",
+      "SHIFT_ASSIGNMENT_DECLINED": "تم رفض نوبة",
+      "SHIFT_ASSIGNMENT_RELEASED": "تم التنازل عن نوبة",
+      "SHIFT_PLANNER_GRANTED": "تم منح صلاحية تخطيط النوبات",
+      "SHIFT_PLANNER_REVOKED": "تم سحب صلاحية تخطيط النوبات"
     },
     "meta": {
       "oldRole": "الدور السابق",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "لا يملك أي عضو سعرًا خاصًا به في هذا المشروع.",
       "addMember": "سعر لعضو",
       "notLead": "قادة المشروع وحدهم يحددون أسعاره."
+    },
+    "shifts": {
+      "title": "تخطيط النوبات",
+      "note": "المخططون ينشئون الفعاليات والنوبات ويعيّنون الأشخاص، ولا يمكنهم تغيير إعدادات المشروع.",
+      "leadsAlways": "القادة ومشرفو الفرق يمكنهم التخطيط دائمًا.",
+      "add": "إضافة مخطط",
+      "remove": "إزالة",
+      "removeNamed": "إزالة {{name}} من المخططين",
+      "removeTitle": "إزالة المخطط؟",
+      "removeMessage": "لن يتمكن {{name}} بعد ذلك من تخطيط النوبات.",
+      "empty": "لا يوجد مخططون بعد. القادة ومشرفو الفرق يمكنهم التخطيط على أي حال.",
+      "added": "تمت إضافة المخطط",
+      "removed": "تمت إزالة المخطط",
+      "noCandidates": "كل الأعضاء مخططون بالفعل."
     }
   },
   "account": {
@@ -5238,8 +5280,122 @@
   },
   "shifts": {
     "empty": {
-      "title": "لا توجد مناوبات بعد",
-      "message": "بمجرد التخطيط لفعالية بمناوبات، ستظهر هنا."
+      "title": "لا توجد نوبات بعد",
+      "message": "عندما تسجّل في نوبة أو يعيّنك أحد فيها، ستظهر هنا. النوبات المفتوحة تجدها في الفعاليات."
+    },
+    "loadFailed": "تعذّر التحميل الآن",
+    "view": {
+      "mine": "نوباتي",
+      "calendar": "التقويم",
+      "events": "الفعاليات",
+      "menu": "تبديل العرض"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · الحد {{max}}",
+      "missing": "ينقص {{count}} شخص",
+      "missing_plural": "ينقص {{count}} أشخاص",
+      "met": "مكتملة",
+      "over": "{{count}} شخص أكثر من المطلوب",
+      "over_plural": "{{count}} أشخاص أكثر من المطلوب",
+      "full": "ممتلئة، {{assigned}} من {{max}}",
+      "semantics": "الإشغال {{assigned}} من {{required}}، {{state}}"
+    },
+    "status": {
+      "assigned": "معيّن",
+      "confirmed": "مؤكَّد",
+      "declined": "مرفوض",
+      "released": "متنازل عنها",
+      "waiting": "في قائمة الانتظار",
+      "mine": "مسجَّل"
+    },
+    "action": {
+      "join": "سجّلني",
+      "confirm": "تأكيد",
+      "decline": "رفض",
+      "release": "تنازل",
+      "toEvent": "إلى الفعالية",
+      "busy": "لحظة، ما زال قيد التنفيذ."
+    },
+    "done": {
+      "joined": "تم تسجيلك",
+      "confirmed": "تم تأكيد النوبة",
+      "declined": "تم رفض التعيين",
+      "released": "تم التنازل عن النوبة"
+    },
+    "ask": {
+      "releaseTitle": "التنازل عن هذه النوبة؟",
+      "releaseMessage": "سيصبح مكانك شاغرًا ويمكن لآخرين التسجيل.",
+      "declineTitle": "رفض هذا التعيين؟",
+      "declineMessage": "سيصبح المكان شاغرًا ويمكن للمنظمين تعيين شخص آخر."
+    },
+    "absentHint": "أنت مسجَّل غائبًا في ذلك اليوم",
+    "next": {
+      "badge": "النوبة التالية",
+      "with": "مع {{names}}",
+      "and": "{{first}} و{{last}}",
+      "withOthers": "مع {{count}} شخص آخر",
+      "withOthers_plural": "مع {{count}} أشخاص آخرين",
+      "alone": "أنت فقط حتى الآن"
+    },
+    "time": {
+      "until": "حتى {{time}}",
+      "span": "{{from}} إلى {{to}}",
+      "hours": "{{count}} ساعة",
+      "hours_plural": "{{count}} ساعات",
+      "minutes": "{{count}} دقيقة",
+      "minutes_plural": "{{count}} دقائق",
+      "inMinutes": "بعد {{count}} دقيقة",
+      "inMinutes_plural": "بعد {{count}} دقائق",
+      "inHours": "بعد {{count}} ساعة",
+      "inHours_plural": "بعد {{count}} ساعات",
+      "inDays": "بعد {{count}} يوم",
+      "inDays_plural": "بعد {{count}} أيام",
+      "running": "جارية الآن"
+    },
+    "zone": "الأوقات بتوقيت {{zone}}",
+    "mine": {
+      "open": "نوبات مفتوحة في مشاريعك",
+      "openCount": "{{count}} ما زالت تحتاج أشخاصًا",
+      "openCount_plural": "{{count}} ما زالت تحتاج أشخاصًا",
+      "openEmpty": "لا يبحث أي مشروع عن أشخاص الآن.",
+      "toEvents": "عرض كل الفعاليات",
+      "offline": "لا يوجد اتصال. تعرض ما تم تحميله آخر مرة."
+    },
+    "event": {
+      "title": "فعالية",
+      "understaffed": "{{count}} نوبة ما زالت تحتاج أشخاصًا",
+      "understaffed_plural": "{{count}} نوبات ما زالت تحتاج أشخاصًا",
+      "allStaffed": "كلها مكتملة",
+      "places": "{{taken}} / {{required}} أماكن",
+      "placesTaken": "شُغل {{taken}} من {{required}} مكانًا",
+      "mine": "{{count}} لك",
+      "mine_plural": "{{count}} لك",
+      "selfAssignOpen": "التسجيل مفتوح",
+      "plannersOnly": "التعيين للمنظمين فقط",
+      "cancelled": "ملغاة",
+      "onlyUnderstaffed": "الناقصة فقط",
+      "noUnderstaffed": "لا ينقص أحد في أي مكان الآن.",
+      "noShifts": "لا توجد نوبات لهذه الفعالية بعد."
+    },
+    "events": {
+      "upcoming": "قريبًا",
+      "allProjects": "كل المشاريع",
+      "pickProject": "اختيار مشروع",
+      "emptyTitle": "لا توجد فعاليات بعد",
+      "emptyMessage": "عندما يخطط مشروع لفعالية فيها نوبات، ستظهر هنا."
+    },
+    "offer": {
+      "full": "ممتلئة، {{assigned}} من {{max}}",
+      "cancelled": "ملغاة",
+      "plannersOnly": "يعيّنها المنظمون"
+    },
+    "sheet": {
+      "freeSpot": "مكان شاغر"
+    },
+    "calendar": {
+      "soonTitle": "التقويم قادم قريبًا",
+      "soonMessage": "عرض الأسبوع والشهر لاحقًا. حتى ذلك الحين تجد كل شيء في نوباتي والفعاليات."
     }
   }
 }

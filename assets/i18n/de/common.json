@@ -164,6 +164,21 @@
         "project": "Wähle das Projekt, das abgerechnet wird.",
         "tax": "Gib eine Umsatzsteuer zwischen 0 und 100 Prozent an."
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "Du bist schon auf dieser Schicht.",
+      "assigneeNotMember": "Diese Person kann nicht eingeteilt werden. Sie braucht ein aktives Konto und Zugriff auf das Projekt.",
+      "assignmentNotPending": "Diese Zuteilung wartet nicht mehr auf eine Antwort.",
+      "batchInvalid": "Einige Tage ließen sich nicht anlegen. Es wurde nichts gespeichert.",
+      "busy": "Gerade tragen sich viele gleichzeitig ein. Bitte versuch es gleich noch einmal.",
+      "eventHasAssignments": "Auf den Schichten dieses Events sind noch Personen eingetragen. Sag es zuerst ab und lösche es dann.",
+      "maxBelowAssigned": "Auf dieser Schicht sind schon mehr Personen, als die neue Obergrenze erlaubt.",
+      "notPlanner": "Nur wer dieses Projekt plant, kann das ändern.",
+      "overlappingAssignment": "Du hast zur selben Zeit schon eine Schicht.",
+      "plannerNotMember": "Diese Person kann hier keine Schichten planen. Sie braucht ein aktives Konto und Zugang zum Projekt.",
+      "selfAssignDisabled": "Für dieses Event teilt die Orga ein. Selbst eintragen geht hier nicht.",
+      "shiftFull": "Diese Schicht ist schon voll.",
+      "shiftUnavailable": "Diese Schicht gibt es nicht mehr."
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "Rechnung storniert",
       "INVOICE_EXPORTED": "Rechnung exportiert",
       "ISSUE_PARTICIPANT_ADDED": "Vorgang mit einer Person geteilt",
-      "ISSUE_PARTICIPANT_REMOVED": "Person aus einem Vorgang entfernt"
+      "ISSUE_PARTICIPANT_REMOVED": "Person aus einem Vorgang entfernt",
+      "SHIFT_EVENT_CREATED": "Event angelegt",
+      "SHIFT_EVENT_UPDATED": "Event geändert",
+      "SHIFT_EVENT_CANCELLED": "Event abgesagt",
+      "SHIFT_EVENT_DELETED": "Event gelöscht",
+      "SHIFT_CREATED": "Schicht angelegt",
+      "SHIFT_UPDATED": "Schicht geändert",
+      "SHIFT_DELETED": "Schicht gelöscht",
+      "SHIFT_ASSIGNMENT_CREATED": "Für Schicht eingeteilt",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "Schicht bestätigt",
+      "SHIFT_ASSIGNMENT_DECLINED": "Schicht abgelehnt",
+      "SHIFT_ASSIGNMENT_RELEASED": "Schicht abgegeben",
+      "SHIFT_PLANNER_GRANTED": "Schichtplanung erlaubt",
+      "SHIFT_PLANNER_REVOKED": "Schichtplanung entzogen"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "Kein Mitglied hat in diesem Projekt einen eigenen Satz.",
       "addMember": "Satz für ein Mitglied",
       "notLead": "Die Sätze eines Projekts legen seine Leitungen fest."
+    },
+    "shifts": {
+      "title": "Schichtplanung",
+      "note": "Planer legen Events und Schichten an und teilen Leute ein. Die Projekteinstellungen ändern sie nicht.",
+      "leadsAlways": "Leads und Team-Admins planen immer.",
+      "add": "Planer hinzufügen",
+      "remove": "Entfernen",
+      "removeNamed": "{{name}} als Planer entfernen",
+      "removeTitle": "Planer entfernen?",
+      "removeMessage": "{{name}} kann danach keine Schichten mehr planen.",
+      "empty": "Noch keine Planer. Leads und Team-Admins planen trotzdem.",
+      "added": "Planer hinzugefügt",
+      "removed": "Planer entfernt",
+      "noCandidates": "Alle Mitglieder planen schon."
     }
   },
   "account": {
@@ -5239,7 +5281,121 @@
   "shifts": {
     "empty": {
       "title": "Noch keine Schichten",
-      "message": "Sobald ein Event mit Schichten geplant ist, erscheint es hier."
+      "message": "Sobald du dich in eine Schicht einträgst oder jemand dich zuteilt, steht sie hier. Offene Schichten findest du unter Events."
+    },
+    "loadFailed": "Das ließ sich gerade nicht laden",
+    "view": {
+      "mine": "Meine",
+      "calendar": "Kalender",
+      "events": "Events",
+      "menu": "Ansicht wechseln"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · max. {{max}}",
+      "missing": "Es fehlt noch {{count}} Person",
+      "missing_plural": "Es fehlen noch {{count}} Personen",
+      "met": "Besetzt",
+      "over": "{{count}} Person mehr als gebraucht",
+      "over_plural": "{{count}} Personen mehr als gebraucht",
+      "full": "Voll, {{assigned}} von {{max}}",
+      "semantics": "Besetzung {{assigned}} von {{required}}, {{state}}"
+    },
+    "status": {
+      "assigned": "Zugeteilt",
+      "confirmed": "Bestätigt",
+      "declined": "Abgelehnt",
+      "released": "Abgegeben",
+      "waiting": "Auf der Warteliste",
+      "mine": "Eingetragen"
+    },
+    "action": {
+      "join": "Eintragen",
+      "confirm": "Bestätigen",
+      "decline": "Ablehnen",
+      "release": "Abgeben",
+      "toEvent": "Zum Event",
+      "busy": "Einen Moment, das läuft noch."
+    },
+    "done": {
+      "joined": "Du bist eingetragen",
+      "confirmed": "Schicht bestätigt",
+      "declined": "Zuteilung abgelehnt",
+      "released": "Schicht abgegeben"
+    },
+    "ask": {
+      "releaseTitle": "Schicht abgeben?",
+      "releaseMessage": "Dein Platz wird wieder frei, und andere können sich eintragen.",
+      "declineTitle": "Zuteilung ablehnen?",
+      "declineMessage": "Der Platz wird wieder frei, und die Orga kann jemand anderen einteilen."
+    },
+    "absentHint": "Du bist an dem Tag als abwesend eingetragen",
+    "next": {
+      "badge": "Nächste Schicht",
+      "with": "mit {{names}}",
+      "and": "{{first}} und {{last}}",
+      "withOthers": "mit {{count}} weiteren Person",
+      "withOthers_plural": "mit {{count}} weiteren Personen",
+      "alone": "Bisher nur du"
+    },
+    "time": {
+      "until": "bis {{time}}",
+      "span": "{{from}} bis {{to}}",
+      "hours": "{{count}} Std.",
+      "hours_plural": "{{count}} Std.",
+      "minutes": "{{count}} Min.",
+      "minutes_plural": "{{count}} Min.",
+      "inMinutes": "in {{count}} Min.",
+      "inMinutes_plural": "in {{count}} Min.",
+      "inHours": "in {{count}} Std.",
+      "inHours_plural": "in {{count}} Std.",
+      "inDays": "in {{count}} Tag",
+      "inDays_plural": "in {{count}} Tagen",
+      "running": "läuft gerade"
+    },
+    "zone": "Zeiten in {{zone}}",
+    "mine": {
+      "open": "Offene Schichten in deinen Projekten",
+      "openCount": "{{count}} braucht noch Leute",
+      "openCount_plural": "{{count}} brauchen noch Leute",
+      "openEmpty": "Gerade sucht kein Projekt Leute.",
+      "toEvents": "Alle Events ansehen",
+      "offline": "Keine Verbindung. Du siehst den Stand vom letzten Laden."
+    },
+    "event": {
+      "title": "Event",
+      "understaffed": "{{count}} Schicht braucht noch Leute",
+      "understaffed_plural": "{{count}} Schichten brauchen noch Leute",
+      "allStaffed": "Alles besetzt",
+      "places": "{{taken}} / {{required}} Plätze",
+      "placesTaken": "{{taken}} von {{required}} Plätzen besetzt",
+      "mine": "{{count}} eigene",
+      "mine_plural": "{{count}} eigene",
+      "selfAssignOpen": "Selbsteintrag offen",
+      "plannersOnly": "Nur die Orga teilt zu",
+      "cancelled": "Abgesagt",
+      "onlyUnderstaffed": "Nur unterbesetzt",
+      "noUnderstaffed": "Gerade fehlt nirgends jemand.",
+      "noShifts": "Dieses Event hat noch keine Schichten."
+    },
+    "events": {
+      "upcoming": "Demnächst",
+      "allProjects": "Alle Projekte",
+      "pickProject": "Projekt wählen",
+      "emptyTitle": "Noch keine Events",
+      "emptyMessage": "Sobald ein Projekt ein Event mit Schichten plant, steht es hier."
+    },
+    "offer": {
+      "full": "Voll, {{assigned}} von {{max}}",
+      "cancelled": "Abgesagt",
+      "plannersOnly": "Teilt die Orga zu"
+    },
+    "sheet": {
+      "freeSpot": "Platz frei"
+    },
+    "calendar": {
+      "soonTitle": "Der Kalender kommt bald",
+      "soonMessage": "Woche und Monat folgen. Bis dahin findest du alles unter Meine und Events."
     }
   }
 }
