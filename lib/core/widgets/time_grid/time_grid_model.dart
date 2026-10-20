@@ -9,6 +9,8 @@ library;
 
 import 'package:flutter/widgets.dart';
 
+import '../../theme/app_colors.dart' show AppColors;
+
 /// One thing on the grid: a span, what to call it, and whether it may be moved.
 @immutable
 class TimeGridItem {
@@ -203,5 +205,7 @@ class TimeGridLayer {
   /// The time calendar's entries do, and keep it. Shift planning turns it off:
   /// there the state of a shift is told by glyph and words, and a coloured
   /// edge would be a second, louder code for the project nobody asked about.
+  /// Without the edge the tint is drawn as the block's fill as it is, so it
+  /// should be a pastel the ink reads on ([AppColors.pastelFor]).
   final bool edge;
 }

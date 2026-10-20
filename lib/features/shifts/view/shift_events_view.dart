@@ -16,10 +16,13 @@ import '../../../core/widgets/glass_filter_bar.dart'
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
-import '../../../core/widgets/hive_widgets.dart' show GhostButton;
+import '../../../core/widgets/hive_widgets.dart'
+    show GhostButton, PrimaryButton;
 import '../../../core/widgets/project_picker.dart';
 import '../../shell/page_chrome.dart';
 import '../bloc/shift_events_cubit.dart';
+import '../bloc/shift_plannable_cubit.dart';
+import '../widgets/shift_event_editor.dart';
 import '../shift_views.dart';
 import '../widgets/shift_event_card.dart';
 import '../widgets/shift_row.dart' show ShiftSectionLabel;
@@ -30,8 +33,17 @@ class ShiftEventsPage extends StatelessWidget {
   const ShiftEventsPage({super.key});
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (_) => ShiftEventsCubit(context.read<ShiftRepository>())..load(),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (_) =>
+            ShiftEventsCubit(context.read<ShiftRepository>())..load(),
+      ),
+      BlocProvider(
+        create: (_) =>
+            ShiftPlannableCubit(context.read<ShiftRepository>())..load(),
+      ),
+    ],
     child: const ShiftEventsView(),
   );
 }
@@ -105,10 +117,42 @@ class _ShiftEventsViewState extends State<ShiftEventsView> {
     onTap: (anchor) => unawaited(_pickProject(anchor)),
   );
 
+  /// A new event, in the project the list is narrowed to when there is one.
+  Future<void> _newEvent() async {
+    final plannable = context.read<ShiftPlannableCubit>().state;
+    final project = _project;
+    final saved = await showShiftEventEditor(
+      context,
+      projectId: project != null && plannable.contains(project.id)
+          ? project.id
+          : null,
+      projectName: project?.name,
+      plannable: plannable,
+    );
+    if (saved != null && mounted) {
+      unawaited(
+        context.push('${ShiftsView.events.route}/${saved.event.summary.id}'),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
+    final canPlan = context.select<ShiftPlannableCubit, bool>(
+      (cubit) => cubit.state.isNotEmpty,
+    );
     return PageChrome(
+      actions: compact && canPlan
+          ? [
+              PageAction(
+                icon: LucideIcons.plus,
+                label: context.t('shifts.plan.addEvent'),
+                primary: true,
+                onTap: (_) => unawaited(_newEvent()),
+              ),
+            ]
+          : const [],
       bottom: compact
           ? ShiftsDock(current: ShiftsView.events, filters: [_projectPill()])
           : null,
@@ -120,9 +164,20 @@ class _ShiftEventsViewState extends State<ShiftEventsView> {
               children: [
                 ShiftsHead(
                   current: ShiftsView.events,
-                  filters: Align(
-                    alignment: AlignmentDirectional.centerStart,
-                    child: _projectPill(),
+                  filters: Wrap(
+                    spacing: 12,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _projectPill(),
+                      if (canPlan)
+                        PrimaryButton(
+                          label: context.t('shifts.plan.addEvent'),
+                          icon: LucideIcons.plus,
+                          onPressed: () => unawaited(_newEvent()),
+                        ),
+                    ],
                   ),
                 ),
                 const Expanded(child: _List(compact: false)),
