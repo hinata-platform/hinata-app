@@ -164,6 +164,21 @@
         "project": "Elige el proyecto que quieres facturar.",
         "tax": "Introduce un tipo de IVA entre 0 y 100 por ciento."
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "Ya estás en este turno.",
+      "assigneeNotMember": "No se puede asignar a esta persona. Necesita una cuenta activa y acceso al proyecto.",
+      "assignmentNotPending": "Esta asignación ya no espera respuesta.",
+      "batchInvalid": "Algunos días no se pudieron crear. No se ha guardado nada.",
+      "busy": "Mucha gente se está apuntando a la vez. Inténtalo de nuevo en un momento.",
+      "eventHasAssignments": "Todavía hay personas en los turnos de este evento. Cancélalo primero y luego bórralo.",
+      "maxBelowAssigned": "En este turno ya hay más personas de las que permite el nuevo límite.",
+      "notPlanner": "Solo quien planifica este proyecto puede cambiar esto.",
+      "overlappingAssignment": "Ya tienes un turno a la misma hora.",
+      "plannerNotMember": "Esta persona no puede planificar turnos aquí. Necesita una cuenta activa y acceso al proyecto.",
+      "selfAssignDisabled": "En este evento asigna la organización. Aquí no puedes apuntarte tú.",
+      "shiftFull": "Este turno ya está completo.",
+      "shiftUnavailable": "Este turno ya no existe."
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "Factura anulada",
       "INVOICE_EXPORTED": "Factura exportada",
       "ISSUE_PARTICIPANT_ADDED": "Incidencia compartida con una persona",
-      "ISSUE_PARTICIPANT_REMOVED": "Persona quitada de una incidencia"
+      "ISSUE_PARTICIPANT_REMOVED": "Persona quitada de una incidencia",
+      "SHIFT_EVENT_CREATED": "Evento creado",
+      "SHIFT_EVENT_UPDATED": "Evento modificado",
+      "SHIFT_EVENT_CANCELLED": "Evento cancelado",
+      "SHIFT_EVENT_DELETED": "Evento eliminado",
+      "SHIFT_CREATED": "Turno creado",
+      "SHIFT_UPDATED": "Turno modificado",
+      "SHIFT_DELETED": "Turno eliminado",
+      "SHIFT_ASSIGNMENT_CREATED": "Asignado a un turno",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "Turno confirmado",
+      "SHIFT_ASSIGNMENT_DECLINED": "Turno rechazado",
+      "SHIFT_ASSIGNMENT_RELEASED": "Turno cedido",
+      "SHIFT_PLANNER_GRANTED": "Planificación de turnos concedida",
+      "SHIFT_PLANNER_REVOKED": "Planificación de turnos retirada"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "Ningún miembro tiene una tarifa propia en este proyecto.",
       "addMember": "Tarifa para un miembro",
       "notLead": "Solo los responsables del proyecto fijan sus tarifas."
+    },
+    "shifts": {
+      "title": "Planificación de turnos",
+      "note": "Quienes planifican crean eventos y turnos y asignan personas. No pueden cambiar los ajustes del proyecto.",
+      "leadsAlways": "Los responsables y los administradores del equipo siempre pueden planificar.",
+      "add": "Añadir planificador",
+      "remove": "Quitar",
+      "removeNamed": "Quitar a {{name}} como planificador",
+      "removeTitle": "¿Quitar planificador?",
+      "removeMessage": "{{name}} ya no podrá planificar turnos.",
+      "empty": "Aún no hay planificadores. Los responsables y los administradores del equipo pueden planificar igualmente.",
+      "added": "Planificador añadido",
+      "removed": "Planificador quitado",
+      "noCandidates": "Todos los miembros ya planifican."
     }
   },
   "account": {
@@ -5239,7 +5281,121 @@
   "shifts": {
     "empty": {
       "title": "Aún no hay turnos",
-      "message": "En cuanto se planifique un evento con turnos, aparecerá aquí."
+      "message": "En cuanto te apuntes a un turno o alguien te asigne, aparecerá aquí. Los turnos abiertos están en Eventos."
+    },
+    "loadFailed": "No se ha podido cargar ahora mismo",
+    "view": {
+      "mine": "Míos",
+      "calendar": "Calendario",
+      "events": "Eventos",
+      "menu": "Cambiar vista"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · máx. {{max}}",
+      "missing": "Falta {{count}} persona",
+      "missing_plural": "Faltan {{count}} personas",
+      "met": "Cubierto",
+      "over": "{{count}} persona más de las necesarias",
+      "over_plural": "{{count}} personas más de las necesarias",
+      "full": "Completo, {{assigned}} de {{max}}",
+      "semantics": "Ocupación {{assigned}} de {{required}}, {{state}}"
+    },
+    "status": {
+      "assigned": "Asignado",
+      "confirmed": "Confirmado",
+      "declined": "Rechazado",
+      "released": "Cedido",
+      "waiting": "En lista de espera",
+      "mine": "Apuntado"
+    },
+    "action": {
+      "join": "Apuntarme",
+      "confirm": "Confirmar",
+      "decline": "Rechazar",
+      "release": "Ceder",
+      "toEvent": "Ir al evento",
+      "busy": "Un momento, aún está en curso."
+    },
+    "done": {
+      "joined": "Te has apuntado",
+      "confirmed": "Turno confirmado",
+      "declined": "Asignación rechazada",
+      "released": "Turno cedido"
+    },
+    "ask": {
+      "releaseTitle": "¿Ceder este turno?",
+      "releaseMessage": "Tu plaza vuelve a quedar libre y otras personas pueden apuntarse.",
+      "declineTitle": "¿Rechazar esta asignación?",
+      "declineMessage": "La plaza vuelve a quedar libre y la organización puede asignar a otra persona."
+    },
+    "absentHint": "Ese día figuras como ausente",
+    "next": {
+      "badge": "Próximo turno",
+      "with": "con {{names}}",
+      "and": "{{first}} y {{last}}",
+      "withOthers": "con {{count}} persona más",
+      "withOthers_plural": "con {{count}} personas más",
+      "alone": "De momento solo tú"
+    },
+    "time": {
+      "until": "hasta las {{time}}",
+      "span": "{{from}} a {{to}}",
+      "hours": "{{count}} h",
+      "hours_plural": "{{count}} h",
+      "minutes": "{{count}} min",
+      "minutes_plural": "{{count}} min",
+      "inMinutes": "en {{count}} min",
+      "inMinutes_plural": "en {{count}} min",
+      "inHours": "en {{count}} h",
+      "inHours_plural": "en {{count}} h",
+      "inDays": "en {{count}} día",
+      "inDays_plural": "en {{count}} días",
+      "running": "en curso"
+    },
+    "zone": "Horas en {{zone}}",
+    "mine": {
+      "open": "Turnos abiertos en tus proyectos",
+      "openCount": "{{count}} aún necesita gente",
+      "openCount_plural": "{{count}} aún necesitan gente",
+      "openEmpty": "Ahora mismo ningún proyecto busca gente.",
+      "toEvents": "Ver todos los eventos",
+      "offline": "Sin conexión. Ves lo que se cargó la última vez."
+    },
+    "event": {
+      "title": "Evento",
+      "understaffed": "{{count}} turno aún necesita gente",
+      "understaffed_plural": "{{count}} turnos aún necesitan gente",
+      "allStaffed": "Todo cubierto",
+      "places": "{{taken}} / {{required}} plazas",
+      "placesTaken": "{{taken}} de {{required}} plazas ocupadas",
+      "mine": "{{count}} tuyo",
+      "mine_plural": "{{count}} tuyos",
+      "selfAssignOpen": "Inscripción abierta",
+      "plannersOnly": "Solo la organización asigna",
+      "cancelled": "Cancelado",
+      "onlyUnderstaffed": "Solo incompletos",
+      "noUnderstaffed": "Ahora mismo no falta nadie.",
+      "noShifts": "Este evento aún no tiene turnos."
+    },
+    "events": {
+      "upcoming": "Próximamente",
+      "allProjects": "Todos los proyectos",
+      "pickProject": "Elegir proyecto",
+      "emptyTitle": "Aún no hay eventos",
+      "emptyMessage": "En cuanto un proyecto planifique un evento con turnos, aparecerá aquí."
+    },
+    "offer": {
+      "full": "Completo, {{assigned}} de {{max}}",
+      "cancelled": "Cancelado",
+      "plannersOnly": "Lo asigna la organización"
+    },
+    "sheet": {
+      "freeSpot": "Plaza libre"
+    },
+    "calendar": {
+      "soonTitle": "El calendario llega pronto",
+      "soonMessage": "Las vistas de semana y mes vendrán después. Hasta entonces lo tienes todo en Míos y Eventos."
     }
   }
 }

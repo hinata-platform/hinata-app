@@ -164,6 +164,21 @@
         "project": "请选择要开票的项目。",
         "tax": "请输入 0 到 100 之间的增值税率。"
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "你已经在这个班次上了。",
+      "assigneeNotMember": "无法安排此人。需要有效账户并能访问该项目。",
+      "assignmentNotPending": "这次分配已不再等待回复。",
+      "batchInvalid": "部分日期无法创建，未保存任何内容。",
+      "busy": "很多人正在同时报名。请稍后再试。",
+      "eventHasAssignments": "这个活动的班次上仍有人员。请先取消活动，再删除。",
+      "maxBelowAssigned": "这个班次上的人数已超过新的上限。",
+      "notPlanner": "只有负责此项目排班的人才能更改。",
+      "overlappingAssignment": "你在同一时间已有班次。",
+      "plannerNotMember": "此人无法在这里排班。需要有效账户并能访问该项目。",
+      "selfAssignDisabled": "这个活动由组织者安排，这里不能自行报名。",
+      "shiftFull": "这个班次已满。",
+      "shiftUnavailable": "这个班次已不存在。"
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "已冲销发票",
       "INVOICE_EXPORTED": "已导出发票",
       "ISSUE_PARTICIPANT_ADDED": "事项已与人员共享",
-      "ISSUE_PARTICIPANT_REMOVED": "人员已从事项中移除"
+      "ISSUE_PARTICIPANT_REMOVED": "人员已从事项中移除",
+      "SHIFT_EVENT_CREATED": "已创建活动",
+      "SHIFT_EVENT_UPDATED": "已修改活动",
+      "SHIFT_EVENT_CANCELLED": "已取消活动",
+      "SHIFT_EVENT_DELETED": "已删除活动",
+      "SHIFT_CREATED": "已创建班次",
+      "SHIFT_UPDATED": "已修改班次",
+      "SHIFT_DELETED": "已删除班次",
+      "SHIFT_ASSIGNMENT_CREATED": "已安排到班次",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "已确认班次",
+      "SHIFT_ASSIGNMENT_DECLINED": "已拒绝班次",
+      "SHIFT_ASSIGNMENT_RELEASED": "已让出班次",
+      "SHIFT_PLANNER_GRANTED": "已授予排班权限",
+      "SHIFT_PLANNER_REVOKED": "已撤销排班权限"
     },
     "meta": {
       "oldRole": "原角色",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "此项目中没有成员设置了自己的费率。",
       "addMember": "为成员设置费率",
       "notLead": "只有项目负责人可以设置项目费率。"
+    },
+    "shifts": {
+      "title": "排班",
+      "note": "排班人员可以创建活动和班次并安排人员，但不能更改项目设置。",
+      "leadsAlways": "负责人和团队管理员始终可以排班。",
+      "add": "添加排班人员",
+      "remove": "移除",
+      "removeNamed": "将 {{name}} 从排班人员中移除",
+      "removeTitle": "移除排班人员？",
+      "removeMessage": "{{name}} 将无法再安排班次。",
+      "empty": "还没有排班人员。负责人和团队管理员仍然可以排班。",
+      "added": "已添加排班人员",
+      "removed": "已移除排班人员",
+      "noCandidates": "所有成员都已是排班人员。"
     }
   },
   "account": {
@@ -5238,8 +5280,122 @@
   },
   "shifts": {
     "empty": {
-      "title": "暂无班次",
-      "message": "规划了带班次的活动后，会显示在这里。"
+      "title": "还没有班次",
+      "message": "当你报名班次或有人为你排班后，它会显示在这里。空缺班次在“活动”中。"
+    },
+    "loadFailed": "暂时无法加载",
+    "view": {
+      "mine": "我的",
+      "calendar": "日历",
+      "events": "活动",
+      "menu": "切换视图"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · 最多 {{max}}",
+      "missing": "还差 {{count}} 人",
+      "missing_plural": "还差 {{count}} 人",
+      "met": "已满足",
+      "over": "比需要多 {{count}} 人",
+      "over_plural": "比需要多 {{count}} 人",
+      "full": "已满，{{assigned}} / {{max}}",
+      "semantics": "已排 {{assigned}} 人，需要 {{required}} 人，{{state}}"
+    },
+    "status": {
+      "assigned": "已分配",
+      "confirmed": "已确认",
+      "declined": "已拒绝",
+      "released": "已让出",
+      "waiting": "候补中",
+      "mine": "已报名"
+    },
+    "action": {
+      "join": "报名",
+      "confirm": "确认",
+      "decline": "拒绝",
+      "release": "让出",
+      "toEvent": "前往活动",
+      "busy": "请稍候，仍在处理中。"
+    },
+    "done": {
+      "joined": "你已报名",
+      "confirmed": "班次已确认",
+      "declined": "已拒绝分配",
+      "released": "班次已让出"
+    },
+    "ask": {
+      "releaseTitle": "让出这个班次？",
+      "releaseMessage": "你的位置会空出来，其他人可以报名。",
+      "declineTitle": "拒绝这次分配？",
+      "declineMessage": "位置会空出来，组织者可以安排其他人。"
+    },
+    "absentHint": "你在当天被登记为缺席",
+    "next": {
+      "badge": "下一个班次",
+      "with": "与 {{names}} 一起",
+      "and": "{{first}} 和 {{last}}",
+      "withOthers": "与另外 {{count}} 人一起",
+      "withOthers_plural": "与另外 {{count}} 人一起",
+      "alone": "目前只有你"
+    },
+    "time": {
+      "until": "至 {{time}}",
+      "span": "{{from}} 至 {{to}}",
+      "hours": "{{count}} 小时",
+      "hours_plural": "{{count}} 小时",
+      "minutes": "{{count}} 分钟",
+      "minutes_plural": "{{count}} 分钟",
+      "inMinutes": "{{count}} 分钟后",
+      "inMinutes_plural": "{{count}} 分钟后",
+      "inHours": "{{count}} 小时后",
+      "inHours_plural": "{{count}} 小时后",
+      "inDays": "{{count}} 天后",
+      "inDays_plural": "{{count}} 天后",
+      "running": "进行中"
+    },
+    "zone": "时间以 {{zone}} 为准",
+    "mine": {
+      "open": "你的项目中的空缺班次",
+      "openCount": "{{count}} 个仍需要人手",
+      "openCount_plural": "{{count}} 个仍需要人手",
+      "openEmpty": "目前没有项目在找人。",
+      "toEvents": "查看所有活动",
+      "offline": "没有网络连接。显示的是上次加载的内容。"
+    },
+    "event": {
+      "title": "活动",
+      "understaffed": "{{count}} 个班次仍需要人手",
+      "understaffed_plural": "{{count}} 个班次仍需要人手",
+      "allStaffed": "全部已满足",
+      "places": "{{taken}} / {{required}} 个位置",
+      "placesTaken": "{{required}} 个位置中已占 {{taken}} 个",
+      "mine": "我的 {{count}} 个",
+      "mine_plural": "我的 {{count}} 个",
+      "selfAssignOpen": "开放报名",
+      "plannersOnly": "仅由组织者安排",
+      "cancelled": "已取消",
+      "onlyUnderstaffed": "仅缺人的",
+      "noUnderstaffed": "目前各处都不缺人。",
+      "noShifts": "这个活动还没有班次。"
+    },
+    "events": {
+      "upcoming": "即将开始",
+      "allProjects": "所有项目",
+      "pickProject": "选择项目",
+      "emptyTitle": "还没有活动",
+      "emptyMessage": "项目一旦安排了带班次的活动，就会显示在这里。"
+    },
+    "offer": {
+      "full": "已满，{{assigned}} / {{max}}",
+      "cancelled": "已取消",
+      "plannersOnly": "由组织者安排"
+    },
+    "sheet": {
+      "freeSpot": "空位"
+    },
+    "calendar": {
+      "soonTitle": "日历即将推出",
+      "soonMessage": "周视图和月视图稍后推出。在此之前，请使用“我的”和“活动”。"
     }
   }
 }
