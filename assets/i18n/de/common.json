@@ -347,7 +347,8 @@
     "myTasks": "Meine Aufgaben",
     "more": "Mehr",
     "collapse": "Einklappen",
-    "expandSidebar": "Seitenleiste ausklappen"
+    "expandSidebar": "Seitenleiste ausklappen",
+    "shifts": "Schichten"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -3526,7 +3527,12 @@
     "holidayRegion": "Feiertage der Plattform",
     "holidayRegionHint": "Die Organisation startet mit einem Feiertagskalender für diese Region, der jedes Jahr von selbst gefüllt wird. Sie kann ihn ändern oder löschen.",
     "holidayRegionAuto": "Automatisch, aus der Zeitzone",
-    "holidayRegionNone": "Keine"
+    "holidayRegionNone": "Keine",
+    "shiftPlanning": {
+      "label": "Schichtplanung",
+      "desc": "Aus: Hinata bleibt, wie es ist. An: Projekte planen Events mit Schichten, und Mitglieder tragen sich in freie Schichten ein.",
+      "unavailable": "Braucht ein MongoDB Replica Set. Dieser Server läuft ohne, deshalb bleibt die Schichtplanung aus."
+    }
   },
   "audit": {
     "title": "Audit-Protokoll",
@@ -5228,6 +5234,12 @@
     "report": {
       "emptyTitle": "Noch keine Budgets",
       "sprints": "Sprints mit Budget"
+    }
+  },
+  "shifts": {
+    "empty": {
+      "title": "Noch keine Schichten",
+      "message": "Sobald ein Event mit Schichten geplant ist, erscheint es hier."
     }
   }
 }

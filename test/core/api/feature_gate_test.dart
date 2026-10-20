@@ -111,6 +111,8 @@ void main() {
       '/api/v1/availability',
       '/api/v1/billing',
       '/api/v1/me/calendar-subscriptions',
+      '/api/v1/shifts',
+      '/api/v1/me/shifts',
     ]);
     // Written without a trailing slash, so the boundary is a decision this file
     // makes rather than an accident of how the strings were typed.
@@ -165,7 +167,46 @@ void main() {
         '/api/v1/projects/*/copy',
         '/api/v1/projects/*/instantiate',
         '/api/v1/projects/*/schedule',
+        '/api/v1/projects/*/shifts',
       ]);
+    });
+  });
+
+  group('shift planning (HIN-49)', () {
+    test('all six server patterns are recognised, bare and below', () {
+      // ShiftPlanningGate in hinata-server gates each route as a bare path and
+      // as `/**`; a 404 from either means our copy of /meta is stale.
+      for (final path in const [
+        '/api/v1/shifts',
+        '/api/v1/shifts/events/e1',
+        '/api/v1/me/shifts',
+        '/api/v1/me/shifts/next',
+        '/api/v1/projects/6a64/shifts',
+        '/api/v1/projects/6a64/shifts/planners',
+        'https://example.org/api/v1/shifts?from=2026-10-01',
+      ]) {
+        expect(
+          isFeatureDisabledResponse(path: path, status: 404),
+          isTrue,
+          reason: path,
+        );
+      }
+    });
+
+    test('neighbours of the module are not read as gated', () {
+      for (final path in const [
+        '/api/v1/shiftsx',
+        '/api/v1/me',
+        '/api/v1/me/shifted',
+        '/api/v1/projects/6a64',
+        '/api/v1/projects/6a64/schedule-notes',
+      ]) {
+        expect(
+          isFeatureDisabledResponse(path: path, status: 404),
+          isFalse,
+          reason: path,
+        );
+      }
     });
   });
 
