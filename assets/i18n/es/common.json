@@ -2969,7 +2969,8 @@
       "askAbsence": "Solicitar esta ausencia",
       "budget": "Presupuesto"
     },
-    "showAll": "Mostrar todos los resultados en {{cat}}"
+    "showAll": "Mostrar todos los resultados en {{cat}}",
+    "span": "{{from}} a {{to}}"
   },
   "settings": {
     "title": "Ajustes",
