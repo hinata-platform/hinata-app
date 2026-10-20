@@ -87,6 +87,7 @@ class _Results extends StatelessWidget {
             tokens: tokens,
             icon: kSearchCatMeta[group.cat]!.icon,
             label: context.t(kSearchCatMeta[group.cat]!.labelKey),
+            onShowAll: group.more ? () => controller.setScope(group.cat) : null,
           ),
         );
         for (final entry in group.items) {
@@ -243,12 +244,27 @@ class _ResultRow extends StatelessWidget {
           imageUrl: entry.avatarUrl,
           size: 34,
         );
+      // A budget or a rate of a project wears the project's key, as the
+      // project's own hit does: it is the project being searched for.
+      case SearchCat.billing when entry.keyChipText != null:
+        return _HexChip(
+          text: entry.keyChipText!,
+          color: entry.keyChipColor ?? AppColors.stBacklog,
+        );
       case SearchCat.commands:
       case SearchCat.boards:
       case SearchCat.docs:
+      case SearchCat.comments:
+      case SearchCat.teams:
+      case SearchCat.attachments:
+      case SearchCat.shifts:
+      case SearchCat.time:
+      case SearchCat.absences:
+      case SearchCat.billing:
         return _IconTile(
           tokens: tokens,
           icon: entry.leadingIcon ?? LucideIcons.zap,
+          color: entry.leadingColor,
         );
     }
   }
@@ -262,8 +278,9 @@ class _ResultRow extends StatelessWidget {
           TextStyle(
             fontSize: AppType.body,
             fontWeight: FontWeight.w600,
-            color: tokens.ink,
+            color: entry.muted ? tokens.inkSoft : tokens.ink,
             letterSpacing: -0.1,
+            decoration: entry.muted ? TextDecoration.lineThrough : null,
           ),
           tokens.markBg,
         ),
@@ -398,6 +415,13 @@ class _ResultRow extends StatelessWidget {
       case SearchCat.people:
       case SearchCat.boards:
       case SearchCat.docs:
+      case SearchCat.comments:
+      case SearchCat.teams:
+      case SearchCat.attachments:
+      case SearchCat.shifts:
+      case SearchCat.time:
+      case SearchCat.absences:
+      case SearchCat.billing:
         break;
     }
     if (selected) {

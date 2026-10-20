@@ -13,6 +13,7 @@ class IssueDetailScreen extends StatefulWidget {
     this.fromModal = false,
     this.onChanged,
     this.targetCommentId,
+    this.targetAttachmentId,
   });
 
   final String issueId;
@@ -24,6 +25,9 @@ class IssueDetailScreen extends StatefulWidget {
 
   /// Deep-link target: scroll to + flash this comment once the thread loads.
   final String? targetCommentId;
+
+  /// Deep-link target: open this attachment in the viewer once it is loaded.
+  final String? targetAttachmentId;
 
   @override
   State<IssueDetailScreen> createState() => _IssueDetailScreenState();
@@ -99,6 +103,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             composerRev: _composerRev,
             floatingComposer: true,
             targetCommentId: widget.targetCommentId,
+            targetAttachmentId: widget.targetAttachmentId,
           ),
         ),
         // Floating composer pinned to the PHYSICAL bottom of the screen — the

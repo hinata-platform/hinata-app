@@ -2905,7 +2905,7 @@
     "workspace": "工作区"
   },
   "search": {
-    "placeholder": "搜索事项、项目、人员…  或输入命令",
+    "placeholder": "搜索全部内容或输入命令…",
     "archivedKeyword": "已归档",
     "scope": {
       "all": "全部"
@@ -2916,7 +2916,14 @@
       "projects": "项目",
       "people": "人员",
       "boards": "看板与迭代",
-      "docs": "知识库"
+      "docs": "知识库",
+      "comments": "评论",
+      "teams": "团队",
+      "attachments": "附件",
+      "shifts": "班次",
+      "time": "工时记录",
+      "absences": "缺勤",
+      "billing": "计费"
     },
     "recent": {
       "title": "最近搜索",
@@ -2924,7 +2931,7 @@
     },
     "empty": {
       "title": "在 {{product}} 中搜索任何内容",
-      "subtitle": "查找事项、项目、人员、看板和文档，或执行命令。开始输入吧。"
+      "subtitle": "查找事项、评论、成员、班次、工时等，或运行命令。直接开始输入。"
     },
     "noMatch": "没有与“{{q}}”匹配的结果",
     "noMatchSub": "换个关键词试试，或输入事项 ID（如 HIV-241）或命令名称。",
@@ -2950,8 +2957,19 @@
       "time": "工时",
       "timesheet": "工时表",
       "absences": "缺勤",
-      "askAbsence": "申请缺勤"
-    }
+      "askAbsence": "申请缺勤",
+      "shifts": "我的班次"
+    },
+    "sub": {
+      "project": "{{open}} 未完成 · {{done}} 已完成 · {{members}} 名成员",
+      "knowledge": "知识库",
+      "space": "空间",
+      "cancelled": "已取消",
+      "timesheet": "工时表",
+      "askAbsence": "申请此类缺勤",
+      "budget": "预算"
+    },
+    "showAll": "显示 {{cat}} 中的全部结果"
   },
   "settings": {
     "title": "设置",
@@ -5688,5 +5706,34 @@
       "failed": "无法保存排班表。",
       "fileName": "shift-plan"
     }
+  },
+  "people": {
+    "title": "个人资料",
+    "you": "这是你",
+    "deactivated": "已停用",
+    "role": {
+      "member": "成员"
+    },
+    "localTime": "当地时间",
+    "localTimeValue": "{{time}} · {{zone}}",
+    "today": "今天",
+    "absentUntil": "{{type}}，至 {{date}}",
+    "absentHalfDay": "{{type}}，半天",
+    "actions": "操作",
+    "issues": "此人的事项",
+    "issuesSelf": "你的事项",
+    "email": "写邮件",
+    "sharedTeams": "共同的团队",
+    "ownTeams": "你的团队",
+    "sharedProjects": "共同的项目",
+    "ownProjects": "你的项目",
+    "noneShared": "你们还没有共同的团队或项目。",
+    "admin": "管理",
+    "notFound": {
+      "title": "此人不在这里",
+      "message": "该账户已被删除或停用。"
+    },
+    "loadFailed": "无法加载个人资料",
+    "open": "打开 {{name}} 的个人资料"
   }
 }

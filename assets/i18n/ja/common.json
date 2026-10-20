@@ -2905,7 +2905,7 @@
     "workspace": "ワークスペース"
   },
   "search": {
-    "placeholder": "課題、プロジェクト、メンバーを検索… またはコマンドを入力",
+    "placeholder": "すべてを検索、またはコマンドを入力…",
     "archivedKeyword": "アーカイブ済み",
     "scope": {
       "all": "すべて"
@@ -2916,7 +2916,14 @@
       "projects": "プロジェクト",
       "people": "メンバー",
       "boards": "ボードとスプリント",
-      "docs": "ナレッジ"
+      "docs": "ナレッジ",
+      "comments": "コメント",
+      "teams": "チーム",
+      "attachments": "添付ファイル",
+      "shifts": "シフト",
+      "time": "時間記録",
+      "absences": "休暇・不在",
+      "billing": "請求"
     },
     "recent": {
       "title": "最近の検索",
@@ -2924,7 +2931,7 @@
     },
     "empty": {
       "title": "{{product}} のすべてを検索",
-      "subtitle": "課題、プロジェクト、メンバー、ボード、ドキュメントを探せます。コマンドの実行も可能です。入力してみてください。"
+      "subtitle": "課題、コメント、メンバー、シフト、作業時間などを検索するか、コマンドを実行します。入力を始めてください。"
     },
     "noMatch": "「{{q}}」に一致する項目はありません",
     "noMatchSub": "別のキーワード、HIV-241 のような課題 ID、コマンド名をお試しください。",
@@ -2950,8 +2957,19 @@
       "time": "時間",
       "timesheet": "工数表",
       "absences": "休暇",
-      "askAbsence": "休暇を申請"
-    }
+      "askAbsence": "休暇を申請",
+      "shifts": "自分のシフト"
+    },
+    "sub": {
+      "project": "未完了 {{open}} · 完了 {{done}} · メンバー {{members}}",
+      "knowledge": "ナレッジ",
+      "space": "スペース",
+      "cancelled": "中止",
+      "timesheet": "タイムシート",
+      "askAbsence": "この不在を申請",
+      "budget": "予算"
+    },
+    "showAll": "{{cat}} の結果をすべて表示"
   },
   "settings": {
     "title": "設定",
@@ -5688,5 +5706,34 @@
       "failed": "シフト表を保存できませんでした。",
       "fileName": "shift-plan"
     }
+  },
+  "people": {
+    "title": "プロフィール",
+    "you": "あなたです",
+    "deactivated": "無効",
+    "role": {
+      "member": "メンバー"
+    },
+    "localTime": "現地時刻",
+    "localTimeValue": "{{time}} · {{zone}}",
+    "today": "今日",
+    "absentUntil": "{{type}}（{{date}}まで）",
+    "absentHalfDay": "{{type}}（半日）",
+    "actions": "操作",
+    "issues": "この人の課題",
+    "issuesSelf": "あなたの課題",
+    "email": "メールを書く",
+    "sharedTeams": "共通のチーム",
+    "ownTeams": "あなたのチーム",
+    "sharedProjects": "共通のプロジェクト",
+    "ownProjects": "あなたのプロジェクト",
+    "noneShared": "共通のチームやプロジェクトはまだありません。",
+    "admin": "管理",
+    "notFound": {
+      "title": "この人はここにいません",
+      "message": "アカウントは削除または無効化されました。"
+    },
+    "loadFailed": "プロフィールを読み込めませんでした",
+    "open": "{{name}} のプロフィールを開く"
   }
 }

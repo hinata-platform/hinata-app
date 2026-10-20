@@ -141,6 +141,20 @@ void main() {
     expect(repo.calls, containsAll(['event:e0', 'myShifts:0', 'next']));
   });
 
+  test('a link naming a shift hands it to the event page', () {
+    final page = shiftsPage(
+      enabled: true,
+      view: ShiftsView.events,
+      eventId: 'e1',
+      shiftId: 's9',
+    );
+    expect(page, isA<ShiftsScreen>());
+    expect((page as ShiftsScreen).shiftId, 's9');
+    expect(page.eventId, 'e1');
+    // Keyed by the event only: another shift of the same event keeps the page.
+    expect(page.key, const ValueKey('shift-event-e1'));
+  });
+
   test('the gate itself, without a router', () {
     final off = shiftsPage(enabled: false);
     expect(off, isA<NotFoundScreen>());

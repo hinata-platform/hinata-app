@@ -21,6 +21,7 @@ import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
     show showGlassToast, GlassToastKind;
 import '../../../core/widgets/glass_filter_bar.dart';
+import 'user_actions.dart';
 import 'user_management_cubit.dart';
 import 'user_management_modals.dart';
 import 'user_management_widgets.dart';
@@ -246,11 +247,6 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
     _debounce = Timer(const Duration(milliseconds: 320), _resetAndReload);
   }
 
-  void _toast(String msg) {
-    if (!mounted) return;
-    showGlassToast(context, context.t(msg), kind: GlassToastKind.success);
-  }
-
   void _toastRaw(String msg, {GlassToastKind kind = GlassToastKind.error}) {
     if (!mounted) return;
     // context.t is idempotent for already-localized text but maps a fallback
@@ -258,137 +254,24 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
     showGlassToast(context, context.t(msg), kind: kind);
   }
 
-  Future<void> _run(
-    Future<void> Function() action,
-    String successKey, {
-    bool clearSel = false,
-  }) async {
-    try {
-      await action();
-      if (clearSel) _sel.clear();
-      _toast(successKey);
-      await _load();
-    } on ApiFailure catch (failure) {
-      _toastRaw(failure.message);
-    }
-  }
-
   // ── Actions bundle ─────────────────────────────────────────────────────
-  UserActions get _actions {
-    late final UserActions actions;
-    return actions = UserActions(
-      currentUserId: _currentUserId,
-      isLastActiveAdmin: (u) => _page?.isLastActiveAdmin(u) ?? false,
-      nameById: (id) =>
-          _page?.items.where((u) => u.id == id).map((u) => u.name).firstOrNull,
-      openDrawer: (u) => showUserDrawer(
-        context,
-        user: u,
-        actions: actions,
-        phone: context.isCompact,
-      ),
-      openEdit: (u) async {
-        final result = await showEditModal(context, u);
-        if (result == null) return;
-        await _run(
-          () => _users.updateDetails(
-            u.id,
-            displayName: result.name,
-            title: result.title,
-            email: result.email,
-          ),
-          'admin.um.toastProfileUpdated',
-        );
-      },
-      activate: (ids) => _run(
-        () => _users.setStatus(ids, UserStatus.active),
-        ids.length == 1
-            ? 'admin.um.toastActivated'
-            : 'admin.um.toastActivatedMany',
-        clearSel: true,
-      ),
-      approve: (ids) =>
-          _run(() => _users.approve(ids), 'admin.um.approved', clearSel: true),
-      openDeactivate: (ids) async {
-        final users = _usersFor(ids);
-        if (!await showDeactivateModal(context, users)) return;
-        await _run(
-          () => _users.setStatus(ids, UserStatus.disabled),
-          'admin.um.toastDeactivated',
-          clearSel: true,
-        );
-      },
-      setRole: (ids, role) => _run(
-        () => _users.setRole(ids, role),
-        role == AdminRole.admin
-            ? 'admin.um.toastPromoted'
-            : 'admin.um.toastDemoted',
-        clearSel: true,
-      ),
-      setOrgAdmin: (ids, orgAdmin) async {
-        final users = _usersFor(ids);
-        if (!await confirmOrgAdminChange(context, users, grant: orgAdmin)) {
-          return false;
-        }
-        if (!mounted) return false;
-        try {
-          await _users.setOrgAdmin(ids, orgAdmin);
-        } on ApiFailure catch (failure) {
-          _toastRaw(failure.message);
-          return false;
-        }
-        _sel.clear();
-        _toast(
-          orgAdmin
-              ? 'admin.um.toastOrgAdminGranted'
-              : 'admin.um.toastOrgAdminRevoked',
-        );
-        await _load();
-        return true;
-      },
-      openDemote: (ids) async {
-        final users = _usersFor(ids);
-        if (!await showRevokeAdminModal(context, users)) return;
-        await _run(
-          () => _users.setRole(ids, AdminRole.user),
-          'admin.um.toastDemoted',
-          clearSel: true,
-        );
-      },
-      openResend: (ids) async {
-        final users = _usersFor(ids);
-        if (!await showResendModal(context, users)) return;
-        await _run(
-          () => _users.resendInvites(ids),
-          'admin.um.toastInviteResent',
-          clearSel: true,
-        );
-      },
-      openReset: (ids) async {
-        final users = _usersFor(ids);
-        if (!await showResetModal(context, users)) return;
-        await _run(
-          () => _users.sendPasswordReset(ids),
-          'admin.um.toastResetSent',
-          clearSel: true,
-        );
-      },
-      revokeSessions: (ids) => _run(
-        () => _users.revokeSessions(ids),
-        'admin.um.toastSessionsRevoked',
-        clearSel: true,
-      ),
-      openDelete: (ids) async {
-        final users = _usersFor(ids);
-        if (!await showDeleteModal(context, users)) return;
-        await _run(
-          () => _users.delete(ids),
-          'admin.um.toastDeleted',
-          clearSel: true,
-        );
-      },
-    );
-  }
+  UserActions get _actions => buildUserActions(
+    context,
+    users: _users,
+    currentUserId: _currentUserId,
+    isLastActiveAdmin: (u) => _page?.isLastActiveAdmin(u) ?? false,
+    nameById: (id) =>
+        _page?.items.where((u) => u.id == id).map((u) => u.name).firstOrNull,
+    usersFor: _usersFor,
+    openDrawer: (u, actions) => showUserDrawer(
+      context,
+      user: u,
+      actions: actions,
+      phone: context.isCompact,
+    ),
+    reload: _load,
+    clearSelection: _sel.clear,
+  );
 
   List<AdminUser> _usersFor(List<String> ids) =>
       ids.map((id) => _known[id]).whereType<AdminUser>().toList();

@@ -348,5 +348,41 @@ void main() {
       await tester.pump(const Duration(seconds: 6));
       await tester.pump(const Duration(seconds: 1));
     });
+
+    // HIN-165: a search hit for one shift links to `?shift=<id>`.
+    testWidgets('a link naming a shift opens its sheet over the event', (
+      tester,
+    ) async {
+      final shift = detail().shifts.first;
+      repo
+        ..eventDetail = detail()
+        ..shiftDetail = ShiftDetail(shift: shift, event: sampleEvent);
+      await pumpShiftsUi(
+        tester,
+        const ShiftEventScreen(eventId: 'e1', shiftId: 'a'),
+        repository: repo,
+        blocs: blocs(),
+      );
+      await settle(tester);
+
+      expect(tester.takeException(), isNull);
+      expect(repo.calls, containsAllInOrder(['event:e1', 'shift:a']));
+      expect(repo.calls.where((call) => call.startsWith('shift:')), [
+        'shift:a',
+      ]);
+    });
+
+    testWidgets('without one, no sheet opens', (tester) async {
+      repo.eventDetail = detail();
+      await pumpShiftsUi(
+        tester,
+        const ShiftEventScreen(eventId: 'e1'),
+        repository: repo,
+        blocs: blocs(),
+      );
+      await settle(tester);
+
+      expect(repo.calls.where((call) => call.startsWith('shift:')), isEmpty);
+    });
   });
 }

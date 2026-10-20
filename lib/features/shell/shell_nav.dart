@@ -275,6 +275,7 @@ String? subPageTitleKey(
     return _isShiftEventRoute(location) ? 'nav.shifts' : null;
   }
   if (location.startsWith('/issues/')) return 'nav.issues';
+  if (location.startsWith('/people/')) return 'people.title';
   if (location.startsWith('/knowledge/')) return 'nav.knowledge';
   if (location.startsWith('/board/')) return 'nav.board';
   if (location.startsWith('/projects/')) return 'board.boards';

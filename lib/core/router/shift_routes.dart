@@ -50,6 +50,8 @@ List<RouteBase> shiftRoutes(
         enabled: enabled(),
         view: ShiftsView.events,
         eventId: state.pathParameters['id'],
+        // `?shift=<id>` opens that shift's sheet over the event (HIN-165).
+        shiftId: state.uri.queryParameters['shift'],
       ),
     ),
   ),
@@ -66,6 +68,7 @@ Widget shiftsPage({
   required bool enabled,
   ShiftsView view = ShiftsView.mine,
   String? eventId,
+  String? shiftId,
   ShiftCalendarQuery calendarQuery = const ShiftCalendarQuery(),
 }) {
   if (!enabled) return const NotFoundScreen(standalone: false);
@@ -75,6 +78,7 @@ Widget shiftsPage({
     key: eventId == null ? null : ValueKey('shift-event-$eventId'),
     view: view,
     eventId: eventId,
+    shiftId: shiftId,
     calendarQuery: calendarQuery,
   );
 }

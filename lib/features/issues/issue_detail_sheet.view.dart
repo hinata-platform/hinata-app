@@ -14,6 +14,7 @@ class IssueDetailBody extends StatefulWidget {
     this.floatingComposer = false,
     this.canMinimize = false,
     this.targetCommentId,
+    this.targetAttachmentId,
   });
 
   final String issueId;
@@ -22,6 +23,10 @@ class IssueDetailBody extends StatefulWidget {
 
   /// Deep-link target: scroll to + flash this comment once the thread loads.
   final String? targetCommentId;
+
+  /// Deep-link target: open this attachment in the viewer once the issue (and
+  /// with it the attachments section) is on screen.
+  final String? targetAttachmentId;
 
   /// The host's scroll controller. Lets the body animate to the newest comment
   /// after posting (sheet: the wolt page scroll; route: the page scroll view).
@@ -277,6 +282,28 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     widget.sheetScroll?.addListener(_onCommentScroll);
     _load();
     _commentSse.start();
+  }
+
+  /// A link to another attachment of the issue on screen: the route keeps this
+  /// body (it is keyed by the issue), so the new target is opened from here.
+  @override
+  void didUpdateWidget(IssueDetailBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final target = widget.targetAttachmentId;
+    if (target != oldWidget.targetAttachmentId && !_loading) {
+      _openTargetAttachment(target);
+    }
+  }
+
+  /// Opens [attachmentId] in the viewer after the next frame, when the
+  /// attachments section is built. An id the issue does not carry opens
+  /// nothing.
+  void _openTargetAttachment(String? attachmentId) {
+    if (attachmentId == null || attachmentId.isEmpty) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(_attachmentsKey.currentState?.openAttachment(attachmentId));
+    });
   }
 
   // Rebuild the floating composer (a separate subtree) when the comment field
@@ -659,6 +686,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       if (target != null && target.isNotEmpty) {
         _jumpToComment(target);
       }
+      // Deep link to one attachment → open it in the viewer.
+      _openTargetAttachment(widget.targetAttachmentId);
     } on ApiFailure catch (failure) {
       if (mounted) {
         setState(() {

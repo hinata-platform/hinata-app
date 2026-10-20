@@ -670,3 +670,17 @@ Future<T?> showTimeViewMenu<T extends Object>(
   }
   return chosen.extra;
 }
+
+/// The day a link names in its `date` parameter (`YYYY-MM-DD`), as a local
+/// midnight, or null for anything else. A link from search or a mail says
+/// which day to open on; a value that is not a day is ignored rather than
+/// guessed at.
+DateTime? linkDay(String? value) {
+  if (value == null || !RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(value)) {
+    return null;
+  }
+  final parsed = DateTime.tryParse(value);
+  return parsed == null
+      ? null
+      : DateTime(parsed.year, parsed.month, parsed.day);
+}

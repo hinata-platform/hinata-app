@@ -28,7 +28,12 @@ import 'time_screen.dart';
 import 'time_views.dart';
 
 class TimeModuleScreen extends StatefulWidget {
-  const TimeModuleScreen({super.key, required this.view, this.scope});
+  const TimeModuleScreen({
+    super.key,
+    required this.view,
+    this.scope,
+    this.query = const {},
+  });
 
   /// The view the address names.
   final TimeView view;
@@ -36,6 +41,12 @@ class TimeModuleScreen extends StatefulWidget {
   /// The list `/time/absences` opens on — see [TimeAbsencesScreen.scope] —
   /// or the report `/time/reports` opens: `shared:<token>`, `saved:<id>`.
   final String? scope;
+
+  /// The address's query: what a link (search, a mail) asks the view to open —
+  /// a day and an entry in the calendar, a day and a project in the timesheet,
+  /// a request or a new request of a type in the absences. A parameter a view
+  /// does not know is ignored.
+  final Map<String, String> query;
 
   @override
   State<TimeModuleScreen> createState() => _TimeModuleScreenState();
@@ -55,11 +66,15 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
   /// behind the reports as a list named after a report.
   final Map<TimeView, String?> _scopes = {};
 
+  /// The query each view was last opened with, for the same reason.
+  final Map<TimeView, Map<String, String>> _queries = {};
+
   @override
   void initState() {
     super.initState();
     _opened.add(widget.view);
     _scopes[widget.view] = widget.scope;
+    _queries[widget.view] = widget.query;
   }
 
   @override
@@ -68,6 +83,7 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
     // Before the build that follows, so the branch is there to be shown.
     _opened.add(widget.view);
     _scopes[widget.view] = widget.scope;
+    _queries[widget.view] = widget.query;
   }
 
   @override
@@ -90,33 +106,48 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
   Widget _branch(TimeView view) =>
       TimeViewBranch(visible: view == widget.view, child: _view(view));
 
-  Widget _view(TimeView view) => switch (view) {
-    TimeView.list => const TimeScreen(),
-    TimeView.calendar => const TimeCalendarScreen(),
-    // The same grid the base route draws, told that it belongs to the module:
-    // paged rows, and a cell of your own that can be typed into.
-    TimeView.timesheet => const TimesheetScreen(moduleView: true),
-    // Keyed by the scope, because that one is read once when the page is
-    // built: a notification about somebody else's request has to open the
-    // inbox even when the absences were already on screen.
-    TimeView.absences => TimeAbsencesScreen(
-      key: ValueKey('absences-${_scopes[view] ?? ''}'),
-      scope: _scopes[view],
-    ),
-    // Keyed by the link, read once when the page is built: a report opened from
-    // a mail or a shared link has to open even when the reports were already
-    // on screen.
-    TimeView.reports => TimeReportsScreen(
-      key: ValueKey('reports-${_scopes[view] ?? ''}'),
-      link: _scopes[view],
-    ),
-    // Reachable even while approvals are switched off, and deliberately: the
-    // route answers with what is there, which is then nothing. Gating it here
-    // would turn a link somebody was sent into a not-found page on the day an
-    // administrator toggles the policy — and the page itself says honestly that
-    // there is nothing to decide.
-    TimeView.approvals => const ApprovalsScreen(),
-  };
+  Widget _view(TimeView view) {
+    final query = _queries[view] ?? const <String, String>{};
+    return switch (view) {
+      TimeView.list => const TimeScreen(),
+      // `?date=&entry=`: the day to show and the entry to open on it.
+      TimeView.calendar => TimeCalendarScreen(
+        date: linkDay(query['date']),
+        entryId: query['entry'],
+      ),
+      // The same grid the base route draws, told that it belongs to the
+      // module: paged rows, and a cell of your own that can be typed into.
+      // `?date=&project=`: the period of that day, narrowed to the project.
+      TimeView.timesheet => TimesheetScreen(
+        moduleView: true,
+        date: linkDay(query['date']),
+        projectId: query['project'],
+      ),
+      // Keyed by the scope, because that one is read once when the page is
+      // built: a notification about somebody else's request has to open the
+      // inbox even when the absences were already on screen.
+      // `?request=` opens that request, `?type=` a new one of that type.
+      TimeView.absences => TimeAbsencesScreen(
+        key: ValueKey('absences-${_scopes[view] ?? ''}'),
+        scope: _scopes[view],
+        requestId: query['request'],
+        typeId: query['type'],
+      ),
+      // Keyed by the link, read once when the page is built: a report opened from
+      // a mail or a shared link has to open even when the reports were already
+      // on screen.
+      TimeView.reports => TimeReportsScreen(
+        key: ValueKey('reports-${_scopes[view] ?? ''}'),
+        link: _scopes[view],
+      ),
+      // Reachable even while approvals are switched off, and deliberately: the
+      // route answers with what is there, which is then nothing. Gating it here
+      // would turn a link somebody was sent into a not-found page on the day an
+      // administrator toggles the policy — and the page itself says honestly that
+      // there is nothing to decide.
+      TimeView.approvals => const ApprovalsScreen(),
+    };
+  }
 }
 
 /// One view of the module, kept built behind the others while it is not the

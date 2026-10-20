@@ -60,7 +60,12 @@ import '../../core/theme/app_type.dart';
 /// rows that were already fetched. Everyone else sees only their own time (the
 /// server refuses another user's), so a filter would have nothing to offer.
 class TimesheetScreen extends StatelessWidget {
-  const TimesheetScreen({super.key, this.moduleView = false});
+  const TimesheetScreen({
+    super.key,
+    this.moduleView = false,
+    this.date,
+    this.projectId,
+  });
 
   /// Whether this is the extended module's `/time/timesheet` rather than the
   /// base `/timesheet`.
@@ -72,6 +77,13 @@ class TimesheetScreen extends StatelessWidget {
   /// that a cell of your own can be typed into. Two files would be one grid
   /// maintained twice.
   final bool moduleView;
+
+  /// The day a link names (`?date=`): the week or period around it is shown.
+  final DateTime? date;
+
+  /// The project a link names (`?project=`): the grid opens narrowed to it,
+  /// for whoever may narrow it.
+  final String? projectId;
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -89,14 +101,20 @@ class TimesheetScreen extends StatelessWidget {
         create: (context) => TimeApprovalCubit(context.read<TimeRepository>()),
       ),
     ],
-    child: _TimesheetView(moduleView: moduleView),
+    child: _TimesheetView(
+      moduleView: moduleView,
+      date: date,
+      projectId: projectId,
+    ),
   );
 }
 
 class _TimesheetView extends StatefulWidget {
-  const _TimesheetView({required this.moduleView});
+  const _TimesheetView({required this.moduleView, this.date, this.projectId});
 
   final bool moduleView;
+  final DateTime? date;
+  final String? projectId;
 
   @override
   State<_TimesheetView> createState() => _TimesheetViewState();
@@ -184,10 +202,11 @@ class _TimesheetViewState extends State<_TimesheetView> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
-    final today = DateTime.now();
+    final today = widget.date ?? DateTime.now();
     _from = weekStartFor(context, today);
     _to = addDays(_from, 6);
     _anchor = DateTime(today.year, today.month, today.day);
+    _projectFilter = widget.projectId;
     // The rules decide whether the window is a week or a period, so they have to
     // be in before the first fetch. A cubit that nobody calls is a feature that
     // works in the test and never appears in the app.
@@ -199,6 +218,30 @@ class _TimesheetViewState extends State<_TimesheetView> {
     // Only as the module's view: the base route is the 1.x timesheet, which
     // exists on instances without the module and has no notice to show.
     if (widget.moduleView) offerTimePrivacyNotice(context);
+  }
+
+  /// A link to another day or project while the grid is on screen: the
+  /// module keeps this page, so the new window is read from here.
+  @override
+  void didUpdateWidget(_TimesheetView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final date = widget.date;
+    final dateChanged = date != null && date != oldWidget.date;
+    final projectChanged =
+        widget.projectId != null && widget.projectId != oldWidget.projectId;
+    if (!dateChanged && !projectChanged) return;
+    if (dateChanged) {
+      _anchor = DateTime(date.year, date.month, date.day);
+      _freeSpan = null;
+      _forgetPeriod();
+      _from = weekStartFor(context, date);
+      _to = addDays(_from, 6);
+    }
+    if (projectChanged) {
+      _projectFilter = widget.projectId;
+      _projectFilterLabel = null;
+    }
+    unawaited(_load());
   }
 
   bool get _isCurrentWeek => weekStartFor(context, DateTime.now()) == _from;
@@ -266,6 +309,9 @@ class _TimesheetViewState extends State<_TimesheetView> {
     final ids = {
       for (final row in rows)
         if (row.projectId != null) row.projectId!,
+      // A project a link narrowed to has no label yet: the field names it.
+      if (_projectFilter != null && _projectFilterLabel == null)
+        _projectFilter!,
     };
     if (ids.isEmpty) return const {};
     try {
@@ -343,6 +389,9 @@ class _TimesheetViewState extends State<_TimesheetView> {
         _total = total;
         _users = users ?? _users;
         _projectsById = projects ?? _projectsById;
+        if (_projectFilter != null && _projectFilterLabel == null) {
+          _projectFilterLabel = _projectsById[_projectFilter]?.name;
+        }
         _directoryAnswered = users != null;
         _loading = false;
       });
