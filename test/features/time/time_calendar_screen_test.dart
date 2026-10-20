@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:hinata/core/router/linked_target.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/my_absences_cubit.dart';
@@ -592,6 +593,42 @@ void main() {
     );
     expect(find.text('time.entry.subtitle'), findsOneWidget);
     expect(find.text('time.entry.edit'), findsWidgets);
+  });
+
+  testWidgets('the same link again opens the entry again', (tester) async {
+    final linked = DateTime(2025, 3, 12);
+    final repository = _FakeTimeRepository(
+      logged: [
+        entry(
+          id: 'far',
+          description: 'linked work',
+          on: linked,
+          startedAt: DateTime(2025, 3, 12, 9),
+          endedAt: DateTime(2025, 3, 12, 10),
+        ),
+      ],
+    );
+    // The route hands the page on screen a new visit, as go_router does.
+    final visit = ValueNotifier(LinkVisit.next());
+    addTearDown(visit.dispose);
+    await pump(
+      tester,
+      repository,
+      size: phone,
+      screen: ValueListenableBuilder<LinkVisit>(
+        valueListenable: visit,
+        builder: (_, value, _) =>
+            TimeCalendarScreen(date: linked, entryId: 'far', visit: value),
+      ),
+    );
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
+    Navigator.of(tester.element(find.text('time.entry.subtitle'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('time.entry.subtitle'), findsNothing);
+
+    visit.value = LinkVisit.next();
+    await tester.pumpAndSettle();
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
   });
 
   testWidgets('an entry the calendar does not hold opens nothing', (

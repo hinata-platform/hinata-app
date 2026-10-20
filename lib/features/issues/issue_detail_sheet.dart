@@ -40,6 +40,7 @@ import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/lexical/hinata_outline.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/issue_participation.dart';
+import '../../core/router/linked_target.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';

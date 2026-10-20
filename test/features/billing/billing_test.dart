@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/router/linked_target.dart';
 import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/models/billing_models.dart';
 import 'package:hinata/core/repositories/billing_repository.dart';
@@ -338,7 +340,11 @@ void main() {
       status: status,
     );
 
-    Future<_FakeBilling> pump(WidgetTester tester, String? rateId) async {
+    Future<_FakeBilling> pump(
+      WidgetTester tester,
+      String? rateId, {
+      ValueNotifier<LinkVisit>? visit,
+    }) async {
       final billing = _FakeBilling(
         granted: const BillingAccess(
           currency: 'EUR',
@@ -356,7 +362,15 @@ void main() {
         RepositoryProvider<BillingRepository>.value(
           value: billing,
           child: MaterialApp(
-            home: Scaffold(body: RatesScreen(rateId: rateId)),
+            home: Scaffold(
+              body: visit == null
+                  ? RatesScreen(rateId: rateId)
+                  : ValueListenableBuilder<LinkVisit>(
+                      valueListenable: visit,
+                      builder: (_, value, _) =>
+                          RatesScreen(rateId: rateId, visit: value),
+                    ),
+            ),
           ),
         ),
       );
@@ -369,10 +383,26 @@ void main() {
     ) async {
       final billing = await pump(tester, 'r2');
 
-      // Every status, or the ended rate would not be in the list.
-      expect(billing.statuses, [null]);
+      // Read by its id: the list opens as it always does, and nothing is
+      // paged through to find the rate.
+      expect(billing.rateReads, ['r2']);
+      expect(billing.statuses, [RateStatus.active]);
       expect(billing.timelineReads, 1);
       expect(billing.timelineTargets.single.scopeId, 'p-r2');
+    });
+
+    testWidgets('the same link again opens the rate again', (tester) async {
+      final visit = ValueNotifier(LinkVisit.next());
+      addTearDown(visit.dispose);
+      final billing = await pump(tester, 'r1', visit: visit);
+      expect(billing.timelineReads, 1);
+      Navigator.of(tester.element(find.byType(RatesScreen))).maybePop();
+      await tester.pumpAndSettle();
+
+      visit.value = LinkVisit.next();
+      await tester.pumpAndSettle();
+      expect(billing.rateReads, ['r1', 'r1']);
+      expect(billing.timelineReads, 2);
     });
 
     testWidgets('without one the list opens on the active rates', (
@@ -449,6 +479,17 @@ class _FakeBilling extends Fake implements BillingRepository {
   final List<(RateTarget, int, DateTime)> created = [];
   final List<InvoiceDraftRequest> drafted = [];
   int timelineReads = 0;
+
+  /// The rates read by their id, for a link.
+  final List<String> rateReads = [];
+
+  @override
+  Future<BillingRate> rate(String id) async {
+    rateReads.add(id);
+    final found = listed.where((rate) => rate.id == id).firstOrNull;
+    if (found == null) throw ApiFailure('error.notFound', statusCode: 404);
+    return found;
+  }
 
   @override
   Future<BillingAccess> access() async => granted;

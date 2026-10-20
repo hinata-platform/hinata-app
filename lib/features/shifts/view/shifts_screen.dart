@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/router/linked_target.dart';
 import '../../../core/repositories/shift_repository.dart';
 import '../../shell/page_chrome.dart';
 import '../bloc/shift_actions_cubit.dart';
@@ -28,6 +29,7 @@ class ShiftsScreen extends StatefulWidget {
     this.view = ShiftsView.mine,
     this.eventId,
     this.shiftId,
+    this.visit,
     this.calendarQuery = const ShiftCalendarQuery(),
   });
 
@@ -40,6 +42,9 @@ class ShiftsScreen extends StatefulWidget {
   /// The shift of [eventId] whose sheet opens over the event
   /// (`/shifts/events/:id?shift=`).
   final String? shiftId;
+
+  /// The navigation that named [shiftId], so the same link opens it again.
+  final LinkVisit? visit;
 
   /// What `/shifts/calendar?project=&span=&date=` asks for.
   final ShiftCalendarQuery calendarQuery;
@@ -85,7 +90,11 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
         BlocProvider.value(value: _planning),
       ],
       child: eventId != null
-          ? ShiftEventScreen(eventId: eventId, shiftId: widget.shiftId)
+          ? ShiftEventScreen(
+              eventId: eventId,
+              shiftId: widget.shiftId,
+              visit: widget.visit,
+            )
           : IndexedStack(
               index: ShiftsView.values.indexOf(widget.view),
               sizing: StackFit.expand,

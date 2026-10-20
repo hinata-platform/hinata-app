@@ -18,6 +18,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../core/router/linked_target.dart';
 import '../shell/page_chrome.dart';
 import '../timesheet/timesheet_screen.dart';
 import 'absences_screen.dart';
@@ -33,6 +34,7 @@ class TimeModuleScreen extends StatefulWidget {
     required this.view,
     this.scope,
     this.query = const {},
+    this.visit,
   });
 
   /// The view the address names.
@@ -47,6 +49,10 @@ class TimeModuleScreen extends StatefulWidget {
   /// a request or a new request of a type in the absences. A parameter a view
   /// does not know is ignored.
   final Map<String, String> query;
+
+  /// The navigation that brought [query] (see [LinkedTarget]): the same link
+  /// again opens what it names again.
+  final LinkVisit? visit;
 
   @override
   State<TimeModuleScreen> createState() => _TimeModuleScreenState();
@@ -69,12 +75,16 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
   /// The query each view was last opened with, for the same reason.
   final Map<TimeView, Map<String, String>> _queries = {};
 
+  /// The visit each view's query came with.
+  final Map<TimeView, LinkVisit?> _visits = {};
+
   @override
   void initState() {
     super.initState();
     _opened.add(widget.view);
     _scopes[widget.view] = widget.scope;
     _queries[widget.view] = widget.query;
+    _visits[widget.view] = widget.visit;
   }
 
   @override
@@ -84,6 +94,7 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
     _opened.add(widget.view);
     _scopes[widget.view] = widget.scope;
     _queries[widget.view] = widget.query;
+    _visits[widget.view] = widget.visit;
   }
 
   @override
@@ -108,12 +119,14 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
 
   Widget _view(TimeView view) {
     final query = _queries[view] ?? const <String, String>{};
+    final visit = _visits[view];
     return switch (view) {
       TimeView.list => const TimeScreen(),
       // `?date=&entry=`: the day to show and the entry to open on it.
       TimeView.calendar => TimeCalendarScreen(
         date: linkDay(query['date']),
         entryId: query['entry'],
+        visit: visit,
       ),
       // The same grid the base route draws, told that it belongs to the
       // module: paged rows, and a cell of your own that can be typed into.
@@ -122,6 +135,7 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
         moduleView: true,
         date: linkDay(query['date']),
         projectId: query['project'],
+        visit: visit,
       ),
       // Keyed by the scope, because that one is read once when the page is
       // built: a notification about somebody else's request has to open the
@@ -132,6 +146,7 @@ class _TimeModuleScreenState extends State<TimeModuleScreen> {
         scope: _scopes[view],
         requestId: query['request'],
         typeId: query['type'],
+        visit: visit,
       ),
       // Keyed by the link, read once when the page is built: a report opened from
       // a mail or a shared link has to open even when the reports were already
