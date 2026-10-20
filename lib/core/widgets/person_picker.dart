@@ -39,6 +39,9 @@ import '../theme/app_type.dart';
 /// "Mich eintragen" when a planner puts people on a shift — while the search
 /// is empty. [disabledIds] are listed greyed out and cannot be picked, with
 /// [disabledLabel] beside them (people already on that shift).
+///
+/// [footerNote] is read after every answer; a text it returns stands under
+/// the list (a capped [search] saying that typing finds the rest).
 Future<DirectoryUser?> showPersonPicker(
   BuildContext context, {
   required Rect anchorRect,
@@ -48,6 +51,7 @@ Future<DirectoryUser?> showPersonPicker(
   ({DirectoryUser user, String label})? first,
   Set<String> disabledIds = const {},
   String? disabledLabel,
+  String? Function()? footerNote,
 }) {
   // The popover is a root-navigator route and so inherits none of the caller's
   // providers — hand the repository across explicitly, to the picker's cubit.
@@ -60,6 +64,7 @@ Future<DirectoryUser?> showPersonPicker(
       first: first,
       disabledIds: disabledIds,
       disabledLabel: disabledLabel,
+      footerNote: footerNote,
     ),
   );
 
@@ -187,6 +192,7 @@ class _PersonPickerPanel extends StatefulWidget {
     this.first,
     this.disabledIds = const {},
     this.disabledLabel,
+    this.footerNote,
   });
 
   final String? selectedId;
@@ -194,6 +200,7 @@ class _PersonPickerPanel extends StatefulWidget {
   final ({DirectoryUser user, String label})? first;
   final Set<String> disabledIds;
   final String? disabledLabel;
+  final String? Function()? footerNote;
 
   @override
   State<_PersonPickerPanel> createState() => _PersonPickerPanelState();
@@ -371,6 +378,7 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
     }
 
     final first = _searchCtrl.text.isEmpty ? widget.first : null;
+    final footer = results.isEmpty ? null : widget.footerNote?.call();
     Widget row(DirectoryUser user, {String? label}) {
       final disabled = widget.disabledIds.contains(user.id);
       return _PersonRow(
@@ -402,6 +410,17 @@ class _PersonPickerPanelState extends State<_PersonPickerPanel> {
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 10),
           child: Center(child: HiveLoader(size: 15)),
+        ),
+      if (footer != null)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(14, 8, 14, 12),
+          child: Text(
+            footer,
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: AppColors.textSecondary,
+            ),
+          ),
         ),
     ];
 

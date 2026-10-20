@@ -13,8 +13,7 @@ import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart' show DirectoryUser;
 import '../../../core/models/shift_models.dart';
-import '../../../core/repositories/project_repository.dart';
-import '../../../core/repositories/user_repository.dart';
+import '../../../core/repositories/shift_repository.dart';
 import '../../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../../core/widgets/person_picker.dart';
 import '../../sprint/modals/glass_modal.dart'
@@ -55,8 +54,9 @@ void announcePlanOutcome(BuildContext context, ShiftPlanOutcome outcome) {
   );
 }
 
-/// Opens the people of [shift]'s project at [anchor] ("Mich eintragen" first,
-/// those on it already greyed out) and puts the one picked on the shift.
+/// Opens the people who may be put on [shift] at [anchor] ("Mich eintragen"
+/// first, those on it already greyed out) and puts the one picked on the
+/// shift. The list is the server's candidates, team access included.
 Future<ShiftPlanOutcome?> assignToShift(
   BuildContext context,
   Shift shift, {
@@ -65,10 +65,10 @@ Future<ShiftPlanOutcome?> assignToShift(
   final planning = context.read<ShiftPlanningCubit>();
   final me = context.read<AuthBloc>().state.user;
   final search = ShiftAssignees(
-    context.read<ProjectRepository>(),
-    context.read<UserRepository>(),
+    context.read<ShiftRepository>(),
     shift.projectId,
   );
+  final truncatedNote = context.t('shifts.plan.candidatesTruncated');
   final picked = await showPersonPicker(
     context,
     anchorRect: anchor,
@@ -86,9 +86,36 @@ Future<ShiftPlanOutcome?> assignToShift(
           ),
     disabledIds: {...shift.assigneeIds, if (shift.mine) ?me?.id},
     disabledLabel: context.t('shifts.plan.alreadyOn'),
+    footerNote: () => search.truncated ? truncatedNote : null,
   );
   if (picked == null || !context.mounted) return null;
   final outcome = await planning.assign(shift, picked.id);
+  if (context.mounted) announcePlanOutcome(context, outcome);
+  return outcome;
+}
+
+/// "Jetzt zuteilen" (HIN-162): gives [name], waiting for [shift], the free
+/// place, after asking. Their waiting place becomes the assignment.
+Future<ShiftPlanOutcome?> assignFromWaitlist(
+  BuildContext context,
+  Shift shift,
+  String userId,
+  String name,
+) async {
+  final planning = context.read<ShiftPlanningCubit>();
+  final sure = await showGlassConfirm(
+    context,
+    icon: LucideIcons.userCheck,
+    title: context.t('shifts.waitlist.assignNowTitle'),
+    message: context.t(
+      'shifts.waitlist.assignNowMessage',
+      variables: {'name': name, 'shift': shift.title},
+    ),
+    confirmLabel: context.t('shifts.waitlist.assignNow'),
+    confirmIcon: LucideIcons.userCheck,
+  );
+  if (sure != true || !context.mounted) return null;
+  final outcome = await planning.assign(shift, userId);
   if (context.mounted) announcePlanOutcome(context, outcome);
   return outcome;
 }

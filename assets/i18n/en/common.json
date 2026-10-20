@@ -202,7 +202,9 @@
       "seriesTooManyShifts": "An event in a series can have at most 50 shifts.",
       "seriesTooManyExdates": "366 events have already been taken out of this series. Please start a new series for the future.",
       "seriesTemplateKeyInvalid": "The shifts of this series are not unique. Please reload the series and try again.",
-      "seriesFutureUnsupported": "Shifts on several days at once can only be added to this event, not to all future ones."
+      "seriesFutureUnsupported": "Shifts on several days at once can only be added to this event, not to all future ones.",
+      "waitlistFull": "This waiting list already has 50 people on it.",
+      "alreadyWaiting": "You're already on this shift's waiting list."
     }
   },
   "notFound": {
@@ -5374,19 +5376,25 @@
       "decline": "Decline",
       "release": "Give up",
       "toEvent": "Go to event",
-      "busy": "One moment, that is still running."
+      "busy": "One moment, that is still running.",
+      "waitlistJoin": "Join waiting list",
+      "waitlistLeave": "Leave waiting list"
     },
     "done": {
       "joined": "You are signed up",
       "confirmed": "Shift confirmed",
       "declined": "Assignment declined",
-      "released": "Shift given up"
+      "released": "Shift given up",
+      "waitlisted": "You're on the waiting list",
+      "waitlistLeft": "You left the waiting list"
     },
     "ask": {
       "releaseTitle": "Give up this shift?",
       "releaseMessage": "Your place opens up again and others can sign up.",
       "declineTitle": "Decline this assignment?",
-      "declineMessage": "The place opens up again and the organisers can assign someone else."
+      "declineMessage": "The place opens up again and the organisers can assign someone else.",
+      "waitlistLeaveTitle": "Leave the waiting list?",
+      "waitlistLeaveMessage": "You lose your place on the list. If you join again, you start at the end."
     },
     "absentHint": "You are entered as absent on that day",
     "next": {
@@ -5419,7 +5427,8 @@
       "openCount_plural": "{{count}} still need people",
       "openEmpty": "No project is looking for people right now.",
       "toEvents": "See all events",
-      "offline": "No connection. You are seeing what was last loaded."
+      "offline": "No connection. You are seeing what was last loaded.",
+      "waitlist": "Waiting list"
     },
     "event": {
       "title": "Event",
@@ -5569,7 +5578,8 @@
         "delete": "Delete",
         "deleteTitle": "Delete the event?",
         "deleteMessage": "The event and all its shifts are deleted. If people are still signed up, call it off first."
-      }
+      },
+      "candidatesTruncated": "There are more people. Search for a name to find them."
     },
     "series": {
       "scope": {
@@ -5633,6 +5643,16 @@
         "created_plural": "Series created, {{count}} events are in the calendar."
       },
       "detached": "differs from the series"
+    },
+    "waitlist": {
+      "count": "1 waiting",
+      "count_plural": "{{count}} waiting",
+      "position": "Waiting list, place {{pos}} of {{total}}",
+      "confirmBy": "A place opened up for you, please confirm by {{time}}",
+      "chip": "{{name}} is waiting in place {{pos}}",
+      "assignNow": "Assign now",
+      "assignNowTitle": "Assign now?",
+      "assignNowMessage": "{{name}} gets the free place on “{{shift}}” and is notified."
     }
   }
 }

@@ -47,7 +47,11 @@ import '../theme/app_colors.dart';
   'ACCOUNT_DELETED' => (LucideIcons.shieldCheck, AppColors.inkSoft),
   'REVIEW' ||
   'REVIEW_REQUEST' => (LucideIcons.messageSquareText, AppColors.stReview),
-  // Shift planning (HIN-27): every type of the module is one family.
+  // Shift planning (HIN-27): every type of the module is one family; the
+  // waiting list's three (HIN-162) say with their glyph what happened.
+  'SHIFT_PROMOTED' => (LucideIcons.circleArrowUp, AppColors.accentTeal),
+  'SHIFT_WAITLIST_SKIPPED' => (LucideIcons.skipForward, AppColors.accentTeal),
+  'SHIFT_WAITLIST_EXPIRED' => (LucideIcons.timerOff, AppColors.accentTeal),
   final shift when shift.startsWith('SHIFT_') => (
     LucideIcons.calendarClock,
     AppColors.accentTeal,

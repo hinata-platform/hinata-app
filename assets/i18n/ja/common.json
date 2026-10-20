@@ -202,7 +202,9 @@
       "seriesTooManyShifts": "シリーズのイベント1件に設定できるシフトは最大 50 件です。",
       "seriesTooManyExdates": "このシリーズからはすでに 366 件のイベントが除外されています。今後の分は新しいシリーズを作成してください。",
       "seriesTemplateKeyInvalid": "このシリーズのシフトを一意に識別できません。シリーズを再読み込みして、もう一度お試しください。",
-      "seriesFutureUnsupported": "複数日のシフトをまとめて追加できるのはこのイベントだけです。以降すべてには追加できません。"
+      "seriesFutureUnsupported": "複数日のシフトをまとめて追加できるのはこのイベントだけです。以降すべてには追加できません。",
+      "waitlistFull": "このキャンセル待ちはすでに 50 人です。",
+      "alreadyWaiting": "このシフトのキャンセル待ちにすでに登録しています。"
     }
   },
   "notFound": {
@@ -5374,19 +5376,25 @@
       "decline": "辞退する",
       "release": "譲る",
       "toEvent": "イベントへ",
-      "busy": "少々お待ちください。処理中です。"
+      "busy": "少々お待ちください。処理中です。",
+      "waitlistJoin": "キャンセル待ちに登録",
+      "waitlistLeave": "キャンセル待ちをやめる"
     },
     "done": {
       "joined": "登録しました",
       "confirmed": "シフトを確認しました",
       "declined": "割り当てを辞退しました",
-      "released": "シフトを譲りました"
+      "released": "シフトを譲りました",
+      "waitlisted": "キャンセル待ちに登録しました",
+      "waitlistLeft": "キャンセル待ちをやめました"
     },
     "ask": {
       "releaseTitle": "このシフトを譲りますか？",
       "releaseMessage": "あなたの枠が空き、ほかの人が登録できるようになります。",
       "declineTitle": "この割り当てを辞退しますか？",
-      "declineMessage": "枠が空き、運営側がほかの人を割り当てられるようになります。"
+      "declineMessage": "枠が空き、運営側がほかの人を割り当てられるようになります。",
+      "waitlistLeaveTitle": "キャンセル待ちをやめますか？",
+      "waitlistLeaveMessage": "リストでの順番がなくなります。再登録すると最後尾になります。"
     },
     "absentHint": "その日は不在として登録されています",
     "next": {
@@ -5419,7 +5427,8 @@
       "openCount_plural": "{{count}} 件で人手が必要",
       "openEmpty": "今は人手を探しているプロジェクトはありません。",
       "toEvents": "すべてのイベントを見る",
-      "offline": "接続がありません。最後に読み込んだ内容を表示しています。"
+      "offline": "接続がありません。最後に読み込んだ内容を表示しています。",
+      "waitlist": "キャンセル待ち"
     },
     "event": {
       "title": "イベント",
@@ -5569,7 +5578,8 @@
         "delete": "削除",
         "deleteTitle": "イベントを削除しますか？",
         "deleteMessage": "イベントとすべてのシフトを削除します。まだ登録者がいる場合は、先に中止してください。"
-      }
+      },
+      "candidatesTruncated": "ほかにも候補がいます。名前で検索してください。"
     },
     "series": {
       "scope": {
@@ -5633,6 +5643,16 @@
         "created_plural": "シリーズを作成しました。{{count}} 件がカレンダーに入りました。"
       },
       "detached": "シリーズとは異なります"
+    },
+    "waitlist": {
+      "count": "1 人待機中",
+      "count_plural": "{{count}} 人待機中",
+      "position": "キャンセル待ち {{total}} 人中 {{pos}} 番目",
+      "confirmBy": "空きが出ました。{{time}} までに確定してください",
+      "chip": "{{name}}（キャンセル待ち {{pos}} 番目）",
+      "assignNow": "今すぐ割り当てる",
+      "assignNowTitle": "今すぐ割り当てますか？",
+      "assignNowMessage": "{{name}} に「{{shift}}」の空き枠を割り当て、通知します。"
     }
   }
 }
