@@ -362,6 +362,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         // Settled, not `unknown` while the session is still being restored:
         // resetting then would throw the hydrated tint away on every start.
         _tint.reset();
+        // The same holds for the shifts kept for offline: the session ended
+        // while the app was closed, so the switch of accounts below never
+        // sees it.
+        unawaited(forgetLeftoverShiftSnapshot(widget.storage));
       }
       _streamServer = null;
       _accountEvents.stop();
@@ -422,6 +426,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // The shifts the session that ended kept for offline are that account's;
     // sign-out and a revoked session both arrive here.
     unawaited(previousShifts.forget().then((_) => previousShifts.close()));
+    unawaited(
+      widget.storage.setShiftSnapshotId(
+        identity == null ? null : _shiftSnapshot.storageId,
+      ),
+    );
     // The session that just ended leaves a persisted timer behind, and that
     // timer names what the person was working on in up to two thousand
     // characters of free text. Every path here matters, not only the sign-out
@@ -1048,6 +1057,17 @@ class _SignedInShortcuts extends StatelessWidget {
 /// Whether a server that is ready asks for the sign-in to be checked: a new
 /// server always, the same one again only when a session is stranded there,
 /// its tokens kept through a start against a server that was down.
+/// Deletes the offline shift snapshot an account left on this device, when
+/// the app starts and the session behind it is gone (revoked, expired or
+/// reset while the app was closed).
+@visibleForTesting
+Future<void> forgetLeftoverShiftSnapshot(AppStorage storage) async {
+  final id = storage.shiftSnapshotId;
+  if (id == null) return;
+  await MyShiftsSnapshotCubit.forgetStored(id);
+  await storage.setShiftSnapshotId(null);
+}
+
 @visibleForTesting
 bool needsAuthCheck({
   required String? checkedServer,

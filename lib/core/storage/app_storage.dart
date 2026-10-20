@@ -35,6 +35,7 @@ class AppStorage {
   // worst a fresh key costs is that one already-opened notification could be
   // opened once more.
   static const _kOpenedNotifications = 'hinata.openedNotifications.v2';
+  static const _kShiftSnapshotId = 'hinata.shiftSnapshotId';
 
   /// Maximum number of recent global-search queries kept on device.
   static const recentSearchMax = 6;
@@ -455,6 +456,15 @@ class AppStorage {
     if (url == null) return;
     await _prefs.setBool(_multiSelectHintKey(url), true);
   }
+
+  /// The storage id of the offline shift snapshot the signed-in account
+  /// keeps, so a start that finds the session gone can delete it without
+  /// knowing who that account was. Null while no account keeps one.
+  String? get shiftSnapshotId => _prefs.getString(_kShiftSnapshotId);
+
+  Future<void> setShiftSnapshotId(String? id) => id == null
+      ? _prefs.remove(_kShiftSnapshotId)
+      : _prefs.setString(_kShiftSnapshotId, id);
 
   String? get locale => _prefs.getString(_kLocale);
   Future<void> setLocale(String code) => _prefs.setString(_kLocale, code);
