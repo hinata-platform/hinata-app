@@ -70,7 +70,9 @@ void main() {
       addTearDown(cubit.close);
       cubit.setSpan(ShiftCalendarSpan.month);
       await Future<void>.delayed(Duration.zero);
+      // The marks do not say who plans; the month asks once (HIN-166).
       expect(repo.calls, [
+        'plannable',
         'marks:202609:all',
         'marks:202610:all',
         'marks:202611:all',

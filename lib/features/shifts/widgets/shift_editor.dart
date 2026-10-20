@@ -28,11 +28,16 @@ import 'shift_plan_texts.dart';
 
 /// Opens the shift editor (HIN-160) for a new shift of [event] (on [day], or
 /// its first day) or for [shift]. True when something was saved.
+///
+/// [start] and [end] (HIN-166) are wall clocks in the event's zone, the span
+/// a planner swept out on the calendar; they come before [day].
 Future<bool> showShiftEditor(
   BuildContext context, {
   required ShiftEventSummary event,
   Shift? shift,
   DateTime? day,
+  DateTime? start,
+  DateTime? end,
 }) async {
   final repository = context.read<ShiftRepository>();
   final zone = await ShiftZones.deviceZone();
@@ -46,6 +51,8 @@ Future<bool> showShiftEditor(
         event: event,
         shift: shift,
         day: day,
+        start: start,
+        end: end,
         deviceZone: zone,
       ),
       child: const ShiftEditorBody(),
