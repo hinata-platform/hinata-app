@@ -47,7 +47,7 @@ class ShiftSheetCubit extends Cubit<ShiftSheetState> {
           // place to act on, whatever the opener thought.
           assignment: !detail.shift.mine
               ? null
-              : detail.myAssignment ?? state.assignment,
+              : _merge(detail.myAssignment, state.assignment),
         ),
       );
     } on ApiFailure catch (failure) {
@@ -57,6 +57,27 @@ class ShiftSheetCubit extends Cubit<ShiftSheetState> {
       if (isClosed) return;
       emit(_failed('errors.unexpected'));
     }
+  }
+
+  /// The server's place, keeping the confirmation deadline the opener knew
+  /// ("Meine Schichten" reads it, the detail answer does not carry it).
+  static ShiftAssignmentRef? _merge(
+    ShiftAssignmentRef? server,
+    ShiftAssignmentRef? known,
+  ) {
+    if (server == null) return known;
+    if (server.confirmByLocal != null ||
+        known == null ||
+        known.id != server.id ||
+        server.status != ShiftAssignmentStatus.assigned) {
+      return server;
+    }
+    return ShiftAssignmentRef(
+      id: server.id,
+      status: server.status,
+      userId: server.userId,
+      confirmByLocal: known.confirmByLocal,
+    );
   }
 
   ShiftSheetState _failed(String key) => ShiftSheetState(

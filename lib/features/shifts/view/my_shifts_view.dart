@@ -61,8 +61,8 @@ class MyShiftsPage extends StatelessWidget {
 }
 
 /// "Meine Schichten" (HIN-44): the hero with the next shift, the caller's
-/// shifts by day, and the open shifts in their projects. Offline it draws the
-/// snapshot, people counted and never named.
+/// waiting lists (HIN-162), their shifts by day, and the open shifts in their
+/// projects. Offline it draws the snapshot, people counted and never named.
 class MyShiftsView extends StatelessWidget {
   const MyShiftsView({super.key, this.now});
 
@@ -109,6 +109,11 @@ class _Open extends _Entry {
   const _Open(this.shift, this.event);
   final Shift shift;
   final ShiftEventHead? event;
+}
+
+class _Waiting extends _Entry {
+  const _Waiting(this.shift);
+  final MyShift shift;
 }
 
 class _Gap extends _Entry {
@@ -186,6 +191,7 @@ class _Body extends StatelessWidget {
             ),
           ),
         ),
+      if (!offline) ..._waiting(context, head),
       ..._byDay(context, listed),
       if (!offline) ..._open(context, head),
     ];
@@ -263,6 +269,17 @@ class _Body extends StatelessWidget {
     );
   }
 
+  /// The compact group above the list: the shifts the caller waits for.
+  List<_Entry> _waiting(BuildContext context, NextShiftState head) {
+    final waiting = head.waiting;
+    if (waiting.isEmpty) return const [];
+    return [
+      _Header(context.t('shifts.mine.waitlist')),
+      for (final row in waiting) ...[_Waiting(row), const _Gap(10)],
+      const _Gap(18),
+    ];
+  }
+
   List<_Entry> _byDay(BuildContext context, List<MyShift> rows) {
     final out = <_Entry>[];
     DateTime? day;
@@ -319,6 +336,43 @@ class _Body extends StatelessWidget {
         return SizedBox(height: height);
       case _Widget(:final child):
         return child;
+      case _Waiting(:final shift):
+        final mine = shift.shift.copyWith(
+          myWaitAssignmentId: shift.assignmentId,
+        );
+        return Builder(
+          builder: (rowContext) => ShiftRow(
+            shift: mine,
+            eventTitle: shift.event.title,
+            location: shift.event.location,
+            stacked: compact,
+            onTap: () => unawaited(
+              showShiftSheet(
+                context,
+                shiftId: mine.id,
+                anchorRect: anchorRectOfContext(rowContext),
+                onOpenEvent: () =>
+                    context.push('${ShiftsView.events.route}/${mine.eventId}'),
+              ),
+            ),
+            trailing: ShiftOfferView(
+              offer: shiftOfferFor(mine),
+              shift: mine,
+              onAction: (action) {
+                final next = context.read<NextShiftCubit>();
+                startShiftAction(
+                  context,
+                  action,
+                  shift: mine,
+                  assignmentId: shift.assignmentId,
+                  then: (outcome) {
+                    if (outcome.ok) next.dropWaiting(shift.assignmentId);
+                  },
+                );
+              },
+            ),
+          ),
+        );
       case _Mine(:final shift):
         return Builder(
           builder: (rowContext) => ShiftRow(
@@ -326,6 +380,9 @@ class _Body extends StatelessWidget {
             eventTitle: shift.event.title,
             location: shift.event.location,
             stacked: compact,
+            note: !offline && shift.promoted && shift.confirmByLocal != null
+                ? confirmByLabel(context, shift.confirmByLocal!, now: now())
+                : null,
             onTap: offline
                 ? null
                 : () => _openSheet(
@@ -417,10 +474,7 @@ class _Body extends StatelessWidget {
           context,
           shiftId: mine.shift.id,
           anchorRect: anchor,
-          assignment: ShiftAssignmentRef(
-            id: mine.assignmentId,
-            status: mine.status,
-          ),
+          assignment: mine.ref,
           onOpenEvent: () =>
               context.push('${ShiftsView.events.route}/${mine.shift.eventId}'),
         ),

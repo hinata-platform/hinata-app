@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/models/shift_models.dart';
 import '../../../core/theme/app_colors.dart';
@@ -27,6 +28,8 @@ class ShiftRow extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.stacked = false,
+    this.note,
+    this.extra,
   });
 
   final Shift shift;
@@ -43,6 +46,13 @@ class ShiftRow extends StatelessWidget {
 
   /// The action below the row rather than beside it (a phone).
   final bool stacked;
+
+  /// A deadline the reader has to meet, in words, with a clock glyph
+  /// ("Nachgerückt, bitte bis 18:00 bestätigen").
+  final String? note;
+
+  /// Drawn under the people: a planner's waiting list (HIN-162).
+  final Widget? extra;
 
   @override
   Widget build(BuildContext context) {
@@ -115,6 +125,36 @@ class ShiftRow extends StatelessWidget {
                     ),
                   ),
                 ),
+              if (note != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 1),
+                        child: ExcludeSemantics(
+                          child: Icon(
+                            LucideIcons.clockAlert,
+                            size: 15,
+                            color: AppColors.warningInk,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          note!,
+                          style: TextStyle(
+                            fontSize: AppType.label,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.warningInk,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 10,
@@ -130,6 +170,7 @@ class ShiftRow extends StatelessWidget {
                     ),
                 ],
               ),
+              ?extra,
             ],
           ),
         ),

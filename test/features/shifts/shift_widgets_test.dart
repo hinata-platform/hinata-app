@@ -34,11 +34,17 @@ void main() {
       expect(offer.secondary, ShiftAction.release);
     });
 
-    test('free: sign up; full: words instead of a disabled button', () {
+    test('free: sign up; full: the waiting list, or words without sign-up', () {
       expect(shiftOfferFor(sampleShift()).primary, ShiftAction.join);
       final full = shiftOfferFor(sampleShift(assigned: 5, required: 5, max: 5));
       expect(full.primary, isNull);
-      expect(full.noteKey, 'shifts.offer.full');
+      expect(full.secondary, ShiftAction.waitlistJoin);
+      final closed = shiftOfferFor(
+        sampleShift(assigned: 5, required: 5, max: 5),
+        selfAssignable: false,
+      );
+      expect(closed.secondary, isNull);
+      expect(closed.noteKey, 'shifts.offer.full');
     });
 
     test('closed for sign-up or cancelled: nothing to press', () {

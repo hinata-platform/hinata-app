@@ -9,8 +9,8 @@ import '../../../core/repositories/shift_repository.dart';
 import 'shift_changes.dart';
 
 /// The head and the foot of "Meine Schichten": the next shift for the hero
-/// card, the people on it, and up to three open shifts in the caller's
-/// projects over the next two weeks.
+/// card, the people on it, the caller's waiting lists (HIN-162), and up to
+/// three open shifts in the caller's projects over the next two weeks.
 class NextShiftState extends Equatable {
   const NextShiftState({
     this.loading = false,
@@ -18,6 +18,7 @@ class NextShiftState extends Equatable {
     this.next,
     this.nextDetail,
     this.open = const ShiftCalendar(),
+    this.waiting = const [],
     this.errorKey,
   });
 
@@ -31,6 +32,9 @@ class NextShiftState extends Equatable {
   /// it loads or when it could not be read; the hero then counts instead.
   final ShiftDetail? nextDetail;
   final ShiftCalendar open;
+
+  /// The shifts the caller waits for, by start; never in the hero.
+  final List<MyShift> waiting;
   final String? errorKey;
 
   NextShiftState copyWith({
@@ -41,6 +45,7 @@ class NextShiftState extends Equatable {
     ShiftDetail? nextDetail,
     bool clearDetail = false,
     ShiftCalendar? open,
+    List<MyShift>? waiting,
     String? errorKey,
   }) => NextShiftState(
     loading: loading ?? this.loading,
@@ -48,6 +53,7 @@ class NextShiftState extends Equatable {
     next: clearNext ? null : (next ?? this.next),
     nextDetail: clearDetail ? null : (nextDetail ?? this.nextDetail),
     open: open ?? this.open,
+    waiting: waiting ?? this.waiting,
     errorKey: errorKey,
   );
 
@@ -58,6 +64,7 @@ class NextShiftState extends Equatable {
     next,
     nextDetail,
     open,
+    waiting,
     errorKey,
   ];
 }
@@ -100,10 +107,13 @@ class NextShiftCubit extends Cubit<NextShiftState> {
             // The open shifts are a suggestion; failing to read them must not
             // take the caller's own shifts down with them.
             .catchError((Object _) => const ShiftCalendar()),
+        // The same for the waiting lists: an older server has no such route.
+        _shifts.myWaitingShifts().catchError((Object _) => const <MyShift>[]),
       ]);
       if (isClosed || token != _token) return;
       final next = results[0] as MyShift?;
       final open = results[1] as ShiftCalendar;
+      final waiting = results[2] as List<MyShift>;
       final keepDetail = state.nextDetail?.shift.id == next?.shift.id;
       emit(
         NextShiftState(
@@ -111,14 +121,18 @@ class NextShiftCubit extends Cubit<NextShiftState> {
           next: next,
           nextDetail: keepDetail ? state.nextDetail : null,
           open: ShiftCalendar(
-            // Never offer a shift the caller is already on.
+            // Never offer a shift the caller is already on or waits for.
             shifts: [
               for (final s in open.shifts)
-                if (!s.mine) s,
+                if (!s.mine && !s.waiting) s,
             ],
             events: open.events,
             truncated: open.truncated,
           ),
+          waiting: [
+            for (final w in waiting)
+              if (w.status == ShiftAssignmentStatus.waiting) w,
+          ],
         ),
       );
       onNext?.call(next);
@@ -142,6 +156,17 @@ class NextShiftCubit extends Cubit<NextShiftState> {
     }
   }
 
+  /// Takes a waiting place off the list right away, once it is left.
+  void dropWaiting(String assignmentId) => emit(
+    state.copyWith(
+      waiting: [
+        for (final w in state.waiting)
+          if (w.assignmentId != assignmentId) w,
+      ],
+      errorKey: state.errorKey,
+    ),
+  );
+
   /// Puts a changed shift into the open list or the hero right away, before
   /// the reload the change triggers anyway.
   void applyShift(Shift shift) {
@@ -154,7 +179,10 @@ class NextShiftCubit extends Cubit<NextShiftState> {
         open: ShiftCalendar(
           shifts: [
             for (final s in state.open.shifts)
-              if (s.id != shift.id) s else if (!shift.mine) shift,
+              if (s.id != shift.id)
+                s
+              else if (!shift.mine && !shift.waiting)
+                shift,
           ],
           events: state.open.events,
           truncated: state.open.truncated,
