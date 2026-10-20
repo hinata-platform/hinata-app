@@ -347,7 +347,8 @@
     "myTasks": "Mis tareas",
     "more": "Más",
     "collapse": "Contraer",
-    "expandSidebar": "Desplegar barra lateral"
+    "expandSidebar": "Desplegar barra lateral",
+    "shifts": "Turnos"
   },
   "dashboard": {
     "title": "Panel",
@@ -3526,7 +3527,12 @@
     "holidayRegion": "Festivos de la plataforma",
     "holidayRegionHint": "La organización empieza con un calendario de festivos de esta región que se llena cada año por sí solo. Puede cambiarlo o borrarlo.",
     "holidayRegionAuto": "Automático, según la zona horaria",
-    "holidayRegionNone": "Ninguno"
+    "holidayRegionNone": "Ninguno",
+    "shiftPlanning": {
+      "label": "Planificación de turnos",
+      "desc": "Desactivado: Hinata sigue igual. Activado: los proyectos planifican eventos con turnos y los miembros se apuntan a los turnos libres.",
+      "unavailable": "Necesita un replica set de MongoDB. Este servidor funciona sin él, así que la planificación de turnos sigue desactivada."
+    }
   },
   "audit": {
     "title": "Registro de auditoría",
@@ -5228,6 +5234,12 @@
     "report": {
       "emptyTitle": "Aún no hay presupuestos",
       "sprints": "Sprints con presupuesto"
+    }
+  },
+  "shifts": {
+    "empty": {
+      "title": "Aún no hay turnos",
+      "message": "En cuanto se planifique un evento con turnos, aparecerá aquí."
     }
   }
 }

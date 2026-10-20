@@ -347,7 +347,8 @@
     "myTasks": "Mes tâches",
     "more": "Plus",
     "collapse": "Réduire",
-    "expandSidebar": "Déployer la barre latérale"
+    "expandSidebar": "Déployer la barre latérale",
+    "shifts": "Créneaux"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -3526,7 +3527,12 @@
     "holidayRegion": "Jours fériés de la plateforme",
     "holidayRegionHint": "L’organisation commence avec un calendrier des jours fériés de cette région, rempli chaque année tout seul. Elle peut le modifier ou le supprimer.",
     "holidayRegionAuto": "Automatique, d’après le fuseau horaire",
-    "holidayRegionNone": "Aucun"
+    "holidayRegionNone": "Aucun",
+    "shiftPlanning": {
+      "label": "Planification des créneaux",
+      "desc": "Désactivé : Hinata reste tel quel. Activé : les projets planifient des événements avec des créneaux, et les membres s'inscrivent sur les créneaux libres.",
+      "unavailable": "Nécessite un replica set MongoDB. Ce serveur fonctionne sans, la planification des créneaux reste donc désactivée."
+    }
   },
   "audit": {
     "title": "Journal d'audit",
@@ -5228,6 +5234,12 @@
     "report": {
       "emptyTitle": "Pas encore de budgets",
       "sprints": "Sprints avec budget"
+    }
+  },
+  "shifts": {
+    "empty": {
+      "title": "Aucun créneau pour l'instant",
+      "message": "Dès qu'un événement avec des créneaux est planifié, il apparaît ici."
     }
   }
 }

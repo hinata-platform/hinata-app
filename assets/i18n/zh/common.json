@@ -347,7 +347,8 @@
     "myTasks": "我的任务",
     "more": "更多",
     "collapse": "收起",
-    "expandSidebar": "展开侧边栏"
+    "expandSidebar": "展开侧边栏",
+    "shifts": "排班"
   },
   "dashboard": {
     "title": "仪表板",
@@ -3526,7 +3527,12 @@
     "holidayRegion": "平台节假日",
     "holidayRegionHint": "组织从这个地区的节假日日历开始，日历每年自动填充。组织可以更改或删除它。",
     "holidayRegionAuto": "自动，根据时区",
-    "holidayRegionNone": "无"
+    "holidayRegionNone": "无",
+    "shiftPlanning": {
+      "label": "排班计划",
+      "desc": "关闭：Hinata 保持不变。开启：项目可以规划带班次的活动，成员可报名空余班次。",
+      "unavailable": "需要 MongoDB 副本集。此服务器未使用副本集运行，因此排班计划保持关闭。"
+    }
   },
   "audit": {
     "title": "审计日志",
@@ -5228,6 +5234,12 @@
     "report": {
       "emptyTitle": "还没有预算",
       "sprints": "有预算的冲刺"
+    }
+  },
+  "shifts": {
+    "empty": {
+      "title": "暂无班次",
+      "message": "规划了带班次的活动后，会显示在这里。"
     }
   }
 }

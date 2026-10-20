@@ -562,16 +562,17 @@ class _MobileDetailView extends StatelessWidget {
           16,
           16 + context.bottomGutter,
         ),
-        child: _sectionBody(section),
+        child: _sectionBody(context, section),
       ),
     );
   }
 
-  Widget _sectionBody(_AdminSection sec) => switch (sec) {
+  Widget _sectionBody(BuildContext context, _AdminSection sec) => switch (sec) {
     _AdminSection.general => AdminGeneralSection(settings: settings),
     _AdminSection.app => AdminAppSection(
       settings: settings,
       onOpenTimeTracking: onOpenTimeTracking,
+      shiftPlanningAvailable: _shiftPlanningAvailable(context),
     ),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
     _AdminSection.connect => const AdminConnectSection(),
@@ -656,16 +657,17 @@ class _WideAdminShell extends StatelessWidget {
           focusUserId: focusUserId,
           inviteController: inviteController,
         ),
-        _ => _body(),
+        _ => _body(context),
       },
     );
   }
 
-  Widget _body() => switch (section) {
+  Widget _body(BuildContext context) => switch (section) {
     _AdminSection.general => AdminGeneralSection(settings: settings),
     _AdminSection.app => AdminAppSection(
       settings: settings,
       onOpenTimeTracking: onOpenTimeTracking,
+      shiftPlanningAvailable: _shiftPlanningAvailable(context),
     ),
     _AdminSection.authentication => AdminSsoSection(settings: settings),
     _AdminSection.connect => const AdminConnectSection(),
@@ -678,3 +680,10 @@ class _WideAdminShell extends StatelessWidget {
     _AdminSection.users => const SizedBox.shrink(),
   };
 }
+
+/// Whether this server could run shift planning at all (HIN-49): false
+/// without a MongoDB replica set. Watched, so the row follows a meta refresh.
+bool _shiftPlanningAvailable(BuildContext context) =>
+    context.select<AppConfigBloc, bool>(
+      (bloc) => bloc.state.meta?.shiftPlanningAvailable ?? true,
+    );
