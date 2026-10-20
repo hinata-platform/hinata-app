@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../api/api_client.dart';
 import '../storage/app_storage.dart';
+import 'notification_visuals.dart' show notificationTarget;
 import 'wns_channel.dart';
 
 /// Background isolate handler. Notification messages are rendered by the OS when
@@ -212,12 +213,16 @@ class FcmService {
 
   void _route(RemoteMessage message) {
     final link = message.data['link'];
+    final type = message.data['type'];
     // Only in-app routes (relative paths) are navigable; guard like the other
     // deep-link call sites so a stray/legacy payload (e.g. a bare "/") can't
-    // throw `no routes for location` instead of resolving to a real screen.
-    if (link is String && link.startsWith('/') && link.length > 1) {
-      _onDeepLink(link);
-    }
+    // throw `no routes for location` instead of resolving to a real screen. A
+    // shift push without a link still opens "Meine Schichten" (HIN-46).
+    final target = notificationTarget(
+      link is String ? link : null,
+      type is String ? type : null,
+    );
+    if (target != null) _onDeepLink(target);
   }
 
   String _platform() {

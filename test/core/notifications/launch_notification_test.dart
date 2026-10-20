@@ -133,6 +133,26 @@ void main() {
 
     expect(opened, isEmpty);
   });
+
+  test(
+    'a shift push opens its event, or "Meine Schichten" without a link',
+    () async {
+      await boot().openNotification(
+        const RemoteMessage(
+          messageId: 'msg-5',
+          data: {'type': 'SHIFT_ASSIGNED', 'link': '/shifts/events/e1'},
+        ),
+      );
+      await boot().openNotification(
+        const RemoteMessage(
+          messageId: 'msg-6',
+          data: {'type': 'SHIFT_REMINDER'},
+        ),
+      );
+
+      expect(opened, ['/shifts/events/e1', '/shifts']);
+    },
+  );
 }
 
 class _FakeApi implements ApiClient {
