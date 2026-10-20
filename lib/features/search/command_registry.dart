@@ -9,11 +9,14 @@ import 'search_models.dart' show SearchModules;
 
 /// What the ⌘K palette can *do*, as opposed to what it can find.
 ///
-/// A list a feature contributes to, rather than a literal inside the palette's
-/// controller. The controller's list was private and had no way to know about
-/// the time module — which is how it came to be missing `/timesheet` — and the
-/// only way to add a command was to edit a file that has nothing to do with the
-/// feature the command belongs to.
+/// One registry, grouped per feature, rather than a literal inside the
+/// palette's controller: the controller's list was private and had no way to
+/// know about the time module, which is how it came to be missing
+/// `/timesheet`. Most groups live in this file ([kNavigationCommands],
+/// [kShiftCommands], [kBillingCommands], [kAdminCommands] and so on); the time
+/// module brings its own ([kTimeCommands]) because its commands act rather
+/// than only navigate. [paletteCommands] puts the groups together for the
+/// reader.
 ///
 /// The palette turns these into its own rows; nothing here knows what a row
 /// looks like.
@@ -36,7 +39,7 @@ class PaletteCommand {
 
   /// A command that only navigates somewhere. The overwhelming majority, and
   /// the reason the list can be `const`: a closure is not a constant, and one
-  /// per destination would be seven closures that all say `context.go`.
+  /// per destination would be a closure per row that all say `context.go`.
   const PaletteCommand.route({
     required this.id,
     required this.labelKey,
@@ -100,6 +103,7 @@ class PaletteAccess {
     this.mcp = false,
     this.workloadReports = false,
     this.absenceReports = false,
+    this.approvals = false,
   });
 
   final SearchModules modules;
@@ -119,6 +123,9 @@ class PaletteAccess {
 
   /// The organisation lets reports show absences.
   final bool absenceReports;
+
+  /// The organisation has timesheet approvals switched on.
+  final bool approvals;
 }
 
 /// Everything on offer right now, to [access].
@@ -133,6 +140,7 @@ List<PaletteCommand> paletteCommands(PaletteAccess access) {
     if (!modules.advancedTime) ...kBaseTimeCommands,
     ...kAppCommands,
     if (modules.advancedTime) ...kTimeCommands,
+    if (modules.advancedTime && access.approvals) kTimeApprovalsCommand,
     if (modules.advancedTime) ...reportCommands(access),
     if (modules.billing && access.orgAdmin) ...kBillingCommands,
     if (modules.shifts) ...kShiftCommands,
