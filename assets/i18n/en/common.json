@@ -5512,7 +5512,13 @@
       "truncated": "Only the first 2000 shifts. Choose a project to see all of them.",
       "ownZone": "Times in your zone",
       "none": "There are no shifts this week.",
-      "noneShort": "Nobody is missing anywhere this week."
+      "noneShort": "Nobody is missing anywhere this week.",
+      "add": "Add",
+      "newEvent": "New event",
+      "newShift": "Add shift",
+      "newEventAt": "New event at this time",
+      "whichEvent": "Which event?",
+      "addOn": "Add a shift on {{date}}"
     },
     "plan": {
       "addEvent": "Event",

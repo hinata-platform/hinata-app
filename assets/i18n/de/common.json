@@ -5512,7 +5512,13 @@
       "truncated": "Nur die ersten 2000 Schichten. Wähle ein Projekt, um alle zu sehen.",
       "ownZone": "Zeiten in deiner Zone",
       "none": "In dieser Woche gibt es keine Schichten.",
-      "noneShort": "In dieser Woche fehlt nirgends jemand."
+      "noneShort": "In dieser Woche fehlt nirgends jemand.",
+      "add": "Hinzufügen",
+      "newEvent": "Neues Event",
+      "newShift": "Schicht anlegen",
+      "newEventAt": "Neues Event mit dieser Zeit",
+      "whichEvent": "Für welches Event?",
+      "addOn": "Schicht am {{date}} anlegen"
     },
     "plan": {
       "addEvent": "Event",

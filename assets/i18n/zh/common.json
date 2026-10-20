@@ -5512,7 +5512,13 @@
       "truncated": "只显示前 2000 个班次。选择一个项目即可全部查看。",
       "ownZone": "按你的时区显示",
       "none": "本周没有班次。",
-      "noneShort": "本周没有缺人的班次。"
+      "noneShort": "本周没有缺人的班次。",
+      "add": "添加",
+      "newEvent": "新活动",
+      "newShift": "创建班次",
+      "newEventAt": "在此时间新建活动",
+      "whichEvent": "用于哪个活动？",
+      "addOn": "在{{date}}创建班次"
     },
     "plan": {
       "addEvent": "活动",

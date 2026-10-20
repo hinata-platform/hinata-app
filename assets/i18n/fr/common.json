@@ -5512,7 +5512,13 @@
       "truncated": "Seulement les 2000 premiers créneaux. Choisis un projet pour tous les voir.",
       "ownZone": "Heures dans ton fuseau",
       "none": "Aucun créneau cette semaine.",
-      "noneShort": "Il ne manque personne cette semaine."
+      "noneShort": "Il ne manque personne cette semaine.",
+      "add": "Ajouter",
+      "newEvent": "Nouvel événement",
+      "newShift": "Créer un créneau",
+      "newEventAt": "Nouvel événement à cette heure",
+      "whichEvent": "Pour quel événement ?",
+      "addOn": "Créer un créneau le {{date}}"
     },
     "plan": {
       "addEvent": "Événement",
