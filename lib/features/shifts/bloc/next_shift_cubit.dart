@@ -77,7 +77,11 @@ class NextShiftState extends Equatable {
   ];
 }
 
-class NextShiftCubit extends Cubit<NextShiftState> {
+/// A change made anywhere in the module is put in from the shift the answer
+/// carried. What that cannot settle is read again on its own, and only while
+/// the view is on screen: the next shift when the caller's places moved, the
+/// waiting lists when they joined one, everything after an event-wide change.
+class NextShiftCubit extends Cubit<NextShiftState> with ShiftStaleWhileHidden {
   NextShiftCubit(
     this._shifts, {
     this.onNext,
@@ -85,7 +89,7 @@ class NextShiftCubit extends Cubit<NextShiftState> {
     Stream<ShiftChange>? changes,
   }) : _now = now ?? DateTime.now,
        super(const NextShiftState()) {
-    _changes = ShiftChangeDebouncer((_) => unawaited(load()), changes: changes);
+    _changes = ShiftChangeDebouncer(_onChanges, changes: changes);
   }
 
   final ShiftRepository _shifts;
@@ -95,6 +99,11 @@ class NextShiftCubit extends Cubit<NextShiftState> {
   final void Function(MyShift? next)? onNext;
   late final ShiftChangeDebouncer _changes;
   int _token = 0;
+
+  /// What a change left to read again, until [refreshStale] does.
+  bool _staleAll = false;
+  bool _staleNext = false;
+  bool _staleWaiting = false;
 
   /// How far ahead the open shifts are looked for.
   static const openWindowDays = 14;
@@ -161,6 +170,112 @@ class NextShiftCubit extends Cubit<NextShiftState> {
     }
   }
 
+  /// Reads the next shift alone, and its people when it is another one or
+  /// [withDetail] says so.
+  Future<void> _reloadNext({bool withDetail = false}) async {
+    final token = _token;
+    try {
+      final next = await _shifts.nextShift();
+      if (isClosed || token != _token) return;
+      final same = state.next?.shift.id == next?.shift.id;
+      emit(
+        state.copyWith(
+          next: next,
+          clearNext: next == null,
+          clearDetail: !same,
+          errorKey: state.errorKey,
+        ),
+      );
+      onNext?.call(next);
+      if (next != null && (!same || withDetail)) {
+        unawaited(_loadDetail(next.shift.id, token));
+      }
+    } catch (_) {
+      // What is shown stands until the next full read.
+    }
+  }
+
+  /// Reads the waiting lists alone.
+  Future<void> _reloadWaiting() async {
+    final token = _token;
+    try {
+      final fresh = await _shifts.myWaitingShifts();
+      if (isClosed || token != _token) return;
+      emit(
+        state.copyWith(
+          waiting: [
+            for (final w in fresh)
+              if (w.status == ShiftAssignmentStatus.waiting) w,
+          ],
+          waitingFailed: false,
+          errorKey: state.errorKey,
+        ),
+      );
+    } catch (_) {
+      if (isClosed || token != _token) return;
+      emit(state.copyWith(waitingFailed: true, errorKey: state.errorKey));
+    }
+  }
+
+  void _onChanges(List<ShiftChange> changes) {
+    if (isClosed) return;
+    var detail = false;
+    for (final change in changes) {
+      final shift = change.shift;
+      if (shift == null || change.shiftId.isEmpty) {
+        _staleAll = true;
+        continue;
+      }
+      final next = state.next;
+      final isNext = next != null && next.shift.id == shift.id;
+      final wasWaiting = state.waiting.any((w) => w.shift.id == shift.id);
+      applyShift(shift);
+      if (shift.waiting && !wasWaiting) _staleWaiting = true;
+      if (!shift.waiting && wasWaiting) _dropWaitingShift(shift.id);
+      if (isNext) {
+        // Given away or moved: which one is next, only the server says. Still
+        // the caller's: the people on it may have changed.
+        if (!shift.mine || shift.startsAt != next.shift.startsAt) {
+          _staleNext = true;
+        } else {
+          detail = true;
+        }
+      } else if (shift.mine &&
+          (next == null || shift.startsAt.isBefore(next.shift.startsAt))) {
+        _staleNext = true;
+      }
+    }
+    if (detail && !_staleNext && !_staleAll) {
+      final next = state.next;
+      if (next != null) unawaited(_loadDetail(next.shift.id, _token));
+    }
+    if (_staleAll || _staleNext || _staleWaiting) markStale();
+  }
+
+  @override
+  void refreshStale() {
+    final all = _staleAll;
+    final next = _staleNext;
+    final waiting = _staleWaiting;
+    _staleAll = _staleNext = _staleWaiting = false;
+    if (all) {
+      unawaited(load());
+      return;
+    }
+    if (next) unawaited(_reloadNext());
+    if (waiting) unawaited(_reloadWaiting());
+  }
+
+  void _dropWaitingShift(String shiftId) => emit(
+    state.copyWith(
+      waiting: [
+        for (final w in state.waiting)
+          if (w.shift.id != shiftId) w,
+      ],
+      errorKey: state.errorKey,
+    ),
+  );
+
   Future<void> _loadDetail(String shiftId, int token) async {
     try {
       final detail = await _shifts.shift(shiftId);
@@ -189,7 +304,7 @@ class NextShiftCubit extends Cubit<NextShiftState> {
     emit(
       state.copyWith(
         next: next != null && next.shift.id == shift.id
-            ? next.copyWith(shift: shift)
+            ? _withShift(next, shift)
             : null,
         open: ShiftCalendar(
           shifts: [
@@ -204,6 +319,17 @@ class NextShiftCubit extends Cubit<NextShiftState> {
         ),
         errorKey: state.errorKey,
       ),
+    );
+  }
+
+  /// The hero's place with the shift as it now stands, and its status when
+  /// the shift says (a confirmation ends the deadline).
+  static MyShift _withShift(MyShift next, Shift shift) {
+    final status = shift.mine ? shift.myStatus ?? next.status : next.status;
+    return next.copyWith(
+      shift: shift,
+      status: status,
+      clearConfirmBy: status == ShiftAssignmentStatus.confirmed,
     );
   }
 

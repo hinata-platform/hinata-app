@@ -35,6 +35,9 @@ class ShiftCalendarState extends Equatable {
     this.plannable = const {},
     this.revision = 0,
     this.moving = const {},
+    this.marks = const {},
+    this.marksFailed = const {},
+    this.marksLoading = const {},
   });
 
   /// The day in focus: the day a phone shows, the week a wide window shows,
@@ -70,6 +73,17 @@ class ShiftCalendarState extends Equatable {
   /// Shifts with a move in the air.
   final Set<String> moving;
 
+  /// What the month view marks, by [monthKey] and then [dayKey]: counts from
+  /// `/shifts/calendar/marks`, not shifts. A separate cache from [months],
+  /// which the week and the day draw from.
+  final Map<int, Map<int, ShiftDayMarks>> marks;
+
+  /// Months whose marks could not be read, by [monthKey], as a message key.
+  final Map<int, String> marksFailed;
+
+  /// Months whose marks are asked for and not answered yet.
+  final Set<int> marksLoading;
+
   bool canPlan(String projectId) => plannable.contains(projectId);
 
   /// Whether a month on screen was cut at the server's cap.
@@ -102,6 +116,9 @@ class ShiftCalendarState extends Equatable {
     Set<String>? plannable,
     int? revision,
     Set<String>? moving,
+    Map<int, Map<int, ShiftDayMarks>>? marks,
+    Map<int, String>? marksFailed,
+    Set<int>? marksLoading,
   }) => ShiftCalendarState(
     focused: focused ?? this.focused,
     span: span ?? this.span,
@@ -114,6 +131,9 @@ class ShiftCalendarState extends Equatable {
     plannable: plannable ?? this.plannable,
     revision: revision ?? this.revision,
     moving: moving ?? this.moving,
+    marks: marks ?? this.marks,
+    marksFailed: marksFailed ?? this.marksFailed,
+    marksLoading: marksLoading ?? this.marksLoading,
   );
 
   @override
@@ -129,6 +149,9 @@ class ShiftCalendarState extends Equatable {
     plannable,
     revision,
     moving,
+    marks,
+    marksFailed,
+    marksLoading,
   ];
 }
 
@@ -147,14 +170,19 @@ class ShiftMoveOutcome extends Equatable {
   List<Object?> get props => [edit, errorKey];
 }
 
-/// The shift calendar (HIN-160): one month cache for the week, the day and the
-/// month, read a month at a time as the reader gets near it.
+/// The shift calendar (HIN-160): the week and the day draw from one month
+/// cache of shifts, the month from a cache of per-day counts
+/// (`/shifts/calendar/marks`). Both are read a month at a time as the reader
+/// gets near it, and each keeps the [monthCacheSize] months used last.
 ///
 /// Opening reads the month in focus and one either side; scrolling asks for
 /// more through [ensureMonths], which never asks for a month it holds or is
-/// already reading. A change made anywhere in the module ([ShiftChanges])
-/// reads only the months that shift is in again.
-class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
+/// already reading. A change made anywhere in the module ([ShiftChanges]) is
+/// put into the held months from the shift the answer carried; what that
+/// cannot settle is read again for the months on screen only, while the view
+/// is shown, and dropped for the rest.
+class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
+    with ShiftStaleWhileHidden {
   ShiftCalendarCubit(
     this._shifts, {
     required DateTime focused,
@@ -182,6 +210,18 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
   /// Bumped whenever the project changes, so an answer for the old one is
   /// dropped when it lands.
   int _generation = 0;
+
+  /// How many months each cache keeps, the ones used last.
+  static const monthCacheSize = 4;
+
+  /// The months of each cache by last use, oldest first.
+  final List<int> _shiftOrder = [];
+  final List<int> _marksOrder = [];
+
+  /// What changes left to read again, until [refreshStale] does.
+  final Set<int> _staleShifts = {};
+  final Set<int> _staleMarks = {};
+  bool _staleAll = false;
 
   /// The filtered shifts of each day, by [dayKey], built once per revision.
   Map<int, List<Shift>>? _byDay;
@@ -217,8 +257,15 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
     DateTime(day.year, day.month + 1),
   ];
 
-  /// Reads the months of [months] not held and not on their way.
-  Future<void> ensureMonths(List<DateTime> months) async {
+  /// Reads the months of [months] not held and not on their way: their
+  /// marks in the month, their shifts in the week and the day.
+  Future<void> ensureMonths(List<DateTime> months) =>
+      state.span == ShiftCalendarSpan.month
+      ? _ensureMarks(months)
+      : _ensureShifts(months);
+
+  Future<void> _ensureShifts(List<DateTime> months) async {
+    _touch(_shiftOrder, months);
     final wanted = <int, DateTime>{};
     for (final month in months) {
       final key = monthKey(month);
@@ -247,7 +294,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
       if (isClosed || generation != _generation) return;
       emit(
         state.copyWith(
-          months: {...state.months, key: answer},
+          months: _evict({...state.months, key: answer}, _shiftOrder),
           failed: {...state.failed}..remove(key),
           loading: {...state.loading}..remove(key),
           plannable: {...state.plannable, ...answer.plannableProjectIds},
@@ -274,8 +321,109 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
 
   /// Asks for a month that failed again.
   Future<void> retry(DateTime month) {
-    emit(state.copyWith(failed: {...state.failed}..remove(monthKey(month))));
+    final key = monthKey(month);
+    emit(
+      state.span == ShiftCalendarSpan.month
+          ? state.copyWith(marksFailed: {...state.marksFailed}..remove(key))
+          : state.copyWith(failed: {...state.failed}..remove(key)),
+    );
     return ensureMonths([month]);
+  }
+
+  Future<void> _ensureMarks(List<DateTime> months) async {
+    _touch(_marksOrder, months);
+    final wanted = <int, DateTime>{};
+    for (final month in months) {
+      final key = monthKey(month);
+      if (state.marks.containsKey(key) ||
+          state.marksLoading.contains(key) ||
+          state.marksFailed.containsKey(key)) {
+        continue;
+      }
+      wanted[key] = DateTime(month.year, month.month);
+    }
+    if (wanted.isEmpty) return;
+    emit(state.copyWith(marksLoading: {...state.marksLoading, ...wanted.keys}));
+    await Future.wait([
+      for (final entry in wanted.entries) _readMarks(entry.key, entry.value),
+    ]);
+  }
+
+  Future<void> _readMarks(int key, DateTime month) async {
+    final generation = _generation;
+    try {
+      final days = await _shifts.calendarMarks(
+        from: month,
+        to: DateTime(month.year, month.month + 1),
+        projectId: state.projectId,
+      );
+      if (isClosed || generation != _generation) return;
+      emit(
+        state.copyWith(
+          marks: _evict({
+            ...state.marks,
+            key: {for (final day in days) dayKey(day.date): day},
+          }, _marksOrder),
+          marksFailed: {...state.marksFailed}..remove(key),
+          marksLoading: {...state.marksLoading}..remove(key),
+          revision: state.revision + 1,
+        ),
+      );
+    } on ApiFailure catch (failure) {
+      _failMarks(generation, key, failure.message);
+    } catch (_) {
+      _failMarks(generation, key, 'errors.unexpected');
+    }
+  }
+
+  void _failMarks(int generation, int key, String message) {
+    if (isClosed || generation != _generation) return;
+    emit(
+      state.copyWith(
+        marksFailed: {...state.marksFailed, key: message},
+        marksLoading: {...state.marksLoading}..remove(key),
+        revision: state.revision + 1,
+      ),
+    );
+  }
+
+  /// Reads the marks of [months] again although they are held.
+  Future<void> _refreshMarks(Iterable<int> keys) async {
+    if (keys.isEmpty) return;
+    emit(state.copyWith(marksLoading: {...state.marksLoading, ...keys}));
+    await Future.wait([
+      for (final key in keys) _readMarks(key, DateTime(key ~/ 100, key % 100)),
+    ]);
+  }
+
+  /// What the month view marks on [day], or null.
+  ShiftDayMarks? marksOn(DateTime day) =>
+      state.marks[monthKey(day)]?[dayKey(day)];
+
+  /// Moves [keys] to the end of [order]: used last.
+  static void _touch(List<int> order, Iterable<DateTime> months) {
+    for (final month in months) {
+      final key = monthKey(month);
+      order
+        ..remove(key)
+        ..add(key);
+    }
+    if (order.length > 3 * monthCacheSize) {
+      order.removeRange(0, order.length - 3 * monthCacheSize);
+    }
+  }
+
+  /// [held] cut to the [monthCacheSize] months used last.
+  static Map<int, V> _evict<V>(Map<int, V> held, List<int> order) {
+    if (held.length <= monthCacheSize) return held;
+    final keep = order.reversed
+        .where(held.containsKey)
+        .take(monthCacheSize)
+        .toSet();
+    return {
+      for (final entry in held.entries)
+        if (keep.contains(entry.key)) entry.key: entry.value,
+    };
   }
 
   /// Reads [months] again even though they are held: after a change that
@@ -284,6 +432,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
     final keys = {
       for (final m in months) monthKey(m): DateTime(m.year, m.month),
     };
+    if (keys.isEmpty) return;
     emit(state.copyWith(loading: {...state.loading, ...keys.keys}));
     await Future.wait([
       for (final entry in keys.entries) _read(entry.key, entry.value),
@@ -313,12 +462,15 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
   void setSpan(ShiftCalendarSpan span) {
     if (span == state.span) return;
     emit(state.copyWith(span: span));
+    unawaited(ensureMonths(_around(state.focused)));
   }
 
   /// A day tapped in the month: that day, in the week span.
   void openDay(DateTime day) {
     emit(state.copyWith(span: ShiftCalendarSpan.week));
     focus(day);
+    // The week draws shifts, which the month never read.
+    unawaited(ensureMonths(_around(state.focused)));
   }
 
   void toggleUnderstaffed() => emit(
@@ -338,6 +490,11 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
       return;
     }
     _generation++;
+    _shiftOrder.clear();
+    _marksOrder.clear();
+    _staleShifts.clear();
+    _staleMarks.clear();
+    _staleAll = false;
     emit(
       ShiftCalendarState(
         focused: state.focused,
@@ -427,6 +584,13 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
               DateTime(key ~/ 100, key % 100),
         }),
       );
+      // The month's counts moved with it; they are read when next shown.
+      _staleMarks.addAll({
+        monthKey(shift.startsAt),
+        monthKey(start),
+        if (all) ...state.marks.keys,
+      });
+      markStale();
       return ShiftMoveOutcome.done(edit);
     } on ApiFailure catch (failure) {
       final code = failure.details['code'];
@@ -444,27 +608,108 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
     }
   }
 
+  /// The held shift with [id], if any month holds it.
+  Shift? _held(String id) {
+    for (final month in state.months.values) {
+      for (final shift in month.shifts) {
+        if (shift.id == id) return shift;
+      }
+    }
+    return null;
+  }
+
+  /// Puts [shift] into every held month that holds it, in one emit.
+  void _put(Shift shift) {
+    var changed = false;
+    final months = {
+      for (final entry in state.months.entries)
+        entry.key: entry.value.shifts.any((s) => s.id == shift.id)
+            ? () {
+                changed = true;
+                return ShiftCalendar(
+                  shifts: [
+                    for (final s in entry.value.shifts)
+                      s.id == shift.id ? shift : s,
+                  ],
+                  events: entry.value.events,
+                  truncated: entry.value.truncated,
+                  plannableProjectIds: entry.value.plannableProjectIds,
+                );
+              }()
+            : entry.value,
+    };
+    if (!changed) return;
+    emit(state.copyWith(months: months, revision: state.revision + 1));
+  }
+
   void _onChanges(List<ShiftChange> changes) {
-    final touched = <DateTime>{};
+    if (isClosed) return;
     for (final change in changes) {
       if (identical(change.origin, this)) continue;
       final shift = change.shift;
-      if (shift != null) touched.add(shift.startsAt);
-      for (final month in state.months.values) {
-        for (final held in month.shifts) {
-          if (held.id == change.shiftId) touched.add(held.startsAt);
-        }
-      }
-      // An event-wide change names no single shift: everything held is
-      // read again, which is still one request per month.
+      final before = _held(change.shiftId);
+      if (shift != null) _put(shift);
+      // An event-wide change names no single shift.
       if (change.shiftId.isEmpty) {
-        touched.addAll([
-          for (final key in state.months.keys) DateTime(key ~/ 100, key % 100),
-        ]);
+        _staleAll = true;
+        continue;
+      }
+      final where = {
+        if (shift != null) monthKey(shift.startsAt),
+        if (before != null) monthKey(before.startsAt),
+      };
+      // The counts of a day only the server knows; they are cheap to read.
+      _staleMarks.addAll(where);
+      // The shifts are in already, unless the answer had none, the shift is
+      // new to the calendar or it moved to another month.
+      if (shift == null || before == null || where.length > 1) {
+        _staleShifts.addAll(where);
       }
     }
-    if (touched.isEmpty) return;
-    unawaited(refresh(touched));
+    if (_staleAll || _staleShifts.isNotEmpty || _staleMarks.isNotEmpty) {
+      markStale();
+    }
+  }
+
+  /// Reads again what the changes touched, for the cache on screen and its
+  /// months in view (the ones used last); everything else touched is dropped
+  /// and read when it is needed again.
+  @override
+  void refreshStale() {
+    final all = _staleAll;
+    final shifts = all ? state.months.keys.toSet() : {..._staleShifts};
+    final marks = all ? state.marks.keys.toSet() : {..._staleMarks};
+    _staleAll = false;
+    _staleShifts.clear();
+    _staleMarks.clear();
+    final monthSpan = state.span == ShiftCalendarSpan.month;
+    final inView = (monthSpan ? _marksOrder : _shiftOrder).reversed
+        .take(3)
+        .toSet();
+    final readShifts = monthSpan
+        ? const <int>{}
+        : shifts.where(
+            (k) => state.months.containsKey(k) && inView.contains(k),
+          );
+    final readMarks = monthSpan
+        ? marks.where((k) => state.marks.containsKey(k) && inView.contains(k))
+        : const <int>{};
+    final dropShifts = shifts.difference(readShifts.toSet());
+    final dropMarks = marks.difference(readMarks.toSet());
+    if (dropShifts.isNotEmpty || dropMarks.isNotEmpty) {
+      emit(
+        state.copyWith(
+          months: {...state.months}
+            ..removeWhere((k, _) => dropShifts.contains(k)),
+          marks: {...state.marks}..removeWhere((k, _) => dropMarks.contains(k)),
+          revision: state.revision + 1,
+        ),
+      );
+    }
+    unawaited(
+      refresh([for (final k in readShifts) DateTime(k ~/ 100, k % 100)]),
+    );
+    unawaited(_refreshMarks(readMarks.toList()));
   }
 
   @override

@@ -22,6 +22,7 @@ import '../../../core/widgets/project_picker.dart';
 import '../../shell/page_chrome.dart';
 import '../bloc/shift_events_cubit.dart';
 import '../bloc/shift_plannable_cubit.dart';
+import '../widgets/shift_visibility.dart';
 import '../widgets/shift_event_editor.dart';
 import '../shift_views.dart';
 import '../widgets/shift_event_card.dart';
@@ -44,7 +45,12 @@ class ShiftEventsPage extends StatelessWidget {
             ShiftPlannableCubit(context.read<ShiftRepository>())..load(),
       ),
     ],
-    child: const ShiftEventsView(),
+    child: Builder(
+      builder: (context) => ShiftVisibilityRelay(
+        onVisible: context.read<ShiftEventsCubit>().setVisible,
+        child: const ShiftEventsView(),
+      ),
+    ),
   );
 }
 
