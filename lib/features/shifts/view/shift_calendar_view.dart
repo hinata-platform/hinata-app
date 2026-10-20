@@ -16,7 +16,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/theme/glass_chrome.dart' show GlassCircleButton;
 import '../../../core/util/dates.dart' show addDays, weekStartFor;
 import '../../../core/widgets/glass_filter_bar.dart'
-    show GlassFilterPill, kGlassDockRow;
+    show GlassFilterPill, kGlassControlHeight, kGlassDockRow;
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_empty_state.dart';
@@ -541,12 +541,24 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     onTap: (anchor) => unawaited(_pickProject(anchor)),
   );
 
-  Widget _shortChip(ShiftCalendarState state) => GlassSwitchChip(
-    label: context.t('shifts.event.onlyUnderstaffed'),
-    icon: LucideIcons.triangleAlert,
-    active: state.understaffedOnly,
-    onTap: _cubit.toggleUnderstaffed,
-  );
+  /// On a phone the dock holds three controls in one row; the label would run
+  /// past the edge, so there the switch is its glyph in its own docked bar,
+  /// with the label as tooltip and for the screen reader.
+  Widget _shortChip(ShiftCalendarState state, {bool compact = false}) {
+    final chip = GlassSwitchChip(
+      label: context.t('shifts.event.onlyUnderstaffed'),
+      icon: LucideIcons.triangleAlert,
+      iconOnly: compact,
+      active: state.understaffedOnly,
+      onTap: _cubit.toggleUnderstaffed,
+    );
+    if (!compact) return chip;
+    return GlassSwitchBar(
+      compact: true,
+      maxWidth: kGlassControlHeight * 2,
+      chips: [chip],
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -571,7 +583,10 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
         bottom: compact
             ? ShiftsDock(
                 current: ShiftsView.calendar,
-                filters: [_projectPill(state), _shortChip(state)],
+                filters: [
+                  _projectPill(state),
+                  _shortChip(state, compact: true),
+                ],
               )
             : null,
         bottomHeight: compact ? kGlassDockRow : 0,
