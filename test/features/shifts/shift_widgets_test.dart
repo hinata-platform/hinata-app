@@ -107,6 +107,24 @@ void main() {
     handle.dispose();
   });
 
+  testWidgets('a row outside a day list names its day first', (tester) async {
+    await pumpShiftsUi(
+      tester,
+      ListView(
+        children: [
+          ShiftRow(
+            shift: sampleShift(assigned: 1, required: 2),
+            day: 'Mo., 26. Okt.',
+            eventTitle: 'Messewoche',
+            location: 'Halle 4',
+          ),
+        ],
+      ),
+      repository: FakeShiftRepository(),
+    );
+    expect(find.text('Mo., 26. Okt. · Messewoche · Halle 4'), findsOneWidget);
+  });
+
   for (final scale in const [1.0, 2.0]) {
     testWidgets('a row at 320 px and text x$scale does not overflow', (
       tester,
