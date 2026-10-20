@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "Таймер отменён через MCP",
       "MCP_SHIFT_SELF_ASSIGNED": "Запись на смену через MCP",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Смена назначена через MCP",
-      "MCP_SHIFT_RELEASED": "Смена передана через MCP",
+      "MCP_SHIFT_RELEASED": "Запись на смену отменена через MCP",
       "MCP_SHIFT_CONFIRMED": "Смена подтверждена через MCP",
       "MCP_SHIFT_DECLINED": "Отказ от смены через MCP",
       "MCP_SHIFT_REMOVED": "Снят со смены через MCP",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Назначен на смену",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Смена подтверждена",
       "SHIFT_ASSIGNMENT_DECLINED": "Смена отклонена",
-      "SHIFT_ASSIGNMENT_RELEASED": "Смена отдана",
+      "SHIFT_ASSIGNMENT_RELEASED": "Запись на смену отменена",
       "SHIFT_PLANNER_GRANTED": "Выдано право планировать смены",
       "SHIFT_PLANNER_REVOKED": "Право планировать смены отозвано"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "Поиск",
       "notifications_read": "Чтение своих уведомлений",
       "shifts_read": "Чтение смен и своих записей",
-      "shifts_write": "Запись на смены, подтверждение, отказ и передача",
+      "shifts_write": "Запись на смены, подтверждение, отказ и отмена записи",
       "shifts_plan": "Планирование смен: назначение и снятие людей",
       "projects_write": "Создание проектов"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "Назначено",
       "confirmed": "Подтверждено",
       "declined": "Отклонено",
-      "released": "Отдано",
+      "released": "Запись отменена",
       "waiting": "В листе ожидания",
       "mine": "Вы записаны"
     },
@@ -5388,7 +5388,7 @@
       "join": "Записаться",
       "confirm": "Подтвердить",
       "decline": "Отклонить",
-      "release": "Отдать",
+      "release": "Отменить запись",
       "toEvent": "К событию",
       "busy": "Секунду, это ещё выполняется.",
       "waitlistJoin": "Встать в лист ожидания",
@@ -5398,12 +5398,12 @@
       "joined": "Вы записаны",
       "confirmed": "Смена подтверждена",
       "declined": "Назначение отклонено",
-      "released": "Смена отдана",
+      "released": "Запись на смену отменена",
       "waitlisted": "Ты в листе ожидания",
       "waitlistLeft": "Ты покинул(а) лист ожидания"
     },
     "ask": {
-      "releaseTitle": "Отдать смену?",
+      "releaseTitle": "Отменить запись на эту смену?",
       "releaseMessage": "Ваше место снова освободится, и записаться смогут другие.",
       "declineTitle": "Отклонить назначение?",
       "declineMessage": "Место снова освободится, и организаторы смогут назначить другого человека.",

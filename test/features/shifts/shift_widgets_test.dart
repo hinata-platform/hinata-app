@@ -190,10 +190,10 @@ void main() {
         if (status == ShiftAssignmentStatus.assigned) {
           expect(find.text('Bestätigen'), findsOneWidget);
           expect(find.text('Ablehnen'), findsOneWidget);
-          expect(find.text('Abgeben'), findsNothing);
+          expect(find.text('Austragen'), findsNothing);
         } else {
           expect(find.text('Bestätigen'), findsNothing);
-          expect(find.text('Abgeben'), findsOneWidget);
+          expect(find.text('Austragen'), findsOneWidget);
         }
         expect(find.textContaining('in 18 Std.'), findsOneWidget);
       },
@@ -219,7 +219,7 @@ void main() {
       blocs: [BlocProvider<ShiftActionsCubit>.value(value: actions)],
     );
     expect(find.text('mit 1 weiteren Person'), findsOneWidget);
-    expect(find.text('Abgeben'), findsNothing);
+    expect(find.text('Austragen'), findsNothing);
   });
 
   const codes = [

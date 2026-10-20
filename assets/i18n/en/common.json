@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "Timer discarded via MCP",
       "MCP_SHIFT_SELF_ASSIGNED": "Signed up for a shift via MCP",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Shift assigned via MCP",
-      "MCP_SHIFT_RELEASED": "Shift given up via MCP",
+      "MCP_SHIFT_RELEASED": "Withdrew from a shift via MCP",
       "MCP_SHIFT_CONFIRMED": "Shift confirmed via MCP",
       "MCP_SHIFT_DECLINED": "Shift declined via MCP",
       "MCP_SHIFT_REMOVED": "Taken off a shift via MCP",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Assigned to a shift",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Shift confirmed",
       "SHIFT_ASSIGNMENT_DECLINED": "Shift declined",
-      "SHIFT_ASSIGNMENT_RELEASED": "Shift given up",
+      "SHIFT_ASSIGNMENT_RELEASED": "Withdrew from a shift",
       "SHIFT_PLANNER_GRANTED": "Shift planning granted",
       "SHIFT_PLANNER_REVOKED": "Shift planning revoked"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "Search",
       "notifications_read": "Read own notifications",
       "shifts_read": "Read shifts and own sign-ups",
-      "shifts_write": "Sign up for shifts, confirm, decline or give them up",
+      "shifts_write": "Sign up for shifts, confirm, decline or withdraw",
       "shifts_plan": "Plan shifts: assign people and take them off",
       "projects_write": "Create projects"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "Assigned",
       "confirmed": "Confirmed",
       "declined": "Declined",
-      "released": "Given up",
+      "released": "Withdrawn",
       "waiting": "On the waiting list",
       "mine": "Signed up"
     },
@@ -5388,7 +5388,7 @@
       "join": "Sign up",
       "confirm": "Confirm",
       "decline": "Decline",
-      "release": "Give up",
+      "release": "Withdraw",
       "toEvent": "Go to event",
       "busy": "One moment, that is still running.",
       "waitlistJoin": "Join waiting list",
@@ -5398,12 +5398,12 @@
       "joined": "You are signed up",
       "confirmed": "Shift confirmed",
       "declined": "Assignment declined",
-      "released": "Shift given up",
+      "released": "Withdrawn from the shift",
       "waitlisted": "You're on the waiting list",
       "waitlistLeft": "You left the waiting list"
     },
     "ask": {
-      "releaseTitle": "Give up this shift?",
+      "releaseTitle": "Withdraw from this shift?",
       "releaseMessage": "Your place opens up again and others can sign up.",
       "declineTitle": "Decline this assignment?",
       "declineMessage": "The place opens up again and the organisers can assign someone else.",
