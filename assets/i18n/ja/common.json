@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "シフトに割り当て",
       "SHIFT_ASSIGNMENT_CONFIRMED": "シフトを確認",
       "SHIFT_ASSIGNMENT_DECLINED": "シフトを辞退",
-      "SHIFT_ASSIGNMENT_RELEASED": "シフトの登録を取り消し",
+      "SHIFT_ASSIGNMENT_RELEASED": "シフトの枠を解放",
       "SHIFT_PLANNER_GRANTED": "シフト計画の権限を付与",
       "SHIFT_PLANNER_REVOKED": "シフト計画の権限を取り消し"
     },

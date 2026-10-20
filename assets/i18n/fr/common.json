@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Affecté à un créneau",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Créneau confirmé",
       "SHIFT_ASSIGNMENT_DECLINED": "Créneau refusé",
-      "SHIFT_ASSIGNMENT_RELEASED": "Désinscription d'un créneau",
+      "SHIFT_ASSIGNMENT_RELEASED": "Place libérée sur un créneau",
       "SHIFT_PLANNER_GRANTED": "Planification accordée",
       "SHIFT_PLANNER_REVOKED": "Planification retirée"
     },

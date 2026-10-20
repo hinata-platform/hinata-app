@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Assigned to a shift",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Shift confirmed",
       "SHIFT_ASSIGNMENT_DECLINED": "Shift declined",
-      "SHIFT_ASSIGNMENT_RELEASED": "Withdrew from a shift",
+      "SHIFT_ASSIGNMENT_RELEASED": "Place on a shift freed",
       "SHIFT_PLANNER_GRANTED": "Shift planning granted",
       "SHIFT_PLANNER_REVOKED": "Shift planning revoked"
     },

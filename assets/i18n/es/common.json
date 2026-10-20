@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Asignado a un turno",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Turno confirmado",
       "SHIFT_ASSIGNMENT_DECLINED": "Turno rechazado",
-      "SHIFT_ASSIGNMENT_RELEASED": "Desapuntado de un turno",
+      "SHIFT_ASSIGNMENT_RELEASED": "Plaza liberada en un turno",
       "SHIFT_PLANNER_GRANTED": "Planificación de turnos concedida",
       "SHIFT_PLANNER_REVOKED": "Planificación de turnos retirada"
     },

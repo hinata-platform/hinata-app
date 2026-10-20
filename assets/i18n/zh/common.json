@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "已安排到班次",
       "SHIFT_ASSIGNMENT_CONFIRMED": "已确认班次",
       "SHIFT_ASSIGNMENT_DECLINED": "已拒绝班次",
-      "SHIFT_ASSIGNMENT_RELEASED": "已取消报名班次",
+      "SHIFT_ASSIGNMENT_RELEASED": "已释放班次名额",
       "SHIFT_PLANNER_GRANTED": "已授予排班权限",
       "SHIFT_PLANNER_REVOKED": "已撤销排班权限"
     },
