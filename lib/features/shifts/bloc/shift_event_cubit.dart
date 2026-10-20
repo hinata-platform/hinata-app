@@ -26,7 +26,7 @@ class ShiftEventState extends Equatable {
   /// The shifts the page lists, after the filter.
   List<Shift> get visibleShifts => [
     for (final s in detail?.shifts ?? const <Shift>[])
-      if (!understaffedOnly || s.coverage.state == CoverageState.under) s,
+      if (!understaffedOnly || s.isShort) s,
   ];
 
   ShiftEventState copyWith({
