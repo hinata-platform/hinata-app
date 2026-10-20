@@ -39,4 +39,32 @@ void main() {
     );
     expect(notificationVisual('time_budget_alert').$1, LucideIcons.gauge);
   });
+
+  test('every shift type is one family, today\'s and later ones', () {
+    for (final type in const [
+      'SHIFT_ASSIGNED',
+      'SHIFT_RELEASED',
+      'SHIFT_REMINDER',
+      'SHIFT_EVENT_CHANGED',
+      'SHIFT_CHANGED',
+      'SHIFT_HELPER_DECLINED',
+      'SHIFT_SOMETHING_NEW',
+    ]) {
+      expect(
+        notificationVisual(type).$1,
+        LucideIcons.calendarClock,
+        reason: type,
+      );
+    }
+  });
+
+  test('a notification opens its link, a shift one at least its module', () {
+    expect(
+      notificationTarget('/shifts/events/e1', 'SHIFT_CHANGED'),
+      '/shifts/events/e1',
+    );
+    expect(notificationTarget(null, 'SHIFT_REMINDER'), '/shifts');
+    expect(notificationTarget('/', 'MENTION'), isNull);
+    expect(notificationTarget(null, 'MENTION'), isNull);
+  });
 }
