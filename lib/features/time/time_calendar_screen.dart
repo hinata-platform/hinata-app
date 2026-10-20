@@ -30,6 +30,7 @@ import '../../core/widgets/time_grid/time_grid.dart';
 import '../../core/widgets/time_grid/time_grid_model.dart';
 import '../../core/widgets/time_grid/time_month_grid.dart';
 import '../../core/widgets/time_grid/time_month_layout.dart';
+import '../../core/widgets/time_grid/time_week_strip.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart' show GlassToastKind, showGlassToast;
 import '../absences/absence_actions.dart';
@@ -1888,7 +1889,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
           )
         : Padding(
             padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
-            child: _WeekStrip(
+            child: TimeWeekStrip(
               days: _weekDays,
               focused: _focused,
               today: today,
@@ -1899,7 +1900,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
 }
 
 /// Height of the week strip docked under the title in the week span.
-const double _kWeekStrip = 52;
+const double _kWeekStrip = kTimeWeekStrip;
 
 /// Height of the weekday letters docked under the title in the month span.
 const double _kWeekdayRow = 26;
@@ -2022,144 +2023,6 @@ class _Day extends StatelessWidget {
     ],
   );
 }
-
-/// The seven days of the week the reader is in, with the one on screen marked.
-///
-/// The calendar's whole navigation on a phone: tapping a day goes to it, and
-/// swiping the canvas below moves through them and on into the weeks either
-/// side, which redraws this strip around the new day.
-class _WeekStrip extends StatelessWidget {
-  const _WeekStrip({
-    required this.days,
-    required this.focused,
-    required this.today,
-    required this.onTap,
-  });
-
-  final List<DateTime> days;
-  final DateTime focused;
-  final DateTime today;
-  final void Function(DateTime day) onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final narrow = MaterialLocalizations.of(context).narrowWeekdays;
-    return Row(
-      children: [
-        for (final day in days)
-          Expanded(
-            child: _WeekStripDay(
-              day: day,
-              letter: narrow[day.weekday % 7],
-              focused: DateUtils.isSameDay(day, focused),
-              today: DateUtils.isSameDay(day, today),
-              onTap: () => onTap(day),
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _WeekStripDay extends StatelessWidget {
-  const _WeekStripDay({
-    required this.day,
-    required this.letter,
-    required this.focused,
-    required this.today,
-    required this.onTap,
-  });
-
-  final DateTime day;
-  final String letter;
-  final bool focused;
-  final bool today;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final weekend =
-        day.weekday == DateTime.saturday || day.weekday == DateTime.sunday;
-    // Today is amber and the day you are reading is a filled disc. When they
-    // are the same day the amber wins — it is the louder mark, and it is still
-    // the day on screen.
-    final Color disc;
-    final Color ink;
-    if (focused && today) {
-      disc = AppColors.accentStrong;
-      ink = _stripOnAccent;
-    } else if (focused) {
-      disc = AppColors.ink;
-      ink = AppColors.surface;
-    } else {
-      disc = Colors.transparent;
-      ink = today
-          ? AppColors.accentStrong
-          : (weekend ? AppColors.inkFaint : AppColors.ink);
-    }
-    // Read out as the whole date: the letter and the number alone say "M 6".
-    // The subtree is excluded, so the node carries the tap itself.
-    return Semantics(
-      button: true,
-      selected: focused,
-      label: MaterialLocalizations.of(context).formatFullDate(day),
-      excludeSemantics: true,
-      onTap: onTap,
-      child: InkResponse(
-        onTap: onTap,
-        radius: 24,
-        // The strip is docked at a fixed height. At a large text scale the
-        // letter and the disc shrink back into it instead of being cut off;
-        // at the usual scale they fit and nothing is scaled.
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                letter,
-                style: TextStyle(
-                  fontSize: AppType.caption,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.inkFaint,
-                ),
-              ),
-              const SizedBox(height: 3),
-              DecoratedBox(
-                decoration: BoxDecoration(color: disc, shape: BoxShape.circle),
-                // At least 26 across, and more when the number grows.
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    minWidth: 26,
-                    minHeight: 26,
-                  ),
-                  child: Align(
-                    widthFactor: 1,
-                    heightFactor: 1,
-                    child: Text(
-                      '${day.day}',
-                      style: TextStyle(
-                        fontSize: AppType.body,
-                        fontWeight: focused || today
-                            ? FontWeight.w800
-                            : FontWeight.w600,
-                        color: ink,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Ink on the amber disc: white, which reads on the honey in both themes. Fixed
-/// rather than a theme token, because the disc does not change with the theme.
-const Color _stripOnAccent = Colors.white;
 
 class _RoundButton extends StatelessWidget {
   const _RoundButton({
