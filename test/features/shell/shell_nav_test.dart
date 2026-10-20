@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:hinata/core/responsive/responsive.dart';
 import 'package:hinata/features/shell/shell_nav.dart';
 
@@ -21,6 +22,7 @@ void main() {
     test('the timesheet keeps its entry, and there is no time entry', () {
       final routes = secondaryDestinations(
         advancedTime: off,
+        shiftPlanning: false,
       ).map((d) => d.route);
       expect(routes, contains('/timesheet'));
       expect(routes, isNot(contains('/time')));
@@ -29,6 +31,7 @@ void main() {
     test('the More sheet shows the same entry', () {
       final routes = moreSheetDestinations(
         advancedTime: off,
+        shiftPlanning: false,
       ).map((d) => d.route);
       expect(routes, contains('/timesheet'));
       expect(routes, isNot(contains('/time')));
@@ -58,7 +61,10 @@ void main() {
     });
 
     test('and it lights up no entry at all', () {
-      for (final destination in secondaryDestinations(advancedTime: off)) {
+      for (final destination in secondaryDestinations(
+        advancedTime: off,
+        shiftPlanning: false,
+      )) {
         expect(
           isNavActive('/time', destination.route, advancedTime: off),
           isFalse,
@@ -74,6 +80,7 @@ void main() {
     test('the entry is /time and the timesheet is no longer one', () {
       final routes = secondaryDestinations(
         advancedTime: on,
+        shiftPlanning: false,
       ).map((d) => d.route);
       expect(routes, contains('/time'));
       expect(routes, isNot(contains('/timesheet')));
@@ -82,6 +89,7 @@ void main() {
     test('the More sheet follows', () {
       final routes = moreSheetDestinations(
         advancedTime: on,
+        shiftPlanning: false,
       ).map((d) => d.route);
       expect(routes, contains('/time'));
       expect(routes, isNot(contains('/timesheet')));
@@ -95,6 +103,7 @@ void main() {
       // Same slot in both states — the entry changes name, not position.
       int slot(bool flag) => secondaryDestinations(
         advancedTime: flag,
+        shiftPlanning: false,
       ).indexWhere((d) => d.route == timeDestination(advancedTime: flag).route);
       expect(slot(on), slot(!on));
     });
@@ -313,5 +322,138 @@ void main() {
       'absence.yearRun.pageTitle',
     );
     expect(subPageBackRoute('/absences/year-run'), '/absences/entitlements');
+  });
+
+  group('shift planning (HIN-49)', () {
+    List<String> rail({required bool shiftPlanning}) => secondaryDestinations(
+      advancedTime: true,
+      shiftPlanning: shiftPlanning,
+    ).map((d) => d.route).toList();
+
+    test('with the module off there is no entry, in the rail or More', () {
+      for (final advancedTime in [false, true]) {
+        expect(
+          secondaryDestinations(
+            advancedTime: advancedTime,
+            shiftPlanning: false,
+          ).map((d) => d.route),
+          isNot(contains(shiftsRoute)),
+        );
+        expect(
+          moreSheetDestinations(
+            advancedTime: advancedTime,
+            shiftPlanning: false,
+          ).map((d) => d.route),
+          isNot(contains(shiftsRoute)),
+        );
+      }
+    });
+
+    test('with it on the entry stands in PLAN, right after time', () {
+      for (final advancedTime in [false, true]) {
+        final routes = secondaryDestinations(
+          advancedTime: advancedTime,
+          shiftPlanning: true,
+        ).map((d) => d.route).toList();
+        final time = timeDestination(advancedTime: advancedTime).route;
+        expect(routes.indexOf(shiftsRoute), routes.indexOf(time) + 1);
+      }
+    });
+
+    test('the More sheet and the compact title list have it too', () {
+      expect(
+        moreSheetDestinations(
+          advancedTime: false,
+          shiftPlanning: true,
+        ).map((d) => d.route),
+        contains(shiftsRoute),
+      );
+      expect(
+        allDestinations(
+          advancedTime: false,
+          shiftPlanning: true,
+        ).map((d) => d.route),
+        contains(shiftsRoute),
+      );
+    });
+
+    test('switching the flag moves no other entry', () {
+      final off = rail(shiftPlanning: false);
+      final on = rail(shiftPlanning: true)..remove(shiftsRoute);
+      expect(on, off);
+    });
+
+    test('it is called "Schichten" and drawn with the calendar clock', () {
+      expect(shiftsDestination.labelKey, 'nav.shifts');
+      expect(shiftsDestination.icon, LucideIcons.calendarClock);
+    });
+
+    test('it lights up on every shifts page and nowhere else', () {
+      for (final location in [
+        '/shifts',
+        '/shifts/calendar',
+        '/shifts/events',
+        '/shifts/events/e1',
+      ]) {
+        expect(
+          isNavActive(location, shiftsRoute, advancedTime: true),
+          isTrue,
+          reason: location,
+        );
+        expect(
+          isNavActive(location, '/time', advancedTime: true),
+          isFalse,
+          reason: location,
+        );
+      }
+      expect(isNavActive('/shiftsx', shiftsRoute, advancedTime: true), isFalse);
+      expect(isNavActive('/time', shiftsRoute, advancedTime: true), isFalse);
+    });
+
+    test('with the module off every shifts page says not found', () {
+      for (final location in [
+        '/shifts',
+        '/shifts/calendar',
+        '/shifts/events',
+        '/shifts/events/e1',
+      ]) {
+        expect(
+          subPageTitleKey(location, advancedTime: true),
+          'notFound.title',
+          reason: location,
+        );
+      }
+      // The views have no parent of their own, so their way out is home.
+      for (final location in [
+        '/shifts',
+        '/shifts/calendar',
+        '/shifts/events',
+      ]) {
+        expect(subPageBackRoute(location), '/dashboard', reason: location);
+      }
+    });
+
+    test('with it on the views are the destination, one event a sub-page', () {
+      for (final location in [
+        '/shifts',
+        '/shifts/calendar',
+        '/shifts/events',
+      ]) {
+        expect(
+          subPageTitleKey(location, advancedTime: true, shiftPlanning: true),
+          isNull,
+          reason: location,
+        );
+      }
+      expect(
+        subPageTitleKey(
+          '/shifts/events/e1',
+          advancedTime: true,
+          shiftPlanning: true,
+        ),
+        'nav.shifts',
+      );
+      expect(subPageBackRoute('/shifts/events/e1'), '/shifts/events');
+    });
   });
 }

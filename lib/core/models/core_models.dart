@@ -49,6 +49,14 @@ class PlatformFlags {
   /// flag editor. Off → none of those entries exist and the server answers the
   /// module's routes with 404 `error.feature.disabled`.
   static const projectTemplates = 'project_templates';
+
+  /// Expose shift planning: events with shifts people sign up for, a planning
+  /// view and a calendar under "Schichten". Configured in Adminbereich → App.
+  /// The server only reports it on while MongoDB transactions are available
+  /// (a replica set), see [ServerMeta.shiftPlanningAvailable]. Off → no nav
+  /// entry, the `/shifts` routes show the shell's not-found page and the
+  /// server answers the module's routes with 404 `error.feature.disabled`.
+  static const shiftPlanning = 'shift_planning';
 }
 
 /// Server metadata from GET /api/v1/meta (version gate, branding, flags).
@@ -72,6 +80,7 @@ class ServerMeta extends Equatable {
     this.passwordMinLength = 10,
     this.uploadLimits = const UploadLimits(),
     this.defaultDeadlineBasis = RelativeDateBasis.calendar,
+    this.shiftPlanningAvailable = true,
   });
 
   final String serverVersion;
@@ -116,6 +125,12 @@ class ServerMeta extends Equatable {
   /// field. Read through [deadlineBasisFor].
   final RelativeDateBasis defaultDeadlineBasis;
 
+  /// Whether this server could run shift planning at all. False when MongoDB
+  /// runs without a replica set, because assigning a shift needs a
+  /// transaction; the admin switch then shows why instead of a toggle. True
+  /// on a server that predates the field.
+  final bool shiftPlanningAvailable;
+
   factory ServerMeta.fromJson(Map<String, dynamic> json) => ServerMeta(
     serverVersion: json['serverVersion'] as String? ?? '0.0.0',
     minAppVersion: json['minAppVersion'] as String? ?? '0.0.0',
@@ -143,6 +158,7 @@ class ServerMeta extends Equatable {
     defaultDeadlineBasis: RelativeDateBasis.fromWire(
       json['defaultDeadlineBasis'] as String?,
     ),
+    shiftPlanningAvailable: json['shiftPlanningAvailable'] as bool? ?? true,
   );
 
   bool isFlagEnabled(String flag) => featureFlags[flag] ?? false;
@@ -172,6 +188,10 @@ class ServerMeta extends Equatable {
   /// kept as an offset; the projects themselves are unaffected either way.
   bool get projectTemplates => isFlagEnabled(PlatformFlags.projectTemplates);
 
+  /// Shift planning (default off). Decides whether the "Schichten" nav entry
+  /// and the `/shifts` routes exist for this client.
+  bool get shiftPlanning => isFlagEnabled(PlatformFlags.shiftPlanning);
+
   @override
   List<Object?> get props => [
     serverVersion,
@@ -196,6 +216,7 @@ class ServerMeta extends Equatable {
     featureFlags,
     uploadLimits,
     defaultDeadlineBasis,
+    shiftPlanningAvailable,
   ];
 }
 

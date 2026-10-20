@@ -14,6 +14,7 @@ class _WideShell extends StatefulWidget {
     required this.location,
     required this.child,
     required this.advancedTime,
+    required this.shiftPlanning,
   });
 
   final String location;
@@ -22,6 +23,9 @@ class _WideShell extends StatefulWidget {
   /// Whether the extended time-tracking module is switched on for this server —
   /// resolved once by the shell so the rail and the sub-page bar agree.
   final bool advancedTime;
+
+  /// Whether shift planning is switched on, resolved the same way.
+  final bool shiftPlanning;
 
   @override
   State<_WideShell> createState() => _WideShellState();
@@ -49,6 +53,7 @@ class _WideShellState extends State<_WideShell> {
     final subKey = subPageTitleKey(
       widget.location,
       advancedTime: widget.advancedTime,
+      shiftPlanning: widget.shiftPlanning,
     );
     final dark = Theme.of(context).brightness == Brightness.dark;
 
@@ -82,6 +87,7 @@ class _WideShellState extends State<_WideShell> {
                         _NavRail(
                           location: widget.location,
                           advancedTime: widget.advancedTime,
+                          shiftPlanning: widget.shiftPlanning,
                           collapsed: collapsed,
                           width: railWidth,
                           canToggle: !isMedium,
@@ -233,6 +239,7 @@ class _NavRail extends StatelessWidget {
   const _NavRail({
     required this.location,
     required this.advancedTime,
+    required this.shiftPlanning,
     required this.collapsed,
     required this.width,
     this.canToggle = false,
@@ -241,6 +248,7 @@ class _NavRail extends StatelessWidget {
 
   final String location;
   final bool advancedTime;
+  final bool shiftPlanning;
   final bool collapsed;
   final double width;
 
@@ -383,6 +391,7 @@ class _NavRail extends StatelessWidget {
                               if (!collapsed) const _RailGroupLabel('PLAN'),
                               for (final dest in secondaryDestinations(
                                 advancedTime: advancedTime,
+                                shiftPlanning: shiftPlanning,
                               ))
                                 _RailItem(
                                   destination: dest,

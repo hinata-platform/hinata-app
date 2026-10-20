@@ -60,6 +60,7 @@ import '../models/core_models.dart' show AuthUser;
 import '../models/time_share_models.dart' show TimeShareBox;
 import '../storage/app_storage.dart';
 import 'board_routes.dart';
+import 'shift_routes.dart';
 
 /// The root navigator, exposed so code that has no [BuildContext] can still
 /// push a route — currently the desktop camera delegate, which image_picker
@@ -592,6 +593,12 @@ GoRouter buildRouter({
                   ? const RatesScreen()
                   : const NotFoundScreen(standalone: false),
             ),
+          ),
+          // Shift planning (HIN-27), gated on `shift_planning` like the time
+          // module above.
+          ...shiftRoutes(
+            _transition,
+            enabled: () => appConfig.state.meta?.shiftPlanning ?? false,
           ),
           GoRoute(
             path: '/watched',
