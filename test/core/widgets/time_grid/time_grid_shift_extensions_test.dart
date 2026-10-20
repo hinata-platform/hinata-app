@@ -114,7 +114,7 @@ void main() {
         ]),
       );
       await tester.pump();
-      expect(borderOf(tester, 'Plain'), isNull);
+      expect(borderOf(tester, 'Plain')?.left.width, 1);
     });
   });
 

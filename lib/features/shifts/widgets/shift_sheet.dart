@@ -16,10 +16,13 @@ import '../../../core/widgets/hive_widgets.dart'
 import '../../sprint/modals/glass_modal.dart'
     show kGlassPopoverBreakpoint, showGlassAnchoredPopover, showGlassModal;
 import '../bloc/shift_actions_cubit.dart';
+import '../bloc/shift_planning_cubit.dart';
 import '../bloc/shift_sheet_cubit.dart';
 import '../shift_texts.dart';
 import 'coverage_hex.dart';
 import 'shift_actions.dart';
+import 'shift_editor.dart';
+import 'shift_plan_actions.dart';
 
 /// Opens one shift (HIN-44): a sheet on a phone, a popover at [anchorRect] on
 /// a wide window, a card in the middle when there is nothing to hang it off.
@@ -37,6 +40,12 @@ Future<void> showShiftSheet(
   // A root-navigator route: hand the repository and the actions across.
   final repository = context.read<ShiftRepository>();
   final actions = context.read<ShiftActionsCubit>();
+  ShiftPlanningCubit? planning;
+  try {
+    planning = context.read<ShiftPlanningCubit>();
+  } catch (_) {
+    // Opened outside the module's page: the sheet is the helper's then.
+  }
   Widget body(BuildContext _) => MultiBlocProvider(
     providers: [
       BlocProvider(
@@ -45,6 +54,7 @@ Future<void> showShiftSheet(
               ..load(),
       ),
       BlocProvider.value(value: actions),
+      if (planning != null) BlocProvider.value(value: planning),
     ],
     child: ShiftSheetBody(onOpenEvent: onOpenEvent),
   );
@@ -110,10 +120,28 @@ class ShiftSheetBody extends StatelessWidget {
           detail: detail,
           assignment: state.assignment,
           onOpenEvent: onOpenEvent,
+          planner: detail.canPlan && _hasPlanning(context),
         );
       },
     );
   }
+}
+
+bool _hasPlanning(BuildContext context) {
+  try {
+    context.read<ShiftPlanningCubit>();
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+Future<void> _editShift(BuildContext context, Shift shift) async {
+  final sheet = context.read<ShiftSheetCubit>();
+  final event = await sheet.eventSummary();
+  if (event == null || !context.mounted) return;
+  final saved = await showShiftEditor(context, event: event, shift: shift);
+  if (saved) unawaited(sheet.load());
 }
 
 class _Content extends StatelessWidget {
@@ -121,11 +149,16 @@ class _Content extends StatelessWidget {
     required this.detail,
     required this.assignment,
     required this.onOpenEvent,
+    this.planner = false,
   });
 
   final ShiftDetail detail;
   final ShiftAssignmentRef? assignment;
   final VoidCallback? onOpenEvent;
+
+  /// The caller plans this shift: people can be taken off, the shift changed
+  /// and deleted.
+  final bool planner;
 
   @override
   Widget build(BuildContext context) {
@@ -216,7 +249,27 @@ class _Content extends StatelessWidget {
               spacing: 8,
               runSpacing: 8,
               children: [
-                for (final person in people) _PersonChip(person: person),
+                for (final id in shift.assigneeIds)
+                  if (detail.users[id] case final person?)
+                    _PersonChip(
+                      person: person,
+                      onRemove: planner && detail.placeOf(id) != null
+                          ? () => unawaited(
+                              removeFromShift(
+                                context,
+                                shift,
+                                detail.placeOf(id)!,
+                                person.name,
+                              ).then((o) {
+                                if (o != null && o.ok && context.mounted) {
+                                  unawaited(
+                                    context.read<ShiftSheetCubit>().load(),
+                                  );
+                                }
+                              }),
+                            )
+                          : null,
+                    ),
                 for (var i = 0; i < free; i++) const _FreeChip(),
               ],
             ),
@@ -267,6 +320,24 @@ class _Content extends StatelessWidget {
                       onOpenEvent();
                     },
                   ),
+                if (planner) ...[
+                  GhostButton(
+                    label: context.t('shifts.plan.editShift'),
+                    icon: LucideIcons.squarePen,
+                    onPressed: () => unawaited(_editShift(context, shift)),
+                  ),
+                  GhostButton(
+                    label: context.t('shifts.plan.delete'),
+                    icon: LucideIcons.trash2,
+                    onPressed: () => unawaited(
+                      deleteShiftAsking(context, shift).then((gone) {
+                        if (gone && context.mounted) {
+                          Navigator.of(context).maybePop();
+                        }
+                      }),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -307,9 +378,12 @@ class _InfoLine extends StatelessWidget {
 }
 
 class _PersonChip extends StatelessWidget {
-  const _PersonChip({required this.person});
+  const _PersonChip({required this.person, this.onRemove});
 
   final ShiftUser person;
+
+  /// A planner takes the person off the shift; null for everybody else.
+  final VoidCallback? onRemove;
 
   @override
   Widget build(BuildContext context) => Container(
@@ -336,6 +410,16 @@ class _PersonChip extends StatelessWidget {
             style: TextStyle(fontSize: AppType.label, color: AppColors.ink),
           ),
         ),
+        if (onRemove != null)
+          IconButton(
+            onPressed: onRemove,
+            tooltip: context.t(
+              'shifts.plan.removeNamed',
+              variables: {'name': person.name},
+            ),
+            visualDensity: VisualDensity.compact,
+            icon: Icon(LucideIcons.x, size: 15, color: AppColors.inkSoft),
+          ),
       ],
     ),
   );

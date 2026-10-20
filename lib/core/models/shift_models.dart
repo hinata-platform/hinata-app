@@ -488,10 +488,17 @@ class ShiftEventDetail extends Equatable {
 
 /// The caller's own place on a shift, as a detail answer may carry it.
 class ShiftAssignmentRef extends Equatable {
-  const ShiftAssignmentRef({required this.id, required this.status});
+  const ShiftAssignmentRef({
+    required this.id,
+    required this.status,
+    this.userId,
+  });
 
   final String id;
   final ShiftAssignmentStatus status;
+
+  /// Whose place it is, where the answer says (a write does).
+  final String? userId;
 
   static ShiftAssignmentRef? fromJson(Object? value) {
     final json = _map(value);
@@ -500,11 +507,12 @@ class ShiftAssignmentRef extends Equatable {
     return ShiftAssignmentRef(
       id: id,
       status: ShiftAssignmentStatus.parse(json['status']),
+      userId: _text(json['userId']),
     );
   }
 
   @override
-  List<Object?> get props => [id, status];
+  List<Object?> get props => [id, status, userId];
 }
 
 /// One shift with its event and the people on it (`ShiftDetail`).
@@ -515,12 +523,27 @@ class ShiftDetail extends Equatable {
     this.users = const {},
     this.canPlan = false,
     this.myAssignment,
+    this.places = const [],
   });
 
   final Shift shift;
   final ShiftEventHead event;
   final Map<String, ShiftUser> users;
   final bool canPlan;
+
+  /// Every active place with its id, for a planner to take somebody off the
+  /// shift (HIN-160). Read from `assignments` where the server sends it; an
+  /// older server sends only [Shift.assigneeIds], and then nobody can be
+  /// taken off from the sheet.
+  final List<ShiftPlace> places;
+
+  /// The place [userId] holds, or null.
+  ShiftPlace? placeOf(String userId) {
+    for (final place in places) {
+      if (place.userId == userId) return place;
+    }
+    return null;
+  }
 
   /// The caller's own place, when the server names it. Falls back to what the
   /// shift row says ([Shift.myAssignmentId]).
@@ -542,11 +565,22 @@ class ShiftDetail extends Equatable {
       users: ShiftUser.mapFromJson(json['users']),
       canPlan: _bool(json['canPlan']),
       myAssignment: mine,
+      places: [
+        for (final p in _maps(json['assignments'] ?? json['places']))
+          ?ShiftPlace.fromJson(p),
+      ],
     );
   }
 
   @override
-  List<Object?> get props => [shift, event, users, canPlan, myAssignment];
+  List<Object?> get props => [
+    shift,
+    event,
+    users,
+    canPlan,
+    myAssignment,
+    places,
+  ];
 }
 
 /// One of the caller's own places (`MyShiftResponse`).
@@ -612,6 +646,18 @@ class ShiftAssignResult extends Equatable {
   /// see the absence, which the server decides).
   bool get absent => warnings.contains('absent');
 
+  /// A planner's answer for putting somebody else on a shift: the shift as the
+  /// server drew it for the caller, untouched — the place is not the caller's.
+  factory ShiftAssignResult.forOther(Map<String, dynamic> json) =>
+      ShiftAssignResult(
+        shift: Shift.fromJson(_map(json['shift'])),
+        assignment: ShiftAssignmentRef.fromJson(json['assignment']),
+        warnings: [
+          for (final w in (json['warnings'] as List?) ?? const [])
+            if (w is String) w,
+        ],
+      );
+
   factory ShiftAssignResult.fromJson(Map<String, dynamic> json) {
     final assignment = ShiftAssignmentRef.fromJson(json['assignment']);
     // The shift either sits under `shift` or is the body itself.
@@ -649,11 +695,16 @@ class ShiftCalendar extends Equatable {
     this.shifts = const [],
     this.events = const {},
     this.truncated = false,
+    this.plannableProjectIds = const {},
   });
 
   final List<Shift> shifts;
   final Map<String, ShiftEventHead> events;
   final bool truncated;
+
+  /// The projects of the window the caller may plan (HIN-45): where the
+  /// calendar offers moving a block.
+  final Set<String> plannableProjectIds;
 
   factory ShiftCalendar.fromJson(Map<String, dynamic> json) => ShiftCalendar(
     shifts: [for (final s in _maps(json['shifts'])) Shift.fromJson(s)],
@@ -665,10 +716,14 @@ class ShiftCalendar extends Equatable {
           ),
     },
     truncated: _bool(json['truncated']),
+    plannableProjectIds: {
+      for (final id in (json['plannableProjectIds'] as List?) ?? const [])
+        if (id is String) id,
+    },
   );
 
   @override
-  List<Object?> get props => [shifts, events, truncated];
+  List<Object?> get props => [shifts, events, truncated, plannableProjectIds];
 }
 
 /// One person who may plan a project's shifts (`shift_planners`).
@@ -717,4 +772,278 @@ class ShiftPlanners extends Equatable {
 
   @override
   List<Object?> get props => [planners, users];
+}
+
+/// One active place on a shift with its id (HIN-160), for taking somebody
+/// off it.
+class ShiftPlace extends Equatable {
+  const ShiftPlace({
+    required this.id,
+    required this.userId,
+    this.status = ShiftAssignmentStatus.assigned,
+  });
+
+  final String id;
+  final String userId;
+  final ShiftAssignmentStatus status;
+
+  static ShiftPlace? fromJson(Map<String, dynamic> json) {
+    final id = _text(json['id']) ?? _text(json['assignmentId']);
+    final userId = _text(json['userId']);
+    if (id == null || userId == null) return null;
+    return ShiftPlace(
+      id: id,
+      userId: userId,
+      status: ShiftAssignmentStatus.parse(json['status']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [id, userId, status];
+}
+
+/// Somebody whose places now overlap after a move (`Warning`): their place on
+/// [shiftId] and the one it collides with, named only where the caller may
+/// see that project.
+class ShiftWarning extends Equatable {
+  const ShiftWarning({
+    required this.userId,
+    this.shiftId,
+    this.conflictingShiftId,
+  });
+
+  final String userId;
+  final String? shiftId;
+  final String? conflictingShiftId;
+
+  static List<ShiftWarning> listFromJson(Object? value) => [
+    for (final w in _maps(value))
+      if (_text(w['userId']) case final userId?)
+        ShiftWarning(
+          userId: userId,
+          shiftId: _text(w['shiftId']),
+          conflictingShiftId: _text(w['conflictingShiftId']),
+        ),
+  ];
+
+  /// How many different people the warnings are about.
+  static int people(List<ShiftWarning> warnings) =>
+      {for (final w in warnings) w.userId}.length;
+
+  @override
+  List<Object?> get props => [userId, shiftId, conflictingShiftId];
+}
+
+/// A changed event and who now collides because of it (`EventChange`).
+class ShiftEventChange extends Equatable {
+  const ShiftEventChange({required this.event, this.warnings = const []});
+
+  final ShiftEventDetail event;
+  final List<ShiftWarning> warnings;
+
+  factory ShiftEventChange.fromJson(Map<String, dynamic> json) =>
+      ShiftEventChange(
+        event: ShiftEventDetail.fromJson(
+          json['event'] is Map<String, dynamic>
+              ? json['event'] as Map<String, dynamic>
+              : json,
+        ),
+        warnings: ShiftWarning.listFromJson(json['warnings']),
+      );
+
+  @override
+  List<Object?> get props => [event, warnings];
+}
+
+/// A changed shift and who now collides because of it (`ShiftChange`).
+class ShiftEdit extends Equatable {
+  const ShiftEdit({required this.shift, this.warnings = const []});
+
+  final Shift shift;
+  final List<ShiftWarning> warnings;
+
+  factory ShiftEdit.fromJson(Map<String, dynamic> json) => ShiftEdit(
+    shift: Shift.fromJson(
+      json['shift'] is Map<String, dynamic>
+          ? json['shift'] as Map<String, dynamic>
+          : json,
+    ),
+    warnings: ShiftWarning.listFromJson(json['warnings']),
+  );
+
+  @override
+  List<Object?> get props => [shift, warnings];
+}
+
+/// What an event is made of, for creating one (`EventDraft`) or changing one
+/// (`EventPatch`).
+class ShiftEventInput extends Equatable {
+  const ShiftEventInput({
+    required this.title,
+    required this.startsAt,
+    required this.endsAt,
+    this.description,
+    this.location,
+    this.timezone,
+    this.selfAssignable = true,
+  });
+
+  final String title;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final String? description;
+  final String? location;
+
+  /// The IANA zone the wall clock was entered in; null lets the server take
+  /// the creator's.
+  final String? timezone;
+  final bool selfAssignable;
+
+  /// The body of a new event.
+  Map<String, dynamic> toDraftJson() => {
+    'title': title.trim(),
+    'startsAt': startsAt.toUtc().toIso8601String(),
+    'endsAt': endsAt.toUtc().toIso8601String(),
+    'description': ?_text(description?.trim()),
+    'location': ?_text(location?.trim()),
+    'timezone': ?timezone,
+    'selfAssignable': selfAssignable,
+  };
+
+  /// What differs from [before], as a patch: an emptied description or place
+  /// is sent blank, which clears it on the server; anything unchanged is left
+  /// out.
+  Map<String, dynamic> toPatchJson(ShiftEventInput before) => {
+    if (title.trim() != before.title) 'title': title.trim(),
+    if (!startsAt.isAtSameMomentAs(before.startsAt) ||
+        !endsAt.isAtSameMomentAs(before.endsAt)) ...{
+      'startsAt': startsAt.toUtc().toIso8601String(),
+      'endsAt': endsAt.toUtc().toIso8601String(),
+    },
+    if ((description?.trim() ?? '') != (before.description ?? ''))
+      'description': description?.trim() ?? '',
+    if ((location?.trim() ?? '') != (before.location ?? ''))
+      'location': location?.trim() ?? '',
+    if (timezone != null && timezone != before.timezone) 'timezone': timezone,
+    if (selfAssignable != before.selfAssignable)
+      'selfAssignable': selfAssignable,
+  };
+
+  @override
+  List<Object?> get props => [
+    title,
+    startsAt,
+    endsAt,
+    description,
+    location,
+    timezone,
+    selfAssignable,
+  ];
+}
+
+/// What a shift is made of (`ShiftDraft`, `ShiftPatch`).
+class ShiftInput extends Equatable {
+  const ShiftInput({
+    required this.title,
+    required this.startsAt,
+    required this.endsAt,
+    this.requiredHelpers = 1,
+    this.maxHelpers,
+  });
+
+  final String title;
+  final DateTime startsAt;
+  final DateTime endsAt;
+  final int requiredHelpers;
+
+  /// Null: no upper limit.
+  final int? maxHelpers;
+
+  Map<String, dynamic> toDraftJson() => {
+    'title': ?_text(title.trim()),
+    'startsAt': startsAt.toUtc().toIso8601String(),
+    'endsAt': endsAt.toUtc().toIso8601String(),
+    'requiredHelpers': requiredHelpers,
+    'maxHelpers': ?maxHelpers,
+  };
+
+  /// What differs from [before]; removing the upper limit is said in so many
+  /// words (`clearMaxHelpers`), because a missing field means "unchanged".
+  Map<String, dynamic> toPatchJson(ShiftInput before) => {
+    if (title.trim() != before.title) 'title': title.trim(),
+    if (!startsAt.isAtSameMomentAs(before.startsAt) ||
+        !endsAt.isAtSameMomentAs(before.endsAt)) ...{
+      'startsAt': startsAt.toUtc().toIso8601String(),
+      'endsAt': endsAt.toUtc().toIso8601String(),
+    },
+    if (requiredHelpers != before.requiredHelpers)
+      'requiredHelpers': requiredHelpers,
+    if (maxHelpers != before.maxHelpers)
+      if (maxHelpers == null)
+        'clearMaxHelpers': true
+      else
+        'maxHelpers': maxHelpers,
+  };
+
+  @override
+  List<Object?> get props => [
+    title,
+    startsAt,
+    endsAt,
+    requiredHelpers,
+    maxHelpers,
+  ];
+}
+
+/// Whether the caller has a personal shift feed (HIN-47). Never the address:
+/// that is shown once, when it is made.
+class ShiftFeedStatus extends Equatable {
+  const ShiftFeedStatus({
+    this.exists = false,
+    this.createdAt,
+    this.lastAccessedAt,
+  });
+
+  final bool exists;
+  final DateTime? createdAt;
+
+  /// When a calendar last fetched it; null until the first time.
+  final DateTime? lastAccessedAt;
+
+  factory ShiftFeedStatus.fromJson(Object? body) {
+    final json = _map(body);
+    return ShiftFeedStatus(
+      exists: _bool(json['exists']),
+      createdAt: parseInstant(json['createdAt']),
+      lastAccessedAt: parseInstant(json['lastAccessedAt']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [exists, createdAt, lastAccessedAt];
+}
+
+/// A new feed's address, in the one answer that carries it.
+class ShiftFeedAddress extends Equatable {
+  const ShiftFeedAddress({required this.url, required this.webcalUrl});
+
+  /// The `https://` address, the one to copy.
+  final String url;
+
+  /// The `webcal://` address, for "open in calendar".
+  final String webcalUrl;
+
+  factory ShiftFeedAddress.fromJson(Object? body) {
+    final json = _map(body);
+    final url = _text(json['url']) ?? '';
+    return ShiftFeedAddress(
+      url: url,
+      webcalUrl:
+          _text(json['webcalUrl']) ??
+          url.replaceFirst(RegExp('^https?://'), 'webcal://'),
+    );
+  }
+
+  @override
+  List<Object?> get props => [url, webcalUrl];
 }
