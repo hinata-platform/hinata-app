@@ -204,8 +204,13 @@
       "seriesTemplateKeyInvalid": "Les créneaux de cette série ne sont pas uniques. Rechargez la série et réessayez.",
       "seriesFutureUnsupported": "Des créneaux sur plusieurs jours à la fois ne peuvent être ajoutés qu'à cet événement, pas à tous les suivants.",
       "waitlistFull": "Cette liste d'attente compte déjà 50 personnes.",
-      "alreadyWaiting": "Tu es déjà sur la liste d'attente de ce créneau."
-    }
+      "alreadyWaiting": "Tu es déjà sur la liste d'attente de ce créneau.",
+      "exportFormat": "Le planning n'est pas disponible dans ce format."
+    },
+    "issue": {
+      "exportRateLimited": "Trop d’exports. Réessayez dans une minute."
+    },
+    "rateLimited": "Beaucoup de demandes en ce moment. Réessayez dans un instant."
   },
   "notFound": {
     "title": "Page introuvable",
@@ -5653,6 +5658,25 @@
       "assignNow": "Affecter maintenant",
       "assignNowTitle": "Affecter maintenant ?",
       "assignNowMessage": "{{name}} obtient la place libre sur « {{shift}} » et est prévenu·e."
+    },
+    "export": {
+      "menu": "Exporter le planning",
+      "title": "Exporter le planning",
+      "subtitle": "Le planning sous forme de fichier, à afficher, transmettre ou retravailler.",
+      "formatLabel": "Format",
+      "format": {
+        "pdf": "PDF",
+        "docx": "Word",
+        "xlsx": "Tableur"
+      },
+      "names": "Avec les noms",
+      "namesHint": "Le fichier contiendra alors des noms de personnes.",
+      "action": "Exporter",
+      "preparing": "Préparation du planning…",
+      "done": "Planning exporté.",
+      "truncated": "Planning exporté. Il était trop long pour un seul fichier ; le fichier indique où il s'arrête.",
+      "failed": "Le planning n'a pas pu être enregistré.",
+      "fileName": "planning-creneaux"
     }
   }
 }

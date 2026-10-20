@@ -204,8 +204,13 @@
       "seriesTemplateKeyInvalid": "The shifts of this series are not unique. Please reload the series and try again.",
       "seriesFutureUnsupported": "Shifts on several days at once can only be added to this event, not to all future ones.",
       "waitlistFull": "This waiting list already has 50 people on it.",
-      "alreadyWaiting": "You're already on this shift's waiting list."
-    }
+      "alreadyWaiting": "You're already on this shift's waiting list.",
+      "exportFormat": "The shift plan is not available in this format."
+    },
+    "issue": {
+      "exportRateLimited": "Too many exports. Try again in a minute."
+    },
+    "rateLimited": "Things are busy right now. Try again in a moment."
   },
   "notFound": {
     "title": "Page not found",
@@ -5653,6 +5658,25 @@
       "assignNow": "Assign now",
       "assignNowTitle": "Assign now?",
       "assignNowMessage": "{{name}} gets the free place on “{{shift}}” and is notified."
+    },
+    "export": {
+      "menu": "Export shift plan",
+      "title": "Export shift plan",
+      "subtitle": "The plan as a file to put up, pass on or work with.",
+      "formatLabel": "Format",
+      "format": {
+        "pdf": "PDF",
+        "docx": "Word",
+        "xlsx": "Spreadsheet"
+      },
+      "names": "With names",
+      "namesHint": "The file then contains people's names.",
+      "action": "Export",
+      "preparing": "Preparing the shift plan…",
+      "done": "Shift plan exported.",
+      "truncated": "Shift plan exported. It was too long for one file; the file says where it stops.",
+      "failed": "The shift plan could not be saved.",
+      "fileName": "shift-plan"
     }
   }
 }
