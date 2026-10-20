@@ -194,6 +194,22 @@ void main() {
       expect(cubit.state.visibleShifts, isEmpty);
       expect(cubit.state.detail!.shifts.first.assignedCount, 2);
     });
+
+    test('a cancelled shift is never among the understaffed', () async {
+      repo.eventDetail = ShiftEventDetail(
+        summary: sampleSummary(),
+        shifts: [
+          sampleShift(id: 'a', assigned: 0, required: 2, cancelled: true),
+          sampleShift(id: 'b', assigned: 1, required: 2),
+        ],
+      );
+      final cubit = ShiftEventCubit(repo, 'e1', changes: bus.stream);
+      addTearDown(cubit.close);
+      await cubit.load();
+
+      cubit.toggleUnderstaffed();
+      expect(cubit.state.visibleShifts.map((s) => s.id), ['b']);
+    });
   });
 
   group('ShiftActionsCubit', () {

@@ -267,7 +267,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
         final item = _item(shift, state);
         if (shift.mine) {
           mine.add(item);
-        } else if (_isShort(shift)) {
+        } else if (shift.isShort) {
           short.add(item);
         } else {
           others.add(item);
@@ -291,11 +291,8 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     ];
   }
 
-  static bool _isShort(Shift shift) =>
-      !shift.cancelled && shift.coverage.state == CoverageState.under;
-
   TimeGridItem _item(Shift shift, ShiftCalendarState state) {
-    final short = _isShort(shift);
+    final short = shift.isShort;
     return TimeGridItem(
       id: shift.id,
       start: shift.startsAt,
@@ -321,7 +318,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     final shifts = _cubit.shiftsOn(day);
     if (shifts.isEmpty) return null;
     final dot = shifts.any((s) => s.mine);
-    final ring = shifts.any((s) => !s.mine && _isShort(s));
+    final ring = shifts.any((s) => !s.mine && s.isShort);
     if (!dot && !ring) return null;
     return TimeDayDots(
       dot: dot,
