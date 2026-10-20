@@ -161,6 +161,7 @@ void main() {
           },
         ],
         'occurrencesCreated': 26,
+        'firstEventId': 'e7',
       });
       expect(series.firstStart, monday);
       expect(series.exdates, [DateTime(2026, 11, 2)]);
@@ -168,6 +169,7 @@ void main() {
       expect(series.next.single.date, DateTime(2026, 10, 26));
       expect(series.rule!.weekdays, {DateTime.monday, DateTime.wednesday});
       expect(series.occurrencesCreated, 26);
+      expect(series.firstEventId, 'e7');
     });
 
     test('events and heads say their series, older answers none', () {
@@ -232,8 +234,8 @@ void main() {
       await rest();
       expect(repo.calls, ['previewSeries:p1']);
       expect(repo.lastDraft!.rule.toRrule(), 'FREQ=WEEKLY;BYDAY=MO');
-      // The server wants a name even for a preview.
-      expect(repo.lastDraft!.toJson()['title'], isNotEmpty);
+      // A preview goes without a name, never with a stand-in.
+      expect(repo.lastDraft!.toJson()['title'], isNull);
       expect(cubit.state.preview!.recurrenceLabel, 'wöchentlich Mo');
       expect(cubit.state.previewing, isFalse);
     });
@@ -259,49 +261,67 @@ void main() {
       expect(cubit.state.preview, isNull);
     });
 
-    test('saving a rule creates a series and finds its first event', () async {
-      final first = SeriesOccurrence(
-        date: DateTime(2026, 10, 26),
-        startsAt: DateTime.utc(2026, 10, 26, 9),
-        endsAt: DateTime.utc(2026, 10, 26, 17),
-        startsLocal: DateTime(2026, 10, 26, 10),
-        endsLocal: DateTime(2026, 10, 26, 18),
-      );
+    test(
+      'saving a rule creates a series and opens the event it names',
+      () async {
+        final first = SeriesOccurrence(
+          date: DateTime(2026, 10, 26),
+          startsAt: DateTime.utc(2026, 10, 26, 9),
+          endsAt: DateTime.utc(2026, 10, 26, 17),
+          startsLocal: DateTime(2026, 10, 26, 10),
+          endsLocal: DateTime(2026, 10, 26, 18),
+        );
+        repo.createdSeries = ShiftSeries(
+          id: 'sr1',
+          projectId: 'p1',
+          title: 'Sprechstunde',
+          firstStart: DateTime(2026, 10, 26, 10),
+          durationMinutes: 480,
+          rrule: 'FREQ=MONTHLY;BYMONTHDAY=26;COUNT=6',
+          recurrenceLabel: 'monatlich am 26., 6 Mal',
+          next: [first],
+          occurrencesCreated: 3,
+          firstEventId: 'e1',
+        );
+        final cubit = fresh();
+        cubit.setTitle('Sprechstunde');
+        cubit.setRepeat(
+          SeriesRepeat.custom,
+          custom: SeriesRule.monthly(monday).withEnd(count: 6),
+        );
+        final saved = await cubit.save();
+        expect(saved!.series!.id, 'sr1');
+        expect(saved.eventId, 'e1');
+        expect(repo.calls, contains('createSeries:p1'));
+        expect(repo.calls, isNot(contains('createEvent:p1')));
+        final body = repo.lastDraft!.toJson();
+        expect(body['rrule'], 'FREQ=MONTHLY;BYMONTHDAY=26;COUNT=6');
+        expect(body['firstStart'], '2026-10-26T10:00');
+        expect(body['durationMinutes'], 8 * 60);
+        expect(body['timezone'], 'Europe/Berlin');
+        expect(body['title'], 'Sprechstunde');
+        // The server names the first event; no list is searched for it.
+        expect(repo.calls.where((c) => c.startsWith('events:')), isEmpty);
+      },
+    );
+
+    test('a series without a first event still saves', () async {
       repo.createdSeries = ShiftSeries(
-        id: 'sr1',
+        id: 'sr2',
         projectId: 'p1',
-        title: 'Sprechstunde',
+        title: 'Inventur',
         firstStart: DateTime(2026, 10, 26, 10),
         durationMinutes: 480,
-        rrule: 'FREQ=MONTHLY;BYMONTHDAY=26;COUNT=6',
-        recurrenceLabel: 'monatlich am 26., 6 Mal',
-        next: [first],
-        occurrencesCreated: 3,
-      );
-      repo.eventPage = (
-        items: [
-          sampleSummary(id: 'other'),
-          sampleSummary(seriesId: 'sr1'),
-        ],
-        total: 2,
+        rrule: 'FREQ=WEEKLY;BYDAY=MO',
+        recurrenceLabel: 'wöchentlich Mo',
       );
       final cubit = fresh();
-      cubit.setTitle('Sprechstunde');
-      cubit.setRepeat(
-        SeriesRepeat.custom,
-        custom: SeriesRule.monthly(monday).withEnd(count: 6),
-      );
+      cubit.setTitle('Inventur');
+      cubit.setRepeat(SeriesRepeat.weekly);
       final saved = await cubit.save();
-      expect(saved!.series!.id, 'sr1');
-      expect(saved.eventId, 'e1');
-      expect(repo.calls, contains('createSeries:p1'));
-      expect(repo.calls, isNot(contains('createEvent:p1')));
-      final body = repo.lastDraft!.toJson();
-      expect(body['rrule'], 'FREQ=MONTHLY;BYMONTHDAY=26;COUNT=6');
-      expect(body['firstStart'], '2026-10-26T10:00');
-      expect(body['durationMinutes'], 8 * 60);
-      expect(body['timezone'], 'Europe/Berlin');
-      expect(repo.lastFrom, first.startsAt);
+      expect(saved!.series!.id, 'sr2');
+      expect(saved.eventId, isNull);
+      expect(repo.calls.where((c) => c.startsWith('events:')), isEmpty);
     });
 
     test('a single event offers no rule afterwards', () {
