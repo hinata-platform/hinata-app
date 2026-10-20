@@ -755,6 +755,18 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
           a.marksLoading.isEmpty != b.marksLoading.isEmpty ||
           a.plannable != b.plannable,
       builder: (context, state) => PageChrome(
+        // On a phone the "+" sits in the bar's glass beside the bell, as on
+        // the events page; the bar then writes the title on the leading edge.
+        actions: compact && state.canCreate
+            ? [
+                PageAction(
+                  icon: LucideIcons.plus,
+                  label: context.t('shifts.calendar.add'),
+                  primary: true,
+                  onTap: (anchor) => unawaited(_addMenu(anchor)),
+                ),
+              ]
+            : const [],
         bottom: compact
             ? ShiftsDock(
                 current: ShiftsView.calendar,
@@ -831,11 +843,6 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                     : null,
                 onSpan: compact
                     ? (anchor) => unawaited(_pickSpan(anchor))
-                    : null,
-                // On a phone the "+" sits in this row, beside the span: the
-                // docked row scrolls sideways and would hide it past the edge.
-                onAdd: compact && state.canCreate
-                    ? (anchor) => unawaited(_addMenu(anchor))
                     : null,
                 previousLabel: context.t(
                   state.span == ShiftCalendarSpan.month
@@ -1201,7 +1208,6 @@ class _NavRow extends StatelessWidget {
     required this.nextLabel,
     this.spanLabel,
     this.onSpan,
-    this.onAdd,
   });
 
   final String label;
@@ -1212,9 +1218,6 @@ class _NavRow extends StatelessWidget {
   final String nextLabel;
   final String? spanLabel;
   final void Function(Rect? anchor)? onSpan;
-
-  /// The phone's "+" (HIN-166); null hides it.
-  final void Function(Rect? anchor)? onAdd;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -1270,16 +1273,6 @@ class _NavRow extends StatelessWidget {
             },
             icon: const Icon(LucideIcons.chevronDown, size: 16),
             label: Text(spanLabel!),
-          ),
-        ),
-      if (onAdd != null)
-        Builder(
-          builder: (anchor) => GlassCircleButton(
-            icon: LucideIcons.plus,
-            onTap: () => onAdd!(anchorRectOfContext(anchor)),
-            size: 44,
-            iconSize: 18,
-            tooltip: context.t('shifts.calendar.add'),
           ),
         ),
     ],
