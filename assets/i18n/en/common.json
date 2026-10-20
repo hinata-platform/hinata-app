@@ -347,7 +347,8 @@
     "myTasks": "My Tasks",
     "more": "More",
     "collapse": "Collapse",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "shifts": "Shifts"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -3526,7 +3527,12 @@
     "holidayRegion": "Holidays of the platform",
     "holidayRegionHint": "The organisation starts with a holiday calendar for this region and keeps it filled every year. It can change or delete the calendar.",
     "holidayRegionAuto": "Automatic, from the time zone",
-    "holidayRegionNone": "None"
+    "holidayRegionNone": "None",
+    "shiftPlanning": {
+      "label": "Shift planning",
+      "desc": "Off: Hinata stays as it is. On: projects plan events with shifts, and members sign up for open ones.",
+      "unavailable": "Needs a MongoDB replica set. This server runs without one, so shift planning stays off."
+    }
   },
   "audit": {
     "title": "Audit log",
@@ -5228,6 +5234,12 @@
     "report": {
       "emptyTitle": "No budgets yet",
       "sprints": "Sprints with a budget"
+    }
+  },
+  "shifts": {
+    "empty": {
+      "title": "No shifts yet",
+      "message": "Once an event with shifts is planned, it shows up here."
     }
   }
 }

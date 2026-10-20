@@ -18,9 +18,16 @@ class AdminAppSection extends StatefulWidget {
     super.key,
     required this.settings,
     this.onOpenTimeTracking,
+    this.shiftPlanningAvailable = true,
   });
 
   final Map<String, dynamic> settings;
+
+  /// Whether this server could run shift planning at all, from
+  /// `/api/v1/meta`. False without a MongoDB replica set, because assigning a
+  /// shift needs a transaction; the row then says why instead of offering a
+  /// switch that could not take effect.
+  final bool shiftPlanningAvailable;
 
   /// Opens Organisation, where time tracking is kept since HIN-129. The
   /// extended time-tracking flag is derived from that module's own settings, so
@@ -53,6 +60,15 @@ class _AdminAppSectionState extends State<AdminAppSection> {
   bool? get _projectTemplatesEffective =>
       (_projectTemplates['effective'] as Map<String, dynamic>?)?['enabled']
           as bool?;
+
+  /// The shift planning block (HIN-49), on demand like the one above. Absent
+  /// means "whatever `HINATA_SHIFTS_ENABLED` says".
+  Map<String, dynamic> get _shifts =>
+      (widget.settings['shifts'] ??= <String, dynamic>{})
+          as Map<String, dynamic>;
+
+  bool? get _shiftsEffective =>
+      (_shifts['effective'] as Map<String, dynamic>?)?['enabled'] as bool?;
 
   /// Read-only here — the Organisation page owns these values.
   Map<String, dynamic> get _timeTracking =>
@@ -168,6 +184,26 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               onChanged: (v) =>
                   setState(() => _flags[PlatformFlags.emailReply] = v),
             ),
+            const SizedBox(height: 14),
+            // A stored override like the project templates below, not a raw
+            // flag: the server derives `shift_planning` from this block and
+            // keeps it off without transactions whatever is stored here.
+            if (widget.shiftPlanningAvailable)
+              PolicySwitch(
+                key: const ValueKey('shiftPlanningSwitch'),
+                title: context.t('admin.shiftPlanning.label'),
+                description: context.t('admin.shiftPlanning.desc'),
+                value: _shifts['enabled'] as bool?,
+                effective: _shiftsEffective,
+                onChanged: (v) => setState(() => _shifts['enabled'] = v),
+              )
+            else
+              _PlatformRow(
+                key: const ValueKey('shiftPlanningUnavailable'),
+                title: context.t('admin.shiftPlanning.label'),
+                description: context.t('admin.shiftPlanning.unavailable'),
+                trailing: const _StateChip(on: false),
+              ),
             const SizedBox(height: 14),
             // Listed here because this is where an admin looks for platform
             // behaviour, but it is not switched here: the flag reported by
@@ -304,6 +340,7 @@ class _PlatformLink extends StatelessWidget {
 /// The shared frame both of the rows above draw.
 class _PlatformRow extends StatelessWidget {
   const _PlatformRow({
+    super.key,
     required this.title,
     required this.description,
     required this.trailing,

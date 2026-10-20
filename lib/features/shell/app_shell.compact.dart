@@ -25,6 +25,7 @@ class _CompactShell extends StatefulWidget {
     required this.location,
     required this.child,
     required this.advancedTime,
+    required this.shiftPlanning,
     this.immersive = false,
   });
 
@@ -34,6 +35,9 @@ class _CompactShell extends StatefulWidget {
   /// Whether the extended time-tracking module is switched on for this server —
   /// resolved once by the shell so every bar and sheet below agrees.
   final bool advancedTime;
+
+  /// Whether shift planning is switched on, resolved the same way.
+  final bool shiftPlanning;
 
   /// A full-screen route that supplies its own chrome: hide the shell's glass
   /// app bar + floating nav and drop their footprints from the content gutters.
@@ -88,6 +92,7 @@ class _CompactShellState extends State<_CompactShell> {
       builder: (sheetCtx) => _MoreSheet(
         location: widget.location,
         advancedTime: widget.advancedTime,
+        shiftPlanning: widget.shiftPlanning,
         user: user,
         onNavigate: (route) {
           Navigator.of(sheetCtx).pop();
@@ -318,6 +323,7 @@ class _CompactShellState extends State<_CompactShell> {
                   location: widget.location,
                   dark: dark,
                   advancedTime: widget.advancedTime,
+                  shiftPlanning: widget.shiftPlanning,
                 ),
               ),
             ),
@@ -337,11 +343,13 @@ class _GlassTopBar extends StatelessWidget {
     required this.location,
     required this.dark,
     required this.advancedTime,
+    required this.shiftPlanning,
   });
 
   final String location;
   final bool dark;
   final bool advancedTime;
+  final bool shiftPlanning;
 
   @override
   Widget build(BuildContext context) {
@@ -355,7 +363,11 @@ class _GlassTopBar extends StatelessWidget {
 
     // Sub-page → back button + the page's own title; primary nav page → brand
     // mark + the nav-derived title.
-    final subKey = subPageTitleKey(location, advancedTime: advancedTime);
+    final subKey = subPageTitleKey(
+      location,
+      advancedTime: advancedTime,
+      shiftPlanning: shiftPlanning,
+    );
     final String titleText;
     VoidCallback? onBack;
     if (subKey != null) {
@@ -363,11 +375,15 @@ class _GlassTopBar extends StatelessWidget {
       final override = chrome.onBackFor(location);
       onBack = () => _handleBack(context, location, override);
     } else {
-      final current = allDestinations(advancedTime: advancedTime).firstWhere(
-        (d) => isNavActive(location, d.route, advancedTime: advancedTime),
-        orElse: () =>
-            const NavDestination('/', 'nav.dashboard', LucideIcons.house),
-      );
+      final current =
+          allDestinations(
+            advancedTime: advancedTime,
+            shiftPlanning: shiftPlanning,
+          ).firstWhere(
+            (d) => isNavActive(location, d.route, advancedTime: advancedTime),
+            orElse: () =>
+                const NavDestination('/', 'nav.dashboard', LucideIcons.house),
+          );
       // A nav destination that names itself is believed. The route's label is
       // the name of a *place* — "Zeit" — and some places show something that
       // changes: the calendar's month is what its title has to say, and it is
@@ -864,12 +880,14 @@ class _MoreSheet extends StatelessWidget {
     required this.location,
     required this.onNavigate,
     required this.advancedTime,
+    required this.shiftPlanning,
     this.user,
   });
 
   final String location;
   final void Function(String route) onNavigate;
   final bool advancedTime;
+  final bool shiftPlanning;
   final AuthUser? user;
 
   static const double _radius = AppTheme.radiusDialog;
@@ -878,7 +896,10 @@ class _MoreSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = SearchTokens.of(Theme.of(context).brightness);
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final items = moreSheetDestinations(advancedTime: advancedTime);
+    final items = moreSheetDestinations(
+      advancedTime: advancedTime,
+      shiftPlanning: shiftPlanning,
+    );
 
     final subtitle = user?.title?.isNotEmpty == true
         ? user!.title!

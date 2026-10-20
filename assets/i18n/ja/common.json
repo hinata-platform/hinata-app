@@ -347,7 +347,8 @@
     "myTasks": "マイタスク",
     "more": "その他",
     "collapse": "折りたたむ",
-    "expandSidebar": "サイドバーを開く"
+    "expandSidebar": "サイドバーを開く",
+    "shifts": "シフト"
   },
   "dashboard": {
     "title": "ダッシュボード",
@@ -3526,7 +3527,12 @@
     "holidayRegion": "プラットフォームの祝日",
     "holidayRegionHint": "組織はこの地域の祝日カレンダーから始まり、毎年自動で埋められます。組織はそれを変更または削除できます。",
     "holidayRegionAuto": "自動（タイムゾーンから）",
-    "holidayRegionNone": "なし"
+    "holidayRegionNone": "なし",
+    "shiftPlanning": {
+      "label": "シフト計画",
+      "desc": "オフ：Hinata はこれまでどおりです。オン：プロジェクトでシフト付きのイベントを計画し、メンバーが空いているシフトに登録できます。",
+      "unavailable": "MongoDB のレプリカセットが必要です。このサーバーはレプリカセットなしで動作しているため、シフト計画はオフのままです。"
+    }
   },
   "audit": {
     "title": "監査ログ",
@@ -5228,6 +5234,12 @@
     "report": {
       "emptyTitle": "予算はまだありません",
       "sprints": "予算のあるスプリント"
+    }
+  },
+  "shifts": {
+    "empty": {
+      "title": "シフトはまだありません",
+      "message": "シフト付きのイベントが計画されると、ここに表示されます。"
     }
   }
 }

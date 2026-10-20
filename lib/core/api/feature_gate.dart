@@ -36,7 +36,9 @@ const String kFeatureDisabledCode = 'error.feature.disabled';
 /// `/api/v1/time-off` is gated by a flag of its own, `absence_management`
 /// (`AbsenceManagementGate` in hinata-server). It belongs in the same list
 /// because the reaction is the same either way: a 404 from a gated route means
-/// our `/api/v1/meta` is stale, whichever flag went off.
+/// our `/api/v1/meta` is stale, whichever flag went off. The same holds for
+/// `/api/v1/shifts` and `/api/v1/me/shifts`, gated by `shift_planning`
+/// (`ShiftPlanningGate` in hinata-server).
 const List<String> kFlagGatedRoutePrefixes = [
   '/api/v1/time',
   '/api/v1/time-off',
@@ -44,6 +46,8 @@ const List<String> kFlagGatedRoutePrefixes = [
   '/api/v1/availability',
   '/api/v1/billing',
   '/api/v1/me/calendar-subscriptions',
+  '/api/v1/shifts',
+  '/api/v1/me/shifts',
 ];
 
 /// Gated routes that sit *inside* a prefix which is not gated, written with `*`
@@ -58,12 +62,16 @@ const List<String> kFlagGatedRoutePrefixes = [
 /// read every ordinary 404 — a deleted project, a mistyped key — as "the flag
 /// went off" and send the app re-reading `/api/v1/meta` for nothing.
 ///
+/// `shift_planning` (`ShiftPlanningGate`) adds `/api/v1/projects/*/shifts`
+/// for the same reason.
+///
 /// A pattern matches its own path and everything under it, which is how the
 /// server writes the same rule as a bare path plus `/**`.
 const List<String> kFlagGatedRoutePatterns = [
   '/api/v1/projects/*/copy',
   '/api/v1/projects/*/instantiate',
   '/api/v1/projects/*/schedule',
+  '/api/v1/projects/*/shifts',
 ];
 
 /// Whether [path] is served by a module that can be switched off.
