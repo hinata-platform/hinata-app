@@ -58,6 +58,24 @@ class FakeShiftRepository implements ShiftRepository {
   @override
   Future<MyShift?> nextShift() => _answer('next', () => next);
 
+  // --- waiting list (HIN-162) ---
+  List<MyShift> waiting = const [];
+  ShiftCandidates candidateList = const ShiftCandidates();
+  String? lastQuery;
+
+  @override
+  Future<List<MyShift>> myWaitingShifts() => _answer('waiting', () => waiting);
+
+  @override
+  Future<ShiftCandidates> candidates(
+    String projectId, {
+    String query = '',
+    int limit = 50,
+  }) {
+    lastQuery = query;
+    return _answer('candidates:$projectId:$limit', () => candidateList);
+  }
+
   @override
   Future<PageResult<ShiftEventSummary>> events({
     required DateTime from,
@@ -282,6 +300,10 @@ Shift sampleShift({
   DateTime? start,
   Duration length = const Duration(hours: 3),
   List<String> assigneeIds = const [],
+  int waitingCount = 0,
+  int? myWaitPosition,
+  String? myWaitAssignmentId,
+  List<String> waitingIds = const [],
 }) {
   final s = start ?? DateTime(2026, 10, 24, 14);
   return Shift(
@@ -302,6 +324,10 @@ Shift sampleShift({
     myStatus: myStatus,
     myAssignmentId: myAssignmentId,
     assigneeIds: assigneeIds,
+    waitingCount: waitingCount,
+    myWaitPosition: myWaitPosition,
+    myWaitAssignmentId: myWaitAssignmentId,
+    waitingIds: waitingIds,
   );
 }
 
@@ -316,6 +342,7 @@ MyShift sampleMine({
   String assignmentId = 'a1',
   ShiftAssignmentStatus status = ShiftAssignmentStatus.confirmed,
   Shift? shift,
+  DateTime? confirmByLocal,
 }) => MyShift(
   assignmentId: assignmentId,
   status: status,
@@ -323,6 +350,8 @@ MyShift sampleMine({
       shift ??
       sampleShift(mine: true, myStatus: status, myAssignmentId: assignmentId),
   event: sampleEvent,
+  confirmBy: confirmByLocal,
+  confirmByLocal: confirmByLocal,
 );
 
 ShiftEventSummary sampleSummary({

@@ -23,6 +23,7 @@ import 'coverage_hex.dart';
 import 'shift_actions.dart';
 import 'shift_editor.dart';
 import 'shift_plan_actions.dart';
+import 'waitlist_chips.dart';
 
 /// Opens one shift (HIN-44): a sheet on a phone, a popover at [anchorRect] on
 /// a wide window, a card in the middle when there is nothing to hang it off.
@@ -166,11 +167,13 @@ class _Content extends StatelessWidget {
     final coverage = shift.coverage;
     final event = detail.event;
     final held = (assignment?.status.active ?? false) ? assignment : null;
+    final promoted = held?.promoted ?? false;
     final offer = shiftOfferFor(
       shift,
       status: held?.status,
       selfAssignable: event.selfAssignable,
       eventCancelled: event.cancelled,
+      promoted: promoted,
     );
     final people = [
       for (final id in shift.assigneeIds)
@@ -243,6 +246,12 @@ class _Content extends StatelessWidget {
                 '${coverageFigure(context, coverage)} · '
                 '${coverageWords(context, coverage)}',
           ),
+          if (promoted)
+            _InfoLine(
+              icon: LucideIcons.clockAlert,
+              text: confirmByLabel(context, held!.confirmByLocal!),
+              color: AppColors.warningInk,
+            ),
           if (people.isNotEmpty || free > 0) ...[
             const SizedBox(height: 10),
             Wrap(
@@ -272,6 +281,20 @@ class _Content extends StatelessWidget {
                     ),
                 for (var i = 0; i < free; i++) const _FreeChip(),
               ],
+            ),
+          ],
+          if (planner && shift.waitingIds.isNotEmpty) ...[
+            const SizedBox(height: 4),
+            WaitlistChips(
+              shift: shift,
+              users: detail.users,
+              onAssign: (userId, name) => unawaited(
+                assignFromWaitlist(context, shift, userId, name).then((o) {
+                  if (o != null && o.ok && context.mounted) {
+                    unawaited(context.read<ShiftSheetCubit>().load());
+                  }
+                }),
+              ),
             ),
           ],
           const SizedBox(height: 20),
@@ -305,6 +328,13 @@ class _Content extends StatelessWidget {
                                   status:
                                       after.myStatus ??
                                       ShiftAssignmentStatus.confirmed,
+                                  // Still to be confirmed: the deadline
+                                  // stands.
+                                  confirmByLocal:
+                                      after.myStatus ==
+                                          ShiftAssignmentStatus.assigned
+                                      ? held?.confirmByLocal
+                                      : null,
                                 ),
                         );
                         unawaited(sheet.load());
@@ -352,10 +382,13 @@ class _Content extends StatelessWidget {
 }
 
 class _InfoLine extends StatelessWidget {
-  const _InfoLine({required this.icon, required this.text});
+  const _InfoLine({required this.icon, required this.text, this.color});
 
   final IconData icon;
   final String text;
+
+  /// A line that needs the reader's attention; plain ink otherwise.
+  final Color? color;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -366,14 +399,18 @@ class _InfoLine extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 2),
           child: ExcludeSemantics(
-            child: Icon(icon, size: 16, color: AppColors.inkFaint),
+            child: Icon(icon, size: 16, color: color ?? AppColors.inkFaint),
           ),
         ),
         const SizedBox(width: 10),
         Expanded(
           child: Text(
             text,
-            style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
+            style: TextStyle(
+              fontSize: AppType.body,
+              color: color ?? AppColors.ink,
+              fontWeight: color == null ? FontWeight.w400 : FontWeight.w600,
+            ),
           ),
         ),
       ],

@@ -50,9 +50,9 @@ class ShiftActionsState extends Equatable {
   List<Object?> get props => [busy];
 }
 
-/// The one place the helper's four actions run (HIN-44): sign up, confirm,
-/// decline, give up. Each announces itself on [ShiftChanges] so every surface
-/// of the module catches up.
+/// The one place the helper's actions run (HIN-44): sign up, confirm,
+/// decline, give up, and leave the waiting list (HIN-162). Each announces
+/// itself on [ShiftChanges] so every surface of the module catches up.
 class ShiftActionsCubit extends Cubit<ShiftActionsState> {
   ShiftActionsCubit(this._shifts, {ShiftChanges? changes})
     : _changes = changes ?? ShiftChanges.instance,
@@ -69,12 +69,26 @@ class ShiftActionsCubit extends Cubit<ShiftActionsState> {
     return failure.message;
   }
 
+  /// Signs up; on a full shift, or one somebody already waits for, the server
+  /// puts the caller on the waiting list instead, and the message says so.
   Future<ShiftActionOutcome> join(Shift shift) => _run(shift.id, () async {
     final result = await _shifts.selfAssign(shift.id);
     return ShiftActionOutcome.done(
-      'shifts.done.joined',
+      result.waitlisted ? 'shifts.done.waitlisted' : 'shifts.done.joined',
       shift: result.shift,
       absent: result.absent,
+    );
+  });
+
+  /// Leaves the waiting list: the waiting place is released.
+  Future<ShiftActionOutcome> leaveWaitlist(
+    String shiftId,
+    String assignmentId,
+  ) => _run(shiftId, () async {
+    final result = await _shifts.release(assignmentId);
+    return ShiftActionOutcome.done(
+      'shifts.done.waitlistLeft',
+      shift: result?.shift,
     );
   });
 

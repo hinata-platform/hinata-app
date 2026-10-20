@@ -202,7 +202,9 @@
       "seriesTooManyShifts": "Un evento de una serie puede tener como máximo 50 turnos.",
       "seriesTooManyExdates": "Ya se han quitado 366 eventos de esta serie. Crea una serie nueva para lo que viene.",
       "seriesTemplateKeyInvalid": "Los turnos de esta serie no son únicos. Vuelve a cargar la serie e inténtalo de nuevo.",
-      "seriesFutureUnsupported": "Los turnos de varios días a la vez solo se pueden añadir a este evento, no a todos los siguientes."
+      "seriesFutureUnsupported": "Los turnos de varios días a la vez solo se pueden añadir a este evento, no a todos los siguientes.",
+      "waitlistFull": "Esta lista de espera ya tiene 50 personas.",
+      "alreadyWaiting": "Ya estás en la lista de espera de este turno."
     }
   },
   "notFound": {
@@ -5374,19 +5376,25 @@
       "decline": "Rechazar",
       "release": "Ceder",
       "toEvent": "Ir al evento",
-      "busy": "Un momento, aún está en curso."
+      "busy": "Un momento, aún está en curso.",
+      "waitlistJoin": "Apuntarse a la lista de espera",
+      "waitlistLeave": "Salir de la lista de espera"
     },
     "done": {
       "joined": "Te has apuntado",
       "confirmed": "Turno confirmado",
       "declined": "Asignación rechazada",
-      "released": "Turno cedido"
+      "released": "Turno cedido",
+      "waitlisted": "Estás en la lista de espera",
+      "waitlistLeft": "Has salido de la lista de espera"
     },
     "ask": {
       "releaseTitle": "¿Ceder este turno?",
       "releaseMessage": "Tu plaza vuelve a quedar libre y otras personas pueden apuntarse.",
       "declineTitle": "¿Rechazar esta asignación?",
-      "declineMessage": "La plaza vuelve a quedar libre y la organización puede asignar a otra persona."
+      "declineMessage": "La plaza vuelve a quedar libre y la organización puede asignar a otra persona.",
+      "waitlistLeaveTitle": "¿Salir de la lista de espera?",
+      "waitlistLeaveMessage": "Pierdes tu puesto en la lista. Si vuelves a apuntarte, empiezas al final."
     },
     "absentHint": "Ese día figuras como ausente",
     "next": {
@@ -5419,7 +5427,8 @@
       "openCount_plural": "{{count}} aún necesitan gente",
       "openEmpty": "Ahora mismo ningún proyecto busca gente.",
       "toEvents": "Ver todos los eventos",
-      "offline": "Sin conexión. Ves lo que se cargó la última vez."
+      "offline": "Sin conexión. Ves lo que se cargó la última vez.",
+      "waitlist": "Lista de espera"
     },
     "event": {
       "title": "Evento",
@@ -5569,7 +5578,8 @@
         "delete": "Eliminar",
         "deleteTitle": "¿Eliminar el evento?",
         "deleteMessage": "Se eliminan el evento y todos sus turnos. Si aún hay personas apuntadas, cancélalo primero."
-      }
+      },
+      "candidatesTruncated": "Hay más personas. Busca un nombre para encontrarlas."
     },
     "series": {
       "scope": {
@@ -5633,6 +5643,16 @@
         "created_plural": "Serie creada, {{count}} eventos ya están en el calendario."
       },
       "detached": "distinto de la serie"
+    },
+    "waitlist": {
+      "count": "1 en espera",
+      "count_plural": "{{count}} en espera",
+      "position": "Lista de espera, puesto {{pos}} de {{total}}",
+      "confirmBy": "Se liberó una plaza para ti, confírmala antes de las {{time}}",
+      "chip": "{{name}} espera en el puesto {{pos}}",
+      "assignNow": "Asignar ahora",
+      "assignNowTitle": "¿Asignar ahora?",
+      "assignNowMessage": "{{name}} recibe la plaza libre en «{{shift}}» y se le avisa."
     }
   }
 }

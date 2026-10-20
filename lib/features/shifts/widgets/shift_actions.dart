@@ -1,4 +1,4 @@
-/// The helper's four actions in one place (HIN-44): which of them a shift
+/// The helper's actions in one place (HIN-44, HIN-162): which of them a shift
 /// offers, the button that runs it, and what is said afterwards.
 library;
 
@@ -17,13 +17,20 @@ import '../../../core/widgets/hive_widgets.dart'
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import '../bloc/shift_actions_cubit.dart';
+import 'shift_status_badge.dart';
 
 /// One thing a helper can do with a shift.
 enum ShiftAction {
   join(LucideIcons.plus, 'shifts.action.join'),
   confirm(LucideIcons.check, 'shifts.action.confirm'),
   decline(LucideIcons.x, 'shifts.action.decline'),
-  release(LucideIcons.logOut, 'shifts.action.release');
+  release(LucideIcons.logOut, 'shifts.action.release'),
+
+  /// Onto the waiting list of a full shift (HIN-162).
+  waitlistJoin(LucideIcons.listPlus, 'shifts.action.waitlistJoin'),
+
+  /// Off the waiting list again.
+  waitlistLeave(LucideIcons.listX, 'shifts.action.waitlistLeave');
 
   const ShiftAction(this.icon, this.labelKey);
 
@@ -48,17 +55,23 @@ class ShiftOffer {
 
 /// Decides [ShiftOffer] for [shift], held by the caller with [status] (null
 /// when it is not theirs), on an event that does or does not take sign-ups.
+///
+/// [promoted]: the place came off the waiting list (HIN-162), so the quiet
+/// way out is giving it up again, not declining a planner's choice. A shift
+/// the caller waits for offers leaving the list; a full one, or one somebody
+/// already waits for, offers joining the list where sign-ups are open.
 ShiftOffer shiftOfferFor(
   Shift shift, {
   ShiftAssignmentStatus? status,
   bool selfAssignable = true,
   bool eventCancelled = false,
+  bool promoted = false,
 }) {
   final held = status ?? (shift.mine ? shift.myStatus : null);
   if (held == ShiftAssignmentStatus.assigned) {
-    return const ShiftOffer(
+    return ShiftOffer(
       primary: ShiftAction.confirm,
-      secondary: ShiftAction.decline,
+      secondary: promoted ? ShiftAction.release : ShiftAction.decline,
     );
   }
   if (held == ShiftAssignmentStatus.confirmed) {
@@ -72,13 +85,33 @@ ShiftOffer shiftOfferFor(
   if (shift.cancelled || eventCancelled) {
     return const ShiftOffer(noteKey: 'shifts.offer.cancelled');
   }
-  if (shift.coverage.state == CoverageState.full) {
+  if (shift.waiting) {
+    return const ShiftOffer(secondary: ShiftAction.waitlistLeave);
+  }
+  final full = shift.coverage.state == CoverageState.full;
+  if (selfAssignable && (full || shift.waitingCount > 0)) {
+    return const ShiftOffer(secondary: ShiftAction.waitlistJoin);
+  }
+  if (full) {
     return const ShiftOffer(noteKey: 'shifts.offer.full');
   }
   if (!selfAssignable) {
     return const ShiftOffer(noteKey: 'shifts.offer.plannersOnly');
   }
   return const ShiftOffer(primary: ShiftAction.join);
+}
+
+/// `Warteliste, Platz 2 von 3` for the caller waiting for [shift], or null.
+String? waitlistPositionLabel(BuildContext context, Shift shift) {
+  final pos = shift.myWaitPosition;
+  if (pos == null) return null;
+  return context.t(
+    'shifts.waitlist.position',
+    variables: {
+      'pos': pos,
+      'total': shift.waitingCount < pos ? pos : shift.waitingCount,
+    },
+  );
 }
 
 /// The text of [ShiftOffer.noteKey] for [shift].
@@ -104,29 +137,33 @@ Future<ShiftActionOutcome?> runShiftAction(
   String? assignmentId,
 }) async {
   final cubit = context.read<ShiftActionsCubit>();
-  if (action == ShiftAction.release || action == ShiftAction.decline) {
-    final release = action == ShiftAction.release;
+  final ask = switch (action) {
+    ShiftAction.release => 'shifts.ask.release',
+    ShiftAction.decline => 'shifts.ask.decline',
+    ShiftAction.waitlistLeave => 'shifts.ask.waitlistLeave',
+    _ => null,
+  };
+  if (ask != null) {
     final sure = await showGlassConfirm(
       context,
       icon: action.icon,
-      title: context.t(
-        release ? 'shifts.ask.releaseTitle' : 'shifts.ask.declineTitle',
-      ),
-      message: context.t(
-        release ? 'shifts.ask.releaseMessage' : 'shifts.ask.declineMessage',
-      ),
+      title: context.t('${ask}Title'),
+      message: context.t('${ask}Message'),
       confirmLabel: context.t(action.labelKey),
       confirmIcon: action.icon,
       destructive: true,
     );
     if (sure != true || !context.mounted) return null;
   }
-  final id = assignmentId ?? shift.myAssignmentId;
+  final id = action == ShiftAction.waitlistLeave
+      ? assignmentId ?? shift.myWaitAssignmentId
+      : assignmentId ?? shift.myAssignmentId;
   final outcome = switch (action) {
-    ShiftAction.join => await cubit.join(shift),
+    ShiftAction.join || ShiftAction.waitlistJoin => await cubit.join(shift),
     ShiftAction.confirm => await cubit.confirm(shift.id, id ?? ''),
     ShiftAction.decline => await cubit.decline(shift.id, id ?? ''),
     ShiftAction.release => await cubit.release(shift.id, id ?? ''),
+    ShiftAction.waitlistLeave => await cubit.leaveWaitlist(shift.id, id ?? ''),
   };
   if (!context.mounted) return outcome;
   announceShiftOutcome(context, outcome);
@@ -218,6 +255,7 @@ class ShiftOfferView extends StatelessWidget {
   final ValueChanged<ShiftAction> onAction;
 
   /// Rows show the primary action only; the sheet and the hero show both.
+  /// Where there is no primary, the secondary is shown either way.
   final bool showSecondary;
   final bool onNavy;
 
@@ -235,12 +273,23 @@ class ShiftOfferView extends StatelessWidget {
       );
     }
     final primary = offer.primary;
-    final secondary = showSecondary ? offer.secondary : null;
-    return Wrap(
+    // An offer with only a quiet action (the waiting list, giving up) shows
+    // it everywhere: it is then the one thing to do.
+    final secondary = showSecondary || primary == null ? offer.secondary : null;
+    final position = secondary == ShiftAction.waitlistLeave
+        ? waitlistPositionLabel(context, shift)
+        : null;
+    final buttons = Wrap(
       spacing: 10,
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
+        // Waiting: the rank as a badge, the way out beside it.
+        if (position != null)
+          ShiftStatusBadge(
+            status: ShiftAssignmentStatus.waiting,
+            label: position,
+          ),
         if (primary != null)
           ShiftActionButton(
             action: primary,
@@ -256,6 +305,28 @@ class ShiftOfferView extends StatelessWidget {
             onNavy: onNavy,
             onPressed: () => onAction(secondary),
           ),
+      ],
+    );
+    // Before joining, how many already wait, under the button.
+    if (secondary != ShiftAction.waitlistJoin || shift.waitingCount <= 0) {
+      return buttons;
+    }
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        buttons,
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.only(left: 4),
+          child: Text(
+            context.t('shifts.waitlist.count', count: shift.waitingCount),
+            style: TextStyle(
+              fontSize: AppType.caption,
+              color: onNavy ? AppColors.inkSoftOnNavy : AppColors.inkFaint,
+            ),
+          ),
+        ),
       ],
     );
   }
