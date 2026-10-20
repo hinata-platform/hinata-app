@@ -5442,7 +5442,8 @@
       "openEmpty": "No project is looking for people right now.",
       "toEvents": "See all events",
       "offline": "No connection. You are seeing what was last loaded.",
-      "waitlist": "Waiting list"
+      "waitlist": "Waiting list",
+      "waitlistFailed": "Your waiting lists could not be loaded just now."
     },
     "event": {
       "title": "Event",

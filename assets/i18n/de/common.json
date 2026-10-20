@@ -5442,7 +5442,8 @@
       "openEmpty": "Gerade sucht kein Projekt Leute.",
       "toEvents": "Alle Events ansehen",
       "offline": "Keine Verbindung. Du siehst den Stand vom letzten Laden.",
-      "waitlist": "Warteliste"
+      "waitlist": "Warteliste",
+      "waitlistFailed": "Deine Wartelisten ließen sich gerade nicht laden."
     },
     "event": {
       "title": "Event",
