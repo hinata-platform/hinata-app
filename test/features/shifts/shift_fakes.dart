@@ -181,7 +181,7 @@ class FakeShiftRepository implements ShiftRepository {
       scope == null ? name : '$name:${scope.wire}';
 
   @override
-  Future<List<ShiftDayMarks>> calendarMarks({
+  Future<ShiftCalendarMarks> calendarMarks({
     required DateTime from,
     required DateTime to,
     String? projectId,
@@ -190,7 +190,11 @@ class FakeShiftRepository implements ShiftRepository {
     final key = from.year * 100 + from.month;
     return _answer(
       'marks:$key:${projectId ?? 'all'}',
-      () => marksMonths[key] ?? const [],
+      () => ShiftCalendarMarks(
+        days: marksMonths[key] ?? const [],
+        // The marks name the planned projects like the calendar does.
+        plannableProjectIds: plannable,
+      ),
     );
   }
 
