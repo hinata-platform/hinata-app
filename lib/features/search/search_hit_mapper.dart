@@ -1,16 +1,17 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/models/search_api.dart';
+import '../../core/router/linked_target.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/hue_colors.dart' show colorFromHex;
 import '../../core/widgets/hive_widgets.dart' show fmtDuration, stateLabel;
 import '../billing/billing_format.dart' show formatMoney;
+import '../board/board_links.dart' show currentBoardLink;
 import '../issues/attachments/attachment_kind.dart'
     show formatBytes, relativeAgeLabel;
 import '../people/person_profile_screen.dart'
@@ -81,7 +82,10 @@ class SearchLabels {
 /// the words themselves need translating.
 SearchEntry mapSearchHit(SearchApiHit hit, SearchLabels l) {
   final cat = searchCatFromName(hit.category) ?? SearchCat.issues;
-  void open(BuildContext context) => context.go(hit.route);
+  // A visit of its own: the same hit chosen again opens its target again.
+  // A board's old address is turned first, a forward would lose the visit.
+  void open(BuildContext context) =>
+      goToLink(context, currentBoardLink(hit.route));
   String? joined(List<String?> parts) {
     final kept = [
       for (final part in parts)

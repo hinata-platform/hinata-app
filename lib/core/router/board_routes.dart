@@ -5,6 +5,7 @@ import '../../features/board/board_links.dart';
 import '../../features/board/board_screen.dart';
 import '../../features/board/boards_screen.dart';
 import '../../features/board/project_boards_screen.dart';
+import 'linked_target.dart';
 
 /// Wraps a screen into the page its route shows.
 typedef RoutePage = Page<void> Function(GoRouterState state, Widget child);
@@ -32,6 +33,7 @@ List<RouteBase> boardRoutes(RoutePage page) => [
           _board(
             state.pathParameters['id']!,
             sprintId: state.uri.queryParameters['sprint'],
+            visit: LinkVisit.of(state),
           ),
         ),
       ),
@@ -40,11 +42,7 @@ List<RouteBase> boardRoutes(RoutePage page) => [
   GoRoute(
     path: '/boards/:id',
     // The query goes along: a search hit for a sprint names it (`?sprint=`).
-    redirect: (_, state) {
-      final board = boardLocation(state.pathParameters['id']!);
-      final query = state.uri.query;
-      return query.isEmpty ? board : '$board?$query';
-    },
+    redirect: (_, state) => currentBoardLink(state.uri.toString()),
   ),
   GoRoute(
     path: '/projects/:id/boards',
@@ -60,6 +58,7 @@ List<RouteBase> boardRoutes(RoutePage page) => [
           _board(
             state.pathParameters['boardId']!,
             sprintId: state.uri.queryParameters['sprint'],
+            visit: LinkVisit.of(state),
           ),
         ),
       ),
@@ -70,9 +69,12 @@ List<RouteBase> boardRoutes(RoutePage page) => [
 /// Keyed by the board, like an issue: go_router keys a page by its pattern, so
 /// going from one board to another would otherwise keep the first board's
 /// state under the second one's address. The sprint is not in the key: a link
-/// to another sprint of the board on screen switches the wall to it.
-KanbanBoardScreen _board(String id, {String? sprintId}) => KanbanBoardScreen(
-  key: ValueKey('board-$id'),
-  boardId: id,
-  sprintId: sprintId,
-);
+/// to another sprint of the board on screen switches the wall to it, and so
+/// does the same link again ([visit]).
+KanbanBoardScreen _board(String id, {String? sprintId, LinkVisit? visit}) =>
+    KanbanBoardScreen(
+      key: ValueKey('board-$id'),
+      boardId: id,
+      sprintId: sprintId,
+      visit: visit,
+    );

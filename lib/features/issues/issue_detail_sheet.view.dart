@@ -15,6 +15,7 @@ class IssueDetailBody extends StatefulWidget {
     this.canMinimize = false,
     this.targetCommentId,
     this.targetAttachmentId,
+    this.linkVisit,
   });
 
   final String issueId;
@@ -27,6 +28,10 @@ class IssueDetailBody extends StatefulWidget {
   /// Deep-link target: open this attachment in the viewer once the issue (and
   /// with it the attachments section) is on screen.
   final String? targetAttachmentId;
+
+  /// The navigation that named [targetCommentId] or [targetAttachmentId]
+  /// (see [LinkedTarget]): the same link again opens its target again.
+  final LinkVisit? linkVisit;
 
   /// The host's scroll controller. Lets the body animate to the newest comment
   /// after posting (sheet: the wolt page scroll; route: the page scroll view).
@@ -280,30 +285,49 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     _commentFocus.addListener(_onCommentFocusChanged);
     // Auto-load older comments as the user scrolls toward the top of the thread.
     widget.sheetScroll?.addListener(_onCommentScroll);
+    _takeLinks();
     _load();
     _commentSse.start();
   }
 
-  /// A link to another attachment of the issue on screen: the route keeps this
-  /// body (it is keyed by the issue), so the new target is opened from here.
+  /// The comment and the attachment a link names, each opened once per
+  /// visit of the link.
+  late final _linkedComment = LinkedTarget<String>(this);
+  late final _linkedAttachment = LinkedTarget<String>(this);
+
+  bool _takeLinks() {
+    final comment = _linkedComment.take(
+      widget.targetCommentId,
+      widget.linkVisit,
+    );
+    final attachment = _linkedAttachment.take(
+      widget.targetAttachmentId,
+      widget.linkVisit,
+    );
+    return comment || attachment;
+  }
+
+  /// A link into the issue on screen, to another comment or attachment or to
+  /// the same one again: the route keeps this body (it is keyed by the
+  /// issue), so the target is opened from here.
   @override
   void didUpdateWidget(IssueDetailBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final target = widget.targetAttachmentId;
-    if (target != oldWidget.targetAttachmentId && !_loading) {
-      _openTargetAttachment(target);
-    }
+    if (_takeLinks()) _openLinked();
   }
 
-  /// Opens [attachmentId] in the viewer after the next frame, when the
-  /// attachments section is built. An id the issue does not carry opens
-  /// nothing.
-  void _openTargetAttachment(String? attachmentId) {
-    if (attachmentId == null || attachmentId.isEmpty) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      unawaited(_attachmentsKey.currentState?.openAttachment(attachmentId));
-    });
+  /// Opens what a link named once the issue is on screen: scrolls to the
+  /// comment and flashes it, or opens the attachment in the viewer. An id
+  /// the issue does not carry opens nothing.
+  void _openLinked() {
+    _linkedComment.openWhen(
+      ready: !_loading,
+      open: (id) => unawaited(_jumpToComment(id)),
+    );
+    _linkedAttachment.openWhen(
+      ready: !_loading,
+      open: (id) => unawaited(_attachmentsKey.currentState?.openAttachment(id)),
+    );
   }
 
   // Rebuild the floating composer (a separate subtree) when the comment field
@@ -681,13 +705,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // Non-critical extras load in the background, each best-effort, so a slow
       // or failed secondary fetch never blocks or blanks the sheet.
       unawaited(_hydrateSecondary(detail.issue));
-      // Deep link into a specific comment → scroll to it and flash it.
-      final target = widget.targetCommentId;
-      if (target != null && target.isNotEmpty) {
-        _jumpToComment(target);
-      }
-      // Deep link to one attachment → open it in the viewer.
-      _openTargetAttachment(widget.targetAttachmentId);
+      // A deep link into a comment or an attachment.
+      _openLinked();
     } on ApiFailure catch (failure) {
       if (mounted) {
         setState(() {

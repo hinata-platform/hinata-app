@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../time/budget/project_budget_capsules.dart';
 import '../time/budget/sprint_budget.dart';
+import '../../core/router/linked_target.dart';
 import '../../core/events/issue_events.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart';
@@ -54,12 +55,20 @@ part 'board_screen.cards.dart';
 // planning, active sprint and insights.
 
 class KanbanBoardScreen extends StatelessWidget {
-  const KanbanBoardScreen({super.key, required this.boardId, this.sprintId});
+  const KanbanBoardScreen({
+    super.key,
+    required this.boardId,
+    this.sprintId,
+    this.visit,
+  });
 
   final String boardId;
 
   /// The sprint a link names (`?sprint=`), shown instead of the active one.
   final String? sprintId;
+
+  /// The navigation that named [sprintId] (see [LinkedTarget]).
+  final LinkVisit? visit;
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -84,7 +93,7 @@ class KanbanBoardScreen extends StatelessWidget {
             BoardProjectsCubit(projects: context.read<ProjectRepository>()),
       ),
     ],
-    child: _BoardScreenBody(sprintId: sprintId),
+    child: _BoardScreenBody(sprintId: sprintId, visit: visit),
   );
 }
 
@@ -92,9 +101,10 @@ class KanbanBoardScreen extends StatelessWidget {
 enum BoardViewMode { board, timeline }
 
 class _BoardScreenBody extends StatefulWidget {
-  const _BoardScreenBody({this.sprintId});
+  const _BoardScreenBody({this.sprintId, this.visit});
 
   final String? sprintId;
+  final LinkVisit? visit;
 
   @override
   State<_BoardScreenBody> createState() => _BoardScreenBodyState();
@@ -116,17 +126,27 @@ class _BoardScreenBodyState extends State<_BoardScreenBody> {
   @override
   void initState() {
     super.initState();
+    // The wall starts on the first link's sprint; taken so that a rebuild
+    // does not switch to it again.
+    _linkedSprint
+      ..take(widget.sprintId, widget.visit)
+      ..drop();
     unawaited(_wall.load());
   }
 
-  /// A link to another sprint of the board on screen: the board stays, the
-  /// wall switches to that sprint.
+  /// The sprint a link names.
+  late final _linkedSprint = LinkedTarget<String>(this);
+
+  /// A link into the board on screen, to another sprint or to the same one
+  /// after the reader picked another: the board stays, the wall switches.
   @override
   void didUpdateWidget(_BoardScreenBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final sprintId = widget.sprintId;
-    if (sprintId != null && sprintId != oldWidget.sprintId) {
-      unawaited(_wall.showSprint(sprintId));
+    if (_linkedSprint.take(widget.sprintId, widget.visit)) {
+      _linkedSprint.openWhen(
+        ready: true,
+        open: (sprintId) => unawaited(_wall.showSprint(sprintId)),
+      );
     }
   }
 

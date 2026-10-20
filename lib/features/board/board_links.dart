@@ -33,3 +33,20 @@ String projectBoardLocation(String projectId, String boardId) {
 /// Whether [id] can stand as a path segment of its own. `.` and `..` stay what
 /// they are when encoded, and a path resolves them away.
 bool _isSegment(String id) => id.isNotEmpty && id != '.' && id != '..';
+
+/// [route] with a board's old address (`/boards/:id`, which servers still
+/// hand out in search hits and notifications) turned into its own, the
+/// query kept; any other route as it is.
+///
+/// The router forwards the old address too, but a forward drops what the
+/// navigation carries along (go_router passes no `extra` through a redirect),
+/// so a link that has to arrive as a visit of its own is turned here first.
+String currentBoardLink(String route) {
+  final uri = Uri.tryParse(route);
+  final segments = uri?.pathSegments ?? const <String>[];
+  if (uri == null || segments.length != 2 || segments.first != 'boards') {
+    return route;
+  }
+  final board = boardLocation(segments[1]);
+  return uri.query.isEmpty ? board : '$board?${uri.query}';
+}

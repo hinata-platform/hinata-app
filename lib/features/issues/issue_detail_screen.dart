@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../core/responsive/responsive.dart';
+import '../../core/router/linked_target.dart';
 import 'issue_detail_sheet.dart';
 
 /// Deep-link / route target for `/issues/:id`. Reuses the shared editable
@@ -14,6 +15,7 @@ class IssueDetailScreen extends StatefulWidget {
     this.onChanged,
     this.targetCommentId,
     this.targetAttachmentId,
+    this.linkVisit,
   });
 
   final String issueId;
@@ -28,6 +30,9 @@ class IssueDetailScreen extends StatefulWidget {
 
   /// Deep-link target: open this attachment in the viewer once it is loaded.
   final String? targetAttachmentId;
+
+  /// The navigation that named the targets (see [LinkedTarget]).
+  final LinkVisit? linkVisit;
 
   @override
   State<IssueDetailScreen> createState() => _IssueDetailScreenState();
@@ -104,6 +109,7 @@ class _IssueDetailScreenState extends State<IssueDetailScreen> {
             floatingComposer: true,
             targetCommentId: widget.targetCommentId,
             targetAttachmentId: widget.targetAttachmentId,
+            linkVisit: widget.linkVisit,
           ),
         ),
         // Floating composer pinned to the PHYSICAL bottom of the screen — the

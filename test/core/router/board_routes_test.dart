@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/router/board_routes.dart';
+import 'package:hinata/core/router/linked_target.dart';
 import 'package:hinata/features/board/board_links.dart';
 import 'package:hinata/features/board/board_screen.dart';
 import 'package:hinata/features/board/boards_screen.dart';
@@ -88,6 +89,26 @@ void main() {
     // The sprint is not part of the key: another sprint of the board on
     // screen switches the wall, it does not build a new board.
     expect(board.key, const ValueKey('board-b1'));
+  });
+
+  testWidgets('the same sprint hit again reaches the board as a new visit', (
+    tester,
+  ) async {
+    await pumpAt(tester, '/board/b1');
+    // The hit's old address turned before going: a forward drops the visit.
+    final link = currentBoardLink('/boards/b1?sprint=s1');
+    expect(link, '/board/b1?sprint=s1');
+    final first = LinkVisit.next();
+    router.go(link, extra: first);
+    await tester.pumpAndSettle();
+    expect(built.whereType<KanbanBoardScreen>().last.visit, first);
+
+    final again = LinkVisit.next();
+    router.go(link, extra: again);
+    await tester.pumpAndSettle();
+    final board = built.whereType<KanbanBoardScreen>().last;
+    expect(board.sprintId, 's1');
+    expect(board.visit, again);
   });
 
   testWidgets('a board without a sprint in its address shows the active one', (

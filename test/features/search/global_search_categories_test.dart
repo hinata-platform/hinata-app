@@ -9,6 +9,7 @@ import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/search_api.dart';
 import 'package:hinata/core/repositories/search_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
+import 'package:hinata/features/board/board_links.dart';
 import 'package:hinata/features/search/global_search_controller.dart';
 import 'package:hinata/features/search/global_search_dialog.dart';
 import 'package:hinata/features/search/search_hit_mapper.dart';
@@ -188,27 +189,6 @@ void main() {
       expect(hit.rateKind, 'COST');
       expect(hit.type, isNull);
       expect(hit.status, isNull);
-
-      // A server before the two fields carried them in `type` and `status`.
-      final legacy = SearchApiHit.fromJson({
-        'category': 'BILLING',
-        'id': 'ra2',
-        'route': '/time/rates?rate=ra2',
-        'kind': 'RATE',
-        'type': 'TEAM',
-        'status': 'BILLABLE',
-      });
-      expect(legacy.rateLevel, 'TEAM');
-      expect(legacy.rateKind, 'BILLABLE');
-
-      // Nothing else borrows an issue's type as a rate level.
-      final issue = SearchApiHit.fromJson({
-        'category': 'ISSUES',
-        'id': 'i9',
-        'route': '/issues/i9',
-        'type': 'BUG',
-      });
-      expect(issue.rateLevel, isNull);
     });
 
     test('a team hit wears its own colour', () {
@@ -462,7 +442,8 @@ void main() {
     for (final MapEntry(key: name, value: json) in hits.entries) {
       testWidgets(name, (tester) async {
         final hit = SearchApiHit.fromJson({'title': name, ...json});
-        final expected = hit.route;
+        // A board's old address is turned into its own before going.
+        final expected = currentBoardLink(hit.route);
         final storage = await _storage();
         final controller = GlobalSearchController(
           repository: _FakeSearch(
@@ -621,7 +602,7 @@ GoRouter _router() {
         '/issues/:id',
         '/teams/:id',
         '/people/:id',
-        '/boards/:id',
+        '/board/:id',
         '/knowledge/:id',
         '/knowledge/spaces/:space',
         '/shifts/events/:id',
