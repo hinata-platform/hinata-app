@@ -191,7 +191,18 @@
       "titleRequired": "Gib einen Namen ein.",
       "tooManyShifts": "Ein Event hat höchstens 200 Schichten.",
       "windowInvalid": "Dieser Zeitraum lässt sich nicht lesen.",
-      "windowTooLarge": "Dieser Zeitraum ist zu groß."
+      "windowTooLarge": "Dieser Zeitraum ist zu groß.",
+      "rruleUnsupported": "Diese Wiederholung wird nicht unterstützt. Möglich sind täglich, wöchentlich an gewählten Wochentagen oder monatlich an einem Tag, mit einem Abstand von 1 bis 100 und einem Enddatum oder einer Anzahl.",
+      "rruleTooComplex": "Diese Wiederholung ist zu aufwendig zu berechnen. Bitte wähle eine einfachere Regel.",
+      "seriesTooLarge": "Eine Serie kann in den nächsten 90 Tagen höchstens 2000 Schichten haben. Bitte plane weniger Schichten pro Event oder wiederhole seltener.",
+      "seriesScopeRequired": "Dieses Event gehört zu einer Serie. Bitte wähle, ob die Änderung nur für dieses Event oder für alle künftigen gilt.",
+      "seriesFromInPast": "Eine Serie lässt sich nur ab heute ändern, nicht ab einem Event, das schon vorbei ist.",
+      "seriesShiftHasAssignments": "In künftigen Events sind noch Leute für diese Schicht eingeteilt. Trage sie zuerst aus, dann lässt sich die Schicht aus der Serie nehmen.",
+      "seriesStartOutOfRange": "Das erste Event darf höchstens ein Jahr zurück und höchstens zwei Jahre voraus liegen.",
+      "seriesTooManyShifts": "Ein Event einer Serie kann höchstens 50 Schichten haben.",
+      "seriesTooManyExdates": "Aus dieser Serie wurden schon 366 Events herausgenommen. Bitte lege für die Zukunft eine neue Serie an.",
+      "seriesTemplateKeyInvalid": "Die Schichten dieser Serie sind nicht eindeutig. Bitte lade die Serie neu und versuch es noch einmal.",
+      "seriesFutureUnsupported": "Schichten an mehreren Tagen auf einmal lassen sich nur für dieses Event anlegen, nicht für alle künftigen."
     }
   },
   "notFound": {
@@ -5559,6 +5570,69 @@
         "deleteTitle": "Event löschen?",
         "deleteMessage": "Das Event und alle Schichten werden gelöscht. Sind noch Personen eingetragen, sag es zuerst ab."
       }
+    },
+    "series": {
+      "scope": {
+        "message": "Dieser Termin gehört zu einer Serie. Wofür soll das gelten?",
+        "messageLabel": "Dieser Termin gehört zur Serie „{{label}}“. Wofür soll das gelten?",
+        "thisHint": "Nur der Termin am {{date}}, der danach nicht mehr der Serie folgt.",
+        "futureHint": "Der Termin am {{date}} und alle folgenden. Vergangene bleiben, wie sie sind.",
+        "futureCancelHint": "Die Serie endet hier. Der Termin am {{date}} und alle folgenden werden abgesagt.",
+        "futureDeleteHint": "Ab dem {{date}} gibt es die Serie nicht mehr. Termine, auf denen jemand eingetragen ist, werden abgesagt, die übrigen gelöscht. Vergangene bleiben.",
+        "ruleOnlyFuture": "Eine neue Regel gilt immer für diesen und alle folgenden Termine.",
+        "batchOnlyThis": "Auf mehrere Tage auf einmal geht eine Schicht nur für diesen Termin.",
+        "this": "Nur dieses",
+        "future": "Alle künftigen"
+      },
+      "ask": {
+        "save": "Serientermin speichern",
+        "cancel": "Serientermin absagen",
+        "delete": "Serientermin löschen",
+        "move": "Schicht verschieben",
+        "addShift": "Schicht anlegen",
+        "editShift": "Schicht ändern",
+        "deleteShift": "Schicht löschen"
+      },
+      "repeat": {
+        "label": "Wiederholen",
+        "never": "Nie",
+        "daily": "Täglich",
+        "weekly": "Wöchentlich am {{day}}",
+        "monthly": "Monatlich am {{day}}.",
+        "custom": "Eigene Regel"
+      },
+      "custom": {
+        "back": "Zurück",
+        "unit": {
+          "daily": "Täglich",
+          "weekly": "Wöchentlich",
+          "monthly": "Monatlich"
+        },
+        "every": "Abstand",
+        "interval": {
+          "daily": "jeden Tag",
+          "daily_plural": "alle {{count}} Tage",
+          "weekly": "jede Woche",
+          "weekly_plural": "alle {{count}} Wochen",
+          "monthly": "jeden Monat",
+          "monthly_plural": "alle {{count}} Monate"
+        },
+        "days": "An diesen Tagen",
+        "monthDay": "Am {{day}}. jedes Monats, wie der Beginn.",
+        "end": "Ende",
+        "endNever": "Kein Ende",
+        "endCount": "Nach Anzahl",
+        "endUntil": "Am Datum",
+        "times": "{{count}} Mal",
+        "times_plural": "{{count}} Mal",
+        "apply": "Übernehmen"
+      },
+      "next": "Nächste Termine: {{dates}}",
+      "done": {
+        "created": "Serie angelegt, {{count}} Termin steht schon im Kalender.",
+        "created_plural": "Serie angelegt, {{count}} Termine stehen schon im Kalender."
+      },
+      "detached": "abweichend von der Serie"
     }
   }
 }
