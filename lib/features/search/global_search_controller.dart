@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 
 import '../../core/api/api_client.dart';
@@ -16,12 +17,13 @@ class SearchGroup {
   final SearchCat cat;
   final List<SearchEntry> items;
 
-  /// Whether the group stopped at the overview's cap, so the category's own
-  /// scope may hold more.
+  /// Whether the category's own scope holds more than the overview shows.
   final bool more;
 }
 
-/// How many hits the server sends per category when searching everything.
+/// How many hits a server that does not say whether there are more sends per
+/// category when searching everything. Only the estimate for such a server
+/// reads it; a current one sends `more` per group.
 const int kSearchOverviewCap = 5;
 
 /// Drives the global search palette. Commands are matched client-side (pure UI
@@ -37,11 +39,17 @@ class GlobalSearchController extends ChangeNotifier {
   final SearchRepository repository;
   final AppStorage storage;
 
-  static const _debounce = Duration(milliseconds: 180);
+  /// Long enough that a steady typist sends one request per pause, not one
+  /// per key; a scope change waits the same, so tabbing through the chips
+  /// asks only for the one it stops on.
+  static const _debounce = Duration(milliseconds: 300);
 
   bool _disposed = false;
   Timer? _debounceTimer;
   int _reqSeq = 0;
+
+  /// The request in flight; a newer search aborts it.
+  CancelToken? _inFlight;
 
   // ---- client-side commands ----
   List<SearchEntry> _commands = const [];
@@ -95,6 +103,7 @@ class GlobalSearchController extends ChangeNotifier {
   void dispose() {
     _disposed = true;
     _debounceTimer?.cancel();
+    _inFlight?.cancel();
     super.dispose();
   }
 
@@ -126,9 +135,12 @@ class GlobalSearchController extends ChangeNotifier {
 
   // ─────────────────────────── searching ────────────────────────────────
 
-  /// Fires the server search for the current query/scope, discarding any
-  /// response that is superseded by a newer request.
+  /// Fires the server search for the current query/scope. A newer request
+  /// aborts the one in flight, and an answer that still arrives for an older
+  /// one is dropped.
   Future<void> _runSearch() async {
+    _inFlight?.cancel();
+    _inFlight = null;
     // Commands-only scope never needs the backend.
     if (_scope == SearchCat.commands) {
       _serverGroups = const [];
@@ -137,6 +149,7 @@ class GlobalSearchController extends ChangeNotifier {
       return;
     }
     final seq = ++_reqSeq;
+    final cancel = _inFlight = CancelToken();
     _loading = true;
     try {
       final parsed = _parseArchiveKeyword(_query);
@@ -144,6 +157,7 @@ class GlobalSearchController extends ChangeNotifier {
         query: parsed.query,
         scope: _scope?.name,
         archived: parsed.archived,
+        cancelToken: cancel,
       );
       if (_disposed || seq != _reqSeq) return; // stale
       _applyResponse(response);
@@ -178,9 +192,13 @@ class GlobalSearchController extends ChangeNotifier {
         final cat = searchCatFromName(group.category);
         if (cat == null || !_available.contains(cat)) continue;
         groups.add(
-          SearchGroup(cat, [
-            for (final hit in group.items) mapSearchHit(hit, labels),
-          ], more: _scope == null && group.items.length >= kSearchOverviewCap),
+          SearchGroup(
+            cat,
+            [for (final hit in group.items) mapSearchHit(hit, labels)],
+            more:
+                _scope == null &&
+                (group.more ?? group.items.length >= kSearchOverviewCap),
+          ),
         );
       }
     }
@@ -286,10 +304,16 @@ class GlobalSearchController extends ChangeNotifier {
   void setScope(SearchCat? value) {
     _scope = value;
     _selected = 0;
+    _debounceTimer?.cancel();
+    // Commands need no server, so they show at once; any other scope waits
+    // like typing does.
+    if (value == SearchCat.commands) {
+      unawaited(_runSearch());
+      return;
+    }
     _recompose();
     _safeNotify();
-    _debounceTimer?.cancel();
-    _runSearch();
+    _debounceTimer = Timer(_debounce, _runSearch);
   }
 
   /// Tab / Shift+Tab through `[All, ...categories]`.
