@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Назначен на смену",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Смена подтверждена",
       "SHIFT_ASSIGNMENT_DECLINED": "Смена отклонена",
-      "SHIFT_ASSIGNMENT_RELEASED": "Запись на смену отменена",
+      "SHIFT_ASSIGNMENT_RELEASED": "Место в смене освобождено",
       "SHIFT_PLANNER_GRANTED": "Выдано право планировать смены",
       "SHIFT_PLANNER_REVOKED": "Право планировать смены отозвано"
     },
