@@ -81,11 +81,23 @@ class ShiftEventCubit extends Cubit<ShiftEventState> {
     emit(state.copyWith(detail: detail.withShift(shift)));
   }
 
+  /// Takes the event as an action answered with it (an edit, a cancellation).
+  void applyEvent(ShiftEventDetail detail) {
+    if (detail.summary.id != eventId) return;
+    emit(state.copyWith(detail: detail));
+  }
+
   void _onChanges(List<ShiftChange> changes) {
     final detail = state.detail;
     if (detail == null) return;
     final ours = {for (final s in detail.shifts) s.id};
-    final touching = changes.where((c) => ours.contains(c.shiftId));
+    // A shift of this event, a new one in it, or a change to events at large.
+    final touching = changes.where(
+      (c) =>
+          ours.contains(c.shiftId) ||
+          c.shift?.eventId == eventId ||
+          c.shiftId.isEmpty,
+    );
     if (touching.isEmpty) return;
     // The rows were replaced as the answers came; the totals and the names in
     // the head are read again once.

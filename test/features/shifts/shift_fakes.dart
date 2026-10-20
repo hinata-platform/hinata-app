@@ -113,6 +113,104 @@ class FakeShiftRepository implements ShiftRepository {
   @override
   Future<void> removePlanner(String projectId, String userId) =>
       _answer('removePlanner:$userId', () {});
+
+  // --- planning (HIN-160) ---------------------------------------------------
+
+  /// The calendar's answer per month (`yyyymm`), or [calendarAll].
+  Map<int, ShiftCalendar> calendarMonths = {};
+  ShiftCalendar calendarAll = const ShiftCalendar();
+  Set<String> plannable = const {};
+  ShiftEventDetail? createdEvent;
+  ShiftEventChange? eventChange;
+  List<Shift> createdShifts = const [];
+  ShiftEdit? shiftEdit;
+  ShiftAssignResult? assigned;
+  ShiftFeedStatus feedStatus = const ShiftFeedStatus();
+  ShiftFeedAddress feedAddress = const ShiftFeedAddress(
+    url: 'https://example.org/api/v1/shifts/feed/abc.ics',
+    webcalUrl: 'webcal://example.org/api/v1/shifts/feed/abc.ics',
+  );
+
+  /// What the last write sent.
+  Map<String, dynamic>? lastPatch;
+  ShiftEventInput? lastEventInput;
+  ShiftInput? lastTemplate;
+  List<DateTime>? lastDays;
+
+  @override
+  Future<ShiftCalendar> calendar({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  }) {
+    lastProjectId = projectId;
+    final key = from.year * 100 + from.month;
+    return _answer(
+      'calendar:$key:${projectId ?? 'all'}',
+      () => calendarMonths[key] ?? calendarAll,
+    );
+  }
+
+  @override
+  Future<Set<String>> plannableProjectIds() =>
+      _answer('plannable', () => plannable);
+
+  @override
+  Future<ShiftEventDetail> createEvent(
+    String projectId,
+    ShiftEventInput input,
+  ) {
+    lastProjectId = projectId;
+    lastEventInput = input;
+    return _answer('createEvent:$projectId', () => createdEvent!);
+  }
+
+  @override
+  Future<ShiftEventChange> updateEvent(String id, Map<String, dynamic> patch) {
+    lastPatch = patch;
+    return _answer('updateEvent:$id', () => eventChange!);
+  }
+
+  @override
+  Future<ShiftEventDetail> cancelEvent(String id) =>
+      _answer('cancelEvent:$id', () => eventDetail!);
+
+  @override
+  Future<void> deleteEvent(String id) => _answer('deleteEvent:$id', () {});
+
+  @override
+  Future<List<Shift>> createShifts(
+    String eventId,
+    ShiftInput template,
+    List<DateTime> days,
+  ) {
+    lastTemplate = template;
+    lastDays = days;
+    return _answer('createShifts:$eventId:${days.length}', () => createdShifts);
+  }
+
+  @override
+  Future<ShiftEdit> updateShift(String id, Map<String, dynamic> patch) {
+    lastPatch = patch;
+    return _answer('updateShift:$id', () => shiftEdit!);
+  }
+
+  @override
+  Future<void> deleteShift(String id) => _answer('deleteShift:$id', () {});
+
+  @override
+  Future<ShiftAssignResult> assign(String shiftId, String userId) =>
+      _answer('assign:$shiftId:$userId', () => assigned!);
+
+  @override
+  Future<ShiftFeedStatus> feed() => _answer('feed', () => feedStatus);
+
+  @override
+  Future<ShiftFeedAddress> createFeed() =>
+      _answer('createFeed', () => feedAddress);
+
+  @override
+  Future<void> deleteFeed() => _answer('deleteFeed', () {});
 }
 
 /// A refusal as the server sends it: its sentence, and the module's code.
