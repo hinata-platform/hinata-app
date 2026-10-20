@@ -1,7 +1,9 @@
 import 'dart:async';
 
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/router/linked_target.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/shift_models.dart';
 import 'package:hinata/features/shifts/bloc/my_shifts_snapshot_cubit.dart';
@@ -370,6 +372,39 @@ void main() {
       expect(repo.calls.where((call) => call.startsWith('shift:')), [
         'shift:a',
       ]);
+    });
+
+    testWidgets('the same link again opens the sheet again', (tester) async {
+      final shift = detail().shifts.first;
+      repo
+        ..eventDetail = detail()
+        ..shiftDetail = ShiftDetail(shift: shift, event: sampleEvent);
+      final visit = ValueNotifier(LinkVisit.next());
+      addTearDown(visit.dispose);
+      await pumpShiftsUi(
+        tester,
+        ValueListenableBuilder<LinkVisit>(
+          valueListenable: visit,
+          builder: (_, value, _) =>
+              ShiftEventScreen(eventId: 'e1', shiftId: 'a', visit: value),
+        ),
+        repository: repo,
+        blocs: blocs(),
+      );
+      await settle(tester);
+      int sheets() =>
+          repo.calls.where((call) => call.startsWith('shift:')).length;
+      expect(sheets(), 1);
+
+      visit.value = LinkVisit.next();
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+      expect(sheets(), 2);
+      expect(
+        repo.calls.where((call) => call.startsWith('event:')),
+        hasLength(1),
+        reason: 'the event is not read again',
+      );
     });
 
     testWidgets('without one, no sheet opens', (tester) async {

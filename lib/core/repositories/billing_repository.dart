@@ -113,6 +113,13 @@ class BillingRepository {
         as Map<String, dynamic>,
   );
 
+  /// One rate by its id, under the same rights as [rates]: a rate the reader
+  /// may not see answers 404.
+  Future<BillingRate> rate(String id) async => BillingRate.fromJson(
+    await _api.get('/api/v1/billing/rates/${Uri.encodeComponent(id)}')
+        as Map<String, dynamic>,
+  );
+
   Future<void> deleteRate(String id) =>
       _api.delete('/api/v1/billing/rates/$id');
 

@@ -9,6 +9,7 @@ import 'package:hinata/core/models/absence_request_models.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
+import 'package:hinata/core/router/linked_target.dart';
 import 'package:hinata/core/theme/app_colors.dart';
 import 'package:hinata/core/blocs/my_absences_cubit.dart';
 import 'package:hinata/core/blocs/time_policy_cubit.dart';
@@ -358,6 +359,35 @@ void main() {
     // Somebody else's request, so the sheet offers the decision.
     expect(find.text('absence.request.approve'), findsOneWidget);
     expect(find.text('absence.request.reject'), findsOneWidget);
+  });
+
+  testWidgets('the same link again opens the request again', (tester) async {
+    final repository = _FakeRequests(inbox: [request(id: 'r7')]);
+    Widget screen(LinkVisit visit) => host(
+      repository,
+      child: TimeAbsencesScreen(
+        scope: 'requests',
+        requestId: 'r7',
+        visit: visit,
+      ),
+    );
+    final first = LinkVisit.next();
+    await tester.pumpWidget(screen(first));
+    await tester.pumpAndSettle();
+    expect(find.text('absence.request.approve'), findsOneWidget);
+    Navigator.of(tester.element(find.text('absence.request.approve'))).pop();
+    await tester.pumpAndSettle();
+    expect(find.text('absence.request.approve'), findsNothing);
+
+    // A rebuild of the same visit opens nothing.
+    await tester.pumpWidget(screen(first));
+    await tester.pumpAndSettle();
+    expect(find.text('absence.request.approve'), findsNothing);
+
+    // The same hit chosen again is a visit of its own.
+    await tester.pumpWidget(screen(LinkVisit.next()));
+    await tester.pumpAndSettle();
+    expect(find.text('absence.request.approve'), findsOneWidget);
   });
 
   testWidgets('a link naming a type opens a new request of that type', (
