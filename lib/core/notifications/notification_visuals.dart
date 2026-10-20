@@ -47,6 +47,11 @@ import '../theme/app_colors.dart';
   'ACCOUNT_DELETED' => (LucideIcons.shieldCheck, AppColors.inkSoft),
   'REVIEW' ||
   'REVIEW_REQUEST' => (LucideIcons.messageSquareText, AppColors.stReview),
+  // Shift planning (HIN-27): every type of the module is one family.
+  final shift when shift.startsWith('SHIFT_') => (
+    LucideIcons.calendarClock,
+    AppColors.accentTeal,
+  ),
   _ => (LucideIcons.bell, AppColors.inkSoft),
 };
 

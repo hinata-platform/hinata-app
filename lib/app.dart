@@ -38,6 +38,7 @@ import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
 import 'core/blocs/tint_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
+import 'features/shifts/bloc/my_shifts_snapshot_cubit.dart';
 import 'features/time/time_shortcuts.dart';
 import 'features/time/timer_signals.dart';
 import 'features/time/timer_surfaces_host.dart';
@@ -117,6 +118,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// itself. Rebuilt with it, but never cleared: they are this device's
   /// settings for that person, not data of the session.
   late TimerSurfacePrefsCubit _surfacePrefs;
+
+  /// "Meine Schichten" offline (HIN-44), scoped like the timer.
+  late MyShiftsSnapshotCubit _shiftSnapshot;
 
   /// "Delete local copies now", from the settings to [TimerSurfacesHost].
   final _surfaceClear = TimerSurfaceClearSignal();
@@ -293,6 +297,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // there is an account to key it to. There is always one to provide.
     _timer = TimerCubit(domains.time, storageId: 'anonymous');
     _surfacePrefs = TimerSurfacePrefsCubit(storageId: 'surfaces#anonymous');
+    _shiftSnapshot = MyShiftsSnapshotCubit(storageId: 'shifts#anonymous');
     // Record the server the boot-time AuthChecked above runs against, so the
     // listener below doesn't redundantly re-check it on the first `ready`.
     _authServer = widget.storage.serverUrl;
@@ -309,6 +314,11 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   /// either has a stored token (→ straight back in) or doesn't (→ sign-in).
   void _onAppConfig(AppConfigState state) {
     if (state.status != AppConfigStatus.ready) return;
+    // Shift planning switched off: what was kept for offline goes with it.
+    if (!(state.meta?.shiftPlanning ?? false) &&
+        !_shiftSnapshot.state.isEmpty) {
+      unawaited(_shiftSnapshot.forget());
+    }
     final server = widget.storage.serverUrl;
     if (!needsAuthCheck(
       checkedServer: _authServer,
@@ -392,6 +402,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _knowledge.reset();
     final previous = _timer;
     final previousPrefs = _surfacePrefs;
+    final previousShifts = _shiftSnapshot;
     // Reached only when the identity actually changed, which the boot-time
     // call cannot do: it runs with no account, and the cubit built above is
     // already the one for "no account".
@@ -403,8 +414,14 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       _surfacePrefs = TimerSurfacePrefsCubit(
         storageId: 'surfaces#${identity ?? 'anonymous'}',
       );
+      _shiftSnapshot = MyShiftsSnapshotCubit(
+        storageId: 'shifts#${identity ?? 'anonymous'}',
+      );
     });
     unawaited(previousPrefs.close());
+    // The shifts the session that ended kept for offline are that account's;
+    // sign-out and a revoked session both arrive here.
+    unawaited(previousShifts.forget().then((_) => previousShifts.close()));
     // The session that just ended leaves a persisted timer behind, and that
     // timer names what the person was working on in up to two thousand
     // characters of free text. Every path here matters, not only the sign-out
@@ -801,6 +818,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _accountEvents.stop();
     unawaited(_timer.close());
     unawaited(_surfacePrefs.close());
+    unawaited(_shiftSnapshot.close());
     _surfaceClear.dispose();
     _hotkeys.dispose();
     _router.dispose();
@@ -858,6 +876,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         ),
         RepositoryProvider<TeamRepository>.value(value: domains.teams),
         RepositoryProvider<GitRepository>.value(value: domains.git),
+        RepositoryProvider<ShiftRepository>.value(value: domains.shifts),
         RepositoryProvider<TimerSurfaceClearSignal>.value(value: _surfaceClear),
         RepositoryProvider<HotkeyStatus>.value(value: _hotkeys),
       ],
@@ -869,6 +888,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _orgLogo),
           BlocProvider.value(value: _timer),
           BlocProvider.value(value: _surfacePrefs),
+          BlocProvider.value(value: _shiftSnapshot),
           BlocProvider.value(value: _timePreferences),
           BlocProvider.value(value: _tint),
           BlocProvider.value(value: _timePolicy),
