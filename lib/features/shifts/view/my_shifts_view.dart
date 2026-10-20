@@ -272,9 +272,11 @@ class _Body extends StatelessWidget {
   /// The compact group above the list: the shifts the caller waits for.
   List<_Entry> _waiting(BuildContext context, NextShiftState head) {
     final waiting = head.waiting;
-    if (waiting.isEmpty) return const [];
+    if (waiting.isEmpty && !head.waitingFailed) return const [];
     return [
       _Header(context.t('shifts.mine.waitlist')),
+      if (head.waitingFailed)
+        _Widget(_Note(text: context.t('shifts.mine.waitlistFailed'))),
       for (final row in waiting) ...[_Waiting(row), const _Gap(10)],
       const _Gap(18),
     ];

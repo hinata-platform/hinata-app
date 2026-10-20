@@ -72,6 +72,51 @@ void main() {
     );
   });
 
+  test('planners read the documented form only', () {
+    final planners = ShiftPlanners.fromJson(const {
+      'planners': [
+        {
+          'userId': 'u1',
+          'grantedBy': 'u0',
+          'createdAt': '2026-10-01T08:00:00Z',
+        },
+        {'id': 'u2'},
+      ],
+      'users': {
+        'u1': {'name': 'Ann'},
+      },
+    });
+    expect(planners.planners.map((p) => p.userId), ['u1']);
+    expect(planners.users['u1']!.name, 'Ann');
+    expect(
+      ShiftPlanners.fromJson(const [
+        {'userId': 'u1'},
+      ]).planners,
+      isEmpty,
+    );
+  });
+
+  test('a detail takes the own place from the shift, places from '
+      'assignments', () {
+    final detail = ShiftDetail.fromJson(const {
+      'shift': {
+        'id': 's1',
+        'mine': true,
+        'myAssignment': {'id': 'a1', 'status': 'CONFIRMED'},
+      },
+      'event': {'id': 'e1'},
+      'assignments': [
+        {'id': 'a1', 'userId': 'u1', 'status': 'CONFIRMED'},
+      ],
+      'places': [
+        {'id': 'a2', 'userId': 'u2', 'status': 'ASSIGNED'},
+      ],
+    });
+    expect(detail.myAssignment?.id, 'a1');
+    expect(detail.myAssignment?.status, ShiftAssignmentStatus.confirmed);
+    expect(detail.places.map((p) => p.id), ['a1']);
+  });
+
   test('a sign-up answer carries the caller\'s place onto the shift', () {
     final result = ShiftAssignResult.fromJson({
       'shift': {...shiftJson, 'mine': true},
