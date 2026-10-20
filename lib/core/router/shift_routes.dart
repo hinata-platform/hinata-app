@@ -28,8 +28,14 @@ List<RouteBase> shiftRoutes(
   ),
   GoRoute(
     path: '$shiftsRoute/calendar',
-    pageBuilder: (_, state) =>
-        page(state, shiftsPage(enabled: enabled(), view: ShiftsView.calendar)),
+    pageBuilder: (_, state) => page(
+      state,
+      shiftsPage(
+        enabled: enabled(),
+        view: ShiftsView.calendar,
+        calendarQuery: ShiftCalendarQuery.parse(state.uri.queryParameters),
+      ),
+    ),
   ),
   GoRoute(
     path: '$shiftsRoute/events',
@@ -60,6 +66,7 @@ Widget shiftsPage({
   required bool enabled,
   ShiftsView view = ShiftsView.mine,
   String? eventId,
+  ShiftCalendarQuery calendarQuery = const ShiftCalendarQuery(),
 }) {
   if (!enabled) return const NotFoundScreen(standalone: false);
   return ShiftsScreen(
@@ -68,5 +75,6 @@ Widget shiftsPage({
     key: eventId == null ? null : ValueKey('shift-event-$eventId'),
     view: view,
     eventId: eventId,
+    calendarQuery: calendarQuery,
   );
 }

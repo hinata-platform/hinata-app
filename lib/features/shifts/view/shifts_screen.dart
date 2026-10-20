@@ -3,20 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/i18n/i18n.dart';
 import '../../../core/repositories/shift_repository.dart';
-import '../../../core/responsive/responsive.dart';
-import '../../../core/widgets/glass_filter_bar.dart' show kGlassDockRow;
-import '../../../core/widgets/hive_empty_state.dart';
 import '../../shell/page_chrome.dart';
 import '../bloc/shift_actions_cubit.dart';
+import '../bloc/shift_planning_cubit.dart';
 import '../shift_views.dart';
-import '../widgets/shifts_head.dart';
 import 'my_shifts_view.dart';
+import 'shift_calendar_view.dart';
 import 'shift_event_screen.dart';
 import 'shift_events_view.dart';
 
 export '../shift_views.dart' show ShiftsView;
+export 'shift_calendar_view.dart' show ShiftCalendarQuery;
 
 /// The shift planning module's page (HIN-27, helper surfaces HIN-44).
 ///
@@ -25,7 +23,12 @@ export '../shift_views.dart' show ShiftsView;
 /// for and kept behind the others, so a scrolled list stays where it was.
 /// One event (`/shifts/events/:id`) is a sub-page of its own.
 class ShiftsScreen extends StatefulWidget {
-  const ShiftsScreen({super.key, this.view = ShiftsView.mine, this.eventId});
+  const ShiftsScreen({
+    super.key,
+    this.view = ShiftsView.mine,
+    this.eventId,
+    this.calendarQuery = const ShiftCalendarQuery(),
+  });
 
   /// Which view the address names.
   final ShiftsView view;
@@ -33,12 +36,18 @@ class ShiftsScreen extends StatefulWidget {
   /// The event at `/shifts/events/:id`, null on the three views.
   final String? eventId;
 
+  /// What `/shifts/calendar?project=&span=&date=` asks for.
+  final ShiftCalendarQuery calendarQuery;
+
   @override
   State<ShiftsScreen> createState() => _ShiftsScreenState();
 }
 
 class _ShiftsScreenState extends State<ShiftsScreen> {
   late final ShiftActionsCubit _actions = ShiftActionsCubit(
+    context.read<ShiftRepository>(),
+  );
+  late final ShiftPlanningCubit _planning = ShiftPlanningCubit(
     context.read<ShiftRepository>(),
   );
   final Set<ShiftsView> _opened = {};
@@ -58,14 +67,18 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
   @override
   void dispose() {
     unawaited(_actions.close());
+    unawaited(_planning.close());
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final eventId = widget.eventId;
-    return BlocProvider.value(
-      value: _actions,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider.value(value: _actions),
+        BlocProvider.value(value: _planning),
+      ],
       child: eventId != null
           ? ShiftEventScreen(eventId: eventId)
           : IndexedStack(
@@ -84,7 +97,7 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
 
   Widget _view(ShiftsView view) => switch (view) {
     ShiftsView.mine => const MyShiftsPage(),
-    ShiftsView.calendar => const _CalendarPlaceholder(),
+    ShiftsView.calendar => ShiftCalendarPage(query: widget.calendarQuery),
     ShiftsView.events => const ShiftEventsPage(),
   };
 }
@@ -102,42 +115,4 @@ class _Branch extends StatelessWidget {
     enabled: visible,
     child: PageChromeVisibility(visible: visible, child: child),
   );
-}
-
-/// `/shifts/calendar` until the planner surfaces arrive (HIN-160): the
-/// module's head and a plain note, so the address is never a dead end.
-class _CalendarPlaceholder extends StatelessWidget {
-  const _CalendarPlaceholder();
-
-  @override
-  Widget build(BuildContext context) {
-    final compact = context.isCompact;
-    final note = HiveEmptyState(
-      title: context.t('shifts.calendar.soonTitle'),
-      message: context.t('shifts.calendar.soonMessage'),
-    );
-    return PageChrome(
-      bottom: compact ? const ShiftsDock(current: ShiftsView.calendar) : null,
-      bottomHeight: compact ? kGlassDockRow : 0,
-      child: compact
-          ? ListView(padding: context.pagePadding, children: [note])
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const ShiftsHead(current: ShiftsView.calendar),
-                Expanded(
-                  child: ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      context.pageGutter,
-                      0,
-                      context.pageGutter,
-                      context.pageGutter + context.bottomGutter,
-                    ),
-                    children: [note],
-                  ),
-                ),
-              ],
-            ),
-    );
-  }
 }
