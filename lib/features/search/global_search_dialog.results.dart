@@ -8,6 +8,7 @@ class _Results extends StatelessWidget {
     required this.scroll,
     required this.tokens,
     required this.rowKeys,
+    required this.rowOrder,
     required this.onActivateEntry,
     required this.onApplyRecent,
     required this.onHoverIndex,
@@ -16,18 +17,30 @@ class _Results extends StatelessWidget {
   final GlobalSearchController controller;
   final ScrollController scroll;
   final SearchTokens tokens;
-  final Map<int, GlobalKey> rowKeys;
+
+  /// One key per row, by what the row shows, kept across builds so a row
+  /// that stays is updated in place rather than rebuilt from scratch.
+  final Map<String, GlobalKey> rowKeys;
+
+  /// The rows' ids in selection order, refilled on every build, so the
+  /// dialog finds the selected row's key to scroll it into view.
+  final List<String> rowOrder;
   final void Function(SearchEntry) onActivateEntry;
   final void Function(String) onApplyRecent;
   final void Function(int) onHoverIndex;
 
   @override
   Widget build(BuildContext context) {
-    rowKeys.clear();
+    rowOrder.clear();
     final children = <Widget>[];
     var flatIndex = 0;
 
-    GlobalKey keyFor(int i) => rowKeys.putIfAbsent(i, () => GlobalKey());
+    GlobalKey keyFor(String id) {
+      // The same hit twice in one answer still needs two keys.
+      final unique = rowOrder.contains(id) ? '$id#${rowOrder.length}' : id;
+      rowOrder.add(unique);
+      return rowKeys.putIfAbsent(unique, GlobalKey.new);
+    }
 
     if (controller.showRecents) {
       children.add(
@@ -54,7 +67,7 @@ class _Results extends StatelessWidget {
           final i = flatIndex++;
           children.add(
             _RecentRow(
-              key: keyFor(i),
+              key: keyFor('recent:$recent'),
               tokens: tokens,
               text: recent,
               selected: controller.selected == i,
@@ -94,7 +107,7 @@ class _Results extends StatelessWidget {
           final i = flatIndex++;
           children.add(
             _ResultRow(
-              key: keyFor(i),
+              key: keyFor(entry.key),
               tokens: tokens,
               entry: entry,
               query: controller.query,
@@ -106,6 +119,8 @@ class _Results extends StatelessWidget {
         }
       }
     }
+
+    rowKeys.removeWhere((id, _) => !rowOrder.contains(id));
 
     return Scrollbar(
       controller: scroll,
