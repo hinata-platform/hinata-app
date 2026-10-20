@@ -844,13 +844,22 @@ class _TimeGridState extends State<TimeGrid> {
               // a paragraph or two each — are still re-recorded on every scroll
               // frame, and at a hundred-odd entries they are the larger half.
               child: RepaintBoundary(
-                child: _Block(
-                  item: placed.slot.item,
-                  tint: placed.tint,
-                  dashed: placed.dashed,
-                  edge: placed.edge,
-                  glyphs: placed.glyphs,
-                  dimmed: drag?.item?.id == placed.slot.item.id,
+                // A button to assistive technology, named by its words: the
+                // grid takes taps by hit-testing the canvas, which a screen
+                // reader cannot reach.
+                child: Semantics(
+                  button: widget.onTap != null,
+                  onTap: widget.onTap == null
+                      ? null
+                      : () => widget.onTap!(placed.slot.item),
+                  child: _Block(
+                    item: placed.slot.item,
+                    tint: placed.tint,
+                    dashed: placed.dashed,
+                    edge: placed.edge,
+                    glyphs: placed.glyphs,
+                    dimmed: drag?.item?.id == placed.slot.item.id,
+                  ),
                 ),
               ),
             ),
@@ -1376,12 +1385,19 @@ class _Block extends StatelessWidget {
               color: tint.withValues(alpha: 0.07),
               borderRadius: BorderRadius.circular(6),
             )
-          : BoxDecoration(
+          : edge
+          ? BoxDecoration(
               color: tint.withValues(alpha: 0.20),
               borderRadius: BorderRadius.circular(6),
-              border: edge
-                  ? Border(left: BorderSide(color: tint, width: 2.5))
-                  : null,
+              border: Border(left: BorderSide(color: tint, width: 2.5)),
+            )
+          // Without the edge the tint is the fill itself (a pastel the caller
+          // chose for its contrast with the ink), held apart from its
+          // neighbours by a hairline rather than by colour.
+          : BoxDecoration(
+              color: tint,
+              borderRadius: BorderRadius.circular(6),
+              border: Border.all(color: AppColors.hairline),
             ),
       // What fits, decided from the height the block was actually given.
       // A quarter-hour entry is fifteen points tall; two lines of text are

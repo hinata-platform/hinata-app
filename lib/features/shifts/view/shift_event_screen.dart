@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
@@ -11,14 +12,21 @@ import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../../core/widgets/soft_card.dart';
 import '../../shell/page_chrome.dart';
-import '../../sprint/modals/glass_modal.dart' show anchorRectOfContext;
+import '../../sprint/modals/glass_modal.dart'
+    show anchorRectOfContext, showGlassConfirm;
 import '../bloc/shift_event_cubit.dart';
+import '../bloc/shift_planning_cubit.dart';
+import '../shift_views.dart';
+import '../widgets/shift_editor.dart';
+import '../widgets/shift_event_editor.dart';
+import '../widgets/shift_plan_actions.dart';
 import '../shift_texts.dart';
 import '../widgets/coverage_hex.dart';
 import '../widgets/shift_actions.dart';
@@ -51,8 +59,26 @@ class ShiftEventView extends StatelessWidget {
     final state = context.watch<ShiftEventCubit>().state;
     final detail = state.detail;
     final compact = context.isCompact;
+    final canPlan = detail?.summary.canPlan ?? false;
     return PageChrome(
       title: detail?.summary.title ?? context.t('shifts.event.title'),
+      actions: detail == null || !canPlan
+          ? const []
+          : [
+              PageAction(
+                icon: LucideIcons.ellipsis,
+                label: context.t('shifts.plan.event.menu'),
+                onTap: (anchor) =>
+                    unawaited(_eventMenu(context, detail, anchor)),
+              ),
+              if (!detail.summary.cancelled)
+                PageAction(
+                  icon: LucideIcons.plus,
+                  label: context.t('shifts.plan.addShift'),
+                  primary: true,
+                  onTap: (_) => unawaited(_addShift(context, detail)),
+                ),
+            ],
       child: detail == null
           ? state.loading || state.errorKey == null
                 ? const Center(child: HiveLoader())
@@ -75,6 +101,93 @@ class ShiftEventView extends StatelessWidget {
           ? _Phone(state: state, detail: detail)
           : _Wide(state: state, detail: detail),
     );
+  }
+}
+
+Future<void> _addShift(BuildContext context, ShiftEventDetail detail) async {
+  final cubit = context.read<ShiftEventCubit>();
+  final saved = await showShiftEditor(context, event: detail.summary);
+  if (saved) unawaited(cubit.load());
+}
+
+enum _EventMenu { edit, cancel, delete }
+
+/// The event's "Mehr": change it, call it off, delete it.
+Future<void> _eventMenu(
+  BuildContext context,
+  ShiftEventDetail detail,
+  Rect? anchor,
+) async {
+  final cubit = context.read<ShiftEventCubit>();
+  final planning = context.read<ShiftPlanningCubit>();
+  final rect = anchor ?? anchorRectOfContext(context) ?? Rect.zero;
+  final picked = await showGlassMenu<_EventMenu>(
+    context: context,
+    anchorRect: rect,
+    value: _EventMenu.edit,
+    width: 260,
+    items: [
+      GlassMenuItem(
+        value: _EventMenu.edit,
+        label: context.t('shifts.plan.event.edit'),
+        leading: Icon(
+          LucideIcons.squarePen,
+          size: 16,
+          color: AppColors.inkSoft,
+        ),
+      ),
+      if (!detail.summary.cancelled)
+        GlassMenuItem(
+          value: _EventMenu.cancel,
+          label: context.t('shifts.plan.event.cancel'),
+          leading: Icon(LucideIcons.ban, size: 16, color: AppColors.inkSoft),
+        ),
+      GlassMenuItem(
+        value: _EventMenu.delete,
+        label: context.t('shifts.plan.event.delete'),
+        leading: const Icon(
+          LucideIcons.trash2,
+          size: 16,
+          color: AppColors.danger,
+        ),
+      ),
+    ],
+  );
+  if (picked == null || !context.mounted) return;
+  switch (picked) {
+    case _EventMenu.edit:
+      final saved = await showShiftEventEditor(context, existing: detail);
+      if (saved != null) cubit.applyEvent(saved.event);
+    case _EventMenu.cancel:
+      final sure = await showGlassConfirm(
+        context,
+        icon: LucideIcons.ban,
+        title: context.t('shifts.plan.event.cancelTitle'),
+        message: context.t('shifts.plan.event.cancelMessage'),
+        confirmLabel: context.t('shifts.plan.event.cancel'),
+        confirmIcon: LucideIcons.ban,
+        destructive: true,
+      );
+      if (sure != true || !context.mounted) return;
+      final outcome = await planning.cancelEvent(detail.summary.id);
+      if (!context.mounted) return;
+      announcePlanOutcome(context, outcome);
+      if (outcome.event case final event?) cubit.applyEvent(event);
+    case _EventMenu.delete:
+      final sure = await showGlassConfirm(
+        context,
+        icon: LucideIcons.trash2,
+        title: context.t('shifts.plan.event.deleteTitle'),
+        message: context.t('shifts.plan.event.deleteMessage'),
+        confirmLabel: context.t('shifts.plan.delete'),
+        confirmIcon: LucideIcons.trash2,
+        destructive: true,
+      );
+      if (sure != true || !context.mounted) return;
+      final outcome = await planning.deleteEvent(detail.summary.id);
+      if (!context.mounted) return;
+      announcePlanOutcome(context, outcome);
+      if (outcome.ok) context.go(ShiftsView.events.route);
   }
 }
 
@@ -201,7 +314,27 @@ class _EventShiftRow extends StatelessWidget {
       for (final id in shift.assigneeIds)
         if (detail.users[id] != null) detail.users[id]!,
     ];
-    final Widget? trailing = shift.mine && offer.primary == null
+    void apply(Shift? after) {
+      if (after != null && context.mounted) {
+        context.read<ShiftEventCubit>().applyShift(after);
+      }
+    }
+
+    // A planner has one thing to do with a row: put somebody on it. The
+    // helper's own answer (confirm, give up) is in the sheet for them.
+    final planning = summary.canPlan && !shift.cancelled && !summary.cancelled;
+    // The caller's place, named by the server (`myAssignment`): the action
+    // it asks for goes right on the row, "Abgeben" included.
+    final held = shift.mine && shift.myAssignmentId != null;
+    final Widget? trailing = planning
+        ? shift.coverage.state == CoverageState.full
+              ? ShiftOfferView(
+                  offer: const ShiftOffer(noteKey: 'shifts.offer.full'),
+                  shift: shift,
+                  onAction: (_) {},
+                )
+              : AssignButton(shift: shift, onDone: (o) => apply(o.shift))
+        : shift.mine && !held
         ? ShiftStatusBadge(
             status: shift.myStatus ?? ShiftAssignmentStatus.unknown,
           )
@@ -210,16 +343,13 @@ class _EventShiftRow extends StatelessWidget {
         : ShiftOfferView(
             offer: offer,
             shift: shift,
-            showSecondary: false,
+            showSecondary: offer.primary == null,
             onAction: (action) => startShiftAction(
               context,
               action,
               shift: shift,
               then: (outcome) {
-                final after = outcome.shift;
-                if (outcome.ok && after != null && context.mounted) {
-                  context.read<ShiftEventCubit>().applyShift(after);
-                }
+                if (outcome.ok) apply(outcome.shift);
               },
             ),
           );
