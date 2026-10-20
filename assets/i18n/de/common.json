@@ -2969,7 +2969,8 @@
       "askAbsence": "Neuen Antrag stellen",
       "budget": "Budget"
     },
-    "showAll": "Alle Treffer in {{cat}} anzeigen"
+    "showAll": "Alle Treffer in {{cat}} anzeigen",
+    "span": "{{from}} bis {{to}}"
   },
   "settings": {
     "title": "Einstellungen",

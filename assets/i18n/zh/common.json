@@ -2969,7 +2969,8 @@
       "askAbsence": "申请此类缺勤",
       "budget": "预算"
     },
-    "showAll": "显示 {{cat}} 中的全部结果"
+    "showAll": "显示 {{cat}} 中的全部结果",
+    "span": "{{from}} 至 {{to}}"
   },
   "settings": {
     "title": "设置",
