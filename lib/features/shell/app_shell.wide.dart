@@ -50,11 +50,28 @@ class _WideShellState extends State<_WideShell> {
     final isMedium = context.layoutSize == LayoutSize.medium;
     final collapsed = isMedium || _collapsed;
     final railWidth = collapsed ? 76.0 : 244.0;
-    final subKey = subPageTitleKey(
-      widget.location,
-      advancedTime: widget.advancedTime,
-      shiftPlanning: widget.shiftPlanning,
-    );
+    // A profile pushed from a page is a panel over that page (HIN-165): the
+    // page keeps its own head instead of gaining a "Profil" bar that shoves
+    // it down. Opened cold it carries no panel flag, and it is a page.
+    // A push carries its extra on its own match, not on the configuration.
+    final configuration = GoRouter.of(
+      context,
+    ).routerDelegate.currentConfiguration;
+    final leaf = configuration.lastOrNull;
+    final routeExtra = leaf is ImperativeRouteMatch
+        ? leaf.matches.extra
+        : configuration.extra;
+    final profilePanel =
+        widget.location.startsWith('/people/') &&
+        routeExtra is PersonRouteArgs &&
+        routeExtra.panel;
+    final subKey = profilePanel
+        ? null
+        : subPageTitleKey(
+            widget.location,
+            advancedTime: widget.advancedTime,
+            shiftPlanning: widget.shiftPlanning,
+          );
     final dark = Theme.of(context).brightness == Brightness.dark;
 
     // The ambient backdrop is painted app-wide; the floating glass topbar and

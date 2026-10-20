@@ -67,31 +67,81 @@ Page<void> personProfilePage(
       PersonProfileScreen(key: ValueKey('person-$id'), personId: id),
     );
   }
-  return CustomTransitionPage<void>(
+  return _PersonPanelPage(
     key: state.pageKey,
-    opaque: false,
-    barrierDismissible: true,
-    barrierColor: Colors.black.withValues(alpha: 0.32),
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    transitionDuration: const Duration(milliseconds: 300),
-    reverseTransitionDuration: const Duration(milliseconds: 220),
     child: PersonProfileScreen(
       key: ValueKey('person-$id'),
       personId: id,
       panel: true,
     ),
-    transitionsBuilder: (context, animation, _, child) {
-      if (MediaQuery.disableAnimationsOf(context)) {
-        return FadeTransition(opacity: animation, child: child);
-      }
-      return SlideTransition(
-        position: Tween(begin: const Offset(1, 0), end: Offset.zero).animate(
-          CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
-        ),
-        child: child,
-      );
-    },
   );
+}
+
+/// The profile panel's page. Its route is a popup, not a page route: a page
+/// route over the shell makes the page beneath play its exit transition
+/// (the shared-axis fade), and the panel then slid in over an empty pane
+/// instead of over the page it was opened from.
+class _PersonPanelPage extends Page<void> {
+  const _PersonPanelPage({
+    super.key,
+    required this.barrierLabel,
+    required this.child,
+  });
+
+  final String barrierLabel;
+  final Widget child;
+
+  @override
+  Route<void> createRoute(BuildContext context) =>
+      _PersonPanelRoute(page: this);
+}
+
+class _PersonPanelRoute extends PopupRoute<void> {
+  _PersonPanelRoute({required _PersonPanelPage page}) : super(settings: page);
+
+  _PersonPanelPage get _page => settings as _PersonPanelPage;
+
+  @override
+  Color? get barrierColor => Colors.black.withValues(alpha: 0.32);
+
+  @override
+  bool get barrierDismissible => true;
+
+  @override
+  String? get barrierLabel => _page.barrierLabel;
+
+  @override
+  Duration get transitionDuration => const Duration(milliseconds: 300);
+
+  @override
+  Duration get reverseTransitionDuration => const Duration(milliseconds: 220);
+
+  @override
+  Widget buildPage(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+  ) => _page.child;
+
+  @override
+  Widget buildTransitions(
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    if (MediaQuery.disableAnimationsOf(context)) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+    return SlideTransition(
+      position: Tween(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(parent: animation, curve: Curves.easeOutCubic)),
+      child: child,
+    );
+  }
 }
 
 /// A person's profile, as a page or as a side panel ([panel]).
