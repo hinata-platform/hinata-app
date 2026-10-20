@@ -62,7 +62,14 @@ const double _kBlockTwoLines =
     2 * kTimeGridBlockPadV + kTimeGridBlockTitleLine + kTimeGridBlockSubLine;
 
 /// One block, worked out: where it goes and what colour it is.
-typedef _Placed = ({TimeGridSlot slot, Rect rect, Color tint, bool dashed});
+typedef _Placed = ({
+  TimeGridSlot slot,
+  Rect rect,
+  Color tint,
+  bool dashed,
+  bool edge,
+  List<IconData> glyphs,
+});
 
 class TimeGrid extends StatefulWidget {
   const TimeGrid({
@@ -841,6 +848,8 @@ class _TimeGridState extends State<TimeGrid> {
                   item: placed.slot.item,
                   tint: placed.tint,
                   dashed: placed.dashed,
+                  edge: placed.edge,
+                  glyphs: placed.glyphs,
                   dimmed: drag?.item?.id == placed.slot.item.id,
                 ),
               ),
@@ -873,11 +882,14 @@ class _TimeGridState extends State<TimeGrid> {
           layer.placement,
           layer.tint,
           layer.dashed,
+          layer.edge,
+          layer.glyph,
           for (final item in layer.items) ...[
             item.id,
             item.start,
             item.end,
             item.tint,
+            item.glyph,
           ],
         ],
       ]),
@@ -893,6 +905,8 @@ class _TimeGridState extends State<TimeGrid> {
             rect: _rectOf(slot, index, columnWidth),
             tint: slot.item.tint ?? layer.tint ?? AppColors.accent,
             dashed: layer.dashed,
+            edge: layer.edge,
+            glyphs: [?layer.glyph, ?slot.item.glyph],
           ));
         }
       }
@@ -1329,10 +1343,19 @@ class _Block extends StatelessWidget {
     required this.tint,
     this.dimmed = false,
     this.dashed = false,
+    this.edge = true,
+    this.glyphs = const [],
   });
 
   final TimeGridItem item;
   final Color tint;
+
+  /// See [TimeGridLayer.edge].
+  final bool edge;
+
+  /// The layer's mark and the item's own, drawn in the top trailing corner;
+  /// see [TimeGridLayer.glyph] and [TimeGridItem.glyph].
+  final List<IconData> glyphs;
 
   /// A suggestion rather than recorded time; see [TimeGridLayer.dashed].
   final bool dashed;
@@ -1356,7 +1379,9 @@ class _Block extends StatelessWidget {
           : BoxDecoration(
               color: tint.withValues(alpha: 0.20),
               borderRadius: BorderRadius.circular(6),
-              border: Border(left: BorderSide(color: tint, width: 2.5)),
+              border: edge
+                  ? Border(left: BorderSide(color: tint, width: 2.5))
+                  : null,
             ),
       // What fits, decided from the height the block was actually given.
       // A quarter-hour entry is fifteen points tall; two lines of text are
@@ -1371,18 +1396,38 @@ class _Block extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
-                item.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: AppType.caption,
-                  // Explicit, so the line box is the number the geometry
-                  // above reserves rather than whatever the font asks for.
-                  height: kTimeGridBlockTitleLine / AppType.caption,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.ink,
-                ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        // Explicit, so the line box is the number the geometry
+                        // above reserves rather than whatever the font asks for.
+                        height: kTimeGridBlockTitleLine / AppType.caption,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                  // Decorative: the title and the line under it say the same
+                  // thing in words, which is what a screen reader is given.
+                  for (final glyph in glyphs)
+                    Padding(
+                      padding: const EdgeInsetsDirectional.only(start: 2),
+                      child: ExcludeSemantics(
+                        child: Icon(
+                          glyph,
+                          size: _kBlockGlyph,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                    ),
+                ],
               ),
               if (item.subtitle != null &&
                   room >= _kBlockTwoLines - 2 * kTimeGridBlockPadV)
@@ -1412,6 +1457,10 @@ class _Block extends StatelessWidget {
     );
   }
 }
+
+/// Size of a block's glyph: the cap height of its title, so a mark never
+/// makes the first line taller than the geometry reserves for it.
+const double _kBlockGlyph = 11;
 
 class _DragPreview extends StatelessWidget {
   const _DragPreview({required this.label});
