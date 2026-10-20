@@ -145,9 +145,11 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
     required this.event,
     this.shift,
     DateTime? day,
+    DateTime? start,
+    DateTime? end,
     String? deviceZone,
   }) : _deviceZone = deviceZone,
-       super(_initial(event, shift, day));
+       super(_initial(event, shift, day, start, end));
 
   final ShiftRepository _shifts;
 
@@ -167,6 +169,8 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
     ShiftEventSummary event,
     Shift? shift,
     DateTime? day,
+    DateTime? start,
+    DateTime? end,
   ) {
     if (shift != null) {
       final s = shift.startsLocal;
@@ -180,13 +184,24 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
         maxHelpers: shift.maxHelpers,
       );
     }
-    final start = event.startsLocal;
-    final first = _date(start);
+    if (start != null && end != null && end.isAfter(start)) {
+      // A span swept out on the calendar (HIN-166), as wall clocks in the
+      // event's zone: exactly that time. Whether it fits into the event is
+      // the editor's question, not something cut short here.
+      return ShiftEditorState(
+        title: '',
+        day: _date(start),
+        fromMinutes: start.hour * 60 + start.minute,
+        toMinutes: end.hour * 60 + end.minute,
+      );
+    }
+    final opens = event.startsLocal;
+    final first = _date(opens);
     final chosen = day == null ? first : _date(day);
     final onFirst = chosen == first;
     // A new shift opens where the event does on its first day, three hours
     // long, and at nine on any other; never past the event's end.
-    final from = onFirst ? start.hour * 60 + start.minute : 9 * 60;
+    final from = onFirst ? opens.hour * 60 + opens.minute : 9 * 60;
     final to = (from + 180).clamp(0, 24 * 60 - 1);
     return ShiftEditorState(
       title: '',
@@ -378,13 +393,16 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
           days,
           scope: inSeries ? ShiftScope.single : null,
         );
-        ShiftChanges.instance.notify(
-          ShiftChange(
-            shiftId: created.isEmpty ? '' : created.first.id,
-            shift: created.isEmpty ? null : created.first,
-            origin: this,
-          ),
-        );
+        // Each new shift on its own, so a surface holding the days can put
+        // every one of them in from the answer (HIN-166).
+        if (created.isEmpty) {
+          ShiftChanges.instance.notify(ShiftChange(shiftId: '', origin: this));
+        }
+        for (final shift in created) {
+          ShiftChanges.instance.notify(
+            ShiftChange(shiftId: shift.id, shift: shift, origin: this),
+          );
+        }
       } else {
         final patch = input.toPatchJson(_before(existing));
         if (patch.isNotEmpty) {
