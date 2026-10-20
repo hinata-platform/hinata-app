@@ -23,6 +23,7 @@ class TimeGridItem {
     this.minutes,
     this.day,
     this.data,
+    this.glyph,
   });
 
   final String id;
@@ -72,6 +73,13 @@ class TimeGridItem {
   /// Whatever the caller needs back in a callback — the entry behind the block.
   final Object? data;
 
+  /// A second mark on this one block, beside its layer's [TimeGridLayer.glyph].
+  ///
+  /// For an item that says two things at once and can only sit in one layer: a
+  /// shift that is the reader's own *and* still short of people is drawn with
+  /// the own shifts and carries the warning here (HIN-160). Blocks only.
+  final IconData? glyph;
+
   /// The day this item belongs to: [day] when the caller named one, and
   /// otherwise the day it starts on.
   DateTime get filedOn => day ?? DateTime(start.year, start.month, start.day);
@@ -107,6 +115,7 @@ class TimeGridItem {
     minutes: keepMinutes ? minutes : null,
     day: day ?? this.day,
     data: data,
+    glyph: glyph,
   );
 }
 
@@ -139,6 +148,7 @@ class TimeGridLayer {
     this.glyph,
     this.hatched = false,
     this.dashed = false,
+    this.edge = true,
   });
 
   final String id;
@@ -151,7 +161,12 @@ class TimeGridLayer {
   /// What the band row is called, shown at its leading edge. Bands only.
   final String? label;
 
-  /// A mark beside the date of every day this layer covers. Background only.
+  /// A mark beside the date of every day this layer covers, for a background;
+  /// a mark in the top trailing corner of every block, for blocks (HIN-160).
+  ///
+  /// On a block it says what the block *is* without a colour having to: shift
+  /// planning draws its own shifts with a check and the ones still short of
+  /// people with a warning triangle, on the same project pastel as the rest.
   ///
   /// A wash on its own cannot say *what* it means, and the grid already has one:
   /// the weekend recedes behind exactly such a wash. A second wash would read as
@@ -181,4 +196,12 @@ class TimeGridLayer {
   /// a dashed one is time that could be, and it must never read as already
   /// counted.
   final bool dashed;
+
+  /// Whether a solid block carries the bar in its tint down its leading edge.
+  /// Blocks only.
+  ///
+  /// The time calendar's entries do, and keep it. Shift planning turns it off:
+  /// there the state of a shift is told by glyph and words, and a coloured
+  /// edge would be a second, louder code for the project nobody asked about.
+  final bool edge;
 }
