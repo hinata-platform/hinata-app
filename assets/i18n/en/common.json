@@ -164,6 +164,21 @@
         "project": "Choose the project to invoice.",
         "tax": "Enter a VAT rate between 0 and 100 percent."
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "You are already on this shift.",
+      "assigneeNotMember": "This person cannot be assigned. They need an active account and access to the project.",
+      "assignmentNotPending": "This assignment is no longer waiting for an answer.",
+      "batchInvalid": "Some days could not be created. Nothing was saved.",
+      "busy": "Many people are signing up at the same moment. Please try again.",
+      "eventHasAssignments": "People are still on this event's shifts. Cancel it first, then delete it.",
+      "maxBelowAssigned": "More people are already on this shift than the new upper limit allows.",
+      "notPlanner": "Only people who plan this project can change that.",
+      "overlappingAssignment": "You already have a shift at the same time.",
+      "plannerNotMember": "This person cannot plan shifts here. They need an active account and access to the project.",
+      "selfAssignDisabled": "The organisers assign people for this event. Signing up yourself is not possible here.",
+      "shiftFull": "This shift is already full.",
+      "shiftUnavailable": "This shift no longer exists."
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "Invoice reversed",
       "INVOICE_EXPORTED": "Invoice exported",
       "ISSUE_PARTICIPANT_ADDED": "Issue shared with a person",
-      "ISSUE_PARTICIPANT_REMOVED": "Person removed from an issue"
+      "ISSUE_PARTICIPANT_REMOVED": "Person removed from an issue",
+      "SHIFT_EVENT_CREATED": "Event created",
+      "SHIFT_EVENT_UPDATED": "Event changed",
+      "SHIFT_EVENT_CANCELLED": "Event cancelled",
+      "SHIFT_EVENT_DELETED": "Event deleted",
+      "SHIFT_CREATED": "Shift created",
+      "SHIFT_UPDATED": "Shift changed",
+      "SHIFT_DELETED": "Shift deleted",
+      "SHIFT_ASSIGNMENT_CREATED": "Assigned to a shift",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "Shift confirmed",
+      "SHIFT_ASSIGNMENT_DECLINED": "Shift declined",
+      "SHIFT_ASSIGNMENT_RELEASED": "Shift given up",
+      "SHIFT_PLANNER_GRANTED": "Shift planning granted",
+      "SHIFT_PLANNER_REVOKED": "Shift planning revoked"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "No member has a rate of their own on this project.",
       "addMember": "Rate for a member",
       "notLead": "Only the project's leads set its rates."
+    },
+    "shifts": {
+      "title": "Shift planning",
+      "note": "Planners create events and shifts and assign people. They cannot change the project settings.",
+      "leadsAlways": "Leads and team admins can always plan.",
+      "add": "Add planner",
+      "remove": "Remove",
+      "removeNamed": "Remove {{name}} as planner",
+      "removeTitle": "Remove planner?",
+      "removeMessage": "{{name}} will no longer be able to plan shifts.",
+      "empty": "No planners yet. Leads and team admins can plan anyway.",
+      "added": "Planner added",
+      "removed": "Planner removed",
+      "noCandidates": "Every member already plans."
     }
   },
   "account": {
@@ -5239,7 +5281,121 @@
   "shifts": {
     "empty": {
       "title": "No shifts yet",
-      "message": "Once an event with shifts is planned, it shows up here."
+      "message": "As soon as you sign up for a shift or someone assigns you, it shows up here. Open shifts are under Events."
+    },
+    "loadFailed": "This could not be loaded just now",
+    "view": {
+      "mine": "Mine",
+      "calendar": "Calendar",
+      "events": "Events",
+      "menu": "Switch view"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · max. {{max}}",
+      "missing": "{{count}} more person needed",
+      "missing_plural": "{{count}} more people needed",
+      "met": "Staffed",
+      "over": "{{count}} person more than needed",
+      "over_plural": "{{count}} people more than needed",
+      "full": "Full, {{assigned}} of {{max}}",
+      "semantics": "Staffing {{assigned}} of {{required}}, {{state}}"
+    },
+    "status": {
+      "assigned": "Assigned",
+      "confirmed": "Confirmed",
+      "declined": "Declined",
+      "released": "Given up",
+      "waiting": "On the waiting list",
+      "mine": "Signed up"
+    },
+    "action": {
+      "join": "Sign up",
+      "confirm": "Confirm",
+      "decline": "Decline",
+      "release": "Give up",
+      "toEvent": "Go to event",
+      "busy": "One moment, that is still running."
+    },
+    "done": {
+      "joined": "You are signed up",
+      "confirmed": "Shift confirmed",
+      "declined": "Assignment declined",
+      "released": "Shift given up"
+    },
+    "ask": {
+      "releaseTitle": "Give up this shift?",
+      "releaseMessage": "Your place opens up again and others can sign up.",
+      "declineTitle": "Decline this assignment?",
+      "declineMessage": "The place opens up again and the organisers can assign someone else."
+    },
+    "absentHint": "You are entered as absent on that day",
+    "next": {
+      "badge": "Next shift",
+      "with": "with {{names}}",
+      "and": "{{first}} and {{last}}",
+      "withOthers": "with {{count}} other person",
+      "withOthers_plural": "with {{count}} other people",
+      "alone": "Just you so far"
+    },
+    "time": {
+      "until": "until {{time}}",
+      "span": "{{from}} to {{to}}",
+      "hours": "{{count}} hr",
+      "hours_plural": "{{count}} hrs",
+      "minutes": "{{count}} min",
+      "minutes_plural": "{{count}} min",
+      "inMinutes": "in {{count}} min",
+      "inMinutes_plural": "in {{count}} min",
+      "inHours": "in {{count}} hr",
+      "inHours_plural": "in {{count}} hrs",
+      "inDays": "in {{count}} day",
+      "inDays_plural": "in {{count}} days",
+      "running": "happening now"
+    },
+    "zone": "Times in {{zone}}",
+    "mine": {
+      "open": "Open shifts in your projects",
+      "openCount": "{{count}} still needs people",
+      "openCount_plural": "{{count}} still need people",
+      "openEmpty": "No project is looking for people right now.",
+      "toEvents": "See all events",
+      "offline": "No connection. You are seeing what was last loaded."
+    },
+    "event": {
+      "title": "Event",
+      "understaffed": "{{count}} shift still needs people",
+      "understaffed_plural": "{{count}} shifts still need people",
+      "allStaffed": "Fully staffed",
+      "places": "{{taken}} / {{required}} places",
+      "placesTaken": "{{taken}} of {{required}} places taken",
+      "mine": "{{count}} of yours",
+      "mine_plural": "{{count}} of yours",
+      "selfAssignOpen": "Open for sign-up",
+      "plannersOnly": "Only the organisers assign people",
+      "cancelled": "Cancelled",
+      "onlyUnderstaffed": "Understaffed only",
+      "noUnderstaffed": "Nobody is missing anywhere right now.",
+      "noShifts": "This event has no shifts yet."
+    },
+    "events": {
+      "upcoming": "Coming up",
+      "allProjects": "All projects",
+      "pickProject": "Choose a project",
+      "emptyTitle": "No events yet",
+      "emptyMessage": "As soon as a project plans an event with shifts, it shows up here."
+    },
+    "offer": {
+      "full": "Full, {{assigned}} of {{max}}",
+      "cancelled": "Cancelled",
+      "plannersOnly": "Assigned by the organisers"
+    },
+    "sheet": {
+      "freeSpot": "Open place"
+    },
+    "calendar": {
+      "soonTitle": "The calendar is on its way",
+      "soonMessage": "Week and month views follow. Until then everything is under Mine and Events."
     }
   }
 }

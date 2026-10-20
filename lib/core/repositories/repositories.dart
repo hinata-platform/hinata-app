@@ -22,6 +22,7 @@ import 'notification_repository.dart';
 import 'org_settings_repository.dart';
 import 'project_repository.dart';
 import 'search_repository.dart';
+import 'shift_repository.dart';
 import 'sprint_repository.dart';
 import 'team_repository.dart';
 import 'time_report_repository.dart';
@@ -49,6 +50,7 @@ export 'notification_repository.dart';
 export 'org_settings_repository.dart';
 export 'project_repository.dart';
 export 'search_repository.dart';
+export 'shift_repository.dart';
 export 'sprint_repository.dart';
 export 'team_repository.dart';
 export 'time_report_repository.dart';
@@ -90,6 +92,7 @@ class HinataRepositories {
       organization: OrgSettingsRepository(api),
       teams: TeamRepository(api),
       git: GitRepository(api),
+      shifts: ApiShiftRepository(api),
     );
   }
 
@@ -120,6 +123,7 @@ class HinataRepositories {
     required this.organization,
     required this.teams,
     required this.git,
+    required this.shifts,
   });
 
   final MetaRepository meta;
@@ -159,4 +163,8 @@ class HinataRepositories {
   final OrgSettingsRepository organization;
   final TeamRepository teams;
   final GitRepository git;
+
+  /// Shift planning (HIN-27); its routes answer only while `shift_planning`
+  /// is on.
+  final ShiftRepository shifts;
 }

@@ -10,6 +10,9 @@ enum ProjectSettingsCard {
   git,
   timeTracking,
   billing,
+
+  /// Who plans the project's shifts (HIN-45), while `shift_planning` is on.
+  shifts,
   archive,
   danger,
 }
@@ -31,6 +34,7 @@ List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
   required bool templates,
   bool lead = true,
   bool billing = false,
+  bool shifts = false,
 }) => [
   const GoldenGroup([ProjectSettingsCard.general], weight: 5.5, lead: true),
   // The project's date, its template marker and the copy. Short — three rows
@@ -47,6 +51,7 @@ List<GoldenGroup<ProjectSettingsCard>> projectSettingsGroups({
     const GoldenGroup([ProjectSettingsCard.timeTracking], weight: 6),
   // The project's rates and its invoices (HIN-96), for its lead.
   if (billing) const GoldenGroup([ProjectSettingsCard.billing], weight: 4.5),
+  if (shifts) const GoldenGroup([ProjectSettingsCard.shifts], weight: 3.6),
   if (lead)
     const GoldenGroup([
       ProjectSettingsCard.archive,
@@ -70,6 +75,7 @@ List<ProjectSettingsCard> projectSettingsSections({
   required bool templates,
   bool lead = true,
   bool billing = false,
+  bool shifts = false,
 }) => [
   ProjectSettingsCard.general,
   ProjectSettingsCard.members,
@@ -78,6 +84,7 @@ List<ProjectSettingsCard> projectSettingsSections({
   ProjectSettingsCard.workflow,
   if (timeTracking) ProjectSettingsCard.timeTracking,
   if (billing) ProjectSettingsCard.billing,
+  if (shifts) ProjectSettingsCard.shifts,
   if (lead) ProjectSettingsCard.git,
   ProjectSettingsCard.archive,
   if (lead) ProjectSettingsCard.danger,

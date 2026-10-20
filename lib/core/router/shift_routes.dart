@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../features/shell/not_found_screen.dart';
 import '../../features/shell/shell_nav.dart' show shiftsRoute;
-import '../../features/shifts/shifts_screen.dart';
+import '../../features/shifts/view/shifts_screen.dart';
 import 'board_routes.dart' show RoutePage;
 
 /// The shift planning module's routes (HIN-27): the three views and one event.
