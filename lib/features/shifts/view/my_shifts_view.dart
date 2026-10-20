@@ -589,6 +589,7 @@ class _Rows {
         return Builder(
           builder: (rowContext) => ShiftRow(
             shift: shift,
+            day: dayLabel(context, shift.startsLocal),
             eventTitle: event?.title,
             location: event?.location,
             stacked: compact,
