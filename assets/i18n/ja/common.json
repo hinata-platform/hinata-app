@@ -191,7 +191,18 @@
       "titleRequired": "名前を入力してください。",
       "tooManyShifts": "1つのイベントのシフトは最大200件です。",
       "windowInvalid": "この期間は読み込めません。",
-      "windowTooLarge": "この期間は長すぎます。"
+      "windowTooLarge": "この期間は長すぎます。",
+      "rruleUnsupported": "この繰り返しルールには対応していません。毎日、毎週の指定曜日、毎月の指定日で繰り返せます。間隔は1から100で、終了日または回数を指定してください。",
+      "rruleTooComplex": "この繰り返しルールは計算量が多すぎます。もっと単純なルールを選んでください。",
+      "seriesTooLarge": "シリーズのシフトは今後90日間で最大 2000 件です。イベントごとのシフトを減らすか、繰り返しの間隔を広げてください。",
+      "seriesScopeRequired": "このイベントはシリーズの一部です。変更をこの回のみに適用するか、以降すべてに適用するかを選んでください。",
+      "seriesFromInPast": "シリーズは今日以降からのみ変更できます。過去のイベントからは変更できません。",
+      "seriesShiftHasAssignments": "今後のイベントで、このシフトにまだ人が入っています。先に外してから、シフトをシリーズから削除してください。",
+      "seriesStartOutOfRange": "最初のイベントは1年前から2年先までの範囲で指定してください。",
+      "seriesTooManyShifts": "シリーズのイベント1件に設定できるシフトは最大 50 件です。",
+      "seriesTooManyExdates": "このシリーズからはすでに 366 件のイベントが除外されています。今後の分は新しいシリーズを作成してください。",
+      "seriesTemplateKeyInvalid": "このシリーズのシフトを一意に識別できません。シリーズを再読み込みして、もう一度お試しください。",
+      "seriesFutureUnsupported": "複数日のシフトをまとめて追加できるのはこのイベントだけです。以降すべてには追加できません。"
     }
   },
   "notFound": {
@@ -5559,6 +5570,69 @@
         "deleteTitle": "イベントを削除しますか？",
         "deleteMessage": "イベントとすべてのシフトを削除します。まだ登録者がいる場合は、先に中止してください。"
       }
+    },
+    "series": {
+      "scope": {
+        "message": "このイベントはシリーズの一部です。どこまで適用しますか？",
+        "messageLabel": "このイベントはシリーズ「{{label}}」の一部です。どこまで適用しますか？",
+        "thisHint": "{{date}} の回のみ。以後はシリーズの変更に従いません。",
+        "futureHint": "{{date}} の回と以降すべて。過去の回はそのままです。",
+        "futureCancelHint": "シリーズはここで終わります。{{date}} の回と以降すべてが中止になります。",
+        "futureDeleteHint": "シリーズは {{date}} の前で終わります。人が入っている回は中止、それ以外は削除されます。過去の回は残ります。",
+        "ruleOnlyFuture": "新しいルールは常にこの回と以降すべてに適用されます。",
+        "batchOnlyThis": "複数日にまとめて追加するシフトは、この回にだけ追加されます。",
+        "this": "この回のみ",
+        "future": "以降すべて"
+      },
+      "ask": {
+        "save": "シリーズの回を保存",
+        "cancel": "シリーズの回を中止",
+        "delete": "シリーズの回を削除",
+        "move": "シフトを移動",
+        "addShift": "シフトを追加",
+        "editShift": "シフトを変更",
+        "deleteShift": "シフトを削除"
+      },
+      "repeat": {
+        "label": "繰り返し",
+        "never": "しない",
+        "daily": "毎日",
+        "weekly": "毎週{{day}}",
+        "monthly": "毎月{{day}}日",
+        "custom": "カスタム"
+      },
+      "custom": {
+        "back": "戻る",
+        "unit": {
+          "daily": "日ごと",
+          "weekly": "週ごと",
+          "monthly": "月ごと"
+        },
+        "every": "間隔",
+        "interval": {
+          "daily": "毎日",
+          "daily_plural": "{{count}} 日ごと",
+          "weekly": "毎週",
+          "weekly_plural": "{{count}} 週ごと",
+          "monthly": "毎月",
+          "monthly_plural": "{{count}} か月ごと"
+        },
+        "days": "曜日",
+        "monthDay": "開始日と同じ、毎月{{day}}日。",
+        "end": "終了",
+        "endNever": "なし",
+        "endCount": "回数",
+        "endUntil": "日付",
+        "times": "{{count}} 回",
+        "times_plural": "{{count}} 回",
+        "apply": "適用"
+      },
+      "next": "次回: {{dates}}",
+      "done": {
+        "created": "シリーズを作成しました。{{count}} 件がカレンダーに入りました。",
+        "created_plural": "シリーズを作成しました。{{count}} 件がカレンダーに入りました。"
+      },
+      "detached": "シリーズとは異なります"
     }
   }
 }

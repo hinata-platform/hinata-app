@@ -39,6 +39,7 @@ import '../bloc/shift_calendar_cubit.dart';
 import '../shift_texts.dart';
 import '../shift_views.dart';
 import '../shift_zones.dart';
+import '../widgets/series_scope_dialog.dart';
 import '../widgets/shift_plan_texts.dart';
 import '../widgets/shift_sheet.dart';
 import '../widgets/shifts_head.dart';
@@ -356,24 +357,44 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   Future<void> _moved(TimeGridItem item, TimeGridSpan span) async {
     final shift = item.data;
     if (shift is! Shift) return;
-    final ok = await showGlassConfirm(
-      context,
-      icon: LucideIcons.move,
-      title: context.t('shifts.plan.move.title'),
-      message: context.t(
-        'shifts.plan.move.message',
-        variables: {
-          'title': shift.title,
-          'when':
-              '${dayLabel(context, span.start)}, '
-              '${spanLabel(context, span.start, span.end)}',
-        },
-      ),
-      confirmLabel: context.t('shifts.plan.move.confirm'),
-      confirmIcon: LucideIcons.move,
+    final message = context.t(
+      'shifts.plan.move.message',
+      variables: {
+        'title': shift.title,
+        'when':
+            '${dayLabel(context, span.start)}, '
+            '${spanLabel(context, span.start, span.end)}',
+      },
     );
-    if (ok != true || !mounted) return;
-    final outcome = await _cubit.move(shift, span.start, span.end);
+    final event = _cubit.eventOf(shift);
+    ShiftScope? scope;
+    if (event != null && event.inSeries) {
+      // On an occurrence of a series the scope question is the confirmation.
+      scope = await askSeriesScope(
+        context,
+        write: SeriesWrite.move,
+        day: shift.startsLocal,
+        recurrenceLabel: event.recurrenceLabel,
+        note: message,
+      );
+      if (scope == null || !mounted) return;
+    } else {
+      final ok = await showGlassConfirm(
+        context,
+        icon: LucideIcons.move,
+        title: context.t('shifts.plan.move.title'),
+        message: message,
+        confirmLabel: context.t('shifts.plan.move.confirm'),
+        confirmIcon: LucideIcons.move,
+      );
+      if (ok != true || !mounted) return;
+    }
+    final outcome = await _cubit.move(
+      shift,
+      span.start,
+      span.end,
+      scope: scope,
+    );
     if (!mounted) return;
     if (!outcome.ok) {
       showGlassToast(

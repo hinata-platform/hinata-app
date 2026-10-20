@@ -319,8 +319,22 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
     maxHelpers: shift.maxHelpers,
   );
 
-  /// Saves; true when it went through. A refusal stays in the state.
-  Future<bool> save() async {
+  /// Whether saving has to ask which occurrences it applies to: the event is
+  /// an occurrence of a series (HIN-161) and something is to be written.
+  Future<bool> asksScope() async {
+    if (!event.inSeries || problem != null) return false;
+    final existing = shift;
+    if (existing == null) return true;
+    if (event.timezone != null && event.timezone != _deviceZone) {
+      await ShiftZones.ensureLoaded();
+    }
+    return _input().toPatchJson(_before(existing)).isNotEmpty;
+  }
+
+  /// Saves; true when it went through. A refusal stays in the state. On an
+  /// occurrence of a series [scope] says which occurrences it applies to; a
+  /// shift put on several days at once only ever goes on this one.
+  Future<bool> save({ShiftScope? scope}) async {
     if (state.saving) return false;
     emit(state.copyWith(attempted: true, clearError: true));
     if (problem != null) return false;
@@ -343,9 +357,27 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
       }
       final input = _input();
       final existing = shift;
-      if (existing == null) {
+      final inSeries = event.inSeries;
+      // A change for every later occurrence names no single shift: every
+      // surface of the module reads again.
+      final wide = inSeries && scope == ShiftScope.future;
+      if (existing == null && wide && state.extraDays.isEmpty) {
+        final created = await _shifts.createShift(
+          event.id,
+          input,
+          scope: ShiftScope.future,
+        );
+        ShiftChanges.instance.notify(
+          ShiftChange(shiftId: '', shift: created, origin: this),
+        );
+      } else if (existing == null) {
         final days = [state.day, ...state.extraDays.toList()..sort()];
-        final created = await _shifts.createShifts(event.id, input, days);
+        final created = await _shifts.createShifts(
+          event.id,
+          input,
+          days,
+          scope: inSeries ? ShiftScope.single : null,
+        );
         ShiftChanges.instance.notify(
           ShiftChange(
             shiftId: created.isEmpty ? '' : created.first.id,
@@ -356,9 +388,17 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
       } else {
         final patch = input.toPatchJson(_before(existing));
         if (patch.isNotEmpty) {
-          final edit = await _shifts.updateShift(existing.id, patch);
+          final edit = await _shifts.updateShift(
+            existing.id,
+            patch,
+            scope: inSeries ? scope : null,
+          );
           ShiftChanges.instance.notify(
-            ShiftChange(shiftId: existing.id, shift: edit.shift, origin: this),
+            ShiftChange(
+              shiftId: wide ? '' : existing.id,
+              shift: edit.shift,
+              origin: this,
+            ),
           );
         }
       }
