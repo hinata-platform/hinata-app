@@ -5442,7 +5442,8 @@
       "openEmpty": "目前没有项目在找人。",
       "toEvents": "查看所有活动",
       "offline": "没有网络连接。显示的是上次加载的内容。",
-      "waitlist": "候补名单"
+      "waitlist": "候补名单",
+      "waitlistFailed": "暂时无法加载你的候补名单。"
     },
     "event": {
       "title": "活动",
