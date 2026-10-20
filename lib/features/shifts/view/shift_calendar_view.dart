@@ -17,9 +17,8 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/theme/glass_chrome.dart' show GlassCircleButton;
 import '../../../core/util/dates.dart' show addDays, weekStartFor;
 import '../../../core/widgets/glass_filter_bar.dart'
-    show GlassFilterPill, GlassPill, kGlassControlHeight, kGlassDockRow;
+    show GlassFilterPill, GlassPill, kGlassControlHeight;
 import '../../../core/widgets/glass_popup_menu.dart';
-import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show GhostButton;
