@@ -99,8 +99,12 @@ class ShiftEventCubit extends Cubit<ShiftEventState> {
           c.shiftId.isEmpty,
     );
     if (touching.isEmpty) return;
-    // The rows were replaced as the answers came; the totals and the names in
-    // the head are read again once.
+    for (final change in touching) {
+      final shift = change.shift;
+      if (shift != null) applyShift(shift);
+    }
+    // The rows are in from the answers; the totals and the names in the head
+    // are read again once.
     unawaited(load());
   }
 
