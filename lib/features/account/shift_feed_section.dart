@@ -170,11 +170,7 @@ class ShiftFeedView extends StatelessWidget {
           ),
         ] else if (state.exists) ...[
           Text(
-            _since(
-              context,
-              state.status!.createdAt,
-              state.status!.lastAccessedAt,
-            ),
+            _since(context, state.status!.createdAt, state.status!.lastUsedAt),
             style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
           ),
           const SizedBox(height: 12),
@@ -220,7 +216,7 @@ class ShiftFeedView extends StatelessWidget {
   static String _since(
     BuildContext context,
     DateTime? createdAt,
-    DateTime? lastAccessedAt,
+    DateTime? lastUsedAt,
   ) {
     final locale = Localizations.localeOf(context).toLanguageTag();
     final since = createdAt == null
@@ -229,11 +225,11 @@ class ShiftFeedView extends StatelessWidget {
             'account.shiftFeed.activeSince',
             variables: {'date': DateFormat.yMMMd(locale).format(createdAt)},
           );
-    final last = lastAccessedAt == null
+    final last = lastUsedAt == null
         ? context.t('account.shiftFeed.neverFetched')
         : context.t(
             'account.shiftFeed.lastFetched',
-            variables: {'ago': _ago(context, lastAccessedAt)},
+            variables: {'ago': _ago(context, lastUsedAt)},
           );
     return '$since, $last';
   }
