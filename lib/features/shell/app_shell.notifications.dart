@@ -97,12 +97,11 @@ class _NotificationBellState extends State<_NotificationBellBody> {
       } catch (_) {}
       notifications.load();
     }
-    final link = notification.link;
-    // Any in-app route (issues, projects, teams, admin …), not just issues, so
-    // every notification type is tappable from the bell like it is in the feed.
-    if (link != null && link.startsWith('/') && mounted) {
-      context.go(link);
-    }
+    // Any in-app route (issues, projects, teams, admin, shifts …), not just
+    // issues, so every notification type is tappable from the bell like it is
+    // in the feed.
+    final link = notificationTarget(notification.link, notification.type);
+    if (link != null && mounted) context.go(link);
   }
 
   @override
