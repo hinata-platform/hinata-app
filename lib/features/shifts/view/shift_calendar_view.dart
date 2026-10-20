@@ -777,7 +777,6 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
               )
             : null,
         bottomHeight: compact ? kGlassDockRow : 0,
-        contentMax: double.infinity,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
