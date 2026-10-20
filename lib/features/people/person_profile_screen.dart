@@ -220,12 +220,20 @@ class _PersonAdmin extends StatelessWidget {
 
   final String personId;
 
+  /// Both cubits are the profile's own, provided here so they close with it:
+  /// one reads the account, the other carries out the admin area's actions.
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (context) => PersonAdminCubit(
-      UserManagementCubit(context.read<AdminRepository>()),
-      personId,
-    )..load(),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) =>
+            PersonAdminCubit(context.read<AdminRepository>(), personId)..load(),
+      ),
+      BlocProvider(
+        create: (context) =>
+            UserManagementCubit(context.read<AdminRepository>()),
+      ),
+    ],
     child: const _PersonAdminBody(),
   );
 }
@@ -262,19 +270,19 @@ class _PersonAdminBody extends StatelessWidget {
     }
     final actions = buildUserActions(
       context,
-      users: admin.users,
+      users: context.read<UserManagementCubit>(),
       currentUserId: context.read<AuthBloc>().state.user?.id,
-      isLastActiveAdmin: (_) => state.lastActiveAdmin,
+      // The profile knows that of its own person only.
+      isLastActiveAdmin: (u) => u.id == user.id && state.lastActiveAdmin,
       // The profile knows one person; an inviter is named where the directory
       // knows them, and simply not named here.
       nameById: (_) => null,
       usersFor: (ids) => [if (ids.contains(user.id)) user],
-      openDrawer: (_, _) {},
       reload: () async {
         final profile = context.read<PersonProfileCubit>();
         await Future.wait([admin.load(), profile.load()]);
       },
     );
-    return UserAdminSections(user: user, actions: actions, onDismiss: () {});
+    return UserAdminSections(user: user, actions: actions);
   }
 }

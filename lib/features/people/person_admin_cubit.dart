@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/models/admin_user_models.dart';
-import '../admin/users/user_management_cubit.dart';
+import '../../core/repositories/admin_repository.dart';
 
 class PersonAdminState extends Equatable {
   const PersonAdminState({
@@ -31,17 +31,18 @@ class PersonAdminState extends Equatable {
 /// Asks the admin endpoints the directory asks; only for a reader who holds
 /// the platform role, which the profile says before this is ever built.
 class PersonAdminCubit extends Cubit<PersonAdminState> {
-  PersonAdminCubit(this.users, this.personId) : super(const PersonAdminState());
+  PersonAdminCubit(this._admin, this.personId)
+    : super(const PersonAdminState());
 
-  final UserManagementCubit users;
+  final AdminRepository _admin;
   final String personId;
 
   Future<void> load() async {
     try {
-      final user = await users.user(personId);
+      final user = await _admin.adminUser(personId);
       // The directory's counts say how many active administrators there are;
       // one row is all it takes to read them.
-      final page = await users.users(perPage: 1);
+      final page = await _admin.adminUsersPage(perPage: 1);
       if (isClosed) return;
       emit(
         PersonAdminState(
