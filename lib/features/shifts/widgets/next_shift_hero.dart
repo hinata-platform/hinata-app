@@ -65,7 +65,14 @@ class NextShiftHero extends StatelessWidget {
       fontSize: AppType.body,
       color: AppColors.inkSoftOnNavy,
     );
-    final offer = shiftOfferFor(shift, status: next.status);
+    // A place that came off the waiting list: confirm by the deadline, or
+    // give it up again (HIN-162).
+    final offer = shiftOfferFor(
+      shift,
+      status: next.status,
+      promoted: next.promoted,
+    );
+    final confirmBy = next.promoted ? next.confirmByLocal : null;
     final radius = BorderRadius.circular(AppTheme.radiusCard + 6);
     return Semantics(
       container: true,
@@ -212,6 +219,14 @@ class NextShiftHero extends StatelessWidget {
                           ),
                         ],
                       ),
+                      if (confirmBy != null) ...[
+                        const SizedBox(height: 12),
+                        _Line(
+                          icon: LucideIcons.clockAlert,
+                          text: confirmByLabel(context, confirmBy, now: now),
+                          color: AppColors.honeyOnNavy,
+                        ),
+                      ],
                       if (!offline && !offer.isEmpty) ...[
                         const SizedBox(height: 18),
                         ShiftOfferView(
@@ -258,10 +273,15 @@ class NextShiftHero extends StatelessWidget {
 }
 
 class _Line extends StatelessWidget {
-  const _Line({required this.icon, required this.text});
+  const _Line({
+    required this.icon,
+    required this.text,
+    this.color = AppColors.inkSoftOnNavy,
+  });
 
   final IconData icon;
   final String text;
+  final Color color;
 
   @override
   Widget build(BuildContext context) => Row(
@@ -269,18 +289,13 @@ class _Line extends StatelessWidget {
     children: [
       Padding(
         padding: const EdgeInsets.only(top: 1),
-        child: ExcludeSemantics(
-          child: Icon(icon, size: 15, color: AppColors.inkSoftOnNavy),
-        ),
+        child: ExcludeSemantics(child: Icon(icon, size: 15, color: color)),
       ),
       const SizedBox(width: 6),
       Expanded(
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: AppType.label,
-            color: AppColors.inkSoftOnNavy,
-          ),
+          style: TextStyle(fontSize: AppType.label, color: color),
         ),
       ),
     ],
