@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "通过 MCP 启动计时器",
       "MCP_TIMER_STOPPED": "通过 MCP 停止计时器",
       "MCP_TIMER_DISCARDED": "通过 MCP 放弃计时器",
+      "MCP_SHIFT_SELF_ASSIGNED": "通过 MCP 报名班次",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "通过 MCP 分配班次",
+      "MCP_SHIFT_RELEASED": "通过 MCP 放弃班次",
+      "MCP_SHIFT_CONFIRMED": "通过 MCP 确认班次",
+      "MCP_SHIFT_DECLINED": "通过 MCP 谢绝班次",
+      "MCP_SHIFT_REMOVED": "通过 MCP 移出班次",
       "MCP_SPRINT_CREATED": "通过 MCP 创建迭代",
       "MCP_SPRINT_UPDATED": "通过 MCP 更新迭代",
       "MCP_SPRINT_STARTED": "通过 MCP 启动迭代",
@@ -4955,6 +4961,9 @@
       "worklog_write": "记录和修改本人工时、使用计时器、申请休假",
       "search_read": "搜索",
       "notifications_read": "读取自己的通知",
+      "shifts_read": "读取班次和本人报名",
+      "shifts_write": "报名班次、确认、谢绝或放弃",
+      "shifts_plan": "排班：分配人员和移出人员",
       "projects_write": "创建项目"
     }
   },

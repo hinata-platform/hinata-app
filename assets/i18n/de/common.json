@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "Timer per MCP gestartet",
       "MCP_TIMER_STOPPED": "Timer per MCP gestoppt",
       "MCP_TIMER_DISCARDED": "Timer per MCP verworfen",
+      "MCP_SHIFT_SELF_ASSIGNED": "Per MCP in Schicht eingetragen",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Schicht per MCP zugeteilt",
+      "MCP_SHIFT_RELEASED": "Schicht per MCP abgegeben",
+      "MCP_SHIFT_CONFIRMED": "Schicht per MCP bestätigt",
+      "MCP_SHIFT_DECLINED": "Schicht per MCP abgesagt",
+      "MCP_SHIFT_REMOVED": "Per MCP aus Schicht herausgenommen",
       "MCP_SPRINT_CREATED": "Sprint per MCP erstellt",
       "MCP_SPRINT_UPDATED": "Sprint per MCP aktualisiert",
       "MCP_SPRINT_STARTED": "Sprint per MCP gestartet",
@@ -4955,6 +4961,9 @@
       "worklog_write": "Eigene Zeiten erfassen und ändern, Timer bedienen, Urlaub beantragen",
       "search_read": "Suchen",
       "notifications_read": "Eigene Benachrichtigungen lesen",
+      "shifts_read": "Schichten und eigene Einträge lesen",
+      "shifts_write": "Sich in Schichten eintragen, bestätigen, absagen oder abgeben",
+      "shifts_plan": "Schichten planen: Personen zuteilen und herausnehmen",
       "projects_write": "Projekte anlegen"
     }
   },

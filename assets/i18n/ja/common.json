@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "MCP 経由でタイマーを開始",
       "MCP_TIMER_STOPPED": "MCP 経由でタイマーを停止",
       "MCP_TIMER_DISCARDED": "MCP 経由でタイマーを破棄",
+      "MCP_SHIFT_SELF_ASSIGNED": "MCP 経由でシフトに登録",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "MCP 経由でシフトを割り当て",
+      "MCP_SHIFT_RELEASED": "MCP 経由でシフトを手放し",
+      "MCP_SHIFT_CONFIRMED": "MCP 経由でシフトを確定",
+      "MCP_SHIFT_DECLINED": "MCP 経由でシフトを辞退",
+      "MCP_SHIFT_REMOVED": "MCP 経由でシフトから解除",
       "MCP_SPRINT_CREATED": "MCP 経由でスプリントを作成",
       "MCP_SPRINT_UPDATED": "MCP 経由でスプリントを更新",
       "MCP_SPRINT_STARTED": "MCP 経由でスプリントを開始",
@@ -4955,6 +4961,9 @@
       "worklog_write": "自分の作業時間の記録と変更、タイマー操作、休暇申請",
       "search_read": "検索",
       "notifications_read": "自分の通知の読み取り",
+      "shifts_read": "シフトと自分の登録の読み取り",
+      "shifts_write": "シフトへの登録、確定、辞退、手放し",
+      "shifts_plan": "シフトの計画：担当者の割り当てと解除",
       "projects_write": "プロジェクトの作成"
     }
   },
