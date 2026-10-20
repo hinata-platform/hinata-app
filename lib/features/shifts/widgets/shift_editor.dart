@@ -23,6 +23,7 @@ import '../../sprint/modals/glass_modal.dart'
 import '../bloc/shift_editor_cubit.dart';
 import '../shift_texts.dart';
 import '../shift_zones.dart';
+import 'series_scope_dialog.dart';
 import 'shift_plan_texts.dart';
 
 /// Opens the shift editor (HIN-160) for a new shift of [event] (on [day], or
@@ -121,7 +122,24 @@ class _ShiftEditorBodyState extends State<ShiftEditorBody> {
   }
 
   Future<void> _save() async {
-    if (await _cubit.save() && mounted) Navigator.of(context).pop(true);
+    final cubit = _cubit;
+    ShiftScope? scope;
+    if (await cubit.asksScope()) {
+      if (!mounted) return;
+      scope = await askSeriesScope(
+        context,
+        write: cubit.editing ? SeriesWrite.editShift : SeriesWrite.addShift,
+        day: cubit.state.day,
+        recurrenceLabel: cubit.event.recurrenceLabel,
+        futureLockedKey: cubit.state.extraDays.isEmpty
+            ? null
+            : 'shifts.series.scope.batchOnlyThis',
+      );
+      if (scope == null || !mounted) return;
+    }
+    if (await cubit.save(scope: scope) && mounted) {
+      Navigator.of(context).pop(true);
+    }
   }
 
   @override

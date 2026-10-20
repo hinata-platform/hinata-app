@@ -191,7 +191,18 @@
       "titleRequired": "Saisis un nom.",
       "tooManyShifts": "Un événement compte au plus 200 créneaux.",
       "windowInvalid": "Cette période ne peut pas être lue.",
-      "windowTooLarge": "Cette période est trop longue."
+      "windowTooLarge": "Cette période est trop longue.",
+      "rruleUnsupported": "Cette règle de répétition n'est pas prise en charge. Vous pouvez répéter chaque jour, chaque semaine certains jours ou chaque mois un jour donné, avec un intervalle de 1 à 100 et une date de fin ou un nombre de fois.",
+      "rruleTooComplex": "Cette règle de répétition demande trop de calculs. Choisissez une règle plus simple.",
+      "seriesTooLarge": "Une série peut avoir au plus 2000 créneaux sur les 90 prochains jours. Prévoyez moins de créneaux par événement ou espacez les répétitions.",
+      "seriesScopeRequired": "Cet événement fait partie d'une série. Indiquez si la modification s'applique à celui-ci seulement ou à tous les suivants.",
+      "seriesFromInPast": "Une série ne peut être modifiée qu'à partir d'aujourd'hui, pas à partir d'un événement passé.",
+      "seriesShiftHasAssignments": "Des personnes sont encore inscrites sur ce créneau dans des événements à venir. Retirez-les d'abord, puis le créneau pourra quitter la série.",
+      "seriesStartOutOfRange": "Le premier événement peut se situer au plus un an en arrière et au plus deux ans à l'avance.",
+      "seriesTooManyShifts": "Un événement d'une série peut avoir au plus 50 créneaux.",
+      "seriesTooManyExdates": "366 événements ont déjà été retirés de cette série. Créez une nouvelle série pour la suite.",
+      "seriesTemplateKeyInvalid": "Les créneaux de cette série ne sont pas uniques. Rechargez la série et réessayez.",
+      "seriesFutureUnsupported": "Des créneaux sur plusieurs jours à la fois ne peuvent être ajoutés qu'à cet événement, pas à tous les suivants."
     }
   },
   "notFound": {
@@ -5559,6 +5570,69 @@
         "deleteTitle": "Supprimer l’événement ?",
         "deleteMessage": "L’événement et tous ses créneaux sont supprimés. Si des personnes sont encore inscrites, annule-le d’abord."
       }
+    },
+    "series": {
+      "scope": {
+        "message": "Cet événement fait partie d’une série. À quoi cela doit-il s’appliquer ?",
+        "messageLabel": "Cet événement fait partie de la série « {{label}} ». À quoi cela doit-il s’appliquer ?",
+        "thisHint": "Seulement l’événement du {{date}}, qui ne suit plus la série ensuite.",
+        "futureHint": "L’événement du {{date}} et tous les suivants. Les événements passés restent tels quels.",
+        "futureCancelHint": "La série s’arrête ici. L’événement du {{date}} et tous les suivants sont annulés.",
+        "futureDeleteHint": "À partir du {{date}}, la série n’existe plus. Les événements avec des personnes inscrites sont annulés, les autres supprimés. Les événements passés restent.",
+        "ruleOnlyFuture": "Une nouvelle règle s’applique toujours à cet événement et à tous les suivants.",
+        "batchOnlyThis": "Un créneau sur plusieurs jours à la fois ne s’ajoute qu’à cet événement.",
+        "this": "Celui-ci seulement",
+        "future": "Tous les suivants"
+      },
+      "ask": {
+        "save": "Enregistrer un événement de série",
+        "cancel": "Annuler un événement de série",
+        "delete": "Supprimer un événement de série",
+        "move": "Déplacer le créneau",
+        "addShift": "Ajouter un créneau",
+        "editShift": "Modifier le créneau",
+        "deleteShift": "Supprimer le créneau"
+      },
+      "repeat": {
+        "label": "Répéter",
+        "never": "Jamais",
+        "daily": "Chaque jour",
+        "weekly": "Chaque semaine le {{day}}",
+        "monthly": "Chaque mois le {{day}}",
+        "custom": "Règle personnalisée"
+      },
+      "custom": {
+        "back": "Retour",
+        "unit": {
+          "daily": "Quotidienne",
+          "weekly": "Hebdomadaire",
+          "monthly": "Mensuelle"
+        },
+        "every": "Intervalle",
+        "interval": {
+          "daily": "chaque jour",
+          "daily_plural": "tous les {{count}} jours",
+          "weekly": "chaque semaine",
+          "weekly_plural": "toutes les {{count}} semaines",
+          "monthly": "chaque mois",
+          "monthly_plural": "tous les {{count}} mois"
+        },
+        "days": "Ces jours-là",
+        "monthDay": "Le {{day}} de chaque mois, comme le début.",
+        "end": "Fin",
+        "endNever": "Jamais",
+        "endCount": "Après un nombre",
+        "endUntil": "À une date",
+        "times": "{{count}} fois",
+        "times_plural": "{{count}} fois",
+        "apply": "Appliquer"
+      },
+      "next": "Prochains : {{dates}}",
+      "done": {
+        "created": "Série créée, {{count}} événement est déjà dans le calendrier.",
+        "created_plural": "Série créée, {{count}} événements sont déjà dans le calendrier."
+      },
+      "detached": "diffère de la série"
     }
   }
 }

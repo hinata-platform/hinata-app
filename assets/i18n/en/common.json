@@ -191,7 +191,18 @@
       "titleRequired": "Enter a name.",
       "tooManyShifts": "An event has 200 shifts at most.",
       "windowInvalid": "This period cannot be read.",
-      "windowTooLarge": "This period is too long."
+      "windowTooLarge": "This period is too long.",
+      "rruleUnsupported": "This repeat rule is not supported. You can repeat daily, weekly on chosen weekdays or monthly on one day, every 1 to 100 periods, with an end date or a number of times.",
+      "rruleTooComplex": "This repeat rule takes too much work to calculate. Please choose a simpler one.",
+      "seriesTooLarge": "A series can have at most 2000 shifts in the next 90 days. Please use fewer shifts per event or repeat less often.",
+      "seriesScopeRequired": "This event is part of a series. Please choose whether the change applies to this event only or to all future ones.",
+      "seriesFromInPast": "A series can only be changed from today on, not from an event in the past.",
+      "seriesShiftHasAssignments": "People are still on this shift in future events. Take them off first, then the shift can leave the series.",
+      "seriesStartOutOfRange": "The first event can be at most one year back and at most two years ahead.",
+      "seriesTooManyShifts": "An event in a series can have at most 50 shifts.",
+      "seriesTooManyExdates": "366 events have already been taken out of this series. Please start a new series for the future.",
+      "seriesTemplateKeyInvalid": "The shifts of this series are not unique. Please reload the series and try again.",
+      "seriesFutureUnsupported": "Shifts on several days at once can only be added to this event, not to all future ones."
     }
   },
   "notFound": {
@@ -5559,6 +5570,69 @@
         "deleteTitle": "Delete the event?",
         "deleteMessage": "The event and all its shifts are deleted. If people are still signed up, call it off first."
       }
+    },
+    "series": {
+      "scope": {
+        "message": "This event is part of a series. What should this apply to?",
+        "messageLabel": "This event is part of the series “{{label}}”. What should this apply to?",
+        "thisHint": "Only the event on {{date}}, which then no longer follows the series.",
+        "futureHint": "The event on {{date}} and all later ones. Past events stay as they are.",
+        "futureCancelHint": "The series ends here. The event on {{date}} and all later ones are called off.",
+        "futureDeleteHint": "The series ends before {{date}}. Events with people on them are called off, the rest are deleted. Past events stay.",
+        "ruleOnlyFuture": "A new rule always applies to this and all later events.",
+        "batchOnlyThis": "A shift on several days at once only goes on this event.",
+        "this": "Only this one",
+        "future": "All future ones"
+      },
+      "ask": {
+        "save": "Save event in a series",
+        "cancel": "Call off event in a series",
+        "delete": "Delete event in a series",
+        "move": "Move shift",
+        "addShift": "Add shift",
+        "editShift": "Change shift",
+        "deleteShift": "Delete shift"
+      },
+      "repeat": {
+        "label": "Repeat",
+        "never": "Never",
+        "daily": "Daily",
+        "weekly": "Weekly on {{day}}",
+        "monthly": "Monthly on day {{day}}",
+        "custom": "Custom rule"
+      },
+      "custom": {
+        "back": "Back",
+        "unit": {
+          "daily": "Daily",
+          "weekly": "Weekly",
+          "monthly": "Monthly"
+        },
+        "every": "Interval",
+        "interval": {
+          "daily": "every day",
+          "daily_plural": "every {{count}} days",
+          "weekly": "every week",
+          "weekly_plural": "every {{count}} weeks",
+          "monthly": "every month",
+          "monthly_plural": "every {{count}} months"
+        },
+        "days": "On these days",
+        "monthDay": "On day {{day}} of each month, like the start.",
+        "end": "Ends",
+        "endNever": "Never",
+        "endCount": "After a number",
+        "endUntil": "On a date",
+        "times": "once",
+        "times_plural": "{{count}} times",
+        "apply": "Apply"
+      },
+      "next": "Next: {{dates}}",
+      "done": {
+        "created": "Series created, {{count}} event is in the calendar.",
+        "created_plural": "Series created, {{count}} events are in the calendar."
+      },
+      "detached": "differs from the series"
     }
   }
 }

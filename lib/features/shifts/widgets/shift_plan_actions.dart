@@ -21,6 +21,7 @@ import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassConfirm, showGlassToast;
 import '../bloc/shift_assignees.dart';
 import '../bloc/shift_planning_cubit.dart';
+import 'series_scope_dialog.dart';
 import 'shift_plan_texts.dart';
 
 /// Says how a planner action went.
@@ -118,9 +119,33 @@ Future<ShiftPlanOutcome?> removeFromShift(
   return outcome;
 }
 
-/// Deletes [shift], after asking. True when it is gone.
-Future<bool> deleteShiftAsking(BuildContext context, Shift shift) async {
+/// Deletes [shift], after asking. True when it is gone. On an occurrence of
+/// a series ([event]) the question is which occurrences it goes from.
+Future<bool> deleteShiftAsking(
+  BuildContext context,
+  Shift shift, {
+  ShiftEventHead? event,
+}) async {
   final planning = context.read<ShiftPlanningCubit>();
+  if (event != null && event.inSeries) {
+    final scope = await askSeriesScope(
+      context,
+      write: SeriesWrite.deleteShift,
+      day: shift.startsLocal,
+      recurrenceLabel: event.recurrenceLabel,
+      note: shift.assignedCount > 0
+          ? context.t(
+              'shifts.plan.deleteShiftPeople',
+              count: shift.assignedCount,
+              variables: {'shift': shift.title},
+            )
+          : null,
+    );
+    if (scope == null || !context.mounted) return false;
+    final outcome = await planning.deleteShift(shift, scope: scope);
+    if (context.mounted) announcePlanOutcome(context, outcome);
+    return outcome.ok;
+  }
   final sure = await showGlassConfirm(
     context,
     icon: LucideIcons.trash2,
