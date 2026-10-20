@@ -204,8 +204,13 @@
       "seriesTemplateKeyInvalid": "此系列的班次无法唯一识别。请重新加载系列后再试。",
       "seriesFutureUnsupported": "一次添加多天的班次只能用于此活动，不能用于以后的全部活动。",
       "waitlistFull": "此候补名单已有 50 人。",
-      "alreadyWaiting": "你已在此排班的候补名单中。"
-    }
+      "alreadyWaiting": "你已在此排班的候补名单中。",
+      "exportFormat": "排班表不支持此格式。"
+    },
+    "issue": {
+      "exportRateLimited": "导出次数过多。请一分钟后再试。"
+    },
+    "rateLimited": "当前请求较多。请稍后再试。"
   },
   "notFound": {
     "title": "未找到页面",
@@ -5653,6 +5658,25 @@
       "assignNow": "立即分配",
       "assignNowTitle": "立即分配？",
       "assignNowMessage": "{{name}} 将获得「{{shift}}」的空余名额，并收到通知。"
+    },
+    "export": {
+      "menu": "导出排班表",
+      "title": "导出排班表",
+      "subtitle": "将排班表导出为文件，用于张贴、转发或继续处理。",
+      "formatLabel": "格式",
+      "format": {
+        "pdf": "PDF",
+        "docx": "Word",
+        "xlsx": "电子表格"
+      },
+      "names": "包含姓名",
+      "namesHint": "文件中将包含人员姓名。",
+      "action": "导出",
+      "preparing": "正在生成排班表…",
+      "done": "排班表已导出。",
+      "truncated": "排班表已导出。内容过长，一个文件放不下；文件中注明了截止位置。",
+      "failed": "无法保存排班表。",
+      "fileName": "shift-plan"
     }
   }
 }

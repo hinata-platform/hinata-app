@@ -13,6 +13,7 @@ import 'package:hinata/core/blocs/paged_cubit.dart';
 import 'package:hinata/core/i18n/i18n.dart';
 import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/shift_models.dart';
+import 'package:hinata/core/models/shift_plan_export.dart';
 import 'package:hinata/core/models/shift_series.dart';
 import 'package:hinata/core/repositories/shift_repository.dart';
 import 'package:hinata/core/theme/app_theme.dart';
@@ -279,6 +280,37 @@ class FakeShiftRepository implements ShiftRepository {
   Future<ShiftFeedAddress> createFeed() =>
       _answer('createFeed', () => feedAddress);
 
+  // --- export (HIN-163) ---
+  ShiftPlanFile planFile = ShiftPlanFile(bytes: Uint8List(0));
+  bool? lastNames;
+  ShiftPlanFormat? lastFormat;
+
+  @override
+  Future<ShiftPlanFile> exportPlan(
+    String eventId,
+    ShiftPlanFormat format, {
+    bool names = false,
+  }) {
+    lastNames = names;
+    lastFormat = format;
+    return _answer('exportPlan:$eventId:${format.extension}', () => planFile);
+  }
+
+  @override
+  Future<bool> exportPlanTo(
+    String eventId,
+    ShiftPlanFormat format,
+    String path, {
+    bool names = false,
+  }) {
+    lastNames = names;
+    lastFormat = format;
+    return _answer(
+      'exportPlanTo:$eventId:${format.extension}',
+      () => planFile.truncated,
+    );
+  }
+
   @override
   Future<void> deleteFeed() => _answer('deleteFeed', () {});
 }
@@ -365,10 +397,12 @@ ShiftEventSummary sampleSummary({
   String? seriesId,
   String? recurrenceLabel,
   bool detached = false,
+  bool canPlan = false,
+  String title = 'Sommerfest',
 }) => ShiftEventSummary(
   id: id,
   projectId: 'p1',
-  title: 'Sommerfest',
+  title: title,
   location: 'Festwiese',
   startsAt: DateTime(2026, 10, 24, 14),
   endsAt: DateTime(2026, 10, 25, 3),
@@ -384,6 +418,7 @@ ShiftEventSummary sampleSummary({
   seriesId: seriesId,
   recurrenceLabel: recurrenceLabel,
   detached: detached,
+  canPlan: canPlan,
 );
 
 /// The real bundle of [code], handed over synchronously: the asset bundle
