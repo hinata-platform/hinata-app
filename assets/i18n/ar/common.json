@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "بدء مؤقت عبر MCP",
       "MCP_TIMER_STOPPED": "إيقاف مؤقت عبر MCP",
       "MCP_TIMER_DISCARDED": "تجاهل مؤقت عبر MCP",
+      "MCP_SHIFT_SELF_ASSIGNED": "تسجيل في مناوبة عبر MCP",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "تعيين مناوبة عبر MCP",
+      "MCP_SHIFT_RELEASED": "التخلي عن مناوبة عبر MCP",
+      "MCP_SHIFT_CONFIRMED": "تأكيد مناوبة عبر MCP",
+      "MCP_SHIFT_DECLINED": "رفض مناوبة عبر MCP",
+      "MCP_SHIFT_REMOVED": "إزالة من مناوبة عبر MCP",
       "MCP_SPRINT_CREATED": "إنشاء سبرنت عبر MCP",
       "MCP_SPRINT_UPDATED": "تحديث سبرنت عبر MCP",
       "MCP_SPRINT_STARTED": "بدء سبرنت عبر MCP",
@@ -4955,6 +4961,9 @@
       "worklog_write": "تسجيل وقتك وتعديله، تشغيل المؤقت، طلب إجازة",
       "search_read": "البحث",
       "notifications_read": "قراءة إشعاراتك",
+      "shifts_read": "قراءة المناوبات وتسجيلاتك",
+      "shifts_write": "التسجيل في المناوبات وتأكيدها أو رفضها أو التخلي عنها",
+      "shifts_plan": "تخطيط المناوبات: تعيين الأشخاص وإزالتهم",
       "projects_write": "إنشاء المشاريع"
     }
   },
