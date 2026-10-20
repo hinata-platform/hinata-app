@@ -2905,7 +2905,7 @@
     "workspace": "Espace de travail"
   },
   "search": {
-    "placeholder": "Rechercher des tickets, des projets, des personnes…  ou saisir une commande",
+    "placeholder": "Tout rechercher ou saisir une commande…",
     "archivedKeyword": "archivé",
     "scope": {
       "all": "Tout"
@@ -2916,7 +2916,14 @@
       "projects": "Projets",
       "people": "Personnes",
       "boards": "Tableaux et sprints",
-      "docs": "Connaissances"
+      "docs": "Connaissances",
+      "comments": "Commentaires",
+      "teams": "Équipes",
+      "attachments": "Pièces jointes",
+      "shifts": "Créneaux",
+      "time": "Suivi du temps",
+      "absences": "Absences",
+      "billing": "Facturation"
     },
     "recent": {
       "title": "Recherches récentes",
@@ -2924,7 +2931,7 @@
     },
     "empty": {
       "title": "Recherchez tout dans {{product}}",
-      "subtitle": "Trouvez des tickets, des projets, des personnes, des tableaux et des documents — ou lancez une commande. Commencez à taper."
+      "subtitle": "Trouvez des tickets, des commentaires, des personnes, des créneaux, du temps et plus encore, ou lancez une commande. Commencez à taper."
     },
     "noMatch": "Aucun résultat pour « {{q}} »",
     "noMatchSub": "Essayez un autre terme, un identifiant de ticket comme HIV-241, ou le nom d'une commande.",
@@ -2950,8 +2957,19 @@
       "time": "Temps",
       "timesheet": "Feuille de temps",
       "absences": "Absences",
-      "askAbsence": "Demander une absence"
-    }
+      "askAbsence": "Demander une absence",
+      "shifts": "Mes créneaux"
+    },
+    "sub": {
+      "project": "{{open}} ouverts · {{done}} terminés · {{members}} membres",
+      "knowledge": "Connaissances",
+      "space": "Espace",
+      "cancelled": "Annulé",
+      "timesheet": "Feuille de temps",
+      "askAbsence": "Demander cette absence",
+      "budget": "Budget"
+    },
+    "showAll": "Afficher tous les résultats dans {{cat}}"
   },
   "settings": {
     "title": "Paramètres",
@@ -5688,5 +5706,34 @@
       "failed": "Le planning n'a pas pu être enregistré.",
       "fileName": "planning-creneaux"
     }
+  },
+  "people": {
+    "title": "Profil",
+    "you": "C'est vous",
+    "deactivated": "Désactivé",
+    "role": {
+      "member": "Membre"
+    },
+    "localTime": "Heure locale",
+    "localTimeValue": "{{time}} · {{zone}}",
+    "today": "Aujourd'hui",
+    "absentUntil": "{{type}} jusqu'au {{date}}",
+    "absentHalfDay": "{{type}}, demi-journée",
+    "actions": "Actions",
+    "issues": "Tickets de cette personne",
+    "issuesSelf": "Vos tickets",
+    "email": "Écrire un e-mail",
+    "sharedTeams": "Équipes en commun",
+    "ownTeams": "Vos équipes",
+    "sharedProjects": "Projets en commun",
+    "ownProjects": "Vos projets",
+    "noneShared": "Vous n'avez encore ni équipe ni projet en commun.",
+    "admin": "Administration",
+    "notFound": {
+      "title": "Cette personne n'est pas ici",
+      "message": "Le compte a été supprimé ou désactivé."
+    },
+    "loadFailed": "Impossible de charger le profil",
+    "open": "Ouvrir le profil de {{name}}"
   }
 }

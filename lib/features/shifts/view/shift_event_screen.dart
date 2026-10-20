@@ -39,16 +39,74 @@ import '../widgets/waitlist_chips.dart';
 
 /// `/shifts/events/:id`: provides the event's cubit.
 class ShiftEventScreen extends StatelessWidget {
-  const ShiftEventScreen({super.key, required this.eventId});
+  const ShiftEventScreen({super.key, required this.eventId, this.shiftId});
 
   final String eventId;
+
+  /// The shift whose sheet opens once the event is on screen
+  /// (`?shift=<id>`, a search hit for one shift).
+  final String? shiftId;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (_) =>
         ShiftEventCubit(context.read<ShiftRepository>(), eventId)..load(),
-    child: const ShiftEventView(),
+    child: _LinkedShift(shiftId: shiftId, child: const ShiftEventView()),
   );
+}
+
+/// Opens the sheet of the shift a link names, once the event has been read —
+/// and again when a link to another shift of the same event arrives while the
+/// page is open (the page is keyed by the event, so it stays).
+class _LinkedShift extends StatefulWidget {
+  const _LinkedShift({required this.shiftId, required this.child});
+
+  final String? shiftId;
+  final Widget child;
+
+  @override
+  State<_LinkedShift> createState() => _LinkedShiftState();
+}
+
+class _LinkedShiftState extends State<_LinkedShift> {
+  /// The shift still to open, null once it is open or when none was named.
+  String? _pending;
+
+  @override
+  void initState() {
+    super.initState();
+    _pending = widget.shiftId;
+    _openWhenRead(context.read<ShiftEventCubit>().state);
+  }
+
+  @override
+  void didUpdateWidget(_LinkedShift oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.shiftId != oldWidget.shiftId) {
+      _pending = widget.shiftId;
+      _openWhenRead(context.read<ShiftEventCubit>().state);
+    }
+  }
+
+  void _openWhenRead(ShiftEventState state) {
+    final shiftId = _pending;
+    if (shiftId == null || shiftId.isEmpty || state.detail == null) return;
+    _pending = null;
+    // After the frame: the event page has to be built under the sheet, and a
+    // listener must not push a route mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(showShiftSheet(context, shiftId: shiftId));
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      BlocListener<ShiftEventCubit, ShiftEventState>(
+        listenWhen: (previous, next) => previous.detail != next.detail,
+        listener: (_, state) => _openWhenRead(state),
+        child: widget.child,
+      );
 }
 
 /// One event for the helper (HIN-44): the head with the places taken, the

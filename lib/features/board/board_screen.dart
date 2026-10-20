@@ -54,9 +54,12 @@ part 'board_screen.cards.dart';
 // planning, active sprint and insights.
 
 class KanbanBoardScreen extends StatelessWidget {
-  const KanbanBoardScreen({super.key, required this.boardId});
+  const KanbanBoardScreen({super.key, required this.boardId, this.sprintId});
 
   final String boardId;
+
+  /// The sprint a link names (`?sprint=`), shown instead of the active one.
+  final String? sprintId;
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -66,6 +69,7 @@ class KanbanBoardScreen extends StatelessWidget {
           boards: context.read<BoardRepository>(),
           issues: context.read<IssueRepository>(),
           boardId: boardId,
+          sprintId: sprintId,
         ),
       ),
       BlocProvider<BoardHeadCubit>(
@@ -80,7 +84,7 @@ class KanbanBoardScreen extends StatelessWidget {
             BoardProjectsCubit(projects: context.read<ProjectRepository>()),
       ),
     ],
-    child: const _BoardScreenBody(),
+    child: _BoardScreenBody(sprintId: sprintId),
   );
 }
 
@@ -88,7 +92,9 @@ class KanbanBoardScreen extends StatelessWidget {
 enum BoardViewMode { board, timeline }
 
 class _BoardScreenBody extends StatefulWidget {
-  const _BoardScreenBody();
+  const _BoardScreenBody({this.sprintId});
+
+  final String? sprintId;
 
   @override
   State<_BoardScreenBody> createState() => _BoardScreenBodyState();
@@ -111,6 +117,17 @@ class _BoardScreenBodyState extends State<_BoardScreenBody> {
   void initState() {
     super.initState();
     unawaited(_wall.load());
+  }
+
+  /// A link to another sprint of the board on screen: the board stays, the
+  /// wall switches to that sprint.
+  @override
+  void didUpdateWidget(_BoardScreenBody oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final sprintId = widget.sprintId;
+    if (sprintId != null && sprintId != oldWidget.sprintId) {
+      unawaited(_wall.showSprint(sprintId));
+    }
   }
 
   void _onWall(BuildContext context, BoardWallState wall) {
