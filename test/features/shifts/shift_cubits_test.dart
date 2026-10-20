@@ -70,19 +70,96 @@ void main() {
       expect(written, isEmpty);
     });
 
-    test('a change anywhere reloads page 0 once, debounced', () async {
-      repo.mine = (items: [sampleMine()], total: 1);
+    test(
+      'a change without a shift reads the held rows once, debounced',
+      () async {
+        repo.mine = (items: [sampleMine()], total: 1);
+        final cubit = MyShiftsCubit(repo, changes: bus.stream);
+        addTearDown(cubit.close);
+        await cubit.load();
+        repo.calls.clear();
+
+        bus
+          ..add(const ShiftChange(shiftId: 's1'))
+          ..add(const ShiftChange(shiftId: 's2'));
+        await Future<void>.delayed(const Duration(milliseconds: 400));
+
+        expect(repo.calls, ['myShifts:0']);
+      },
+    );
+
+    test('an answer is put into the rows held without a request', () async {
+      final row = sampleMine(
+        assignmentId: 'a1',
+        status: ShiftAssignmentStatus.assigned,
+      );
+      final other = sampleMine(
+        assignmentId: 'a2',
+        shift: sampleShift(id: 's2', mine: true),
+      );
+      repo.mine = (items: [row, other], total: 2);
       final cubit = MyShiftsCubit(repo, changes: bus.stream);
       addTearDown(cubit.close);
       await cubit.load();
       repo.calls.clear();
 
-      bus
-        ..add(const ShiftChange(shiftId: 's1'))
-        ..add(const ShiftChange(shiftId: 's2'));
-      await Future<void>.delayed(const Duration(milliseconds: 400));
+      bus.add(
+        ShiftChange(
+          shiftId: 's1',
+          shift: sampleShift(
+            mine: true,
+            myStatus: ShiftAssignmentStatus.confirmed,
+            myAssignmentId: 'a1',
+          ),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(repo.calls, isEmpty);
+      expect(cubit.state.items.first.status, ShiftAssignmentStatus.confirmed);
 
+      // Given away: the row goes, still without a request.
+      bus.add(ShiftChange(shiftId: 's1', shift: sampleShift()));
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(repo.calls, isEmpty);
+      expect(cubit.state.items, [other]);
+    });
+
+    test('a new place reads the pages held in one request, and waits while '
+        'hidden', () async {
+      repo.minePages = [
+        (items: [sampleMine(assignmentId: 'a1')], total: 3),
+        (items: [sampleMine(assignmentId: 'a2')], total: 3),
+      ];
+      final cubit = MyShiftsCubit(repo, pageSize: 1, changes: bus.stream);
+      addTearDown(cubit.close);
+      await cubit.load();
+      await cubit.loadMore();
+      repo
+        ..calls.clear()
+        ..minePages = null
+        ..mine = (
+          items: [
+            sampleMine(assignmentId: 'a1'),
+            sampleMine(assignmentId: 'a9'),
+          ],
+          total: 3,
+        );
+
+      cubit.setVisible(false);
+      bus.add(
+        ShiftChange(
+          shiftId: 's9',
+          shift: sampleShift(id: 's9', mine: true),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(repo.calls, isEmpty);
+
+      cubit.setVisible(true);
+      await Future<void>.delayed(Duration.zero);
       expect(repo.calls, ['myShifts:0']);
+      expect(repo.lastMineSize, 2);
+      expect(cubit.state.items.map((r) => r.assignmentId), ['a1', 'a9']);
     });
   });
 
@@ -148,6 +225,46 @@ void main() {
       await cubit.load();
       expect(cubit.state.next, isNotNull);
       expect(cubit.state.open.shifts, isEmpty);
+    });
+
+    test('a change reads the next shift alone, not all four', () async {
+      repo.next = sampleMine(
+        shift: sampleShift(
+          id: 's1',
+          mine: true,
+          myStatus: ShiftAssignmentStatus.confirmed,
+        ),
+      );
+      final cubit = NextShiftCubit(repo, changes: bus.stream);
+      addTearDown(cubit.close);
+      await cubit.load();
+      await Future<void>.delayed(Duration.zero);
+      repo.calls.clear();
+
+      // A place earlier than the hero's: which one is next, the server says.
+      bus.add(
+        ShiftChange(
+          shiftId: 's0',
+          shift: sampleShift(
+            id: 's0',
+            mine: true,
+            start: DateTime(2026, 10, 23, 9),
+          ),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(repo.calls, ['next']);
+
+      // Joining a waiting list reads the waiting lists alone.
+      repo.calls.clear();
+      bus.add(
+        ShiftChange(
+          shiftId: 's5',
+          shift: sampleShift(id: 's5', myWaitPosition: 2),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(repo.calls, ['waiting']);
     });
 
     test(

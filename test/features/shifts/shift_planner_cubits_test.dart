@@ -58,9 +58,68 @@ void main() {
       addTearDown(cubit.close);
       await cubit.start();
       cubit.focus(DateTime(2026, 10, 25));
-      cubit.setSpan(ShiftCalendarSpan.month);
       await Future<void>.delayed(Duration.zero);
       expect(repo.calls, hasLength(3));
+    });
+
+    test('the month reads counts per day, the week shifts', () async {
+      repo.marksMonths[202610] = [
+        ShiftDayMarks(date: DateTime(2026, 10, 24), mine: 1, understaffed: 2),
+      ];
+      final cubit = calendar();
+      addTearDown(cubit.close);
+      cubit.setSpan(ShiftCalendarSpan.month);
+      await Future<void>.delayed(Duration.zero);
+      expect(repo.calls, [
+        'marks:202609:all',
+        'marks:202610:all',
+        'marks:202611:all',
+      ]);
+      expect(cubit.marksOn(DateTime(2026, 10, 24))!.understaffed, 2);
+      expect(cubit.marksOn(DateTime(2026, 10, 25)), isNull);
+      expect(cubit.state.months, isEmpty);
+
+      cubit.openDay(DateTime(2026, 10, 24));
+      await Future<void>.delayed(Duration.zero);
+      expect(repo.calls.where((c) => c.startsWith('calendar:')), hasLength(3));
+    });
+
+    test('keeps the four months used last', () async {
+      final cubit = calendar();
+      addTearDown(cubit.close);
+      await cubit.start();
+      for (var m = 12; m <= 15; m++) {
+        await cubit.ensureMonths([DateTime(2026, m)]);
+      }
+      expect(cubit.state.months.length, ShiftCalendarCubit.monthCacheSize);
+      expect(cubit.state.months.keys.toSet(), {202612, 202701, 202702, 202703});
+    });
+
+    test('a sign-up is put in from the answer, its counts read again, and '
+        'nothing while hidden', () async {
+      final shift = sampleShift(id: 's1', assigned: 1, required: 2);
+      repo.calendarMonths[202610] = month([shift]);
+      final cubit = calendar();
+      addTearDown(cubit.close);
+      await cubit.start();
+      cubit.setSpan(ShiftCalendarSpan.month);
+      await Future<void>.delayed(Duration.zero);
+      repo.calls.clear();
+
+      cubit.setVisible(false);
+      bus.add(
+        ShiftChange(
+          shiftId: 's1',
+          shift: sampleShift(id: 's1', assigned: 2, required: 2, mine: true),
+        ),
+      );
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(cubit.shiftsOn(DateTime(2026, 10, 24)).single.mine, isTrue);
+      expect(repo.calls, isEmpty);
+
+      cubit.setVisible(true);
+      await Future<void>.delayed(Duration.zero);
+      expect(repo.calls, ['marks:202610:all']);
     });
 
     test('files shifts by day, a night shift on both, and filters short '
