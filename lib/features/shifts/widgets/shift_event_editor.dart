@@ -100,12 +100,22 @@ class ShiftEventEditorBody extends StatefulWidget {
 class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
   ShiftEventEditorCubit get _cubit => context.read<ShiftEventEditorCubit>();
 
-  late final _title = TextEditingController(text: _cubit.state.title);
-  late final _location = TextEditingController(text: _cubit.state.location);
-  late final _description = TextEditingController(
-    text: _cubit.state.description,
-  );
+  late final TextEditingController _title;
+  late final TextEditingController _location;
+  late final TextEditingController _description;
   bool _moreOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Made here rather than lazily: the description field is folded away at
+    // first, and a lazy one would be created in dispose, after the cubit is
+    // out of reach.
+    final state = _cubit.state;
+    _title = TextEditingController(text: state.title);
+    _location = TextEditingController(text: state.location);
+    _description = TextEditingController(text: state.description);
+  }
 
   @override
   void dispose() {
