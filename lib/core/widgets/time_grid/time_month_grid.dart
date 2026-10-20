@@ -59,6 +59,8 @@ class TimeMonthScroller extends StatefulWidget {
     this.markOn,
     this.marksOnly = false,
     this.dotsOn,
+    this.onAddOnDay,
+    this.addLabel,
   });
 
   /// The month the scroller centres on when [jump] changes.
@@ -158,6 +160,15 @@ class TimeMonthScroller extends StatefulWidget {
   /// Changes are announced through [revision], like [itemsForDay].
   final TimeDayDots? Function(DateTime day)? dotsOn;
 
+  /// A small "+" in a [marksOnly] day (HIN-166), shown while the pointer is
+  /// over the day or the keyboard is on it; [anchor] is the "+" on screen,
+  /// for a menu to hang off. Null draws no "+", which is right for a touch
+  /// screen: there is nothing to hover, and the day's tap stays the way in.
+  final void Function(DateTime day, Rect anchor)? onAddOnDay;
+
+  /// What a screen reader and the tooltip call the "+" of [day].
+  final String Function(DateTime day)? addLabel;
+
   @override
   State<TimeMonthScroller> createState() => _TimeMonthScrollerState();
 }
@@ -202,6 +213,7 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
   int? _blocksRevision;
   bool? _blocksTotals;
   bool? _blocksEvents;
+  bool? _blocksAdd;
   int? _blocksToday;
 
   /// The brightness the held blocks were built at.
@@ -380,11 +392,13 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
         // Switching the calendar layer on or off changes no entry, so the
         // owner has no reason to bump [revision] for it.
         _blocksEvents != (widget.eventsForDay != null) ||
+        _blocksAdd != (widget.onAddOnDay != null) ||
         _blocksToday != todayKey ||
         _blocksThemeKey != AppColors.themeKey) {
       _blocksRevision = widget.revision;
       _blocksTotals = widget.showTotals;
       _blocksEvents = widget.eventsForDay != null;
+      _blocksAdd = widget.onAddOnDay != null;
       _blocksToday = todayKey;
       _blocksThemeKey = AppColors.themeKey;
       _blocks.clear();
@@ -419,6 +433,8 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
       markOn: widget.markOn,
       marksOnly: widget.marksOnly,
       dotsOn: widget.dotsOn,
+      onAddOnDay: widget.onAddOnDay,
+      addLabel: widget.addLabel,
     );
   }
 
@@ -594,6 +610,8 @@ class _MonthBlock extends StatelessWidget {
     this.markOn,
     this.marksOnly = false,
     this.dotsOn,
+    this.onAddOnDay,
+    this.addLabel,
   });
 
   final DateTime month;
@@ -616,6 +634,8 @@ class _MonthBlock extends StatelessWidget {
   final void Function(DateTime day)? onNewOnDay;
   final void Function(DateTime day, Rect anchor)? onDayMenu;
   final void Function(TimeGridItem item)? onTap;
+  final void Function(DateTime day, Rect anchor)? onAddOnDay;
+  final String Function(DateTime day)? addLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -660,6 +680,8 @@ class _MonthBlock extends StatelessWidget {
                         markOn: markOn,
                         marksOnly: marksOnly,
                         dotsOn: dotsOn,
+                        onAddOnDay: onAddOnDay,
+                        addLabel: addLabel,
                       ),
                     ),
                 ],
@@ -754,6 +776,8 @@ class _Cell extends StatelessWidget {
     this.markOn,
     this.marksOnly = false,
     this.dotsOn,
+    this.onAddOnDay,
+    this.addLabel,
   });
 
   /// Null for the cells before the first of the month and after the last.
@@ -775,6 +799,10 @@ class _Cell extends StatelessWidget {
   final void Function(DateTime day)? onNewOnDay;
   final void Function(DateTime day, Rect anchor)? onDayMenu;
   final void Function(TimeGridItem item)? onTap;
+
+  /// See [TimeMonthScroller.onAddOnDay] and [TimeMonthScroller.addLabel].
+  final void Function(DateTime day, Rect anchor)? onAddOnDay;
+  final String Function(DateTime day)? addLabel;
 
   /// The menu hangs under the day's number, not under the whole cell.
   ///
@@ -918,7 +946,7 @@ extension on _Cell {
     final dots = dotsOn?.call(at);
     final isToday = DateUtils.isSameDay(at, today);
     final listening = MediaQuery.accessibleNavigationOf(context);
-    return Semantics(
+    final cell = Semantics(
       button: onTapDay != null,
       // Read out as the date and what the marks say: a dot is nothing to a
       // screen reader.
@@ -930,8 +958,14 @@ extension on _Cell {
             ].join(', ')
           : null,
       excludeSemantics: listening,
+      onLongPressHint: onDayMenu != null
+          ? context.t('time.calendar.dayActions')
+          : null,
       child: InkWell(
         onTap: onTapDay == null ? null : () => onTapDay!(at),
+        // Held or right-clicked, what can be done with the day (HIN-166).
+        onLongPress: onDayMenu == null ? null : () => _menu(context, at),
+        onSecondaryTap: onDayMenu == null ? null : () => _menu(context, at),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(_kCellPad, 4, _kCellPad, 4),
           child: Column(
@@ -956,6 +990,122 @@ extension on _Cell {
             ],
           ),
         ),
+      ),
+    );
+    final add = onAddOnDay;
+    if (add == null) return cell;
+    return _AddOnHover(
+      label: addLabel?.call(at) ?? context.t('common.add'),
+      onAdd: (anchor) => add(at, anchor),
+      child: cell,
+    );
+  }
+}
+
+/// A day of the month with a "+" in its corner (HIN-166), shown while the
+/// pointer is over the day or the keyboard is on the "+".
+///
+/// Always in the tree, so Tab reaches it and a screen reader finds it; only
+/// drawn and hit when shown, so a tap on a touch screen, which hovers over
+/// nothing, still opens the day. The target is 48 points, the glyph's disc
+/// half of it.
+class _AddOnHover extends StatefulWidget {
+  const _AddOnHover({
+    required this.label,
+    required this.onAdd,
+    required this.child,
+  });
+
+  final String label;
+  final void Function(Rect anchor) onAdd;
+  final Widget child;
+
+  @override
+  State<_AddOnHover> createState() => _AddOnHoverState();
+}
+
+class _AddOnHoverState extends State<_AddOnHover> {
+  bool _hovered = false;
+  bool _focused = false;
+
+  void _set({bool? hovered, bool? focused}) {
+    final h = hovered ?? _hovered;
+    final f = focused ?? _focused;
+    if (h == _hovered && f == _focused) return;
+    setState(() {
+      _hovered = h;
+      _focused = f;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final shown = _hovered || _focused;
+    return MouseRegion(
+      onEnter: (_) => _set(hovered: true),
+      onExit: (_) => _set(hovered: false),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          widget.child,
+          // Right after the day's number, so it reads as that day's "+" and
+          // not as the next day's, whose number sits just past the edge.
+          PositionedDirectional(
+            top: 0,
+            start: _kDayLine,
+            width: kMinInteractiveDimension,
+            height: kMinInteractiveDimension,
+            child: IgnorePointer(
+              ignoring: !shown,
+              child: AnimatedOpacity(
+                opacity: shown ? 1 : 0,
+                duration: MediaQuery.disableAnimationsOf(context)
+                    ? Duration.zero
+                    : const Duration(milliseconds: 120),
+                child: Semantics(
+                  button: true,
+                  label: widget.label,
+                  child: Tooltip(
+                    message: widget.label,
+                    excludeFromSemantics: true,
+                    child: Builder(
+                      builder: (anchor) => InkResponse(
+                        onFocusChange: (focused) => _set(focused: focused),
+                        onTap: () {
+                          final box = anchor.findRenderObject() as RenderBox?;
+                          if (box == null || !box.attached || !box.hasSize) {
+                            return;
+                          }
+                          widget.onAdd(
+                            box.localToGlobal(Offset.zero) & box.size,
+                          );
+                        },
+                        radius: 22,
+                        child: Center(
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.hairline),
+                            ),
+                            child: SizedBox.square(
+                              dimension: 24,
+                              child: Icon(
+                                LucideIcons.plus,
+                                size: 14,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

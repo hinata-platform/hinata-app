@@ -87,6 +87,8 @@ class TimeGrid extends StatefulWidget {
     this.initialScrollHour = 8,
     this.showHeadings = true,
     this.newEntryLength = const Duration(hours: 1),
+    this.scrollKey,
+    this.createTint,
   });
 
   /// The columns, as local dates. One for a day view, seven for a week — the
@@ -126,6 +128,20 @@ class TimeGrid extends StatefulWidget {
   /// The hour the grid opens on, so a reader lands on the working day instead
   /// of on midnight.
   final int initialScrollHour;
+
+  /// When it changes, the grid scrolls to [initialScrollHour] again.
+  ///
+  /// A grid opens on its hour once and then leaves the scrolling to the
+  /// reader. A caller whose hour depends on what is drawn (the shift calendar
+  /// opens a week an hour before its first shift, HIN-166) only knows it once
+  /// that has arrived, and again for every week it turns to; this says when.
+  /// Null, the default, never scrolls again.
+  final Object? scrollKey;
+
+  /// What the block a sweep draws is painted in while the finger is down:
+  /// the tint the new entry will get, filled like a block without an edge.
+  /// Null keeps the accent outline the time calendar draws.
+  final Color? createTint;
 
   /// How long an entry is when the gesture said *where* but not *how long* —
   /// a tap, or a press that never moved.
@@ -584,7 +600,7 @@ class _TimeGridState extends State<TimeGrid> {
                           children: [
                             if (widget.showHeadings)
                               SizedBox(
-                                height: kTimeGridHeader,
+                                height: _headerHeight,
                                 child: Row(
                                   children: [
                                     for (final day in widget.days)
@@ -681,7 +697,18 @@ class _TimeGridState extends State<TimeGrid> {
   }
 
   /// What the day headings occupy — nothing when the page writes them itself.
-  double get _headerHeight => widget.showHeadings ? kTimeGridHeader : 0;
+  ///
+  /// [kTimeGridHeader] at the reader's text size, and taller as the text
+  /// grows: the weekday and the date are text, and at 200 % they need about
+  /// a line more than the fixed height gave them.
+  double get _headerHeight {
+    if (!widget.showHeadings) return 0;
+    final scaler = MediaQuery.textScalerOf(context);
+    // What the two lines grow by past their size at 100 %; nothing at 100 %.
+    final weekday = (scaler.scale(AppType.caption) - AppType.caption) * 1.3;
+    final date = _dateDisc(scaler) - 26;
+    return (kTimeGridHeader + weekday + date).ceilToDouble();
+  }
 
   Widget _bandLabels() => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -936,6 +963,7 @@ class _TimeGridState extends State<TimeGrid> {
       _placed = null;
       _bandRowCounts = null;
     }
+    if (old.scrollKey != widget.scrollKey) _didInitialScroll = false;
   }
 
   List<Widget> _dragPreview(_Drag drag, double columnWidth) {
@@ -950,7 +978,10 @@ class _TimeGridState extends State<TimeGrid> {
           (drag.dayIndex + 1) * columnWidth - kTimeGridColumnGutter,
           math.max(bottom, top + kTimeGridBlockMinHeight),
         ),
-        child: _DragPreview(label: _spanLabel(context, drag.start, drag.end)),
+        child: _DragPreview(
+          label: _spanLabel(context, drag.start, drag.end),
+          tint: drag.kind == _DragKind.create ? widget.createTint : null,
+        ),
       ),
     ];
   }
@@ -1044,8 +1075,8 @@ class _DayHeading extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 26,
-              height: 26,
+              width: _dateDisc(MediaQuery.textScalerOf(context)),
+              height: _dateDisc(MediaQuery.textScalerOf(context)),
               alignment: Alignment.center,
               decoration: today
                   ? BoxDecoration(
@@ -1074,6 +1105,11 @@ class _DayHeading extends StatelessWidget {
     );
   }
 }
+
+/// How wide and tall the date's disc is: 26 at 100 %, growing with the text
+/// so a two-digit date at 200 % stays whole and today's disc stays round.
+double _dateDisc(TextScaler scaler) =>
+    math.max(26.0, scaler.scale(AppType.label) * 1.3 + 6).ceilToDouble();
 
 class _HourAxis extends StatelessWidget {
   const _HourAxis({required this.metrics});
@@ -1479,17 +1515,24 @@ class _Block extends StatelessWidget {
 const double _kBlockGlyph = 11;
 
 class _DragPreview extends StatelessWidget {
-  const _DragPreview({required this.label});
+  const _DragPreview({required this.label, this.tint});
 
   final String label;
+
+  /// See [TimeGrid.createTint]: filled with it, no coloured edge.
+  final Color? tint;
 
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
     decoration: BoxDecoration(
-      color: AppColors.accentSoft,
+      // In the tint, the block's own pastel with the hairline every block
+      // without an edge has: the block that will be there, not a selection.
+      color: tint ?? AppColors.accentSoft,
       borderRadius: BorderRadius.circular(6),
-      border: Border.all(color: AppColors.accentStrong, width: 1.5),
+      border: tint == null
+          ? Border.all(color: AppColors.accentStrong, width: 1.5)
+          : Border.all(color: AppColors.hairline),
     ),
     child: Text(
       label,
@@ -1501,7 +1544,7 @@ class _DragPreview extends StatelessWidget {
         // floor, so its line has to fit in the same box.
         height: kTimeGridBlockTitleLine / AppType.caption,
         fontWeight: FontWeight.w600,
-        color: AppColors.accentInk,
+        color: tint == null ? AppColors.accentInk : AppColors.ink,
       ),
     ),
   );
