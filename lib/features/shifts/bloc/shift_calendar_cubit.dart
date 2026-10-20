@@ -362,7 +362,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
     for (final month in state.months.values) {
       for (final shift in month.shifts) {
         if (!seen.add(shift.id)) continue;
-        if (state.understaffedOnly && !_short(shift)) continue;
+        if (state.understaffedOnly && !shift.isShort) continue;
         var day = DateTime(
           shift.startsAt.year,
           shift.startsAt.month,
@@ -380,9 +380,6 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
     _byDayRevision = state.revision;
     return index;
   }
-
-  static bool _short(Shift shift) =>
-      shift.coverage.state == CoverageState.under && !shift.cancelled;
 
   /// The event a held shift belongs to.
   ShiftEventHead? eventOf(Shift shift) {

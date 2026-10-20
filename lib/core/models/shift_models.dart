@@ -230,6 +230,10 @@ class Shift extends Equatable {
     max: maxHelpers,
   );
 
+  /// Somebody is still missing. A cancelled shift never is: nobody is going
+  /// to fill it. The one rule for every filter and list in the app.
+  bool get isShort => coverage.state == CoverageState.under && !cancelled;
+
   Duration get duration => endsAt.difference(startsAt);
 
   factory Shift.fromJson(Map<String, dynamic> json) {

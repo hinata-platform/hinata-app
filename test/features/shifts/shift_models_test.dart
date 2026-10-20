@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/shift_models.dart';
 
+import 'shift_fakes.dart';
+
 /// The module reads the server's records leniently (HIN-44): what a stage
 /// adds later is optional, and nothing of somebody else survives into the
 /// offline snapshot.
@@ -59,6 +61,15 @@ void main() {
     );
     expect(const Coverage(assigned: 9, required: 3).fill, 1.0);
     expect(const Coverage(assigned: 0, required: 0).fill, 1.0);
+  });
+
+  test('short means somebody is missing and the shift still happens', () {
+    expect(sampleShift(assigned: 1, required: 2).isShort, isTrue);
+    expect(sampleShift(assigned: 2, required: 2).isShort, isFalse);
+    expect(
+      sampleShift(assigned: 0, required: 2, cancelled: true).isShort,
+      isFalse,
+    );
   });
 
   test('a sign-up answer carries the caller\'s place onto the shift', () {
