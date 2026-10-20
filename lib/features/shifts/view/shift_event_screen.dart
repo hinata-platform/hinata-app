@@ -34,6 +34,7 @@ import '../widgets/shift_actions.dart';
 import '../widgets/shift_row.dart';
 import '../widgets/shift_sheet.dart';
 import '../widgets/shift_status_badge.dart';
+import '../widgets/waitlist_chips.dart';
 
 /// `/shifts/events/:id`: provides the event's cubit.
 class ShiftEventScreen extends StatelessWidget {
@@ -386,6 +387,22 @@ class _EventShiftRow extends StatelessWidget {
       people: [for (final u in named) u.name],
       avatars: [for (final u in named) u.avatarUrl],
       trailing: trailing,
+      // Who waits, behind the people on it; a planner gives a free place to
+      // one of them from here (HIN-162).
+      extra: planning && shift.waitingIds.isNotEmpty
+          ? Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: WaitlistChips(
+                shift: shift,
+                users: detail.users,
+                onAssign: (userId, name) => unawaited(
+                  assignFromWaitlist(context, shift, userId, name).then((o) {
+                    if (o != null && o.ok) apply(o.shift);
+                  }),
+                ),
+              ),
+            )
+          : null,
       onTap: () => unawaited(
         showShiftSheet(
           context,
@@ -530,11 +547,17 @@ class _Head extends StatelessWidget {
           _Line(icon: LucideIcons.globe, text: zone, color: AppColors.inkSoft),
         ],
         const SizedBox(height: 12),
-        GlassSwitchChip(
-          label: context.t('shifts.event.onlyUnderstaffed'),
-          icon: LucideIcons.filter,
-          active: state.understaffedOnly,
-          onTap: () => context.read<ShiftEventCubit>().toggleUnderstaffed(),
+        // The chip keeps its label on one line; on a phone at twice the text
+        // size it would run past the edge, so there it shrinks to fit.
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: GlassSwitchChip(
+            label: context.t('shifts.event.onlyUnderstaffed'),
+            icon: LucideIcons.filter,
+            active: state.understaffedOnly,
+            onTap: () => context.read<ShiftEventCubit>().toggleUnderstaffed(),
+          ),
         ),
       ],
     );

@@ -202,7 +202,9 @@
       "seriesTooManyShifts": "Un événement d'une série peut avoir au plus 50 créneaux.",
       "seriesTooManyExdates": "366 événements ont déjà été retirés de cette série. Créez une nouvelle série pour la suite.",
       "seriesTemplateKeyInvalid": "Les créneaux de cette série ne sont pas uniques. Rechargez la série et réessayez.",
-      "seriesFutureUnsupported": "Des créneaux sur plusieurs jours à la fois ne peuvent être ajoutés qu'à cet événement, pas à tous les suivants."
+      "seriesFutureUnsupported": "Des créneaux sur plusieurs jours à la fois ne peuvent être ajoutés qu'à cet événement, pas à tous les suivants.",
+      "waitlistFull": "Cette liste d'attente compte déjà 50 personnes.",
+      "alreadyWaiting": "Tu es déjà sur la liste d'attente de ce créneau."
     }
   },
   "notFound": {
@@ -5374,19 +5376,25 @@
       "decline": "Refuser",
       "release": "Céder",
       "toEvent": "Vers l'événement",
-      "busy": "Un instant, c'est encore en cours."
+      "busy": "Un instant, c'est encore en cours.",
+      "waitlistJoin": "S'inscrire sur la liste d'attente",
+      "waitlistLeave": "Quitter la liste d'attente"
     },
     "done": {
       "joined": "Tu es inscrit",
       "confirmed": "Créneau confirmé",
       "declined": "Affectation refusée",
-      "released": "Créneau cédé"
+      "released": "Créneau cédé",
+      "waitlisted": "Tu es sur la liste d'attente",
+      "waitlistLeft": "Tu as quitté la liste d'attente"
     },
     "ask": {
       "releaseTitle": "Céder ce créneau ?",
       "releaseMessage": "Ta place se libère et d'autres peuvent s'inscrire.",
       "declineTitle": "Refuser cette affectation ?",
-      "declineMessage": "La place se libère et l'organisation peut affecter quelqu'un d'autre."
+      "declineMessage": "La place se libère et l'organisation peut affecter quelqu'un d'autre.",
+      "waitlistLeaveTitle": "Quitter la liste d'attente ?",
+      "waitlistLeaveMessage": "Tu perds ta place sur la liste. Si tu te réinscris, tu repars à la fin."
     },
     "absentHint": "Tu es noté absent ce jour-là",
     "next": {
@@ -5419,7 +5427,8 @@
       "openCount_plural": "{{count}} cherchent encore du monde",
       "openEmpty": "Aucun projet ne cherche de monde pour le moment.",
       "toEvents": "Voir tous les événements",
-      "offline": "Pas de connexion. Tu vois l'état du dernier chargement."
+      "offline": "Pas de connexion. Tu vois l'état du dernier chargement.",
+      "waitlist": "Liste d'attente"
     },
     "event": {
       "title": "Événement",
@@ -5569,7 +5578,8 @@
         "delete": "Supprimer",
         "deleteTitle": "Supprimer l’événement ?",
         "deleteMessage": "L’événement et tous ses créneaux sont supprimés. Si des personnes sont encore inscrites, annule-le d’abord."
-      }
+      },
+      "candidatesTruncated": "Il y a d'autres personnes. Cherche un nom pour les trouver."
     },
     "series": {
       "scope": {
@@ -5633,6 +5643,16 @@
         "created_plural": "Série créée, {{count}} événements sont déjà dans le calendrier."
       },
       "detached": "diffère de la série"
+    },
+    "waitlist": {
+      "count": "1 en attente",
+      "count_plural": "{{count}} en attente",
+      "position": "Liste d'attente, place {{pos}} sur {{total}}",
+      "confirmBy": "Une place s'est libérée pour toi, confirme avant {{time}}",
+      "chip": "{{name}} attend en place {{pos}}",
+      "assignNow": "Affecter maintenant",
+      "assignNowTitle": "Affecter maintenant ?",
+      "assignNowMessage": "{{name}} obtient la place libre sur « {{shift}} » et est prévenu·e."
     }
   }
 }

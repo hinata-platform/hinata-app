@@ -16,6 +16,9 @@ abstract class ShiftRepository {
   /// The caller's next place, or null when there is none.
   Future<MyShift?> nextShift();
 
+  /// The caller's places on waiting lists (HIN-162), by start, at most 50.
+  Future<List<MyShift>> myWaitingShifts();
+
   /// Events touching [from] to [to], across every visible project or within
   /// [projectId].
   Future<PageResult<ShiftEventSummary>> events({
@@ -133,8 +136,17 @@ abstract class ShiftRepository {
   /// One series with its next five occurrences.
   Future<ShiftSeries> series(String id);
 
-  /// A planner puts [userId] on [shiftId].
+  /// A planner puts [userId] on [shiftId]. Somebody waiting for it moves up
+  /// ("Jetzt zuteilen", HIN-162).
   Future<ShiftAssignResult> assign(String shiftId, String userId);
+
+  /// Who a planner can put on [projectId]'s shifts, matching [query] by name,
+  /// at most [limit] (the server caps it at 50).
+  Future<ShiftCandidates> candidates(
+    String projectId, {
+    String query = '',
+    int limit = 50,
+  });
 
   // --- the personal feed (HIN-47) -------------------------------------------
 
@@ -187,6 +199,16 @@ class ApiShiftRepository implements ShiftRepository {
     final body = await _api.get('/api/v1/me/shifts/next');
     if (body is! Map<String, dynamic> || body.isEmpty) return null;
     return MyShift.fromJson(body);
+  }
+
+  @override
+  Future<List<MyShift>> myWaitingShifts() async {
+    final body = await _api.get('/api/v1/me/shifts/waiting');
+    return [
+      if (body is List)
+        for (final row in body)
+          if (row is Map<String, dynamic>) MyShift.fromJson(row),
+    ];
   }
 
   @override
@@ -461,6 +483,18 @@ class ApiShiftRepository implements ShiftRepository {
             )
             as Map<String, dynamic>,
       );
+
+  @override
+  Future<ShiftCandidates> candidates(
+    String projectId, {
+    String query = '',
+    int limit = 50,
+  }) async => ShiftCandidates.fromJson(
+    await _api.get(
+      '/api/v1/projects/${Uri.encodeComponent(projectId)}/shifts/candidates',
+      query: {if (query.trim().isNotEmpty) 'q': query.trim(), 'limit': limit},
+    ),
+  );
 
   @override
   Future<ShiftFeedStatus> feed() async =>

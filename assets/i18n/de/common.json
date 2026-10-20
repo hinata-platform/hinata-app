@@ -202,7 +202,9 @@
       "seriesTooManyShifts": "Ein Event einer Serie kann höchstens 50 Schichten haben.",
       "seriesTooManyExdates": "Aus dieser Serie wurden schon 366 Events herausgenommen. Bitte lege für die Zukunft eine neue Serie an.",
       "seriesTemplateKeyInvalid": "Die Schichten dieser Serie sind nicht eindeutig. Bitte lade die Serie neu und versuch es noch einmal.",
-      "seriesFutureUnsupported": "Schichten an mehreren Tagen auf einmal lassen sich nur für dieses Event anlegen, nicht für alle künftigen."
+      "seriesFutureUnsupported": "Schichten an mehreren Tagen auf einmal lassen sich nur für dieses Event anlegen, nicht für alle künftigen.",
+      "waitlistFull": "Auf dieser Warteliste stehen schon 50 Personen.",
+      "alreadyWaiting": "Du stehst schon auf der Warteliste dieser Schicht."
     }
   },
   "notFound": {
@@ -5374,19 +5376,25 @@
       "decline": "Ablehnen",
       "release": "Abgeben",
       "toEvent": "Zum Event",
-      "busy": "Einen Moment, das läuft noch."
+      "busy": "Einen Moment, das läuft noch.",
+      "waitlistJoin": "Auf Warteliste setzen",
+      "waitlistLeave": "Warteliste verlassen"
     },
     "done": {
       "joined": "Du bist eingetragen",
       "confirmed": "Schicht bestätigt",
       "declined": "Zuteilung abgelehnt",
-      "released": "Schicht abgegeben"
+      "released": "Schicht abgegeben",
+      "waitlisted": "Du stehst auf der Warteliste",
+      "waitlistLeft": "Du hast die Warteliste verlassen"
     },
     "ask": {
       "releaseTitle": "Schicht abgeben?",
       "releaseMessage": "Dein Platz wird wieder frei, und andere können sich eintragen.",
       "declineTitle": "Zuteilung ablehnen?",
-      "declineMessage": "Der Platz wird wieder frei, und die Orga kann jemand anderen einteilen."
+      "declineMessage": "Der Platz wird wieder frei, und die Orga kann jemand anderen einteilen.",
+      "waitlistLeaveTitle": "Warteliste verlassen?",
+      "waitlistLeaveMessage": "Dein Platz auf der Liste geht verloren. Trägst du dich wieder ein, stehst du hinten."
     },
     "absentHint": "Du bist an dem Tag als abwesend eingetragen",
     "next": {
@@ -5419,7 +5427,8 @@
       "openCount_plural": "{{count}} brauchen noch Leute",
       "openEmpty": "Gerade sucht kein Projekt Leute.",
       "toEvents": "Alle Events ansehen",
-      "offline": "Keine Verbindung. Du siehst den Stand vom letzten Laden."
+      "offline": "Keine Verbindung. Du siehst den Stand vom letzten Laden.",
+      "waitlist": "Warteliste"
     },
     "event": {
       "title": "Event",
@@ -5569,7 +5578,8 @@
         "delete": "Löschen",
         "deleteTitle": "Event löschen?",
         "deleteMessage": "Das Event und alle Schichten werden gelöscht. Sind noch Personen eingetragen, sag es zuerst ab."
-      }
+      },
+      "candidatesTruncated": "Es gibt noch mehr Personen. Such nach einem Namen, um sie zu finden."
     },
     "series": {
       "scope": {
@@ -5633,6 +5643,16 @@
         "created_plural": "Serie angelegt, {{count}} Termine stehen schon im Kalender."
       },
       "detached": "abweichend von der Serie"
+    },
+    "waitlist": {
+      "count": "1 wartet",
+      "count_plural": "{{count}} warten",
+      "position": "Warteliste, Platz {{pos}} von {{total}}",
+      "confirmBy": "Nachgerückt, bitte bis {{time}} bestätigen",
+      "chip": "{{name}} wartet auf Platz {{pos}}",
+      "assignNow": "Jetzt zuteilen",
+      "assignNowTitle": "Jetzt zuteilen?",
+      "assignNowMessage": "{{name}} bekommt den freien Platz in „{{shift}}“ und wird benachrichtigt."
     }
   }
 }
