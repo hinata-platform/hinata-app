@@ -1,6 +1,7 @@
 import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/shift_models.dart';
+import '../models/shift_plan_export.dart';
 import '../models/shift_series.dart';
 
 /// The shift planning module's data (HIN-27), behind `shift_planning`.
@@ -146,6 +147,25 @@ abstract class ShiftRepository {
     String projectId, {
     String query = '',
     int limit = 50,
+  });
+
+  // --- export (HIN-163) -----------------------------------------------------
+
+  /// The event's shift plan as a file in memory. [names] adds the people on
+  /// each shift; only a planner may ask for it (403 otherwise).
+  Future<ShiftPlanFile> exportPlan(
+    String eventId,
+    ShiftPlanFormat format, {
+    bool names = false,
+  });
+
+  /// The same file written straight to [path]. Answers whether the server
+  /// stopped at the format's ceiling.
+  Future<bool> exportPlanTo(
+    String eventId,
+    ShiftPlanFormat format,
+    String path, {
+    bool names = false,
   });
 
   // --- the personal feed (HIN-47) -------------------------------------------
@@ -495,6 +515,47 @@ class ApiShiftRepository implements ShiftRepository {
       query: {if (query.trim().isNotEmpty) 'q': query.trim(), 'limit': limit},
     ),
   );
+
+  // --- export (HIN-163) -----------------------------------------------------
+
+  static String _exportPath(
+    String eventId,
+    ShiftPlanFormat format,
+    bool names,
+  ) =>
+      '/api/v1/shifts/events/${Uri.encodeComponent(eventId)}/export'
+      '?format=${format.extension}&names=$names';
+
+  @override
+  Future<ShiftPlanFile> exportPlan(
+    String eventId,
+    ShiftPlanFormat format, {
+    bool names = false,
+  }) async {
+    final file = await _api.getFile(
+      _exportPath(eventId, format, names),
+      receiveTimeout: const Duration(minutes: 3),
+    );
+    return ShiftPlanFile(
+      bytes: file.bytes,
+      truncated: file.header('x-export-truncated') == 'true',
+      fileName: fileNameFromDisposition(file.header('content-disposition')),
+    );
+  }
+
+  @override
+  Future<bool> exportPlanTo(
+    String eventId,
+    ShiftPlanFormat format,
+    String path, {
+    bool names = false,
+  }) async =>
+      (await _api.downloadTo(
+        _exportPath(eventId, format, names),
+        path,
+        receiveTimeout: const Duration(minutes: 5),
+      ))('x-export-truncated') ==
+      'true';
 
   @override
   Future<ShiftFeedStatus> feed() async =>

@@ -204,8 +204,13 @@
       "seriesTemplateKeyInvalid": "このシリーズのシフトを一意に識別できません。シリーズを再読み込みして、もう一度お試しください。",
       "seriesFutureUnsupported": "複数日のシフトをまとめて追加できるのはこのイベントだけです。以降すべてには追加できません。",
       "waitlistFull": "このキャンセル待ちはすでに 50 人です。",
-      "alreadyWaiting": "このシフトのキャンセル待ちにすでに登録しています。"
-    }
+      "alreadyWaiting": "このシフトのキャンセル待ちにすでに登録しています。",
+      "exportFormat": "この形式ではシフト表を書き出せません。"
+    },
+    "issue": {
+      "exportRateLimited": "書き出しが多すぎます。1分後にもう一度お試しください。"
+    },
+    "rateLimited": "現在混み合っています。しばらくしてからもう一度お試しください。"
   },
   "notFound": {
     "title": "ページが見つかりません",
@@ -5653,6 +5658,25 @@
       "assignNow": "今すぐ割り当てる",
       "assignNowTitle": "今すぐ割り当てますか？",
       "assignNowMessage": "{{name}} に「{{shift}}」の空き枠を割り当て、通知します。"
+    },
+    "export": {
+      "menu": "シフト表を書き出す",
+      "title": "シフト表を書き出す",
+      "subtitle": "掲示、共有、集計に使えるファイルとして書き出します。",
+      "formatLabel": "形式",
+      "format": {
+        "pdf": "PDF",
+        "docx": "Word",
+        "xlsx": "表計算"
+      },
+      "names": "名前を含める",
+      "namesHint": "ファイルに人の名前が含まれます。",
+      "action": "書き出す",
+      "preparing": "シフト表を作成しています…",
+      "done": "シフト表を書き出しました。",
+      "truncated": "シフト表を書き出しました。1つのファイルには長すぎたため、途中で終わる位置がファイルに記載されています。",
+      "failed": "シフト表を保存できませんでした。",
+      "fileName": "shift-plan"
     }
   }
 }
