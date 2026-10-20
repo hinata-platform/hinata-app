@@ -52,6 +52,7 @@ import '../../core/widgets/frosted_surface.dart';
 import '../../core/widgets/glass_panel.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../account/account_cubit.dart';
+import '../people/person_profile_screen.dart' show PersonRouteArgs;
 import '../account/account_modals.dart' show showEditProfile;
 import '../notifications/notifications_cubit.dart';
 import '../search/global_search_dialog.dart';
