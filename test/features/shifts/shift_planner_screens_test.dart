@@ -163,6 +163,22 @@ void main() {
       }
     });
 
+    testWidgets('wide: the span pill names the view it switches to', (
+      tester,
+    ) async {
+      final cubit = await pumpCalendar(tester, width: 1280);
+      expect(find.text('Monat'), findsOneWidget);
+      expect(find.text('Woche'), findsNothing);
+      await tester.tap(find.text('Monat'));
+      await settle(tester);
+      expect(cubit.state.span, ShiftCalendarSpan.month);
+      expect(find.text('Woche'), findsOneWidget);
+      expect(find.text('Monat'), findsNothing);
+      await tester.tap(find.text('Nur unterbesetzt'));
+      await settle(tester);
+      expect(cubit.state.understaffedOnly, isTrue);
+    });
+
     testWidgets('the month marks days and opens one on tap', (tester) async {
       final cubit = await pumpCalendar(
         tester,
