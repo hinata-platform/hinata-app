@@ -998,11 +998,17 @@ class ShiftCalendar extends Equatable {
     this.events = const {},
     this.truncated = false,
     this.plannableProjectIds = const {},
+    this.eventsTruncated = false,
   });
 
   final List<Shift> shifts;
   final Map<String, ShiftEventHead> events;
   final bool truncated;
+
+  /// Whether the open events a planner could add a shift to were cut short
+  /// (HIN-166): the heads then do not name every event of the window, and a
+  /// sweep asks for the events of its own span. False from a server before it.
+  final bool eventsTruncated;
 
   /// The projects of the window the caller may plan (HIN-45): where the
   /// calendar offers moving a block.
@@ -1022,10 +1028,17 @@ class ShiftCalendar extends Equatable {
       for (final id in (json['plannableProjectIds'] as List?) ?? const [])
         if (id is String) id,
     },
+    eventsTruncated: _bool(json['eventsTruncated']),
   );
 
   @override
-  List<Object?> get props => [shifts, events, truncated, plannableProjectIds];
+  List<Object?> get props => [
+    shifts,
+    events,
+    truncated,
+    plannableProjectIds,
+    eventsTruncated,
+  ];
 }
 
 /// One person who may plan a project's shifts (`shift_planners`).
