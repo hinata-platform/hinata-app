@@ -104,6 +104,37 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     }
   }
 
+  /// Reads the rows already held again, in one request, instead of starting
+  /// over at page 0.
+  ///
+  /// [load] after a change elsewhere costs a reader who scrolled four pages
+  /// down everything below the first: the list shrinks to one page, the
+  /// scroll offset lands past its end and the next pages are asked for again.
+  /// This asks for as many rows as are held (whole pages, at most
+  /// [maxRows], the server's page cap) and swaps them in where they stand.
+  /// A failure keeps what is on screen; nothing is lost by it.
+  Future<void> refreshLoaded({int maxRows = 100}) async {
+    if (!state.hasData) return load();
+    final token = ++_token;
+    final pages = (state.items.length + pageSize - 1) ~/ pageSize;
+    final size = (pages * pageSize).clamp(pageSize, maxRows);
+    try {
+      final result = await _fetch(0, size);
+      if (token != _token) return;
+      emit(
+        PagedState<T>(
+          items: result.items,
+          total: result.total,
+          page: result.items.isEmpty
+              ? 0
+              : (result.items.length - 1) ~/ pageSize,
+        ),
+      );
+    } catch (_) {
+      // What is on screen stands.
+    }
+  }
+
   /// Loads the next page and appends it. No-op while another load is running or
   /// when no more pages remain. A failed append silently stops the spinner,
   /// keeping the pages already loaded so the user can retry by scrolling again.

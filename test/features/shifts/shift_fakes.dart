@@ -52,9 +52,14 @@ class FakeShiftRepository implements ShiftRepository {
     return value();
   }
 
+  /// The page size the last read of "Meine Schichten" asked for.
+  int? lastMineSize;
+
   @override
-  Future<PageResult<MyShift>> myShifts({int page = 0, int size = 25}) =>
-      _answer('myShifts:$page', () => minePages?[page] ?? mine);
+  Future<PageResult<MyShift>> myShifts({int page = 0, int size = 25}) {
+    lastMineSize = size;
+    return _answer('myShifts:$page', () => minePages?[page] ?? mine);
+  }
 
   @override
   Future<MyShift?> nextShift() => _answer('next', () => next);
@@ -174,6 +179,23 @@ class FakeShiftRepository implements ShiftRepository {
   /// A write's name, with its scope where it has one: `updateEvent:e1:future`.
   static String _scoped(String name, ShiftScope? scope) =>
       scope == null ? name : '$name:${scope.wire}';
+
+  @override
+  Future<List<ShiftDayMarks>> calendarMarks({
+    required DateTime from,
+    required DateTime to,
+    String? projectId,
+  }) {
+    lastProjectId = projectId;
+    final key = from.year * 100 + from.month;
+    return _answer(
+      'marks:$key:${projectId ?? 'all'}',
+      () => marksMonths[key] ?? const [],
+    );
+  }
+
+  /// The month view's marks, by `year * 100 + month`.
+  Map<int, List<ShiftDayMarks>> marksMonths = {};
 
   @override
   Future<ShiftCalendar> calendar({

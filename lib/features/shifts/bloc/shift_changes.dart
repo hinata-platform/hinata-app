@@ -66,3 +66,39 @@ class ShiftChangeDebouncer {
     await _sub.cancel();
   }
 }
+
+/// For a view the module keeps built behind the others: what a change asks to
+/// read again waits until the view is on screen, and is read then.
+///
+/// A change made in one view used to reload every view kept alive, seen or
+/// not. Now a hidden view only notes that it is stale; [refreshStale] runs
+/// once it is shown, as often as changes arrived meanwhile: one time.
+mixin ShiftStaleWhileHidden {
+  bool _visible = true;
+  bool _stale = false;
+
+  /// Whether the view is the one on screen.
+  bool get visible => _visible;
+
+  /// Told by the view as it is shown and hidden.
+  void setVisible(bool visible) {
+    if (visible == _visible) return;
+    _visible = visible;
+    if (visible && _stale) {
+      _stale = false;
+      refreshStale();
+    }
+  }
+
+  /// Reads again now when on screen, else once the view is shown.
+  void markStale() {
+    if (_visible) {
+      refreshStale();
+    } else {
+      _stale = true;
+    }
+  }
+
+  /// Reads what changed while the view was hidden, or just now.
+  void refreshStale();
+}
