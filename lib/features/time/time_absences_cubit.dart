@@ -51,6 +51,10 @@ class TimeAbsencesCubit extends Cubit<void> {
     required int size,
   }) => _absences.inbox(page: page, size: size);
 
+  /// One request, for a link that names it.
+  Future<AbsenceRequest> request(String requestId) =>
+      _absences.request(requestId);
+
   Future<AbsenceRequest> approve(String requestId) =>
       _absences.approve(requestId);
 

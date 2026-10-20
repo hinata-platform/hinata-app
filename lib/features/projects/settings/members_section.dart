@@ -10,6 +10,7 @@ import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/widgets/hit_slop.dart';
 import 'settings_common.dart';
 import '../../../core/theme/app_type.dart';
+import '../../people/person_link.dart';
 
 /// Leads & members card: member rows with a star→lead toggle and remove.
 class MembersSection extends StatelessWidget {
@@ -84,7 +85,11 @@ class _MemberRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          HiveAvatar(name: name, imageUrl: user?.avatarUrl, size: 36),
+          PersonLink(
+            personId: user?.id ?? fallbackId,
+            name: name,
+            child: HiveAvatar(name: name, imageUrl: user?.avatarUrl, size: 36),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Column(

@@ -2905,7 +2905,7 @@
     "workspace": "Workspace"
   },
   "search": {
-    "placeholder": "Vorgänge, Projekte, Personen suchen…  oder Befehl eingeben",
+    "placeholder": "Alles durchsuchen oder Befehl eingeben…",
     "archivedKeyword": "archiviert",
     "scope": {
       "all": "Alle"
@@ -2916,7 +2916,14 @@
       "projects": "Projekte",
       "people": "Personen",
       "boards": "Boards & Sprints",
-      "docs": "Wissen"
+      "docs": "Wissen",
+      "comments": "Kommentare",
+      "teams": "Teams",
+      "attachments": "Anhänge",
+      "shifts": "Schichten",
+      "time": "Zeiterfassung",
+      "absences": "Abwesenheiten",
+      "billing": "Abrechnung"
     },
     "recent": {
       "title": "Letzte Suchen",
@@ -2924,7 +2931,7 @@
     },
     "empty": {
       "title": "Durchsuche alles in {{product}}",
-      "subtitle": "Finde Vorgänge, Projekte, Personen, Boards und Dokumente — oder führe einen Befehl aus. Tippe los."
+      "subtitle": "Finde Vorgänge, Kommentare, Personen, Schichten, Zeiten und mehr oder führe einen Befehl aus. Tippe einfach los."
     },
     "noMatch": "Keine Treffer für „{{q}}“",
     "noMatchSub": "Versuche einen anderen Begriff, eine Vorgangs-ID wie HIV-241 oder einen Befehlsnamen.",
@@ -2950,8 +2957,19 @@
       "time": "Zeit",
       "timesheet": "Stundenzettel",
       "absences": "Abwesenheiten",
-      "askAbsence": "Abwesenheit beantragen"
-    }
+      "askAbsence": "Abwesenheit beantragen",
+      "shifts": "Meine Schichten"
+    },
+    "sub": {
+      "project": "{{open}} offen · {{done}} erledigt · {{members}} Mitglieder",
+      "knowledge": "Wissen",
+      "space": "Space",
+      "cancelled": "Abgesagt",
+      "timesheet": "Stundenzettel",
+      "askAbsence": "Neuen Antrag stellen",
+      "budget": "Budget"
+    },
+    "showAll": "Alle Treffer in {{cat}} anzeigen"
   },
   "settings": {
     "title": "Einstellungen",
@@ -5688,5 +5706,34 @@
       "failed": "Der Schichtplan konnte nicht gespeichert werden.",
       "fileName": "schichtplan"
     }
+  },
+  "people": {
+    "title": "Profil",
+    "you": "Das bist du",
+    "deactivated": "Deaktiviert",
+    "role": {
+      "member": "Mitglied"
+    },
+    "localTime": "Ortszeit",
+    "localTimeValue": "{{time}} · {{zone}}",
+    "today": "Heute",
+    "absentUntil": "{{type}} bis {{date}}",
+    "absentHalfDay": "{{type}}, halber Tag",
+    "actions": "Aktionen",
+    "issues": "Vorgänge dieser Person",
+    "issuesSelf": "Deine Vorgänge",
+    "email": "E-Mail schreiben",
+    "sharedTeams": "Gemeinsame Teams",
+    "ownTeams": "Deine Teams",
+    "sharedProjects": "Gemeinsame Projekte",
+    "ownProjects": "Deine Projekte",
+    "noneShared": "Ihr habt noch kein Team und kein Projekt gemeinsam.",
+    "admin": "Verwaltung",
+    "notFound": {
+      "title": "Diese Person gibt es hier nicht",
+      "message": "Das Konto wurde gelöscht oder deaktiviert."
+    },
+    "loadFailed": "Das Profil ließ sich nicht laden",
+    "open": "Profil von {{name}} öffnen"
   }
 }

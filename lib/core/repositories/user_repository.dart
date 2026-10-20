@@ -1,5 +1,6 @@
 import '../api/api_client.dart';
 import '../models/core_models.dart';
+import '../models/person_profile.dart';
 
 /// The organisation-wide user directory.
 class UserRepository {
@@ -15,6 +16,13 @@ class UserRepository {
   static const byIdsChunk = 100;
 
   final ApiClient _api;
+
+  /// One person's profile as the reader may see it (HIN-165). Fails with
+  /// `error.notFound` for an unknown or deactivated account.
+  Future<PersonProfile> profile(String id) async => PersonProfile.fromJson(
+    await _api.get('/api/v1/people/${Uri.encodeComponent(id)}')
+        as Map<String, dynamic>,
+  );
 
   Future<List<DirectoryUser>> users() async =>
       ((await _api.get('/api/v1/users')) as List<dynamic>)

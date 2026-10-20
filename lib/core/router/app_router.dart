@@ -32,6 +32,8 @@ import '../../features/issues/issues_screen.dart';
 import '../../features/issues/watched_issues_screen.dart';
 import '../../features/knowledge/knowledge_location.dart';
 import '../../features/knowledge/knowledge_screen.dart';
+import '../../features/people/person_profile_screen.dart'
+    show peopleRoute, personProfilePage;
 import '../../features/notifications/notifications_screen.dart';
 import '../../features/oauth/oauth_consent_screen.dart';
 import '../../features/onboarding/onboarding_screen.dart';
@@ -367,6 +369,8 @@ GoRouter buildRouter({
               // Dashboard KPI deep-links carry the active project scope so the
               // Issues page shows exactly the set the card counted.
               final projectsCsv = state.uri.queryParameters['projects'] ?? '';
+              // A person's profile links to that person's issues.
+              final assignee = state.uri.queryParameters['assignee'];
               final scope = projectsCsv.isEmpty
                   ? const <String>[]
                   : projectsCsv.split(',').where((s) => s.isNotEmpty).toList();
@@ -377,11 +381,12 @@ GoRouter buildRouter({
                 state,
                 IssuesScreen(
                   key: ValueKey(
-                    'issues-${view?.name ?? 'all'}-${projectId ?? ''}-${scope.join(',')}',
+                    'issues-${view?.name ?? 'all'}-${projectId ?? ''}-${scope.join(',')}-${assignee ?? ''}',
                   ),
                   projectId: projectId,
                   initialView: view,
                   scopeProjectIds: scope,
+                  assigneeId: assignee,
                 ),
               );
             },
@@ -413,6 +418,8 @@ GoRouter buildRouter({
                   onChanged: args?.onChanged,
                   // Deep link `…/issues/ID?comment=<id>` scrolls to that comment.
                   targetCommentId: state.uri.queryParameters['comment'],
+                  // `…/issues/ID?attachment=<id>` opens that file in the viewer.
+                  targetAttachmentId: state.uri.queryParameters['attachment'],
                 ),
               );
             },
@@ -451,12 +458,20 @@ GoRouter buildRouter({
           // with the module off it stays exactly where it has always been.
           GoRoute(
             path: '/timesheet',
-            redirect: (_, _) =>
+            // The query goes along: a search hit names the day to open on.
+            redirect: (_, state) =>
                 (appConfig.state.meta?.advancedTimeTracking ?? false)
-                ? '/time/timesheet'
+                ? Uri(
+                    path: '/time/timesheet',
+                    queryParameters: state.uri.queryParameters.isEmpty
+                        ? null
+                        : state.uri.queryParameters,
+                  ).toString()
                 : null,
-            pageBuilder: (_, state) =>
-                _transition(state, const TimesheetScreen()),
+            pageBuilder: (_, state) => _transition(
+              state,
+              TimesheetScreen(date: linkDay(state.uri.queryParameters['date'])),
+            ),
           ),
           // The extended time-tracking module. Its routes exist for the client
           // only while `advanced_time_tracking` is on — with the flag off the
@@ -480,21 +495,23 @@ GoRouter buildRouter({
           ),
           GoRoute(
             path: '/time/calendar',
-            pageBuilder: (_, _) => _timePage(
+            pageBuilder: (_, state) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
                 view: TimeView.calendar,
+                query: state.uri.queryParameters,
               ),
             ),
           ),
           GoRoute(
             path: '/time/timesheet',
-            pageBuilder: (_, _) => _timePage(
+            pageBuilder: (_, state) => _timePage(
               timeModulePage(
                 advancedTime:
                     appConfig.state.meta?.advancedTimeTracking ?? false,
                 view: TimeView.timesheet,
+                query: state.uri.queryParameters,
               ),
             ),
           ),
@@ -519,6 +536,7 @@ GoRouter buildRouter({
                     appConfig.state.meta?.advancedTimeTracking ?? false,
                 view: TimeView.absences,
                 scope: state.uri.queryParameters['scope'],
+                query: state.uri.queryParameters,
               ),
             ),
           ),
@@ -590,7 +608,8 @@ GoRouter buildRouter({
             pageBuilder: (_, state) => _transition(
               state,
               (appConfig.state.meta?.billing ?? false)
-                  ? const RatesScreen()
+                  // `?rate=<id>` opens that rate's timeline (search, HIN-165).
+                  ? RatesScreen(rateId: state.uri.queryParameters['rate'])
                   : const NotFoundScreen(standalone: false),
             ),
           ),
@@ -599,6 +618,13 @@ GoRouter buildRouter({
           ...shiftRoutes(
             _transition,
             enabled: () => appConfig.state.meta?.shiftPlanning ?? false,
+          ),
+          // A person's profile (HIN-165): a panel over the page it was opened
+          // from on a wide window, a page of its own otherwise.
+          GoRoute(
+            path: '$peopleRoute/:id',
+            pageBuilder: (context, state) =>
+                personProfilePage(context, state, fullPage: _transition),
           ),
           GoRoute(
             path: '/watched',
@@ -807,9 +833,10 @@ Widget timeModulePage({
   required bool advancedTime,
   TimeView view = TimeView.list,
   String? scope,
+  Map<String, String> query = const {},
 }) {
   if (!advancedTime) return const NotFoundScreen(standalone: false);
-  return TimeModuleScreen(view: view, scope: scope);
+  return TimeModuleScreen(view: view, scope: scope, query: query);
 }
 
 /// The page behind `/time/focus`.

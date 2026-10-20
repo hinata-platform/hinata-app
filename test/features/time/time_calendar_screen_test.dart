@@ -81,6 +81,7 @@ void main() {
     // — a flag that is off means no request, not a 404 on every visit.
     bool absenceManagement = false,
     AbsenceRepository? absences,
+    Widget screen = const TimeCalendarScreen(),
   }) {
     final router = GoRouter(
       routes: [
@@ -135,7 +136,7 @@ void main() {
                       ),
                     ),
                   ],
-                  child: const TimeCalendarScreen(),
+                  child: screen,
                 ),
               ),
             ),
@@ -162,6 +163,7 @@ void main() {
     TimePolicySnapshot? policyOnLoad,
     bool absenceManagement = false,
     AbsenceRepository? absences,
+    Widget screen = const TimeCalendarScreen(),
   }) async {
     tester.view.physicalSize = size;
     tester.view.devicePixelRatio = 1;
@@ -173,6 +175,7 @@ void main() {
         policyOnLoad: policyOnLoad,
         absenceManagement: absenceManagement,
         absences: absences,
+        screen: screen,
       ),
     );
     await tester.pumpAndSettle();
@@ -557,6 +560,51 @@ void main() {
 
     expect(find.text('time.entry.subtitle'), findsOneWidget);
     expect(find.text('time.entry.edit'), findsWidgets);
+  });
+
+  // HIN-165: a search hit for an entry links to `?date=&entry=`.
+  testWidgets('a link opens the calendar on its day, with the entry open', (
+    tester,
+  ) async {
+    final linked = DateTime(2025, 3, 12);
+    final repository = _FakeTimeRepository(
+      logged: [
+        entry(
+          id: 'far',
+          description: 'linked work',
+          on: linked,
+          startedAt: DateTime(2025, 3, 12, 9),
+          endedAt: DateTime(2025, 3, 12, 10),
+        ),
+      ],
+    );
+    await pump(
+      tester,
+      repository,
+      size: phone,
+      screen: TimeCalendarScreen(date: linked, entryId: 'far'),
+    );
+
+    // The month of the linked day was read, not only today's.
+    expect(
+      repository.windows.map((w) => (w.from.year, w.from.month)),
+      contains((2025, 3)),
+    );
+    expect(find.text('time.entry.subtitle'), findsOneWidget);
+    expect(find.text('time.entry.edit'), findsWidgets);
+  });
+
+  testWidgets('an entry the calendar does not hold opens nothing', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      _FakeTimeRepository(),
+      size: phone,
+      screen: TimeCalendarScreen(date: day, entryId: 'gone'),
+    );
+
+    expect(find.text('time.entry.subtitle'), findsNothing);
   });
 
   testWidgets('a long press on a month day offers an entry or an absence on '
