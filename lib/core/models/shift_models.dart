@@ -60,7 +60,7 @@ enum ShiftAssignmentStatus {
   /// Said no to a planner's assignment.
   declined,
 
-  /// Given up, or taken off by a planner.
+  /// Withdrawn by the person, or taken off by a planner.
   released,
 
   /// On the waiting list (HIN-162).

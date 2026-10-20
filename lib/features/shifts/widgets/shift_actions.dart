@@ -279,7 +279,7 @@ class ShiftOfferView extends StatelessWidget {
       );
     }
     final primary = offer.primary;
-    // An offer with only a quiet action (the waiting list, giving up) shows
+    // An offer with only a quiet action (the waiting list, withdrawing) shows
     // it everywhere: it is then the one thing to do.
     final secondary = showSecondary || primary == null ? offer.secondary : null;
     final position = secondary == ShiftAction.waitlistLeave

@@ -436,7 +436,7 @@ class _EventShiftRow extends StatelessWidget {
     }
 
     // A planner has one thing to do with a row: put somebody on it. The
-    // helper's own answer (confirm, give up) is in the sheet for them.
+    // helper's own answer (confirm, withdraw) is in the sheet for them.
     final planning = summary.canPlan && !shift.cancelled && !summary.cancelled;
     // The caller's place, named by the server (`myAssignment`): the action
     // it asks for goes right on the row, "Austragen" included.

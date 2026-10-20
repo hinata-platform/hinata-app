@@ -51,7 +51,7 @@ class ShiftActionsState extends Equatable {
 }
 
 /// The one place the helper's actions run (HIN-44): sign up, confirm,
-/// decline, give up, and leave the waiting list (HIN-162). Each announces
+/// decline, withdraw, and leave the waiting list (HIN-162). Each announces
 /// itself on [ShiftChanges] so every surface of the module catches up.
 class ShiftActionsCubit extends Cubit<ShiftActionsState> {
   ShiftActionsCubit(this._shifts, {ShiftChanges? changes})
