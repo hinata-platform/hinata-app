@@ -5512,7 +5512,13 @@
       "truncated": "Solo los primeros 2000 turnos. Elige un proyecto para verlos todos.",
       "ownZone": "Horas en tu zona",
       "none": "Esta semana no hay turnos.",
-      "noneShort": "Esta semana no falta nadie en ningún sitio."
+      "noneShort": "Esta semana no falta nadie en ningún sitio.",
+      "add": "Añadir",
+      "newEvent": "Nuevo evento",
+      "newShift": "Crear turno",
+      "newEventAt": "Nuevo evento a esta hora",
+      "whichEvent": "¿Para qué evento?",
+      "addOn": "Crear un turno el {{date}}"
     },
     "plan": {
       "addEvent": "Evento",

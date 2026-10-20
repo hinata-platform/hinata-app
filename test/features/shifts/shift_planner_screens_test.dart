@@ -136,7 +136,11 @@ void main() {
 
       await pumpCalendar(tester, plannable: {'p1'});
       expect(tester.widget<TimeGrid>(find.byType(TimeGrid)).onMoved, isNotNull);
-      expect(tester.widget<TimeGrid>(find.byType(TimeGrid)).onCreate, isNull);
+      // Since HIN-166 a planner also plans by sweeping the canvas.
+      expect(
+        tester.widget<TimeGrid>(find.byType(TimeGrid)).onCreate,
+        isNotNull,
+      );
     });
 
     testWidgets('the filter keeps only the short ones, without asking again', (

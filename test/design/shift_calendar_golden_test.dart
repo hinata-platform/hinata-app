@@ -1,7 +1,9 @@
 // The shift calendar of HIN-160 as a planner meets it: one week with an own
 // shift that is still short (check and warning), an open one (warning and
 // "fehlen 2") and a staffed one (words only), wide and on a phone, light and
-// dark, text scale 1.0 and 2.0 on the phone. Real fonts and German strings.
+// dark, text scale 1.0 and 2.0 on the phone and 2.0 wide. Since HIN-166 the
+// week opens an hour before its first shift and a planner has a "+" beside
+// the span pill. Real fonts and German strings.
 
 import 'dart:io';
 
@@ -66,6 +68,8 @@ void main() {
     (width: 1180.0, scale: 1.0),
     (width: 390.0, scale: 1.0),
     (width: 390.0, scale: 2.0),
+    // The week's headings at 200 % on a wide window (HIN-166).
+    (width: 1440.0, scale: 2.0),
   ];
   for (final c in cases) {
     for (final dark in const [false, true]) {
@@ -112,6 +116,8 @@ void main() {
               ),
             ],
             events: const {'e1': sampleEvent},
+            // A planner (HIN-166): the "+" beside the span pill.
+            plannableProjectIds: const {'p1'},
           );
         final cubit = ShiftCalendarCubit(repo, focused: DateTime(2026, 10, 24));
         addTearDown(cubit.close);
