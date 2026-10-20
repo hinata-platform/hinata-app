@@ -499,25 +499,27 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     await showShiftEditor(
       context,
       event: event,
-      start: ShiftZones.toWall(span.start, zone, _deviceZone),
-      end: ShiftZones.toWall(span.end, zone, _deviceZone),
+      wallSpan: (
+        start: ShiftZones.toWall(span.start, zone, _deviceZone),
+        end: ShiftZones.toWall(span.end, zone, _deviceZone),
+      ),
     );
   }
 
   /// "Neues Event mit dieser Zeit": the event editor on [span], and once the
   /// event is saved, its first shift with the same time.
   Future<void> _newEventThenShift(TimeGridSpan span) async {
-    final saved = await _newEvent(start: span.start, end: span.end);
+    final saved = await _newEvent(span: span);
     if (saved == null || !mounted) return;
     await _openShiftEditor(saved, span);
   }
 
   /// The event editor for a new event, narrowed to the calendar's project
   /// when it is one the caller plans. Resolves to the event saved.
+  /// [span] is on the device's clock, as the calendar draws.
   Future<ShiftEventSummary?> _newEvent({
     DateTime? day,
-    DateTime? start,
-    DateTime? end,
+    TimeGridSpan? span,
   }) async {
     final cubit = _cubit;
     final state = cubit.state;
@@ -530,8 +532,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
       projectName: state.projectName,
       plannable: plannable,
       day: day,
-      start: start,
-      end: end,
+      deviceSpan: span,
     );
     if (saved == null || !mounted) return null;
     final event = saved.event?.summary;

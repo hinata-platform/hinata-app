@@ -206,10 +206,14 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     String? projectName,
     String? deviceZone,
     DateTime? day,
-    DateTime? start,
-    DateTime? end,
+    ({DateTime start, DateTime end})? deviceSpan,
     this.previewDelay = const Duration(milliseconds: 400),
-  }) : _deviceZone = deviceZone,
+  }) : assert(day == null || deviceSpan == null, 'a day or a span, not both'),
+       assert(
+         deviceSpan == null || deviceSpan.end.isAfter(deviceSpan.start),
+         'a span ends after it starts',
+       ),
+       _deviceZone = deviceZone,
        super(
          _initial(
            existing,
@@ -217,8 +221,7 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
            projectName,
            deviceZone,
            day,
-           start,
-           end,
+           deviceSpan,
          ),
        );
 
@@ -362,8 +365,7 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     String? projectName,
     String? deviceZone,
     DateTime? day,
-    DateTime? start,
-    DateTime? end,
+    ({DateTime start, DateTime end})? deviceSpan,
   ) {
     final e = existing?.summary;
     if (e != null) {
@@ -379,7 +381,7 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
         selfAssignable: e.selfAssignable,
       );
     }
-    if (start != null && end != null && end.isAfter(start)) {
+    if (deviceSpan case (:final start, :final end)) {
       // "Neues Event mit dieser Zeit" (HIN-166): the span swept out on the
       // calendar, in the device's zone the calendar draws in.
       return ShiftEventEditorState(
