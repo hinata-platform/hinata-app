@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/shift_models.dart';
 import 'package:hinata/features/shifts/bloc/my_shifts_snapshot_cubit.dart';
 import 'package:hinata/features/shifts/bloc/next_shift_cubit.dart';
@@ -560,6 +561,27 @@ void main() {
         expect(find.text('Warteliste verlassen'), findsOneWidget);
       });
     }
+
+    testWidgets('Meine Schichten says when the waiting lists fail', (
+      tester,
+    ) async {
+      repo
+        ..mine = (items: [sampleMine()], total: 1)
+        ..waitingFailure = ApiFailure('errors.unexpected');
+      await pumpShiftsUi(
+        tester,
+        MyShiftsPage(now: () => DateTime(2026, 10, 20, 12)),
+        repository: repo,
+        blocs: blocs(),
+      );
+      await settle(tester);
+      expect(tester.takeException(), isNull);
+      expect(find.text('WARTELISTE'), findsOneWidget);
+      expect(
+        find.text('Deine Wartelisten ließen sich gerade nicht laden.'),
+        findsOneWidget,
+      );
+    });
 
     testWidgets('the sheet of a promoted place: deadline, confirm, give up', (
       tester,
