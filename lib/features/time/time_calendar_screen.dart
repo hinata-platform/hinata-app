@@ -73,17 +73,27 @@ import '../../core/theme/app_type.dart';
 /// already takes wall-clock times, so that stage converts on the way in without
 /// touching the grid.
 class TimeCalendarScreen extends StatelessWidget {
-  const TimeCalendarScreen({super.key});
+  const TimeCalendarScreen({super.key, this.date, this.entryId});
+
+  /// The day a link names (`?date=`): the week span opens on it.
+  final DateTime? date;
+
+  /// The entry a link names (`?entry=`): its sheet opens once the days around
+  /// [date] are read. An id the calendar does not hold opens nothing.
+  final String? entryId;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => TimeCalendarCubit(context.read<TimeRepository>()),
-    child: const _TimeCalendarView(),
+    child: _TimeCalendarView(date: date, entryId: entryId),
   );
 }
 
 class _TimeCalendarView extends StatefulWidget {
-  const _TimeCalendarView();
+  const _TimeCalendarView({this.date, this.entryId});
+
+  final DateTime? date;
+  final String? entryId;
 
   @override
   State<_TimeCalendarView> createState() => _TimeCalendarViewState();
@@ -130,12 +140,16 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   Map<int, List<TimeGridItem>> _eventsByDay = const {};
 
   /// The day the week span is reading — the one the canvas draws and the strip
-  /// marks.
-  DateTime _focused = _today();
+  /// marks. A link's day when it names one.
+  late DateTime _focused = widget.date ?? _today();
+
+  /// The entry a link asked to open, until it is found among the held months
+  /// (and opened) or its day is read without it.
+  late String? _linkedEntry = widget.entryId;
 
   /// The month the scroller centres on when [_jump] is bumped. Never moved by a
   /// scroll — which is what keeps the ground still under a finger.
-  DateTime _monthAnchor = DateTime(_today().year, _today().month);
+  late DateTime _monthAnchor = DateTime(_focused.year, _focused.month);
 
   /// Bumped for every deliberate jump. The scroller re-centres on the token,
   /// not on the anchor: pressing "today" while already anchored on this month
@@ -144,7 +158,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
   int _jump = 0;
 
   /// The month the scroller has scrolled to, which is what the title says.
-  DateTime _visibleMonth = DateTime(_today().year, _today().month);
+  late DateTime _visibleMonth = DateTime(_focused.year, _focused.month);
 
   /// Everything held, by [monthKey].
   ///
@@ -314,6 +328,52 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
     _layerMemo.clear();
   }
 
+  /// A link to another day or entry while the calendar is on screen: the
+  /// module keeps this page, so the new target is shown from here.
+  @override
+  void didUpdateWidget(_TimeCalendarView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.date == oldWidget.date && widget.entryId == oldWidget.entryId) {
+      return;
+    }
+    final date = widget.date;
+    _linkedEntry = widget.entryId;
+    // After the frame: moving the pager is a scroll, which must not happen
+    // while this widget is being rebuilt.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (date != null) {
+        if (_span != _Span.week) setState(() => _span = _Span.week);
+        _focusDay(date);
+      }
+      _openLinkedEntry();
+    });
+  }
+
+  /// Opens the entry a link named, once a held month has it. Given up when the
+  /// month of the focused day has been read without it — an entry of somebody
+  /// else, or one since deleted, opens nothing.
+  void _openLinkedEntry() {
+    final id = _linkedEntry;
+    if (id == null || id.isEmpty) return;
+    for (final window in _months.values) {
+      for (final item in window.items) {
+        final data = item.data;
+        if (data is WorkItem && data.id == id) {
+          _linkedEntry = null;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(_openEntry(item));
+          });
+          return;
+        }
+      }
+    }
+    final key = monthKey(_focused);
+    if (_months.containsKey(key) || _failed.containsKey(key)) {
+      _linkedEntry = null;
+    }
+  }
+
   @override
   void dispose() {
     _pager.dispose();
@@ -421,6 +481,7 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
       _evict();
       _regroup();
     });
+    _openLinkedEntry();
   }
 
   /// One month's answer, so [_ensure] can apply the lot in a single frame.

@@ -95,7 +95,6 @@ class UserDrawerBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final u = user;
-    final lastAdmin = actions.isLastActiveAdmin(u);
     // Clearance so the last action (delete) scrolls clear of the device's home
     // indicator on the phone bottom sheet. On the desktop drawer this is 0 — its
     // SafeArea wrapper has already consumed the inset.
@@ -181,40 +180,10 @@ class UserDrawerBody extends StatelessWidget {
           child: ListView(
             padding: EdgeInsets.fromLTRB(20, 18, 20, 28 + bottomInset),
             children: [
-              _factsGrid(context, u),
-              if (u.inviteExpired) ...[
-                const SizedBox(height: 18),
-                _expiredBanner(context, u),
-              ],
-              const SizedBox(height: 22),
-              // The roles, each with one line on what it grants: the
-              // organisation role is a switch of its own, beside the platform
-              // role and independent of it (HIN-129).
-              _sectionLabel(context, context.t('admin.um.roles')),
-              const SizedBox(height: 12),
-              OrgAdminToggle(user: u, actions: actions),
-              const SizedBox(height: 22),
-              _sectionLabel(context, context.t('admin.um.manage')),
-              const SizedBox(height: 12),
-              ..._manageActions(context, u, lastAdmin),
-              const SizedBox(height: 22),
-              _sectionLabel(context, context.t('admin.um.activity')),
-              const SizedBox(height: 12),
-              ..._timeline(context, u),
-              const SizedBox(height: 22),
-              _sectionLabel(context, context.t('admin.um.dangerZone')),
-              const SizedBox(height: 12),
-              _ActRow(
-                icon: LucideIcons.trash2,
-                title: context.t('admin.um.deleteThisUser'),
-                subtitle: context.t('admin.um.deleteThisUserSub'),
-                danger: true,
-                enabled: !lastAdmin,
-                disabledReason: context.t('admin.um.reasonLastAdmin'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  actions.openDelete([u.id]);
-                },
+              UserAdminSections(
+                user: u,
+                actions: actions,
+                onDismiss: () => Navigator.of(context).pop(),
               ),
             ],
           ),
@@ -222,16 +191,86 @@ class UserDrawerBody extends StatelessWidget {
       ],
     );
   }
+}
+
+/// The administration of one account: its facts, its roles, the lifecycle
+/// actions, its history and the danger zone.
+///
+/// The body of the admin area's drawer, and the admin's part of a person's
+/// profile (HIN-165), so both offer the same actions with the same safeguards.
+/// [onDismiss] runs before an action that opens a dialog of its own: the
+/// drawer closes, a profile page stays where it is.
+class UserAdminSections extends StatelessWidget {
+  const UserAdminSections({
+    super.key,
+    required this.user,
+    required this.actions,
+    required this.onDismiss,
+  });
+
+  final AdminUser user;
+  final UserActions actions;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final u = user;
+    final lastAdmin = actions.isLastActiveAdmin(u);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _factsGrid(context, u),
+        if (u.inviteExpired) ...[
+          const SizedBox(height: 18),
+          _expiredBanner(context, u),
+        ],
+        const SizedBox(height: 22),
+        // The roles, each with one line on what it grants: the
+        // organisation role is a switch of its own, beside the platform
+        // role and independent of it (HIN-129).
+        _sectionLabel(context, context.t('admin.um.roles')),
+        const SizedBox(height: 12),
+        OrgAdminToggle(user: u, actions: actions),
+        const SizedBox(height: 22),
+        _sectionLabel(context, context.t('admin.um.manage')),
+        const SizedBox(height: 12),
+        ..._manageActions(context, u, lastAdmin),
+        const SizedBox(height: 22),
+        _sectionLabel(context, context.t('admin.um.activity')),
+        const SizedBox(height: 12),
+        ..._timeline(context, u),
+        const SizedBox(height: 22),
+        _sectionLabel(context, context.t('admin.um.dangerZone')),
+        const SizedBox(height: 12),
+        _ActRow(
+          icon: LucideIcons.trash2,
+          title: context.t('admin.um.deleteThisUser'),
+          subtitle: context.t('admin.um.deleteThisUserSub'),
+          danger: true,
+          enabled: !lastAdmin,
+          disabledReason: context.t('admin.um.reasonLastAdmin'),
+          onTap: () {
+            onDismiss();
+            actions.openDelete([u.id]);
+          },
+        ),
+      ],
+    );
+  }
 
   Widget _sectionLabel(BuildContext context, String text) => Row(
     children: [
-      Text(
-        text,
-        style: TextStyle(
-          fontSize: AppType.caption,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0.3,
-          color: AppColors.inkSoft,
+      // Flexible: under large text a long label wraps instead of running
+      // past the panel's edge.
+      Flexible(
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: AppType.caption,
+            fontWeight: FontWeight.w800,
+            letterSpacing: 0.3,
+            color: AppColors.inkSoft,
+          ),
         ),
       ),
       const SizedBox(width: 10),
@@ -356,7 +395,7 @@ class UserDrawerBody extends StatelessWidget {
     bool lastAdmin,
   ) {
     final rows = <Widget>[];
-    void close() => Navigator.of(context).pop();
+    void close() => onDismiss();
 
     if (u.status == UserStatus.invited) {
       rows.add(

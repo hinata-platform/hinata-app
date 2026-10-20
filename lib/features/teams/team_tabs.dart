@@ -25,6 +25,7 @@ import 'team_modal_kit.dart' show KnowledgeAccessChip;
 import 'team_widgets.dart';
 import '../../core/widgets/folded_hint.dart';
 import '../../core/theme/app_type.dart';
+import '../people/person_link.dart';
 
 part 'team_tabs.members_projects.dart';
 part 'team_tabs.settings.dart';

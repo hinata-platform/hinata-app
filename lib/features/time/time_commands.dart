@@ -58,6 +58,22 @@ final List<PaletteCommand> kTimeCommands = [
     onSelect: (context) => unawaited(askForAbsence(context)),
   ),
   const PaletteCommand.route(
+    id: 'time.calendar',
+    labelKey: 'time.view.calendar',
+    contextKey: 'nav.time',
+    icon: LucideIcons.calendarDays,
+    route: '/time/calendar',
+    keywords: 'time calendar day week entries',
+  ),
+  const PaletteCommand.route(
+    id: 'time.approvals',
+    labelKey: 'time.view.approvals',
+    contextKey: 'nav.time',
+    icon: LucideIcons.badgeCheck,
+    route: '/time/approvals',
+    keywords: 'approvals approve timesheets submitted review',
+  ),
+  const PaletteCommand.route(
     id: 'time.timesheet',
     labelKey: 'search.cmd.timesheet',
     icon: LucideIcons.table,

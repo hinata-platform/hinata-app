@@ -27,6 +27,7 @@ class ShiftsScreen extends StatefulWidget {
     super.key,
     this.view = ShiftsView.mine,
     this.eventId,
+    this.shiftId,
     this.calendarQuery = const ShiftCalendarQuery(),
   });
 
@@ -35,6 +36,10 @@ class ShiftsScreen extends StatefulWidget {
 
   /// The event at `/shifts/events/:id`, null on the three views.
   final String? eventId;
+
+  /// The shift of [eventId] whose sheet opens over the event
+  /// (`/shifts/events/:id?shift=`).
+  final String? shiftId;
 
   /// What `/shifts/calendar?project=&span=&date=` asks for.
   final ShiftCalendarQuery calendarQuery;
@@ -80,7 +85,7 @@ class _ShiftsScreenState extends State<ShiftsScreen> {
         BlocProvider.value(value: _planning),
       ],
       child: eventId != null
-          ? ShiftEventScreen(eventId: eventId)
+          ? ShiftEventScreen(eventId: eventId, shiftId: widget.shiftId)
           : IndexedStack(
               index: ShiftsView.values.indexOf(widget.view),
               sizing: StackFit.expand,

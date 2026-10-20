@@ -342,6 +342,51 @@ void main() {
     expect(find.text('absence.request.withdraw'), findsNothing);
   });
 
+  // --- links (HIN-165) ---------------------------------------------------------
+
+  testWidgets('a link naming a request opens it', (tester) async {
+    // Not in the list on screen: the request is read by its id.
+    final repository = _FakeRequests(inbox: [request(id: 'r7')]);
+    await tester.pumpWidget(
+      host(
+        repository,
+        child: const TimeAbsencesScreen(scope: 'requests', requestId: 'r7'),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Somebody else's request, so the sheet offers the decision.
+    expect(find.text('absence.request.approve'), findsOneWidget);
+    expect(find.text('absence.request.reject'), findsOneWidget);
+  });
+
+  testWidgets('a link naming a type opens a new request of that type', (
+    tester,
+  ) async {
+    const training = AbsenceType(
+      id: 't-training',
+      key: 'training',
+      kind: AbsenceKind.training,
+      name: 'Fortbildung',
+      requiresApproval: true,
+    );
+    await tester.pumpWidget(
+      host(
+        _FakeRequests(),
+        types: const [_vacationType, training],
+        child: const TimeAbsencesScreen(
+          scope: 'requests',
+          typeId: 't-training',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('absence.request.subtitle'), findsOneWidget);
+    // Not the vacation the form would otherwise have guessed.
+    expect(find.text('Fortbildung'), findsOneWidget);
+  });
+
   // --- the form ---------------------------------------------------------------
 
   testWidgets('the form previews what a span costs before anybody commits', (

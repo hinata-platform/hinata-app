@@ -94,7 +94,15 @@ class _MemberRow extends StatelessWidget {
           final narrow = c.maxWidth < 460;
           final identity = Row(
             children: [
-              HiveAvatar(name: name, imageUrl: user?.avatarUrl, size: 38),
+              PersonLink(
+                personId: membership.userId,
+                name: name,
+                child: HiveAvatar(
+                  name: name,
+                  imageUrl: user?.avatarUrl,
+                  size: 38,
+                ),
+              ),
               const SizedBox(width: 13),
               Expanded(
                 child: Column(

@@ -3,9 +3,12 @@ part of 'global_search_dialog.dart';
 // ─────────────────────────────── pieces ─────────────────────────────────────
 
 class _IconTile extends StatelessWidget {
-  const _IconTile({required this.tokens, required this.icon});
+  const _IconTile({required this.tokens, required this.icon, this.color});
   final SearchTokens tokens;
   final IconData icon;
+
+  /// The glyph's own colour, where the hit brings one (a team's hue).
+  final Color? color;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +21,7 @@ class _IconTile extends StatelessWidget {
         border: Border.all(color: tokens.hairline),
       ),
       alignment: Alignment.center,
-      child: Icon(icon, size: 17, color: tokens.inkSoft),
+      child: Icon(icon, size: 17, color: color ?? tokens.inkSoft),
     );
   }
 }
@@ -89,7 +92,7 @@ class _ScopeChip extends StatelessWidget {
   final SearchTokens tokens;
   final IconData icon;
   final String label;
-  final int? count;
+  final String? count;
   final bool active;
   final VoidCallback onTap;
 
@@ -130,7 +133,7 @@ class _ScopeChip extends StatelessWidget {
                 if (count != null) ...[
                   const SizedBox(width: 6),
                   Text(
-                    '$count',
+                    count!,
                     style: TextStyle(
                       fontFamily: AppTheme.fontMono,
                       fontSize: AppType.caption,
@@ -229,28 +232,72 @@ class _GroupLabel extends StatelessWidget {
     required this.tokens,
     required this.icon,
     required this.label,
+    this.onShowAll,
   });
   final SearchTokens tokens;
   final IconData icon;
   final String label;
 
+  /// Narrows the palette to this category, for a group that stopped at the
+  /// overview's cap. Null when the group shows everything there is.
+  final VoidCallback? onShowAll;
+
   @override
   Widget build(BuildContext context) {
+    final showAll = onShowAll;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 14, 12, 7),
+      padding: showAll == null
+          ? const EdgeInsets.fromLTRB(12, 14, 12, 7)
+          : const EdgeInsetsDirectional.fromSTEB(12, 9, 6, 2),
       child: Row(
         children: [
           Icon(icon, size: 13, color: tokens.inkFaint),
           const SizedBox(width: 7),
-          Text(
-            label.toUpperCase(),
-            style: TextStyle(
-              fontSize: AppType.caption,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: tokens.inkFaint,
+          Flexible(
+            child: Text(
+              label.toUpperCase(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: AppType.caption,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: tokens.inkFaint,
+              ),
             ),
           ),
+          if (showAll != null) ...[
+            const Spacer(),
+            // Says which category it opens; the visible words alone would
+            // read "Show all" five times over to a screen reader.
+            Semantics(
+              button: true,
+              label: context.t('search.showAll', variables: {'cat': label}),
+              excludeSemantics: true,
+              onTap: showAll,
+              child: Material(
+                type: MaterialType.transparency,
+                child: InkWell(
+                  onTap: showAll,
+                  borderRadius: BorderRadius.circular(6),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 5,
+                    ),
+                    child: Text(
+                      context.t('common.seeAll'),
+                      style: TextStyle(
+                        fontSize: AppType.caption,
+                        fontWeight: FontWeight.w600,
+                        color: tokens.inkSoft,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -278,16 +325,17 @@ class _RecentsHead extends StatelessWidget {
           : const EdgeInsets.fromLTRB(12, 14, 12, 7),
       child: Row(
         children: [
-          Text(
-            context.t('search.recent.title').toUpperCase(),
-            style: TextStyle(
-              fontSize: AppType.caption,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.8,
-              color: tokens.inkFaint,
+          Expanded(
+            child: Text(
+              context.t('search.recent.title').toUpperCase(),
+              style: TextStyle(
+                fontSize: AppType.caption,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.8,
+                color: tokens.inkFaint,
+              ),
             ),
           ),
-          const Spacer(),
           if (hasItems)
             Semantics(
               button: true,

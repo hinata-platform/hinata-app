@@ -89,6 +89,7 @@ class IssuesScreen extends StatefulWidget {
     this.projectId,
     this.initialView,
     this.scopeProjectIds = const [],
+    this.assigneeId,
   });
 
   final String? projectId;
@@ -99,6 +100,10 @@ class IssuesScreen extends StatefulWidget {
   /// Project scope carried from the dashboard so a KPI deep-link reproduces the
   /// same project selection the card was counted with. Empty ⇒ all projects.
   final List<String> scopeProjectIds;
+
+  /// Opens the list on one person's issues (`/issues?assignee=<id>`), the
+  /// link a person's profile offers (HIN-165).
+  final String? assigneeId;
 
   @override
   State<IssuesScreen> createState() => _IssuesScreenState();
@@ -937,6 +942,9 @@ class _IssuesScreenState extends State<IssuesScreen> {
         // projects' workflow/resolved states.
         if (!_initialViewApplied && widget.initialView != null) {
           _applyInitialView(widget.initialView!, projects);
+          _initialViewApplied = true;
+        } else if (!_initialViewApplied && widget.assigneeId != null) {
+          _filter = IssueFilter(assignees: {widget.assigneeId!});
           _initialViewApplied = true;
         }
       });

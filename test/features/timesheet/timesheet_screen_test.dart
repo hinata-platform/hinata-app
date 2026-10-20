@@ -73,6 +73,8 @@ void main() {
     bool moduleView = false,
     bool dockedBand = false,
     TimePolicySnapshot policy = TimePolicySnapshot.none,
+    DateTime? date,
+    String? projectId,
   }) {
     final router = GoRouter(
       routes: [
@@ -146,7 +148,11 @@ void main() {
                             create: (_) => FakeMyAbsencesCubit(managed: false),
                           ),
                         ],
-                        child: TimesheetScreen(moduleView: moduleView),
+                        child: TimesheetScreen(
+                          moduleView: moduleView,
+                          date: date,
+                          projectId: projectId,
+                        ),
                       ),
                     ),
                   ),
@@ -533,6 +539,53 @@ void main() {
       // and a week's table names a handful.
       expect(projects.resolved, hasLength(1));
       expect(projects.resolved.single, ['p1']);
+    });
+  });
+
+  // HIN-165: search hits link to `?date=` (an entry's week) and to
+  // `?date=&project=` (a timesheet period of one project).
+  group('a link', () {
+    testWidgets('opens on the week of the day it names', (tester) async {
+      final base = _FakeTimesheetRepository(const []);
+      final linked = DateTime(2025, 3, 12); // a Wednesday
+      await tester.pumpWidget(
+        host(rows: const [], timesheet: base, date: linked),
+      );
+      await tester.pumpAndSettle();
+
+      // The week that holds the day, whichever day the locale starts it on.
+      final call = base.calls.single;
+      expect(call.from.isAfter(linked), isFalse);
+      expect(call.to.isBefore(linked), isFalse);
+      expect(call.projectId, isNull);
+    });
+
+    testWidgets('narrows to the project it names, and names it', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1400, 900);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final base = _FakeTimesheetRepository([
+        row(userId: 'u1', projectId: 'p1'),
+      ]);
+      await tester.pumpWidget(
+        host(
+          rows: const [],
+          timesheet: base,
+          admin: true,
+          date: monday,
+          projectId: 'p1',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final call = base.calls.single;
+      expect(call.projectId, 'p1');
+      expect(call.from.isAfter(monday), isFalse);
+      expect(call.to.isBefore(monday), isFalse);
+      expect(find.text('timesheet.allProjects'), findsNothing);
+      expect(find.text('Hinata'), findsWidgets);
     });
   });
 
