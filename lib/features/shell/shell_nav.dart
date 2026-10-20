@@ -55,11 +55,27 @@ NavDestination timeDestination({required bool advancedTime}) => advancedTime
     ? const NavDestination('/time', 'nav.time', LucideIcons.timer)
     : const NavDestination('/timesheet', 'nav.timesheet', LucideIcons.table);
 
+/// Where shift planning lives, while `shift_planning` is on.
+const shiftsRoute = '/shifts';
+
+/// The entry of the shift planning module (HIN-27). It exists only while the
+/// server reports the module on; with it off there is no entry at all, not a
+/// greyed one, because the module is simply not on this server.
+const shiftsDestination = NavDestination(
+  shiftsRoute,
+  'nav.shifts',
+  LucideIcons.calendarClock,
+);
+
 /// The desktop rail's second group ("PLAN").
-List<NavDestination> secondaryDestinations({required bool advancedTime}) => [
+List<NavDestination> secondaryDestinations({
+  required bool advancedTime,
+  required bool shiftPlanning,
+}) => [
   const NavDestination('/watched', 'nav.watched', LucideIcons.eye),
   const NavDestination('/gantt', 'nav.gantt', LucideIcons.chartColumnStacked),
   timeDestination(advancedTime: advancedTime),
+  if (shiftPlanning) shiftsDestination,
   const NavDestination('/reports', 'nav.reports', LucideIcons.chartLine),
   const NavDestination('/knowledge', 'nav.knowledge', LucideIcons.bookOpen),
 ];
@@ -68,21 +84,31 @@ List<NavDestination> secondaryDestinations({required bool advancedTime}) => [
 ///
 /// Notifications are deliberately absent — they live in the always-visible top
 /// bar bell, so they need no entry here.
-List<NavDestination> moreSheetDestinations({required bool advancedTime}) => [
+List<NavDestination> moreSheetDestinations({
+  required bool advancedTime,
+  required bool shiftPlanning,
+}) => [
   const NavDestination('/projects', 'nav.projects', LucideIcons.folder),
   const NavDestination('/teams', 'nav.teams', LucideIcons.usersRound),
   const NavDestination('/watched', 'nav.watched', LucideIcons.eye),
   const NavDestination('/gantt', 'nav.gantt', LucideIcons.chartColumnStacked),
   timeDestination(advancedTime: advancedTime),
+  if (shiftPlanning) shiftsDestination,
   const NavDestination('/reports', 'nav.reports', LucideIcons.chartLine),
   const NavDestination('/knowledge', 'nav.knowledge', LucideIcons.bookOpen),
 ];
 
 /// Every destination that can be on screen right now, in nav order — the list
 /// the compact app bar searches to name the page it is sitting above.
-List<NavDestination> allDestinations({required bool advancedTime}) => [
+List<NavDestination> allDestinations({
+  required bool advancedTime,
+  required bool shiftPlanning,
+}) => [
   ...primaryDestinations,
-  ...secondaryDestinations(advancedTime: advancedTime),
+  ...secondaryDestinations(
+    advancedTime: advancedTime,
+    shiftPlanning: shiftPlanning,
+  ),
 ];
 
 /// Whether the nav entry for [navRoute] should read as active at [location].
@@ -103,6 +129,8 @@ bool isNavActive(
   if (navRoute == '/teams') {
     return location.startsWith('/teams');
   }
+  // On segment boundaries, so a future `/shifts-…` page never lights it.
+  if (navRoute == shiftsRoute) return isShiftsRoute(location);
   // `/timesheet` starts with `/time`, so a plain prefix test cannot tell these
   // two entries apart — and which of them owns the other is exactly what the
   // flag decides. With the module on, the timesheet is one of its pages and
@@ -137,6 +165,16 @@ const sharedEntriesRoute = '/time/shared';
 
 bool isTimeModuleRoute(String location) =>
     location == '/time' || location.startsWith('/time/');
+
+/// Whether [location] is one of the shift planning module's pages.
+bool isShiftsRoute(String location) =>
+    location == shiftsRoute || location.startsWith('$shiftsRoute/');
+
+/// Whether [location] is one event of the shift planning module, the one
+/// shifts page that is a sub-page with a way back rather than a view of the
+/// destination.
+bool _isShiftEventRoute(String location) =>
+    location.startsWith('$shiftsRoute/events/');
 
 /// Whether the phone's floating timer bar belongs over [location].
 ///
@@ -179,7 +217,15 @@ double pageContentMax(String location) {
 /// A "sub-page" shows a back button and its own title instead of the brand mark.
 /// The key here is only the fallback; pages with a dynamic title (an issue, an
 /// article, a board) override it through `PageChrome`.
-String? subPageTitleKey(String location, {required bool advancedTime}) {
+///
+/// [shiftPlanning] defaults to off, so a caller that has no reason to know
+/// about the module reads its routes as not found, which is what they are on a
+/// server without it.
+String? subPageTitleKey(
+  String location, {
+  required bool advancedTime,
+  bool shiftPlanning = false,
+}) {
   if (location == '/admin') return 'admin.title';
   if (location == '/organization') return 'org.title';
   if (location.startsWith('/organization/holidays')) {
@@ -220,6 +266,14 @@ String? subPageTitleKey(String location, {required bool advancedTime}) {
   if (isTimeModuleRoute(location)) {
     return advancedTime ? null : 'notFound.title';
   }
+  // Shift planning (HIN-27) follows the time module: with the module off every
+  // route of it is the not-found page and says so. With it on, the three
+  // views (mine, calendar, events) are one destination and carry the page's
+  // own head; one event is a sub-page with a way back to the events.
+  if (isShiftsRoute(location)) {
+    if (!shiftPlanning) return 'notFound.title';
+    return _isShiftEventRoute(location) ? 'nav.shifts' : null;
+  }
   if (location.startsWith('/issues/')) return 'nav.issues';
   if (location.startsWith('/knowledge/')) return 'nav.knowledge';
   if (location.startsWith('/board/')) return 'nav.board';
@@ -249,6 +303,7 @@ String subPageBackRoute(String location) {
   if (location.startsWith('/absences/')) return '/settings';
   if (location == sharedEntriesRoute) return '/time';
   if (location.startsWith('/time/invoices/')) return '/time/invoices';
+  if (_isShiftEventRoute(location)) return '$shiftsRoute/events';
   if (location == '/time/invoices' || location == '/time/rates') {
     return '/time/reports';
   }

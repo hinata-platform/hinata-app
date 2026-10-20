@@ -135,6 +135,11 @@ class _AppShellState extends State<AppShell> {
     final advancedTime = context.select<AppConfigBloc, bool>(
       (bloc) => bloc.state.meta?.advancedTimeTracking ?? false,
     );
+    // Shift planning (HIN-27) the same way: an admin switching it on or off
+    // adds or removes the entry while the app runs.
+    final shiftPlanning = context.select<AppConfigBloc, bool>(
+      (bloc) => bloc.state.meta?.shiftPlanning ?? false,
+    );
     // `widget.location` (from the ShellRoute builder's state) goes STALE after
     // an imperative `push` of a nested route — it keeps reporting the underlying
     // page (e.g. `/board`) while a pushed `/issues/:id` is on screen, so the top
@@ -169,11 +174,13 @@ class _AppShellState extends State<AppShell> {
                         location: location,
                         immersive: immersive,
                         advancedTime: advancedTime,
+                        shiftPlanning: shiftPlanning,
                         child: content,
                       )
                     : _WideShell(
                         location: location,
                         advancedTime: advancedTime,
+                        shiftPlanning: shiftPlanning,
                         child: content,
                       );
               },
@@ -190,6 +197,9 @@ class _AppShellState extends State<AppShell> {
   bool get _advancedTime =>
       context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false;
 
+  bool get _shiftPlanning =>
+      context.read<AppConfigBloc>().state.meta?.shiftPlanning ?? false;
+
   /// Whether the swipe-back gesture has anywhere to go right now: something
   /// on a navigator stack, an in-page back override, or a sub-page's parent
   /// route. Primary tabs (dashboard, issues, board, …) don't swipe — the
@@ -199,7 +209,12 @@ class _AppShellState extends State<AppShell> {
     if (router.canPop()) return true;
     final location = router.state.matchedLocation;
     return _chrome.onBackFor(location) != null ||
-        subPageTitleKey(location, advancedTime: _advancedTime) != null;
+        subPageTitleKey(
+              location,
+              advancedTime: _advancedTime,
+              shiftPlanning: _shiftPlanning,
+            ) !=
+            null;
   }
 
   /// Routes the system back (Android back button / edge-swipe gesture) through
@@ -221,7 +236,12 @@ class _AppShellState extends State<AppShell> {
       override();
       return true;
     }
-    if (subPageTitleKey(location, advancedTime: _advancedTime) != null) {
+    if (subPageTitleKey(
+          location,
+          advancedTime: _advancedTime,
+          shiftPlanning: _shiftPlanning,
+        ) !=
+        null) {
       router.go(subPageBackRoute(location));
       return true;
     }

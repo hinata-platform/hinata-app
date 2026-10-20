@@ -19,6 +19,7 @@ void main() {
     Map<String, dynamic> settings, {
     VoidCallback? onOpenTimeTracking,
     double width = 900,
+    bool shiftPlanningAvailable = true,
   }) => MaterialApp(
     debugShowCheckedModeBanner: false,
     home: Scaffold(
@@ -29,6 +30,7 @@ void main() {
             child: AdminAppSection(
               settings: settings,
               onOpenTimeTracking: onOpenTimeTracking,
+              shiftPlanningAvailable: shiftPlanningAvailable,
             ),
           ),
         ),
@@ -165,10 +167,98 @@ void main() {
     });
   });
 
+  group('the shift planning switch (HIN-49)', () {
+    testWidgets('writes the stored override, not a raw flag', (tester) async {
+      final settings = <String, dynamic>{
+        'shifts': <String, dynamic>{'enabled': false},
+      };
+      await tester.pumpWidget(host(settings));
+      await tester.pumpAndSettle();
+
+      expect(find.text('admin.shiftPlanning.label'), findsOneWidget);
+      final toggle = find.descendant(
+        of: find.byKey(const ValueKey('shiftPlanningSwitch')),
+        matching: find.byType(HiveSwitch),
+      );
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+
+      expect((settings['shifts'] as Map<String, dynamic>)['enabled'], isTrue);
+      final flags = (settings['app'] as Map<String, dynamic>?)?['featureFlags'];
+      expect(
+        (flags as Map<String, dynamic>?)?.containsKey(
+              PlatformFlags.shiftPlanning,
+            ) ??
+            false,
+        isFalse,
+      );
+    });
+
+    testWidgets('absent shows what the environment resolves to', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        host(<String, dynamic>{
+          'shifts': <String, dynamic>{
+            'effective': <String, dynamic>{'enabled': false},
+          },
+        }),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.descendant(
+          of: find.byKey(const ValueKey('shiftPlanningSwitch')),
+          matching: find.text('admin.timeTracking.envDefault: admin.stateOff'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('without a replica set: the reason, and no switch', (
+      tester,
+    ) async {
+      final settings = <String, dynamic>{};
+      await tester.pumpWidget(host(settings, shiftPlanningAvailable: false));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const ValueKey('shiftPlanningSwitch')), findsNothing);
+      final row = find.byKey(const ValueKey('shiftPlanningUnavailable'));
+      expect(row, findsOneWidget);
+      expect(
+        find.descendant(
+          of: row,
+          matching: find.text('admin.shiftPlanning.unavailable'),
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.byType(HiveSwitch)),
+        findsNothing,
+      );
+      // Nothing written: a switch that cannot take effect stores nothing.
+      expect(settings.containsKey('shifts'), isFalse);
+    });
+  });
+
   for (final width in <double>[320, 420, 900]) {
     testWidgets('lays out without overflow at ${width}px', (tester) async {
       await tester.pumpWidget(
         host(<String, dynamic>{}, onOpenTimeTracking: () {}, width: width),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('the replica set hint fits at ${width}px', (tester) async {
+      await tester.pumpWidget(
+        host(
+          <String, dynamic>{},
+          onOpenTimeTracking: () {},
+          width: width,
+          shiftPlanningAvailable: false,
+        ),
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
