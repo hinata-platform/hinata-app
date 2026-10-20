@@ -307,6 +307,22 @@ class ApiClient {
     idempotent: true,
   );
 
+  /// [get] that [cancelToken] aborts, for a request a newer one supersedes
+  /// (the palette's search while the person keeps typing). An aborted request
+  /// fails like any other; the caller has already moved on and drops it.
+  Future<dynamic> getCancellable(
+    String path, {
+    Map<String, dynamic>? query,
+    required CancelToken cancelToken,
+  }) => _run(
+    () => _dio.get<dynamic>(
+      _url(path),
+      queryParameters: query,
+      cancelToken: cancelToken,
+    ),
+    idempotent: true,
+  );
+
   /// [get] with the response's headers, for a list whose headers say more
   /// about it than its body does (`X-Truncated` when the server cut it short).
   Future<({dynamic data, String? Function(String name) header})> getWithHeaders(
