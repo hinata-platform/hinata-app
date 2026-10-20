@@ -206,9 +206,21 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     String? projectName,
     String? deviceZone,
     DateTime? day,
+    DateTime? start,
+    DateTime? end,
     this.previewDelay = const Duration(milliseconds: 400),
   }) : _deviceZone = deviceZone,
-       super(_initial(existing, projectId, projectName, deviceZone, day));
+       super(
+         _initial(
+           existing,
+           projectId,
+           projectName,
+           deviceZone,
+           day,
+           start,
+           end,
+         ),
+       );
 
   final ShiftRepository _shifts;
 
@@ -350,6 +362,8 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     String? projectName,
     String? deviceZone,
     DateTime? day,
+    DateTime? start,
+    DateTime? end,
   ) {
     final e = existing?.summary;
     if (e != null) {
@@ -365,13 +379,24 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
         selfAssignable: e.selfAssignable,
       );
     }
+    if (start != null && end != null && end.isAfter(start)) {
+      // "Neues Event mit dieser Zeit" (HIN-166): the span swept out on the
+      // calendar, in the device's zone the calendar draws in.
+      return ShiftEventEditorState(
+        projectId: projectId,
+        projectName: projectName,
+        start: start,
+        end: end,
+        timezone: deviceZone,
+      );
+    }
     final base = day ?? DateTime.now().add(const Duration(days: 7));
-    final start = DateTime(base.year, base.month, base.day, 10);
+    final opens = DateTime(base.year, base.month, base.day, 10);
     return ShiftEventEditorState(
       projectId: projectId,
       projectName: projectName,
-      start: start,
-      end: start.add(const Duration(hours: 8)),
+      start: opens,
+      end: opens.add(const Duration(hours: 8)),
       timezone: deviceZone,
     );
   }
