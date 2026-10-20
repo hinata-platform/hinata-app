@@ -671,9 +671,16 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                 ),
               ),
             if (state.span == ShiftCalendarSpan.month)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 4),
-                child: MonthWeekdayHeader(),
+              Padding(
+                // Wide, the month keeps the page's gutter like the week does;
+                // on a phone it runs edge to edge, as the time calendar's.
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 0 : context.pageGutter,
+                  0,
+                  compact ? 0 : context.pageGutter,
+                  4,
+                ),
+                child: const MonthWeekdayHeader(),
               ),
             Expanded(
               child: Listener(
@@ -762,22 +769,29 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
       );
     }
     if (state.span == ShiftCalendarSpan.month) {
-      return TimeMonthScroller(
-        anchor: DateTime(state.focused.year, state.focused.month),
-        jump: _jump,
-        revision: state.revision,
-        now: _now,
-        itemsForDay: (_) => const [],
-        marksOnly: true,
-        dotsOn: _dotsOn,
-        failureFor: (key) => state.marksFailed[key],
-        onNeedMonths: (months) => unawaited(_cubit.ensureMonths(months)),
-        onMonthChanged: (_) {},
-        onTapDay: (day) {
-          _cubit.openDay(day);
-          WidgetsBinding.instance.addPostFrameCallback((_) => _jumpPager(day));
-        },
-        onRetryMonth: (month) => unawaited(_cubit.retry(month)),
+      return Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: compact ? 0 : context.pageGutter,
+        ),
+        child: TimeMonthScroller(
+          anchor: DateTime(state.focused.year, state.focused.month),
+          jump: _jump,
+          revision: state.revision,
+          now: _now,
+          itemsForDay: (_) => const [],
+          marksOnly: true,
+          dotsOn: _dotsOn,
+          failureFor: (key) => state.marksFailed[key],
+          onNeedMonths: (months) => unawaited(_cubit.ensureMonths(months)),
+          onMonthChanged: (_) {},
+          onTapDay: (day) {
+            _cubit.openDay(day);
+            WidgetsBinding.instance.addPostFrameCallback(
+              (_) => _jumpPager(day),
+            );
+          },
+          onRetryMonth: (month) => unawaited(_cubit.retry(month)),
+        ),
       );
     }
     final grid = compact
