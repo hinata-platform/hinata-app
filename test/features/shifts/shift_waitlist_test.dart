@@ -121,7 +121,7 @@ void main() {
       expect(offer.secondary, ShiftAction.waitlistLeave);
     });
 
-    test('promoted: confirm first, give up second', () {
+    test('promoted: confirm first, withdraw second', () {
       final shift = sampleShift(
         mine: true,
         myStatus: ShiftAssignmentStatus.assigned,
@@ -597,7 +597,7 @@ void main() {
       );
     });
 
-    testWidgets('the sheet of a promoted place: deadline, confirm, give up', (
+    testWidgets('the sheet of a promoted place: deadline, confirm, withdraw', (
       tester,
     ) async {
       repo.shiftDetail = ShiftDetail(
