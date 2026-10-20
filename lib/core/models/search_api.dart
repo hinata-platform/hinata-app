@@ -59,7 +59,7 @@ class SearchApiHit {
   final String? subtitle;
   final String? readableId;
 
-  /// Issue type. A server before [rateLevel] put a rate's level here.
+  /// Issue type.
   final String? type;
   final String? state;
   final String? assigneeName;
@@ -108,8 +108,7 @@ class SearchApiHit {
   final DateTime? to;
   final int? minutes;
 
-  /// `SUBMITTED`… for a timesheet or an absence request. A server before
-  /// [rateKind] put a rate's kind here.
+  /// `SUBMITTED`… for a timesheet or an absence request.
   final String? status;
   final String? icon;
   final int? hue;
@@ -117,67 +116,58 @@ class SearchApiHit {
   final String? currency;
 
   /// What a `RATE` applies to (`PROJECT`, `PROJECT_MEMBER`, `ISSUE`, `USER`,
-  /// `TEAM`, `DEFAULT`). Falls back to [type] for a server that predates it.
+  /// `TEAM`, `DEFAULT`).
   final String? rateLevel;
 
-  /// Whether a `RATE` is `BILLABLE` or `COST`. Falls back to [status] for a
-  /// server that predates it.
+  /// Whether a `RATE` is `BILLABLE` or `COST`.
   final String? rateKind;
 
-  factory SearchApiHit.fromJson(Map<String, dynamic> json) {
-    // A server before `rateLevel`/`rateKind` carried both in `type`/`status`.
-    final legacyRate = json['kind'] == 'RATE';
-    return SearchApiHit(
-      category: json['category'] as String? ?? '',
-      id: json['id'] as String? ?? '',
-      route: json['route'] as String? ?? '/',
-      title: json['title'] as String? ?? '',
-      subtitle: json['subtitle'] as String?,
-      readableId: json['readableId'] as String?,
-      type: json['type'] as String?,
-      state: json['state'] as String?,
-      assigneeName: json['assigneeName'] as String?,
-      assigneeAvatarUrl: json['assigneeAvatarUrl'] as String?,
-      avatarUrl: json['avatarUrl'] as String?,
-      projectKey: json['projectKey'] as String?,
-      projectColor: json['projectColor'] as String?,
-      openCount: (json['openCount'] as num?)?.toInt(),
-      doneCount: (json['doneCount'] as num?)?.toInt(),
-      memberNames: ((json['memberNames'] as List<dynamic>?) ?? const [])
-          .cast<String>(),
-      space: json['space'] as String?,
-      updatedAt: parseInstant(json['updatedAt']),
-      archived: json['archived'] as bool? ?? false,
-      kind: json['kind'] as String?,
-      username: json['username'] as String?,
-      key: json['key'] as String?,
-      projectId: json['projectId'] as String?,
-      projectName: json['projectName'] as String?,
-      issueId: json['issueId'] as String?,
-      authorName: json['authorName'] as String?,
-      createdAt: parseInstant(json['createdAt']),
-      contentType: json['contentType'] as String?,
-      size: (json['size'] as num?)?.toInt(),
-      startsAt: parseInstant(json['startsAt']),
-      endsAt: parseInstant(json['endsAt']),
-      location: json['location'] as String?,
-      cancelled: json['cancelled'] as bool? ?? false,
-      from: parseDate(json['from']),
-      to: parseDate(json['to']),
-      minutes: (json['minutes'] as num?)?.toInt(),
-      status: json['status'] as String?,
-      icon: json['icon'] as String?,
-      hue: (json['hue'] as num?)?.toInt(),
-      amountCents: (json['amountCents'] as num?)?.toInt(),
-      currency: json['currency'] as String?,
-      rateLevel:
-          json['rateLevel'] as String? ??
-          (legacyRate ? json['type'] as String? : null),
-      rateKind:
-          json['rateKind'] as String? ??
-          (legacyRate ? json['status'] as String? : null),
-    );
-  }
+  factory SearchApiHit.fromJson(Map<String, dynamic> json) => SearchApiHit(
+    category: json['category'] as String? ?? '',
+    id: json['id'] as String? ?? '',
+    route: json['route'] as String? ?? '/',
+    title: json['title'] as String? ?? '',
+    subtitle: json['subtitle'] as String?,
+    readableId: json['readableId'] as String?,
+    type: json['type'] as String?,
+    state: json['state'] as String?,
+    assigneeName: json['assigneeName'] as String?,
+    assigneeAvatarUrl: json['assigneeAvatarUrl'] as String?,
+    avatarUrl: json['avatarUrl'] as String?,
+    projectKey: json['projectKey'] as String?,
+    projectColor: json['projectColor'] as String?,
+    openCount: (json['openCount'] as num?)?.toInt(),
+    doneCount: (json['doneCount'] as num?)?.toInt(),
+    memberNames: ((json['memberNames'] as List<dynamic>?) ?? const [])
+        .cast<String>(),
+    space: json['space'] as String?,
+    updatedAt: parseInstant(json['updatedAt']),
+    archived: json['archived'] as bool? ?? false,
+    kind: json['kind'] as String?,
+    username: json['username'] as String?,
+    key: json['key'] as String?,
+    projectId: json['projectId'] as String?,
+    projectName: json['projectName'] as String?,
+    issueId: json['issueId'] as String?,
+    authorName: json['authorName'] as String?,
+    createdAt: parseInstant(json['createdAt']),
+    contentType: json['contentType'] as String?,
+    size: (json['size'] as num?)?.toInt(),
+    startsAt: parseInstant(json['startsAt']),
+    endsAt: parseInstant(json['endsAt']),
+    location: json['location'] as String?,
+    cancelled: json['cancelled'] as bool? ?? false,
+    from: parseDate(json['from']),
+    to: parseDate(json['to']),
+    minutes: (json['minutes'] as num?)?.toInt(),
+    status: json['status'] as String?,
+    icon: json['icon'] as String?,
+    hue: (json['hue'] as num?)?.toInt(),
+    amountCents: (json['amountCents'] as num?)?.toInt(),
+    currency: json['currency'] as String?,
+    rateLevel: json['rateLevel'] as String?,
+    rateKind: json['rateKind'] as String?,
+  );
 }
 
 class SearchApiGroup {
