@@ -330,7 +330,11 @@ class _Content extends StatelessWidget {
                     label: context.t('shifts.plan.delete'),
                     icon: LucideIcons.trash2,
                     onPressed: () => unawaited(
-                      deleteShiftAsking(context, shift).then((gone) {
+                      deleteShiftAsking(
+                        context,
+                        shift,
+                        event: detail.event,
+                      ).then((gone) {
                         if (gone && context.mounted) {
                           Navigator.of(context).maybePop();
                         }

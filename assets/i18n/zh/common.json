@@ -191,7 +191,18 @@
       "titleRequired": "请输入名称。",
       "tooManyShifts": "一个活动最多 200 个班次。",
       "windowInvalid": "无法读取这个时间段。",
-      "windowTooLarge": "这个时间段太长。"
+      "windowTooLarge": "这个时间段太长。",
+      "rruleUnsupported": "不支持此重复规则。可以按天、按周的指定星期或按月的某一天重复，间隔 1 到 100，并设置结束日期或次数。",
+      "rruleTooComplex": "此重复规则计算量过大，请选择更简单的规则。",
+      "seriesTooLarge": "一个系列在未来 90 天内最多可有 2000 个班次。请减少每个活动的班次，或降低重复频率。",
+      "seriesScopeRequired": "此活动属于一个系列。请选择更改仅适用于此活动，还是适用于以后的全部活动。",
+      "seriesFromInPast": "系列只能从今天起更改，不能从已过去的活动起更改。",
+      "seriesShiftHasAssignments": "以后的活动中仍有人在这个班次上。请先将他们移出，然后才能从系列中移除该班次。",
+      "seriesStartOutOfRange": "第一个活动最早可在一年前，最晚可在两年后。",
+      "seriesTooManyShifts": "系列中的一个活动最多可有 50 个班次。",
+      "seriesTooManyExdates": "此系列已移除 366 个活动。请为以后的安排新建一个系列。",
+      "seriesTemplateKeyInvalid": "此系列的班次无法唯一识别。请重新加载系列后再试。",
+      "seriesFutureUnsupported": "一次添加多天的班次只能用于此活动，不能用于以后的全部活动。"
     }
   },
   "notFound": {
@@ -5559,6 +5570,69 @@
         "deleteTitle": "删除活动？",
         "deleteMessage": "活动及其所有班次都会被删除。如果仍有人报名，请先取消活动。"
       }
+    },
+    "series": {
+      "scope": {
+        "message": "此活动属于一个系列。要应用到哪些活动？",
+        "messageLabel": "此活动属于系列“{{label}}”。要应用到哪些活动？",
+        "thisHint": "仅 {{date}} 的活动。之后它不再跟随系列变化。",
+        "futureHint": "{{date}} 的活动及之后全部。过去的活动保持不变。",
+        "futureCancelHint": "系列到此结束。{{date}} 的活动及之后全部将取消。",
+        "futureDeleteHint": "系列在 {{date}} 之前结束。已有人报名的活动将取消，其余的删除。过去的活动保留。",
+        "ruleOnlyFuture": "新规则始终适用于此活动及之后的全部活动。",
+        "batchOnlyThis": "一次添加到多天的班次只会加到此活动。",
+        "this": "仅此一次",
+        "future": "以后全部"
+      },
+      "ask": {
+        "save": "保存系列中的活动",
+        "cancel": "取消系列中的活动",
+        "delete": "删除系列中的活动",
+        "move": "移动班次",
+        "addShift": "添加班次",
+        "editShift": "更改班次",
+        "deleteShift": "删除班次"
+      },
+      "repeat": {
+        "label": "重复",
+        "never": "从不",
+        "daily": "每天",
+        "weekly": "每周{{day}}",
+        "monthly": "每月 {{day}} 日",
+        "custom": "自定义规则"
+      },
+      "custom": {
+        "back": "返回",
+        "unit": {
+          "daily": "按天",
+          "weekly": "按周",
+          "monthly": "按月"
+        },
+        "every": "间隔",
+        "interval": {
+          "daily": "每天",
+          "daily_plural": "每 {{count}} 天",
+          "weekly": "每周",
+          "weekly_plural": "每 {{count}} 周",
+          "monthly": "每月",
+          "monthly_plural": "每 {{count}} 个月"
+        },
+        "days": "在这些日子",
+        "monthDay": "每月 {{day}} 日，与开始日相同。",
+        "end": "结束",
+        "endNever": "永不",
+        "endCount": "按次数",
+        "endUntil": "按日期",
+        "times": "{{count}} 次",
+        "times_plural": "{{count}} 次",
+        "apply": "应用"
+      },
+      "next": "接下来：{{dates}}",
+      "done": {
+        "created": "系列已创建，{{count}} 个活动已在日历中。",
+        "created_plural": "系列已创建，{{count}} 个活动已在日历中。"
+      },
+      "detached": "与系列不同"
     }
   }
 }
