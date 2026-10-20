@@ -26,6 +26,7 @@ void main() {
     mcp: true,
     workloadReports: true,
     absenceReports: true,
+    approvals: true,
   );
 
   Iterable<String> ids(PaletteAccess access) =>
@@ -53,7 +54,6 @@ void main() {
         'time.focus',
         'time.list',
         'time.calendar',
-        'time.approvals',
         'time.timesheet',
         'time.absences',
         'time.askAbsence',
@@ -132,6 +132,23 @@ void main() {
     final admin = ids(const PaletteAccess(admin: true));
     expect(admin, contains('admin.users'));
     expect(admin, isNot(contains('organization')));
+  });
+
+  test('approvals are listed only where they are switched on', () {
+    const time = SearchModules(advancedTime: true);
+    expect(
+      ids(const PaletteAccess(modules: time)),
+      isNot(contains('time.approvals')),
+    );
+    expect(
+      ids(const PaletteAccess(modules: time, approvals: true)),
+      contains('time.approvals'),
+    );
+    // Without the module there is no approvals page at all.
+    expect(
+      ids(const PaletteAccess(approvals: true)),
+      isNot(contains('time.approvals')),
+    );
   });
 
   test('a report tab is listed only where the report shows it', () {
