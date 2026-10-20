@@ -204,8 +204,13 @@
       "seriesTemplateKeyInvalid": "Die Schichten dieser Serie sind nicht eindeutig. Bitte lade die Serie neu und versuch es noch einmal.",
       "seriesFutureUnsupported": "Schichten an mehreren Tagen auf einmal lassen sich nur für dieses Event anlegen, nicht für alle künftigen.",
       "waitlistFull": "Auf dieser Warteliste stehen schon 50 Personen.",
-      "alreadyWaiting": "Du stehst schon auf der Warteliste dieser Schicht."
-    }
+      "alreadyWaiting": "Du stehst schon auf der Warteliste dieser Schicht.",
+      "exportFormat": "Den Schichtplan gibt es nicht in diesem Format."
+    },
+    "issue": {
+      "exportRateLimited": "Zu viele Exporte. Versuch es in einer Minute noch einmal."
+    },
+    "rateLimited": "Gerade ist viel los. Versuch es gleich noch einmal."
   },
   "notFound": {
     "title": "Seite nicht gefunden",
@@ -5653,6 +5658,25 @@
       "assignNow": "Jetzt zuteilen",
       "assignNowTitle": "Jetzt zuteilen?",
       "assignNowMessage": "{{name}} bekommt den freien Platz in „{{shift}}“ und wird benachrichtigt."
+    },
+    "export": {
+      "menu": "Schichtplan exportieren",
+      "title": "Schichtplan exportieren",
+      "subtitle": "Der Plan als Datei zum Aushängen, Weitergeben oder Weiterrechnen.",
+      "formatLabel": "Format",
+      "format": {
+        "pdf": "PDF",
+        "docx": "Word",
+        "xlsx": "Tabelle"
+      },
+      "names": "Mit Namen",
+      "namesHint": "Die Datei enthält dann Namen von Personen.",
+      "action": "Exportieren",
+      "preparing": "Schichtplan wird erstellt …",
+      "done": "Schichtplan exportiert.",
+      "truncated": "Schichtplan exportiert. Er war für eine Datei zu lang, die Datei sagt, wo sie endet.",
+      "failed": "Der Schichtplan konnte nicht gespeichert werden.",
+      "fileName": "schichtplan"
     }
   }
 }

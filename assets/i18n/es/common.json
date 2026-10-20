@@ -204,8 +204,13 @@
       "seriesTemplateKeyInvalid": "Los turnos de esta serie no son únicos. Vuelve a cargar la serie e inténtalo de nuevo.",
       "seriesFutureUnsupported": "Los turnos de varios días a la vez solo se pueden añadir a este evento, no a todos los siguientes.",
       "waitlistFull": "Esta lista de espera ya tiene 50 personas.",
-      "alreadyWaiting": "Ya estás en la lista de espera de este turno."
-    }
+      "alreadyWaiting": "Ya estás en la lista de espera de este turno.",
+      "exportFormat": "El plan de turnos no está disponible en este formato."
+    },
+    "issue": {
+      "exportRateLimited": "Demasiadas exportaciones. Inténtalo de nuevo en un minuto."
+    },
+    "rateLimited": "Hay mucha actividad ahora mismo. Inténtalo de nuevo en un momento."
   },
   "notFound": {
     "title": "Página no encontrada",
@@ -5653,6 +5658,25 @@
       "assignNow": "Asignar ahora",
       "assignNowTitle": "¿Asignar ahora?",
       "assignNowMessage": "{{name}} recibe la plaza libre en «{{shift}}» y se le avisa."
+    },
+    "export": {
+      "menu": "Exportar plan de turnos",
+      "title": "Exportar plan de turnos",
+      "subtitle": "El plan como archivo para colgar, compartir o seguir trabajando.",
+      "formatLabel": "Formato",
+      "format": {
+        "pdf": "PDF",
+        "docx": "Word",
+        "xlsx": "Hoja de cálculo"
+      },
+      "names": "Con nombres",
+      "namesHint": "El archivo contendrá nombres de personas.",
+      "action": "Exportar",
+      "preparing": "Preparando el plan de turnos…",
+      "done": "Plan de turnos exportado.",
+      "truncated": "Plan de turnos exportado. Era demasiado largo para un archivo; el archivo indica dónde termina.",
+      "failed": "No se pudo guardar el plan de turnos.",
+      "fileName": "plan-de-turnos"
     }
   }
 }

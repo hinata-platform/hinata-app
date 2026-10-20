@@ -28,6 +28,7 @@ import '../widgets/shift_editor.dart';
 import '../widgets/shift_event_editor.dart';
 import '../widgets/series_scope_dialog.dart';
 import '../widgets/shift_plan_actions.dart';
+import '../widgets/shift_plan_export.dart';
 import '../shift_texts.dart';
 import '../widgets/coverage_hex.dart';
 import '../widgets/shift_actions.dart';
@@ -64,16 +65,18 @@ class ShiftEventView extends StatelessWidget {
     final canPlan = detail?.summary.canPlan ?? false;
     return PageChrome(
       title: detail?.summary.title ?? context.t('shifts.event.title'),
-      actions: detail == null || !canPlan
+      actions: detail == null
           ? const []
           : [
+              // Everybody who sees the event may take its plan out (HIN-163);
+              // the rest of "Mehr" is the planner's.
               PageAction(
                 icon: LucideIcons.ellipsis,
                 label: context.t('shifts.plan.event.menu'),
                 onTap: (anchor) =>
                     unawaited(_eventMenu(context, detail, anchor)),
               ),
-              if (!detail.summary.cancelled)
+              if (canPlan && !detail.summary.cancelled)
                 PageAction(
                   icon: LucideIcons.plus,
                   label: context.t('shifts.plan.addShift'),
@@ -112,52 +115,62 @@ Future<void> _addShift(BuildContext context, ShiftEventDetail detail) async {
   if (saved) unawaited(cubit.load());
 }
 
-enum _EventMenu { edit, cancel, delete }
+enum _EventMenu { export, edit, cancel, delete }
 
-/// The event's "Mehr": change it, call it off, delete it.
+/// The event's "Mehr": export its plan; for a planner also change it, call it
+/// off, delete it.
 Future<void> _eventMenu(
   BuildContext context,
   ShiftEventDetail detail,
   Rect? anchor,
 ) async {
   final cubit = context.read<ShiftEventCubit>();
-  final planning = context.read<ShiftPlanningCubit>();
   final summary = detail.summary;
+  final canPlan = summary.canPlan;
   final rect = anchor ?? anchorRectOfContext(context) ?? Rect.zero;
   final picked = await showGlassMenu<_EventMenu>(
     context: context,
     anchorRect: rect,
-    value: _EventMenu.edit,
+    value: _EventMenu.export,
     width: 260,
     items: [
       GlassMenuItem(
-        value: _EventMenu.edit,
-        label: context.t('shifts.plan.event.edit'),
-        leading: Icon(
-          LucideIcons.squarePen,
-          size: 16,
-          color: AppColors.inkSoft,
-        ),
+        value: _EventMenu.export,
+        label: context.t('shifts.export.menu'),
+        leading: Icon(LucideIcons.fileDown, size: 16, color: AppColors.inkSoft),
       ),
-      if (!detail.summary.cancelled)
+      if (canPlan) ...[
         GlassMenuItem(
-          value: _EventMenu.cancel,
-          label: context.t('shifts.plan.event.cancel'),
-          leading: Icon(LucideIcons.ban, size: 16, color: AppColors.inkSoft),
+          value: _EventMenu.edit,
+          label: context.t('shifts.plan.event.edit'),
+          leading: Icon(
+            LucideIcons.squarePen,
+            size: 16,
+            color: AppColors.inkSoft,
+          ),
         ),
-      GlassMenuItem(
-        value: _EventMenu.delete,
-        label: context.t('shifts.plan.event.delete'),
-        leading: const Icon(
-          LucideIcons.trash2,
-          size: 16,
-          color: AppColors.danger,
+        if (!detail.summary.cancelled)
+          GlassMenuItem(
+            value: _EventMenu.cancel,
+            label: context.t('shifts.plan.event.cancel'),
+            leading: Icon(LucideIcons.ban, size: 16, color: AppColors.inkSoft),
+          ),
+        GlassMenuItem(
+          value: _EventMenu.delete,
+          label: context.t('shifts.plan.event.delete'),
+          leading: const Icon(
+            LucideIcons.trash2,
+            size: 16,
+            color: AppColors.danger,
+          ),
         ),
-      ),
+      ],
     ],
   );
   if (picked == null || !context.mounted) return;
   switch (picked) {
+    case _EventMenu.export:
+      await exportShiftPlan(context, summary, anchor: anchor);
     case _EventMenu.edit:
       final saved = await showShiftEventEditor(context, existing: detail);
       if (saved?.event case final event?) cubit.applyEvent(event);
@@ -185,7 +198,10 @@ Future<void> _eventMenu(
         );
         if (sure != true || !context.mounted) return;
       }
-      final outcome = await planning.cancelEvent(summary.id, scope: scope);
+      final outcome = await context.read<ShiftPlanningCubit>().cancelEvent(
+        summary.id,
+        scope: scope,
+      );
       if (!context.mounted) return;
       announcePlanOutcome(context, outcome);
       if (outcome.event case final event?) cubit.applyEvent(event);
@@ -212,7 +228,10 @@ Future<void> _eventMenu(
         );
         if (sure != true || !context.mounted) return;
       }
-      final outcome = await planning.deleteEvent(summary.id, scope: scope);
+      final outcome = await context.read<ShiftPlanningCubit>().deleteEvent(
+        summary.id,
+        scope: scope,
+      );
       if (!context.mounted) return;
       announcePlanOutcome(context, outcome);
       if (outcome.ok) context.go(ShiftsView.events.route);
