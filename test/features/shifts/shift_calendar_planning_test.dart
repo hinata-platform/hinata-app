@@ -219,6 +219,83 @@ void main() {
       },
     );
 
+    test('cut-short heads: a sweep reads its own span once', () async {
+      final late = event(
+        'e9',
+        title: 'Herbstmarkt',
+        start: DateTime(2026, 10, 30, 8),
+        end: DateTime(2026, 10, 30, 18),
+      );
+      repo.calendarAll = ShiftCalendar(
+        events: heads([fair]),
+        plannableProjectIds: const {'p1'},
+        eventsTruncated: true,
+      );
+      repo.eventPage = (items: [late], total: 1);
+      final cubit = calendar();
+      addTearDown(cubit.close);
+      await cubit.start();
+      await Future<void>.delayed(Duration.zero);
+      repo.calls.clear();
+
+      final from = DateTime(2026, 10, 30, 10);
+      final until = DateTime(2026, 10, 30, 12);
+      expect(cubit.createTarget(from, until).none, isTrue);
+      final target = await cubit.resolveTarget(from, until);
+      expect(target.only, late);
+      expect(repo.calls, ['events:all:0']);
+      expect(repo.lastFrom, from);
+      expect(repo.lastTo, until);
+    });
+
+    test('whole heads: a sweep asks for nothing', () async {
+      repo.calendarAll = ShiftCalendar(
+        events: heads([fair]),
+        plannableProjectIds: const {'p1'},
+      );
+      final cubit = calendar();
+      addTearDown(cubit.close);
+      await cubit.start();
+      await Future<void>.delayed(Duration.zero);
+      repo.calls.clear();
+      final target = await cubit.resolveTarget(
+        DateTime(2026, 10, 24, 10),
+        DateTime(2026, 10, 24, 11),
+      );
+      expect(target.only, fair);
+      expect(repo.calls, isEmpty);
+    });
+
+    test('projects are named only for the choice, all at once', () async {
+      repo.calendarAll = ShiftCalendar(
+        events: heads([
+          fair,
+          event('e3', projectId: 'p2', start: fair.startsAt, end: fair.endsAt),
+        ]),
+        plannableProjectIds: const {'p1', 'p2'},
+      );
+      final asked = <String>[];
+      final cubit = ShiftCalendarCubit(
+        repo,
+        focused: DateTime(2026, 10, 24),
+        changes: bus.stream,
+        projectNameOf: (id) async {
+          asked.add(id);
+          return id == 'p1' ? 'Sommerfest' : 'Kasse';
+        },
+      );
+      addTearDown(cubit.close);
+      await cubit.start();
+      await Future<void>.delayed(Duration.zero);
+      expect(asked, isEmpty);
+
+      await cubit.nameProjects(['p1', 'p2', 'p1']);
+      expect(asked, ['p1', 'p2']);
+      expect(cubit.state.projectNames, {'p1': 'Sommerfest', 'p2': 'Kasse'});
+      await cubit.nameProjects(['p2']);
+      expect(asked, hasLength(2));
+    });
+
     test(
       'a filter on a project the caller does not plan offers nothing',
       () async {

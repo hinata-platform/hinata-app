@@ -439,7 +439,9 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     await Future<void>.value();
     if (!mounted) return;
     final anchor = _pointerRect;
-    await _place(_cubit.createTarget(span.start, span.end), anchor);
+    final target = await _cubit.resolveTarget(span.start, span.end);
+    if (!mounted) return;
+    await _place(target, anchor);
   }
 
   /// Puts a new shift where [target] says: straight into the editor on its
@@ -447,6 +449,9 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   Future<void> _place(ShiftCreateTarget target, Rect? anchor) async {
     final only = target.only;
     if (only != null) return _openShiftEditor(only, target.spanFor(only));
+    // The projects are named for the choice alone, so only now.
+    await _cubit.nameProjects(target.events.map((event) => event.projectId));
+    if (!mounted) return;
     final state = _cubit.state;
     final picked = await showGlassOptions<Object>(
       context,
@@ -580,11 +585,12 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     }
     final hour = (_now.hour + 1).clamp(0, 23);
     final start = DateTime(on.year, on.month, on.day, hour);
-    final target = _cubit.createTarget(
+    final target = await _cubit.resolveTarget(
       start,
       start.add(const Duration(hours: 1)),
       wholeDay: true,
     );
+    if (!mounted) return;
     await _place(target, anchor);
   }
 
