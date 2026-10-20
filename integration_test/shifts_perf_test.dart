@@ -30,6 +30,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:hinata/core/router/app_router.dart' show rootNavigatorKey;
+import 'package:hinata/core/widgets/time_grid/time_grid.dart';
 import 'package:hinata/main.dart' as app;
 
 import 'support/sign_in.dart';
@@ -235,6 +236,34 @@ void main() {
         '/shifts/calendar?span=week&date=2026-10-26',
       ]) {
         GoRouter.of(rootNavigatorKey.currentContext!).go(route);
+        await _pumpFor(tester, const Duration(milliseconds: 900));
+      }
+    });
+
+    // HIN-166: a planner sweeps out a span on empty canvas, a frame per
+    // pointer sample, and lets go; the editor or the choice of event opens
+    // and is closed again. The raster p90 should stay where the week's is.
+    await go('/shifts/calendar?span=week&date=2026-10-26');
+    await measure('calendar_week_sweep', () async {
+      for (var i = 0; i < 3; i++) {
+        final grid = tester.getRect(find.byType(TimeGrid).first);
+        // The last day of the week, a third of the way down: Sunday is the
+        // column the demo fair leaves emptiest.
+        final from = Offset(
+          grid.right - 40,
+          grid.top + kTimeGridHeader + grid.height * 0.3,
+        );
+        final gesture = await tester.startGesture(
+          from,
+          kind: PointerDeviceKind.mouse,
+        );
+        for (var step = 0; step < 45; step++) {
+          await gesture.moveBy(const Offset(0, 4));
+          await tester.pump(const Duration(milliseconds: 8));
+        }
+        await gesture.up();
+        await _pumpFor(tester, const Duration(milliseconds: 1200));
+        await rootNavigatorKey.currentState?.maybePop();
         await _pumpFor(tester, const Duration(milliseconds: 900));
       }
     });

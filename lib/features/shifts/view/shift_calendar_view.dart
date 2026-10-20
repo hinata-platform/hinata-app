@@ -16,7 +16,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/theme/glass_chrome.dart' show GlassCircleButton;
 import '../../../core/util/dates.dart' show addDays, weekStartFor;
 import '../../../core/widgets/glass_filter_bar.dart'
-    show GlassFilterPill, kGlassControlHeight, kGlassDockRow;
+    show GlassFilterPill, GlassPill, kGlassControlHeight, kGlassDockRow;
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_empty_state.dart';
@@ -34,13 +34,20 @@ import '../../../core/widgets/time_grid/time_month_layout.dart'
 import '../../../core/widgets/time_grid/time_week_strip.dart';
 import '../../shell/page_chrome.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassConfirm, showGlassToast;
+    show
+        GlassToastKind,
+        anchorRectOfContext,
+        showGlassConfirm,
+        showGlassOptions,
+        showGlassToast;
 import '../bloc/shift_calendar_cubit.dart';
 import '../shift_texts.dart';
 import '../shift_views.dart';
 import '../shift_zones.dart';
 import '../widgets/shift_visibility.dart';
 import '../widgets/series_scope_dialog.dart';
+import '../widgets/shift_editor.dart' show showShiftEditor;
+import '../widgets/shift_event_editor.dart' show showShiftEventEditor;
 import '../widgets/shift_plan_texts.dart';
 import '../widgets/shift_sheet.dart';
 import '../widgets/shifts_head.dart';
@@ -422,6 +429,158 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     );
   }
 
+  // --- planning on the calendar (HIN-166) ----------------------------------
+
+  /// A span swept out, or double clicked, on empty canvas: the shift editor
+  /// on the event it falls into, after a choice where that is not one.
+  Future<void> _createFrom(TimeGridSpan span) async {
+    // The grid reports the sweep while the pointer's release is still being
+    // handed out; the listener above it records where that was right after.
+    await Future<void>.value();
+    if (!mounted) return;
+    final anchor = _pointerRect;
+    await _place(_cubit.createTarget(span.start, span.end), anchor);
+  }
+
+  /// Puts a new shift where [target] says: straight into the editor on its
+  /// one event, or through a choice between the events, or a new event.
+  Future<void> _place(ShiftCreateTarget target, Rect? anchor) async {
+    final only = target.only;
+    if (only != null) return _openShiftEditor(only, target.spanFor(only));
+    final state = _cubit.state;
+    final picked = await showGlassOptions<Object>(
+      context,
+      title: context.t('shifts.calendar.whichEvent'),
+      anchorRect: anchor,
+      options: [
+        for (final event in target.events)
+          (
+            value: event,
+            child: _ChoiceRow(
+              icon: LucideIcons.calendarDays,
+              title: event.title,
+              subtitle: [
+                ?state.projectNames[event.projectId],
+                spanLabel(context, event.startsAt, event.endsAt),
+              ].join(' · '),
+            ),
+          ),
+        (
+          value: const _NewEventChoice(),
+          child: _ChoiceRow(
+            icon: LucideIcons.calendarPlus,
+            title: context.t('shifts.calendar.newEventAt'),
+            subtitle: spanLabel(context, target.start, target.end),
+          ),
+        ),
+      ],
+    );
+    if (!mounted || picked == null) return;
+    if (picked is ShiftEventSummary) {
+      return _openShiftEditor(picked, target.spanFor(picked));
+    }
+    await _newEventThenShift((start: target.start, end: target.end));
+  }
+
+  /// The shift editor on [event] with [span], turned into the event's own
+  /// wall clock: the calendar draws on the device's.
+  Future<void> _openShiftEditor(
+    ShiftEventSummary event,
+    TimeGridSpan span,
+  ) async {
+    final zone = event.timezone;
+    if (zone != null && zone != _deviceZone) await ShiftZones.ensureLoaded();
+    if (!mounted) return;
+    await showShiftEditor(
+      context,
+      event: event,
+      start: ShiftZones.toWall(span.start, zone, _deviceZone),
+      end: ShiftZones.toWall(span.end, zone, _deviceZone),
+    );
+  }
+
+  /// "Neues Event mit dieser Zeit": the event editor on [span], and once the
+  /// event is saved, its first shift with the same time.
+  Future<void> _newEventThenShift(TimeGridSpan span) async {
+    final saved = await _newEvent(start: span.start, end: span.end);
+    if (saved == null || !mounted) return;
+    await _openShiftEditor(saved, span);
+  }
+
+  /// The event editor for a new event, narrowed to the calendar's project
+  /// when it is one the caller plans. Resolves to the event saved.
+  Future<ShiftEventSummary?> _newEvent({
+    DateTime? day,
+    DateTime? start,
+    DateTime? end,
+  }) async {
+    final cubit = _cubit;
+    final state = cubit.state;
+    final plannable = state.plannableInScope;
+    final saved = await showShiftEventEditor(
+      context,
+      projectId: state.projectId != null && plannable.contains(state.projectId)
+          ? state.projectId
+          : null,
+      projectName: state.projectName,
+      plannable: plannable,
+      day: day,
+      start: start,
+      end: end,
+    );
+    if (saved == null || !mounted) return null;
+    final event = saved.event?.summary;
+    if (event != null) {
+      cubit.adoptEvent(event);
+      return event;
+    }
+    // A new series answers with the series: its first occurrence is read.
+    final id = saved.eventId;
+    return id == null ? null : cubit.readEvent(id);
+  }
+
+  /// The "+" of the week, the day and the month, and a day's menu: a new
+  /// event, or a shift on [day] (the day in focus without one) at the next
+  /// full hour for an hour, placed like a sweep. The way to plan without
+  /// dragging, for a keyboard and a screen reader.
+  Future<void> _addMenu(Rect? anchor, {DateTime? day}) async {
+    final picked = await showGlassOptions<String>(
+      context,
+      title: context.t('shifts.calendar.add'),
+      anchorRect: anchor,
+      options: [
+        (
+          value: 'event',
+          child: _ChoiceRow(
+            icon: LucideIcons.calendarPlus,
+            title: context.t('shifts.calendar.newEvent'),
+          ),
+        ),
+        (
+          value: 'shift',
+          child: _ChoiceRow(
+            icon: LucideIcons.clockPlus,
+            title: context.t('shifts.calendar.newShift'),
+          ),
+        ),
+      ],
+    );
+    if (picked == null || !mounted) return;
+    final on = day ?? _cubit.state.focused;
+    if (picked == 'event') {
+      await _newEvent(day: on);
+      return;
+    }
+    final hour = (_now.hour + 1).clamp(0, 23);
+    final start = DateTime(on.year, on.month, on.day, hour);
+    final target = _cubit.createTarget(
+      start,
+      start.add(const Duration(hours: 1)),
+      wholeDay: true,
+    );
+    await _place(target, anchor);
+  }
+
   Future<void> _pickProject(Rect? anchor) async {
     if (anchor == null) return;
     final cubit = _cubit;
@@ -630,6 +789,8 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                             : ShiftCalendarSpan.month,
                       ),
                     ),
+                    if (state.canCreate)
+                      _AddPill(onTap: (anchor) => unawaited(_addMenu(anchor))),
                   ],
                 ),
               ),
@@ -654,6 +815,11 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                     : null,
                 onSpan: compact
                     ? (anchor) => unawaited(_pickSpan(anchor))
+                    : null,
+                // On a phone the "+" sits in this row, beside the span: the
+                // docked row scrolls sideways and would hide it past the edge.
+                onAdd: compact && state.canCreate
+                    ? (anchor) => unawaited(_addMenu(anchor))
                     : null,
                 previousLabel: context.t(
                   state.span == ShiftCalendarSpan.month
@@ -701,6 +867,8 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
             Expanded(
               child: Listener(
                 onPointerDown: (e) => _lastPointer = e.position,
+                // Where a sweep was let go: the choice of event hangs there.
+                onPointerUp: (e) => _lastPointer = e.position,
                 child: _body(state, compact),
               ),
             ),
@@ -807,6 +975,20 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
             );
           },
           onRetryMonth: (month) => unawaited(_cubit.retry(month)),
+          // A planner's "+" in the day, shown on hover where there is a
+          // pointer to hover with; held or right-clicked, the same menu.
+          onDayMenu: state.canCreate
+              ? (day, anchor) => unawaited(_addMenu(anchor, day: day))
+              : null,
+          onAddOnDay: state.canCreate && !compact
+              ? (day, anchor) => unawaited(_addMenu(anchor, day: day))
+              : null,
+          addLabel: (day) => context.t(
+            'shifts.calendar.addOn',
+            variables: {
+              'date': MaterialLocalizations.of(context).formatFullDate(day),
+            },
+          ),
         ),
       );
     }
@@ -884,6 +1066,12 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     required bool single,
   }) {
     final planner = state.plannable.isNotEmpty;
+    final cubit = _cubit;
+    final create = state.canCreate;
+    final scope = state.plannableInScope;
+    // The week, also under a phone's single day: the day opens where its
+    // week does, and swiping within the week does not jump.
+    final week = _weekOf(days.first);
     return TimeGrid(
       days: days,
       layers: _layersFor(days),
@@ -891,13 +1079,100 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
       metrics: const TimeGridMetrics(hourExtent: 52),
       showHeadings: !single,
       minColumnWidth: single ? 0 : kTimeGridMinColumn,
-      initialScrollHour: 8,
+      // An hour before the week's first shift, once the week has arrived,
+      // and again for every week turned to (HIN-166).
+      initialScrollHour: cubit.scrollHourFor(week),
+      scrollKey: (dayKey(week.first), cubit.holds(week)),
       onTap: _openShift,
       // Moving is for planners, and only blocks of their projects are movable
-      // at all; nobody creates a shift by sweeping the canvas.
+      // at all.
       onMoved: planner ? (item, span) => unawaited(_moved(item, span)) : null,
+      // Sweeping empty canvas plans a shift, for a planner only (HIN-166).
+      onCreate: create ? (span) => unawaited(_createFrom(span)) : null,
+      onDayMenu: create && !single
+          ? (day, anchor) => unawaited(_addMenu(anchor, day: day))
+          : null,
+      createTint: scope.length == 1
+          ? shiftTint(scope.first)
+          : AppColors.accentSoft,
     );
   }
+}
+
+/// The "+" of the calendar (HIN-166): a glass pill with the glyph, named
+/// "Hinzufügen" as its tooltip and to a screen reader.
+class _AddPill extends StatelessWidget {
+  const _AddPill({required this.onTap});
+
+  final void Function(Rect? anchor) onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = context.t('shifts.calendar.add');
+    return Tooltip(
+      message: label,
+      excludeFromSemantics: true,
+      child: Semantics(
+        label: label,
+        child: Builder(
+          builder: (pill) => GlassPill(
+            height: kGlassControlHeight,
+            onTap: () => onTap(anchorRectOfContext(pill)),
+            child: SizedBox(
+              width: kGlassControlHeight,
+              child: Icon(LucideIcons.plus, size: 16, color: AppColors.ink),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// What "Neues Event mit dieser Zeit" answers with in the choice of event.
+class _NewEventChoice {
+  const _NewEventChoice();
+}
+
+/// One row of a choice: a glyph, a title and a line under it.
+class _ChoiceRow extends StatelessWidget {
+  const _ChoiceRow({required this.icon, required this.title, this.subtitle});
+
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    children: [
+      Icon(icon, size: 16, color: AppColors.inkSoft),
+      const SizedBox(width: 10),
+      Flexible(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: AppType.body,
+                fontWeight: FontWeight.w600,
+                color: AppColors.ink,
+              ),
+            ),
+            if (subtitle != null && subtitle!.isNotEmpty)
+              Text(
+                subtitle!,
+                style: TextStyle(
+                  fontSize: AppType.caption,
+                  color: AppColors.inkSoft,
+                ),
+              ),
+          ],
+        ),
+      ),
+    ],
+  );
 }
 
 class _NavRow extends StatelessWidget {
@@ -910,6 +1185,7 @@ class _NavRow extends StatelessWidget {
     required this.nextLabel,
     this.spanLabel,
     this.onSpan,
+    this.onAdd,
   });
 
   final String label;
@@ -920,6 +1196,9 @@ class _NavRow extends StatelessWidget {
   final String nextLabel;
   final String? spanLabel;
   final void Function(Rect? anchor)? onSpan;
+
+  /// The phone's "+" (HIN-166); null hides it.
+  final void Function(Rect? anchor)? onAdd;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -975,6 +1254,16 @@ class _NavRow extends StatelessWidget {
             },
             icon: const Icon(LucideIcons.chevronDown, size: 16),
             label: Text(spanLabel!),
+          ),
+        ),
+      if (onAdd != null)
+        Builder(
+          builder: (anchor) => GlassCircleButton(
+            icon: LucideIcons.plus,
+            onTap: () => onAdd!(anchorRectOfContext(anchor)),
+            size: 44,
+            iconSize: 18,
+            tooltip: context.t('shifts.calendar.add'),
           ),
         ),
     ],
