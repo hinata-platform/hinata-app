@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "通过 MCP 放弃计时器",
       "MCP_SHIFT_SELF_ASSIGNED": "通过 MCP 报名班次",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "通过 MCP 分配班次",
-      "MCP_SHIFT_RELEASED": "通过 MCP 放弃班次",
+      "MCP_SHIFT_RELEASED": "通过 MCP 取消报名班次",
       "MCP_SHIFT_CONFIRMED": "通过 MCP 确认班次",
       "MCP_SHIFT_DECLINED": "通过 MCP 谢绝班次",
       "MCP_SHIFT_REMOVED": "通过 MCP 移出班次",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "已安排到班次",
       "SHIFT_ASSIGNMENT_CONFIRMED": "已确认班次",
       "SHIFT_ASSIGNMENT_DECLINED": "已拒绝班次",
-      "SHIFT_ASSIGNMENT_RELEASED": "已让出班次",
+      "SHIFT_ASSIGNMENT_RELEASED": "已取消报名班次",
       "SHIFT_PLANNER_GRANTED": "已授予排班权限",
       "SHIFT_PLANNER_REVOKED": "已撤销排班权限"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "搜索",
       "notifications_read": "读取自己的通知",
       "shifts_read": "读取班次和本人报名",
-      "shifts_write": "报名班次、确认、谢绝或放弃",
+      "shifts_write": "报名班次、确认、谢绝或取消报名",
       "shifts_plan": "排班：分配人员和移出人员",
       "projects_write": "创建项目"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "已分配",
       "confirmed": "已确认",
       "declined": "已拒绝",
-      "released": "已让出",
+      "released": "已取消报名",
       "waiting": "候补中",
       "mine": "已报名"
     },
@@ -5388,7 +5388,7 @@
       "join": "报名",
       "confirm": "确认",
       "decline": "拒绝",
-      "release": "让出",
+      "release": "取消报名",
       "toEvent": "前往活动",
       "busy": "请稍候，仍在处理中。",
       "waitlistJoin": "加入候补名单",
@@ -5398,12 +5398,12 @@
       "joined": "你已报名",
       "confirmed": "班次已确认",
       "declined": "已拒绝分配",
-      "released": "班次已让出",
+      "released": "已取消报名该班次",
       "waitlisted": "你已在候补名单中",
       "waitlistLeft": "你已退出候补名单"
     },
     "ask": {
-      "releaseTitle": "让出这个班次？",
+      "releaseTitle": "取消报名这个班次？",
       "releaseMessage": "你的位置会空出来，其他人可以报名。",
       "declineTitle": "拒绝这次分配？",
       "declineMessage": "位置会空出来，组织者可以安排其他人。",

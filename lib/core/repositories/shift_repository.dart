@@ -54,7 +54,7 @@ abstract class ShiftRepository {
   /// when the server answered without one.
   Future<ShiftAssignResult?> decline(String assignmentId);
 
-  /// Gives a place up ("Abgeben"); answers like [decline].
+  /// Gives a place up ("Austragen", withdraw); answers like [decline].
   Future<ShiftAssignResult?> release(String assignmentId);
 
   /// Who may plan [projectId]'s shifts besides its leads.

@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "Timer per MCP verworfen",
       "MCP_SHIFT_SELF_ASSIGNED": "Per MCP in Schicht eingetragen",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Schicht per MCP zugeteilt",
-      "MCP_SHIFT_RELEASED": "Schicht per MCP abgegeben",
+      "MCP_SHIFT_RELEASED": "Per MCP aus Schicht ausgetragen",
       "MCP_SHIFT_CONFIRMED": "Schicht per MCP bestätigt",
       "MCP_SHIFT_DECLINED": "Schicht per MCP abgesagt",
       "MCP_SHIFT_REMOVED": "Per MCP aus Schicht herausgenommen",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Für Schicht eingeteilt",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Schicht bestätigt",
       "SHIFT_ASSIGNMENT_DECLINED": "Schicht abgelehnt",
-      "SHIFT_ASSIGNMENT_RELEASED": "Schicht abgegeben",
+      "SHIFT_ASSIGNMENT_RELEASED": "Aus Schicht ausgetragen",
       "SHIFT_PLANNER_GRANTED": "Schichtplanung erlaubt",
       "SHIFT_PLANNER_REVOKED": "Schichtplanung entzogen"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "Suchen",
       "notifications_read": "Eigene Benachrichtigungen lesen",
       "shifts_read": "Schichten und eigene Einträge lesen",
-      "shifts_write": "Sich in Schichten eintragen, bestätigen, absagen oder abgeben",
+      "shifts_write": "Sich in Schichten eintragen, bestätigen, absagen oder austragen",
       "shifts_plan": "Schichten planen: Personen zuteilen und herausnehmen",
       "projects_write": "Projekte anlegen"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "Zugeteilt",
       "confirmed": "Bestätigt",
       "declined": "Abgelehnt",
-      "released": "Abgegeben",
+      "released": "Ausgetragen",
       "waiting": "Auf der Warteliste",
       "mine": "Eingetragen"
     },
@@ -5388,7 +5388,7 @@
       "join": "Eintragen",
       "confirm": "Bestätigen",
       "decline": "Ablehnen",
-      "release": "Abgeben",
+      "release": "Austragen",
       "toEvent": "Zum Event",
       "busy": "Einen Moment, das läuft noch.",
       "waitlistJoin": "Auf Warteliste setzen",
@@ -5398,12 +5398,12 @@
       "joined": "Du bist eingetragen",
       "confirmed": "Schicht bestätigt",
       "declined": "Zuteilung abgelehnt",
-      "released": "Schicht abgegeben",
+      "released": "Aus der Schicht ausgetragen",
       "waitlisted": "Du stehst auf der Warteliste",
       "waitlistLeft": "Du hast die Warteliste verlassen"
     },
     "ask": {
-      "releaseTitle": "Schicht abgeben?",
+      "releaseTitle": "Aus der Schicht austragen?",
       "releaseMessage": "Dein Platz wird wieder frei, und andere können sich eintragen.",
       "declineTitle": "Zuteilung ablehnen?",
       "declineMessage": "Der Platz wird wieder frei, und die Orga kann jemand anderen einteilen.",

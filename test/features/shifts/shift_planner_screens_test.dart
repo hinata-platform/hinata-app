@@ -403,7 +403,7 @@ void main() {
         repository: repo,
       );
       await settle(tester);
-      expect(find.text('Abgeben'), findsOneWidget);
+      expect(find.text('Austragen'), findsOneWidget);
       expect(find.byTooltip('Jonas Weber herausnehmen'), findsOneWidget);
       expect(find.text('Bearbeiten'), findsOneWidget);
       expect(find.text('Löschen'), findsOneWidget);
