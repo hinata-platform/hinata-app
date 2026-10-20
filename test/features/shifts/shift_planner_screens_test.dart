@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/widgets/time_grid/time_week_strip.dart';
+import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/core/models/shift_models.dart';
 import 'package:hinata/core/widgets/time_grid/time_day_dots.dart';
 import 'package:hinata/core/widgets/time_grid/time_grid.dart';
@@ -163,7 +165,17 @@ void main() {
         await pumpCalendar(tester, width: 320, scale: scale);
         expect(tester.takeException(), isNull, reason: 'x$scale');
         expect(find.text('Kasse · fehlt 1'), findsOneWidget);
-        expect(find.byType(TimeDayDotsRow), findsWidgets);
+        // The bar (drawn by the shell) carries the month as title and the
+        // week strip with its marks; the page keeps only the hours and the
+        // day written out above them.
+        final chrome = tester.widget<PageChrome>(find.byType(PageChrome).first);
+        expect(chrome.title, 'Oktober');
+        expect(chrome.titleLeading, isTrue);
+        expect(chrome.onTitleTap, isNotNull);
+        final strip = (chrome.bottom! as Padding).child! as TimeWeekStrip;
+        expect(strip.dotsOn, isNotNull);
+        expect(find.byType(TimeWeekStrip), findsNothing);
+        expect(find.text('Samstag, 24. Oktober 2026'), findsOneWidget);
       }
     });
 
