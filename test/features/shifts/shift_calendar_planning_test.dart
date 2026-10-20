@@ -437,9 +437,10 @@ void main() {
         final cubit = ShiftEditorCubit(
           repo,
           event: fair,
-          day: DateTime(2026, 10, 24),
-          start: DateTime(2026, 10, 24, 14, 15),
-          end: DateTime(2026, 10, 24, 16, 45),
+          wallSpan: (
+            start: DateTime(2026, 10, 24, 14, 15),
+            end: DateTime(2026, 10, 24, 16, 45),
+          ),
         );
         addTearDown(cubit.close);
         expect(cubit.state.day, DateTime(2026, 10, 24));
@@ -462,12 +463,46 @@ void main() {
       final cubit = ShiftEditorCubit(
         repo,
         event: fair,
-        start: DateTime(2026, 10, 24, 19),
-        end: DateTime(2026, 10, 24, 22),
+        wallSpan: (
+          start: DateTime(2026, 10, 24, 19),
+          end: DateTime(2026, 10, 24, 22),
+        ),
       );
       addTearDown(cubit.close);
       expect(cubit.state.toMinutes, 22 * 60);
       expect(cubit.problem, ShiftEditorProblem.outsideEvent);
+    });
+
+    test('a day and a span, or a span backwards, is refused', () {
+      final span = (
+        start: DateTime(2026, 10, 24, 14),
+        end: DateTime(2026, 10, 24, 16),
+      );
+      expect(
+        () => ShiftEditorCubit(
+          repo,
+          event: fair,
+          day: DateTime(2026, 10, 24),
+          wallSpan: span,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => ShiftEditorCubit(
+          repo,
+          event: fair,
+          wallSpan: (start: span.end, end: span.start),
+        ),
+        throwsA(isA<AssertionError>()),
+      );
+      expect(
+        () => ShiftEventEditorCubit(
+          repo,
+          day: DateTime(2026, 10, 24),
+          deviceSpan: span,
+        ),
+        throwsA(isA<AssertionError>()),
+      );
     });
   });
 
@@ -475,8 +510,10 @@ void main() {
     final cubit = ShiftEventEditorCubit(
       repo,
       projectId: 'p1',
-      start: DateTime(2026, 10, 24, 9),
-      end: DateTime(2026, 10, 24, 12, 30),
+      deviceSpan: (
+        start: DateTime(2026, 10, 24, 9),
+        end: DateTime(2026, 10, 24, 12, 30),
+      ),
     );
     addTearDown(cubit.close);
     expect(cubit.state.start, DateTime(2026, 10, 24, 9));
