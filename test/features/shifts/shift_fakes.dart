@@ -64,8 +64,15 @@ class FakeShiftRepository implements ShiftRepository {
   ShiftCandidates candidateList = const ShiftCandidates();
   String? lastQuery;
 
+  /// Fails only the waiting lists, when set.
+  Object? waitingFailure;
+
   @override
-  Future<List<MyShift>> myWaitingShifts() => _answer('waiting', () => waiting);
+  Future<List<MyShift>> myWaitingShifts() => _answer('waiting', () {
+    final f = waitingFailure;
+    if (f != null) throw f;
+    return waiting;
+  });
 
   @override
   Future<ShiftCandidates> candidates(
