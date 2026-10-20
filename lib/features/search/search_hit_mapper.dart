@@ -55,12 +55,16 @@ class SearchLabels {
   final String Function(int cents, String currency) money;
   final String Function(DateTime when) ago;
 
-  /// A span of days, `Mo., 19. Okt.` or `Mo., 19. Okt. – Fr., 23. Okt.`.
-  String days(DateTime from, DateTime? to) =>
-      to == null || to == from ? day(from) : '${day(from)} – ${day(to)}';
+  /// A span in words, `{from} bis {to}` in the reader's language; no dash.
+  String _span(String from, String to) =>
+      t('search.span', {'from': from, 'to': to});
 
-  /// A span in time, `Sa., 24. Okt. 14:00–18:00`; a span over midnight names
-  /// both days.
+  /// A span of days, `Mo., 19. Okt.` or `Mo., 19. Okt. bis Fr., 23. Okt.`.
+  String days(DateTime from, DateTime? to) =>
+      to == null || to == from ? day(from) : _span(day(from), day(to));
+
+  /// A span in time, `Sa., 24. Okt. 14:00 bis 18:00`; a span over midnight
+  /// names both days.
   String moment(DateTime start, DateTime? end) {
     if (end == null) return '${day(start)} ${time(start)}';
     final sameDay =
@@ -68,8 +72,8 @@ class SearchLabels {
         start.month == end.month &&
         start.day == end.day;
     return sameDay
-        ? '${day(start)} ${time(start)}–${time(end)}'
-        : '${day(start)} ${time(start)} – ${day(end)} ${time(end)}';
+        ? '${day(start)} ${_span(time(start), time(end))}'
+        : _span('${day(start)} ${time(start)}', '${day(end)} ${time(end)}');
   }
 }
 

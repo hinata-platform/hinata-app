@@ -2969,7 +2969,8 @@
       "askAbsence": "この不在を申請",
       "budget": "予算"
     },
-    "showAll": "{{cat}} の結果をすべて表示"
+    "showAll": "{{cat}} の結果をすべて表示",
+    "span": "{{from}} 〜 {{to}}"
   },
   "settings": {
     "title": "設定",
