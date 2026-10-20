@@ -30,6 +30,7 @@ class ShiftRow extends StatelessWidget {
     this.stacked = false,
     this.note,
     this.extra,
+    this.day,
   });
 
   final Shift shift;
@@ -54,9 +55,15 @@ class ShiftRow extends StatelessWidget {
   /// Drawn under the people: a planner's waiting list (HIN-162).
   final Widget? extra;
 
+  /// The shift's day in words, for lists that are not grouped by day (the
+  /// open shifts on "Meine"); without it two shifts of the same name on
+  /// different days read as the same row twice.
+  final String? day;
+
   @override
   Widget build(BuildContext context) {
     final subtitle = [
+      if (day != null && day!.isNotEmpty) day!,
       if (eventTitle != null && eventTitle!.isNotEmpty) eventTitle!,
       if (location != null && location!.isNotEmpty) location!,
     ].join(' · ');
