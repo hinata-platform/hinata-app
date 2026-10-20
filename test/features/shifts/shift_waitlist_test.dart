@@ -15,6 +15,7 @@ import 'package:hinata/features/shifts/view/shift_event_screen.dart';
 import 'package:hinata/features/shifts/widgets/shift_actions.dart';
 import 'package:hinata/features/shifts/widgets/shift_sheet.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/timer_surface_fakes.dart' show MemoryStorage;
 import 'shift_fakes.dart';
@@ -490,6 +491,19 @@ void main() {
       await settle(tester);
       expect(repo.calls, contains('candidates:p1:50'));
       expect(find.text('Kemal Aydın'), findsOneWidget);
+      // "Mich eintragen" is an action, drawn with a person glyph, not an avatar.
+      expect(
+        find.descendant(
+          of: find
+              .ancestor(
+                of: find.text('Mich eintragen'),
+                matching: find.byType(Row),
+              )
+              .first,
+          matching: find.byIcon(LucideIcons.userRound),
+        ),
+        findsOneWidget,
+      );
       expect(
         find.text(
           'Es gibt noch mehr Personen. Such nach einem Namen, um sie zu finden.',

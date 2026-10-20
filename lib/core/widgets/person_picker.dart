@@ -481,12 +481,25 @@ class _PersonRow extends StatelessWidget {
                       : AppColors.textSecondary.withValues(alpha: 0.7),
                 ),
                 const SizedBox(width: 10),
-                HiveAvatar(
-                  name: name,
-                  imageUrl: user.avatarUrl,
-                  pronouns: user.pronouns,
-                  size: 28,
-                ),
+                // The pinned row ("Mich eintragen") is an action, not one
+                // more person: a plain person glyph instead of the avatar sets
+                // it apart from the list below.
+                if (label != null)
+                  SizedBox.square(
+                    dimension: 28,
+                    child: Icon(
+                      LucideIcons.userRound,
+                      size: 20,
+                      color: AppColors.textSecondary,
+                    ),
+                  )
+                else
+                  HiveAvatar(
+                    name: name,
+                    imageUrl: user.avatarUrl,
+                    pronouns: user.pronouns,
+                    size: 28,
+                  ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
