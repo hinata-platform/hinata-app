@@ -27,6 +27,39 @@ void main() {
     keyOf: (item) => item,
   );
 
+  test('refreshLoaded reads the held pages in one request', () async {
+    final server = ['a', 'b', 'c', 'd', 'e'];
+    final asked = <(int, int)>[];
+    final cubit = PagedCubit<String>(
+      (page, size) async {
+        asked.add((page, size));
+        final start = page * size;
+        final end = start + size > server.length ? server.length : start + size;
+        return (
+          items: start >= server.length
+              ? const <String>[]
+              : server.sublist(start, end),
+          total: server.length,
+        );
+      },
+      pageSize: 2,
+      keyOf: (item) => item,
+    );
+    await cubit.load();
+    await cubit.loadMore();
+    asked.clear();
+    server[1] = 'B';
+
+    await cubit.refreshLoaded();
+
+    expect(asked, [(0, 4)]);
+    expect(cubit.state.items, ['a', 'B', 'c', 'd']);
+    expect(cubit.state.page, 1);
+    // Paging on asks for the page after the held rows.
+    await cubit.loadMore();
+    expect(cubit.state.items, ['a', 'B', 'c', 'd', 'e']);
+  });
+
   test('replaceItem swaps one row and leaves the paging alone', () async {
     final cubit = cubitOver(['a', 'b', 'c', 'd']);
     await cubit.load();

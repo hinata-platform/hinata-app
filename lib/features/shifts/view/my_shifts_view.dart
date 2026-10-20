@@ -28,6 +28,7 @@ import '../widgets/shift_actions.dart';
 import '../widgets/shift_row.dart';
 import '../widgets/shift_sheet.dart';
 import '../widgets/shift_status_badge.dart';
+import '../widgets/shift_visibility.dart';
 import '../widgets/shifts_head.dart';
 
 /// `/shifts`: provides the cubits of "Meine Schichten" and wires their fresh
@@ -55,7 +56,15 @@ class MyShiftsPage extends StatelessWidget {
                 ..load(),
         ),
       ],
-      child: MyShiftsView(now: now),
+      child: Builder(
+        builder: (context) => ShiftVisibilityRelay(
+          onVisible: (visible) {
+            context.read<MyShiftsCubit>().setVisible(visible);
+            context.read<NextShiftCubit>().setVisible(visible);
+          },
+          child: MyShiftsView(now: now),
+        ),
+      ),
     );
   }
 }

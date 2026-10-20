@@ -7,7 +7,12 @@ import 'shift_changes.dart';
 
 /// The events list (HIN-44): every visible project's, or one project's,
 /// from today over the next two months, paged.
-class ShiftEventsCubit extends PagedCubit<ShiftEventSummary> {
+///
+/// A change made anywhere in the module moves an event's totals, which only
+/// the server counts: the rows held are read again in one request, keeping
+/// the scroll position, and only while the list is on screen.
+class ShiftEventsCubit extends PagedCubit<ShiftEventSummary>
+    with ShiftStaleWhileHidden {
   ShiftEventsCubit(
     ShiftRepository shifts, {
     DateTime Function()? now,
@@ -38,7 +43,7 @@ class ShiftEventsCubit extends PagedCubit<ShiftEventSummary> {
         pageSize: pageSize,
         keyOf: (event) => event.id,
       ) {
-    _changes = ShiftChangeDebouncer((_) => unawaited(load()), changes: changes);
+    _changes = ShiftChangeDebouncer((_) => markStale(), changes: changes);
   }
 
   /// How many days ahead the list reads.
@@ -49,6 +54,9 @@ class ShiftEventsCubit extends PagedCubit<ShiftEventSummary> {
 
   /// The project the list is narrowed to, null for all.
   String? get projectId => _filter.projectId;
+
+  @override
+  void refreshStale() => unawaited(refreshLoaded());
 
   /// Narrows the list to [projectId] (null: all projects) and reads it again.
   Future<void> filter(String? projectId) {
