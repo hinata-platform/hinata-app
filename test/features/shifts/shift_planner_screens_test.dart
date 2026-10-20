@@ -378,7 +378,7 @@ void main() {
   });
 
   group('Sheet', () {
-    testWidgets('a planner takes people off; the caller gives up in place', (
+    testWidgets('a planner takes people off; the caller withdraws in place', (
       tester,
     ) async {
       repo.shiftDetail = ShiftDetail.fromJson({

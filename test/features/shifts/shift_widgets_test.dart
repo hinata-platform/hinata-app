@@ -25,7 +25,7 @@ void main() {
       expect(offer.secondary, ShiftAction.decline);
     });
 
-    test('confirmed: give up, quietly', () {
+    test('confirmed: withdraw, quietly', () {
       final offer = shiftOfferFor(
         sampleShift(mine: true),
         status: ShiftAssignmentStatus.confirmed,
