@@ -1152,29 +1152,25 @@ class ShiftInput extends Equatable {
 /// Whether the caller has a personal shift feed (HIN-47). Never the address:
 /// that is shown once, when it is made.
 class ShiftFeedStatus extends Equatable {
-  const ShiftFeedStatus({
-    this.exists = false,
-    this.createdAt,
-    this.lastAccessedAt,
-  });
+  const ShiftFeedStatus({this.exists = false, this.createdAt, this.lastUsedAt});
 
   final bool exists;
   final DateTime? createdAt;
 
   /// When a calendar last fetched it; null until the first time.
-  final DateTime? lastAccessedAt;
+  final DateTime? lastUsedAt;
 
   factory ShiftFeedStatus.fromJson(Object? body) {
     final json = _map(body);
     return ShiftFeedStatus(
       exists: _bool(json['exists']),
       createdAt: parseInstant(json['createdAt']),
-      lastAccessedAt: parseInstant(json['lastAccessedAt']),
+      lastUsedAt: parseInstant(json['lastUsedAt']),
     );
   }
 
   @override
-  List<Object?> get props => [exists, createdAt, lastAccessedAt];
+  List<Object?> get props => [exists, createdAt, lastUsedAt];
 }
 
 /// A new feed's address, in the one answer that carries it.
