@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hinata/core/blocs/auth_bloc.dart';
+import 'package:hinata/core/repositories/shift_repository.dart';
+import 'package:hinata/features/shifts/bloc/my_shifts_snapshot_cubit.dart';
+import 'package:hydrated_bloc/hydrated_bloc.dart';
 import 'package:hinata/core/router/shift_routes.dart';
 import 'package:hinata/features/shell/not_found_screen.dart';
-import 'package:hinata/features/shifts/shifts_screen.dart';
+import 'package:hinata/features/shifts/view/shifts_screen.dart';
+
+import '../../features/shifts/shift_fakes.dart';
+import '../../support/timer_surface_fakes.dart' show MemoryStorage;
 
 /// HIN-49: the shift planning routes exist for the client only while
 /// `shift_planning` is on. With it off a deep link lands on the not-found page
@@ -11,11 +19,17 @@ import 'package:hinata/features/shifts/shifts_screen.dart';
 ///
 /// The router here is the module's own route list under a stand-in shell, the
 /// way the real router mounts it; the shell is a marker so the test can see the
-/// page sits inside it. No repository is provided: neither page may reach for
-/// one, which is what "no request to a gated prefix" means at this stage.
+/// page sits inside it. The repository is a recording fake: with the flag off
+/// it must never be asked, which is what "no request to a gated prefix" means.
 void main() {
   late GoRouter router;
   late ValueNotifier<bool> flag;
+  late FakeShiftRepository repo;
+
+  setUp(() {
+    HydratedBloc.storage = MemoryStorage();
+    repo = FakeShiftRepository();
+  });
 
   Future<void> pumpAt(
     WidgetTester tester,
@@ -40,8 +54,21 @@ void main() {
       ],
     );
     addTearDown(router.dispose);
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
-    await tester.pumpAndSettle();
+    final snapshot = MyShiftsSnapshotCubit(storageId: 'shifts#routes');
+    addTearDown(snapshot.close);
+    await tester.pumpWidget(
+      RepositoryProvider<ShiftRepository>.value(
+        value: repo,
+        child: MultiBlocProvider(
+          providers: [
+            BlocProvider<AuthBloc>(create: (_) => FakeAuthBloc()),
+            BlocProvider<MyShiftsSnapshotCubit>.value(value: snapshot),
+          ],
+          child: MaterialApp.router(routerConfig: router),
+        ),
+      ),
+    );
+    await _settle(tester);
   }
 
   Finder inShell(Finder finder) => find.descendant(
@@ -65,6 +92,7 @@ void main() {
       expect(tester.widget<NotFoundScreen>(notFound).standalone, isFalse);
       expect(find.byType(ShiftsScreen), findsNothing);
       expect(tester.takeException(), isNull);
+      expect(repo.calls, isEmpty);
     });
   }
 
@@ -79,13 +107,13 @@ void main() {
 
     flag.value = true;
     router.go('/shifts/calendar');
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(inShell(find.byType(ShiftsScreen)), findsOneWidget);
     expect(find.byType(NotFoundScreen), findsNothing);
 
     flag.value = false;
     router.go('/shifts/events');
-    await tester.pumpAndSettle();
+    await _settle(tester);
     expect(find.byType(NotFoundScreen), findsOneWidget);
     expect(find.byType(ShiftsScreen), findsNothing);
   });
@@ -100,13 +128,13 @@ void main() {
       ('/shifts/events/e1', ShiftsView.events, 'e1'),
     ]) {
       router.go(location);
-      await tester.pumpAndSettle();
+      await _settle(tester);
       final screen = tester.widget<ShiftsScreen>(find.byType(ShiftsScreen));
       expect(screen.view, view, reason: location);
       expect(screen.eventId, eventId, reason: location);
-      // The placeholder of this stage: the empty state, nothing more.
-      expect(find.text('shifts.empty.title'), findsOneWidget);
     }
+    // Each view read what it shows, and nothing else.
+    expect(repo.calls, containsAll(['event:e0', 'myShifts:0', 'next']));
   });
 
   test('the gate itself, without a router', () {
@@ -115,4 +143,11 @@ void main() {
     expect((off as NotFoundScreen).standalone, isFalse);
     expect(shiftsPage(enabled: true), isA<ShiftsScreen>());
   });
+}
+
+/// Pumps a few frames: the views draw a looping loader, so they never settle.
+Future<void> _settle(WidgetTester tester) async {
+  for (var i = 0; i < 5; i++) {
+    await tester.pump(const Duration(milliseconds: 100));
+  }
 }

@@ -164,6 +164,21 @@
         "project": "Choisissez le projet à facturer.",
         "tax": "Saisissez un taux de TVA entre 0 et 100 pour cent."
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "Tu es déjà sur ce créneau.",
+      "assigneeNotMember": "Cette personne ne peut pas être affectée. Il lui faut un compte actif et l'accès au projet.",
+      "assignmentNotPending": "Cette affectation n'attend plus de réponse.",
+      "batchInvalid": "Certains jours n'ont pas pu être créés. Rien n'a été enregistré.",
+      "busy": "Beaucoup de personnes s'inscrivent en même temps. Réessaie dans un instant.",
+      "eventHasAssignments": "Des personnes sont encore inscrites aux créneaux de cet événement. Annule-le d'abord, puis supprime-le.",
+      "maxBelowAssigned": "Ce créneau compte déjà plus de personnes que la nouvelle limite ne le permet.",
+      "notPlanner": "Seules les personnes qui planifient ce projet peuvent modifier cela.",
+      "overlappingAssignment": "Tu as déjà un créneau au même moment.",
+      "plannerNotMember": "Cette personne ne peut pas planifier ici. Il lui faut un compte actif et l'accès au projet.",
+      "selfAssignDisabled": "Pour cet événement, l'organisation affecte. Tu ne peux pas t'inscrire toi-même ici.",
+      "shiftFull": "Ce créneau est déjà plein.",
+      "shiftUnavailable": "Ce créneau n'existe plus."
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "Facture annulée",
       "INVOICE_EXPORTED": "Facture exportée",
       "ISSUE_PARTICIPANT_ADDED": "Ticket partagé avec une personne",
-      "ISSUE_PARTICIPANT_REMOVED": "Personne retirée d’un ticket"
+      "ISSUE_PARTICIPANT_REMOVED": "Personne retirée d’un ticket",
+      "SHIFT_EVENT_CREATED": "Événement créé",
+      "SHIFT_EVENT_UPDATED": "Événement modifié",
+      "SHIFT_EVENT_CANCELLED": "Événement annulé",
+      "SHIFT_EVENT_DELETED": "Événement supprimé",
+      "SHIFT_CREATED": "Créneau créé",
+      "SHIFT_UPDATED": "Créneau modifié",
+      "SHIFT_DELETED": "Créneau supprimé",
+      "SHIFT_ASSIGNMENT_CREATED": "Affecté à un créneau",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "Créneau confirmé",
+      "SHIFT_ASSIGNMENT_DECLINED": "Créneau refusé",
+      "SHIFT_ASSIGNMENT_RELEASED": "Créneau cédé",
+      "SHIFT_PLANNER_GRANTED": "Planification accordée",
+      "SHIFT_PLANNER_REVOKED": "Planification retirée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "Aucun membre n'a de taux propre sur ce projet.",
       "addMember": "Taux pour un membre",
       "notLead": "Seuls les responsables du projet définissent ses taux."
+    },
+    "shifts": {
+      "title": "Planification des créneaux",
+      "note": "Les planificateurs créent des événements et des créneaux et affectent des personnes. Ils ne modifient pas les paramètres du projet.",
+      "leadsAlways": "Les responsables et les admins d'équipe peuvent toujours planifier.",
+      "add": "Ajouter un planificateur",
+      "remove": "Retirer",
+      "removeNamed": "Retirer {{name}} des planificateurs",
+      "removeTitle": "Retirer le planificateur ?",
+      "removeMessage": "{{name}} ne pourra plus planifier de créneaux.",
+      "empty": "Pas encore de planificateurs. Les responsables et les admins d'équipe peuvent planifier quand même.",
+      "added": "Planificateur ajouté",
+      "removed": "Planificateur retiré",
+      "noCandidates": "Tous les membres planifient déjà."
     }
   },
   "account": {
@@ -5238,8 +5280,122 @@
   },
   "shifts": {
     "empty": {
-      "title": "Aucun créneau pour l'instant",
-      "message": "Dès qu'un événement avec des créneaux est planifié, il apparaît ici."
+      "title": "Pas encore de créneaux",
+      "message": "Dès que tu t'inscris à un créneau ou que quelqu'un t'y affecte, il apparaît ici. Les créneaux ouverts sont sous Événements."
+    },
+    "loadFailed": "Impossible de charger pour le moment",
+    "view": {
+      "mine": "Les miens",
+      "calendar": "Calendrier",
+      "events": "Événements",
+      "menu": "Changer de vue"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · max. {{max}}",
+      "missing": "Il manque encore {{count}} personne",
+      "missing_plural": "Il manque encore {{count}} personnes",
+      "met": "Complet",
+      "over": "{{count}} personne de plus que nécessaire",
+      "over_plural": "{{count}} personnes de plus que nécessaire",
+      "full": "Plein, {{assigned}} sur {{max}}",
+      "semantics": "Effectif {{assigned}} sur {{required}}, {{state}}"
+    },
+    "status": {
+      "assigned": "Affecté",
+      "confirmed": "Confirmé",
+      "declined": "Refusé",
+      "released": "Cédé",
+      "waiting": "En liste d'attente",
+      "mine": "Inscrit"
+    },
+    "action": {
+      "join": "M'inscrire",
+      "confirm": "Confirmer",
+      "decline": "Refuser",
+      "release": "Céder",
+      "toEvent": "Vers l'événement",
+      "busy": "Un instant, c'est encore en cours."
+    },
+    "done": {
+      "joined": "Tu es inscrit",
+      "confirmed": "Créneau confirmé",
+      "declined": "Affectation refusée",
+      "released": "Créneau cédé"
+    },
+    "ask": {
+      "releaseTitle": "Céder ce créneau ?",
+      "releaseMessage": "Ta place se libère et d'autres peuvent s'inscrire.",
+      "declineTitle": "Refuser cette affectation ?",
+      "declineMessage": "La place se libère et l'organisation peut affecter quelqu'un d'autre."
+    },
+    "absentHint": "Tu es noté absent ce jour-là",
+    "next": {
+      "badge": "Prochain créneau",
+      "with": "avec {{names}}",
+      "and": "{{first}} et {{last}}",
+      "withOthers": "avec {{count}} autre personne",
+      "withOthers_plural": "avec {{count}} autres personnes",
+      "alone": "Seulement toi pour l'instant"
+    },
+    "time": {
+      "until": "jusqu'à {{time}}",
+      "span": "{{from}} à {{to}}",
+      "hours": "{{count}} h",
+      "hours_plural": "{{count}} h",
+      "minutes": "{{count}} min",
+      "minutes_plural": "{{count}} min",
+      "inMinutes": "dans {{count}} min",
+      "inMinutes_plural": "dans {{count}} min",
+      "inHours": "dans {{count}} h",
+      "inHours_plural": "dans {{count}} h",
+      "inDays": "dans {{count}} jour",
+      "inDays_plural": "dans {{count}} jours",
+      "running": "en cours"
+    },
+    "zone": "Heures en {{zone}}",
+    "mine": {
+      "open": "Créneaux ouverts dans tes projets",
+      "openCount": "{{count}} cherche encore du monde",
+      "openCount_plural": "{{count}} cherchent encore du monde",
+      "openEmpty": "Aucun projet ne cherche de monde pour le moment.",
+      "toEvents": "Voir tous les événements",
+      "offline": "Pas de connexion. Tu vois l'état du dernier chargement."
+    },
+    "event": {
+      "title": "Événement",
+      "understaffed": "{{count}} créneau cherche encore du monde",
+      "understaffed_plural": "{{count}} créneaux cherchent encore du monde",
+      "allStaffed": "Tout est pourvu",
+      "places": "{{taken}} / {{required}} places",
+      "placesTaken": "{{taken}} places sur {{required}} prises",
+      "mine": "{{count}} à toi",
+      "mine_plural": "{{count}} à toi",
+      "selfAssignOpen": "Inscription ouverte",
+      "plannersOnly": "Seule l'organisation affecte",
+      "cancelled": "Annulé",
+      "onlyUnderstaffed": "Seulement incomplets",
+      "noUnderstaffed": "Il ne manque personne pour le moment.",
+      "noShifts": "Cet événement n'a pas encore de créneaux."
+    },
+    "events": {
+      "upcoming": "À venir",
+      "allProjects": "Tous les projets",
+      "pickProject": "Choisir un projet",
+      "emptyTitle": "Pas encore d'événements",
+      "emptyMessage": "Dès qu'un projet planifie un événement avec des créneaux, il apparaît ici."
+    },
+    "offer": {
+      "full": "Plein, {{assigned}} sur {{max}}",
+      "cancelled": "Annulé",
+      "plannersOnly": "Affecté par l'organisation"
+    },
+    "sheet": {
+      "freeSpot": "Place libre"
+    },
+    "calendar": {
+      "soonTitle": "Le calendrier arrive bientôt",
+      "soonMessage": "Les vues semaine et mois suivront. D'ici là, tout est sous Les miens et Événements."
     }
   }
 }
