@@ -16,8 +16,9 @@ import 'user_management_widgets.dart';
 /// these to [UserAdminSections]; what differs between them is only how they
 /// learn about the people involved ([usersFor], [nameById],
 /// [isLastActiveAdmin]) and what they reload afterwards ([reload]).
-/// [clearSelection] is the directory's, which forgets a bulk selection once
-/// the action is done.
+/// [openDrawer] and [clearSelection] are the directory's: the drawer it opens
+/// on a row, and forgetting a bulk selection once the action is done. A
+/// profile has neither.
 UserActions buildUserActions(
   BuildContext context, {
   required UserManagementCubit users,
@@ -25,8 +26,8 @@ UserActions buildUserActions(
   required bool Function(AdminUser u) isLastActiveAdmin,
   required String? Function(String? id) nameById,
   required List<AdminUser> Function(List<String> ids) usersFor,
-  required void Function(AdminUser u, UserActions actions) openDrawer,
   required Future<void> Function() reload,
+  void Function(AdminUser u, UserActions actions)? openDrawer,
   VoidCallback? clearSelection,
 }) {
   void toast(String key) {
@@ -61,7 +62,7 @@ UserActions buildUserActions(
     currentUserId: currentUserId,
     isLastActiveAdmin: isLastActiveAdmin,
     nameById: nameById,
-    openDrawer: (u) => openDrawer(u, actions),
+    openDrawer: (u) => openDrawer?.call(u, actions),
     openEdit: (u) async {
       final result = await showEditModal(context, u);
       if (result == null) return;

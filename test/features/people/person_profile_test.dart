@@ -10,8 +10,10 @@ import 'package:hinata/core/models/person_profile.dart';
 import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/widgets/glass_panel.dart';
+import 'package:hinata/features/admin/users/user_management_cubit.dart';
 import 'package:hinata/features/admin/users/user_management_widgets.dart'
     show UserAdminSections;
+import 'package:hinata/features/people/person_admin_cubit.dart';
 import 'package:hinata/features/people/person_profile_cubit.dart';
 import 'package:hinata/features/people/person_profile_screen.dart';
 
@@ -136,6 +138,26 @@ void main() {
         scrollable: find.byType(Scrollable).first,
       );
       expect(find.text('admin.um.deleteThisUser'), findsOneWidget);
+    });
+  });
+
+  group('an admin, leaving', () {
+    testWidgets('closes both cubits of the administration', (tester) async {
+      final router = await _pumpPage(tester, asAdmin, width: 390, admin: true);
+      await tester.scrollUntilVisible(
+        find.byType(UserAdminSections),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      final sections = tester.element(find.byType(UserAdminSections));
+      final account = sections.read<PersonAdminCubit>();
+      final actions = sections.read<UserManagementCubit>();
+      expect(account.isClosed, isFalse);
+
+      router.go('/issues');
+      await tester.pumpAndSettle();
+      expect(account.isClosed, isTrue);
+      expect(actions.isClosed, isTrue);
     });
   });
 

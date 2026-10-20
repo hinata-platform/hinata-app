@@ -19,6 +19,7 @@ import '../../sprint/modals/glass_modal.dart' show showGlassBottomSheet;
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/hover_builder.dart';
 
+part 'user_admin_sections.dart';
 part 'user_management_widgets.drawer.dart';
 
 // ════════════════════════════════════════════════════════════════════════
