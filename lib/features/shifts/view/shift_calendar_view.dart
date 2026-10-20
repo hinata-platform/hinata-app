@@ -571,6 +571,13 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
       await _newEvent(day: on);
       return;
     }
+    if (_cubit.state.span == ShiftCalendarSpan.month) {
+      // The month holds counts, not events: the shift is planned in the day,
+      // which opens with its shifts and events.
+      await _cubit.openDayHeld(on);
+      if (!mounted) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _jumpPager(on));
+    }
     final hour = (_now.hour + 1).clamp(0, 23);
     final start = DateTime(on.year, on.month, on.day, hour);
     final target = _cubit.createTarget(

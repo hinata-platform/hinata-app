@@ -41,7 +41,6 @@ class ShiftCalendarState extends Equatable {
     this.marks = const {},
     this.marksFailed = const {},
     this.marksLoading = const {},
-    this.events = const {},
     this.projectNames = const {},
   });
 
@@ -89,12 +88,7 @@ class ShiftCalendarState extends Equatable {
   /// Months whose marks are asked for and not answered yet.
   final Set<int> marksLoading;
 
-  /// The events of the projects the caller plans, by [monthKey] (HIN-166):
-  /// what a new shift on the calendar can go into. Read for a planner only,
-  /// alongside the month, so finding the event for a sweep asks for nothing.
-  final Map<int, List<ShiftEventSummary>> events;
-
-  /// Names of the projects of [events], for the choice between events.
+  /// Names of the projects the caller plans, for the choice between events.
   final Map<String, String> projectNames;
 
   bool canPlan(String projectId) => plannable.contains(projectId);
@@ -142,7 +136,6 @@ class ShiftCalendarState extends Equatable {
     Map<int, Map<int, ShiftDayMarks>>? marks,
     Map<int, String>? marksFailed,
     Set<int>? marksLoading,
-    Map<int, List<ShiftEventSummary>>? events,
     Map<String, String>? projectNames,
   }) => ShiftCalendarState(
     focused: focused ?? this.focused,
@@ -159,7 +152,6 @@ class ShiftCalendarState extends Equatable {
     marks: marks ?? this.marks,
     marksFailed: marksFailed ?? this.marksFailed,
     marksLoading: marksLoading ?? this.marksLoading,
-    events: events ?? this.events,
     projectNames: projectNames ?? this.projectNames,
   );
 
@@ -179,7 +171,6 @@ class ShiftCalendarState extends Equatable {
     marks,
     marksFailed,
     marksLoading,
-    events,
     projectNames,
   ];
 }
@@ -252,20 +243,9 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   final Set<int> _staleMarks = {};
   bool _staleAll = false;
 
-  /// The months whose planner events were asked for (HIN-166).
-  final Set<int> _eventsAsked = {};
-
-  /// Whether the month span asked who plans what; the week learns it from
-  /// every month it reads.
-  bool _plannableAsked = false;
-
-  /// Every planner event seen, by id: what a new shift's event looks like
-  /// when the month it lands in does not name it yet.
+  /// Events just created here, by id: what a new shift's event looks like
+  /// before a month read names it.
   final Map<String, ShiftEventSummary> _known = {};
-
-  /// Most events read per month for the planner. A month with more is a
-  /// month nobody plans from the calendar.
-  static const eventsPerMonth = 100;
 
   /// The filtered shifts of each day, by [dayKey], built once per revision.
   Map<int, List<Shift>>? _byDay;
@@ -345,7 +325,10 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
           revision: state.revision + 1,
         ),
       );
-      unawaited(_ensureEvents(state.months.keys));
+      _nameProjects({
+        for (final head in answer.events.values)
+          if (head.projectId case final id? when state.canPlan(id)) id,
+      });
     } on ApiFailure catch (failure) {
       _fail(generation, key, failure.message);
     } catch (_) {
@@ -364,78 +347,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
     );
   }
 
-  /// Who plans what, for the month span: the marks do not say, and the "+"
-  /// of a month cell is for planners only. Asked once.
-  Future<void> _ensurePlannable() async {
-    if (_plannableAsked || state.plannable.isNotEmpty) return;
-    _plannableAsked = true;
-    final generation = _generation;
-    try {
-      final ids = await _shifts.plannableProjectIds();
-      if (isClosed || generation != _generation || ids.isEmpty) return;
-      emit(
-        state.copyWith(
-          plannable: {...state.plannable, ...ids},
-          revision: state.revision + 1,
-        ),
-      );
-      unawaited(_ensureEvents({...state.marks.keys, ...state.months.keys}));
-    } catch (_) {
-      // Nothing to offer then; reading the calendar does not depend on it.
-      _plannableAsked = false;
-    }
-  }
-
-  /// Reads the planner's events of the months of [keys] not asked for yet,
-  /// so a sweep finds its event without a request (HIN-166). Nothing for
-  /// somebody who plans nothing here.
-  Future<void> _ensureEvents(Iterable<int> keys) async {
-    if (!state.canCreate) return;
-    final wanted = [
-      for (final key in keys)
-        if (_eventsAsked.add(key)) key,
-    ];
-    if (wanted.isEmpty) return;
-    await Future.wait([for (final key in wanted) _readEvents(key)]);
-  }
-
-  Future<void> _readEvents(int key) async {
-    final generation = _generation;
-    final month = DateTime(key ~/ 100, key % 100);
-    try {
-      final page = await _shifts.events(
-        from: month,
-        to: DateTime(month.year, month.month + 1),
-        projectId: state.projectId,
-        size: eventsPerMonth,
-      );
-      if (isClosed || generation != _generation) return;
-      final planned = [
-        for (final event in page.items)
-          if (event.canPlan) event,
-      ];
-      for (final event in planned) {
-        _known[event.id] = event;
-      }
-      _nameProjects({for (final event in planned) event.projectId});
-      final held = {...state.months.keys, ...state.marks.keys, key};
-      emit(
-        state.copyWith(
-          events: {
-            for (final entry in state.events.entries)
-              if (held.contains(entry.key)) entry.key: entry.value,
-            key: planned,
-          },
-        ),
-      );
-    } catch (_) {
-      // Asked again with the month's next read; until then the month offers
-      // a new event, which is still a way to plan.
-      _eventsAsked.remove(key);
-    }
-  }
-
-  /// The projects of planner events whose names were asked for.
+  /// The planned projects whose names were asked for.
   final Set<String> _namesAsked = {};
 
   /// Names [ids] for the choice between events; nothing waits for it.
@@ -469,24 +381,23 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
     }
   }
 
-  /// Takes an event just created into the planner's events, so the shift
-  /// that follows it finds it without the month being read again.
-  void adoptEvent(ShiftEventSummary event) {
-    _known[event.id] = event;
-    final keys = {monthKey(event.startsAt), monthKey(event.endsAt)};
-    emit(
-      state.copyWith(
-        events: {
-          ...state.events,
-          for (final key in keys)
-            key: [
-              for (final e in state.events[key] ?? const <ShiftEventSummary>[])
-                if (e.id != event.id) e,
-              event,
-            ],
-        },
-      ),
-    );
+  /// Takes an event just created into what a new shift can go into, so the
+  /// shift that follows it finds it before the month is read again.
+  void adoptEvent(ShiftEventSummary event) => _known[event.id] = event;
+
+  /// The events the calendar holds as the editors take them: every head
+  /// with a span, the caller's right on its project, and what was created
+  /// here since.
+  Iterable<ShiftEventSummary> get _heldEvents sync* {
+    for (final month in state.months.values) {
+      for (final head in month.events.values) {
+        final summary = head.toSummary(
+          canPlan: head.projectId != null && state.canPlan(head.projectId!),
+        );
+        if (summary != null) yield summary;
+      }
+    }
+    yield* _known.values;
   }
 
   /// Where a new shift from [start] to [end] goes: the planner's events it
@@ -499,7 +410,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   }) => ShiftCreateTarget.resolve(
     start: start,
     end: end,
-    held: state.events.values.expand((events) => events),
+    held: _heldEvents,
     plannable: state.plannableInScope,
     projectId: state.projectId,
     wholeDay: wholeDay,
@@ -544,7 +455,6 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
 
   Future<void> _ensureMarks(List<DateTime> months) async {
     _touch(_marksOrder, months);
-    unawaited(_ensurePlannable());
     final wanted = <int, DateTime>{};
     for (final month in months) {
       final key = monthKey(month);
@@ -565,7 +475,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   Future<void> _readMarks(int key, DateTime month) async {
     final generation = _generation;
     try {
-      final days = await _shifts.calendarMarks(
+      final answer = await _shifts.calendarMarks(
         from: month,
         to: DateTime(month.year, month.month + 1),
         projectId: state.projectId,
@@ -575,14 +485,15 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
         state.copyWith(
           marks: _evict({
             ...state.marks,
-            key: {for (final day in days) dayKey(day.date): day},
+            key: {for (final day in answer.days) dayKey(day.date): day},
           }, _marksOrder),
           marksFailed: {...state.marksFailed}..remove(key),
           marksLoading: {...state.marksLoading}..remove(key),
+          // The month's "+" is for planners; the marks say who plans.
+          plannable: {...state.plannable, ...answer.plannableProjectIds},
           revision: state.revision + 1,
         ),
       );
-      unawaited(_ensureEvents(state.marks.keys));
     } on ApiFailure catch (failure) {
       _failMarks(generation, key, failure.message);
     } catch (_) {
@@ -687,6 +598,21 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
     unawaited(ensureMonths(_around(state.focused)));
   }
 
+  /// [openDay], and resolves once the day's shifts and events are held, so
+  /// a new shift from the month's "+" finds its event (HIN-166).
+  Future<void> openDayHeld(DateTime day) async {
+    openDay(day);
+    final days = [day];
+    if (holds(days)) return;
+    try {
+      await stream
+          .firstWhere((_) => holds(days))
+          .timeout(const Duration(seconds: 15));
+    } catch (_) {
+      // Not answered in time or closed: the choice then offers a new event.
+    }
+  }
+
   void toggleUnderstaffed() => emit(
     state.copyWith(
       understaffedOnly: !state.understaffedOnly,
@@ -709,8 +635,6 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
     _staleShifts.clear();
     _staleMarks.clear();
     _staleAll = false;
-    _eventsAsked.clear();
-    _plannableAsked = false;
     emit(
       ShiftCalendarState(
         focused: state.focused,
@@ -944,9 +868,6 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   @override
   void refreshStale() {
     final all = _staleAll;
-    // An event-wide change may have added, moved or ended an event: the
-    // planner's events are read again with the months.
-    if (all) _eventsAsked.clear();
     final shifts = all ? state.months.keys.toSet() : {..._staleShifts};
     final marks = all ? state.marks.keys.toSet() : {..._staleMarks};
     _staleAll = false;
