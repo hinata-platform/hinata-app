@@ -39,6 +39,7 @@ import '../bloc/shift_calendar_cubit.dart';
 import '../shift_texts.dart';
 import '../shift_views.dart';
 import '../shift_zones.dart';
+import '../widgets/shift_visibility.dart';
 import '../widgets/series_scope_dialog.dart';
 import '../widgets/shift_plan_texts.dart';
 import '../widgets/shift_sheet.dart';
@@ -104,7 +105,12 @@ class ShiftCalendarPage extends StatelessWidget {
         projectId: query.projectId,
         projectNameOf: (id) async => (await projects.project(id)).name,
       )..start(),
-      child: ShiftCalendarView(query: query),
+      child: Builder(
+        builder: (context) => ShiftVisibilityRelay(
+          onVisible: context.read<ShiftCalendarCubit>().setVisible,
+          child: ShiftCalendarView(query: query),
+        ),
+      ),
     );
   }
 }
@@ -306,11 +312,26 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     );
   }
 
+  /// The month marks a day from its counts; the week strip from the shifts
+  /// it already holds.
   TimeDayDots? _dotsOn(DateTime day) {
-    final shifts = _cubit.shiftsOn(day);
+    final cubit = _cubit;
+    if (cubit.state.span == ShiftCalendarSpan.month) {
+      final marks = cubit.marksOn(day);
+      if (marks == null) return null;
+      return _dots(
+        dot: !cubit.state.understaffedOnly && marks.mine > 0,
+        ring: marks.understaffed > 0,
+      );
+    }
+    final shifts = cubit.shiftsOn(day);
     if (shifts.isEmpty) return null;
     final dot = shifts.any((s) => s.mine);
     final ring = shifts.any((s) => !s.mine && s.isShort);
+    return _dots(dot: dot, ring: ring);
+  }
+
+  TimeDayDots? _dots({required bool dot, required bool ring}) {
     if (!dot && !ring) return null;
     return TimeDayDots(
       dot: dot,
@@ -544,6 +565,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
           a.projectName != b.projectName ||
           a.understaffedOnly != b.understaffedOnly ||
           a.loading.isEmpty != b.loading.isEmpty ||
+          a.marksLoading.isEmpty != b.marksLoading.isEmpty ||
           a.plannable != b.plannable,
       builder: (context, state) => PageChrome(
         bottom: compact
@@ -657,7 +679,8 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
             for (final d in _weekOf(state.focused)) DateTime(d.year, d.month),
           }.toList();
     final notes = <Widget>[
-      if (state.truncatedAny(months))
+      // The month draws counts, which are never cut.
+      if (state.span == ShiftCalendarSpan.week && state.truncatedAny(months))
         _Notice(
           icon: LucideIcons.info,
           text: context.t('shifts.calendar.truncated'),
@@ -699,11 +722,15 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   }
 
   Widget _body(ShiftCalendarState state, bool compact) {
-    if (state.months.isEmpty && state.loading.isNotEmpty) {
+    final monthSpan = state.span == ShiftCalendarSpan.month;
+    final nothingHeld = monthSpan ? state.marks.isEmpty : state.months.isEmpty;
+    final failed = monthSpan ? state.marksFailed : state.failed;
+    if (nothingHeld &&
+        (monthSpan ? state.marksLoading : state.loading).isNotEmpty) {
       return const Center(child: HiveLoader(size: 44));
     }
-    final failure = state.failed[monthKey(state.focused)];
-    if (state.months.isEmpty && failure != null) {
+    final failure = failed[monthKey(state.focused)];
+    if (nothingHeld && failure != null) {
       return ListView(
         padding: context.pagePadding,
         children: [
@@ -728,7 +755,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
         itemsForDay: (_) => const [],
         marksOnly: true,
         dotsOn: _dotsOn,
-        failureFor: (key) => state.failed[key],
+        failureFor: (key) => state.marksFailed[key],
         onNeedMonths: (months) => unawaited(_cubit.ensureMonths(months)),
         onMonthChanged: (_) {},
         onTapDay: (day) {

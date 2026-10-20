@@ -850,6 +850,48 @@ class ShiftAssignResult extends Equatable {
   List<Object?> get props => [shift, assignment, warnings];
 }
 
+/// What the month view marks on one day (`/shifts/calendar/marks`): counts,
+/// never shifts. The day is the shift's first day in the caller's zone.
+class ShiftDayMarks extends Equatable {
+  const ShiftDayMarks({
+    required this.date,
+    this.mine = 0,
+    this.open = 0,
+    this.understaffed = 0,
+  });
+
+  /// Midnight of the day, as a local date.
+  final DateTime date;
+
+  /// The caller's own active places that day.
+  final int mine;
+
+  /// Shifts the caller could still sign up for.
+  final int open;
+
+  /// Shifts still missing somebody; a cancelled shift never counts.
+  final int understaffed;
+
+  static ShiftDayMarks? fromJson(Map<String, dynamic> json) {
+    final date = DateTime.tryParse(json['date'] as String? ?? '');
+    if (date == null) return null;
+    return ShiftDayMarks(
+      date: DateTime(date.year, date.month, date.day),
+      mine: _int(json['mine']),
+      open: _int(json['open']),
+      understaffed: _int(json['understaffed']),
+    );
+  }
+
+  /// Reads `{days: [...]}`.
+  static List<ShiftDayMarks> listFromJson(Object? body) => [
+    for (final day in _maps(_map(body)['days'])) ?ShiftDayMarks.fromJson(day),
+  ];
+
+  @override
+  List<Object?> get props => [date, mine, open, understaffed];
+}
+
 /// Shifts in a window with their events named once (`CalendarResponse`).
 class ShiftCalendar extends Equatable {
   const ShiftCalendar({

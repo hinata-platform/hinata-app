@@ -80,7 +80,12 @@ void main() {
       Set<String> plannable = const {},
       ShiftCalendarSpan span = ShiftCalendarSpan.week,
     }) async {
-      repo.calendarMonths[202610] = month(plannable: plannable);
+      repo
+        ..calendarMonths[202610] = month(plannable: plannable)
+        ..marksMonths[202610] = [
+          ShiftDayMarks(date: DateTime(2026, 10, 22), mine: 1),
+          ShiftDayMarks(date: DateTime(2026, 10, 24), open: 1, understaffed: 2),
+        ];
       final cubit = ShiftCalendarCubit(
         repo,
         focused: DateTime(2026, 10, 24),
@@ -167,6 +172,9 @@ void main() {
       expect(tester.takeException(), isNull);
       expect(find.text('Kasse · fehlt 1'), findsNothing);
       expect(find.byType(TimeDayDotsRow), findsNWidgets(2));
+      // The month read counts, never shifts.
+      expect(repo.calls.where((c) => c.startsWith('calendar:')), isEmpty);
+      expect(repo.calls, contains('marks:202610:all'));
       await tester.tap(find.text('22').first);
       await settle(tester);
       expect(cubit.state.span, ShiftCalendarSpan.week);
