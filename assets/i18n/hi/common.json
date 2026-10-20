@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "MCP से टाइमर शुरू किया गया",
       "MCP_TIMER_STOPPED": "MCP से टाइमर रोका गया",
       "MCP_TIMER_DISCARDED": "MCP से टाइमर रद्द किया गया",
+      "MCP_SHIFT_SELF_ASSIGNED": "MCP से शिफ़्ट में नाम लिखा गया",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "MCP से शिफ़्ट सौंपी गई",
+      "MCP_SHIFT_RELEASED": "MCP से शिफ़्ट छोड़ी गई",
+      "MCP_SHIFT_CONFIRMED": "MCP से शिफ़्ट की पुष्टि की गई",
+      "MCP_SHIFT_DECLINED": "MCP से शिफ़्ट के लिए मना किया गया",
+      "MCP_SHIFT_REMOVED": "MCP से शिफ़्ट से हटाया गया",
       "MCP_SPRINT_CREATED": "MCP से स्प्रिंट बनाया गया",
       "MCP_SPRINT_UPDATED": "MCP से स्प्रिंट अपडेट किया गया",
       "MCP_SPRINT_STARTED": "MCP से स्प्रिंट शुरू किया गया",
@@ -4955,6 +4961,9 @@
       "worklog_write": "अपना समय दर्ज करना और बदलना, टाइमर चलाना, छुट्टी का अनुरोध",
       "search_read": "खोज",
       "notifications_read": "अपनी सूचनाएँ पढ़ना",
+      "shifts_read": "शिफ़्ट और अपने पंजीकरण पढ़ना",
+      "shifts_write": "शिफ़्ट में नाम लिखना, पुष्टि करना, मना करना या छोड़ना",
+      "shifts_plan": "शिफ़्ट की योजना: लोगों को सौंपना और हटाना",
       "projects_write": "परियोजनाएं बनाना"
     }
   },

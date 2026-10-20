@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "Таймер запущен через MCP",
       "MCP_TIMER_STOPPED": "Таймер остановлен через MCP",
       "MCP_TIMER_DISCARDED": "Таймер отменён через MCP",
+      "MCP_SHIFT_SELF_ASSIGNED": "Запись на смену через MCP",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Смена назначена через MCP",
+      "MCP_SHIFT_RELEASED": "Смена передана через MCP",
+      "MCP_SHIFT_CONFIRMED": "Смена подтверждена через MCP",
+      "MCP_SHIFT_DECLINED": "Отказ от смены через MCP",
+      "MCP_SHIFT_REMOVED": "Снят со смены через MCP",
       "MCP_SPRINT_CREATED": "Спринт создан через MCP",
       "MCP_SPRINT_UPDATED": "Спринт обновлён через MCP",
       "MCP_SPRINT_STARTED": "Спринт начат через MCP",
@@ -4955,6 +4961,9 @@
       "worklog_write": "Запись и изменение своего времени, таймер, заявки на отпуск",
       "search_read": "Поиск",
       "notifications_read": "Чтение своих уведомлений",
+      "shifts_read": "Чтение смен и своих записей",
+      "shifts_write": "Запись на смены, подтверждение, отказ и передача",
+      "shifts_plan": "Планирование смен: назначение и снятие людей",
       "projects_write": "Создание проектов"
     }
   },

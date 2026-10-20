@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "Minuteur démarré via MCP",
       "MCP_TIMER_STOPPED": "Minuteur arrêté via MCP",
       "MCP_TIMER_DISCARDED": "Minuteur abandonné via MCP",
+      "MCP_SHIFT_SELF_ASSIGNED": "Inscription à un créneau via MCP",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Créneau affecté via MCP",
+      "MCP_SHIFT_RELEASED": "Créneau cédé via MCP",
+      "MCP_SHIFT_CONFIRMED": "Créneau confirmé via MCP",
+      "MCP_SHIFT_DECLINED": "Créneau refusé via MCP",
+      "MCP_SHIFT_REMOVED": "Retiré d'un créneau via MCP",
       "MCP_SPRINT_CREATED": "Sprint créé via MCP",
       "MCP_SPRINT_UPDATED": "Sprint mis à jour via MCP",
       "MCP_SPRINT_STARTED": "Sprint démarré via MCP",
@@ -4955,6 +4961,9 @@
       "worklog_write": "Saisir et modifier ses temps, gérer le minuteur, demander des congés",
       "search_read": "Rechercher",
       "notifications_read": "Lire ses propres notifications",
+      "shifts_read": "Lire les créneaux et ses propres inscriptions",
+      "shifts_write": "S'inscrire à des créneaux, les confirmer, les refuser ou les céder",
+      "shifts_plan": "Planifier les créneaux : affecter des personnes et les retirer",
       "projects_write": "Créer des projets"
     }
   },
