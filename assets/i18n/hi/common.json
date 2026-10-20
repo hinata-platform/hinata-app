@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "शिफ़्ट दी गई",
       "SHIFT_ASSIGNMENT_CONFIRMED": "शिफ़्ट की पुष्टि हुई",
       "SHIFT_ASSIGNMENT_DECLINED": "शिफ़्ट अस्वीकार हुई",
-      "SHIFT_ASSIGNMENT_RELEASED": "शिफ़्ट से नाम हटाया गया",
+      "SHIFT_ASSIGNMENT_RELEASED": "शिफ़्ट पर एक जगह खाली की गई",
       "SHIFT_PLANNER_GRANTED": "शिफ़्ट योजना की अनुमति दी गई",
       "SHIFT_PLANNER_REVOKED": "शिफ़्ट योजना की अनुमति वापस ली गई"
     },

@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "تم التعيين في نوبة",
       "SHIFT_ASSIGNMENT_CONFIRMED": "تم تأكيد نوبة",
       "SHIFT_ASSIGNMENT_DECLINED": "تم رفض نوبة",
-      "SHIFT_ASSIGNMENT_RELEASED": "إلغاء التسجيل في نوبة",
+      "SHIFT_ASSIGNMENT_RELEASED": "تم تحرير مكان في نوبة",
       "SHIFT_PLANNER_GRANTED": "تم منح صلاحية تخطيط النوبات",
       "SHIFT_PLANNER_REVOKED": "تم سحب صلاحية تخطيط النوبات"
     },

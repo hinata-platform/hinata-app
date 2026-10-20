@@ -3813,7 +3813,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Für Schicht eingeteilt",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Schicht bestätigt",
       "SHIFT_ASSIGNMENT_DECLINED": "Schicht abgelehnt",
-      "SHIFT_ASSIGNMENT_RELEASED": "Aus Schicht ausgetragen",
+      "SHIFT_ASSIGNMENT_RELEASED": "Platz auf Schicht freigegeben",
       "SHIFT_PLANNER_GRANTED": "Schichtplanung erlaubt",
       "SHIFT_PLANNER_REVOKED": "Schichtplanung entzogen"
     },
