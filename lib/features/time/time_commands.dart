@@ -13,6 +13,9 @@ import 'time_shortcuts.dart' show toggleTimer;
 /// page of the module is in here by name: somebody looking for the timesheet or
 /// for their absences had to know which page they sit under before they could
 /// find them.
+///
+/// The approvals page is not among them: it is listed on its own, and only
+/// where the organisation has approvals switched on ([kTimeApprovalsCommand]).
 final List<PaletteCommand> kTimeCommands = [
   const PaletteCommand(
     id: 'time.toggle',
@@ -66,14 +69,6 @@ final List<PaletteCommand> kTimeCommands = [
     keywords: 'time calendar day week entries',
   ),
   const PaletteCommand.route(
-    id: 'time.approvals',
-    labelKey: 'time.view.approvals',
-    contextKey: 'nav.time',
-    icon: LucideIcons.badgeCheck,
-    route: '/time/approvals',
-    keywords: 'approvals approve timesheets submitted review',
-  ),
-  const PaletteCommand.route(
     id: 'time.timesheet',
     labelKey: 'search.cmd.timesheet',
     icon: LucideIcons.table,
@@ -81,3 +76,14 @@ final List<PaletteCommand> kTimeCommands = [
     keywords: 'timesheet grid week hours',
   ),
 ];
+
+/// The approvals page, where approvals are switched on: without them it has
+/// nothing to show anybody.
+const PaletteCommand kTimeApprovalsCommand = PaletteCommand.route(
+  id: 'time.approvals',
+  labelKey: 'time.view.approvals',
+  contextKey: 'nav.time',
+  icon: LucideIcons.badgeCheck,
+  route: '/time/approvals',
+  keywords: 'approvals approve timesheets submitted review',
+);

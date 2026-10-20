@@ -69,6 +69,7 @@ PaletteAccess paletteAccessOf(BuildContext context) {
     mcp: meta?.isFlagEnabled(PlatformFlags.mcp) ?? false,
     workloadReports: policy?.workloadReportsEnabled ?? false,
     absenceReports: policy?.absenceReportsEnabled ?? false,
+    approvals: policy?.approvalsEnabled ?? false,
   );
 }
 
