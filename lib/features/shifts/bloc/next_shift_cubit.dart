@@ -19,6 +19,7 @@ class NextShiftState extends Equatable {
     this.nextDetail,
     this.open = const ShiftCalendar(),
     this.waiting = const [],
+    this.waitingFailed = false,
     this.errorKey,
   });
 
@@ -35,6 +36,10 @@ class NextShiftState extends Equatable {
 
   /// The shifts the caller waits for, by start; never in the hero.
   final List<MyShift> waiting;
+
+  /// The waiting lists could not be read: [waiting] is what was held before,
+  /// and the page says that it may be out of date.
+  final bool waitingFailed;
   final String? errorKey;
 
   NextShiftState copyWith({
@@ -46,6 +51,7 @@ class NextShiftState extends Equatable {
     bool clearDetail = false,
     ShiftCalendar? open,
     List<MyShift>? waiting,
+    bool? waitingFailed,
     String? errorKey,
   }) => NextShiftState(
     loading: loading ?? this.loading,
@@ -54,6 +60,7 @@ class NextShiftState extends Equatable {
     nextDetail: clearDetail ? null : (nextDetail ?? this.nextDetail),
     open: open ?? this.open,
     waiting: waiting ?? this.waiting,
+    waitingFailed: waitingFailed ?? this.waitingFailed,
     errorKey: errorKey,
   );
 
@@ -65,6 +72,7 @@ class NextShiftState extends Equatable {
     nextDetail,
     open,
     waiting,
+    waitingFailed,
     errorKey,
   ];
 }
@@ -107,13 +115,17 @@ class NextShiftCubit extends Cubit<NextShiftState> {
             // The open shifts are a suggestion; failing to read them must not
             // take the caller's own shifts down with them.
             .catchError((Object _) => const ShiftCalendar()),
-        // The same for the waiting lists: an older server has no such route.
-        _shifts.myWaitingShifts().catchError((Object _) => const <MyShift>[]),
+        // The waiting lists must not take the caller's shifts down either,
+        // but a failure is said: whoever waits must not think they do not.
+        _shifts.myWaitingShifts().then<List<MyShift>?>(
+          (w) => w,
+          onError: (Object _) => null,
+        ),
       ]);
       if (isClosed || token != _token) return;
       final next = results[0] as MyShift?;
       final open = results[1] as ShiftCalendar;
-      final waiting = results[2] as List<MyShift>;
+      final fresh = results[2] as List<MyShift>?;
       final keepDetail = state.nextDetail?.shift.id == next?.shift.id;
       emit(
         NextShiftState(
@@ -129,10 +141,13 @@ class NextShiftCubit extends Cubit<NextShiftState> {
             events: open.events,
             truncated: open.truncated,
           ),
-          waiting: [
-            for (final w in waiting)
-              if (w.status == ShiftAssignmentStatus.waiting) w,
-          ],
+          waiting: fresh == null
+              ? state.waiting
+              : [
+                  for (final w in fresh)
+                    if (w.status == ShiftAssignmentStatus.waiting) w,
+                ],
+          waitingFailed: fresh == null,
         ),
       );
       onNext?.call(next);
