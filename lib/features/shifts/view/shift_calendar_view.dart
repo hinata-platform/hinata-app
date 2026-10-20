@@ -603,12 +603,28 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     _projectPill(state),
-                    _shortChip(state),
-                    GlassSwitchChip(
-                      label: context.t('shifts.calendar.month'),
-                      icon: LucideIcons.calendar,
-                      active: state.span == ShiftCalendarSpan.month,
-                      onTap: () => _cubit.setSpan(
+                    // Glass pills like the project filter beside them: the
+                    // filter lights while it holds, the span pill names the
+                    // view it switches to, so in the month it reads "Woche".
+                    GlassFilterPill(
+                      icon: LucideIcons.triangleAlert,
+                      label: context.t('shifts.event.onlyUnderstaffed'),
+                      active: state.understaffedOnly,
+                      chevron: false,
+                      onTap: (_) => _cubit.toggleUnderstaffed(),
+                    ),
+                    GlassFilterPill(
+                      icon: state.span == ShiftCalendarSpan.month
+                          ? LucideIcons.calendarDays
+                          : LucideIcons.calendar,
+                      label: context.t(
+                        state.span == ShiftCalendarSpan.month
+                            ? 'shifts.calendar.week'
+                            : 'shifts.calendar.month',
+                      ),
+                      active: false,
+                      chevron: false,
+                      onTap: (_) => _cubit.setSpan(
                         state.span == ShiftCalendarSpan.month
                             ? ShiftCalendarSpan.week
                             : ShiftCalendarSpan.month,
