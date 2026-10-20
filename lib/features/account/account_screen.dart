@@ -43,6 +43,7 @@ import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
 import 'time_preferences_section.dart';
 import 'pat_section.dart';
+import 'shift_feed_section.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
 import '../../core/theme/app_type.dart';
@@ -836,7 +837,14 @@ class _AccountScreenState extends State<_AccountBody> {
   Widget _sectionCard(_SettingsSection s) => switch (s) {
     _SettingsSection.security => _securitySection(),
     _SettingsSection.sessions => _sessionsSection(),
-    _SettingsSection.notifications => _notificationsSection(),
+    _SettingsSection.notifications => Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _notificationsSection(),
+        // Shift planning only: the personal feed of one's shifts (HIN-47).
+        const ShiftFeedSlot(),
+      ],
+    ),
     _SettingsSection.time => const Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
