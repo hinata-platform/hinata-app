@@ -301,7 +301,8 @@ class SeriesDraft extends Equatable {
     }
 
     return {
-      'title': title.trim(),
+      // A preview may go without a name; creating still needs one.
+      'title': text(title),
       'description': text(description),
       'location': text(location),
       'timezone': ?timezone,
@@ -403,6 +404,7 @@ class ShiftSeries extends Equatable {
     this.canPlan = false,
     this.next = const [],
     this.occurrencesCreated,
+    this.firstEventId,
   });
 
   final String id;
@@ -424,6 +426,10 @@ class ShiftSeries extends Equatable {
 
   /// How many occurrences creating it brought; only in the answer to that.
   final int? occurrencesCreated;
+
+  /// The first occurrence from today on that is not called off, to open after
+  /// creating; null when there is none or the server is older.
+  final String? firstEventId;
 
   /// [rrule] read back, or null when it is outside the app's subset.
   SeriesRule? get rule => SeriesRule.parse(rrule);
@@ -447,6 +453,7 @@ class ShiftSeries extends Equatable {
     canPlan: json['canPlan'] as bool? ?? false,
     next: SeriesOccurrence.listFromJson(json['next']),
     occurrencesCreated: (json['occurrencesCreated'] as num?)?.toInt(),
+    firstEventId: json['firstEventId'] as String?,
   );
 
   @override
@@ -466,5 +473,6 @@ class ShiftSeries extends Equatable {
     canPlan,
     next,
     occurrencesCreated,
+    firstEventId,
   ];
 }

@@ -301,10 +301,7 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     try {
       final zone = state.timezone;
       if (zone != null && zone != _deviceZone) await ShiftZones.ensureLoaded();
-      final preview = await _shifts.previewSeries(
-        state.projectId!,
-        _draft(previewTitle: true),
-      );
+      final preview = await _shifts.previewSeries(state.projectId!, _draft());
       if (isClosed || ticket != _previewTicket) return;
       emit(
         state.copyWith(
@@ -328,11 +325,9 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     }
   }
 
-  SeriesDraft _draft({bool previewTitle = false}) {
-    final title = state.title.trim();
+  SeriesDraft _draft() {
     return SeriesDraft(
-      // The preview does not care for the name, but the server wants one.
-      title: title.isEmpty && previewTitle ? '…' : title,
+      title: state.title,
       firstStart: state.start,
       durationMinutes: state.end.difference(state.start).inMinutes,
       rule: state.rule!,
@@ -443,32 +438,15 @@ class ShiftEventEditorCubit extends Cubit<ShiftEventEditorState> {
     return null;
   }
 
-  /// A new series, and its first occurrence to open: one more list read in
-  /// the window of the first date. Not found, the series still stands.
+  /// A new series, and its first occurrence to open as the server names it.
+  /// None named, the series still stands and the list shows it.
   Future<ShiftEventSaved> _createSeries() async {
-    final projectId = state.projectId!;
-    final series = await _shifts.createSeries(projectId, _draft());
-    String? firstId;
-    if (series.next.isNotEmpty) {
-      final first = series.next.first;
-      try {
-        final page = await _shifts.events(
-          from: first.startsAt,
-          to: first.endsAt,
-          projectId: projectId,
-          size: 10,
-        );
-        for (final event in page.items) {
-          if (event.seriesId == series.id) {
-            firstId = event.id;
-            break;
-          }
-        }
-      } catch (_) {
-        // The list shows the occurrences anyway.
-      }
-    }
-    return ShiftEventSaved(null, series: series, firstEventId: firstId);
+    final series = await _shifts.createSeries(state.projectId!, _draft());
+    return ShiftEventSaved(
+      null,
+      series: series,
+      firstEventId: series.firstEventId,
+    );
   }
 
   ShiftEventInput _input() => ShiftEventInput(
