@@ -159,3 +159,24 @@ String eventStaffingLabel(BuildContext context, int understaffed) =>
     understaffed > 0
     ? context.t('shifts.event.understaffed', count: understaffed)
     : context.t('shifts.event.allStaffed');
+
+/// `Montag`
+String weekdayLabel(BuildContext context, DateTime day) =>
+    DateFormat.EEEE(_locale(context)).format(day);
+
+/// What a card or a head says about the series an event belongs to (HIN-161):
+/// its rule in the server's words, and whether this occurrence went its own
+/// way. Null for an event outside a series.
+String? seriesLine(
+  BuildContext context, {
+  required String? seriesId,
+  required String? recurrenceLabel,
+  required bool detached,
+}) {
+  if (seriesId == null) return null;
+  final parts = [
+    ?recurrenceLabel,
+    if (detached) context.t('shifts.series.detached'),
+  ];
+  return parts.isEmpty ? null : parts.join(' · ');
+}

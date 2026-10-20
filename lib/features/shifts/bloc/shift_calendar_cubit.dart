@@ -394,12 +394,15 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
   }
 
   /// Moves [shift] to [start]..[end] (a planner's drag, once confirmed), and
-  /// reads the months it left and the ones it landed in again.
+  /// reads the months it left and the ones it landed in again. On an
+  /// occurrence of a series [scope] says which occurrences move; all later
+  /// ones mean every month held is read again.
   Future<ShiftMoveOutcome> move(
     Shift shift,
     DateTime start,
-    DateTime end,
-  ) async {
+    DateTime end, {
+    ShiftScope? scope,
+  }) async {
     if (state.moving.contains(shift.id)) {
       return const ShiftMoveOutcome.failed('shifts.action.busy');
     }
@@ -408,12 +411,25 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState> {
       final edit = await _shifts.updateShift(shift.id, {
         'startsAt': start.toUtc().toIso8601String(),
         'endsAt': end.toUtc().toIso8601String(),
-      });
+      }, scope: scope);
       if (isClosed) return ShiftMoveOutcome.done(edit);
+      final all = scope == ShiftScope.future;
       ShiftChanges.instance.notify(
-        ShiftChange(shiftId: shift.id, shift: edit.shift, origin: this),
+        ShiftChange(
+          shiftId: all ? '' : shift.id,
+          shift: edit.shift,
+          origin: this,
+        ),
       );
-      unawaited(refresh({shift.startsAt, start}));
+      unawaited(
+        refresh({
+          shift.startsAt,
+          start,
+          if (all)
+            for (final key in state.months.keys)
+              DateTime(key ~/ 100, key % 100),
+        }),
+      );
       return ShiftMoveOutcome.done(edit);
     } on ApiFailure catch (failure) {
       final code = failure.details['code'];

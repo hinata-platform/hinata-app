@@ -1,6 +1,7 @@
 import '../api/api_client.dart';
 import '../blocs/paged_cubit.dart';
 import '../models/shift_models.dart';
+import '../models/shift_series.dart';
 
 /// The shift planning module's data (HIN-27), behind `shift_planning`.
 ///
@@ -76,25 +77,61 @@ abstract class ShiftRepository {
 
   Future<ShiftEventDetail> createEvent(String projectId, ShiftEventInput input);
 
-  /// Changes an event; [patch] holds only what changed.
-  Future<ShiftEventChange> updateEvent(String id, Map<String, dynamic> patch);
+  // Every write below takes a [ShiftScope]; it is required (the server says
+  // 400 `seriesScopeRequired` otherwise) as soon as the event is an
+  // occurrence of a series, and ignored for any other event.
 
-  Future<ShiftEventDetail> cancelEvent(String id);
+  /// Changes an event; [patch] holds only what changed. With
+  /// [ShiftScope.future] the series is split here, and the answer carries the
+  /// occurrence with its new `seriesId`.
+  Future<ShiftEventChange> updateEvent(
+    String id,
+    Map<String, dynamic> patch, {
+    ShiftScope? scope,
+  });
 
-  Future<void> deleteEvent(String id);
+  Future<ShiftEventDetail> cancelEvent(String id, {ShiftScope? scope});
+
+  Future<void> deleteEvent(String id, {ShiftScope? scope});
 
   /// The same shift on each of [days] (wall-clock dates in the event's zone),
-  /// all or none. A refusal names each failed day in its details.
+  /// all or none. A refusal names each failed day in its details. Only ever
+  /// [ShiftScope.single]: a batch cannot change a series.
   Future<List<Shift>> createShifts(
     String eventId,
     ShiftInput template,
-    List<DateTime> days,
-  );
+    List<DateTime> days, {
+    ShiftScope? scope,
+  });
+
+  /// One new shift; with [ShiftScope.future] it also becomes a template of
+  /// the series from this occurrence on.
+  Future<Shift> createShift(
+    String eventId,
+    ShiftInput input, {
+    ShiftScope? scope,
+  });
 
   /// Changes a shift; [patch] holds only what changed.
-  Future<ShiftEdit> updateShift(String id, Map<String, dynamic> patch);
+  Future<ShiftEdit> updateShift(
+    String id,
+    Map<String, dynamic> patch, {
+    ShiftScope? scope,
+  });
 
-  Future<void> deleteShift(String id);
+  Future<void> deleteShift(String id, {ShiftScope? scope});
+
+  // --- series (HIN-161) -----------------------------------------------------
+
+  /// Creates a series and its occurrences of the first horizon.
+  Future<ShiftSeries> createSeries(String projectId, SeriesDraft draft);
+
+  /// What [draft] would make, in words and as the next five dates. Nothing is
+  /// saved.
+  Future<SeriesPreview> previewSeries(String projectId, SeriesDraft draft);
+
+  /// One series with its next five occurrences.
+  Future<ShiftSeries> series(String id);
 
   /// A planner puts [userId] on [shiftId].
   Future<ShiftAssignResult> assign(String shiftId, String userId);
@@ -268,6 +305,9 @@ class ApiShiftRepository implements ShiftRepository {
   static String _shift(String id) =>
       '/api/v1/shifts/shifts/${Uri.encodeComponent(id)}';
 
+  static String _scoped(String path, ShiftScope? scope) =>
+      scope == null ? path : '$path?scope=${scope.wire}';
+
   static String _day(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-'
       '${d.month.toString().padLeft(2, '0')}-'
@@ -321,28 +361,33 @@ class ApiShiftRepository implements ShiftRepository {
   @override
   Future<ShiftEventChange> updateEvent(
     String id,
-    Map<String, dynamic> patch,
-  ) async => ShiftEventChange.fromJson(
-    await _api.patch(_event(id), body: patch) as Map<String, dynamic>,
+    Map<String, dynamic> patch, {
+    ShiftScope? scope,
+  }) async => ShiftEventChange.fromJson(
+    await _api.patch(_scoped(_event(id), scope), body: patch)
+        as Map<String, dynamic>,
   );
 
   @override
-  Future<ShiftEventDetail> cancelEvent(String id) async =>
+  Future<ShiftEventDetail> cancelEvent(String id, {ShiftScope? scope}) async =>
       ShiftEventDetail.fromJson(
-        await _api.post('${_event(id)}/cancel') as Map<String, dynamic>,
+        await _api.post(_scoped('${_event(id)}/cancel', scope))
+            as Map<String, dynamic>,
       );
 
   @override
-  Future<void> deleteEvent(String id) => _api.delete(_event(id));
+  Future<void> deleteEvent(String id, {ShiftScope? scope}) =>
+      _api.delete(_scoped(_event(id), scope));
 
   @override
   Future<List<Shift>> createShifts(
     String eventId,
     ShiftInput template,
-    List<DateTime> days,
-  ) async {
+    List<DateTime> days, {
+    ShiftScope? scope,
+  }) async {
     final body = await _api.post(
-      '${_event(eventId)}/shifts:batch',
+      _scoped('${_event(eventId)}/shifts:batch', scope),
       body: {
         'template': template.toDraftJson(),
         'days': [for (final d in days) _day(d)],
@@ -356,13 +401,56 @@ class ApiShiftRepository implements ShiftRepository {
   }
 
   @override
-  Future<ShiftEdit> updateShift(String id, Map<String, dynamic> patch) async =>
-      ShiftEdit.fromJson(
-        await _api.patch(_shift(id), body: patch) as Map<String, dynamic>,
+  Future<Shift> createShift(
+    String eventId,
+    ShiftInput input, {
+    ShiftScope? scope,
+  }) async => Shift.fromJson(
+    await _api.post(
+          _scoped('${_event(eventId)}/shifts', scope),
+          body: input.toDraftJson(),
+        )
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<ShiftEdit> updateShift(
+    String id,
+    Map<String, dynamic> patch, {
+    ShiftScope? scope,
+  }) async => ShiftEdit.fromJson(
+    await _api.patch(_scoped(_shift(id), scope), body: patch)
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<void> deleteShift(String id, {ShiftScope? scope}) =>
+      _api.delete(_scoped(_shift(id), scope));
+
+  static String _seriesOf(String projectId) =>
+      '/api/v1/projects/${Uri.encodeComponent(projectId)}/shifts/series';
+
+  @override
+  Future<ShiftSeries> createSeries(String projectId, SeriesDraft draft) async =>
+      ShiftSeries.fromJson(
+        await _api.post(_seriesOf(projectId), body: draft.toJson())
+            as Map<String, dynamic>,
       );
 
   @override
-  Future<void> deleteShift(String id) => _api.delete(_shift(id));
+  Future<SeriesPreview> previewSeries(
+    String projectId,
+    SeriesDraft draft,
+  ) async => SeriesPreview.fromJson(
+    await _api.post('${_seriesOf(projectId)}:preview', body: draft.toJson())
+        as Map<String, dynamic>,
+  );
+
+  @override
+  Future<ShiftSeries> series(String id) async => ShiftSeries.fromJson(
+    await _api.get('/api/v1/shifts/series/${Uri.encodeComponent(id)}')
+        as Map<String, dynamic>,
+  );
 
   @override
   Future<ShiftAssignResult> assign(String shiftId, String userId) async =>

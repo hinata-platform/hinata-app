@@ -191,7 +191,18 @@
       "titleRequired": "Escribe un nombre.",
       "tooManyShifts": "Un evento tiene como máximo 200 turnos.",
       "windowInvalid": "No se puede leer este periodo.",
-      "windowTooLarge": "Este periodo es demasiado largo."
+      "windowTooLarge": "Este periodo es demasiado largo.",
+      "rruleUnsupported": "Esta regla de repetición no está admitida. Puedes repetir a diario, cada semana en días concretos o cada mes en un día, con un intervalo de 1 a 100 y una fecha de fin o un número de veces.",
+      "rruleTooComplex": "Esta regla de repetición requiere demasiados cálculos. Elige una más sencilla.",
+      "seriesTooLarge": "Una serie puede tener como máximo 2000 turnos en los próximos 90 días. Usa menos turnos por evento o repite con menos frecuencia.",
+      "seriesScopeRequired": "Este evento forma parte de una serie. Elige si el cambio se aplica solo a este o a todos los siguientes.",
+      "seriesFromInPast": "Una serie solo se puede cambiar a partir de hoy, no desde un evento pasado.",
+      "seriesShiftHasAssignments": "Todavía hay personas en este turno en eventos futuros. Quítalas primero y después el turno podrá salir de la serie.",
+      "seriesStartOutOfRange": "El primer evento puede estar como máximo un año atrás y dos años adelante.",
+      "seriesTooManyShifts": "Un evento de una serie puede tener como máximo 50 turnos.",
+      "seriesTooManyExdates": "Ya se han quitado 366 eventos de esta serie. Crea una serie nueva para lo que viene.",
+      "seriesTemplateKeyInvalid": "Los turnos de esta serie no son únicos. Vuelve a cargar la serie e inténtalo de nuevo.",
+      "seriesFutureUnsupported": "Los turnos de varios días a la vez solo se pueden añadir a este evento, no a todos los siguientes."
     }
   },
   "notFound": {
@@ -5559,6 +5570,69 @@
         "deleteTitle": "¿Eliminar el evento?",
         "deleteMessage": "Se eliminan el evento y todos sus turnos. Si aún hay personas apuntadas, cancélalo primero."
       }
+    },
+    "series": {
+      "scope": {
+        "message": "Este evento forma parte de una serie. ¿A qué debe aplicarse?",
+        "messageLabel": "Este evento forma parte de la serie «{{label}}». ¿A qué debe aplicarse?",
+        "thisHint": "Solo el evento del {{date}}, que después ya no sigue a la serie.",
+        "futureHint": "El evento del {{date}} y todos los siguientes. Los pasados quedan como están.",
+        "futureCancelHint": "La serie termina aquí. Se cancelan el evento del {{date}} y todos los siguientes.",
+        "futureDeleteHint": "La serie termina antes del {{date}}. Los eventos con personas inscritas se cancelan y el resto se elimina. Los pasados se quedan.",
+        "ruleOnlyFuture": "Una regla nueva siempre se aplica a este evento y a todos los siguientes.",
+        "batchOnlyThis": "Un turno en varios días a la vez solo se añade a este evento.",
+        "this": "Solo este",
+        "future": "Todos los siguientes"
+      },
+      "ask": {
+        "save": "Guardar evento de una serie",
+        "cancel": "Cancelar evento de una serie",
+        "delete": "Eliminar evento de una serie",
+        "move": "Mover turno",
+        "addShift": "Añadir turno",
+        "editShift": "Cambiar turno",
+        "deleteShift": "Eliminar turno"
+      },
+      "repeat": {
+        "label": "Repetir",
+        "never": "Nunca",
+        "daily": "Cada día",
+        "weekly": "Cada semana el {{day}}",
+        "monthly": "Cada mes el día {{day}}",
+        "custom": "Regla propia"
+      },
+      "custom": {
+        "back": "Atrás",
+        "unit": {
+          "daily": "Diaria",
+          "weekly": "Semanal",
+          "monthly": "Mensual"
+        },
+        "every": "Intervalo",
+        "interval": {
+          "daily": "cada día",
+          "daily_plural": "cada {{count}} días",
+          "weekly": "cada semana",
+          "weekly_plural": "cada {{count}} semanas",
+          "monthly": "cada mes",
+          "monthly_plural": "cada {{count}} meses"
+        },
+        "days": "Estos días",
+        "monthDay": "El día {{day}} de cada mes, como el inicio.",
+        "end": "Fin",
+        "endNever": "Sin fin",
+        "endCount": "Tras un número",
+        "endUntil": "En una fecha",
+        "times": "{{count}} vez",
+        "times_plural": "{{count}} veces",
+        "apply": "Aplicar"
+      },
+      "next": "Próximos: {{dates}}",
+      "done": {
+        "created": "Serie creada, {{count}} evento ya está en el calendario.",
+        "created_plural": "Serie creada, {{count}} eventos ya están en el calendario."
+      },
+      "detached": "distinto de la serie"
     }
   }
 }

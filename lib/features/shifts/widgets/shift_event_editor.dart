@@ -6,6 +6,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/shift_models.dart';
+import '../../../core/models/shift_series.dart';
 import '../../../core/repositories/shift_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
@@ -27,6 +28,8 @@ import '../bloc/shift_event_editor_cubit.dart';
 import '../shift_texts.dart';
 import '../shift_zones.dart';
 import 'shift_editor.dart' show ShiftDisclosure;
+import 'series_repeat_picker.dart';
+import 'series_scope_dialog.dart';
 import 'shift_plan_texts.dart';
 import 'zone_picker.dart';
 
@@ -59,7 +62,7 @@ Future<ShiftEventSaved?> showShiftEventEditor(
         projectName: projectName,
         deviceZone: zone,
         day: day,
-      ),
+      )..loadSeries(),
       child: ShiftEventEditorBody(
         projectLocked: existing != null || projectId != null,
         plannable: plannable,
@@ -68,14 +71,20 @@ Future<ShiftEventSaved?> showShiftEventEditor(
   );
   if (saved != null && context.mounted) {
     final overlaps = overlapNotice(context, saved.warnings);
+    final series = saved.series;
     showGlassToast(
       context,
       overlaps ??
-          context.t(
-            existing == null
-                ? 'shifts.plan.done.eventCreated'
-                : 'shifts.plan.done.eventSaved',
-          ),
+          (series != null
+              ? context.t(
+                  'shifts.series.done.created',
+                  count: series.occurrencesCreated ?? 0,
+                )
+              : context.t(
+                  existing == null
+                      ? 'shifts.plan.done.eventCreated'
+                      : 'shifts.plan.done.eventSaved',
+                )),
       kind: overlaps == null ? GlassToastKind.success : GlassToastKind.warning,
     );
   }
@@ -171,8 +180,38 @@ class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
     if (zone != null) _cubit.setTimezone(zone);
   }
 
+  Future<void> _pickRepeat(Rect? anchor) async {
+    final cubit = _cubit;
+    final state = cubit.state;
+    final picked = await showSeriesRepeatPicker(
+      context,
+      anchorRect: anchor,
+      start: state.start,
+      current: state.repeat,
+      custom: state.customRule ?? state.rule,
+      allowNever: !cubit.inSeries,
+    );
+    if (picked == null || !mounted) return;
+    cubit.setRepeat(picked.repeat, custom: picked.rule);
+  }
+
   Future<void> _save() async {
     final cubit = _cubit;
+    ShiftScope? scope;
+    if (await cubit.asksScope()) {
+      if (!mounted) return;
+      final summary = cubit.existing!.summary;
+      scope = await askSeriesScope(
+        context,
+        write: SeriesWrite.save,
+        day: summary.startsLocal,
+        recurrenceLabel: summary.recurrenceLabel,
+        singleLockedKey: cubit.ruleChanged
+            ? 'shifts.series.scope.ruleOnlyFuture'
+            : null,
+      );
+      if (scope == null || !mounted) return;
+    }
     if (cubit.problem == null && cubit.zoneChangeMovesShifts) {
       final start = await cubit.startOnDevice();
       if (!mounted) return;
@@ -193,8 +232,57 @@ class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
       );
       if (ok != true || !mounted) return;
     }
-    final saved = await cubit.save();
+    final saved = await cubit.save(scope: scope);
     if (saved != null && mounted) Navigator.of(context).pop(saved);
+  }
+
+  /// "Wiederholen" in words: the server's, once it has said them.
+  String _repeatValue(ShiftEventEditorCubit cubit, ShiftEventEditorState s) {
+    if (s.repeat == SeriesRepeat.never) {
+      return context.t('shifts.series.repeat.never');
+    }
+    final known = s.preview?.recurrenceLabel;
+    if (known != null && known.isNotEmpty) return known;
+    final current = cubit.existing?.summary.recurrenceLabel;
+    if (current != null && !cubit.ruleChanged) return current;
+    return switch (s.repeat) {
+      SeriesRepeat.daily => context.t('shifts.series.repeat.daily'),
+      SeriesRepeat.weekly => context.t(
+        'shifts.series.repeat.weekly',
+        variables: {'day': weekdayLabel(context, s.start)},
+      ),
+      SeriesRepeat.monthly => context.t(
+        'shifts.series.repeat.monthly',
+        variables: {'day': s.start.day},
+      ),
+      _ => context.t('shifts.series.repeat.custom'),
+    };
+  }
+
+  /// The next dates the preview named, or why there is no preview.
+  Widget? _repeatNote(ShiftEventEditorState s) {
+    if (s.repeat == SeriesRepeat.never) return null;
+    final error = s.previewErrorKey;
+    if (error != null) {
+      return _RepeatNote(
+        icon: LucideIcons.circleAlert,
+        text: planErrorText(context, error),
+        error: true,
+      );
+    }
+    final next = s.preview?.next ?? const <SeriesOccurrence>[];
+    if (next.isEmpty) return null;
+    return _RepeatNote(
+      icon: LucideIcons.calendarDays,
+      text: context.t(
+        'shifts.series.next',
+        variables: {
+          'dates': [
+            for (final o in next) dayLabel(context, o.date),
+          ].join(' · '),
+        },
+      ),
+    );
   }
 
   String? _problemText(ShiftEventProblem? problem) => switch (problem) {
@@ -215,6 +303,10 @@ class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
     final cubit = context.read<ShiftEventEditorCubit>();
     final problem = state.attempted ? cubit.problem : null;
     final zone = state.timezone;
+    final repeatNote = cubit.canRepeat ? _repeatNote(state) : null;
+    final label = state.repeat == SeriesRepeat.never
+        ? null
+        : _repeatValue(cubit, state);
     final moreSummary = [
       ?zone,
       context.t(
@@ -233,7 +325,8 @@ class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
                 ? 'shifts.plan.event.editTitle'
                 : 'shifts.plan.event.newTitle',
           ),
-          subtitle: context.t('shifts.plan.event.subtitle'),
+          // A series says its rule in the head, in the server's words.
+          subtitle: label ?? context.t('shifts.plan.event.subtitle'),
         ),
         Flexible(
           child: SingleChildScrollView(
@@ -304,6 +397,27 @@ class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
                     );
                   },
                 ),
+                if (cubit.canRepeat) ...[
+                  const SizedBox(height: 12),
+                  Builder(
+                    builder: (anchor) => FieldButton(
+                      icon: LucideIcons.repeat,
+                      label: context.t('shifts.series.repeat.label'),
+                      value: label ?? _repeatValue(cubit, state),
+                      empty: state.repeat == SeriesRepeat.never,
+                      onTap: () =>
+                          unawaited(_pickRepeat(anchorRectOfContext(anchor))),
+                    ),
+                  ),
+                  if (state.previewing && state.preview == null) ...[
+                    const SizedBox(height: 6),
+                    const LinearProgressIndicator(minHeight: 2),
+                  ],
+                  if (repeatNote != null) ...[
+                    const SizedBox(height: 6),
+                    repeatNote,
+                  ],
+                ],
                 const SizedBox(height: 12),
                 TextField(
                   controller: _location,
@@ -410,6 +524,46 @@ class _ShiftEventEditorBodyState extends State<ShiftEventEditorBody> {
           onConfirm: state.saving ? null : () => unawaited(_save()),
         ),
       ],
+    );
+  }
+}
+
+class _RepeatNote extends StatelessWidget {
+  const _RepeatNote({
+    required this.icon,
+    required this.text,
+    this.error = false,
+  });
+
+  final IconData icon;
+  final String text;
+  final bool error;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = error ? AppColors.dangerInk : AppColors.inkSoft;
+    return Semantics(
+      liveRegion: true,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: ExcludeSemantics(child: Icon(icon, size: 14, color: color)),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontSize: AppType.caption,
+                height: 1.4,
+                color: color,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
