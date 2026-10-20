@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "MCP से टाइमर रद्द किया गया",
       "MCP_SHIFT_SELF_ASSIGNED": "MCP से शिफ़्ट में नाम लिखा गया",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "MCP से शिफ़्ट सौंपी गई",
-      "MCP_SHIFT_RELEASED": "MCP से शिफ़्ट छोड़ी गई",
+      "MCP_SHIFT_RELEASED": "MCP से शिफ़्ट से नाम हटाया गया",
       "MCP_SHIFT_CONFIRMED": "MCP से शिफ़्ट की पुष्टि की गई",
       "MCP_SHIFT_DECLINED": "MCP से शिफ़्ट के लिए मना किया गया",
       "MCP_SHIFT_REMOVED": "MCP से शिफ़्ट से हटाया गया",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "शिफ़्ट दी गई",
       "SHIFT_ASSIGNMENT_CONFIRMED": "शिफ़्ट की पुष्टि हुई",
       "SHIFT_ASSIGNMENT_DECLINED": "शिफ़्ट अस्वीकार हुई",
-      "SHIFT_ASSIGNMENT_RELEASED": "शिफ़्ट छोड़ी गई",
+      "SHIFT_ASSIGNMENT_RELEASED": "शिफ़्ट से नाम हटाया गया",
       "SHIFT_PLANNER_GRANTED": "शिफ़्ट योजना की अनुमति दी गई",
       "SHIFT_PLANNER_REVOKED": "शिफ़्ट योजना की अनुमति वापस ली गई"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "खोज",
       "notifications_read": "अपनी सूचनाएँ पढ़ना",
       "shifts_read": "शिफ़्ट और अपने पंजीकरण पढ़ना",
-      "shifts_write": "शिफ़्ट में नाम लिखना, पुष्टि करना, मना करना या छोड़ना",
+      "shifts_write": "शिफ़्ट में नाम लिखना, पुष्टि करना, मना करना या नाम हटाना",
       "shifts_plan": "शिफ़्ट की योजना: लोगों को सौंपना और हटाना",
       "projects_write": "परियोजनाएं बनाना"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "सौंपी गई",
       "confirmed": "पुष्टि की गई",
       "declined": "अस्वीकार की गई",
-      "released": "छोड़ी गई",
+      "released": "नाम हटाया गया",
       "waiting": "प्रतीक्षा सूची में",
       "mine": "नाम दर्ज"
     },
@@ -5388,7 +5388,7 @@
       "join": "नाम दर्ज करें",
       "confirm": "पुष्टि करें",
       "decline": "अस्वीकार करें",
-      "release": "छोड़ें",
+      "release": "नाम हटाएँ",
       "toEvent": "इवेंट पर जाएँ",
       "busy": "एक पल, यह अभी चल रहा है।",
       "waitlistJoin": "प्रतीक्षा सूची में जुड़ें",
@@ -5398,12 +5398,12 @@
       "joined": "आपका नाम दर्ज हो गया",
       "confirmed": "शिफ़्ट की पुष्टि हो गई",
       "declined": "असाइनमेंट अस्वीकार किया गया",
-      "released": "शिफ़्ट छोड़ दी गई",
+      "released": "शिफ़्ट से नाम हटा दिया गया",
       "waitlisted": "आप प्रतीक्षा सूची में हैं",
       "waitlistLeft": "आपने प्रतीक्षा सूची छोड़ दी"
     },
     "ask": {
-      "releaseTitle": "यह शिफ़्ट छोड़ें?",
+      "releaseTitle": "इस शिफ़्ट से नाम हटाएँ?",
       "releaseMessage": "आपकी जगह फिर से खाली हो जाएगी और दूसरे लोग नाम दर्ज कर सकेंगे।",
       "declineTitle": "यह असाइनमेंट अस्वीकार करें?",
       "declineMessage": "जगह फिर से खाली हो जाएगी और आयोजक किसी और को रख सकेंगे।",

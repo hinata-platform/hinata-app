@@ -154,7 +154,7 @@ void main() {
       );
       expect(find.text('Theke'), findsOneWidget);
       expect(find.text('mit 1 weiteren Person'), findsOneWidget);
-      expect(find.text('Abgeben'), findsNothing);
+      expect(find.text('Austragen'), findsNothing);
     });
 
     testWidgets('failing without a snapshot offers a retry', (tester) async {
@@ -322,7 +322,7 @@ void main() {
       );
       expect(find.text('Eintragen'), findsNothing);
       // The place is named (`myAssignment`), so giving it up is right there.
-      expect(find.text('Abgeben'), findsOneWidget);
+      expect(find.text('Austragen'), findsOneWidget);
       await tester.pump(const Duration(seconds: 6));
       await tester.pump(const Duration(seconds: 1));
     });

@@ -381,7 +381,7 @@ class _EventShiftRow extends StatelessWidget {
     // helper's own answer (confirm, give up) is in the sheet for them.
     final planning = summary.canPlan && !shift.cancelled && !summary.cancelled;
     // The caller's place, named by the server (`myAssignment`): the action
-    // it asks for goes right on the row, "Abgeben" included.
+    // it asks for goes right on the row, "Austragen" included.
     final held = shift.mine && shift.myAssignmentId != null;
     final Widget? trailing = planning
         ? shift.coverage.state == CoverageState.full

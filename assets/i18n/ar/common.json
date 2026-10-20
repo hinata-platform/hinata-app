@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "تجاهل مؤقت عبر MCP",
       "MCP_SHIFT_SELF_ASSIGNED": "تسجيل في مناوبة عبر MCP",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "تعيين مناوبة عبر MCP",
-      "MCP_SHIFT_RELEASED": "التخلي عن مناوبة عبر MCP",
+      "MCP_SHIFT_RELEASED": "إلغاء التسجيل في نوبة عبر MCP",
       "MCP_SHIFT_CONFIRMED": "تأكيد مناوبة عبر MCP",
       "MCP_SHIFT_DECLINED": "رفض مناوبة عبر MCP",
       "MCP_SHIFT_REMOVED": "إزالة من مناوبة عبر MCP",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "تم التعيين في نوبة",
       "SHIFT_ASSIGNMENT_CONFIRMED": "تم تأكيد نوبة",
       "SHIFT_ASSIGNMENT_DECLINED": "تم رفض نوبة",
-      "SHIFT_ASSIGNMENT_RELEASED": "تم التنازل عن نوبة",
+      "SHIFT_ASSIGNMENT_RELEASED": "إلغاء التسجيل في نوبة",
       "SHIFT_PLANNER_GRANTED": "تم منح صلاحية تخطيط النوبات",
       "SHIFT_PLANNER_REVOKED": "تم سحب صلاحية تخطيط النوبات"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "البحث",
       "notifications_read": "قراءة إشعاراتك",
       "shifts_read": "قراءة المناوبات وتسجيلاتك",
-      "shifts_write": "التسجيل في المناوبات وتأكيدها أو رفضها أو التخلي عنها",
+      "shifts_write": "التسجيل في المناوبات وتأكيدها أو رفضها أو إلغاء التسجيل",
       "shifts_plan": "تخطيط المناوبات: تعيين الأشخاص وإزالتهم",
       "projects_write": "إنشاء المشاريع"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "معيّن",
       "confirmed": "مؤكَّد",
       "declined": "مرفوض",
-      "released": "متنازل عنها",
+      "released": "أُلغي التسجيل",
       "waiting": "في قائمة الانتظار",
       "mine": "مسجَّل"
     },
@@ -5388,7 +5388,7 @@
       "join": "سجّلني",
       "confirm": "تأكيد",
       "decline": "رفض",
-      "release": "تنازل",
+      "release": "ألغِ تسجيلي",
       "toEvent": "إلى الفعالية",
       "busy": "لحظة، ما زال قيد التنفيذ.",
       "waitlistJoin": "الانضمام إلى قائمة الانتظار",
@@ -5398,12 +5398,12 @@
       "joined": "تم تسجيلك",
       "confirmed": "تم تأكيد النوبة",
       "declined": "تم رفض التعيين",
-      "released": "تم التنازل عن النوبة",
+      "released": "تم إلغاء تسجيلك في النوبة",
       "waitlisted": "أنت في قائمة الانتظار",
       "waitlistLeft": "غادرت قائمة الانتظار"
     },
     "ask": {
-      "releaseTitle": "التنازل عن هذه النوبة؟",
+      "releaseTitle": "إلغاء تسجيلك في هذه النوبة؟",
       "releaseMessage": "سيصبح مكانك شاغرًا ويمكن لآخرين التسجيل.",
       "declineTitle": "رفض هذا التعيين؟",
       "declineMessage": "سيصبح المكان شاغرًا ويمكن للمنظمين تعيين شخص آخر.",

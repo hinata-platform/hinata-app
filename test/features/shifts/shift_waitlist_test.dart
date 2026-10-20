@@ -553,7 +553,7 @@ void main() {
           findsOneWidget,
         );
         expect(find.text('Bestätigen'), findsOneWidget);
-        expect(find.text('Abgeben'), findsOneWidget);
+        expect(find.text('Austragen'), findsOneWidget);
         expect(find.text('Ablehnen'), findsNothing);
         expect(find.text('WARTELISTE'), findsOneWidget);
         expect(find.text('Garderobe'), findsOneWidget);
@@ -618,7 +618,7 @@ void main() {
       await settle(tester);
       expect(find.textContaining('Nachgerückt, bitte bis'), findsOneWidget);
       expect(find.text('Bestätigen'), findsOneWidget);
-      expect(find.text('Abgeben'), findsOneWidget);
+      expect(find.text('Austragen'), findsOneWidget);
       expect(find.text('Ablehnen'), findsNothing);
     });
   });
