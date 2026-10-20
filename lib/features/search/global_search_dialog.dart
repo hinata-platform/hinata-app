@@ -18,7 +18,13 @@ import '../../core/branding/org_logo.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/auth_bloc.dart';
+import '../../core/blocs/time_policy_cubit.dart';
+import '../../core/models/core_models.dart' show PlatformFlags;
+import '../../core/models/time_policy_models.dart' show TimePolicySnapshot;
+import 'command_registry.dart';
 import 'global_search_controller.dart';
+import 'search_hit_mapper.dart';
 import 'search_models.dart';
 import 'search_tokens.dart';
 import '../../core/theme/app_type.dart';
@@ -40,6 +46,32 @@ const double _kPhoneBreakpoint = 610;
 /// caller: the key, the search bar, and the command that reopens it.
 bool _paletteIsOpen = false;
 
+/// What the reader may reach from the palette, read from the app's state.
+PaletteAccess paletteAccessOf(BuildContext context) {
+  final meta = context.read<AppConfigBloc>().state.meta;
+  final user = context.read<AuthBloc>().state.user;
+  TimePolicySnapshot? policy;
+  try {
+    policy = context.read<TimePolicyCubit>().state;
+  } on ProviderNotFoundException {
+    // Not provided above every caller (previews, tests): no policy, no tabs
+    // that depend on one.
+  }
+  return PaletteAccess(
+    modules: SearchModules(
+      advancedTime: meta?.advancedTimeTracking ?? false,
+      absences: meta?.absenceManagement ?? false,
+      billing: meta?.billing ?? false,
+      shifts: meta?.shiftPlanning ?? false,
+    ),
+    admin: user?.isAdmin ?? false,
+    orgAdmin: user?.isOrgAdmin ?? false,
+    mcp: meta?.isFlagEnabled(PlatformFlags.mcp) ?? false,
+    workloadReports: policy?.workloadReportsEnabled ?? false,
+    absenceReports: policy?.absenceReportsEnabled ?? false,
+  );
+}
+
 /// Opens the global search / command palette over a dimmed, blurred app.
 ///
 /// Uses [showGeneralDialog] so we own the scrim, blur and spring (§3.1). The
@@ -52,13 +84,14 @@ Future<void> openGlobalSearch(BuildContext context) {
     repository: context.read<SearchRepository>(),
     storage: context.read<AppStorage>(),
   );
-  // Localise command labels against the launching context, then load async.
-  // The module's own commands are listed only where the module exists — five
-  // rows leading to a not-found page is worse than five rows fewer.
+  // Localise against the launching context, then load async. A module's own
+  // categories and commands are offered only where the module exists, and a
+  // page's command only to somebody the page is there for.
+  final access = paletteAccessOf(context);
   controller.load(
-    t: (key) => context.t(key),
-    advancedTime:
-        context.read<AppConfigBloc>().state.meta?.advancedTimeTracking ?? false,
+    labels: SearchLabels.of(context),
+    modules: access.modules,
+    commands: paletteCommands(access),
   );
 
   return showGeneralDialog<void>(
@@ -481,7 +514,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
 
   // ---- scope chips (§3.4) ----
   Widget _scopes(SearchTokens tokens) {
-    final chips = <SearchCat?>[null, ...SearchCat.values];
+    final chips = <SearchCat?>[null, ..._c.available];
     return Container(
       decoration: BoxDecoration(
         border: Border(bottom: BorderSide(color: tokens.hairline)),
@@ -500,7 +533,7 @@ class _GlobalSearchDialogState extends State<GlobalSearchDialog> {
                 label: cat == null
                     ? context.t('search.scope.all')
                     : context.t(kSearchCatMeta[cat]!.labelKey),
-                count: cat == null ? null : (_c.counts[cat] ?? 0),
+                count: cat == null ? null : _c.countLabel(cat),
                 active: _c.scope == cat,
                 onTap: () => _c.setScope(cat),
               ),

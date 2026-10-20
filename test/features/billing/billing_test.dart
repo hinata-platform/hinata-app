@@ -10,6 +10,7 @@ import 'package:hinata/features/billing/billing_format.dart';
 import 'package:hinata/features/billing/invoice_draft_sheet.dart';
 import 'package:hinata/features/billing/invoices_screen.dart';
 import 'package:hinata/features/billing/rate_timeline_sheet.dart';
+import 'package:hinata/features/billing/rates_screen.dart';
 import 'package:hinata/features/time/reports/billing_report_tab.dart';
 
 /// Billing (HIN-96): amounts typed and shown, the rate timeline with "change
@@ -323,6 +324,73 @@ void main() {
     });
   });
 
+  // HIN-165: a search hit for a rate links to `/time/rates?rate=<id>`.
+  group('a link to a rate', () {
+    BillingRate rate(String id, RateStatus status) => BillingRate(
+      id: id,
+      kind: RateKind.billable,
+      scope: RateScope.project,
+      scopeId: 'p-$id',
+      targetLabel: 'Project $id',
+      amountCents: 9500,
+      currency: 'EUR',
+      validFrom: DateTime(2026, 1, 1),
+      status: status,
+    );
+
+    Future<_FakeBilling> pump(WidgetTester tester, String? rateId) async {
+      final billing = _FakeBilling(
+        granted: const BillingAccess(
+          currency: 'EUR',
+          admin: true,
+          costs: true,
+          invoices: true,
+          reports: true,
+        ),
+        listed: [rate('r1', RateStatus.active), rate('r2', RateStatus.ended)],
+      );
+      tester.view.physicalSize = const Size(1000, 1400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        RepositoryProvider<BillingRepository>.value(
+          value: billing,
+          child: MaterialApp(
+            home: Scaffold(body: RatesScreen(rateId: rateId)),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return billing;
+    }
+
+    testWidgets('opens that rate\'s timeline, even one that has ended', (
+      tester,
+    ) async {
+      final billing = await pump(tester, 'r2');
+
+      // Every status, or the ended rate would not be in the list.
+      expect(billing.statuses, [null]);
+      expect(billing.timelineReads, 1);
+      expect(billing.timelineTargets.single.scopeId, 'p-r2');
+    });
+
+    testWidgets('without one the list opens on the active rates', (
+      tester,
+    ) async {
+      final billing = await pump(tester, null);
+
+      expect(billing.statuses, [RateStatus.active]);
+      expect(billing.timelineReads, 0);
+    });
+
+    testWidgets('a rate the reader cannot see opens nothing', (tester) async {
+      final billing = await pump(tester, 'gone');
+
+      expect(billing.timelineReads, 0);
+    });
+  });
+
   testWidgets('the invoices page tells a member it is not theirs', (
     tester,
   ) async {
@@ -366,9 +434,17 @@ class _FakeBilling extends Fake implements BillingRepository {
   _FakeBilling({
     this.spans = const [],
     this.granted = const BillingAccess(currency: 'EUR', reports: true),
+    this.listed = const [],
   });
 
   final List<BillingRate> spans;
+
+  /// What the rates page lists, whatever it narrows to.
+  final List<BillingRate> listed;
+
+  /// The status each read of the rates page asked for.
+  final List<RateStatus?> statuses = [];
+  final List<RateTarget> timelineTargets = [];
   final BillingAccess granted;
   final List<(RateTarget, int, DateTime)> created = [];
   final List<InvoiceDraftRequest> drafted = [];
@@ -380,6 +456,7 @@ class _FakeBilling extends Fake implements BillingRepository {
   @override
   Future<List<BillingRate>> timeline(RateTarget target) async {
     timelineReads++;
+    timelineTargets.add(target);
     return spans;
   }
 
@@ -412,6 +489,20 @@ class _FakeBilling extends Fake implements BillingRepository {
       unratedLines: 0,
       editable: true,
     );
+  }
+
+  @override
+  Future<PageResult<BillingRate>> rates({
+    RateKind? kind,
+    RateScope? scope,
+    String? scopeId,
+    String? projectId,
+    RateStatus? status,
+    int page = 0,
+    int size = 25,
+  }) async {
+    statuses.add(status);
+    return (items: listed, total: listed.length);
   }
 
   @override

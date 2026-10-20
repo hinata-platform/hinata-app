@@ -1,29 +1,34 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:go_router/go_router.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/search_repository.dart';
 import 'command_registry.dart';
 import '../../core/models/search_api.dart';
 import '../../core/storage/app_storage.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/widgets/hive_widgets.dart' show stateLabel;
+import 'search_hit_mapper.dart';
 import 'search_models.dart';
 
 /// A category group of results, in [SearchCat] order.
 class SearchGroup {
-  const SearchGroup(this.cat, this.items);
+  const SearchGroup(this.cat, this.items, {this.more = false});
   final SearchCat cat;
   final List<SearchEntry> items;
+
+  /// Whether the group stopped at the overview's cap, so the category's own
+  /// scope may hold more.
+  final bool more;
 }
 
+/// How many hits the server sends per category when searching everything.
+const int kSearchOverviewCap = 5;
+
 /// Drives the global search palette. Commands are matched client-side (pure UI
-/// actions, instant/offline); everything else (issues, projects, people,
-/// boards, docs) is searched server-side via `/api/v1/search` (debounced,
-/// stale responses discarded). See [[project_global_search]].
+/// actions, instant/offline); everything else (issues, comments, projects,
+/// teams, people, boards, knowledge, attachments and the modules' own records)
+/// is searched server-side via `/api/v1/search` (debounced, stale responses
+/// discarded). See [[project_global_search]].
 class GlobalSearchController extends ChangeNotifier {
   GlobalSearchController({required this.repository, required this.storage}) {
     _recents = storage.recentSearches.toList();
@@ -53,6 +58,16 @@ class GlobalSearchController extends ChangeNotifier {
   List<SearchGroup> _serverGroups = const [];
   final Map<SearchCat, int> _counts = {};
   Map<SearchCat, int> get counts => _counts;
+
+  /// Categories whose count stopped at the server's ceiling ("99+").
+  final Set<SearchCat> _capped = {};
+  Set<SearchCat> get cappedCounts => _capped;
+
+  /// The scopes on offer: every category whose module this server runs.
+  List<SearchCat> _available = SearchCat.values;
+  List<SearchCat> get available => _available;
+
+  SearchLabels? _labels;
 
   bool _loading = false;
   bool get loading => _loading;
@@ -87,18 +102,22 @@ class GlobalSearchController extends ChangeNotifier {
     if (!_disposed) notifyListeners();
   }
 
-  /// Builds the client commands (localised via [t]) and fetches initial counts.
+  /// Builds the client [commands] (localised via [labels]), settles which
+  /// categories this server offers and fetches the initial counts.
   Future<void> load({
-    required String Function(String) t,
-    bool advancedTime = false,
+    required SearchLabels labels,
+    required List<PaletteCommand> commands,
+    SearchModules modules = const SearchModules(),
   }) async {
+    _labels = labels;
+    _available = availableSearchCats(modules);
     // i18next echoes the raw key when it can't resolve (e.g. assets not yet
     // reloaded) — a dot marks that case, so never treat it as a keyword.
-    final localized = t('search.archivedKeyword').trim().toLowerCase();
+    final localized = labels.t('search.archivedKeyword').trim().toLowerCase();
     if (localized.isNotEmpty && !localized.contains('.')) {
       _archivedKeywords.add(localized);
     }
-    _commands = _buildCommands(t, advancedTime: advancedTime);
+    _commands = _buildCommands(labels, commands);
     _recount();
     _recompose();
     _safeNotify();
@@ -139,99 +158,41 @@ class GlobalSearchController extends ChangeNotifier {
   }
 
   void _applyResponse(SearchApiResponse response) {
-    // counts (always present, query-independent)
+    // Counts come with a blank query only; a typed one leaves the last ones.
     for (final entry in response.counts.entries) {
-      final cat = _catFromName(entry.key);
-      if (cat != null) _counts[cat] = entry.value;
-    }
-    // grouped results → SearchEntry
-    final groups = <SearchGroup>[];
-    for (final group in response.groups) {
-      final cat = _catFromName(group.category);
+      final cat = searchCatFromName(entry.key);
       if (cat == null) continue;
-      groups.add(SearchGroup(cat, group.items.map(_mapHit).toList()));
+      _counts[cat] = entry.value;
+      if (response.cappedCounts.contains(entry.key.toUpperCase())) {
+        _capped.add(cat);
+      } else {
+        _capped.remove(cat);
+      }
+    }
+    // Grouped results → SearchEntry. A category this app does not know (a
+    // newer server) or whose module it does not offer is skipped.
+    final labels = _labels;
+    final groups = <SearchGroup>[];
+    if (labels != null) {
+      for (final group in response.groups) {
+        final cat = searchCatFromName(group.category);
+        if (cat == null || !_available.contains(cat)) continue;
+        groups.add(
+          SearchGroup(cat, [
+            for (final hit in group.items) mapSearchHit(hit, labels),
+          ], more: _scope == null && group.items.length >= kSearchOverviewCap),
+        );
+      }
     }
     _serverGroups = groups;
   }
 
-  SearchEntry _mapHit(SearchApiHit hit) {
-    final cat = _catFromName(hit.category) ?? SearchCat.issues;
-    void open(BuildContext context) => context.go(hit.route);
-    switch (cat) {
-      case SearchCat.issues:
-        return SearchEntry(
-          cat: cat,
-          key: 'i-${hit.id}',
-          title: hit.title,
-          keys: hit.title.toLowerCase(),
-          mono: hit.readableId,
-          issueType: hit.type,
-          statusColor: hit.state != null
-              ? AppColors.stateColor(hit.state!)
-              : null,
-          statusName: hit.state != null ? stateLabel(hit.state!) : null,
-          avatarName: hit.assigneeName,
-          avatarUrl: hit.assigneeAvatarUrl,
-          archived: hit.archived,
-          onSelect: open,
-        );
-      case SearchCat.projects:
-        final members = hit.memberNames.length;
-        return SearchEntry(
-          cat: cat,
-          key: 'p-${hit.id}',
-          title: hit.title,
-          keys: hit.title.toLowerCase(),
-          subtitle:
-              '${hit.openCount ?? 0} open · ${hit.doneCount ?? 0} done · $members members',
-          keyChipText: hit.projectKey,
-          keyChipColor: hit.projectColor != null
-              ? _parseHex(hit.projectColor!)
-              : null,
-          memberNames: hit.memberNames,
-          archived: hit.archived,
-          onSelect: open,
-        );
-      case SearchCat.people:
-        return SearchEntry(
-          cat: cat,
-          key: 'u-${hit.id}',
-          title: hit.title,
-          keys: hit.title.toLowerCase(),
-          subtitle: hit.subtitle,
-          avatarName: hit.title,
-          avatarUrl: hit.avatarUrl,
-          onSelect: open,
-        );
-      case SearchCat.boards:
-        return SearchEntry(
-          cat: cat,
-          key: 'b-${hit.id}',
-          title: hit.title,
-          keys: hit.title.toLowerCase(),
-          subtitle: hit.subtitle,
-          leadingIcon: LucideIcons.columns3,
-          onSelect: open,
-        );
-      case SearchCat.docs:
-        return SearchEntry(
-          cat: cat,
-          key: 'k-${hit.id}',
-          title: hit.title,
-          keys: hit.title.toLowerCase(),
-          subtitle: '${hit.space ?? 'Knowledge'} · ${_relative(hit.updatedAt)}',
-          leadingIcon: LucideIcons.fileText,
-          onSelect: open,
-        );
-      case SearchCat.commands:
-        return SearchEntry(
-          cat: cat,
-          key: 'x-${hit.id}',
-          title: hit.title,
-          keys: hit.title.toLowerCase(),
-          onSelect: open,
-        );
-    }
+  /// The count a scope chip shows: `99+` past the server's ceiling, nothing
+  /// where the server sent no count (it ran out of time for it).
+  String? countLabel(SearchCat cat) {
+    final count = _counts[cat];
+    if (count == null) return null;
+    return _capped.contains(cat) ? '99+' : '$count';
   }
 
   /// Detects an archive keyword ("archiviert" / "archived", any supported
@@ -333,7 +294,7 @@ class GlobalSearchController extends ChangeNotifier {
 
   /// Tab / Shift+Tab through `[All, ...categories]`.
   void cycleScope(bool forward) {
-    const chips = <SearchCat?>[null, ...SearchCat.values];
+    final chips = <SearchCat?>[null, ..._available];
     final i = chips.indexOf(_scope);
     final next = (i + (forward ? 1 : chips.length - 1)) % chips.length;
     setScope(chips[next]);
@@ -395,47 +356,26 @@ class GlobalSearchController extends ChangeNotifier {
   /// haystack, and the haystack has to hold both what it is called in the
   /// reader's language and the English words somebody might reach for anyway.
   List<SearchEntry> _buildCommands(
-    String Function(String) t, {
-    required bool advancedTime,
-  }) => [
-    for (final command in paletteCommands(advancedTime: advancedTime))
+    SearchLabels labels,
+    List<PaletteCommand> commands,
+  ) => [
+    for (final command in commands)
       SearchEntry(
         cat: SearchCat.commands,
         key: 'c-${command.id}',
-        title: t(command.labelKey),
-        keys: '${t(command.labelKey)} ${command.keywords}'.toLowerCase(),
+        title: labels.t(command.labelKey),
+        subtitle: command.contextKey == null
+            ? null
+            : labels.t(command.contextKey!),
+        keys: [
+          labels.t(command.labelKey),
+          if (command.contextKey != null) labels.t(command.contextKey!),
+          command.keywords,
+        ].join(' ').toLowerCase(),
         leadingIcon: command.icon,
         hint: command.hint,
         closesOnSelect: command.closesOnSelect,
         onSelect: command.invoke,
       ),
   ];
-
-  // ─────────────────────────── helpers ──────────────────────────────────
-
-  static SearchCat? _catFromName(String name) => switch (name.toUpperCase()) {
-    'COMMANDS' => SearchCat.commands,
-    'ISSUES' => SearchCat.issues,
-    'PROJECTS' => SearchCat.projects,
-    'PEOPLE' => SearchCat.people,
-    'BOARDS' => SearchCat.boards,
-    'DOCS' => SearchCat.docs,
-    _ => null,
-  };
-
-  static Color _parseHex(String hex) {
-    var h = hex.replaceAll('#', '').trim();
-    if (h.length == 6) h = 'FF$h';
-    final value = int.tryParse(h, radix: 16);
-    return value == null ? AppColors.stBacklog : Color(value);
-  }
-
-  static String _relative(DateTime? date) {
-    if (date == null) return 'recently';
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays >= 1) return 'updated ${diff.inDays}d';
-    if (diff.inHours >= 1) return 'updated ${diff.inHours}h';
-    if (diff.inMinutes >= 1) return 'updated ${diff.inMinutes}m';
-    return 'updated just now';
-  }
 }

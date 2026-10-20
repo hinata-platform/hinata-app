@@ -20,6 +20,7 @@ import '../../../core/lexical/hinata_document.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'voice/voice_player.dart';
 import '../../../core/theme/app_type.dart';
+import '../../people/person_link.dart';
 
 part 'comment_thread.bubbles.dart';
 part 'comment_thread.menus.dart';

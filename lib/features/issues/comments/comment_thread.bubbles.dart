@@ -48,10 +48,14 @@ class CommentBubbleRow extends StatelessWidget {
                   child: _SelectDot(selected: selected),
                 )
               : SizedBox(width: avatarSize))
-        : HiveAvatar(
+        : PersonLink(
+            personId: _c.authorId,
             name: name,
-            imageUrl: _x.avatarFor(_c.authorId),
-            size: avatarSize,
+            child: HiveAvatar(
+              name: name,
+              imageUrl: _x.avatarFor(_c.authorId),
+              size: avatarSize,
+            ),
           );
 
     final body = _c.isVoice

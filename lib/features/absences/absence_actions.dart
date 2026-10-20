@@ -34,10 +34,15 @@ Future<MyAbsencesState> _mine(BuildContext context) async {
 
 /// Asks for time off from [from] to [to] — or, without absence management,
 /// enters it. Resolves to true when something was filed.
+///
+/// [typeId] picks the type the request form opens with, when it is one the
+/// reader may ask for; the plain absence of an instance without management has
+/// no such types and ignores it.
 Future<bool> askForAbsence(
   BuildContext context, {
   DateTime? from,
   DateTime? to,
+  String? typeId,
 }) async {
   final cubit = context.read<MyAbsencesCubit>();
   if (!absencesManaged(context)) {
@@ -58,6 +63,7 @@ Future<bool> askForAbsence(
     balances: mine.balances,
     initialFrom: from,
     initialTo: to,
+    initialTypeId: typeId,
   );
   if (filed != null) unawaited(cubit.changed());
   return filed != null;
