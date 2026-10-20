@@ -145,11 +145,15 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
     required this.event,
     this.shift,
     DateTime? day,
-    DateTime? start,
-    DateTime? end,
+    ({DateTime start, DateTime end})? wallSpan,
     String? deviceZone,
-  }) : _deviceZone = deviceZone,
-       super(_initial(event, shift, day, start, end));
+  }) : assert(day == null || wallSpan == null, 'a day or a span, not both'),
+       assert(
+         wallSpan == null || wallSpan.end.isAfter(wallSpan.start),
+         'a span ends after it starts',
+       ),
+       _deviceZone = deviceZone,
+       super(_initial(event, shift, day, wallSpan));
 
   final ShiftRepository _shifts;
 
@@ -169,8 +173,7 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
     ShiftEventSummary event,
     Shift? shift,
     DateTime? day,
-    DateTime? start,
-    DateTime? end,
+    ({DateTime start, DateTime end})? wallSpan,
   ) {
     if (shift != null) {
       final s = shift.startsLocal;
@@ -184,7 +187,7 @@ class ShiftEditorCubit extends Cubit<ShiftEditorState> {
         maxHelpers: shift.maxHelpers,
       );
     }
-    if (start != null && end != null && end.isAfter(start)) {
+    if (wallSpan case (:final start, :final end)) {
       // A span swept out on the calendar (HIN-166), as wall clocks in the
       // event's zone: exactly that time. Whether it fits into the event is
       // the editor's question, not something cut short here.
