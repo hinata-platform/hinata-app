@@ -67,7 +67,7 @@ dependencies:
   liquid_glass_widgets:
     git:
       url: https://github.com/hinata-platform/liquid_glass_widgets.git
-      ref: v1.13.0-hinata.1
+      ref: v1.13.0-hinata.2
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
   # and the renderer; there is no second markdown path any more. The bundle
