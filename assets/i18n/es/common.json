@@ -3699,6 +3699,12 @@
       "MCP_TIMER_STARTED": "Temporizador iniciado mediante MCP",
       "MCP_TIMER_STOPPED": "Temporizador detenido mediante MCP",
       "MCP_TIMER_DISCARDED": "Temporizador descartado mediante MCP",
+      "MCP_SHIFT_SELF_ASSIGNED": "Inscripción en turno mediante MCP",
+      "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Turno asignado mediante MCP",
+      "MCP_SHIFT_RELEASED": "Turno dejado mediante MCP",
+      "MCP_SHIFT_CONFIRMED": "Turno confirmado mediante MCP",
+      "MCP_SHIFT_DECLINED": "Turno rechazado mediante MCP",
+      "MCP_SHIFT_REMOVED": "Retirado de un turno mediante MCP",
       "MCP_SPRINT_CREATED": "Sprint creado mediante MCP",
       "MCP_SPRINT_UPDATED": "Sprint actualizado mediante MCP",
       "MCP_SPRINT_STARTED": "Sprint iniciado mediante MCP",
@@ -4955,6 +4961,9 @@
       "worklog_write": "Registrar y cambiar el tiempo propio, usar el temporizador, solicitar ausencias",
       "search_read": "Buscar",
       "notifications_read": "Leer las notificaciones propias",
+      "shifts_read": "Leer turnos e inscripciones propias",
+      "shifts_write": "Apuntarse a turnos, confirmarlos, rechazarlos o dejarlos",
+      "shifts_plan": "Planificar turnos: asignar personas y retirarlas",
       "projects_write": "Crear proyectos"
     }
   },
