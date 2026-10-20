@@ -171,6 +171,10 @@ class Shift extends Equatable {
     this.assigneeIds = const [],
     this.myAssignmentId,
     this.myStatus,
+    this.waitingCount = 0,
+    this.myWaitPosition,
+    this.myWaitAssignmentId,
+    this.waitingIds = const [],
   });
 
   final String id;
@@ -201,6 +205,24 @@ class Shift extends Equatable {
   /// wire; see [ShiftDetail.myAssignment].
   final String? myAssignmentId;
   final ShiftAssignmentStatus? myStatus;
+
+  /// How many people wait for a place (HIN-162), told to everybody who sees
+  /// the shift.
+  final int waitingCount;
+
+  /// The caller's rank on the waiting list (1 is next), or null when they do
+  /// not wait. A waiting person is never [mine].
+  final int? myWaitPosition;
+
+  /// The caller's waiting place, for leaving the list.
+  final String? myWaitAssignmentId;
+
+  /// Who waits, in order: only for a planner and only in detail answers; the
+  /// names are in the answer's `users`.
+  final List<String> waitingIds;
+
+  /// The caller is on the waiting list.
+  bool get waiting => myWaitPosition != null;
 
   Coverage get coverage => Coverage(
     assigned: assignedCount,
@@ -238,6 +260,13 @@ class Shift extends Equatable {
       myStatus: json['myStatus'] != null || my['status'] != null
           ? ShiftAssignmentStatus.parse(json['myStatus'] ?? my['status'])
           : null,
+      waitingCount: _int(json['waitingCount']),
+      myWaitPosition: _intOrNull(json['myWaitPosition']),
+      myWaitAssignmentId: _text(json['myWaitAssignmentId']),
+      waitingIds: [
+        for (final id in (json['waitingIds'] as List?) ?? const [])
+          if (id is String) id,
+      ],
     );
   }
 
@@ -258,6 +287,9 @@ class Shift extends Equatable {
     'full': full,
     'mine': mine,
     'cancelled': cancelled,
+    'waitingCount': waitingCount,
+    'myWaitPosition': myWaitPosition,
+    'myWaitAssignmentId': myWaitAssignmentId,
   };
 
   Shift copyWith({
@@ -268,6 +300,10 @@ class Shift extends Equatable {
     String? myAssignmentId,
     ShiftAssignmentStatus? myStatus,
     bool clearMine = false,
+    int? waitingCount,
+    int? myWaitPosition,
+    String? myWaitAssignmentId,
+    bool clearWait = false,
   }) => Shift(
     id: id,
     eventId: eventId,
@@ -287,6 +323,12 @@ class Shift extends Equatable {
     assigneeIds: assigneeIds,
     myAssignmentId: clearMine ? null : (myAssignmentId ?? this.myAssignmentId),
     myStatus: clearMine ? null : (myStatus ?? this.myStatus),
+    waitingCount: waitingCount ?? this.waitingCount,
+    myWaitPosition: clearWait ? null : (myWaitPosition ?? this.myWaitPosition),
+    myWaitAssignmentId: clearWait
+        ? null
+        : (myWaitAssignmentId ?? this.myWaitAssignmentId),
+    waitingIds: waitingIds,
   );
 
   @override
@@ -309,6 +351,10 @@ class Shift extends Equatable {
     assigneeIds,
     myAssignmentId,
     myStatus,
+    waitingCount,
+    myWaitPosition,
+    myWaitAssignmentId,
+    waitingIds,
   ];
 }
 
@@ -548,6 +594,7 @@ class ShiftAssignmentRef extends Equatable {
     required this.id,
     required this.status,
     this.userId,
+    this.confirmByLocal,
   });
 
   final String id;
@@ -555,6 +602,14 @@ class ShiftAssignmentRef extends Equatable {
 
   /// Whose place it is, where the answer says (a write does).
   final String? userId;
+
+  /// Until when a place that came off the waiting list has to be confirmed,
+  /// as a wall clock in the event's zone (HIN-162); null otherwise.
+  final DateTime? confirmByLocal;
+
+  /// The place came off the waiting list and waits for a confirmation.
+  bool get promoted =>
+      status == ShiftAssignmentStatus.assigned && confirmByLocal != null;
 
   static ShiftAssignmentRef? fromJson(Object? value) {
     final json = _map(value);
@@ -564,11 +619,12 @@ class ShiftAssignmentRef extends Equatable {
       id: id,
       status: ShiftAssignmentStatus.parse(json['status']),
       userId: _text(json['userId']),
+      confirmByLocal: parseLocalWallClock(json['confirmByLocal']),
     );
   }
 
   @override
-  List<Object?> get props => [id, status, userId];
+  List<Object?> get props => [id, status, userId, confirmByLocal];
 }
 
 /// One shift with its event and the people on it (`ShiftDetail`).
@@ -647,6 +703,8 @@ class MyShift extends Equatable {
     this.assignedBy,
     required this.shift,
     required this.event,
+    this.confirmBy,
+    this.confirmByLocal,
   });
 
   final String assignmentId;
@@ -657,13 +715,35 @@ class MyShift extends Equatable {
   final Shift shift;
   final ShiftEventHead event;
 
-  factory MyShift.fromJson(Map<String, dynamic> json) => MyShift(
-    assignmentId: json['assignmentId'] as String? ?? '',
-    status: ShiftAssignmentStatus.parse(json['status']),
-    assignedBy: _text(json['assignedBy']),
-    shift: Shift.fromJson(_map(json['shift'])),
-    event: ShiftEventHead.fromJson(_map(json['event'])),
+  /// Until when a place that came off the waiting list has to be confirmed
+  /// (HIN-162): the instant, and the wall clock in the event's zone to show.
+  final DateTime? confirmBy;
+  final DateTime? confirmByLocal;
+
+  /// The place came off the waiting list and waits for a confirmation.
+  bool get promoted =>
+      status == ShiftAssignmentStatus.assigned &&
+      (confirmBy != null || confirmByLocal != null);
+
+  /// The place as a reference, for the sheet.
+  ShiftAssignmentRef get ref => ShiftAssignmentRef(
+    id: assignmentId,
+    status: status,
+    confirmByLocal: promoted ? (confirmByLocal ?? confirmBy) : null,
   );
+
+  factory MyShift.fromJson(Map<String, dynamic> json) {
+    final confirmBy = parseInstant(json['confirmBy']);
+    return MyShift(
+      assignmentId: json['assignmentId'] as String? ?? '',
+      status: ShiftAssignmentStatus.parse(json['status']),
+      assignedBy: _text(json['assignedBy']),
+      shift: Shift.fromJson(_map(json['shift'])),
+      event: ShiftEventHead.fromJson(_map(json['event'])),
+      confirmBy: confirmBy,
+      confirmByLocal: parseLocalWallClock(json['confirmByLocal']) ?? confirmBy,
+    );
+  }
 
   /// The snapshot form: nobody else's id, not even who assigned it.
   Map<String, dynamic> toSnapshotJson() => {
@@ -671,18 +751,37 @@ class MyShift extends Equatable {
     'status': status.wire,
     'shift': shift.toSnapshotJson(),
     'event': event.toJson(),
+    'confirmBy': confirmBy?.toUtc().toIso8601String(),
+    'confirmByLocal': confirmByLocal == null
+        ? null
+        : _wallClock(confirmByLocal!),
   };
 
-  MyShift copyWith({ShiftAssignmentStatus? status, Shift? shift}) => MyShift(
+  /// A confirmation ends the deadline; [clearConfirmBy] says so.
+  MyShift copyWith({
+    ShiftAssignmentStatus? status,
+    Shift? shift,
+    bool clearConfirmBy = false,
+  }) => MyShift(
     assignmentId: assignmentId,
     status: status ?? this.status,
     assignedBy: assignedBy,
     shift: shift ?? this.shift,
     event: event,
+    confirmBy: clearConfirmBy ? null : confirmBy,
+    confirmByLocal: clearConfirmBy ? null : confirmByLocal,
   );
 
   @override
-  List<Object?> get props => [assignmentId, status, assignedBy, shift, event];
+  List<Object?> get props => [
+    assignmentId,
+    status,
+    assignedBy,
+    shift,
+    event,
+    confirmBy,
+    confirmByLocal,
+  ];
 }
 
 /// What signing up returned: the shift with its new count, the place, and the
@@ -701,6 +800,10 @@ class ShiftAssignResult extends Equatable {
   /// The person is entered as absent on that day (shown only to whoever may
   /// see the absence, which the server decides).
   bool get absent => warnings.contains('absent');
+
+  /// The shift was full, or somebody already waited: the caller is on the
+  /// waiting list now instead of on the shift (HIN-162).
+  bool get waitlisted => assignment?.status == ShiftAssignmentStatus.waiting;
 
   /// A planner's answer for putting somebody else on a shift: the shift as the
   /// server drew it for the caller, untouched — the place is not the caller's.
@@ -723,9 +826,16 @@ class ShiftAssignResult extends Equatable {
     final shift = Shift.fromJson(shiftJson);
     return ShiftAssignResult(
       // The caller's place rides on the shift while it is held; a release or
-      // a decline answers with the same shape and a place that is gone.
+      // a decline answers with the same shape and a place that is gone. A
+      // place on the waiting list is not held: the shift names the rank.
       shift: assignment == null
           ? shift
+          : assignment.status == ShiftAssignmentStatus.waiting
+          ? shift.copyWith(
+              mine: false,
+              clearMine: true,
+              myWaitAssignmentId: assignment.id,
+            )
           : assignment.status.active
           ? shift.copyWith(
               mine: true,
@@ -1102,4 +1212,49 @@ class ShiftFeedAddress extends Equatable {
 
   @override
   List<Object?> get props => [url, webcalUrl];
+}
+
+/// One person a planner can put on a project's shifts (`candidates`).
+class ShiftCandidate extends Equatable {
+  const ShiftCandidate({
+    required this.userId,
+    required this.name,
+    this.avatarUrl,
+  });
+
+  final String userId;
+  final String name;
+  final String? avatarUrl;
+
+  @override
+  List<Object?> get props => [userId, name, avatarUrl];
+}
+
+/// The people who may be put on a project's shifts (HIN-162): active
+/// accounts that reach the project, directly or through a team, by name.
+/// [truncated] when there are more than were asked for.
+class ShiftCandidates extends Equatable {
+  const ShiftCandidates({this.candidates = const [], this.truncated = false});
+
+  final List<ShiftCandidate> candidates;
+  final bool truncated;
+
+  factory ShiftCandidates.fromJson(Object? body) {
+    final json = _map(body);
+    return ShiftCandidates(
+      candidates: [
+        for (final c in _maps(json['candidates']))
+          if (_text(c['userId']) case final userId?)
+            ShiftCandidate(
+              userId: userId,
+              name: _text(c['name']) ?? '',
+              avatarUrl: _text(c['avatarUrl']),
+            ),
+      ],
+      truncated: _bool(json['truncated']),
+    );
+  }
+
+  @override
+  List<Object?> get props => [candidates, truncated];
 }

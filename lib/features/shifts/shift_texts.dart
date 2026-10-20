@@ -180,3 +180,14 @@ String? seriesLine(
   ];
   return parts.isEmpty ? null : parts.join(' · ');
 }
+
+/// `Nachgerückt, bitte bis 18:00 bestätigen` (HIN-162), the deadline as the
+/// server wrote it in the event's zone; with the day in front unless it is
+/// [now]'s day.
+String confirmByLabel(BuildContext context, DateTime until, {DateTime? now}) {
+  final today = now ?? DateTime.now();
+  final time = _sameDay(until, today)
+      ? clockLabel(context, until)
+      : '${dayLabel(context, until)}, ${clockLabel(context, until)}';
+  return context.t('shifts.waitlist.confirmBy', variables: {'time': time});
+}

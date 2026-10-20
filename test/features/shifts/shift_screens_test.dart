@@ -263,9 +263,8 @@ void main() {
     );
 
     for (final width in const [390.0, 1280.0]) {
-      testWidgets('one action per shift, full in words, filter at $width px', (
-        tester,
-      ) async {
+      testWidgets('one action per shift, full offers the waiting list, '
+          'filter at $width px', (tester) async {
         repo.eventDetail = detail();
         await pumpShiftsUi(
           tester,
@@ -280,7 +279,8 @@ void main() {
         expect(find.text('3 von 7 Plätzen besetzt'), findsOneWidget);
         expect(find.text('Selbsteintrag offen'), findsOneWidget);
         expect(find.text('Eintragen'), findsOneWidget);
-        expect(find.text('Voll, 5 von 5'), findsOneWidget);
+        // Full with sign-ups open: the quiet way onto the waiting list.
+        expect(find.text('Auf Warteliste setzen'), findsOneWidget);
 
         await tester.tap(find.text('Nur unterbesetzt'));
         await settle(tester);
