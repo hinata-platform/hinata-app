@@ -243,8 +243,9 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   final Set<int> _staleMarks = {};
   bool _staleAll = false;
 
-  /// Events just created here, by id: what a new shift's event looks like
-  /// before a month read names it.
+  /// Events just created here, or read for a sweep over a month whose heads
+  /// were cut short, by id: what a new shift's event looks like before a
+  /// month read names it.
   final Map<String, ShiftEventSummary> _known = {};
 
   /// The filtered shifts of each day, by [dayKey], built once per revision.
@@ -325,10 +326,6 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
           revision: state.revision + 1,
         ),
       );
-      _nameProjects({
-        for (final head in answer.events.values)
-          if (head.projectId case final id? when state.canPlan(id)) id,
-      });
     } on ApiFailure catch (failure) {
       _fail(generation, key, failure.message);
     } catch (_) {
@@ -350,22 +347,30 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   /// The planned projects whose names were asked for.
   final Set<String> _namesAsked = {};
 
-  /// Names [ids] for the choice between events; nothing waits for it.
-  void _nameProjects(Set<String> ids) {
+  /// Names the projects of [ids] for the choice between their events, all
+  /// asked at once and only when the choice is about to show. A name that
+  /// does not come within a moment is left out; the choice then names the
+  /// event and its time, enough to pick.
+  Future<void> nameProjects(Iterable<String> ids) async {
     final nameOf = _projectNameOf;
     if (nameOf == null) return;
-    for (final id in ids) {
-      if (!_namesAsked.add(id)) continue;
-      unawaited(() async {
-        try {
-          final name = await nameOf(id);
-          if (isClosed || name == null) return;
-          emit(state.copyWith(projectNames: {...state.projectNames, id: name}));
-        } catch (_) {
-          // The choice then names the event and its time; enough to pick.
-        }
-      }());
-    }
+    final asked = [
+      for (final id in ids.toSet())
+        if (!state.projectNames.containsKey(id) && _namesAsked.add(id)) id,
+    ];
+    if (asked.isEmpty) return;
+    final names = await Future.wait([
+      for (final id in asked)
+        nameOf(id).then<String?>((name) => name, onError: (_) => null),
+    ]).timeout(const Duration(seconds: 2), onTimeout: () => const []);
+    if (isClosed) return;
+    final named = <String, String>{
+      for (var i = 0; i < names.length; i++) asked[i]: ?names[i],
+    };
+    // Asked again next time when the answer did not come.
+    _namesAsked.removeAll(asked.where((id) => !named.containsKey(id)));
+    if (named.isEmpty) return;
+    emit(state.copyWith(projectNames: {...state.projectNames, ...named}));
   }
 
   /// One event read for the shift that follows creating it, when saving
@@ -384,6 +389,49 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   /// Takes an event just created into what a new shift can go into, so the
   /// shift that follows it finds it before the month is read again.
   void adoptEvent(ShiftEventSummary event) => _known[event.id] = event;
+
+  /// [createTarget], after reading the events of exactly the span once when
+  /// a month it touches came with its open events cut short
+  /// ([ShiftCalendar.eventsTruncated]): the heads alone may then miss the
+  /// event the sweep falls into.
+  Future<ShiftCreateTarget> resolveTarget(
+    DateTime start,
+    DateTime end, {
+    bool wholeDay = false,
+  }) async {
+    final from = wholeDay
+        ? DateTime(start.year, start.month, start.day)
+        : start;
+    final until = wholeDay ? addDays(from, 1) : end;
+    if (_eventsCut(from, until)) {
+      try {
+        final page = await _shifts.events(
+          from: from,
+          to: until,
+          projectId: state.projectId,
+          size: 100,
+        );
+        if (isClosed) return createTarget(start, end, wholeDay: wholeDay);
+        for (final event in page.items) {
+          if (event.canPlan && !event.cancelled) _known[event.id] = event;
+        }
+      } catch (_) {
+        // The heads held still name most events; the choice offers a new
+        // event for the rest.
+      }
+    }
+    return createTarget(start, end, wholeDay: wholeDay);
+  }
+
+  /// Whether a month from [from] to [until] touches cut its open events.
+  bool _eventsCut(DateTime from, DateTime until) {
+    var month = DateTime(from.year, from.month);
+    while (month.isBefore(until)) {
+      if (state.months[monthKey(month)]?.eventsTruncated ?? false) return true;
+      month = DateTime(month.year, month.month + 1);
+    }
+    return false;
+  }
 
   /// The events the calendar holds as the editors take them: every head
   /// with a span, the caller's right on its project, and what was created
@@ -774,6 +822,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
                   events: entry.value.events,
                   truncated: entry.value.truncated,
                   plannableProjectIds: entry.value.plannableProjectIds,
+                  eventsTruncated: entry.value.eventsTruncated,
                 );
               }()
             : entry.value,
@@ -802,6 +851,7 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
             events: {...month.events, shift.eventId: head},
             truncated: month.truncated,
             plannableProjectIds: month.plannableProjectIds,
+            eventsTruncated: month.eventsTruncated,
           ),
         },
         revision: state.revision + 1,
