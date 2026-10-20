@@ -19,6 +19,23 @@ const List<String> kPatScopes = [
   'worklog:write',
   'search:read',
   'notifications:read',
+  ...kShiftPatScopes,
+];
+
+/// The shift planning scopes (HIN-164). A token may always carry them, but the
+/// create sheet offers them only while `shift_planning` is on, see
+/// [patScopesFor].
+const List<String> kShiftPatScopes = [
+  'shifts:read',
+  'shifts:write',
+  'shifts:plan',
+];
+
+/// The scopes the create sheet offers: all of [kPatScopes], without the shift
+/// scopes while the shift planning module is off.
+List<String> patScopesFor({required bool shiftPlanning}) => [
+  for (final scope in kPatScopes)
+    if (shiftPlanning || !kShiftPatScopes.contains(scope)) scope,
 ];
 
 /// i18n key segment for a scope id — i18next treats `:` as the namespace

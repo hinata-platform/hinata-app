@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/personal_access_token.dart';
 import '../../core/theme/app_colors.dart';
@@ -77,7 +78,11 @@ class _PatSectionState extends State<PatSection> {
   }
 
   Future<void> _create() async {
-    final created = await showCreatePat(context, _account);
+    final scopes = patScopesFor(
+      shiftPlanning:
+          context.read<AppConfigBloc>().state.meta?.shiftPlanning ?? false,
+    );
+    final created = await showCreatePat(context, _account, scopes: scopes);
     if (created == null || !mounted) return;
     await showPatReveal(context, created);
     if (mounted) _load();
@@ -322,12 +327,17 @@ class _ScopeChip extends StatelessWidget {
 // ─────────────────────────── Create sheet ────────────────────────────────
 
 /// Opens the "Create token" glass sheet. Resolves to the freshly-minted
-/// [CreatedPat] (with its one-time plaintext) or null if dismissed.
-Future<CreatedPat?> showCreatePat(BuildContext context, AccountCubit account) {
+/// [CreatedPat] (with its one-time plaintext) or null if dismissed. It offers
+/// [scopes], which [patScopesFor] narrows to the modules that are on.
+Future<CreatedPat?> showCreatePat(
+  BuildContext context,
+  AccountCubit account, {
+  List<String> scopes = kPatScopes,
+}) {
   return showGlassModal<CreatedPat>(
     context,
     width: 480,
-    builder: (_) => _CreatePatModal(account: account),
+    builder: (_) => _CreatePatModal(account: account, scopes: scopes),
   );
 }
 
@@ -336,9 +346,10 @@ Future<CreatedPat?> showCreatePat(BuildContext context, AccountCubit account) {
 const List<int> _kExpiryDays = [30, 90, 365, 0];
 
 class _CreatePatModal extends StatefulWidget {
-  const _CreatePatModal({required this.account});
+  const _CreatePatModal({required this.account, required this.scopes});
 
   final AccountCubit account;
+  final List<String> scopes;
 
   @override
   State<_CreatePatModal> createState() => _CreatePatModalState();
@@ -413,7 +424,7 @@ class _CreatePatModalState extends State<_CreatePatModal> {
                     spacing: 8,
                     runSpacing: 8,
                     children: [
-                      for (final scope in kPatScopes)
+                      for (final scope in widget.scopes)
                         _SelectableScope(
                           scope: scope,
                           selected: _scopes.contains(scope),
