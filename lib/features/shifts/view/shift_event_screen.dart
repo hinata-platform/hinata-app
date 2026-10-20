@@ -115,7 +115,15 @@ Future<void> _addShift(BuildContext context, ShiftEventDetail detail) async {
   if (saved) unawaited(cubit.load());
 }
 
-enum _EventMenu { export, edit, cancel, delete }
+enum _EventMenu {
+  /// Nothing is current: the menu offers actions, it is not a choice, so no row
+  /// carries a check.
+  none,
+  export,
+  edit,
+  cancel,
+  delete,
+}
 
 /// The event's "Mehr": export its plan; for a planner also change it, call it
 /// off, delete it.
@@ -131,8 +139,8 @@ Future<void> _eventMenu(
   final picked = await showGlassMenu<_EventMenu>(
     context: context,
     anchorRect: rect,
-    value: _EventMenu.export,
-    width: 260,
+    value: _EventMenu.none,
+    width: 280,
     items: [
       GlassMenuItem(
         value: _EventMenu.export,
@@ -169,6 +177,8 @@ Future<void> _eventMenu(
   );
   if (picked == null || !context.mounted) return;
   switch (picked) {
+    case _EventMenu.none:
+      return;
     case _EventMenu.export:
       await exportShiftPlan(context, summary, anchor: anchor);
     case _EventMenu.edit:
@@ -566,16 +576,27 @@ class _Head extends StatelessWidget {
           _Line(icon: LucideIcons.globe, text: zone, color: AppColors.inkSoft),
         ],
         const SizedBox(height: 12),
-        // The chip keeps its label on one line; on a phone at twice the text
-        // size it would run past the edge, so there it shrinks to fit.
-        FittedBox(
-          fit: BoxFit.scaleDown,
-          alignment: AlignmentDirectional.centerStart,
-          child: GlassSwitchChip(
-            label: context.t('shifts.event.onlyUnderstaffed'),
-            icon: LucideIcons.filter,
-            active: state.understaffedOnly,
-            onTap: () => context.read<ShiftEventCubit>().toggleUnderstaffed(),
+        // The chip sits in its own flat bar: a chip alone has no surface while
+        // it is off, and its padding then reads as an indent against the lines
+        // above. The label keeps to one line; on a phone at twice the text
+        // size it would run past the edge, so there the bar shrinks to fit.
+        LayoutBuilder(
+          builder: (context, constraints) => FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: AlignmentDirectional.centerStart,
+            child: GlassSwitchBar(
+              inline: true,
+              maxWidth: constraints.maxWidth,
+              chips: [
+                GlassSwitchChip(
+                  label: context.t('shifts.event.onlyUnderstaffed'),
+                  icon: LucideIcons.filter,
+                  active: state.understaffedOnly,
+                  onTap: () =>
+                      context.read<ShiftEventCubit>().toggleUnderstaffed(),
+                ),
+              ],
+            ),
           ),
         ),
       ],
