@@ -65,3 +65,16 @@ String? notificationTimeAgo(DateTime? time) {
   if (diff.inDays < 7) return '${diff.inDays}d';
   return '${(diff.inDays / 7).floor()}w';
 }
+
+/// Where a notification opens: its own [link] when it carries an in-app route,
+/// otherwise the place its [type] belongs to.
+///
+/// Every server notification names a link today. The fallback is for a push
+/// that arrives without one, which the shift module's generic pushes may do
+/// (HIN-46): a `SHIFT_*` push still lands on "Meine Schichten" rather than
+/// opening the app on whatever page was last shown.
+String? notificationTarget(String? link, String? type) {
+  if (link != null && link.startsWith('/') && link.length > 1) return link;
+  if ((type ?? '').toUpperCase().startsWith('SHIFT_')) return '/shifts';
+  return null;
+}

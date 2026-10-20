@@ -119,10 +119,8 @@ class _NotificationsScreenState extends State<_NotificationsBody> {
     // Every notification type carries a relative in-app route in `link`
     // (issues, teams, admin approvals, …) — the same field pushed via FCM and
     // rendered as the email CTA, so this is not limited to issue mentions.
-    final link = notification.link;
-    if (link != null && link.isNotEmpty && link.startsWith('/') && mounted) {
-      context.go(link);
-    }
+    final link = notificationTarget(notification.link, notification.type);
+    if (link != null && mounted) context.go(link);
   }
 
   @override
