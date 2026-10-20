@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' show DateFormat;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -164,6 +165,14 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   late final DateTime _origin;
   late final PageController _pager;
   int _jump = 0;
+
+  /// The month a phone's month view has scrolled to: the bar's title.
+  DateTime? _visibleMonth;
+
+  /// The docked strip, held so the shell does not re-publish the chrome on
+  /// every build (it compares the bar's bottom by identity).
+  Widget? _dock;
+  Object? _dockKey;
   String? _deviceZone;
 
   /// Where the last pointer went down, for the sheet to hang off a block.
@@ -641,35 +650,131 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     cubit.setProject(picked.first.id, name: picked.first.name);
   }
 
-  Future<void> _pickSpan(Rect? anchor) async {
+  /// The bar's title on a phone: the month in view, with the year only when
+  /// it is not this one.
+  String _monthTitle(ShiftCalendarState state) {
+    final month = state.span == ShiftCalendarSpan.month
+        ? (_visibleMonth ?? state.focused)
+        : state.focused;
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    final name = DateFormat.MMMM(locale).format(month);
+    return month.year == _now.year ? name : '$name ${month.year}';
+  }
+
+  /// The day in focus written out above a phone's hours.
+  String _dayHeading(DateTime day) {
+    final locale = Localizations.localeOf(context).toLanguageTag();
+    return DateFormat.yMMMMEEEEd(locale).format(day);
+  }
+
+  /// What a phone docks under the title: the week strip with its marks, or
+  /// the weekday letters over the month.
+  Widget _dockFor(ShiftCalendarState state) {
+    final key = Object.hash(
+      state.span,
+      dayKey(state.focused),
+      dayKey(_now),
+      state.revision,
+      state.marks.length,
+      AppColors.themeKey,
+    );
+    if (_dockKey == key && _dock != null) return _dock!;
+    _dockKey = key;
+    return _dock = state.span == ShiftCalendarSpan.month
+        ? const Align(
+            alignment: Alignment.bottomCenter,
+            child: MonthWeekdayHeader(height: _kWeekdayRow - 4),
+          )
+        : Padding(
+            padding: EdgeInsets.symmetric(horizontal: context.pageGutter),
+            child: TimeWeekStrip(
+              days: _weekOf(state.focused),
+              focused: state.focused,
+              today: _now,
+              onTap: _focusDay,
+              dotsOn: _dotsOn,
+            ),
+          );
+  }
+
+  /// The phone calendar's menu behind its title: the three views, week or
+  /// month, today, and the filters that sat in pills on the page.
+  Future<void> _calendarMenu(Rect? anchor) async {
     if (anchor == null) return;
-    final cubit = _cubit;
-    final picked = await showGlassMenu<ShiftCalendarSpan>(
+    final state = _cubit.state;
+    Icon glyph(IconData icon) => Icon(icon, size: 16, color: AppColors.inkSoft);
+    Widget? tick(bool on) => on
+        ? Icon(LucideIcons.check, size: 16, color: AppColors.accentInk)
+        : null;
+    final picked = await showGlassMenu<String>(
       context: context,
       anchorRect: anchor,
-      value: cubit.state.span,
+      width: 260,
+      value: ShiftsView.calendar.name,
       items: [
-        GlassMenuItem(
-          value: ShiftCalendarSpan.week,
-          label: context.t('shifts.calendar.week'),
-          leading: Icon(
-            LucideIcons.calendarDays,
-            size: 16,
-            color: AppColors.inkSoft,
+        for (final view in ShiftsView.values)
+          GlassMenuItem(
+            value: view.name,
+            label: context.t(view.labelKey),
+            leading: glyph(view.icon),
           ),
+        GlassMenuItem(
+          value: 'week',
+          label: context.t('shifts.calendar.week'),
+          leading: glyph(LucideIcons.calendarDays),
+          trailing: tick(state.span == ShiftCalendarSpan.week),
+          dividerAbove: true,
         ),
         GlassMenuItem(
-          value: ShiftCalendarSpan.month,
+          value: 'month',
           label: context.t('shifts.calendar.month'),
-          leading: Icon(
-            LucideIcons.calendar,
+          leading: glyph(LucideIcons.calendar),
+          trailing: tick(state.span == ShiftCalendarSpan.month),
+        ),
+        GlassMenuItem(
+          value: 'today',
+          label: context.t('shifts.calendar.today'),
+          leading: glyph(LucideIcons.locateFixed),
+        ),
+        GlassMenuItem(
+          value: 'project',
+          label: state.projectId == null
+              ? context.t('shifts.events.allProjects')
+              : state.projectName ?? context.t('shifts.calendar.oneProject'),
+          leading: glyph(LucideIcons.folder),
+          trailing: Icon(
+            LucideIcons.chevronRight,
             size: 16,
             color: AppColors.inkSoft,
           ),
+          dividerAbove: true,
+        ),
+        GlassMenuItem(
+          value: 'short',
+          label: context.t('shifts.event.onlyUnderstaffed'),
+          leading: glyph(LucideIcons.triangleAlert),
+          trailing: tick(state.understaffedOnly),
         ),
       ],
     );
-    if (picked != null) cubit.setSpan(picked);
+    if (picked == null || !mounted) return;
+    switch (picked) {
+      case 'week':
+        _cubit.setSpan(ShiftCalendarSpan.week);
+      case 'month':
+        _cubit.setSpan(ShiftCalendarSpan.month);
+      case 'today':
+        _today();
+      case 'project':
+        await _pickProject(anchor);
+      case 'short':
+        _cubit.toggleUnderstaffed();
+      default:
+        final view = ShiftsView.values.where((v) => v.name == picked);
+        if (view.isNotEmpty && view.first != ShiftsView.calendar) {
+          context.go(view.first.route);
+        }
+    }
   }
 
   void _focusDay(DateTime day) {
@@ -716,25 +821,6 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     onTap: (anchor) => unawaited(_pickProject(anchor)),
   );
 
-  /// On a phone the dock holds three controls in one row; the label would run
-  /// past the edge, so there the switch is its glyph in its own docked bar,
-  /// with the label as tooltip and for the screen reader.
-  Widget _shortChip(ShiftCalendarState state, {bool compact = false}) {
-    final chip = GlassSwitchChip(
-      label: context.t('shifts.event.onlyUnderstaffed'),
-      icon: LucideIcons.triangleAlert,
-      iconOnly: compact,
-      active: state.understaffedOnly,
-      onTap: _cubit.toggleUnderstaffed,
-    );
-    if (!compact) return chip;
-    return GlassSwitchBar(
-      compact: true,
-      maxWidth: kGlassControlHeight * 2,
-      chips: [chip],
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final compact = context.isCompact;
@@ -767,16 +853,21 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                 ),
               ]
             : const [],
-        bottom: compact
-            ? ShiftsDock(
-                current: ShiftsView.calendar,
-                filters: [
-                  _projectPill(state),
-                  _shortChip(state, compact: true),
-                ],
-              )
+        // A phone's bar works like the time calendar's: the month as title,
+        // which opens the calendar's menu (views, span, today, filters), and
+        // only the week strip docked under it. The rows of pills and arrows
+        // that stood above the hours gave the canvas a third of the screen.
+        title: compact ? _monthTitle(state) : null,
+        titleLeading: compact,
+        onTitleTap: compact
+            ? (anchor) => unawaited(_calendarMenu(anchor))
             : null,
-        bottomHeight: compact ? kGlassDockRow : 0,
+        bottom: compact ? _dockFor(state) : null,
+        bottomHeight: compact
+            ? (state.span == ShiftCalendarSpan.month
+                  ? _kWeekdayRow
+                  : kTimeWeekStripWithDots)
+            : 0,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -821,60 +912,47 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                   ],
                 ),
               ),
-            Padding(
-              padding: EdgeInsets.fromLTRB(
-                context.pageGutter,
-                compact ? context.topGutter + 8 : 0,
-                context.pageGutter,
-                8,
-              ),
-              child: _NavRow(
-                label: _rangeLabel(state, compact),
-                onPrevious: () => _step(-1, compact: compact),
-                onNext: () => _step(1, compact: compact),
-                onToday: _today,
-                spanLabel: compact
-                    ? context.t(
-                        state.span == ShiftCalendarSpan.month
-                            ? 'shifts.calendar.month'
-                            : 'shifts.calendar.week',
-                      )
-                    : null,
-                onSpan: compact
-                    ? (anchor) => unawaited(_pickSpan(anchor))
-                    : null,
-                previousLabel: context.t(
-                  state.span == ShiftCalendarSpan.month
-                      ? 'shifts.calendar.previousMonth'
-                      : compact
-                      ? 'shifts.calendar.previousDay'
-                      : 'shifts.calendar.previousWeek',
-                ),
-                nextLabel: context.t(
-                  state.span == ShiftCalendarSpan.month
-                      ? 'shifts.calendar.nextMonth'
-                      : compact
-                      ? 'shifts.calendar.nextDay'
-                      : 'shifts.calendar.nextWeek',
-                ),
-              ),
-            ),
-            ..._notices(state, compact),
-            if (compact && state.span == ShiftCalendarSpan.week)
+            if (!compact)
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: SizedBox(
-                  height: kTimeWeekStripWithDots,
-                  child: TimeWeekStrip(
-                    days: _weekOf(state.focused),
-                    focused: state.focused,
-                    today: _now,
-                    onTap: _focusDay,
-                    dotsOn: _dotsOn,
+                padding: EdgeInsets.fromLTRB(
+                  context.pageGutter,
+                  0,
+                  context.pageGutter,
+                  8,
+                ),
+                child: _NavRow(
+                  label: _rangeLabel(state, false),
+                  onPrevious: () => _step(-1, compact: false),
+                  onNext: () => _step(1, compact: false),
+                  onToday: _today,
+                  previousLabel: context.t(
+                    state.span == ShiftCalendarSpan.month
+                        ? 'shifts.calendar.previousMonth'
+                        : 'shifts.calendar.previousWeek',
+                  ),
+                  nextLabel: context.t(
+                    state.span == ShiftCalendarSpan.month
+                        ? 'shifts.calendar.nextMonth'
+                        : 'shifts.calendar.nextWeek',
                   ),
                 ),
               ),
-            if (state.span == ShiftCalendarSpan.month)
+            if (compact) SizedBox(height: context.topGutter + 4),
+            ..._notices(state, compact),
+            if (compact && state.span == ShiftCalendarSpan.week)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: Text(
+                  _dayHeading(state.focused),
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: AppType.label,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.ink,
+                  ),
+                ),
+              ),
+            if (!compact && state.span == ShiftCalendarSpan.month)
               Padding(
                 // Wide, the month keeps the page's gutter like the week does;
                 // on a phone it runs edge to edge, as the time calendar's.
@@ -989,7 +1067,13 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
           dotsOn: _dotsOn,
           failureFor: (key) => state.marksFailed[key],
           onNeedMonths: (months) => unawaited(_cubit.ensureMonths(months)),
-          onMonthChanged: (_) {},
+          onMonthChanged: (month) {
+            if (_visibleMonth != null &&
+                monthKey(_visibleMonth!) == monthKey(month)) {
+              return;
+            }
+            setState(() => _visibleMonth = month);
+          },
           onTapDay: (day) {
             _cubit.openDay(day);
             WidgetsBinding.instance.addPostFrameCallback(
@@ -1205,8 +1289,6 @@ class _NavRow extends StatelessWidget {
     required this.onToday,
     required this.previousLabel,
     required this.nextLabel,
-    this.spanLabel,
-    this.onSpan,
   });
 
   final String label;
@@ -1215,8 +1297,6 @@ class _NavRow extends StatelessWidget {
   final VoidCallback onToday;
   final String previousLabel;
   final String nextLabel;
-  final String? spanLabel;
-  final void Function(Rect? anchor)? onSpan;
 
   @override
   Widget build(BuildContext context) => Wrap(
@@ -1259,21 +1339,6 @@ class _NavRow extends StatelessWidget {
         icon: const Icon(LucideIcons.locateFixed, size: 16),
         label: Text(context.t('shifts.calendar.today')),
       ),
-      if (spanLabel != null && onSpan != null)
-        Builder(
-          builder: (anchor) => TextButton.icon(
-            onPressed: () {
-              final box = anchor.findRenderObject() as RenderBox?;
-              onSpan!(
-                box == null || !box.hasSize
-                    ? null
-                    : box.localToGlobal(Offset.zero) & box.size,
-              );
-            },
-            icon: const Icon(LucideIcons.chevronDown, size: 16),
-            label: Text(spanLabel!),
-          ),
-        ),
     ],
   );
 }
@@ -1309,3 +1374,6 @@ class _Notice extends StatelessWidget {
     ),
   );
 }
+
+/// Height of the weekday letters docked under a phone's title in the month.
+const double _kWeekdayRow = 26;
