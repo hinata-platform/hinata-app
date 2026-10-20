@@ -126,6 +126,9 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
   // off, and switchable off entirely: a notice about somebody's working
   // pattern that could not be turned off would sit badly against R7.
   (id: 'time', icon: LucideIcons.timer, locked: false),
+  // Shift planning (HIN-46): assigned, changed, called off, the reminder a
+  // day ahead. Listed only while the module is on.
+  (id: 'shifts', icon: LucideIcons.calendarClock, locked: false),
   (id: 'security', icon: LucideIcons.shieldCheck, locked: true),
 ];
 
@@ -1359,6 +1362,17 @@ class _AccountScreenState extends State<_AccountBody> {
 
   // --- notifications --------------------------------------------------------
 
+  /// The notification events this server has: the shift events only while
+  /// shift planning is on. Watched, so an admin's switch shows here at once.
+  List<({String id, IconData icon, bool locked})> get _visibleNotifEvents {
+    final shifts =
+        context.watch<AppConfigBloc>().state.meta?.shiftPlanning ?? false;
+    return [
+      for (final e in _notifEvents)
+        if (e.id != 'shifts' || shifts) e,
+    ];
+  }
+
   Widget _notificationsSection() {
     final prefs = _prefs!;
     return AccountSection(
@@ -1385,10 +1399,10 @@ class _AccountScreenState extends State<_AccountBody> {
         NotificationScheduleRow(prefs: prefs, onChanged: _onTogglePrefs),
         const SizedBox(height: 8),
         if (context.isCompact)
-          ..._notifEvents.map(_notifCard)
+          ..._visibleNotifEvents.map(_notifCard)
         else ...[
           _matrixHeader(),
-          for (final e in _notifEvents) _matrixRow(e),
+          for (final e in _visibleNotifEvents) _matrixRow(e),
         ],
       ],
     );
