@@ -38,6 +38,9 @@ import 'zone_picker.dart';
 /// [existing] to change. [plannable] are the projects the caller may plan,
 /// the only ones a new event can go into.
 ///
+/// [start] and [end] (HIN-166) open a new event on a span swept out on the
+/// calendar, on the device's clock; they come before [day].
+///
 /// Resolves to the saved event, or null. A move that leaves people with two
 /// places at once is said right after, as a hint.
 Future<ShiftEventSaved?> showShiftEventEditor(
@@ -47,6 +50,8 @@ Future<ShiftEventSaved?> showShiftEventEditor(
   String? projectName,
   Set<String> plannable = const {},
   DateTime? day,
+  DateTime? start,
+  DateTime? end,
 }) async {
   final repository = context.read<ShiftRepository>();
   final zone = await ShiftZones.deviceZone();
@@ -62,6 +67,8 @@ Future<ShiftEventSaved?> showShiftEventEditor(
         projectName: projectName,
         deviceZone: zone,
         day: day,
+        start: start,
+        end: end,
       )..loadSeries(),
       child: ShiftEventEditorBody(
         projectLocked: existing != null || projectId != null,
