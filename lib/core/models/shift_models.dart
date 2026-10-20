@@ -419,9 +419,6 @@ class ShiftEventHead extends Equatable {
   final DateTime? startsLocal;
   final DateTime? endsLocal;
 
-  /// Whether the head names the event's project and span (HIN-166).
-  bool get hasSpan => projectId != null && startsAt != null && endsAt != null;
-
   /// The series the event is an occurrence of (HIN-161), or null.
   final String? seriesId;
 
@@ -567,6 +564,25 @@ class ShiftEventSummary extends Equatable {
   final bool detached;
 
   bool get inSeries => seriesId != null;
+
+  /// The event as a row pointing at it takes it, the way back from
+  /// [ShiftEventHead.toSummary]: everything a head carries, span included.
+  ShiftEventHead toHead() => ShiftEventHead(
+    id: id,
+    title: title,
+    location: location,
+    timezone: timezone,
+    selfAssignable: selfAssignable,
+    cancelled: cancelled,
+    seriesId: seriesId,
+    recurrenceLabel: recurrenceLabel,
+    detached: detached,
+    projectId: projectId,
+    startsAt: startsAt,
+    endsAt: endsAt,
+    startsLocal: startsLocal,
+    endsLocal: endsLocal,
+  );
 
   Coverage get coverage =>
       Coverage(assigned: placesTaken, required: placesRequired);
