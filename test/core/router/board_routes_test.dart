@@ -75,6 +75,30 @@ void main() {
     expect(router.state.uri.path, '/board/b1');
   });
 
+  testWidgets('the old address keeps the sprint a search hit names', (
+    tester,
+  ) async {
+    await pumpAt(tester, '/boards/b1?sprint=s1');
+
+    expect(router.state.uri.path, '/board/b1');
+    expect(router.state.uri.queryParameters['sprint'], 's1');
+    final board = built.whereType<KanbanBoardScreen>().last;
+    expect(board.boardId, 'b1');
+    expect(board.sprintId, 's1');
+    // The sprint is not part of the key: another sprint of the board on
+    // screen switches the wall, it does not build a new board.
+    expect(board.key, const ValueKey('board-b1'));
+  });
+
+  testWidgets('a board without a sprint in its address shows the active one', (
+    tester,
+  ) async {
+    await pumpAt(tester, '/boards/b1');
+
+    expect(router.state.uri.query, isEmpty);
+    expect(built.whereType<KanbanBoardScreen>().last.sprintId, isNull);
+  });
+
   testWidgets('a board opened from a project leads back to its boards', (
     tester,
   ) async {

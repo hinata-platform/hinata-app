@@ -2905,7 +2905,7 @@
     "workspace": "Espacio de trabajo"
   },
   "search": {
-    "placeholder": "Busca incidencias, proyectos, personas…  o escribe un comando",
+    "placeholder": "Busca en todo o escribe un comando…",
     "archivedKeyword": "archivado",
     "scope": {
       "all": "Todo"
@@ -2916,7 +2916,14 @@
       "projects": "Proyectos",
       "people": "Personas",
       "boards": "Tableros y sprints",
-      "docs": "Conocimiento"
+      "docs": "Conocimiento",
+      "comments": "Comentarios",
+      "teams": "Equipos",
+      "attachments": "Adjuntos",
+      "shifts": "Turnos",
+      "time": "Registro de tiempo",
+      "absences": "Ausencias",
+      "billing": "Facturación"
     },
     "recent": {
       "title": "Búsquedas recientes",
@@ -2924,7 +2931,7 @@
     },
     "empty": {
       "title": "Busca lo que sea en {{product}}",
-      "subtitle": "Encuentra incidencias, proyectos, personas, tableros y documentos, o ejecuta un comando. Empieza a escribir."
+      "subtitle": "Encuentra incidencias, comentarios, personas, turnos, tiempos y más, o ejecuta un comando. Empieza a escribir."
     },
     "noMatch": "No hay resultados para «{{q}}»",
     "noMatchSub": "Prueba con otro término, con un ID de incidencia como HIV-241 o con el nombre de un comando.",
@@ -2950,8 +2957,19 @@
       "time": "Tiempo",
       "timesheet": "Parte de horas",
       "absences": "Ausencias",
-      "askAbsence": "Solicitar ausencia"
-    }
+      "askAbsence": "Solicitar ausencia",
+      "shifts": "Mis turnos"
+    },
+    "sub": {
+      "project": "{{open}} abiertas · {{done}} hechas · {{members}} miembros",
+      "knowledge": "Conocimiento",
+      "space": "Espacio",
+      "cancelled": "Cancelado",
+      "timesheet": "Hoja de horas",
+      "askAbsence": "Solicitar esta ausencia",
+      "budget": "Presupuesto"
+    },
+    "showAll": "Mostrar todos los resultados en {{cat}}"
   },
   "settings": {
     "title": "Ajustes",
@@ -5688,5 +5706,34 @@
       "failed": "No se pudo guardar el plan de turnos.",
       "fileName": "plan-de-turnos"
     }
+  },
+  "people": {
+    "title": "Perfil",
+    "you": "Eres tú",
+    "deactivated": "Desactivado",
+    "role": {
+      "member": "Miembro"
+    },
+    "localTime": "Hora local",
+    "localTimeValue": "{{time}} · {{zone}}",
+    "today": "Hoy",
+    "absentUntil": "{{type}} hasta el {{date}}",
+    "absentHalfDay": "{{type}}, medio día",
+    "actions": "Acciones",
+    "issues": "Incidencias de esta persona",
+    "issuesSelf": "Tus incidencias",
+    "email": "Escribir un correo",
+    "sharedTeams": "Equipos en común",
+    "ownTeams": "Tus equipos",
+    "sharedProjects": "Proyectos en común",
+    "ownProjects": "Tus proyectos",
+    "noneShared": "Todavía no compartís ningún equipo ni proyecto.",
+    "admin": "Administración",
+    "notFound": {
+      "title": "Esta persona no está aquí",
+      "message": "La cuenta se eliminó o se desactivó."
+    },
+    "loadFailed": "No se pudo cargar el perfil",
+    "open": "Abrir el perfil de {{name}}"
   }
 }

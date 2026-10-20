@@ -34,18 +34,24 @@ import 'rate_timeline_sheet.dart';
 /// what anybody costs. A row opens its target's timeline, where a rate is
 /// changed from a date on.
 class RatesScreen extends StatelessWidget {
-  const RatesScreen({super.key});
+  const RatesScreen({super.key, this.rateId});
+
+  /// The rate a link names (`?rate=`): its timeline opens once the list has
+  /// it. An id the reader cannot see opens nothing.
+  final String? rateId;
 
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) =>
         BillingAccessCubit(context.read<BillingRepository>())..load(),
-    child: const _RatesView(),
+    child: _RatesView(rateId: rateId),
   );
 }
 
 class _RatesView extends StatefulWidget {
-  const _RatesView();
+  const _RatesView({this.rateId});
+
+  final String? rateId;
 
   @override
   State<_RatesView> createState() => _RatesViewState();
@@ -55,7 +61,21 @@ class _RatesViewState extends State<_RatesView> {
   late final BillingRepository _billing = context.read<BillingRepository>();
   RateKind? _kind;
   RateScope? _scope;
-  RateStatus? _status = RateStatus.active;
+
+  /// Active rates first, unless a link names one: that one may have ended or
+  /// be planned, so the list opens on every status to find it.
+  late RateStatus? _status = _hasLink(widget.rateId) ? null : RateStatus.active;
+
+  /// The rate a link asked to open, until it is found and opened, or the list
+  /// is read to its end without it.
+  late String? _linkedRate = _hasLink(widget.rateId) ? widget.rateId : null;
+
+  /// Pages read further to find [_linkedRate], bounded so a link to a rate
+  /// that is not there does not read the whole catalogue.
+  int _seekPages = 0;
+  static const int _maxSeekPages = 8;
+
+  static bool _hasLink(String? id) => id != null && id.isNotEmpty;
 
   late final PagedCubit<BillingRate> _rates = PagedCubit<BillingRate>(
     (page, size) => _billing.rates(
@@ -75,10 +95,51 @@ class _RatesViewState extends State<_RatesView> {
     unawaited(_rates.load());
   }
 
+  /// A link to another rate while the page is on screen: the route keeps the
+  /// page, so the new one is looked for from here, among every status.
+  @override
+  void didUpdateWidget(_RatesView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final id = widget.rateId;
+    if (!_hasLink(id) || id == oldWidget.rateId) return;
+    _linkedRate = id;
+    _seekPages = 0;
+    if (_status != null) {
+      setState(() => _status = null);
+      _reload();
+    } else {
+      _seekLinkedRate();
+    }
+  }
+
   @override
   void dispose() {
     unawaited(_rates.close());
     super.dispose();
+  }
+
+  /// Opens the rate a link named once both the reader's access and the rate
+  /// are in; reads on while the list has more and the rate is not among it.
+  void _seekLinkedRate() {
+    final id = _linkedRate;
+    final access = context.read<BillingAccessCubit>().state;
+    if (id == null || access == null) return;
+    if (!access.invoices) {
+      _linkedRate = null;
+      return;
+    }
+    final state = _rates.state;
+    if (state.isLoading || state.isLoadingMore) return;
+    final rate = state.items.where((rate) => rate.id == id).firstOrNull;
+    if (rate != null) {
+      _linkedRate = null;
+      unawaited(_open(rate.target, access));
+    } else if (state.hasMore && _seekPages < _maxSeekPages) {
+      _seekPages++;
+      unawaited(_rates.loadMore());
+    } else if (state.hasData || state.errorKey != null) {
+      _linkedRate = null;
+    }
   }
 
   void _reload() => unawaited(_rates.load());
@@ -264,7 +325,7 @@ class _RatesViewState extends State<_RatesView> {
   @override
   Widget build(BuildContext context) {
     final access = context.watch<BillingAccessCubit>().state;
-    return PageChrome(
+    final page = PageChrome(
       contentMax: Breakpoints.readingWidth,
       title: context.t('billing.rates.title'),
       actions: [
@@ -286,6 +347,18 @@ class _RatesViewState extends State<_RatesView> {
               ),
             )
           : _list(context, access),
+    );
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<BillingAccessCubit, BillingAccess?>(
+          listener: (_, _) => _seekLinkedRate(),
+        ),
+        BlocListener<PagedCubit<BillingRate>, PagedState<BillingRate>>(
+          bloc: _rates,
+          listener: (_, _) => _seekLinkedRate(),
+        ),
+      ],
+      child: page,
     );
   }
 

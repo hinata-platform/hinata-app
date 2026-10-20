@@ -37,7 +37,8 @@ import '../../core/theme/app_type.dart';
 /// [types] and [balances] come from the screen that opened it, so the sheet
 /// makes no read of its own before it can draw: the reader's own balance is
 /// already on the screen behind it. [initialFrom] and [initialTo] are the days
-/// somebody marked in the calendar before asking.
+/// somebody marked in the calendar before asking; [initialTypeId] is the type
+/// a link named, picked when it is among [types].
 ///
 /// With [existing] the form edits that request, which still waits for a
 /// decision; with [template] it files a new one that starts where an old one
@@ -50,6 +51,7 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
   AbsenceBalances? balances,
   DateTime? initialFrom,
   DateTime? initialTo,
+  String? initialTypeId,
   AbsenceRequest? existing,
   AbsenceRequest? template,
 }) {
@@ -71,6 +73,7 @@ Future<AbsenceRequest?> showAbsenceRequestSheet(
           balances: balances,
           initialFrom: initialFrom,
           initialTo: initialTo,
+          initialTypeId: initialTypeId,
           existing: existing,
           template: existing ?? template,
         ),
@@ -113,6 +116,7 @@ class _RequestForm extends StatefulWidget {
     required this.balances,
     required this.initialFrom,
     required this.initialTo,
+    this.initialTypeId,
     required this.existing,
     required this.template,
   });
@@ -121,6 +125,9 @@ class _RequestForm extends StatefulWidget {
   final AbsenceBalances? balances;
   final DateTime? initialFrom;
   final DateTime? initialTo;
+
+  /// The type a new request starts with, when it is among [types].
+  final String? initialTypeId;
 
   /// The request being edited, or null for a new one.
   final AbsenceRequest? existing;
@@ -172,7 +179,11 @@ class _RequestFormState extends State<_RequestForm> {
     _from = start;
     _to = end.isBefore(start) ? start : end;
     _type =
-        widget.types.where((type) => type.id == template?.typeId).firstOrNull ??
+        widget.types
+            .where(
+              (type) => type.id == (template?.typeId ?? widget.initialTypeId),
+            )
+            .firstOrNull ??
         _likelyType(widget.types);
     if (template != null) {
       _halfFirst = template.firstDayMilliDays == kMilliDay ~/ 2;

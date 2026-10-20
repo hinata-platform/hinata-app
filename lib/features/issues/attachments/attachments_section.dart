@@ -197,6 +197,16 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   /// on web) or a full issue reload.
   Future<void> pickFiles() => _pickFiles();
 
+  /// Opens the attachment [id] in the viewer, as a tap on its tile would — for
+  /// a link that names it (`/issues/:id?attachment=`). Resolves to false when
+  /// the issue has no such attachment, and nothing opens.
+  Future<bool> openAttachment(String id) async {
+    final attachment = _server.where((a) => a.id == id).firstOrNull;
+    if (attachment == null) return false;
+    await _open(attachment);
+    return true;
+  }
+
   /// The add control — the header button, or the empty dropzone while there
   /// is nothing yet; never both — so the source menu hangs off what was tapped.
   final _addKey = GlobalKey();

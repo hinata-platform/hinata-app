@@ -27,14 +27,24 @@ List<RouteBase> boardRoutes(RoutePage page) => [
     routes: [
       GoRoute(
         path: ':id',
-        pageBuilder: (_, state) =>
-            page(state, _board(state.pathParameters['id']!)),
+        pageBuilder: (_, state) => page(
+          state,
+          _board(
+            state.pathParameters['id']!,
+            sprintId: state.uri.queryParameters['sprint'],
+          ),
+        ),
       ),
     ],
   ),
   GoRoute(
     path: '/boards/:id',
-    redirect: (_, state) => boardLocation(state.pathParameters['id']!),
+    // The query goes along: a search hit for a sprint names it (`?sprint=`).
+    redirect: (_, state) {
+      final board = boardLocation(state.pathParameters['id']!);
+      final query = state.uri.query;
+      return query.isEmpty ? board : '$board?$query';
+    },
   ),
   GoRoute(
     path: '/projects/:id/boards',
@@ -45,8 +55,13 @@ List<RouteBase> boardRoutes(RoutePage page) => [
     routes: [
       GoRoute(
         path: ':boardId',
-        pageBuilder: (_, state) =>
-            page(state, _board(state.pathParameters['boardId']!)),
+        pageBuilder: (_, state) => page(
+          state,
+          _board(
+            state.pathParameters['boardId']!,
+            sprintId: state.uri.queryParameters['sprint'],
+          ),
+        ),
       ),
     ],
   ),
@@ -54,6 +69,10 @@ List<RouteBase> boardRoutes(RoutePage page) => [
 
 /// Keyed by the board, like an issue: go_router keys a page by its pattern, so
 /// going from one board to another would otherwise keep the first board's
-/// state under the second one's address.
-KanbanBoardScreen _board(String id) =>
-    KanbanBoardScreen(key: ValueKey('board-$id'), boardId: id);
+/// state under the second one's address. The sprint is not in the key: a link
+/// to another sprint of the board on screen switches the wall to it.
+KanbanBoardScreen _board(String id, {String? sprintId}) => KanbanBoardScreen(
+  key: ValueKey('board-$id'),
+  boardId: id,
+  sprintId: sprintId,
+);
