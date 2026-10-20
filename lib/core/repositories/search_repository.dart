@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart' show CancelToken;
+
 import '../api/api_client.dart';
 import '../models/search_api.dart';
 
@@ -17,13 +19,16 @@ class SearchRepository {
   /// A blank [query] returns just category counts.
   /// [archived] searches the archive instead (archived issues + projects) —
   /// triggered by the palette's locale-aware "archived" keyword.
+  /// [cancelToken] aborts the request once a newer search supersedes it.
   Future<SearchApiResponse> search({
     String query = '',
     String? scope,
     bool archived = false,
+    CancelToken? cancelToken,
   }) async => SearchApiResponse.fromJson(
-    await _api.get(
+    await _api.getCancellable(
           '/api/v1/search',
+          cancelToken: cancelToken ?? CancelToken(),
           query: {
             'q': ?(query.trim().isEmpty ? null : query.trim()),
             'scope': ?scope,

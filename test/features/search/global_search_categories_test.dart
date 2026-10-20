@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -10,6 +13,7 @@ import 'package:hinata/features/search/global_search_controller.dart';
 import 'package:hinata/features/search/global_search_dialog.dart';
 import 'package:hinata/features/search/search_hit_mapper.dart';
 import 'package:hinata/features/search/search_models.dart';
+import 'package:hinata/features/teams/team_widgets.dart' show teamHueColor;
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The palette after HIN-165: every area of the app is a category, and every
@@ -32,7 +36,13 @@ void main() {
       'id': 'p1',
       'route': '/issues?projectId=p1',
     },
-    'team': {'category': 'TEAMS', 'id': 't1', 'route': '/teams/t1'},
+    'team': {
+      'category': 'TEAMS',
+      'id': 't1',
+      'route': '/teams/t1',
+      'key': 'EVT',
+      'hue': 200,
+    },
     'person': {
       'category': 'PEOPLE',
       'id': 'u1',
@@ -132,8 +142,8 @@ void main() {
       'id': 'ra1',
       'route': '/time/rates?rate=ra1',
       'kind': 'RATE',
-      'type': 'PROJECT',
-      'status': 'BILLABLE',
+      'rateLevel': 'PROJECT',
+      'rateKind': 'COST',
       'amountCents': 9500,
       'currency': 'EUR',
       'from': '2026-01-01',
@@ -170,6 +180,54 @@ void main() {
       expect(hit.location, 'Halle 3');
       expect(hit.startsAt, isNotNull);
       expect(response.cappedCounts, {'SHIFTS'});
+    });
+
+    test('a rate reads its level and kind from their own fields', () {
+      final hit = SearchApiHit.fromJson(hits['rate']!);
+      expect(hit.rateLevel, 'PROJECT');
+      expect(hit.rateKind, 'COST');
+      expect(hit.type, isNull);
+      expect(hit.status, isNull);
+
+      // A server before the two fields carried them in `type` and `status`.
+      final legacy = SearchApiHit.fromJson({
+        'category': 'BILLING',
+        'id': 'ra2',
+        'route': '/time/rates?rate=ra2',
+        'kind': 'RATE',
+        'type': 'TEAM',
+        'status': 'BILLABLE',
+      });
+      expect(legacy.rateLevel, 'TEAM');
+      expect(legacy.rateKind, 'BILLABLE');
+
+      // Nothing else borrows an issue's type as a rate level.
+      final issue = SearchApiHit.fromJson({
+        'category': 'ISSUES',
+        'id': 'i9',
+        'route': '/issues/i9',
+        'type': 'BUG',
+      });
+      expect(issue.rateLevel, isNull);
+    });
+
+    test('a team hit wears its own colour', () {
+      final entry = mapSearchHit(
+        SearchApiHit.fromJson({'title': 'Events', ...hits['team']!}),
+        _labels(),
+      );
+      expect(entry.leadingColor, teamHueColor(200));
+    });
+
+    test('a group says whether there is more', () {
+      final response = SearchApiResponse.fromJson({
+        'groups': [
+          {'category': 'TEAMS', 'items': <dynamic>[], 'more': true},
+          {'category': 'PEOPLE', 'items': <dynamic>[]},
+        ],
+      });
+      expect(response.groups.first.more, isTrue);
+      expect(response.groups.last.more, isNull);
     });
 
     test('a response from before HIN-165 still reads', () {
@@ -293,7 +351,7 @@ void main() {
       expect(controller.groups.map((g) => g.cat), [SearchCat.teams]);
     });
 
-    testWidgets('a full group offers to show its whole category', (
+    testWidgets('a server without the flag: a full group offers more', (
       tester,
     ) async {
       final repo = _FakeSearch(
@@ -314,24 +372,93 @@ void main() {
           'counts': <String, dynamic>{},
         }),
       );
-      final controller = GlobalSearchController(
-        repository: repo,
-        storage: storage,
-      );
-      addTearDown(controller.dispose);
-      await tester.pumpWidget(
-        _withContext((context) {
-          controller.load(labels: SearchLabels.of(context), commands: const []);
-        }),
-      );
+      final controller = await _loaded(tester, repo, storage);
       controller.setQuery('a');
       await tester.pump(const Duration(milliseconds: 300));
       expect(controller.groups.first.more, isTrue);
       expect(controller.groups.last.more, isFalse);
     });
+
+    testWidgets('the server says whether there is more, not the count', (
+      tester,
+    ) async {
+      final repo = _FakeSearch(
+        SearchApiResponse.fromJson({
+          'groups': [
+            {
+              // Exactly five, and nothing beyond them.
+              'category': 'COMMENTS',
+              'more': false,
+              'items': [
+                for (var i = 0; i < 5; i++)
+                  {'category': 'COMMENTS', 'id': 'c$i', 'route': '/issues/i'},
+              ],
+            },
+            {
+              'category': 'PEOPLE',
+              'more': true,
+              'items': [hits['person']],
+            },
+          ],
+          'counts': <String, dynamic>{},
+        }),
+      );
+      final controller = await _loaded(tester, repo, storage);
+      controller.setQuery('a');
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(controller.groups.first.more, isFalse);
+      expect(controller.groups.last.more, isTrue);
+    });
+
+    testWidgets('typing waits for a pause and drops what it superseded', (
+      tester,
+    ) async {
+      final repo = _FakeSearch(
+        SearchApiResponse(groups: const [], counts: const {}),
+      );
+      final controller = await _loaded(tester, repo, storage);
+      final opened = repo.calls.length;
+      for (final text in ['s', 'sc', 'sch', 'schi']) {
+        controller.setQuery(text);
+        await tester.pump(const Duration(milliseconds: 200));
+      }
+      expect(repo.calls, hasLength(opened));
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(repo.calls, hasLength(opened + 1));
+      expect(repo.calls.last.query, 'schi');
+
+      // A newer search aborts the one still on its way.
+      repo.hold = true;
+      controller.setQuery('schic');
+      await tester.pump(const Duration(milliseconds: 300));
+      final first = repo.calls.last.cancelToken!;
+      controller.setQuery('schich');
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(first.isCancelled, isTrue);
+      expect(repo.calls.last.cancelToken!.isCancelled, isFalse);
+      repo.release();
+      await tester.pump();
+    });
+
+    testWidgets('tabbing through the chips asks only for the last one', (
+      tester,
+    ) async {
+      final repo = _FakeSearch(
+        SearchApiResponse(groups: const [], counts: const {}),
+      );
+      final controller = await _loaded(tester, repo, storage);
+      final opened = repo.calls.length;
+      for (var i = 0; i < 4; i++) {
+        controller.cycleScope(true);
+        await tester.pump(const Duration(milliseconds: 50));
+      }
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(repo.calls, hasLength(opened + 1));
+      expect(repo.calls.last.scope, controller.scope!.name);
+    });
   });
 
-  group('a hit opens exactly what it names', () {
+  group('a hit navigates to its route', () {
     for (final MapEntry(key: name, value: json) in hits.entries) {
       testWidgets(name, (tester) async {
         final hit = SearchApiHit.fromJson({'title': name, ...json});
@@ -518,16 +645,62 @@ Widget _withContext(void Function(BuildContext context) run) => MaterialApp(
   ),
 );
 
+Future<GlobalSearchController> _loaded(
+  WidgetTester tester,
+  SearchRepository repo,
+  AppStorage storage,
+) async {
+  final controller = GlobalSearchController(repository: repo, storage: storage);
+  addTearDown(controller.dispose);
+  await tester.pumpWidget(
+    _withContext((context) {
+      controller.load(labels: SearchLabels.of(context), commands: const []);
+    }),
+  );
+  await tester.pump();
+  return controller;
+}
+
+SearchLabels _labels() => SearchLabels(
+  t: (key, [_]) => key,
+  day: (date) => '$date',
+  time: (date) => '$date',
+  duration: (minutes) => '$minutes',
+  money: (cents, currency) => '$cents $currency',
+  ago: (when) => '$when',
+);
+
 class _FakeSearch implements SearchRepository {
   _FakeSearch(this.response);
   final SearchApiResponse response;
+  final calls = <({String query, String? scope, CancelToken? cancelToken})>[];
+
+  /// Keeps the answers back until [release], like a slow server.
+  bool hold = false;
+  final _held = <Completer<void>>[];
+
+  void release() {
+    for (final gate in _held) {
+      gate.complete();
+    }
+    _held.clear();
+  }
 
   @override
   Future<SearchApiResponse> search({
     String query = '',
     String? scope,
     bool archived = false,
-  }) async => response;
+    CancelToken? cancelToken,
+  }) async {
+    calls.add((query: query, scope: scope, cancelToken: cancelToken));
+    if (hold) {
+      final gate = Completer<void>();
+      _held.add(gate);
+      await gate.future;
+    }
+    return response;
+  }
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
@@ -539,7 +712,11 @@ class _RecordingApi implements ApiClient {
   final List<(String, Map<String, dynamic>?)> calls = [];
 
   @override
-  Future<dynamic> get(String path, {Map<String, dynamic>? query}) async {
+  Future<dynamic> getCancellable(
+    String path, {
+    Map<String, dynamic>? query,
+    required CancelToken cancelToken,
+  }) async {
     calls.add((path, query));
     return response;
   }

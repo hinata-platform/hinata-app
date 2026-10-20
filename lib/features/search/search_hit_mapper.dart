@@ -288,11 +288,11 @@ SearchEntry mapSearchHit(SearchApiHit hit, SearchLabels l) {
           icon: LucideIcons.coins,
           subtitle: joined([
             l.t(
-              hit.status == 'COST'
+              hit.rateKind == 'COST'
                   ? 'billing.kind.cost'
                   : 'billing.kind.billable',
             ),
-            if (hit.type != null) l.t(_rateScopeKey(hit.type!)),
+            if (hit.rateLevel != null) l.t(_rateScopeKey(hit.rateLevel!)),
             amount,
             if (hit.from != null) l.days(hit.from!, hit.to),
           ]),
