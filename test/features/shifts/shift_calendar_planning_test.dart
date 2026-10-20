@@ -64,6 +64,25 @@ void main() {
     end: DateTime(2026, 10, 24, 23),
   );
 
+  /// The calendar's heads for [events], with project and span (HIN-166).
+  Map<String, ShiftEventHead> heads(List<ShiftEventSummary> events) => {
+    for (final e in events)
+      e.id: ShiftEventHead(
+        id: e.id,
+        title: e.title,
+        location: e.location,
+        timezone: e.timezone,
+        cancelled: e.cancelled,
+        seriesId: e.seriesId,
+        recurrenceLabel: e.recurrenceLabel,
+        projectId: e.projectId,
+        startsAt: e.startsAt,
+        endsAt: e.endsAt,
+        startsLocal: e.startsLocal,
+        endsLocal: e.endsLocal,
+      ),
+  };
+
   group('ShiftCreateTarget', () {
     ShiftCreateTarget resolve(
       List<ShiftEventSummary> held, {
@@ -165,24 +184,28 @@ void main() {
     );
 
     test(
-      'a planner reads the events of each month once, a helper never',
+      'a planner reads the months and nothing else; events come with them',
       () async {
         final helper = calendar();
         addTearDown(helper.close);
         await helper.start();
         await Future<void>.delayed(Duration.zero);
-        expect(repo.calls.where((c) => c.startsWith('events:')), isEmpty);
         expect(helper.state.canCreate, isFalse);
 
         repo.calls.clear();
-        repo
-          ..calendarAll = const ShiftCalendar(plannableProjectIds: {'p1'})
-          ..eventPage = (items: [fair], total: 1);
+        repo.calendarAll = ShiftCalendar(
+          events: heads([fair]),
+          plannableProjectIds: const {'p1'},
+        );
         final planner = calendar();
         addTearDown(planner.close);
         await planner.start();
         await Future<void>.delayed(Duration.zero);
-        expect(repo.calls.where((c) => c.startsWith('events:')), hasLength(3));
+        expect(repo.calls, [
+          'calendar:202609:all',
+          'calendar:202610:all',
+          'calendar:202611:all',
+        ]);
         expect(planner.state.canCreate, isTrue);
 
         // Finding the event asks for nothing.
@@ -199,9 +222,10 @@ void main() {
     test(
       'a filter on a project the caller does not plan offers nothing',
       () async {
-        repo
-          ..calendarAll = const ShiftCalendar(plannableProjectIds: {'p1'})
-          ..eventPage = (items: [fair], total: 1);
+        repo.calendarAll = ShiftCalendar(
+          events: heads([fair]),
+          plannableProjectIds: const {'p1'},
+        );
         final cubit = calendar(projectId: 'p2');
         addTearDown(cubit.close);
         await cubit.start();
@@ -222,9 +246,10 @@ void main() {
     test(
       'a new shift goes in from the answer, without reading the month',
       () async {
-        repo
-          ..calendarAll = const ShiftCalendar(plannableProjectIds: {'p1'})
-          ..eventPage = (items: [fair], total: 1);
+        repo.calendarAll = ShiftCalendar(
+          events: heads([fair]),
+          plannableProjectIds: const {'p1'},
+        );
         final cubit = calendar();
         addTearDown(cubit.close);
         await cubit.start();
@@ -269,6 +294,60 @@ void main() {
       },
     );
   });
+
+  test('a head reads its project and span; the marks who plans', () {
+    final head = ShiftEventHead.fromJson(const {
+      'id': 'e1',
+      'title': 'Messe',
+      'projectId': 'p1',
+      'startsAt': '2026-10-24T06:00:00Z',
+      'endsAt': '2026-10-24T18:00:00Z',
+      'startsLocal': '2026-10-24T08:00:00',
+      'endsLocal': '2026-10-24T20:00:00',
+      'timezone': 'Europe/Berlin',
+    });
+    expect(head.hasSpan, isTrue);
+    expect(head.startsLocal, DateTime(2026, 10, 24, 8));
+    final summary = head.toSummary(canPlan: true)!;
+    expect(summary.projectId, 'p1');
+    expect(summary.startsAt, DateTime.utc(2026, 10, 24, 6).toLocal());
+    expect(ShiftEventHead.fromJson(head.toJson()), head);
+    expect(
+      ShiftEventHead.fromJson(const {
+        'id': 'old',
+        'title': 'x',
+      }).toSummary(canPlan: true),
+      isNull,
+    );
+    final marks = ShiftCalendarMarks.fromJson(const {
+      'days': [
+        {'date': '2026-10-24', 'open': 2},
+      ],
+      'plannableProjectIds': ['p1'],
+    });
+    expect(marks.days.single.open, 2);
+    expect(marks.plannableProjectIds, {'p1'});
+  });
+
+  test(
+    'the month learns who plans from its marks, asking nothing else',
+    () async {
+      repo.plannable = const {'p1'};
+      final cubit = ShiftCalendarCubit(
+        repo,
+        focused: DateTime(2026, 10, 24),
+        span: ShiftCalendarSpan.month,
+      );
+      addTearDown(cubit.close);
+      await cubit.start();
+      expect(repo.calls, [
+        'marks:202609:all',
+        'marks:202610:all',
+        'marks:202611:all',
+      ]);
+      expect(cubit.state.canCreate, isTrue);
+    },
+  );
 
   group('ShiftEditorCubit', () {
     test(
@@ -363,11 +442,13 @@ void main() {
               start: DateTime(2026, 10, 22, 9),
             ),
           ],
-          events: const {'e1': sampleEvent},
+          events: {
+            'e1': sampleEvent,
+            ...heads(events ?? [fair]),
+          },
           plannableProjectIds: planner ? const {'p1'} : const {},
         )
-        ..plannable = planner ? const {'p1'} : const {}
-        ..eventPage = (items: events ?? [fair], total: 1);
+        ..plannable = planner ? const {'p1'} : const {};
       final cubit = ShiftCalendarCubit(
         repo,
         focused: DateTime(2026, 10, 24),

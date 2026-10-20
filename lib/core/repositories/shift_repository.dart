@@ -76,8 +76,9 @@ abstract class ShiftRepository {
   });
 
   /// What the month view marks per day from [from] to [to] (at most 62
-  /// days): counts only, one row per day that has any.
-  Future<List<ShiftDayMarks>> calendarMarks({
+  /// days): counts only, one row per day that has any, and the projects the
+  /// caller plans.
+  Future<ShiftCalendarMarks> calendarMarks({
     required DateTime from,
     required DateTime to,
     String? projectId,
@@ -381,11 +382,11 @@ class ApiShiftRepository implements ShiftRepository {
   );
 
   @override
-  Future<List<ShiftDayMarks>> calendarMarks({
+  Future<ShiftCalendarMarks> calendarMarks({
     required DateTime from,
     required DateTime to,
     String? projectId,
-  }) async => ShiftDayMarks.listFromJson(
+  }) async => ShiftCalendarMarks.fromJson(
     await _api.get(
       '/api/v1/shifts/calendar/marks',
       query: {
