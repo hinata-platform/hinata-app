@@ -445,7 +445,7 @@ void main() {
       repo.feedStatus = ShiftFeedStatus(
         exists: true,
         createdAt: DateTime(2026, 10, 20),
-        lastAccessedAt: DateTime.now().subtract(const Duration(minutes: 12)),
+        lastUsedAt: DateTime.now().subtract(const Duration(minutes: 12)),
       );
       await pumpFeed(tester);
       expect(find.textContaining('vor 12 Minuten'), findsOneWidget);
