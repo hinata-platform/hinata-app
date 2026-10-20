@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/router/linked_target.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
@@ -73,6 +74,7 @@ class TimeAbsencesScreen extends StatelessWidget {
     this.scope,
     this.requestId,
     this.typeId,
+    this.visit,
   });
 
   /// Which list the page opens on — a notification about somebody's request
@@ -87,6 +89,9 @@ class TimeAbsencesScreen extends StatelessWidget {
   /// opens with that type picked.
   final String? typeId;
 
+  /// The navigation that named [requestId] or [typeId] (see [LinkedTarget]).
+  final LinkVisit? visit;
+
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => TimeAbsencesCubit(
@@ -97,16 +102,23 @@ class TimeAbsencesScreen extends StatelessWidget {
       scope: scope,
       requestId: requestId,
       typeId: typeId,
+      visit: visit,
     ),
   );
 }
 
 class _TimeAbsencesView extends StatefulWidget {
-  const _TimeAbsencesView({this.scope, this.requestId, this.typeId});
+  const _TimeAbsencesView({
+    this.scope,
+    this.requestId,
+    this.typeId,
+    this.visit,
+  });
 
   final String? scope;
   final String? requestId;
   final String? typeId;
+  final LinkVisit? visit;
 
   @override
   State<_TimeAbsencesView> createState() => _TimeAbsencesViewState();
@@ -201,7 +213,7 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
     unawaited(context.read<MyAbsencesCubit>().ensureLoaded(managed: _managed));
     if (_managed) unawaited(context.read<TimePolicyCubit>().ensureLoaded());
     unawaited(_reload());
-    _openLinked(requestId: widget.requestId, typeId: widget.typeId);
+    _openLinked();
   }
 
   @override
@@ -210,29 +222,32 @@ class _TimeAbsencesViewState extends State<_TimeAbsencesView> {
     // A notification tapped while the page is open: the route stays, the
     // scope it names changes.
     if (widget.scope != oldWidget.scope) _switchScope(_initialScope());
-    _openLinked(
-      requestId: widget.requestId == oldWidget.requestId
-          ? null
-          : widget.requestId,
-      typeId: widget.typeId == oldWidget.typeId ? null : widget.typeId,
-    );
+    _openLinked();
   }
 
+  /// The request a link names, and the type of a new request one names.
+  late final _linkedRequest = LinkedTarget<String>(this);
+  late final _linkedType = LinkedTarget<String>(this);
+
   /// What a link asks for once the page is on screen: the request it names,
-  /// or a new request of the type it names. Without absence management there
-  /// are no requests, and a new absence is entered without a type.
-  void _openLinked({String? requestId, String? typeId}) {
-    final hasRequest = requestId != null && requestId.isNotEmpty;
-    final hasType = typeId != null && typeId.isNotEmpty;
-    if (!hasRequest && !hasType) return;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (hasRequest) {
-        if (_managed) unawaited(_openRequest(requestId));
-      } else {
-        unawaited(askForAbsence(context, typeId: typeId));
-      }
-    });
+  /// or a new request of the type it names, once per visit of the link.
+  /// Without absence management there are no requests, and a new absence is
+  /// entered without a type.
+  void _openLinked() {
+    final visit = widget.visit;
+    if (_linkedRequest.take(widget.requestId, visit)) {
+      _linkedRequest.openWhen(
+        ready: true,
+        open: (id) {
+          if (_managed) unawaited(_openRequest(id));
+        },
+      );
+    } else if (_linkedType.take(widget.typeId, visit)) {
+      _linkedType.openWhen(
+        ready: true,
+        open: (id) => unawaited(askForAbsence(context, typeId: id)),
+      );
+    }
   }
 
   Future<void> _openRequest(String requestId) async {

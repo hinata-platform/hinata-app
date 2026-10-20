@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/router/linked_target.dart';
 import 'package:hinata/core/responsive/responsive.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -75,7 +76,14 @@ void main() {
     TimePolicySnapshot policy = TimePolicySnapshot.none,
     DateTime? date,
     String? projectId,
+    ValueNotifier<LinkVisit>? visit,
   }) {
+    Widget screen(LinkVisit? link) => TimesheetScreen(
+      moduleView: moduleView,
+      date: date,
+      projectId: projectId,
+      visit: link,
+    );
     final router = GoRouter(
       routes: [
         GoRoute(
@@ -148,11 +156,12 @@ void main() {
                             create: (_) => FakeMyAbsencesCubit(managed: false),
                           ),
                         ],
-                        child: TimesheetScreen(
-                          moduleView: moduleView,
-                          date: date,
-                          projectId: projectId,
-                        ),
+                        child: visit == null
+                            ? screen(null)
+                            : ValueListenableBuilder<LinkVisit>(
+                                valueListenable: visit,
+                                builder: (_, value, _) => screen(value),
+                              ),
                       ),
                     ),
                   ),
@@ -558,6 +567,23 @@ void main() {
       expect(call.from.isAfter(linked), isFalse);
       expect(call.to.isBefore(linked), isFalse);
       expect(call.projectId, isNull);
+    });
+
+    testWidgets('the same link again reads its week again', (tester) async {
+      final base = _FakeTimesheetRepository(const []);
+      final linked = DateTime(2025, 3, 12);
+      final visit = ValueNotifier(LinkVisit.next());
+      addTearDown(visit.dispose);
+      await tester.pumpWidget(
+        host(rows: const [], timesheet: base, date: linked, visit: visit),
+      );
+      await tester.pumpAndSettle();
+      expect(base.calls, hasLength(1));
+
+      visit.value = LinkVisit.next();
+      await tester.pumpAndSettle();
+      expect(base.calls, hasLength(2));
+      expect(base.calls.last.from, base.calls.first.from);
     });
 
     testWidgets('narrows to the project it names, and names it', (

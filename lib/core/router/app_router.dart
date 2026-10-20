@@ -62,6 +62,7 @@ import '../models/core_models.dart' show AuthUser;
 import '../models/time_share_models.dart' show TimeShareBox;
 import '../storage/app_storage.dart';
 import 'board_routes.dart';
+import 'linked_target.dart';
 import 'shift_routes.dart';
 
 /// The root navigator, exposed so code that has no [BuildContext] can still
@@ -420,6 +421,7 @@ GoRouter buildRouter({
                   targetCommentId: state.uri.queryParameters['comment'],
                   // `…/issues/ID?attachment=<id>` opens that file in the viewer.
                   targetAttachmentId: state.uri.queryParameters['attachment'],
+                  linkVisit: LinkVisit.of(state),
                 ),
               );
             },
@@ -501,6 +503,7 @@ GoRouter buildRouter({
                     appConfig.state.meta?.advancedTimeTracking ?? false,
                 view: TimeView.calendar,
                 query: state.uri.queryParameters,
+                visit: LinkVisit.of(state),
               ),
             ),
           ),
@@ -512,6 +515,7 @@ GoRouter buildRouter({
                     appConfig.state.meta?.advancedTimeTracking ?? false,
                 view: TimeView.timesheet,
                 query: state.uri.queryParameters,
+                visit: LinkVisit.of(state),
               ),
             ),
           ),
@@ -537,6 +541,7 @@ GoRouter buildRouter({
                 view: TimeView.absences,
                 scope: state.uri.queryParameters['scope'],
                 query: state.uri.queryParameters,
+                visit: LinkVisit.of(state),
               ),
             ),
           ),
@@ -609,7 +614,10 @@ GoRouter buildRouter({
               state,
               (appConfig.state.meta?.billing ?? false)
                   // `?rate=<id>` opens that rate's timeline (search, HIN-165).
-                  ? RatesScreen(rateId: state.uri.queryParameters['rate'])
+                  ? RatesScreen(
+                      rateId: state.uri.queryParameters['rate'],
+                      visit: LinkVisit.of(state),
+                    )
                   : const NotFoundScreen(standalone: false),
             ),
           ),
@@ -834,9 +842,10 @@ Widget timeModulePage({
   TimeView view = TimeView.list,
   String? scope,
   Map<String, String> query = const {},
+  LinkVisit? visit,
 }) {
   if (!advancedTime) return const NotFoundScreen(standalone: false);
-  return TimeModuleScreen(view: view, scope: scope, query: query);
+  return TimeModuleScreen(view: view, scope: scope, query: query, visit: visit);
 }
 
 /// The page behind `/time/focus`.

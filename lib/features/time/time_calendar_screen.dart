@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/router/linked_target.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/my_absences_cubit.dart';
 import '../../core/blocs/time_policy_cubit.dart';
@@ -73,7 +74,7 @@ import '../../core/theme/app_type.dart';
 /// already takes wall-clock times, so that stage converts on the way in without
 /// touching the grid.
 class TimeCalendarScreen extends StatelessWidget {
-  const TimeCalendarScreen({super.key, this.date, this.entryId});
+  const TimeCalendarScreen({super.key, this.date, this.entryId, this.visit});
 
   /// The day a link names (`?date=`): the week span opens on it.
   final DateTime? date;
@@ -82,18 +83,22 @@ class TimeCalendarScreen extends StatelessWidget {
   /// [date] are read. An id the calendar does not hold opens nothing.
   final String? entryId;
 
+  /// The navigation that named [date] and [entryId] (see [LinkedTarget]).
+  final LinkVisit? visit;
+
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => TimeCalendarCubit(context.read<TimeRepository>()),
-    child: _TimeCalendarView(date: date, entryId: entryId),
+    child: _TimeCalendarView(date: date, entryId: entryId, visit: visit),
   );
 }
 
 class _TimeCalendarView extends StatefulWidget {
-  const _TimeCalendarView({this.date, this.entryId});
+  const _TimeCalendarView({this.date, this.entryId, this.visit});
 
   final DateTime? date;
   final String? entryId;
+  final LinkVisit? visit;
 
   @override
   State<_TimeCalendarView> createState() => _TimeCalendarViewState();
@@ -145,7 +150,21 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
 
   /// The entry a link asked to open, until it is found among the held months
   /// (and opened) or its day is read without it.
-  late String? _linkedEntry = widget.entryId;
+  late final _linkedEntry = LinkedTarget<String>(this);
+
+  /// The day a link asked for; the first one is where [_focused] starts.
+  late final _linkedDay = LinkedTarget<DateTime>(this);
+
+  @override
+  void initState() {
+    super.initState();
+    _linkedEntry.take(widget.entryId, widget.visit);
+    // Taken so that a rebuild does not focus it again; [_focused] already
+    // starts on it.
+    _linkedDay
+      ..take(widget.date, widget.visit)
+      ..drop();
+  }
 
   /// The month the scroller centres on when [_jump] is bumped. Never moved by a
   /// scroll — which is what keeps the ground still under a finger.
@@ -328,49 +347,52 @@ class _TimeCalendarViewState extends State<_TimeCalendarView> {
     _layerMemo.clear();
   }
 
-  /// A link to another day or entry while the calendar is on screen: the
-  /// module keeps this page, so the new target is shown from here.
+  /// A link while the calendar is on screen, another one or the same one
+  /// again: the module keeps this page, so the target is shown from here.
   @override
   void didUpdateWidget(_TimeCalendarView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.date == oldWidget.date && widget.entryId == oldWidget.entryId) {
-      return;
-    }
-    final date = widget.date;
-    _linkedEntry = widget.entryId;
+    final day = _linkedDay.take(widget.date, widget.visit);
+    final entry = _linkedEntry.take(widget.entryId, widget.visit);
+    if (!day && !entry) return;
     // After the frame: moving the pager is a scroll, which must not happen
     // while this widget is being rebuilt.
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      if (date != null) {
+    _linkedDay.openWhen(
+      ready: true,
+      open: (date) {
         if (_span != _Span.week) setState(() => _span = _Span.week);
         _focusDay(date);
-      }
-      _openLinkedEntry();
-    });
+        _openLinkedEntry();
+      },
+    );
+    if (!day) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _openLinkedEntry();
+      });
+    }
   }
 
   /// Opens the entry a link named, once a held month has it. Given up when the
   /// month of the focused day has been read without it — an entry of somebody
   /// else, or one since deleted, opens nothing.
   void _openLinkedEntry() {
-    final id = _linkedEntry;
-    if (id == null || id.isEmpty) return;
+    final id = _linkedEntry.pending;
+    if (id == null) return;
     for (final window in _months.values) {
       for (final item in window.items) {
         final data = item.data;
         if (data is WorkItem && data.id == id) {
-          _linkedEntry = null;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) unawaited(_openEntry(item));
-          });
+          _linkedEntry.openWhen(
+            ready: true,
+            open: (_) => unawaited(_openEntry(item)),
+          );
           return;
         }
       }
     }
     final key = monthKey(_focused);
     if (_months.containsKey(key) || _failed.containsKey(key)) {
-      _linkedEntry = null;
+      _linkedEntry.drop();
     }
   }
 

@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/router/linked_target.dart';
 import '../../core/api/api_client.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
@@ -65,6 +66,7 @@ class TimesheetScreen extends StatelessWidget {
     this.moduleView = false,
     this.date,
     this.projectId,
+    this.visit,
   });
 
   /// Whether this is the extended module's `/time/timesheet` rather than the
@@ -84,6 +86,9 @@ class TimesheetScreen extends StatelessWidget {
   /// The project a link names (`?project=`): the grid opens narrowed to it,
   /// for whoever may narrow it.
   final String? projectId;
+
+  /// The navigation that named [date] and [projectId] (see [LinkedTarget]).
+  final LinkVisit? visit;
 
   @override
   Widget build(BuildContext context) => MultiBlocProvider(
@@ -105,16 +110,29 @@ class TimesheetScreen extends StatelessWidget {
       moduleView: moduleView,
       date: date,
       projectId: projectId,
+      visit: visit,
     ),
   );
 }
 
 class _TimesheetView extends StatefulWidget {
-  const _TimesheetView({required this.moduleView, this.date, this.projectId});
+  const _TimesheetView({
+    required this.moduleView,
+    this.date,
+    this.projectId,
+    this.visit,
+  });
 
   final bool moduleView;
   final DateTime? date;
   final String? projectId;
+  final LinkVisit? visit;
+
+  /// What the link names, null when it names nothing.
+  ({DateTime? date, String? projectId})? get link =>
+      date == null && projectId == null
+      ? null
+      : (date: date, projectId: projectId);
 
   @override
   State<_TimesheetView> createState() => _TimesheetViewState();
@@ -202,6 +220,11 @@ class _TimesheetViewState extends State<_TimesheetView> {
     super.didChangeDependencies();
     if (_started) return;
     _started = true;
+    // The first link is where the grid starts; taken so a rebuild does not
+    // read it again.
+    _link
+      ..take(widget.link, widget.visit)
+      ..drop();
     final today = widget.date ?? DateTime.now();
     _from = weekStartFor(context, today);
     _to = addDays(_from, 6);
@@ -220,25 +243,29 @@ class _TimesheetViewState extends State<_TimesheetView> {
     if (widget.moduleView) offerTimePrivacyNotice(context);
   }
 
-  /// A link to another day or project while the grid is on screen: the
-  /// module keeps this page, so the new window is read from here.
+  /// The day and project a link asked for.
+  late final _link = LinkedTarget<({DateTime? date, String? projectId})>(this);
+
+  /// A link while the grid is on screen, another one or the same one again
+  /// after the reader moved on: the module keeps this page, so the window
+  /// it names is read from here.
   @override
   void didUpdateWidget(_TimesheetView oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (!_link.take(widget.link, widget.visit)) return;
+    // Applied at once: the next read is what shows it.
+    _link.drop();
     final date = widget.date;
-    final dateChanged = date != null && date != oldWidget.date;
-    final projectChanged =
-        widget.projectId != null && widget.projectId != oldWidget.projectId;
-    if (!dateChanged && !projectChanged) return;
-    if (dateChanged) {
+    final projectId = widget.projectId;
+    if (date != null) {
       _anchor = DateTime(date.year, date.month, date.day);
       _freeSpan = null;
       _forgetPeriod();
       _from = weekStartFor(context, date);
       _to = addDays(_from, 6);
     }
-    if (projectChanged) {
-      _projectFilter = widget.projectId;
+    if (projectId != null) {
+      _projectFilter = projectId;
       _projectFilterLabel = null;
     }
     unawaited(_load());

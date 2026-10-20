@@ -5,6 +5,7 @@ import '../../features/shell/not_found_screen.dart';
 import '../../features/shell/shell_nav.dart' show shiftsRoute;
 import '../../features/shifts/view/shifts_screen.dart';
 import 'board_routes.dart' show RoutePage;
+import 'linked_target.dart';
 
 /// The shift planning module's routes (HIN-27): the three views and one event.
 ///
@@ -52,6 +53,7 @@ List<RouteBase> shiftRoutes(
         eventId: state.pathParameters['id'],
         // `?shift=<id>` opens that shift's sheet over the event (HIN-165).
         shiftId: state.uri.queryParameters['shift'],
+        visit: LinkVisit.of(state),
       ),
     ),
   ),
@@ -69,6 +71,7 @@ Widget shiftsPage({
   ShiftsView view = ShiftsView.mine,
   String? eventId,
   String? shiftId,
+  LinkVisit? visit,
   ShiftCalendarQuery calendarQuery = const ShiftCalendarQuery(),
 }) {
   if (!enabled) return const NotFoundScreen(standalone: false);
@@ -79,6 +82,7 @@ Widget shiftsPage({
     view: view,
     eventId: eventId,
     shiftId: shiftId,
+    visit: visit,
     calendarQuery: calendarQuery,
   );
 }
