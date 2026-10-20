@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
+import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/shift_repository.dart';
 import 'package:hinata/features/shifts/bloc/my_shifts_snapshot_cubit.dart';
 import 'package:hydrated_bloc/hydrated_bloc.dart';
@@ -57,8 +58,11 @@ void main() {
     final snapshot = MyShiftsSnapshotCubit(storageId: 'shifts#routes');
     addTearDown(snapshot.close);
     await tester.pumpWidget(
-      RepositoryProvider<ShiftRepository>.value(
-        value: repo,
+      MultiRepositoryProvider(
+        providers: [
+          RepositoryProvider<ShiftRepository>.value(value: repo),
+          RepositoryProvider<ProjectRepository>.value(value: _NoProjects()),
+        ],
         child: MultiBlocProvider(
           providers: [
             BlocProvider<AuthBloc>(create: (_) => FakeAuthBloc()),
@@ -151,3 +155,7 @@ Future<void> _settle(WidgetTester tester) async {
     await tester.pump(const Duration(milliseconds: 100));
   }
 }
+
+/// The calendar names a project only for an address narrowed to one; none of
+/// these is.
+class _NoProjects extends Fake implements ProjectRepository {}
