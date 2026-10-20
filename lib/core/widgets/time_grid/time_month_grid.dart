@@ -6,6 +6,7 @@ import '../../i18n/i18n.dart';
 import '../../theme/app_colors.dart';
 import '../hive_widgets.dart' show fmtDuration;
 import 'dashed_outline.dart';
+import 'time_day_dots.dart';
 import 'time_grid_model.dart';
 import 'time_month_layout.dart';
 import '../../theme/app_type.dart';
@@ -56,6 +57,8 @@ class TimeMonthScroller extends StatefulWidget {
     this.onTap,
     this.onRetryMonth,
     this.markOn,
+    this.marksOnly = false,
+    this.dotsOn,
   });
 
   /// The month the scroller centres on when [jump] changes.
@@ -141,6 +144,19 @@ class TimeMonthScroller extends StatefulWidget {
   /// holiday calendar is, and the day it did would be the day the month view
   /// could not be built without one.
   final ({IconData glyph, String label})? Function(DateTime day)? markOn;
+
+  /// Whether a day shows only that something is on it, not what (HIN-160).
+  ///
+  /// The month of shift planning: a cell is the day's number and at most two
+  /// marks from [dotsOn] under it, no chips and no total. Thirty cells of
+  /// shift titles is a month nobody reads, and the week is where the titles
+  /// are; the month is for seeing *where* the gaps and your own days are.
+  /// [itemsForDay] is still asked, but only by a day that is tapped.
+  final bool marksOnly;
+
+  /// The marks under a day's number in [marksOnly] mode, or null for none.
+  /// Changes are announced through [revision], like [itemsForDay].
+  final TimeDayDots? Function(DateTime day)? dotsOn;
 
   @override
   State<TimeMonthScroller> createState() => _TimeMonthScrollerState();
@@ -401,6 +417,8 @@ class _TimeMonthScrollerState extends State<TimeMonthScroller> {
       onDayMenu: widget.onDayMenu,
       onTap: widget.onTap,
       markOn: widget.markOn,
+      marksOnly: widget.marksOnly,
+      dotsOn: widget.dotsOn,
     );
   }
 
@@ -574,6 +592,8 @@ class _MonthBlock extends StatelessWidget {
     this.onDayMenu,
     this.onTap,
     this.markOn,
+    this.marksOnly = false,
+    this.dotsOn,
   });
 
   final DateTime month;
@@ -585,6 +605,10 @@ class _MonthBlock extends StatelessWidget {
 
   /// See [TimeMonthScroller.markOn].
   final ({IconData glyph, String label})? Function(DateTime day)? markOn;
+
+  /// See [TimeMonthScroller.marksOnly] and [TimeMonthScroller.dotsOn].
+  final bool marksOnly;
+  final TimeDayDots? Function(DateTime day)? dotsOn;
   final void Function(DateTime day)? onTapDay;
 
   /// Somebody held a day: start an entry on it. Null leaves the month
@@ -634,6 +658,8 @@ class _MonthBlock extends StatelessWidget {
                         onDayMenu: onDayMenu,
                         onTap: onTap,
                         markOn: markOn,
+                        marksOnly: marksOnly,
+                        dotsOn: dotsOn,
                       ),
                     ),
                 ],
@@ -726,6 +752,8 @@ class _Cell extends StatelessWidget {
     this.onDayMenu,
     this.onTap,
     this.markOn,
+    this.marksOnly = false,
+    this.dotsOn,
   });
 
   /// Null for the cells before the first of the month and after the last.
@@ -738,6 +766,10 @@ class _Cell extends StatelessWidget {
 
   /// See [TimeMonthScroller.markOn].
   final ({IconData glyph, String label})? Function(DateTime day)? markOn;
+
+  /// See [TimeMonthScroller.marksOnly] and [TimeMonthScroller.dotsOn].
+  final bool marksOnly;
+  final TimeDayDots? Function(DateTime day)? dotsOn;
 
   final void Function(DateTime day)? onTapDay;
   final void Function(DateTime day)? onNewOnDay;
@@ -767,6 +799,7 @@ class _Cell extends StatelessWidget {
   Widget build(BuildContext context) {
     final at = day;
     if (at == null) return const SizedBox.shrink();
+    if (marksOnly) return _marksOnly(context, at);
     final mark = markOn?.call(at);
     final entries = itemsForDay(dayKey(at));
     final events = eventsForDay?.call(dayKey(at)) ?? const <TimeGridItem>[];
@@ -873,6 +906,57 @@ class _Cell extends StatelessWidget {
     return DecoratedBox(
       decoration: BoxDecoration(color: AppColors.recess),
       child: cell,
+    );
+  }
+}
+
+extension on _Cell {
+  /// A day of [TimeMonthScroller.marksOnly]: the number, the day's mark beside
+  /// it, and the dots under it. The whole cell is the day's button.
+  Widget _marksOnly(BuildContext context, DateTime at) {
+    final mark = markOn?.call(at);
+    final dots = dotsOn?.call(at);
+    final isToday = DateUtils.isSameDay(at, today);
+    final listening = MediaQuery.accessibleNavigationOf(context);
+    return Semantics(
+      button: onTapDay != null,
+      // Read out as the date and what the marks say: a dot is nothing to a
+      // screen reader.
+      label: listening
+          ? [
+              MaterialLocalizations.of(context).formatFullDate(at),
+              if (dots != null && !dots.isEmpty) dots.label,
+              if (mark != null) mark.label,
+            ].join(', ')
+          : null,
+      excludeSemantics: listening,
+      child: InkWell(
+        onTap: onTapDay == null ? null : () => onTapDay!(at),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(_kCellPad, 4, _kCellPad, 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DayLine(
+                day: at,
+                today: isToday,
+                weekend: weekend,
+                minutes: 0,
+                mark: mark,
+              ),
+              if (dots != null && !dots.isEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  // Centred under the number, which sits in a box this wide.
+                  child: SizedBox(
+                    width: _kDayLine,
+                    child: Center(child: TimeDayDotsRow(dots: dots)),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
