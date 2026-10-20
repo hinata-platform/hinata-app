@@ -95,22 +95,14 @@ class ShiftCalendarPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    ProjectRepository? projects;
-    try {
-      projects = context.read<ProjectRepository>();
-    } catch (_) {
-      // Not provided (a test): the pill names the project generically.
-    }
+    final projects = context.read<ProjectRepository>();
     return BlocProvider(
       create: (_) => ShiftCalendarCubit(
         context.read<ShiftRepository>(),
         focused: query.date ?? DateTime.now(),
         span: query.span ?? ShiftCalendarSpan.week,
         projectId: query.projectId,
-        projectNameOf: switch (projects) {
-          final repo? => (id) async => (await repo.project(id)).name,
-          null => null,
-        },
+        projectNameOf: (id) async => (await projects.project(id)).name,
       )..start(),
       child: ShiftCalendarView(query: query),
     );
