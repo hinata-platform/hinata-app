@@ -228,8 +228,14 @@ class ShiftActionButton extends StatelessWidget {
         onPressed: press,
         icon: Icon(action.icon, size: 16),
         label: Text(label),
+        // The app's outlined theme lays a light glass gloss under the capsule.
+        // On the navy hero that turned the white label into grey on grey, so
+        // the capsule stays clear here and only its line shows.
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.inkOnNavy,
+          backgroundColor: Colors.transparent,
+          backgroundBuilder: (context, states, child) => child!,
+          disabledForegroundColor: AppColors.inkSoftOnNavy,
           minimumSize: const Size(48, 48),
           side: const BorderSide(color: AppColors.inkSoftOnNavy),
         ),
