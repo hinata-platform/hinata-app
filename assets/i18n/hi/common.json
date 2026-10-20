@@ -164,6 +164,21 @@
         "project": "वह प्रोजेक्ट चुनें जिसका इनवॉइस बनाना है।",
         "tax": "0 से 100 प्रतिशत के बीच वैट दर दर्ज करें।"
       }
+    },
+    "shifts": {
+      "alreadyAssigned": "आप पहले से इस शिफ़्ट में हैं।",
+      "assigneeNotMember": "इस व्यक्ति को शिफ़्ट नहीं दी जा सकती। सक्रिय खाता और प्रोजेक्ट तक पहुँच चाहिए।",
+      "assignmentNotPending": "यह असाइनमेंट अब जवाब का इंतज़ार नहीं कर रहा।",
+      "batchInvalid": "कुछ दिन नहीं बन सके। कुछ भी सहेजा नहीं गया।",
+      "busy": "बहुत से लोग एक साथ नाम दर्ज कर रहे हैं। कृपया थोड़ी देर में फिर कोशिश करें।",
+      "eventHasAssignments": "इस इवेंट की शिफ़्टों में अभी लोग दर्ज हैं। पहले इसे रद्द करें, फिर हटाएँ।",
+      "maxBelowAssigned": "इस शिफ़्ट में पहले से नई सीमा से ज़्यादा लोग हैं।",
+      "notPlanner": "इसे सिर्फ़ इस प्रोजेक्ट के योजनाकार बदल सकते हैं।",
+      "overlappingAssignment": "उसी समय आपकी पहले से एक शिफ़्ट है।",
+      "plannerNotMember": "यह व्यक्ति यहाँ शिफ़्ट की योजना नहीं बना सकता। सक्रिय खाता और प्रोजेक्ट तक पहुँच चाहिए।",
+      "selfAssignDisabled": "इस इवेंट में आयोजक शिफ़्ट देते हैं। यहाँ खुद नाम दर्ज नहीं हो सकता।",
+      "shiftFull": "यह शिफ़्ट पहले से भरी हुई है।",
+      "shiftUnavailable": "यह शिफ़्ट अब मौजूद नहीं है।"
     }
   },
   "notFound": {
@@ -3732,7 +3747,20 @@
       "INVOICE_CREDITED": "इनवॉइस रद्द किया गया",
       "INVOICE_EXPORTED": "इनवॉइस निर्यात किया गया",
       "ISSUE_PARTICIPANT_ADDED": "इश्यू किसी व्यक्ति के साथ साझा किया गया",
-      "ISSUE_PARTICIPANT_REMOVED": "व्यक्ति को इश्यू से हटाया गया"
+      "ISSUE_PARTICIPANT_REMOVED": "व्यक्ति को इश्यू से हटाया गया",
+      "SHIFT_EVENT_CREATED": "इवेंट बनाया गया",
+      "SHIFT_EVENT_UPDATED": "इवेंट बदला गया",
+      "SHIFT_EVENT_CANCELLED": "इवेंट रद्द किया गया",
+      "SHIFT_EVENT_DELETED": "इवेंट हटाया गया",
+      "SHIFT_CREATED": "शिफ़्ट बनाई गई",
+      "SHIFT_UPDATED": "शिफ़्ट बदली गई",
+      "SHIFT_DELETED": "शिफ़्ट हटाई गई",
+      "SHIFT_ASSIGNMENT_CREATED": "शिफ़्ट दी गई",
+      "SHIFT_ASSIGNMENT_CONFIRMED": "शिफ़्ट की पुष्टि हुई",
+      "SHIFT_ASSIGNMENT_DECLINED": "शिफ़्ट अस्वीकार हुई",
+      "SHIFT_ASSIGNMENT_RELEASED": "शिफ़्ट छोड़ी गई",
+      "SHIFT_PLANNER_GRANTED": "शिफ़्ट योजना की अनुमति दी गई",
+      "SHIFT_PLANNER_REVOKED": "शिफ़्ट योजना की अनुमति वापस ली गई"
     },
     "meta": {
       "oldRole": "पिछली भूमिका",
@@ -4143,6 +4171,20 @@
       "noMemberRates": "इस प्रोजेक्ट पर किसी सदस्य की अपनी दर नहीं है।",
       "addMember": "किसी सदस्य के लिए दर",
       "notLead": "केवल प्रोजेक्ट लीड ही इसकी दरें तय करते हैं।"
+    },
+    "shifts": {
+      "title": "शिफ़्ट योजना",
+      "note": "योजनाकार इवेंट और शिफ़्ट बनाते हैं और लोगों को शिफ़्ट देते हैं। वे प्रोजेक्ट सेटिंग्स नहीं बदल सकते।",
+      "leadsAlways": "लीड और टीम एडमिन हमेशा योजना बना सकते हैं।",
+      "add": "योजनाकार जोड़ें",
+      "remove": "हटाएँ",
+      "removeNamed": "{{name}} को योजनाकार से हटाएँ",
+      "removeTitle": "योजनाकार हटाएँ?",
+      "removeMessage": "{{name}} इसके बाद शिफ़्ट की योजना नहीं बना सकेंगे।",
+      "empty": "अभी कोई योजनाकार नहीं। लीड और टीम एडमिन फिर भी योजना बना सकते हैं।",
+      "added": "योजनाकार जोड़ा गया",
+      "removed": "योजनाकार हटाया गया",
+      "noCandidates": "सभी सदस्य पहले से योजना बनाते हैं।"
     }
   },
   "account": {
@@ -5238,8 +5280,122 @@
   },
   "shifts": {
     "empty": {
-      "title": "अभी कोई शिफ्ट नहीं",
-      "message": "शिफ्ट वाला कोई इवेंट योजना में आते ही यहाँ दिखेगा।"
+      "title": "अभी कोई शिफ़्ट नहीं",
+      "message": "जैसे ही आप किसी शिफ़्ट के लिए नाम दर्ज करेंगे या कोई आपको शिफ़्ट देगा, वह यहाँ दिखेगी। खुली शिफ़्टें इवेंट में मिलेंगी।"
+    },
+    "loadFailed": "अभी लोड नहीं हो सका",
+    "view": {
+      "mine": "मेरी",
+      "calendar": "कैलेंडर",
+      "events": "इवेंट",
+      "menu": "दृश्य बदलें"
+    },
+    "coverage": {
+      "figure": "{{assigned}} / {{required}}",
+      "figureMax": "{{assigned}} / {{required}} · अधिकतम {{max}}",
+      "missing": "अभी {{count}} व्यक्ति चाहिए",
+      "missing_plural": "अभी {{count}} लोग चाहिए",
+      "met": "पूरी",
+      "over": "ज़रूरत से {{count}} व्यक्ति ज़्यादा",
+      "over_plural": "ज़रूरत से {{count}} लोग ज़्यादा",
+      "full": "भरी हुई, {{max}} में से {{assigned}}",
+      "semantics": "{{required}} में से {{assigned}} लोग, {{state}}"
+    },
+    "status": {
+      "assigned": "सौंपी गई",
+      "confirmed": "पुष्टि की गई",
+      "declined": "अस्वीकार की गई",
+      "released": "छोड़ी गई",
+      "waiting": "प्रतीक्षा सूची में",
+      "mine": "नाम दर्ज"
+    },
+    "action": {
+      "join": "नाम दर्ज करें",
+      "confirm": "पुष्टि करें",
+      "decline": "अस्वीकार करें",
+      "release": "छोड़ें",
+      "toEvent": "इवेंट पर जाएँ",
+      "busy": "एक पल, यह अभी चल रहा है।"
+    },
+    "done": {
+      "joined": "आपका नाम दर्ज हो गया",
+      "confirmed": "शिफ़्ट की पुष्टि हो गई",
+      "declined": "असाइनमेंट अस्वीकार किया गया",
+      "released": "शिफ़्ट छोड़ दी गई"
+    },
+    "ask": {
+      "releaseTitle": "यह शिफ़्ट छोड़ें?",
+      "releaseMessage": "आपकी जगह फिर से खाली हो जाएगी और दूसरे लोग नाम दर्ज कर सकेंगे।",
+      "declineTitle": "यह असाइनमेंट अस्वीकार करें?",
+      "declineMessage": "जगह फिर से खाली हो जाएगी और आयोजक किसी और को रख सकेंगे।"
+    },
+    "absentHint": "उस दिन आप अनुपस्थित के रूप में दर्ज हैं",
+    "next": {
+      "badge": "अगली शिफ़्ट",
+      "with": "{{names}} के साथ",
+      "and": "{{first}} और {{last}}",
+      "withOthers": "{{count}} और व्यक्ति के साथ",
+      "withOthers_plural": "{{count}} और लोगों के साथ",
+      "alone": "अभी सिर्फ़ आप"
+    },
+    "time": {
+      "until": "{{time}} तक",
+      "span": "{{from}} से {{to}}",
+      "hours": "{{count}} घंटा",
+      "hours_plural": "{{count}} घंटे",
+      "minutes": "{{count}} मिनट",
+      "minutes_plural": "{{count}} मिनट",
+      "inMinutes": "{{count}} मिनट में",
+      "inMinutes_plural": "{{count}} मिनट में",
+      "inHours": "{{count}} घंटे में",
+      "inHours_plural": "{{count}} घंटे में",
+      "inDays": "{{count}} दिन में",
+      "inDays_plural": "{{count}} दिन में",
+      "running": "अभी चल रही है"
+    },
+    "zone": "समय {{zone}} के अनुसार",
+    "mine": {
+      "open": "आपके प्रोजेक्ट में खुली शिफ़्टें",
+      "openCount": "{{count}} में अभी लोग चाहिए",
+      "openCount_plural": "{{count}} में अभी लोग चाहिए",
+      "openEmpty": "अभी किसी प्रोजेक्ट को लोग नहीं चाहिए।",
+      "toEvents": "सभी इवेंट देखें",
+      "offline": "कनेक्शन नहीं है। आप पिछली बार लोड हुई जानकारी देख रहे हैं।"
+    },
+    "event": {
+      "title": "इवेंट",
+      "understaffed": "{{count}} शिफ़्ट में अभी लोग चाहिए",
+      "understaffed_plural": "{{count}} शिफ़्टों में अभी लोग चाहिए",
+      "allStaffed": "सब भरी हुई",
+      "places": "{{taken}} / {{required}} जगहें",
+      "placesTaken": "{{required}} में से {{taken}} जगहें भरीं",
+      "mine": "{{count}} आपकी",
+      "mine_plural": "{{count}} आपकी",
+      "selfAssignOpen": "नाम दर्ज करना खुला है",
+      "plannersOnly": "केवल आयोजक शिफ़्ट देते हैं",
+      "cancelled": "रद्द",
+      "onlyUnderstaffed": "सिर्फ़ जहाँ लोग कम हैं",
+      "noUnderstaffed": "अभी कहीं भी किसी की कमी नहीं है।",
+      "noShifts": "इस इवेंट में अभी कोई शिफ़्ट नहीं है।"
+    },
+    "events": {
+      "upcoming": "जल्द आने वाले",
+      "allProjects": "सभी प्रोजेक्ट",
+      "pickProject": "प्रोजेक्ट चुनें",
+      "emptyTitle": "अभी कोई इवेंट नहीं",
+      "emptyMessage": "जैसे ही कोई प्रोजेक्ट शिफ़्टों वाला इवेंट बनाएगा, वह यहाँ दिखेगा।"
+    },
+    "offer": {
+      "full": "भरी हुई, {{max}} में से {{assigned}}",
+      "cancelled": "रद्द",
+      "plannersOnly": "आयोजक शिफ़्ट देते हैं"
+    },
+    "sheet": {
+      "freeSpot": "खाली जगह"
+    },
+    "calendar": {
+      "soonTitle": "कैलेंडर जल्द आ रहा है",
+      "soonMessage": "सप्ताह और महीने का दृश्य बाद में आएगा। तब तक सब कुछ मेरी और इवेंट में है।"
     }
   }
 }
