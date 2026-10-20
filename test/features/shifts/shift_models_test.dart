@@ -117,6 +117,15 @@ void main() {
     expect(detail.places.map((p) => p.id), ['a1']);
   });
 
+  test('the feed status reads lastUsedAt', () {
+    final status = ShiftFeedStatus.fromJson(const {
+      'exists': true,
+      'createdAt': '2026-10-20T08:00:00Z',
+      'lastUsedAt': '2026-10-20T09:12:00Z',
+    });
+    expect(status.lastUsedAt, DateTime.utc(2026, 10, 20, 9, 12).toLocal());
+  });
+
   test('a sign-up answer carries the caller\'s place onto the shift', () {
     final result = ShiftAssignResult.fromJson({
       'shift': {...shiftJson, 'mine': true},
