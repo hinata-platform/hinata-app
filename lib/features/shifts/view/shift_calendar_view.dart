@@ -823,9 +823,11 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
               ),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  color: AppColors.surface.withValues(
-                    alpha: AppColors.brightness == Brightness.dark ? .5 : .78,
-                  ),
+                  // Opaque on purpose. At 78 % the page behind had to be
+                  // blended into every scrolled frame of the full grid, which
+                  // cost the week about 4 ms raster p90 on a 60 Hz MacBook
+                  // (19.9 to 16.2 ms, integration_test/shifts_perf_test.dart).
+                  color: AppColors.surface,
                   border: compact
                       ? null
                       : Border.all(color: AppColors.hairline),
