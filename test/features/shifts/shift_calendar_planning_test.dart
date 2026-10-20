@@ -306,12 +306,13 @@ void main() {
       'endsLocal': '2026-10-24T20:00:00',
       'timezone': 'Europe/Berlin',
     });
-    expect(head.hasSpan, isTrue);
     expect(head.startsLocal, DateTime(2026, 10, 24, 8));
     final summary = head.toSummary(canPlan: true)!;
     expect(summary.projectId, 'p1');
     expect(summary.startsAt, DateTime.utc(2026, 10, 24, 6).toLocal());
     expect(ShiftEventHead.fromJson(head.toJson()), head);
+    // And back: an event the calendar learnt from an editor keeps its span.
+    expect(summary.toHead(), head);
     expect(
       ShiftEventHead.fromJson(const {
         'id': 'old',
