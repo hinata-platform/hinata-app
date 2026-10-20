@@ -260,9 +260,9 @@ class Shift extends Equatable {
         for (final id in (json['assigneeIds'] as List?) ?? const [])
           if (id is String) id,
       ],
-      myAssignmentId: _text(json['myAssignmentId']) ?? _text(my['id']),
-      myStatus: json['myStatus'] != null || my['status'] != null
-          ? ShiftAssignmentStatus.parse(json['myStatus'] ?? my['status'])
+      myAssignmentId: _text(my['id']),
+      myStatus: my['status'] != null
+          ? ShiftAssignmentStatus.parse(my['status'])
           : null,
       waitingCount: _int(json['waitingCount']),
       myWaitPosition: _intOrNull(json['myWaitPosition']),
@@ -648,9 +648,8 @@ class ShiftDetail extends Equatable {
   final bool canPlan;
 
   /// Every active place with its id, for a planner to take somebody off the
-  /// shift (HIN-160). Read from `assignments` where the server sends it; an
-  /// older server sends only [Shift.assigneeIds], and then nobody can be
-  /// taken off from the sheet.
+  /// shift (HIN-160). The server sends `assignments` to planners only; for
+  /// everybody else this is empty.
   final List<ShiftPlace> places;
 
   /// The place [userId] holds, or null.
@@ -661,20 +660,17 @@ class ShiftDetail extends Equatable {
     return null;
   }
 
-  /// The caller's own place, when the server names it. Falls back to what the
-  /// shift row says ([Shift.myAssignmentId]).
+  /// The caller's own place, from the shift's `myAssignment`.
   final ShiftAssignmentRef? myAssignment;
 
   factory ShiftDetail.fromJson(Map<String, dynamic> json) {
     final shift = Shift.fromJson(_map(json['shift']));
-    final mine =
-        ShiftAssignmentRef.fromJson(json['myAssignment']) ??
-        (shift.myAssignmentId == null
-            ? null
-            : ShiftAssignmentRef(
-                id: shift.myAssignmentId!,
-                status: shift.myStatus ?? ShiftAssignmentStatus.unknown,
-              ));
+    final mine = shift.myAssignmentId == null
+        ? null
+        : ShiftAssignmentRef(
+            id: shift.myAssignmentId!,
+            status: shift.myStatus ?? ShiftAssignmentStatus.unknown,
+          );
     return ShiftDetail(
       shift: shift,
       event: ShiftEventHead.fromJson(_map(json['event'])),
@@ -682,8 +678,7 @@ class ShiftDetail extends Equatable {
       canPlan: _bool(json['canPlan']),
       myAssignment: mine,
       places: [
-        for (final p in _maps(json['assignments'] ?? json['places']))
-          ?ShiftPlace.fromJson(p),
+        for (final p in _maps(json['assignments'])) ?ShiftPlace.fromJson(p),
       ],
     );
   }
@@ -823,11 +818,7 @@ class ShiftAssignResult extends Equatable {
 
   factory ShiftAssignResult.fromJson(Map<String, dynamic> json) {
     final assignment = ShiftAssignmentRef.fromJson(json['assignment']);
-    // The shift either sits under `shift` or is the body itself.
-    final shiftJson = json['shift'] is Map<String, dynamic>
-        ? json['shift'] as Map<String, dynamic>
-        : json;
-    final shift = Shift.fromJson(shiftJson);
+    final shift = Shift.fromJson(_map(json['shift']));
     return ShiftAssignResult(
       // The caller's place rides on the shift while it is held; a release or
       // a decline answers with the same shape and a place that is gone. A
@@ -905,7 +896,7 @@ class ShiftPlanner extends Equatable {
   final DateTime? createdAt;
 
   factory ShiftPlanner.fromJson(Map<String, dynamic> json) => ShiftPlanner(
-    userId: json['userId'] as String? ?? json['id'] as String? ?? '',
+    userId: json['userId'] as String? ?? '',
     grantedBy: _text(json['grantedBy']),
     createdAt: parseInstant(json['createdAt']),
   );
@@ -921,20 +912,13 @@ class ShiftPlanners extends Equatable {
   final List<ShiftPlanner> planners;
   final Map<String, ShiftUser> users;
 
-  /// Reads a bare list, or an object with the list under `planners`, `items`
-  /// or `content` beside an optional `users` map.
+  /// Reads `PlannersResponse {planners, users}`.
   factory ShiftPlanners.fromJson(Object? body) {
-    if (body is List) {
-      return ShiftPlanners(
-        planners: [for (final p in _maps(body)) ShiftPlanner.fromJson(p)],
-      );
-    }
     final json = _map(body);
-    final list = json['planners'] ?? json['items'] ?? json['content'];
     return ShiftPlanners(
       planners: [
-        for (final p in _maps(list))
-          if (p['userId'] != null || p['id'] != null) ShiftPlanner.fromJson(p),
+        for (final p in _maps(json['planners']))
+          if (p['userId'] != null) ShiftPlanner.fromJson(p),
       ],
       users: ShiftUser.mapFromJson(json['users']),
     );

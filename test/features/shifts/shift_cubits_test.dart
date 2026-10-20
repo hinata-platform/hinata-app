@@ -149,6 +149,31 @@ void main() {
       expect(cubit.state.next, isNotNull);
       expect(cubit.state.open.shifts, isEmpty);
     });
+
+    test(
+      'the waiting lists failing is said, and what was held stays',
+      () async {
+        final waits = sampleMine(
+          assignmentId: 'w1',
+          status: ShiftAssignmentStatus.waiting,
+        );
+        repo
+          ..next = sampleMine()
+          ..waiting = [waits];
+        final cubit = NextShiftCubit(repo, changes: bus.stream);
+        addTearDown(cubit.close);
+        await cubit.load();
+        expect(cubit.state.waiting, [waits]);
+        expect(cubit.state.waitingFailed, isFalse);
+
+        repo.waitingFailure = ApiFailure('errors.unexpected');
+        await cubit.load();
+
+        expect(cubit.state.next, isNotNull);
+        expect(cubit.state.waitingFailed, isTrue);
+        expect(cubit.state.waiting, [waits]);
+      },
+    );
   });
 
   group('ShiftEventsCubit', () {
