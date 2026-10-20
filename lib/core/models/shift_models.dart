@@ -395,6 +395,11 @@ class ShiftEventHead extends Equatable {
     this.seriesId,
     this.recurrenceLabel,
     this.detached = false,
+    this.projectId,
+    this.startsAt,
+    this.endsAt,
+    this.startsLocal,
+    this.endsLocal,
   });
 
   final String id;
@@ -403,6 +408,19 @@ class ShiftEventHead extends Equatable {
   final String? timezone;
   final bool selfAssignable;
   final bool cancelled;
+
+  /// The event's project and span (HIN-166), so the calendar can tell which
+  /// event a new shift falls into. Null from a server before it.
+  final String? projectId;
+  final DateTime? startsAt;
+  final DateTime? endsAt;
+
+  /// [startsAt] and [endsAt] as wall clocks in the event's zone.
+  final DateTime? startsLocal;
+  final DateTime? endsLocal;
+
+  /// Whether the head names the event's project and span (HIN-166).
+  bool get hasSpan => projectId != null && startsAt != null && endsAt != null;
 
   /// The series the event is an occurrence of (HIN-161), or null.
   final String? seriesId;
@@ -426,6 +444,11 @@ class ShiftEventHead extends Equatable {
     seriesId: _text(json['seriesId']),
     recurrenceLabel: _text(json['recurrenceLabel']),
     detached: _bool(json['detached']),
+    projectId: _text(json['projectId']),
+    startsAt: parseInstant(json['startsAt']),
+    endsAt: parseInstant(json['endsAt']),
+    startsLocal: parseLocalWallClock(json['startsLocal']),
+    endsLocal: parseLocalWallClock(json['endsLocal']),
   );
 
   Map<String, dynamic> toJson() => {
@@ -438,7 +461,39 @@ class ShiftEventHead extends Equatable {
     'seriesId': seriesId,
     'recurrenceLabel': recurrenceLabel,
     'detached': detached,
+    if (projectId != null) 'projectId': projectId,
+    if (startsAt != null) 'startsAt': startsAt!.toUtc().toIso8601String(),
+    if (endsAt != null) 'endsAt': endsAt!.toUtc().toIso8601String(),
+    if (startsLocal != null) 'startsLocal': _wallClock(startsLocal!),
+    if (endsLocal != null) 'endsLocal': _wallClock(endsLocal!),
   };
+
+  /// The head as the editors take an event (HIN-166); null without a span.
+  /// [canPlan] is the caller's right on its project, which the head does not
+  /// carry.
+  ShiftEventSummary? toSummary({required bool canPlan}) {
+    final project = projectId;
+    final start = startsAt;
+    final end = endsAt;
+    if (project == null || start == null || end == null) return null;
+    return ShiftEventSummary(
+      id: id,
+      projectId: project,
+      title: title,
+      location: location,
+      startsAt: start,
+      endsAt: end,
+      startsLocal: startsLocal ?? start,
+      endsLocal: endsLocal ?? end,
+      timezone: timezone,
+      cancelled: cancelled,
+      selfAssignable: selfAssignable,
+      canPlan: canPlan,
+      seriesId: seriesId,
+      recurrenceLabel: recurrenceLabel,
+      detached: detached,
+    );
+  }
 
   @override
   List<Object?> get props => [
@@ -451,6 +506,11 @@ class ShiftEventHead extends Equatable {
     seriesId,
     recurrenceLabel,
     detached,
+    projectId,
+    startsAt,
+    endsAt,
+    startsLocal,
+    endsLocal,
   ];
 }
 
@@ -890,6 +950,29 @@ class ShiftDayMarks extends Equatable {
 
   @override
   List<Object?> get props => [date, mine, open, understaffed];
+}
+
+/// What the month view reads (`/shifts/calendar/marks`): counts per day, and
+/// the projects of the window the caller plans (HIN-166), for its "+".
+class ShiftCalendarMarks extends Equatable {
+  const ShiftCalendarMarks({
+    this.days = const [],
+    this.plannableProjectIds = const {},
+  });
+
+  final List<ShiftDayMarks> days;
+  final Set<String> plannableProjectIds;
+
+  factory ShiftCalendarMarks.fromJson(Object? body) => ShiftCalendarMarks(
+    days: ShiftDayMarks.listFromJson(body),
+    plannableProjectIds: {
+      for (final id in (_map(body)['plannableProjectIds'] as List?) ?? const [])
+        if (id is String) id,
+    },
+  );
+
+  @override
+  List<Object?> get props => [days, plannableProjectIds];
 }
 
 /// Shifts in a window with their events named once (`CalendarResponse`).
