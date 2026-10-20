@@ -5,6 +5,8 @@ import 'package:flutter/gestures.dart'
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/core/models/shift_models.dart';
 import 'package:hinata/core/widgets/time_grid/time_grid.dart';
 import 'package:hinata/core/widgets/time_grid/time_month_grid.dart';
@@ -826,10 +828,15 @@ void main() {
       Navigator.of(tester.element(find.text('Schicht anlegen'))).pop();
       await settle(tester);
 
-      // On a phone the "+" sits in the row with the date, and its menu is a
-      // sheet too.
+      // On a phone the "+" is a bar action beside the bell (the shell draws
+      // it from the page's chrome), not a button in the date row; its menu is
+      // a sheet too.
       await pumpCalendar(tester, width: 390);
-      await tester.tap(find.byTooltip('Hinzufügen'));
+      expect(find.byTooltip('Hinzufügen'), findsNothing);
+      final add = phoneAction(tester);
+      expect(add.icon, LucideIcons.plus);
+      expect(add.label, 'Hinzufügen');
+      add.onTap!(null);
       await settle(tester);
       expect(find.byType(BottomSheet), findsOneWidget);
       expect(find.text('Neues Event'), findsOneWidget);
@@ -866,9 +873,17 @@ void main() {
         for (final scale in [1.0, 2.0]) {
           await pumpCalendar(tester, width: width, scale: scale);
           expect(tester.takeException(), isNull, reason: '$width x$scale');
-          expect(find.byTooltip('Hinzufügen'), findsOneWidget);
+          if (width < 600) {
+            expect(phoneAction(tester).label, 'Hinzufügen');
+          } else {
+            expect(find.byTooltip('Hinzufügen'), findsOneWidget);
+          }
         }
       }
     });
   });
 }
+
+/// The "+" a phone-width calendar hands the shell for its glass bar.
+PageAction phoneAction(WidgetTester tester) =>
+    tester.widget<PageChrome>(find.byType(PageChrome).first).actions.single;
