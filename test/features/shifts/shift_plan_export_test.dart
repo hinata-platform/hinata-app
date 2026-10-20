@@ -211,7 +211,7 @@ void main() {
       expect(cubit.state.format, ShiftPlanFormat.xlsx);
       expect(
         tester.getSemantics(find.text('Tabelle')),
-        containsSemantics(isSelected: true, isButton: true),
+        isSemantics(isSelected: true, isButton: true),
       );
     });
 
