@@ -3701,7 +3701,7 @@
       "MCP_TIMER_DISCARDED": "Temporizador descartado mediante MCP",
       "MCP_SHIFT_SELF_ASSIGNED": "Inscripción en turno mediante MCP",
       "MCP_SHIFT_ASSIGNED_BY_PLANNER": "Turno asignado mediante MCP",
-      "MCP_SHIFT_RELEASED": "Turno dejado mediante MCP",
+      "MCP_SHIFT_RELEASED": "Desapuntado de un turno mediante MCP",
       "MCP_SHIFT_CONFIRMED": "Turno confirmado mediante MCP",
       "MCP_SHIFT_DECLINED": "Turno rechazado mediante MCP",
       "MCP_SHIFT_REMOVED": "Retirado de un turno mediante MCP",
@@ -3795,7 +3795,7 @@
       "SHIFT_ASSIGNMENT_CREATED": "Asignado a un turno",
       "SHIFT_ASSIGNMENT_CONFIRMED": "Turno confirmado",
       "SHIFT_ASSIGNMENT_DECLINED": "Turno rechazado",
-      "SHIFT_ASSIGNMENT_RELEASED": "Turno cedido",
+      "SHIFT_ASSIGNMENT_RELEASED": "Desapuntado de un turno",
       "SHIFT_PLANNER_GRANTED": "Planificación de turnos concedida",
       "SHIFT_PLANNER_REVOKED": "Planificación de turnos retirada"
     },
@@ -4962,7 +4962,7 @@
       "search_read": "Buscar",
       "notifications_read": "Leer las notificaciones propias",
       "shifts_read": "Leer turnos e inscripciones propias",
-      "shifts_write": "Apuntarse a turnos, confirmarlos, rechazarlos o dejarlos",
+      "shifts_write": "Apuntarse a turnos, confirmarlos, rechazarlos o desapuntarse",
       "shifts_plan": "Planificar turnos: asignar personas y retirarlas",
       "projects_write": "Crear proyectos"
     }
@@ -5380,7 +5380,7 @@
       "assigned": "Asignado",
       "confirmed": "Confirmado",
       "declined": "Rechazado",
-      "released": "Cedido",
+      "released": "Desapuntado",
       "waiting": "En lista de espera",
       "mine": "Apuntado"
     },
@@ -5388,7 +5388,7 @@
       "join": "Apuntarme",
       "confirm": "Confirmar",
       "decline": "Rechazar",
-      "release": "Ceder",
+      "release": "Desapuntarme",
       "toEvent": "Ir al evento",
       "busy": "Un momento, aún está en curso.",
       "waitlistJoin": "Apuntarse a la lista de espera",
@@ -5398,12 +5398,12 @@
       "joined": "Te has apuntado",
       "confirmed": "Turno confirmado",
       "declined": "Asignación rechazada",
-      "released": "Turno cedido",
+      "released": "Te has desapuntado del turno",
       "waitlisted": "Estás en la lista de espera",
       "waitlistLeft": "Has salido de la lista de espera"
     },
     "ask": {
-      "releaseTitle": "¿Ceder este turno?",
+      "releaseTitle": "¿Desapuntarte de este turno?",
       "releaseMessage": "Tu plaza vuelve a quedar libre y otras personas pueden apuntarse.",
       "declineTitle": "¿Rechazar esta asignación?",
       "declineMessage": "La plaza vuelve a quedar libre y la organización puede asignar a otra persona.",
