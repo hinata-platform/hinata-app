@@ -30,8 +30,9 @@ class MyShiftsSnapshot extends Equatable {
 ///
 /// Written only after a fresh first page ([recordRows]) and a fresh next
 /// shift ([recordNext]), never while scrolling. Cleared on sign-out, when the
-/// session is revoked (both arrive as the account going away) and when the
-/// module is switched off.
+/// session is revoked (both arrive as the account going away), when the app
+/// starts and finds the session gone ([forgetStored]) and when the module is
+/// switched off.
 class MyShiftsSnapshotCubit extends HydratedCubit<MyShiftsSnapshot> {
   MyShiftsSnapshotCubit({required this.storageId, DateTime Function()? now})
     : _now = now ?? DateTime.now,
@@ -58,6 +59,14 @@ class MyShiftsSnapshotCubit extends HydratedCubit<MyShiftsSnapshot> {
   Future<void> forget() async {
     emit(const MyShiftsSnapshot());
     await clear();
+  }
+
+  /// Deletes the snapshot kept under [storageId] without a cubit in use for
+  /// it: a start without a session cannot know whose it was, only its id.
+  static Future<void> forgetStored(String storageId) async {
+    final cubit = MyShiftsSnapshotCubit(storageId: storageId);
+    await cubit.forget();
+    await cubit.close();
   }
 
   @override
