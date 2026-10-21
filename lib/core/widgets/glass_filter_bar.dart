@@ -672,11 +672,17 @@ class GlassScopePill extends StatelessWidget {
   }
 }
 
-/// Each of [labels] as wide as a pill or chip sets it: the label size, bold,
-/// at the reader's text scale. For rows that decide how many of their
-/// controls can carry a name before falling back to glyphs.
-List<double> glassLabelWidths(BuildContext context, List<String> labels) {
-  final style = DefaultTextStyle.of(context).style.merge(
+/// Each of [labels] as wide as it is set at the reader's text scale, in
+/// [style] or, by default, a pill's or chip's label at its boldest — so an
+/// inactive label, set at w600, measures a hair wide rather than short. For
+/// rows that decide how many of their controls can carry a name before
+/// falling back to glyphs.
+List<double> glassLabelWidths(
+  BuildContext context,
+  List<String> labels, {
+  TextStyle? style,
+}) {
+  style ??= DefaultTextStyle.of(context).style.merge(
     const TextStyle(fontSize: AppType.label, fontWeight: FontWeight.w700),
   );
   final painter = TextPainter(
@@ -695,6 +701,39 @@ List<double> glassLabelWidths(BuildContext context, List<String> labels) {
   } finally {
     painter.dispose();
   }
+}
+
+/// How many of a row's controls carry their name.
+enum GlassNaming { all, active, none }
+
+/// The rule a row of named controls gives up its names by: every one named
+/// where [room] allows; else the one at [activeIndex] keeps its name and the
+/// others are glyphs; else every one is a glyph. [labelWidths] from
+/// [glassLabelWidths]; [namedChrome] and [glyphWidth] as the control draws
+/// them; [gap] between controls and [inset] around them. A point of slack per
+/// named control, since a measured label and a laid-out one can differ by a
+/// rounding, and a clipped last letter is worse than a glyph.
+GlassNaming glassNaming({
+  required List<double> labelWidths,
+  required double namedChrome,
+  required double glyphWidth,
+  required double gap,
+  required double room,
+  int activeIndex = -1,
+  double inset = 0,
+}) {
+  final fixed = inset + gap * math.max(0, labelWidths.length - 1);
+  final allNamed =
+      fixed +
+      labelWidths.fold<double>(0, (sum, w) => sum + w + namedChrome + 1);
+  if (allNamed <= room) return GlassNaming.all;
+  final activeNamed =
+      fixed +
+      glyphWidth * (labelWidths.length - 1) +
+      (activeIndex < 0
+          ? glyphWidth
+          : labelWidths[activeIndex] + namedChrome + 1);
+  return activeNamed <= room ? GlassNaming.active : GlassNaming.none;
 }
 
 class GlassStepperPill extends StatelessWidget {
@@ -918,6 +957,14 @@ class GlassFilterPill extends StatelessWidget {
   /// when it is narrowing something.
   final bool iconOnly;
 
+  /// What a named pill adds around its label, its chevron, the widest its
+  /// label is set, and a glyph-only pill's width — for a row that works out
+  /// which of its pills it can afford to name. Kept beside [build].
+  static const double namedChrome = 13 + 14 + 7 + 13;
+  static const double chevronWidth = 4 + 13;
+  static const double maxLabelWidth = 150;
+  static const double glyphWidth = kGlassControlHeight;
+
   /// Whether the pill shows it opens something. A pill that toggles in place —
   /// an order, say — has nothing to drop down.
   final bool chevron;
@@ -936,20 +983,25 @@ class GlassFilterPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = active ? AppColors.accentStrong : AppColors.inkSoft;
     if (iconOnly) {
+      // One node: the name and the state merged into the pill's own button,
+      // or the name sits on a node with no tap and the tap on one with no
+      // name (see [GlassScopePill]).
       return Tooltip(
         message: label,
         excludeFromSemantics: true,
-        child: Semantics(
-          button: true,
-          selected: active,
-          label: label,
-          child: GlassPill(
-            height: kGlassControlHeight,
-            active: active,
-            onTap: () => onTap(_rectOf(context)),
-            child: SizedBox(
-              width: kGlassControlHeight,
-              child: Icon(icon, size: 15, color: color),
+        child: MergeSemantics(
+          child: Semantics(
+            button: true,
+            selected: active,
+            label: label,
+            child: GlassPill(
+              height: kGlassControlHeight,
+              active: active,
+              onTap: () => onTap(_rectOf(context)),
+              child: SizedBox(
+                width: kGlassControlHeight,
+                child: Icon(icon, size: 15, color: color),
+              ),
             ),
           ),
         ),
@@ -968,7 +1020,7 @@ class GlassFilterPill extends StatelessWidget {
             const SizedBox(width: 7),
             ConstrainedBox(
               // A project name can be long; the pill may not grow with it.
-              constraints: const BoxConstraints(maxWidth: 150),
+              constraints: const BoxConstraints(maxWidth: maxLabelWidth),
               child: Text(
                 label,
                 maxLines: 1,

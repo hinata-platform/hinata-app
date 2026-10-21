@@ -621,9 +621,10 @@ class ShiftCalendarCubit extends Cubit<ShiftCalendarState>
   }
 
   /// One step back or on: a day on a phone, a week on a wide window, a month
-  /// in the month.
-  void step(int direction, {required bool byDay}) {
-    final f = state.focused;
+  /// in the month — from [from] when given, which the month passes as the
+  /// month scrolled to, else from the day in focus.
+  void step(int direction, {required bool byDay, DateTime? from}) {
+    final f = from ?? state.focused;
     focus(switch (state.span) {
       ShiftCalendarSpan.month => DateTime(f.year, f.month + direction, 1),
       ShiftCalendarSpan.week => addDays(f, byDay ? direction : 7 * direction),

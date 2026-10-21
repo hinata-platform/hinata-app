@@ -41,6 +41,12 @@ class GlassSwitchChip extends StatelessWidget {
   /// that a second tap is never waiting on it.
   static const Duration _settle = Duration(milliseconds: 180);
 
+  /// What a named chip adds around its label (padding, glyph, gap), and the
+  /// width of a glyph-only one — for a row that works out how many of its
+  /// chips it can afford to name. Kept beside [build], which draws them.
+  static const double namedChrome = 12 + 15 + 5 + 12;
+  static const double glyphWidth = 11 + 18 + 11;
+
   @override
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
@@ -182,6 +188,9 @@ class GlassSwitchBar extends StatelessWidget {
   /// field's on a wide window, where it rides beside a page title rather than
   /// in a toolbar.
   double get _height => heightFor(compact: compact);
+
+  /// The track's horizontal inset around its chips, as [build] pads it.
+  static const double inset = 6 + 6;
 
   /// The height a bar of the given shape draws at — for a row that lines its
   /// own controls up with the bar instead of guessing the number.
