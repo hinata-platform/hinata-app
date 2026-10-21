@@ -1,0 +1,5 @@
+{
+  "_comment": "Hand-written store release notes for 10.8.0, in both listing languages. tool/gen_changelog.py prefers this file over anything it can derive from the commits, then runs it through the same per-store platform gate as every other source — so keep every line free of operating-system, device and store names. One line per bullet; the leading bullet character is added when the note is written. Keep it short: the Play note is capped at 480 characters including the bullets.",
+  "en": "Shift planning: plan events and shifts, sign up yourself, with a waiting list and a calendar\nSubscribe to your shifts in your own calendar and export plans\nSearch across every part of the app and open a person's profile\nBudgets in hours and a billable switch per project\nMany smaller fixes and improvements",
+  "de": "Schichtplanung: Veranstaltungen und Schichten planen, selbst eintragen, mit Warteliste und Kalender\nDie eigenen Schichten im eigenen Kalender abonnieren und Pläne exportieren\nÜberall in der App suchen und das Profil einer Person öffnen\nBudgets in Stunden und ein Schalter für Abrechenbarkeit je Projekt\nViele kleinere Korrekturen und Verbesserungen"
+}
