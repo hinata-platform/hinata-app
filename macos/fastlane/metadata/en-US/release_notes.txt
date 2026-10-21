@@ -1,2 +1,5 @@
-• Refreshed store pictures that show the app as it looks today
-• Smaller fixes and improvements
+• Shift planning: plan events and shifts, sign up yourself, with a waiting list and a calendar
+• Subscribe to your shifts in your own calendar and export plans
+• Search across every part of the app and open a person's profile
+• Budgets in hours and a billable switch per project
+• Many smaller fixes and improvements
