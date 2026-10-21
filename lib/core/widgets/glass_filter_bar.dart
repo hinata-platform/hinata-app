@@ -605,6 +605,7 @@ class GlassScopePill extends StatelessWidget {
     required this.label,
     required this.active,
     required this.onTap,
+    this.iconOnly = false,
   });
 
   final IconData icon;
@@ -612,44 +613,87 @@ class GlassScopePill extends StatelessWidget {
   final bool active;
   final VoidCallback onTap;
 
+  /// Just the glyph, square, named by [label] as a tooltip and to a screen
+  /// reader — for a row without room to write every scope out.
+  final bool iconOnly;
+
+  /// What a pill adds around its label, and the width of a glyph-only one —
+  /// for a row that works out which of its pills it can afford to name.
+  static const double namedChrome = 13 + 14 + 7 + 13;
+  static const double glyphWidth = kGlassControlHeight;
+
   @override
   Widget build(BuildContext context) {
+    final glyph = Icon(
+      icon,
+      size: iconOnly ? 15 : 14,
+      color: active ? AppColors.accentInk : AppColors.inkSoft,
+    );
     // One node: the pill's own button, its label and the selected state. A
     // second Semantics around it announced as a button with no name.
-    return MergeSemantics(
+    final pill = MergeSemantics(
       child: Semantics(
         button: true,
         selected: active,
+        label: iconOnly ? label : null,
         child: GlassPill(
           height: kGlassControlHeight,
           active: active,
           onTap: active ? null : onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 13),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  icon,
-                  size: 14,
-                  color: active ? AppColors.accentInk : AppColors.inkSoft,
-                ),
-                const SizedBox(width: 7),
-                Text(
-                  label,
-                  maxLines: 1,
-                  style: TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: active ? FontWeight.w700 : FontWeight.w600,
-                    color: active ? AppColors.accentInk : AppColors.ink,
+          child: iconOnly
+              ? SizedBox(width: glyphWidth, child: glyph)
+              : Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 13),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      glyph,
+                      const SizedBox(width: 7),
+                      Text(
+                        label,
+                        maxLines: 1,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: active
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                          color: active ? AppColors.accentInk : AppColors.ink,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
         ),
       ),
     );
+    return iconOnly
+        ? Tooltip(message: label, excludeFromSemantics: true, child: pill)
+        : pill;
+  }
+}
+
+/// Each of [labels] as wide as a pill or chip sets it: the label size, bold,
+/// at the reader's text scale. For rows that decide how many of their
+/// controls can carry a name before falling back to glyphs.
+List<double> glassLabelWidths(BuildContext context, List<String> labels) {
+  final style = DefaultTextStyle.of(context).style.merge(
+    const TextStyle(fontSize: AppType.label, fontWeight: FontWeight.w700),
+  );
+  final painter = TextPainter(
+    textDirection: Directionality.of(context),
+    textScaler: MediaQuery.textScalerOf(context),
+    maxLines: 1,
+  );
+  try {
+    return [
+      for (final label in labels)
+        (painter
+              ..text = TextSpan(text: label, style: style)
+              ..layout())
+            .width,
+    ];
+  } finally {
+    painter.dispose();
   }
 }
 
@@ -862,11 +906,17 @@ class GlassFilterPill extends StatelessWidget {
     required this.active,
     required this.onTap,
     this.chevron = true,
+    this.iconOnly = false,
   });
 
   final IconData icon;
   final String label;
   final bool active;
+
+  /// Just the glyph, square, with [label] as its tooltip and its name — for a
+  /// row that has run out of room to write it. The amber wash still says
+  /// when it is narrowing something.
+  final bool iconOnly;
 
   /// Whether the pill shows it opens something. A pill that toggles in place —
   /// an order, say — has nothing to drop down.
@@ -885,6 +935,26 @@ class GlassFilterPill extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = active ? AppColors.accentStrong : AppColors.inkSoft;
+    if (iconOnly) {
+      return Tooltip(
+        message: label,
+        excludeFromSemantics: true,
+        child: Semantics(
+          button: true,
+          selected: active,
+          label: label,
+          child: GlassPill(
+            height: kGlassControlHeight,
+            active: active,
+            onTap: () => onTap(_rectOf(context)),
+            child: SizedBox(
+              width: kGlassControlHeight,
+              child: Icon(icon, size: 15, color: color),
+            ),
+          ),
+        ),
+      );
+    }
     return GlassPill(
       height: kGlassControlHeight,
       active: active,

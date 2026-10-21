@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' show DateFormat;
@@ -17,8 +18,9 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/theme/glass_chrome.dart' show GlassCircleButton;
 import '../../../core/util/dates.dart' show addDays, weekStartFor;
 import '../../../core/widgets/glass_filter_bar.dart'
-    show GlassFilterPill, GlassPill, kGlassControlHeight;
+    show GlassFilterPill, GlassPill, glassLabelWidths, kGlassControlHeight;
 import '../../../core/widgets/glass_popup_menu.dart';
+import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show GhostButton;
@@ -653,7 +655,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   /// it is not this one.
   String _monthTitle(ShiftCalendarState state) {
     final month = state.span == ShiftCalendarSpan.month
-        ? (_visibleMonth ?? state.focused)
+        ? _monthInView(state)
         : state.focused;
     final locale = Localizations.localeOf(context).toLanguageTag();
     final name = DateFormat.MMMM(locale).format(month);
@@ -795,30 +797,131 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
 
   void _step(int direction, {required bool compact}) {
     final cubit = _cubit;
-    cubit.step(direction, byDay: compact);
     if (cubit.state.span == ShiftCalendarSpan.month) {
-      setState(() => _jump++);
-    } else if (compact) {
-      _jumpPager(cubit.state.focused);
+      // From the month on screen, not from the one last jumped to: the month
+      // scrolls, and after a scroll those are different months.
+      final month = _monthInView(cubit.state);
+      final target = DateTime(month.year, month.month + direction);
+      cubit.focus(target);
+      setState(() {
+        _visibleMonth = target;
+        _jump++;
+      });
+      return;
     }
+    cubit.step(direction, byDay: compact);
+    if (compact) _jumpPager(cubit.state.focused);
+  }
+
+  /// The month the month view shows: where it has been scrolled to, else the
+  /// one in focus.
+  DateTime _monthInView(ShiftCalendarState state) {
+    final month = _visibleMonth ?? state.focused;
+    return DateTime(month.year, month.month);
+  }
+
+  /// Whether today is on screen, which is when "Heute" has nothing to do.
+  bool _isCurrent(ShiftCalendarState state) {
+    if (state.span == ShiftCalendarSpan.month) {
+      final month = _monthInView(state);
+      return month.year == _now.year && month.month == _now.month;
+    }
+    return _weekOf(state.focused).any((day) => DateUtils.isSameDay(day, _now));
+  }
+
+  /// Week or month, as the time calendar switches them.
+  Widget _spanSwitcher(ShiftCalendarState state, _HeadNaming naming) {
+    const spans = <({ShiftCalendarSpan span, String labelKey, IconData icon})>[
+      (
+        span: ShiftCalendarSpan.week,
+        labelKey: 'shifts.calendar.week',
+        icon: LucideIcons.calendarRange,
+      ),
+      (
+        span: ShiftCalendarSpan.month,
+        labelKey: 'shifts.calendar.month',
+        icon: LucideIcons.calendarDays,
+      ),
+    ];
+    return GlassSwitchBar(
+      // The height follows the window, as the time calendar's does.
+      compact: !context.isExpanded,
+      maxWidth: 240,
+      chips: [
+        for (final each in spans) ...[
+          if (each != spans.first) const SizedBox(width: 2),
+          GlassSwitchChip(
+            label: context.t(each.labelKey),
+            icon: each.icon,
+            active: state.span == each.span,
+            iconOnly: switch (naming) {
+              _HeadNaming.all || _HeadNaming.glyphFilters => false,
+              _HeadNaming.activeSpan => state.span != each.span,
+              _HeadNaming.none => true,
+            },
+            onTap: each.span == state.span
+                ? null
+                : () => _cubit.setSpan(each.span),
+          ),
+        ],
+      ],
+    );
   }
 
   void _today() {
     _cubit.today(_now);
-    setState(() => _jump++);
+    setState(() {
+      _visibleMonth = DateTime(_now.year, _now.month);
+      _jump++;
+    });
     _jumpPager(_now);
   }
 
   // --- the page -------------------------------------------------------------
 
-  Widget _projectPill(ShiftCalendarState state) => GlassFilterPill(
-    icon: LucideIcons.folder,
-    label: state.projectId == null
-        ? context.t('shifts.events.allProjects')
-        : state.projectName ?? context.t('shifts.calendar.oneProject'),
-    active: state.projectId != null,
-    onTap: (anchor) => unawaited(_pickProject(anchor)),
-  );
+  String _projectLabel(ShiftCalendarState state) => state.projectId == null
+      ? context.t('shifts.events.allProjects')
+      : state.projectName ?? context.t('shifts.calendar.oneProject');
+
+  Widget _projectPill(ShiftCalendarState state, {bool iconOnly = false}) =>
+      GlassFilterPill(
+        icon: LucideIcons.folder,
+        label: _projectLabel(state),
+        active: state.projectId != null,
+        iconOnly: iconOnly,
+        onTap: (anchor) => unawaited(_pickProject(anchor)),
+      );
+
+  /// How wide the second line's filters and switcher stand at [naming], as
+  /// [GlassFilterPill] and [GlassSwitchChip] draw them; [_NavRow] takes the
+  /// first naming that fits.
+  double _filtersWidth(ShiftCalendarState state, _HeadNaming naming) {
+    final widths = glassLabelWidths(context, [
+      _projectLabel(state),
+      context.t('shifts.event.onlyUnderstaffed'),
+      context.t('shifts.calendar.week'),
+      context.t('shifts.calendar.month'),
+    ]);
+    // A pill's padding, glyph and gap around its label, its chevron, and a
+    // point of slack against a rounding that would clip the last letter.
+    const pill = 13 + 14 + 7 + 13 + 1;
+    const chevron = 4 + 13;
+    const glyph = kGlassControlHeight;
+    final filters = naming == _HeadNaming.all
+        ? pill + math.min(widths[0], 150) + chevron + pill + widths[1]
+        : 2 * glyph;
+    final active = state.span == ShiftCalendarSpan.week ? 2 : 3;
+    final switcher =
+        _kSwitchTrack +
+        2 +
+        switch (naming) {
+          _HeadNaming.all ||
+          _HeadNaming.glyphFilters => 2 * _kNamedChip + widths[2] + widths[3],
+          _HeadNaming.activeSpan => _kNamedChip + widths[active] + _kGlyphChip,
+          _HeadNaming.none => 2 * _kGlyphChip,
+        };
+    return filters + switcher + 2 * 8;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -870,60 +973,21 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            // Two lines on a wide window, as in the time calendar: the
+            // module's name with its views and the "+" on the first, the
+            // window on screen and its filters on the second.
             if (!compact)
               ShiftsHead(
                 current: ShiftsView.calendar,
-                filters: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    _projectPill(state),
-                    // Glass pills like the project filter beside them: the
-                    // filter lights while it holds, the span pill names the
-                    // view it switches to, so in the month it reads "Woche".
-                    GlassFilterPill(
-                      icon: LucideIcons.triangleAlert,
-                      label: context.t('shifts.event.onlyUnderstaffed'),
-                      active: state.understaffedOnly,
-                      chevron: false,
-                      onTap: (_) => _cubit.toggleUnderstaffed(),
-                    ),
-                    GlassFilterPill(
-                      icon: state.span == ShiftCalendarSpan.month
-                          ? LucideIcons.calendarDays
-                          : LucideIcons.calendar,
-                      label: context.t(
-                        state.span == ShiftCalendarSpan.month
-                            ? 'shifts.calendar.week'
-                            : 'shifts.calendar.month',
-                      ),
-                      active: false,
-                      chevron: false,
-                      onTap: (_) => _cubit.setSpan(
-                        state.span == ShiftCalendarSpan.month
-                            ? ShiftCalendarSpan.week
-                            : ShiftCalendarSpan.month,
-                      ),
-                    ),
-                    if (state.canCreate)
-                      _AddPill(onTap: (anchor) => unawaited(_addMenu(anchor))),
-                  ],
-                ),
-              ),
-            if (!compact)
-              Padding(
-                padding: EdgeInsets.fromLTRB(
-                  context.pageGutter,
-                  0,
-                  context.pageGutter,
-                  8,
-                ),
-                child: _NavRow(
+                actions: [
+                  if (state.canCreate)
+                    _AddPill(onTap: (anchor) => unawaited(_addMenu(anchor))),
+                ],
+                filters: _NavRow(
                   label: _rangeLabel(state, false),
                   onPrevious: () => _step(-1, compact: false),
                   onNext: () => _step(1, compact: false),
-                  onToday: _today,
+                  onToday: _isCurrent(state) ? null : _today,
                   previousLabel: context.t(
                     state.span == ShiftCalendarSpan.month
                         ? 'shifts.calendar.previousMonth'
@@ -934,6 +998,20 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                         ? 'shifts.calendar.nextMonth'
                         : 'shifts.calendar.nextWeek',
                   ),
+                  trailingWidth: (naming) => _filtersWidth(state, naming),
+                  trailing: (naming) => [
+                    _projectPill(state, iconOnly: naming != _HeadNaming.all),
+                    // The filter lights while it holds.
+                    GlassFilterPill(
+                      icon: LucideIcons.triangleAlert,
+                      label: context.t('shifts.event.onlyUnderstaffed'),
+                      active: state.understaffedOnly,
+                      chevron: false,
+                      iconOnly: naming != _HeadNaming.all,
+                      onTap: (_) => _cubit.toggleUnderstaffed(),
+                    ),
+                    _spanSwitcher(state, naming),
+                  ],
                 ),
               ),
             if (compact) SizedBox(height: context.topGutter + 4),
@@ -1013,7 +1091,9 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   String _rangeLabel(ShiftCalendarState state, bool compact) {
     final f = state.focused;
     if (state.span == ShiftCalendarSpan.month) {
-      return MaterialLocalizations.of(context).formatMonthYear(f);
+      return MaterialLocalizations.of(
+        context,
+      ).formatMonthYear(_monthInView(state));
     }
     if (compact) return dayLabel(context, f);
     final week = _weekOf(f);
@@ -1280,6 +1360,30 @@ class _ChoiceRow extends StatelessWidget {
   );
 }
 
+/// The arrows and the gaps beside them on the second line.
+const double _kNavArrows = 44 + 6 + 44 + 12 + 12;
+
+/// "Heute" as a [TextButton.icon] draws it around its label, with the gap
+/// before it.
+const double _kTodayChrome = 8 + 12 + 16 + 8 + 16 + 1;
+
+/// A switcher chip's padding and glyph around its label, an icon-only chip,
+/// and the track's inset, as [GlassSwitchChip] and [GlassSwitchBar] draw them.
+const double _kNamedChip = 12 + 15 + 5 + 12 + 1;
+const double _kGlyphChip = 11 + 18 + 11;
+const double _kSwitchTrack = 12;
+
+/// How much of the second line is written out, from everything named down to
+/// glyphs only — the order the time module's switcher gives up its names in.
+enum _HeadNaming { all, glyphFilters, activeSpan, none }
+
+/// The second line of a wide calendar's head: the arrows, the window's name
+/// and the way back to today on the leading edge, the [trailing] filters and
+/// the span switcher against the trailing one. The filters keep their names
+/// while they fit beside the name and "Heute", measured; with less room they
+/// become glyphs with the name as a tooltip, then the switcher keeps only its
+/// active name, then none. The window's name gives way last, by an ellipsis,
+/// and the controls scroll only when not even glyphs fit.
 class _NavRow extends StatelessWidget {
   const _NavRow({
     required this.label,
@@ -1288,57 +1392,135 @@ class _NavRow extends StatelessWidget {
     required this.onToday,
     required this.previousLabel,
     required this.nextLabel,
+    required this.trailing,
+    required this.trailingWidth,
   });
 
   final String label;
   final VoidCallback onPrevious;
   final VoidCallback onNext;
-  final VoidCallback onToday;
+
+  /// Null while today is on screen; the button is then left out.
+  final VoidCallback? onToday;
   final String previousLabel;
   final String nextLabel;
+  final List<Widget> Function(_HeadNaming naming) trailing;
+  final double Function(_HeadNaming naming) trailingWidth;
+
+  /// What the leading edge needs to write the window's name and "Heute" out
+  /// in full, as they are set at the reader's text scale.
+  double _leadWidth(BuildContext context) {
+    final scaler = MediaQuery.textScalerOf(context);
+    double width(String text, TextStyle style) {
+      final painter = TextPainter(
+        text: TextSpan(text: text, style: style),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      final result = painter.width;
+      painter.dispose();
+      return result;
+    }
+
+    final name = width(label, _labelStyle) + 1;
+    final today = onToday == null
+        ? 0.0
+        : width(
+                context.t('shifts.calendar.today'),
+                Theme.of(context).textTheme.labelLarge ?? const TextStyle(),
+              ) +
+              _kTodayChrome;
+    return _kNavArrows + name + today;
+  }
+
+  TextStyle get _labelStyle => TextStyle(
+    fontFamily: AppTheme.fontBrand,
+    fontSize: AppType.title,
+    fontWeight: FontWeight.w700,
+    color: AppColors.ink,
+  );
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 6,
-    runSpacing: 6,
-    crossAxisAlignment: WrapCrossAlignment.center,
-    children: [
-      GlassCircleButton(
-        icon: LucideIcons.chevronLeft,
-        onTap: onPrevious,
-        size: 44,
-        iconSize: 18,
-        tooltip: previousLabel,
-      ),
-      GlassCircleButton(
-        icon: LucideIcons.chevronRight,
-        onTap: onNext,
-        size: 44,
-        iconSize: 18,
-        tooltip: nextLabel,
-      ),
-      Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6),
-        child: Semantics(
-          header: true,
-          liveRegion: true,
-          child: Text(
-            label,
-            style: TextStyle(
-              fontFamily: AppTheme.fontBrand,
-              fontSize: AppType.title,
-              fontWeight: FontWeight.w700,
-              color: AppColors.ink,
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final lead = _leadWidth(context);
+      final room = math.max(0.0, constraints.maxWidth - lead);
+      final naming = _HeadNaming.values.firstWhere(
+        (each) => trailingWidth(each) <= room,
+        orElse: () => _HeadNaming.none,
+      );
+      final controls = Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (final (index, control) in trailing(naming).indexed) ...[
+            if (index > 0) const SizedBox(width: 8),
+            control,
+          ],
+        ],
+      );
+      final fits = trailingWidth(naming) <= room;
+      return Row(
+        children: [
+          GlassCircleButton(
+            icon: LucideIcons.chevronLeft,
+            onTap: onPrevious,
+            size: 44,
+            iconSize: 18,
+            tooltip: previousLabel,
+          ),
+          const SizedBox(width: 6),
+          GlassCircleButton(
+            icon: LucideIcons.chevronRight,
+            onTap: onNext,
+            size: 44,
+            iconSize: 18,
+            tooltip: nextLabel,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Row(
+              children: [
+                Flexible(
+                  child: Semantics(
+                    header: true,
+                    liveRegion: true,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: _labelStyle,
+                    ),
+                  ),
+                ),
+                if (onToday != null) ...[
+                  const SizedBox(width: 8),
+                  TextButton.icon(
+                    onPressed: onToday,
+                    icon: const Icon(LucideIcons.locateFixed, size: 16),
+                    label: Text(context.t('shifts.calendar.today')),
+                  ),
+                ],
+              ],
             ),
           ),
-        ),
-      ),
-      TextButton.icon(
-        onPressed: onToday,
-        icon: const Icon(LucideIcons.locateFixed, size: 16),
-        label: Text(context.t('shifts.calendar.today')),
-      ),
-    ],
+          const SizedBox(width: 12),
+          // Unclipped while it fits, so the glass keeps its edge. Past the
+          // last fallback, at a text scale no naming fits, it scrolls inside
+          // what the name leaves, with the trailing edge in view.
+          if (fits)
+            controls
+          else
+            Flexible(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
+                child: controls,
+              ),
+            ),
+        ],
+      );
+    },
   );
 }
 

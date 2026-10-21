@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/widgets/glass_filter_bar.dart' show GlassFilterPill;
 import 'package:hinata/core/widgets/time_grid/time_week_strip.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/core/models/shift_models.dart';
@@ -150,7 +151,12 @@ void main() {
     ) async {
       final cubit = await pumpCalendar(tester);
       final before = repo.calls.length;
-      await tester.tap(find.text('Nur unterbesetzt'));
+      // Named or a glyph, whichever the width affords.
+      await tester.tap(
+        find.byWidgetPredicate(
+          (w) => w is GlassFilterPill && w.label == 'Nur unterbesetzt',
+        ),
+      );
       await settle(tester);
       expect(find.text('Empfang'), findsNothing);
       expect(find.text('Aufbau · fehlen 2'), findsOneWidget);
@@ -179,20 +185,68 @@ void main() {
       }
     });
 
-    testWidgets('wide: the span pill names the view it switches to', (
+    testWidgets('wide: the span switcher and the filter sit on one line', (
       tester,
     ) async {
-      final cubit = await pumpCalendar(tester, width: 1280);
+      // Wide enough that the test font, a square per letter, still names all.
+      final cubit = await pumpCalendar(tester, width: 1900);
+      expect(find.text('Woche'), findsOneWidget);
       expect(find.text('Monat'), findsOneWidget);
-      expect(find.text('Woche'), findsNothing);
+      // One line: the arrows, the switcher and the filter share a row.
+      final arrow = tester.getCenter(find.byTooltip('Vorige Woche'));
+      final month = tester.getCenter(find.text('Monat'));
+      final filter = tester.getCenter(find.text('Nur unterbesetzt'));
+      expect((arrow.dy - month.dy).abs(), lessThan(4));
+      expect((arrow.dy - filter.dy).abs(), lessThan(4));
+      // The filters against the trailing edge, not after the window's name.
+      expect(month.dx, greaterThan(1900 * 0.75));
       await tester.tap(find.text('Monat'));
       await settle(tester);
       expect(cubit.state.span, ShiftCalendarSpan.month);
-      expect(find.text('Woche'), findsOneWidget);
-      expect(find.text('Monat'), findsNothing);
       await tester.tap(find.text('Nur unterbesetzt'));
       await settle(tester);
       expect(cubit.state.understaffedOnly, isTrue);
+    });
+
+    testWidgets('narrower, the filters fall back to glyphs before anything '
+        'scrolls or clips', (tester) async {
+      final cubit = await pumpCalendar(tester, width: 820);
+      expect(tester.takeException(), isNull);
+      // Named as tooltips and to a screen reader, no longer written out.
+      expect(find.text('Nur unterbesetzt'), findsNothing);
+      expect(find.byTooltip('Nur unterbesetzt'), findsOneWidget);
+      expect(find.byTooltip('Alle Projekte'), findsOneWidget);
+      await tester.tap(find.byTooltip('Nur unterbesetzt'));
+      await settle(tester);
+      expect(cubit.state.understaffedOnly, isTrue);
+      for (final width in [640.0, 700.0, 1000.0]) {
+        await pumpCalendar(tester, width: width);
+        expect(tester.takeException(), isNull, reason: 'at $width');
+      }
+    });
+
+    testWidgets('wide: the month title follows the scroll and "next" steps '
+        'from there', (tester) async {
+      final cubit = await pumpCalendar(
+        tester,
+        width: 1280,
+        span: ShiftCalendarSpan.month,
+      );
+      expect(find.text('Oktober 2026'), findsOneWidget);
+      // Today is on screen, so there is no way back to it.
+      expect(find.text('Heute'), findsNothing);
+      await tester.drag(find.text('24').first, const Offset(0, -900));
+      await settle(tester);
+      expect(find.text('November 2026'), findsOneWidget);
+      expect(find.text('Oktober 2026'), findsNothing);
+      expect(find.text('Heute'), findsOneWidget);
+      await tester.tap(find.byTooltip('Nächster Monat'));
+      await settle(tester);
+      expect(find.text('Dezember 2026'), findsOneWidget);
+      expect(cubit.state.focused.month, 12);
+      await tester.tap(find.text('Heute'));
+      await settle(tester);
+      expect(find.text('Oktober 2026'), findsOneWidget);
     });
 
     testWidgets('the month marks days and opens one on tap', (tester) async {
