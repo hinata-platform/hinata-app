@@ -26,11 +26,21 @@ void _go(BuildContext context, ShiftsView current, String key) {
 
 /// The module's head on a wide window: its name, then the three scope pills
 /// (Meine, Kalender, Events), and under them the view's own [filters].
+///
+/// With [actions] the name, the pills and the actions share one line, the
+/// pills and the actions against the trailing edge, as in the time module's
+/// head; the calendar uses it so its chrome stays at two lines.
 class ShiftsHead extends StatelessWidget {
-  const ShiftsHead({super.key, required this.current, this.filters});
+  const ShiftsHead({
+    super.key,
+    required this.current,
+    this.filters,
+    this.actions,
+  });
 
   final ShiftsView current;
   final Widget? filters;
+  final List<Widget>? actions;
 
   @override
   Widget build(BuildContext context) {
@@ -44,25 +54,54 @@ class ShiftsHead extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Wrap(
-            spacing: 16,
-            runSpacing: 12,
-            alignment: WrapAlignment.spaceBetween,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              IntrinsicWidth(child: PageHead(title: context.t('nav.shifts'))),
-              GlassScopeRow(
-                scopes: _scopes(context),
-                active: current.name,
-                onSelected: (key) => _go(context, current, key),
-              ),
-            ],
-          ),
+          if (actions case final actions?)
+            _line(context, actions)
+          else
+            Wrap(
+              spacing: 16,
+              runSpacing: 12,
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                IntrinsicWidth(child: PageHead(title: context.t('nav.shifts'))),
+                _scopeRow(context),
+              ],
+            ),
           if (filters != null) ...[const SizedBox(height: 14), filters!],
         ],
       ),
     );
   }
+
+  Widget _scopeRow(BuildContext context, {bool trailing = false}) =>
+      GlassScopeRow(
+        scopes: _scopes(context),
+        active: current.name,
+        onSelected: (key) => _go(context, current, key),
+        alignment: trailing
+            ? AlignmentDirectional.centerEnd
+            : AlignmentDirectional.centerStart,
+        adaptive: trailing,
+      );
+
+  /// The name on the leading edge, capped so a large text scale shrinks it
+  /// rather than pushing the pills off; the pills take the rest, against the
+  /// trailing edge, and fall back to glyphs where they cannot all be named.
+  Widget _line(BuildContext context, List<Widget> actions) => LayoutBuilder(
+    builder: (context, constraints) => Row(
+      children: [
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth * 0.4),
+          child: IntrinsicWidth(
+            child: PageHead(title: context.t('nav.shifts')),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(child: _scopeRow(context, trailing: true)),
+        for (final action in actions) ...[const SizedBox(width: 8), action],
+      ],
+    ),
+  );
 }
 
 /// The phone's docked row: the view on screen as one pill that opens the

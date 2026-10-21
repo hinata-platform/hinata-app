@@ -12,12 +12,12 @@ import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show GhostButton, PageHead;
+import '../../core/widgets/glass_filter_bar.dart' show glassLabelWidths;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_split_button.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../absences/absence_actions.dart';
 import 'timer_bar.dart';
-import '../../core/theme/app_type.dart';
 
 /// The extended time module's ways of looking at the same hours.
 ///
@@ -205,7 +205,7 @@ class TimeViewSwitcher extends StatelessWidget {
             ? constraints.maxWidth
             : _legacyRoom(context, views.length);
         final labels = [for (final view in views) context.t(view.labelKey)];
-        final widths = _labelWidths(context, labels);
+        final widths = glassLabelWidths(context, labels);
         final gaps = _gap * (views.length - 1);
         // A point of slack per chip: a measured label and a laid-out one can
         // differ by a rounding, and a clipped last letter is worse than a
@@ -256,31 +256,6 @@ class TimeViewSwitcher extends StatelessWidget {
         );
       },
     );
-  }
-
-  /// Each label's width as the chip sets it.
-  static List<double> _labelWidths(BuildContext context, List<String> labels) {
-    final style = DefaultTextStyle.of(context).style.merge(
-      const TextStyle(fontSize: AppType.label, fontWeight: FontWeight.w700),
-    );
-    final scaler = MediaQuery.textScalerOf(context);
-    final direction = Directionality.of(context);
-    final painter = TextPainter(
-      textDirection: direction,
-      textScaler: scaler,
-      maxLines: 1,
-    );
-    try {
-      return [
-        for (final label in labels)
-          (painter
-                ..text = TextSpan(text: label, style: style)
-                ..layout())
-              .width,
-      ];
-    } finally {
-      painter.dispose();
-    }
   }
 
   /// The room assumed without a bound: the one on screen named on a large
