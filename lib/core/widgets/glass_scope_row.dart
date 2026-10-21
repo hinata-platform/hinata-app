@@ -15,8 +15,8 @@ typedef GlassScope = ({String key, IconData icon, String label});
 /// screen, and a pill sat past the edge while it was the one shown (HIN-118
 /// live check). A widget of its own because the docked row is built by the
 /// shell a frame after the page, so only the row itself knows when it is laid
-/// out. Shared by the absences and the reports (HIN-93), so both rows behave
-/// the same.
+/// out. Shared by the absences and the reports (HIN-93) and the shift
+/// module's head, so the rows behave the same.
 class GlassScopeRow extends StatefulWidget {
   const GlassScopeRow({
     super.key,
@@ -46,6 +46,8 @@ class GlassScopeRow extends StatefulWidget {
 }
 
 class _GlassScopeRowState extends State<GlassScopeRow> {
+  static const double _gap = 8;
+
   final _scroll = ScrollController();
 
   @override
@@ -83,34 +85,25 @@ class _GlassScopeRowState extends State<GlassScopeRow> {
     if (!widget.adaptive) return _row(context, (_) => false);
     return LayoutBuilder(
       builder: (context, constraints) {
-        final labels = [for (final scope in widget.scopes) scope.label];
-        final widths = glassLabelWidths(context, labels);
-        const gap = 8.0;
-        final gaps = gap * (widths.length - 1);
-        // A point of slack per pill: a measured label and a laid-out one can
-        // differ by a rounding, and a clipped last letter is worse than a
-        // glyph.
-        final allNamed =
-            gaps +
-            widths.fold<double>(
-              0,
-              (sum, w) => sum + w + GlassScopePill.namedChrome + 1,
-            );
-        final index = widget.scopes.indexWhere(
-          (scope) => scope.key == widget.active,
+        final naming = glassNaming(
+          labelWidths: glassLabelWidths(context, [
+            for (final scope in widget.scopes) scope.label,
+          ]),
+          namedChrome: GlassScopePill.namedChrome,
+          glyphWidth: GlassScopePill.glyphWidth,
+          gap: _gap,
+          room: constraints.maxWidth,
+          activeIndex: widget.scopes.indexWhere(
+            (scope) => scope.key == widget.active,
+          ),
         );
-        final activeNamed =
-            gaps +
-            GlassScopePill.glyphWidth * (widths.length - 1) +
-            (index < 0 ? 0 : widths[index] + GlassScopePill.namedChrome + 1);
-        final room = constraints.maxWidth;
         return _row(
           context,
-          allNamed <= room
-              ? (_) => false
-              : activeNamed <= room
-              ? (scope) => scope.key != widget.active
-              : (_) => true,
+          (scope) => switch (naming) {
+            GlassNaming.all => false,
+            GlassNaming.active => scope.key != widget.active,
+            GlassNaming.none => true,
+          },
         );
       },
     );
@@ -130,7 +123,7 @@ class _GlassScopeRowState extends State<GlassScopeRow> {
           child: Row(
             children: [
               for (final (index, scope) in widget.scopes.indexed) ...[
-                if (index > 0) const SizedBox(width: 8),
+                if (index > 0) const SizedBox(width: _gap),
                 GlassScopePill(
                   icon: scope.icon,
                   label: scope.label,

@@ -216,9 +216,28 @@ void main() {
       expect(find.text('Nur unterbesetzt'), findsNothing);
       expect(find.byTooltip('Nur unterbesetzt'), findsOneWidget);
       expect(find.byTooltip('Alle Projekte'), findsOneWidget);
+      // A screen reader meets one button with the name, the state and the tap.
+      final semantics = tester.ensureSemantics();
+      expect(
+        tester.getSemantics(find.bySemanticsLabel('Nur unterbesetzt')),
+        matchesSemantics(
+          label: 'Nur unterbesetzt',
+          isButton: true,
+          hasSelectedState: true,
+          hasTapAction: true,
+        ),
+      );
+      semantics.dispose();
       await tester.tap(find.byTooltip('Nur unterbesetzt'));
       await settle(tester);
       expect(cubit.state.understaffedOnly, isTrue);
+      // Glyphs rather than a scrolling row: the fallback that scrolls is for
+      // a text scale no naming fits.
+      expect(
+        find.byWidgetPredicate((w) => w is SingleChildScrollView && w.reverse),
+        findsNothing,
+      );
+      // 640 and 700 are the narrowest wide windows (compact ends at ~610).
       for (final width in [640.0, 700.0, 1000.0]) {
         await pumpCalendar(tester, width: width);
         expect(tester.takeException(), isNull, reason: 'at $width');

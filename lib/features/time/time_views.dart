@@ -12,7 +12,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_widgets.dart' show GhostButton, PageHead;
-import '../../core/widgets/glass_filter_bar.dart' show glassLabelWidths;
+import '../../core/widgets/glass_filter_bar.dart'
+    show GlassNaming, glassLabelWidths, glassNaming;
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/glass_split_button.dart';
 import '../../core/widgets/glass_switch_chip.dart';
@@ -188,12 +189,7 @@ class TimeViewSwitcher extends StatelessWidget {
 
   final TimeView current;
 
-  /// A chip's padding and glyph around its label, and an icon-only chip, as
-  /// [GlassSwitchChip] draws them; the track's own inset and the gap between
-  /// chips, as [GlassSwitchBar] and [build] lay them out.
-  static const double _namedChrome = 12 + 15 + 5 + 12;
-  static const double _glyphChip = 11 + 18 + 11;
-  static const double _track = 12;
+  /// The gap between chips, as [build] lays them out.
   static const double _gap = 2;
 
   @override
@@ -205,28 +201,15 @@ class TimeViewSwitcher extends StatelessWidget {
             ? constraints.maxWidth
             : _legacyRoom(context, views.length);
         final labels = [for (final view in views) context.t(view.labelKey)];
-        final widths = glassLabelWidths(context, labels);
-        final gaps = _gap * (views.length - 1);
-        // A point of slack per chip: a measured label and a laid-out one can
-        // differ by a rounding, and a clipped last letter is worse than a
-        // glyph.
-        final allNamed =
-            _track +
-            gaps +
-            widths.fold<double>(0, (sum, w) => sum + w + _namedChrome + 1);
-        final currentIndex = views.indexOf(current);
-        final currentNamed =
-            _track +
-            gaps +
-            _glyphChip * (views.length - 1) +
-            (currentIndex < 0 ? _glyphChip : widths[currentIndex]) +
-            _namedChrome +
-            1;
-        final mode = allNamed <= room
-            ? _Naming.all
-            : currentNamed <= room
-            ? _Naming.current
-            : _Naming.none;
+        final mode = glassNaming(
+          labelWidths: glassLabelWidths(context, labels),
+          namedChrome: GlassSwitchChip.namedChrome,
+          glyphWidth: GlassSwitchChip.glyphWidth,
+          gap: _gap,
+          inset: GlassSwitchBar.inset,
+          room: room,
+          activeIndex: views.indexOf(current),
+        );
         return GlassSwitchBar(
           // The height of the bar follows the window, not the naming: on a
           // tablet the head is a control row's height whatever it shows.
@@ -240,9 +223,9 @@ class TimeViewSwitcher extends StatelessWidget {
                 icon: view.icon,
                 active: view == current,
                 iconOnly: switch (mode) {
-                  _Naming.all => false,
-                  _Naming.current => view != current,
-                  _Naming.none => true,
+                  GlassNaming.all => false,
+                  GlassNaming.active => view != current,
+                  GlassNaming.none => true,
                 },
                 // Going rather than pushing: the views are one destination
                 // seen several ways, so stepping back from the calendar belongs
@@ -263,12 +246,9 @@ class TimeViewSwitcher extends StatelessWidget {
   /// handed its width.
   static double _legacyRoom(BuildContext context, int views) =>
       context.isExpanded
-      ? _track + (_glyphChip + _gap) * views + 120
-      : _track + (_glyphChip + _gap) * views;
+      ? GlassSwitchBar.inset + (GlassSwitchChip.glyphWidth + _gap) * views + 120
+      : GlassSwitchBar.inset + (GlassSwitchChip.glyphWidth + _gap) * views;
 }
-
-/// How many of the switcher's chips carry their name.
-enum _Naming { all, current, none }
 
 /// The "+", which is two things.
 ///
