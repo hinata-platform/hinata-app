@@ -1,0 +1,5 @@
+• Schichtplanung: Veranstaltungen und Schichten planen, selbst eintragen, mit Warteliste und Kalender
+• Die eigenen Schichten im eigenen Kalender abonnieren und Pläne exportieren
+• Überall in der App suchen und das Profil einer Person öffnen
+• Budgets in Stunden und ein Schalter für Abrechenbarkeit je Projekt
+• Viele kleinere Korrekturen und Verbesserungen
