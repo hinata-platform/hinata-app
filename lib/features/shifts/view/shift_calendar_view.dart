@@ -167,7 +167,8 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
   late final PageController _pager;
   int _jump = 0;
 
-  /// The month a phone's month view has scrolled to: the bar's title.
+  /// The month the month view has scrolled to, at any width: the title, the
+  /// month the arrows step from, and whether "Heute" shows.
   DateTime? _visibleMonth;
 
   /// The docked strip, held so the shell does not re-publish the chrome on
@@ -651,8 +652,8 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     cubit.setProject(picked.first.id, name: picked.first.name);
   }
 
-  /// The bar's title on a phone: the month in view, with the year only when
-  /// it is not this one.
+  /// The bar's title on a phone: the month in view (see [_monthInView]), with
+  /// the year only when it is not this one.
   String _monthTitle(ShiftCalendarState state) {
     final month = state.span == ShiftCalendarSpan.month
         ? _monthInView(state)
@@ -800,11 +801,10 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     if (cubit.state.span == ShiftCalendarSpan.month) {
       // From the month on screen, not from the one last jumped to: the month
       // scrolls, and after a scroll those are different months.
-      final month = _monthInView(cubit.state);
-      final target = DateTime(month.year, month.month + direction);
-      cubit.focus(target);
+      cubit.step(direction, byDay: false, from: _monthInView(cubit.state));
+      final focused = cubit.state.focused;
       setState(() {
-        _visibleMonth = target;
+        _visibleMonth = DateTime(focused.year, focused.month);
         _jump++;
       });
       return;
@@ -846,10 +846,10 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
     return GlassSwitchBar(
       // The height follows the window, as the time calendar's does.
       compact: !context.isExpanded,
-      maxWidth: 240,
+      maxWidth: _kSwitcherMax,
       chips: [
         for (final each in spans) ...[
-          if (each != spans.first) const SizedBox(width: 2),
+          if (each != spans.first) const SizedBox(width: _kChipGap),
           GlassSwitchChip(
             label: context.t(each.labelKey),
             icon: each.icon,
@@ -892,35 +892,51 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
         onTap: (anchor) => unawaited(_pickProject(anchor)),
       );
 
-  /// How wide the second line's filters and switcher stand at [naming], as
-  /// [GlassFilterPill] and [GlassSwitchChip] draw them; [_NavRow] takes the
-  /// first naming that fits.
-  double _filtersWidth(ShiftCalendarState state, _HeadNaming naming) {
+  /// How wide the second line's filters and switcher stand at each naming,
+  /// from the sizes [GlassFilterPill] and [GlassSwitchChip] draw at; [_NavRow]
+  /// takes the first naming that fits. The labels are measured once per
+  /// build. A naming whose switcher would pass [_kSwitcherMax] does not fit:
+  /// the bar would scroll its chips inside and clip a name.
+  Map<_HeadNaming, double> _filtersWidths(ShiftCalendarState state) {
     final widths = glassLabelWidths(context, [
       _projectLabel(state),
       context.t('shifts.event.onlyUnderstaffed'),
       context.t('shifts.calendar.week'),
       context.t('shifts.calendar.month'),
     ]);
-    // A pill's padding, glyph and gap around its label, its chevron, and a
-    // point of slack against a rounding that would clip the last letter.
-    const pill = 13 + 14 + 7 + 13 + 1;
-    const chevron = 4 + 13;
-    const glyph = kGlassControlHeight;
-    final filters = naming == _HeadNaming.all
-        ? pill + math.min(widths[0], 150) + chevron + pill + widths[1]
-        : 2 * glyph;
+    // A point of slack per named control, against a rounding that would clip
+    // the last letter.
+    const pill = GlassFilterPill.namedChrome + 1;
+    const chip = GlassSwitchChip.namedChrome + 1;
+    final named =
+        pill +
+        math.min(widths[0], GlassFilterPill.maxLabelWidth) +
+        GlassFilterPill.chevronWidth +
+        pill +
+        widths[1];
+    const glyphs = 2 * GlassFilterPill.glyphWidth;
     final active = state.span == ShiftCalendarSpan.week ? 2 : 3;
-    final switcher =
-        _kSwitchTrack +
-        2 +
-        switch (naming) {
-          _HeadNaming.all ||
-          _HeadNaming.glyphFilters => 2 * _kNamedChip + widths[2] + widths[3],
-          _HeadNaming.activeSpan => _kNamedChip + widths[active] + _kGlyphChip,
-          _HeadNaming.none => 2 * _kGlyphChip,
-        };
-    return filters + switcher + 2 * 8;
+    double switcher(_HeadNaming naming) {
+      final width =
+          GlassSwitchBar.inset +
+          _kChipGap +
+          switch (naming) {
+            _HeadNaming.all ||
+            _HeadNaming.glyphFilters => 2 * chip + widths[2] + widths[3],
+            _HeadNaming.activeSpan =>
+              chip + widths[active] + GlassSwitchChip.glyphWidth,
+            _HeadNaming.none => 2 * GlassSwitchChip.glyphWidth,
+          };
+      return width <= _kSwitcherMax ? width : double.infinity;
+    }
+
+    return {
+      for (final naming in _HeadNaming.values)
+        naming:
+            (naming == _HeadNaming.all ? named : glyphs) +
+            switcher(naming) +
+            2 * _kControlGap,
+    };
   }
 
   @override
@@ -979,6 +995,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
             if (!compact)
               ShiftsHead(
                 current: ShiftsView.calendar,
+                inline: true,
                 actions: [
                   if (state.canCreate)
                     _AddPill(onTap: (anchor) => unawaited(_addMenu(anchor))),
@@ -998,7 +1015,7 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
                         ? 'shifts.calendar.nextMonth'
                         : 'shifts.calendar.nextWeek',
                   ),
-                  trailingWidth: (naming) => _filtersWidth(state, naming),
+                  trailingWidth: _filtersWidths(state),
                   trailing: (naming) => [
                     _projectPill(state, iconOnly: naming != _HeadNaming.all),
                     // The filter lights while it holds.
@@ -1363,15 +1380,19 @@ class _ChoiceRow extends StatelessWidget {
 /// The arrows and the gaps beside them on the second line.
 const double _kNavArrows = 44 + 6 + 44 + 12 + 12;
 
-/// "Heute" as a [TextButton.icon] draws it around its label, with the gap
-/// before it.
-const double _kTodayChrome = 8 + 12 + 16 + 8 + 16 + 1;
+/// "Heute" as the theme's text button draws it around its label
+/// ([GlassButtons.text]: 14 a side, a 16-point glyph and the 8 between), with
+/// the gap before it and a point of slack.
+const double _kTodayChrome = 8 + 14 + 16 + 8 + 14 + 1;
 
-/// A switcher chip's padding and glyph around its label, an icon-only chip,
-/// and the track's inset, as [GlassSwitchChip] and [GlassSwitchBar] draw them.
-const double _kNamedChip = 12 + 15 + 5 + 12 + 1;
-const double _kGlyphChip = 11 + 18 + 11;
-const double _kSwitchTrack = 12;
+/// The least of the window's name kept beside glyphs before they scroll.
+const double _kNameMin = 96;
+
+/// The span switcher's widest, and the gaps between its chips and between the
+/// controls beside it.
+const double _kSwitcherMax = 240;
+const double _kChipGap = 2;
+const double _kControlGap = 8;
 
 /// How much of the second line is written out, from everything named down to
 /// glyphs only — the order the time module's switcher gives up its names in.
@@ -1382,8 +1403,9 @@ enum _HeadNaming { all, glyphFilters, activeSpan, none }
 /// the span switcher against the trailing one. The filters keep their names
 /// while they fit beside the name and "Heute", measured; with less room they
 /// become glyphs with the name as a tooltip, then the switcher keeps only its
-/// active name, then none. The window's name gives way last, by an ellipsis,
-/// and the controls scroll only when not even glyphs fit.
+/// active name, then none. The window's name gives way last, by an ellipsis
+/// down to [_kNameMin], and the controls scroll only when not even that
+/// leaves the glyphs room.
 class _NavRow extends StatelessWidget {
   const _NavRow({
     required this.label,
@@ -1405,33 +1427,19 @@ class _NavRow extends StatelessWidget {
   final String previousLabel;
   final String nextLabel;
   final List<Widget> Function(_HeadNaming naming) trailing;
-  final double Function(_HeadNaming naming) trailingWidth;
+  final Map<_HeadNaming, double> trailingWidth;
 
   /// What the leading edge needs to write the window's name and "Heute" out
   /// in full, as they are set at the reader's text scale.
   double _leadWidth(BuildContext context) {
-    final scaler = MediaQuery.textScalerOf(context);
-    double width(String text, TextStyle style) {
-      final painter = TextPainter(
-        text: TextSpan(text: text, style: style),
-        textDirection: Directionality.of(context),
-        textScaler: scaler,
-        maxLines: 1,
-      )..layout();
-      final result = painter.width;
-      painter.dispose();
-      return result;
-    }
-
-    final name = width(label, _labelStyle) + 1;
+    final name = glassLabelWidths(context, [label], style: _labelStyle).first;
     final today = onToday == null
         ? 0.0
-        : width(
+        : glassLabelWidths(context, [
                 context.t('shifts.calendar.today'),
-                Theme.of(context).textTheme.labelLarge ?? const TextStyle(),
-              ) +
+              ], style: Theme.of(context).textTheme.labelLarge).first +
               _kTodayChrome;
-    return _kNavArrows + name + today;
+    return _kNavArrows + name + 1 + today;
   }
 
   TextStyle get _labelStyle => TextStyle(
@@ -1447,19 +1455,24 @@ class _NavRow extends StatelessWidget {
       final lead = _leadWidth(context);
       final room = math.max(0.0, constraints.maxWidth - lead);
       final naming = _HeadNaming.values.firstWhere(
-        (each) => trailingWidth(each) <= room,
+        (each) => trailingWidth[each]! <= room,
         orElse: () => _HeadNaming.none,
       );
       final controls = Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           for (final (index, control) in trailing(naming).indexed) ...[
-            if (index > 0) const SizedBox(width: 8),
+            if (index > 0) const SizedBox(width: _kControlGap),
             control,
           ],
         ],
       );
-      final fits = trailingWidth(naming) <= room;
+      // Glyphs that do not fit beside the whole name still stand when the
+      // name can give way to an ellipsis; only past that do they scroll.
+      final fits =
+          trailingWidth[naming]! <= room ||
+          trailingWidth[naming]! <=
+              constraints.maxWidth - _kNavArrows - _kNameMin;
       return Row(
         children: [
           GlassCircleButton(

@@ -27,20 +27,24 @@ void _go(BuildContext context, ShiftsView current, String key) {
 /// The module's head on a wide window: its name, then the three scope pills
 /// (Meine, Kalender, Events), and under them the view's own [filters].
 ///
-/// With [actions] the name, the pills and the actions share one line, the
-/// pills and the actions against the trailing edge, as in the time module's
-/// head; the calendar uses it so its chrome stays at two lines.
+/// [inline] puts the name, the pills and the [actions] on one line, the pills
+/// and the actions against the trailing edge, as in the time module's head;
+/// the calendar uses it so its chrome stays at two lines.
 class ShiftsHead extends StatelessWidget {
   const ShiftsHead({
     super.key,
     required this.current,
     this.filters,
-    this.actions,
+    this.inline = false,
+    this.actions = const [],
   });
 
   final ShiftsView current;
   final Widget? filters;
-  final List<Widget>? actions;
+  final bool inline;
+
+  /// Beside the pills, on an [inline] head only.
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +58,8 @@ class ShiftsHead extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (actions case final actions?)
-            _line(context, actions)
+          if (inline)
+            _line(context)
           else
             Wrap(
               spacing: 16,
@@ -73,21 +77,23 @@ class ShiftsHead extends StatelessWidget {
     );
   }
 
-  Widget _scopeRow(BuildContext context, {bool trailing = false}) =>
-      GlassScopeRow(
-        scopes: _scopes(context),
-        active: current.name,
-        onSelected: (key) => _go(context, current, key),
-        alignment: trailing
-            ? AlignmentDirectional.centerEnd
-            : AlignmentDirectional.centerStart,
-        adaptive: trailing,
-      );
+  /// On an [inline] head the pills stand against the trailing edge and name
+  /// themselves by the room they have; under the name they keep every name
+  /// and scroll.
+  Widget _scopeRow(BuildContext context) => GlassScopeRow(
+    scopes: _scopes(context),
+    active: current.name,
+    onSelected: (key) => _go(context, current, key),
+    alignment: inline
+        ? AlignmentDirectional.centerEnd
+        : AlignmentDirectional.centerStart,
+    adaptive: inline,
+  );
 
   /// The name on the leading edge, capped so a large text scale shrinks it
   /// rather than pushing the pills off; the pills take the rest, against the
   /// trailing edge, and fall back to glyphs where they cannot all be named.
-  Widget _line(BuildContext context, List<Widget> actions) => LayoutBuilder(
+  Widget _line(BuildContext context) => LayoutBuilder(
     builder: (context, constraints) => Row(
       children: [
         ConstrainedBox(
@@ -97,7 +103,7 @@ class ShiftsHead extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 16),
-        Expanded(child: _scopeRow(context, trailing: true)),
+        Expanded(child: _scopeRow(context)),
         for (final action in actions) ...[const SizedBox(width: 8), action],
       ],
     ),
