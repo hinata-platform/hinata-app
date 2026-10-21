@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "Budget temps",
+    "hoursInvalid": "Indique les heures, par exemple 120.",
     "estimate": "Estimation",
     "estimates": "Somme des estimations",
     "usedOfLimit": "{{used}} sur {{limit}}",

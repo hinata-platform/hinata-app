@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "時間予算",
+    "hoursInvalid": "時間数を入力してください（例: 120）。",
     "estimate": "見積もり",
     "estimates": "見積もりの合計",
     "usedOfLimit": "{{used}} / {{limit}}",

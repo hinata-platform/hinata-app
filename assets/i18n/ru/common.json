@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "Бюджет времени",
+    "hoursInvalid": "Укажите часы, например 120.",
     "estimate": "Оценка",
     "estimates": "Сумма оценок",
     "usedOfLimit": "{{used}} из {{limit}}",

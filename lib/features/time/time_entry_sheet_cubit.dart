@@ -17,6 +17,7 @@ class TimeEntrySheetCubit extends Cubit<void> {
   TimeEntrySheetCubit(this._time) : super(null);
 
   final TimeRepository _time;
+  final Map<String, Future<bool?>> _defaultBillable = {};
 
   Future<SavedTimeEntry> create(TimeEntryDraft draft) => _time.create(draft);
 
@@ -40,13 +41,18 @@ class TimeEntrySheetCubit extends Cubit<void> {
   /// Whether [projectId] bills its entries by default, or null when it follows
   /// the instance (HIN-158). Null too when the settings cannot be read: the
   /// switch then shows the instance's default, and the server decides anyway.
-  Future<bool?> projectDefaultBillable(String projectId) async {
-    try {
-      return (await _time.projectSettings(projectId)).defaultBillable;
-    } on ApiFailure {
-      return null;
-    }
-  }
+  /// Read once per project while the sheet is open, so switching back and
+  /// forth between projects asks the server only the first time; a failed
+  /// read is asked again.
+  Future<bool?> projectDefaultBillable(String projectId) =>
+      _defaultBillable.putIfAbsent(projectId, () async {
+        try {
+          return (await _time.projectSettings(projectId)).defaultBillable;
+        } on ApiFailure {
+          _defaultBillable.remove(projectId);
+          return null;
+        }
+      });
 
   /// Takes a calendar event over as an entry (HIN-94).
   Future<WorkItem> convert(String eventId, CalendarConversion conversion) =>
