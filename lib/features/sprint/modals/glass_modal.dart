@@ -289,7 +289,7 @@ const ShapeBorder glassWoltSheetShape = RoundedRectangleBorder(
 ///
 /// The [builder] should return its own content directly (a `Column`/list); the
 /// helper supplies the surface, the grab handle, side insets and `SafeArea`, so
-/// content must NOT add its own — see [showUploadSourceSheet] for the original.
+/// content must NOT add its own — see [showUploadSourcePicker] for the original.
 Future<T?> showGlassBottomSheet<T>(
   BuildContext context, {
   required WidgetBuilder builder,

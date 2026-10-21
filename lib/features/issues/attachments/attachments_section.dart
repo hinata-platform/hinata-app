@@ -219,7 +219,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       await _pickFiles();
       return;
     }
-    final source = await showUploadSourceSheet(
+    final source = await showUploadSourcePicker(
       context,
       anchorRect: anchorRectOf(_addKey),
     );

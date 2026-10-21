@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "时间预算",
+    "hoursInvalid": "请输入小时数，例如 120。",
     "estimate": "估算",
     "estimates": "估算总和",
     "usedOfLimit": "{{used}} / {{limit}}",
