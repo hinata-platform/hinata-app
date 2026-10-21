@@ -13,7 +13,7 @@ import '../../sprint/modals/glass_modal.dart'
 import '../../../core/widgets/hive_widgets.dart' show forwardChevron;
 import '../../../core/theme/app_type.dart';
 
-/// Where an attachment is being sourced from. Picked in [showUploadSourceSheet]
+/// Where an attachment is being sourced from. Picked in [showUploadSourcePicker]
 /// on touch platforms, where the OS offers distinct gallery / camera / document
 /// flows (mirroring the native iOS "attach" action sheet).
 enum UploadSource { gallery, photo, video, files }
@@ -27,7 +27,7 @@ enum UploadSource { gallery, photo, video, files }
 ///
 /// On a wide screen (an iPad) the same choice hangs off [anchorRect], the
 /// control that was tapped, as a glass menu rather than a sheet.
-Future<UploadSource?> showUploadSourceSheet(
+Future<UploadSource?> showUploadSourcePicker(
   BuildContext context, {
   Rect? anchorRect,
 }) {

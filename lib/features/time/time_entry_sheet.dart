@@ -465,11 +465,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     _billableReadFor = projectId;
     _projectBillable = null;
     if (_isEdit || projectId == null) return;
-    final timer = widget.timer;
-    if (timer != null &&
-        (timer.billableChosen || timer.projectId == projectId)) {
-      return;
-    }
+    if (_timerFlagApplies) return;
     final entries = context.read<TimeEntrySheetCubit>();
     unawaited(
       entries.projectDefaultBillable(projectId).then((billable) {
@@ -484,15 +480,21 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// somebody set it or while it is filed where it ran, otherwise the
   /// project's default or the instance's.
   bool _billableShown(TimePolicySnapshot policy) {
-    final timer = widget.timer;
     return _billable ??
         (_isEdit
             ? widget.entry!.billable
-            : timer != null &&
-                  (timer.billableChosen ||
-                      timer.projectId == _placement.projectId)
-            ? timer.billable
+            : _timerFlagApplies
+            ? widget.timer!.billable
             : _projectBillable ?? policy.defaultBillable);
+  }
+
+  /// Whether the timer's own flag stands for this entry: somebody set it, or
+  /// the entry is still filed where the timer ran. The project's default is
+  /// then neither read nor shown.
+  bool get _timerFlagApplies {
+    final timer = widget.timer;
+    return timer != null &&
+        (timer.billableChosen || timer.projectId == _placement.projectId);
   }
 
   /// The day this entry will be filed on — the interval's start day when there

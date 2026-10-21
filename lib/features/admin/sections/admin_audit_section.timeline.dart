@@ -318,7 +318,7 @@ Future<void> showAuditDetailSheet(BuildContext context, AuditEntry entry) {
       builder: (_) => Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 560),
-          child: _AuditDetailSheet(entry: entry, sheet: false),
+          child: _AuditDetailPanel(entry: entry, asSheet: false),
         ),
       ),
     );
@@ -329,6 +329,6 @@ Future<void> showAuditDetailSheet(BuildContext context, AuditEntry entry) {
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     barrierColor: Colors.black.withValues(alpha: 0.32),
-    builder: (_) => _AuditDetailSheet(entry: entry),
+    builder: (_) => _AuditDetailPanel(entry: entry),
   );
 }

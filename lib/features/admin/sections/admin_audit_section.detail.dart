@@ -1,12 +1,12 @@
 part of 'admin_audit_section.dart';
 
-class _AuditDetailSheet extends StatelessWidget {
-  const _AuditDetailSheet({required this.entry, this.sheet = true});
+class _AuditDetailPanel extends StatelessWidget {
+  const _AuditDetailPanel({required this.entry, this.asSheet = true});
   final AuditEntry entry;
 
   /// A bottom sheet on a phone, with its grab handle; a centred card on a
   /// wide screen, without one.
-  final bool sheet;
+  final bool asSheet;
 
   static const double _radius = AppTheme.radiusDialog;
 
@@ -107,7 +107,7 @@ class _AuditDetailSheet extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 const SizedBox(height: 10),
-                if (sheet)
+                if (asSheet)
                   Container(
                     width: 38,
                     height: 4,
@@ -117,7 +117,7 @@ class _AuditDetailSheet extends StatelessWidget {
                     ),
                   ),
                 Padding(
-                  padding: EdgeInsets.fromLTRB(18, sheet ? 14 : 8, 18, 4),
+                  padding: EdgeInsets.fromLTRB(18, asSheet ? 14 : 8, 18, 4),
                   child: Row(
                     children: [
                       _GlyphBadge(icon: _actionIcon(entry.action), tint: tint),
@@ -186,7 +186,7 @@ class _AuditDetailSheet extends StatelessWidget {
       ),
     );
 
-    if (!sheet) return panel;
+    if (!asSheet) return panel;
     return SafeArea(
       top: false,
       child: Padding(

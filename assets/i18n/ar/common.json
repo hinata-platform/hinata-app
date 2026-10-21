@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "ميزانية الوقت",
+    "hoursInvalid": "أدخل عدد الساعات، مثلًا 120.",
     "estimate": "التقدير",
     "estimates": "مجموع التقديرات",
     "usedOfLimit": "{{used}} من {{limit}}",

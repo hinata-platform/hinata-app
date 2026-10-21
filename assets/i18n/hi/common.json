@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "समय बजट",
+    "hoursInvalid": "घंटे दर्ज करें, जैसे 120।",
     "estimate": "अनुमान",
     "estimates": "अनुमानों का योग",
     "usedOfLimit": "{{limit}} में से {{used}}",

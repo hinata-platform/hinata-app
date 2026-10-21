@@ -5275,6 +5275,7 @@
   },
   "budget": {
     "timeBudget": "Zeitbudget",
+    "hoursInvalid": "Gib die Stunden an, zum Beispiel 120.",
     "estimate": "Schätzung",
     "estimates": "Summe der Schätzungen",
     "usedOfLimit": "{{used}} von {{limit}}",
