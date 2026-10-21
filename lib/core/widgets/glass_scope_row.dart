@@ -23,11 +23,23 @@ class GlassScopeRow extends StatefulWidget {
     required this.scopes,
     required this.active,
     required this.onSelected,
+    this.alignment = AlignmentDirectional.centerStart,
+    this.adaptive = false,
   });
 
   final List<GlassScope> scopes;
   final String active;
   final ValueChanged<String> onSelected;
+
+  /// Where the pills sit in the room they are given: the leading edge in a
+  /// docked row, the trailing one beside a page title.
+  final AlignmentDirectional alignment;
+
+  /// Names every pill where the width allows; where it does not, the active
+  /// one keeps its name and the others fall back to glyphs, and with less
+  /// room still every pill is a glyph — the time module's view switcher's
+  /// rule. Off, the pills keep their names and the row scrolls.
+  final bool adaptive;
 
   @override
   State<GlassScopeRow> createState() => _GlassScopeRowState();
@@ -68,8 +80,45 @@ class _GlassScopeRowState extends State<GlassScopeRow> {
   @override
   Widget build(BuildContext context) {
     WidgetsBinding.instance.addPostFrameCallback((_) => _reveal());
+    if (!widget.adaptive) return _row(context, (_) => false);
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final labels = [for (final scope in widget.scopes) scope.label];
+        final widths = glassLabelWidths(context, labels);
+        const gap = 8.0;
+        final gaps = gap * (widths.length - 1);
+        // A point of slack per pill: a measured label and a laid-out one can
+        // differ by a rounding, and a clipped last letter is worse than a
+        // glyph.
+        final allNamed =
+            gaps +
+            widths.fold<double>(
+              0,
+              (sum, w) => sum + w + GlassScopePill.namedChrome + 1,
+            );
+        final index = widget.scopes.indexWhere(
+          (scope) => scope.key == widget.active,
+        );
+        final activeNamed =
+            gaps +
+            GlassScopePill.glyphWidth * (widths.length - 1) +
+            (index < 0 ? 0 : widths[index] + GlassScopePill.namedChrome + 1);
+        final room = constraints.maxWidth;
+        return _row(
+          context,
+          allNamed <= room
+              ? (_) => false
+              : activeNamed <= room
+              ? (scope) => scope.key != widget.active
+              : (_) => true,
+        );
+      },
+    );
+  }
+
+  Widget _row(BuildContext context, bool Function(GlassScope) glyphOnly) {
     return Align(
-      alignment: AlignmentDirectional.centerStart,
+      alignment: widget.alignment,
       child: SizedBox(
         height: kGlassControlHeight,
         child: SingleChildScrollView(
@@ -86,6 +135,7 @@ class _GlassScopeRowState extends State<GlassScopeRow> {
                   icon: scope.icon,
                   label: scope.label,
                   active: widget.active == scope.key,
+                  iconOnly: glyphOnly(scope),
                   onTap: () => widget.onSelected(scope.key),
                 ),
               ],
