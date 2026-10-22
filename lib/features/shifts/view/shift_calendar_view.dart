@@ -1243,7 +1243,9 @@ class _ShiftCalendarViewState extends State<ShiftCalendarView> {
             Positioned(
               left: 0,
               right: 0,
-              top: 80,
+              // Docked to the top of the scroll area, under the day headings
+              // where the week shows them.
+              top: compact ? 12 : kTimeGridHeader + 12,
               child: IgnorePointer(
                 child: Center(
                   child: _Notice(
