@@ -56,11 +56,13 @@ class SsoCallbackScreen extends StatelessWidget {
   /// Single-use handoff code; redeemed for the token pair. Preferred path.
   final String? code;
 
-  /// What the server reported when the identity provider's sign-in failed.
+  /// What the server reported when the sign-in did not end in the app: why
+  /// Hinata refused a person the identity provider had accepted (HIN-179), or
+  /// what went wrong at the provider.
   ///
-  /// Its text is the server's and not for display; that there *is* one is what
-  /// counts: this was a failed sign-in, not a link that lost its code, and the
-  /// person is told so in their own words.
+  /// Never shown here: it goes on to the login screen, which gives a known
+  /// reason its own sentence and anything else the general one, since any
+  /// page can link here with any text.
   final String? error;
 
   /// Legacy fallback: tokens directly in the URL (older server redirects).
@@ -175,8 +177,10 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
       // Legacy redirect that still carried tokens in the URL.
       _auth.add(SsoTokensReceived(access, refresh));
     } else if (widget.error != null) {
-      // The provider refused, or the server could not finish with it.
-      _bail('auth.ssoProviderFailed');
+      // Hinata refused the person, or the provider did, or the server could
+      // not finish with it. The reason goes on as it came: the login screen
+      // turns it into one of our sentences, as for a web sign-in.
+      _bail(widget.error!);
     } else {
       // Nothing usable in the URL: back to login.
       _bail('auth.ssoNoCode');
@@ -201,7 +205,7 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
     }
   }
 
-  /// Leaves the callback screen for `/login`, carrying [reasonKey] so the login
+  /// Leaves the callback screen for `/login`, carrying [reason] so the login
   /// screen can explain what happened. Nothing else navigates away from this
   /// route, so this is the only exit from a failed handoff.
   ///
@@ -209,7 +213,7 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
   /// in the dashboard, or in its own failure, which comes back through here.
   /// Only the watchdog leaves regardless — [evenIfUnderway] — because a sign-in
   /// that never finishes must not hold the screen forever either.
-  void _bail(String reasonKey, {bool evenIfUnderway = false}) {
+  void _bail(String reason, {bool evenIfUnderway = false}) {
     // Deferred: this is reachable straight from initState (no usable code in
     // the URL), and navigating while the route is still being built throws.
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -223,7 +227,9 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
       // `authenticating`, which renders the login screen with every control
       // disabled — a second dead end right behind this one.
       _auth.add(const AuthChecked());
-      GoRouter.of(context).go('/login?ssoError=$reasonKey');
+      GoRouter.of(context).go(
+        Uri(path: '/login', queryParameters: {'ssoError': reason}).toString(),
+      );
     });
   }
 

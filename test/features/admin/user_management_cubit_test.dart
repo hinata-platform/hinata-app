@@ -57,6 +57,7 @@ void main() {
     await cubit.setOrgAdmin(ids, true);
     await cubit.sendPasswordReset(ids);
     await cubit.revokeSessions(ids);
+    await cubit.unlinkSso('u1');
     await cubit.updateDetails(
       'u1',
       displayName: 'Mira',
@@ -73,6 +74,7 @@ void main() {
       'orgRole u1,u2 true',
       'reset u1,u2',
       'revoke u1,u2',
+      'unlinkSso u1',
       'details u1 Mira Kasse mira@example.org',
       'delete u1,u2',
     ]);
@@ -171,6 +173,9 @@ class _FakeAdmin implements AdminRepository {
   @override
   Future<void> adminRevokeSessions(List<String> ids) async =>
       calls.add('revoke ${ids.join(',')}');
+
+  @override
+  Future<void> adminUnlinkSso(String id) async => calls.add('unlinkSso $id');
 
   @override
   Future<void> adminUpdateUserDetails(

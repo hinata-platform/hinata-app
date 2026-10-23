@@ -5,7 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../core/widgets/hive_loader.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart' show ApiFailure;
 import '../../core/repositories/auth_repository.dart';
@@ -21,6 +20,8 @@ import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'auth_shell.dart';
 import 'auth_flow_cubit.dart';
+import 'sso_errors.dart';
+import 'sso_launch.dart';
 import '../../core/theme/app_type.dart';
 
 class LoginScreen extends StatelessWidget {
@@ -111,18 +112,22 @@ class _LoginScreenState extends State<_LoginScreenBody>
     super.didChangeAppLifecycleState(state);
   }
 
-  /// A failed SSO login lands back here as `/login?ssoError=<reason>` — either
-  /// a message from the server, or a key from [SsoCallbackScreen] when the
-  /// handoff itself failed. `t()` returns unknown strings unchanged, so both
-  /// render correctly.
+  /// A failed SSO login lands back here as `/login?ssoError=<reason>`: the
+  /// server's reason after a refused or failed sign-in, passed on by
+  /// [SsoCallbackScreen] in the native apps, or that screen's own key when the
+  /// handoff itself failed. Shown only as one of our own sentences
+  /// ([ssoErrorKey]), never as the text in the address.
   void _showSsoErrorIfPresent() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final error = GoRouterState.of(context).uri.queryParameters['ssoError'];
       if (error != null && error.isNotEmpty) {
+        final passwordSignIn =
+            context.read<AppConfigBloc>().state.meta?.localAuthEnabled ?? true;
         showGlassErrorToast(
           context,
-          '${context.t('auth.ssoFailed')}: ${context.t(error)}',
+          '${context.t('auth.ssoFailed')}: '
+          '${context.t(ssoErrorKey(error, passwordSignIn: passwordSignIn))}',
         );
       }
     });
@@ -541,7 +546,6 @@ class _LoginScreenState extends State<_LoginScreenBody>
 
   Future<void> _launchSso(SsoProvider provider) async {
     final serverUrl = context.read<AuthBloc>().storage.serverUrl ?? '';
-    var uri = Uri.parse('$serverUrl${provider.loginUrl}');
     setState(() => _launchingSsoId = provider.id);
     try {
       // Let the disabled/loading state actually reach the screen before we
@@ -552,13 +556,8 @@ class _LoginScreenState extends State<_LoginScreenBody>
       // frames (loader visible, buttons disabled) first.
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
+      final launched = await launchSso(serverUrl, provider);
       if (kIsWeb) {
-        // Web: tell the server where to return; the whole flow stays in this
-        // tab and ends at <origin>/auth-callback with the handoff code.
-        uri = uri.replace(
-          queryParameters: {...uri.queryParameters, 'return': Uri.base.origin},
-        );
-        final launched = await launchUrl(uri, webOnlyWindowName: '_self');
         // Only keep the buttons disabled if the tab is genuinely on its way to
         // the provider — re-enabling them then would let the user start a
         // second login on top of the first. A refused navigation is the
@@ -570,11 +569,6 @@ class _LoginScreenState extends State<_LoginScreenBody>
         }
         return;
       }
-      // Native: the server redirects back via hinata://auth-callback.
-      final launched = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
       // The external browser took over; restore the buttons so the user can
       // retry if they return without completing the login.
       if (!mounted) return;

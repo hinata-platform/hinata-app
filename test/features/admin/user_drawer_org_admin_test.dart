@@ -49,6 +49,7 @@ void main() {
     openResend: (_) {},
     openReset: (_) {},
     revokeSessions: (_) {},
+    openUnlinkSso: (_) {},
     openDelete: (_) {},
     isLastActiveAdmin: (_) => false,
     nameById: (_) => null,

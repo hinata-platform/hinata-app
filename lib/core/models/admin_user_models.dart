@@ -79,6 +79,7 @@ class AdminUser {
     required this.status,
     required this.twoFA,
     required this.sso,
+    this.ssoLinked = false,
     required this.sessions,
     this.lastActive,
     this.invitedAt,
@@ -103,6 +104,10 @@ class AdminUser {
   final UserStatus status;
   final bool twoFA;
   final bool sso;
+
+  /// Bound to an identity at an SSO provider (HIN-179). An administrator can
+  /// undo that when the person's key at the provider changed.
+  final bool ssoLinked;
   final int sessions;
   final DateTime? lastActive;
   final DateTime? invitedAt;
@@ -132,6 +137,7 @@ class AdminUser {
     status: UserStatus.fromWire(json['status'] as String?),
     twoFA: json['twoFA'] == true,
     sso: json['sso'] == true,
+    ssoLinked: json['ssoLinked'] == true,
     sessions: (json['sessions'] as num?)?.toInt() ?? 0,
     lastActive: _date(json['lastActive']),
     invitedAt: _date(json['invitedAt']),
