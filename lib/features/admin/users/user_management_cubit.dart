@@ -61,6 +61,8 @@ class UserManagementCubit extends Cubit<void> {
   Future<void> sendPasswordReset(List<String> ids) =>
       _admin.adminSendPasswordReset(ids);
 
+  Future<void> unlinkSso(String id) => _admin.adminUnlinkSso(id);
+
   Future<void> revokeSessions(List<String> ids) =>
       _admin.adminRevokeSessions(ids);
 

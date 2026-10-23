@@ -11,6 +11,7 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/features/auth/sso_callback_screen.dart';
+import 'package:hinata/features/auth/sso_errors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// The SSO handoff used to be a one-way street. `/auth-callback` is deliberately
@@ -209,12 +210,60 @@ void main() {
     await advance(tester);
 
     expect(location(router), '/login');
+    // The login screen's sentence for the provider's own words.
     expect(
-      router
-          .routerDelegate
-          .currentConfiguration
-          .uri
-          .queryParameters['ssoError'],
+      ssoErrorKey(
+        router
+            .routerDelegate
+            .currentConfiguration
+            .uri
+            .queryParameters['ssoError'],
+      ),
+      'auth.ssoProviderFailed',
+    );
+  });
+
+  testWidgets('a sign-in the server refused says why, in our words', (
+    tester,
+  ) async {
+    // The identity provider accepted the person, Hinata did not (HIN-179): the
+    // server sends the reason as a code, the code goes on to the login screen
+    // as it came, and the login screen's sentence for it is our own.
+    final router = await pumpCallback(
+      tester,
+      _FakeAuthRepository(),
+      error: 'ssoAccountNotLinked',
+    );
+    await advance(tester);
+
+    expect(location(router), '/login');
+    final reason = router
+        .routerDelegate
+        .currentConfiguration
+        .uri
+        .queryParameters['ssoError'];
+    expect(reason, 'ssoAccountNotLinked');
+    expect(ssoErrorKey(reason), 'auth.ssoRefused.ssoAccountNotLinked');
+  });
+
+  testWidgets('text in the link never reaches the screen', (tester) async {
+    // Any page can open the app's callback with any text; only the general
+    // sentence comes of it.
+    final router = await pumpCallback(
+      tester,
+      _FakeAuthRepository(),
+      error: Uri.encodeQueryComponent('Server moved, sign in at evil.example'),
+    );
+    await advance(tester);
+
+    expect(
+      ssoErrorKey(
+        router
+            .routerDelegate
+            .currentConfiguration
+            .uri
+            .queryParameters['ssoError'],
+      ),
       'auth.ssoProviderFailed',
     );
   });

@@ -356,6 +356,15 @@
       "confirm": "サーバーを切り替える"
     },
     "ssoProviderFailed": "組織のログインサービスで完了しませんでした。もう一度お試しください。",
+    "ssoRefused": {
+      "ssoAccountNotLinked": "このメールアドレスのアカウントは既に存在しますが、このサインイン方法とは連携されていません。パスワードでサインインするか、管理者にお問い合わせください。",
+      "ssoAccountNotLinkedSsoOnly": "このメールアドレスのアカウントは既に存在しますが、このサインイン方法とは連携されていません。管理者にお問い合わせください。",
+      "ssoEmailNotVerified": "サインインサービスによると、このメールアドレスは未確認です。未確認のアドレスに既存のアカウントが連携されることはありません。管理者にお問い合わせください。",
+      "ssoNoEmail": "サインインサービスからメールアドレスが送られてきませんでした。アドレスがないとアカウントを作成できません。管理者にお問い合わせください。",
+      "accountDeactivated": "アカウントは無効になっています。管理者にお問い合わせください。",
+      "pendingApproval": "アカウントは管理者の承認待ちです。",
+      "emailNotVerified": "まずメールアドレスを確認してください。リンクは受信トレイに届いています。"
+    },
     "showPassword": "パスワードを表示",
     "hidePassword": "パスワードを隠す"
   },
@@ -3410,6 +3419,11 @@
       "sendPasswordResetSub": "{{email}} に安全な再設定リンクを送ります",
       "revokeAllSessions": "すべてのセッションを無効化",
       "revokeAllSessionsSub": "すべてのデバイスで強制的にログアウトします（有効なセッション {{n}} 件）",
+      "unlinkSso": "SSO サインインの連携を解除",
+      "unlinkSsoSub": "ID プロバイダー側でこの人のアカウントが変わった場合のみ",
+      "unlinkSsoConfirm": "{{email}} での次回の SSO サインインで、このアカウントが再び連携される場合があります。プロバイダーのどのアカウントからのサインインでも同じです。本人であると分かっている場合にのみ実行してください。この人のセッションはすべて終了します。",
+      "unlinkSsoAction": "連携を解除",
+      "toastSsoUnlinked": "SSO サインインの連携を解除しました",
       "deleteThisUser": "このユーザーを削除",
       "deleteThisUserSub": "アカウントと所属を完全に削除します",
       "tlLastActive": "最終アクティブ",
@@ -3670,6 +3684,7 @@
       "LOGIN_BLOCKED": "ログインをブロック",
       "MFA_FAILURE": "二要素認証に失敗",
       "SSO_LOGIN": "SSO でログイン",
+      "SSO_LINKED": "アカウントを SSO に連携",
       "SESSION_REVOKED": "セッションを無効化",
       "USER_REGISTERED": "ユーザーが登録",
       "EMAIL_VERIFIED": "メールアドレスを確認",
@@ -3691,6 +3706,7 @@
       "USER_DELETED": "ユーザーを削除",
       "USER_PASSWORD_RESET_SENT": "パスワード再設定を送信",
       "USER_SESSIONS_REVOKED": "セッションを無効化",
+      "USER_SSO_LINK_REMOVED": "管理者が SSO 連携を解除",
       "SETTINGS_CHANGED": "設定を変更",
       "CONNECT_ENROLLED": "Hinata Connect に登録",
       "CONNECT_HANDSHAKE_STARTED": "Hinata Connect のハンドシェイクを開始",
@@ -4685,9 +4701,11 @@
   "invite": {
     "title": "アカウントを設定",
     "subtitle": "{{email}} として参加します。パスワードを決めると完了です。",
+    "subtitleSso": "{{email}} として参加します。サインインサービスでサインインすると完了です。",
     "passwordLabel": "パスワード",
     "passwordHint": "10 文字以上",
     "createAccount": "アカウントを作成",
+    "joinWith": "{{provider}} で参加",
     "invalidTitle": "招待が無効か期限切れです",
     "invalidBody": "管理者に新しい招待の送信を依頼してください。",
     "goToLogin": "ログインへ"

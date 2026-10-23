@@ -356,6 +356,15 @@
       "confirm": "Server wechseln"
     },
     "ssoProviderFailed": "Der Anmeldedienst deiner Organisation hat sie nicht abgeschlossen. Bitte versuche es erneut.",
+    "ssoRefused": {
+      "ssoAccountNotLinked": "Für diese E-Mail-Adresse gibt es schon ein Konto, das nicht mit dieser Anmeldung verbunden ist. Melde dich mit deinem Passwort an oder wende dich an die Administration.",
+      "ssoAccountNotLinkedSsoOnly": "Für diese E-Mail-Adresse gibt es schon ein Konto, das nicht mit dieser Anmeldung verbunden ist. Wende dich an die Administration.",
+      "ssoEmailNotVerified": "Dein Anmeldedienst meldet diese E-Mail-Adresse als nicht bestätigt. Mit einer unbestätigten Adresse wird kein bestehendes Konto verbunden. Wende dich an die Administration.",
+      "ssoNoEmail": "Dein Anmeldedienst hat keine E-Mail-Adresse übermittelt, und ohne Adresse lässt sich kein Konto anlegen. Wende dich an die Administration.",
+      "accountDeactivated": "Dein Konto ist deaktiviert. Wende dich an die Administration.",
+      "pendingApproval": "Dein Konto wartet auf die Freigabe durch die Administration.",
+      "emailNotVerified": "Bestätige zuerst deine E-Mail-Adresse. Den Link dazu findest du in deinem Postfach."
+    },
     "showPassword": "Passwort anzeigen",
     "hidePassword": "Passwort verbergen"
   },
@@ -3410,6 +3419,11 @@
       "sendPasswordResetSub": "Einen sicheren Reset-Link an {{email}} senden",
       "revokeAllSessions": "Alle Sitzungen beenden",
       "revokeAllSessionsSub": "Abmeldung auf allen Geräten erzwingen ({{n}} aktiv)",
+      "unlinkSso": "SSO-Verbindung lösen",
+      "unlinkSsoSub": "Nur nötig, wenn sich das Konto der Person beim Anbieter geändert hat",
+      "unlinkSsoConfirm": "Die nächste SSO-Anmeldung mit {{email}} kann dieses Konto neu verbinden, egal von welchem Konto beim Anbieter sie kommt. Mach das nur, wenn du weißt, dass es diese Person sein wird. Alle Sitzungen der Person enden dabei.",
+      "unlinkSsoAction": "Lösen",
+      "toastSsoUnlinked": "SSO-Verbindung gelöst",
       "deleteThisUser": "Diesen Benutzer löschen",
       "deleteThisUserSub": "Konto & Mitgliedschaften dauerhaft entfernen",
       "tlLastActive": "Zuletzt aktiv",
@@ -3670,6 +3684,7 @@
       "LOGIN_BLOCKED": "Anmeldung blockiert",
       "MFA_FAILURE": "Zwei-Faktor fehlgeschlagen",
       "SSO_LOGIN": "Über SSO angemeldet",
+      "SSO_LINKED": "Konto mit SSO verbunden",
       "SESSION_REVOKED": "Sitzung widerrufen",
       "USER_REGISTERED": "Benutzer registriert",
       "EMAIL_VERIFIED": "E-Mail bestätigt",
@@ -3691,6 +3706,7 @@
       "USER_DELETED": "Benutzer gelöscht",
       "USER_PASSWORD_RESET_SENT": "Passwort-Zurücksetzung gesendet",
       "USER_SESSIONS_REVOKED": "Sitzungen widerrufen",
+      "USER_SSO_LINK_REMOVED": "SSO-Verbindung von einem Admin gelöst",
       "SETTINGS_CHANGED": "Einstellungen geändert",
       "CONNECT_ENROLLED": "Hinata Connect registriert",
       "CONNECT_HANDSHAKE_STARTED": "Hinata Connect Verbindung gestartet",
@@ -4685,9 +4701,11 @@
   "invite": {
     "title": "Konto einrichten",
     "subtitle": "Du trittst als {{email}} bei. Wähle ein Passwort, um abzuschließen.",
+    "subtitleSso": "Du trittst als {{email}} bei. Melde dich bei deinem Anmeldedienst an, um abzuschließen.",
     "passwordLabel": "Passwort",
     "passwordHint": "Mindestens 10 Zeichen",
     "createAccount": "Konto erstellen",
+    "joinWith": "Mit {{provider}} beitreten",
     "invalidTitle": "Einladung ungültig oder abgelaufen",
     "invalidBody": "Bitte einen Administrator um eine neue Einladung bitten.",
     "goToLogin": "Zur Anmeldung"
