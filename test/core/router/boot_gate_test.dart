@@ -182,6 +182,30 @@ void main() {
       });
     }
 
+    test('a refused web sign-in keeps its reason through the boot', () {
+      // A refused SSO sign-in comes back to the web app as a full page load
+      // of /login?ssoError=…, while the app is still connecting (HIN-179).
+      const refused = '/login?ssoError=Konto%20ist%20deaktiviert';
+      expect(
+        at(
+          '/login',
+          uri: refused,
+          config: AppConfigStatus.connecting,
+          auth: AuthStatus.unknown,
+        ),
+        '/connecting',
+      );
+      // Ready and signed out: the login screen, with the reason still on it.
+      expect(at('/connecting', auth: AuthStatus.unauthenticated), refused);
+      expect(
+        at('/login', uri: refused, auth: AuthStatus.unauthenticated),
+        null,
+      );
+      // Shown once: a later visit to the login screen carries nothing.
+      expect(at('/register', auth: AuthStatus.unauthenticated), null);
+      expect(at('/connecting', auth: AuthStatus.unauthenticated), '/login');
+    });
+
     test(
       '/auth-callback holds its tokens until they have signed the user in',
       () {

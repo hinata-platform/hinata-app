@@ -123,6 +123,14 @@ class BootGate {
   /// The destination waiting for the app to become able to show it.
   String? pendingDeepLink;
 
+  /// A login screen that has something to tell, held through the boot.
+  ///
+  /// A refused SSO sign-in comes back to the web app as a full page load of
+  /// `/login?ssoError=…` while the app is still connecting (HIN-179). The
+  /// boot's own bounce to `/login` would drop the reason; this is where it
+  /// waits, and it is handed out once.
+  String? pendingLogin;
+
   /// The location to redirect to, or null to let [location] render.
   String? redirect({
     required String location,
@@ -138,6 +146,11 @@ class BootGate {
       if (!gates.contains(location) && location != '/dashboard') {
         pendingDeepLink = uri;
       }
+    }
+
+    if (location == '/login' &&
+        Uri.parse(uri).queryParameters.containsKey('ssoError')) {
+      pendingLogin = uri;
     }
 
     // The SSO callback carries a one-time token pair in its query string.
@@ -202,9 +215,14 @@ class BootGate {
         '/register',
         '/forgot-password',
       };
-      if (allowed.contains(location)) return null;
+      if (allowed.contains(location)) {
+        if (location == '/login' && uri == pendingLogin) pendingLogin = null;
+        return null;
+      }
       parkIfDeepLink();
-      return '/login';
+      final login = pendingLogin ?? '/login';
+      pendingLogin = null;
+      return login;
     }
     // Authenticated and ready: hand back the parked deep link, wherever the
     // user is standing right now. Deliberately not limited to the gates: the
@@ -216,6 +234,7 @@ class BootGate {
     // from a location that is by then no longer a gate — and used to sit there
     // forever, which is exactly what "the app opens and does nothing" looked
     // like.
+    pendingLogin = null;
     final parked = pendingDeepLink;
     pendingDeepLink = null;
     if (parked != null && parked != uri) return parked;
