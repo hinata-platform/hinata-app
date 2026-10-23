@@ -388,6 +388,24 @@ Future<bool> showResetModal(BuildContext context, List<AdminUser> users) {
   );
 }
 
+/// Asks before an account's SSO binding is undone (HIN-179), and says what
+/// follows: every session of the person ends, and their next SSO sign-in can
+/// connect the account again, by the same rules as any account not yet bound.
+Future<bool> showUnlinkSsoModal(BuildContext context, AdminUser user) {
+  return _confirm(
+    context,
+    icon: LucideIcons.unlink,
+    title: context.t('admin.um.unlinkSso'),
+    subtitle: context.t(
+      'admin.um.unlinkSsoConfirm',
+      variables: {'email': user.email},
+    ),
+    confirmLabel: context.t('admin.um.unlinkSsoAction'),
+    confirmIcon: LucideIcons.unlink,
+    body: _previewList(context, [user]),
+  );
+}
+
 // ─────────────────────────── Delete (type DELETE) ────────────────────────
 
 Future<bool> showDeleteModal(

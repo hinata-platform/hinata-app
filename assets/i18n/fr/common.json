@@ -356,6 +356,15 @@
       "confirm": "Changer de serveur"
     },
     "ssoProviderFailed": "le service de connexion de votre organisation ne l’a pas finalisée. Réessayez.",
+    "ssoRefused": {
+      "ssoAccountNotLinked": "Un compte avec cette adresse e-mail existe déjà, mais il n'est pas associé à cette connexion. Connectez-vous avec votre mot de passe ou contactez votre administrateur.",
+      "ssoAccountNotLinkedSsoOnly": "Un compte avec cette adresse e-mail existe déjà, mais il n'est pas associé à cette connexion. Contactez votre administrateur.",
+      "ssoEmailNotVerified": "Votre service de connexion indique que cette adresse e-mail n'est pas confirmée. Un compte existant n'est jamais associé à une adresse non confirmée. Contactez votre administrateur.",
+      "ssoNoEmail": "Votre service de connexion n'a transmis aucune adresse e-mail, et sans adresse aucun compte ne peut être créé. Contactez votre administrateur.",
+      "accountDeactivated": "Votre compte est désactivé. Contactez votre administrateur.",
+      "pendingApproval": "Votre compte attend l'approbation d'un administrateur.",
+      "emailNotVerified": "Confirmez d'abord votre adresse e-mail. Vous trouverez le lien dans votre boîte de réception."
+    },
     "showPassword": "Afficher le mot de passe",
     "hidePassword": "Masquer le mot de passe"
   },
@@ -3410,6 +3419,11 @@
       "sendPasswordResetSub": "Envoyer un lien de réinitialisation sécurisé à {{email}}",
       "revokeAllSessions": "Révoquer toutes les sessions",
       "revokeAllSessionsSub": "Forcer la déconnexion sur tous les appareils ({{n}} actives)",
+      "unlinkSso": "Dissocier la connexion SSO",
+      "unlinkSsoSub": "Seulement si le compte de la personne chez le fournisseur d'identité a changé",
+      "unlinkSsoConfirm": "La prochaine connexion SSO avec {{email}} peut associer à nouveau ce compte, quel que soit le compte du fournisseur d'où elle vient. Ne le faites que si vous savez que ce sera cette personne. Toutes les sessions de la personne prennent fin.",
+      "unlinkSsoAction": "Dissocier",
+      "toastSsoUnlinked": "Connexion SSO dissociée",
       "deleteThisUser": "Supprimer cet utilisateur",
       "deleteThisUserSub": "Supprimer définitivement le compte et ses adhésions",
       "tlLastActive": "Dernière activité",
@@ -3670,6 +3684,7 @@
       "LOGIN_BLOCKED": "Connexion bloquée",
       "MFA_FAILURE": "Échec de la double authentification",
       "SSO_LOGIN": "Connexion via SSO",
+      "SSO_LINKED": "Compte associé au SSO",
       "SESSION_REVOKED": "Session révoquée",
       "USER_REGISTERED": "Utilisateur inscrit",
       "EMAIL_VERIFIED": "Adresse e-mail vérifiée",
@@ -3691,6 +3706,7 @@
       "USER_DELETED": "Utilisateur supprimé",
       "USER_PASSWORD_RESET_SENT": "Réinitialisation de mot de passe envoyée",
       "USER_SESSIONS_REVOKED": "Sessions révoquées",
+      "USER_SSO_LINK_REMOVED": "Association SSO supprimée par un administrateur",
       "SETTINGS_CHANGED": "Réglages modifiés",
       "CONNECT_ENROLLED": "Enregistrement sur Hinata Connect",
       "CONNECT_HANDSHAKE_STARTED": "Handshake Hinata Connect démarré",
@@ -4685,9 +4701,11 @@
   "invite": {
     "title": "Configurez votre compte",
     "subtitle": "Vous rejoignez l'espace en tant que {{email}}. Choisissez un mot de passe pour terminer.",
+    "subtitleSso": "Vous rejoignez l'espace en tant que {{email}}. Connectez-vous avec votre service de connexion pour terminer.",
     "passwordLabel": "Mot de passe",
     "passwordHint": "Au moins 10 caractères",
     "createAccount": "Créer le compte",
+    "joinWith": "Rejoindre avec {{provider}}",
     "invalidTitle": "Invitation non valide ou expirée",
     "invalidBody": "Demandez à un administrateur de vous envoyer une nouvelle invitation.",
     "goToLogin": "Aller à la connexion"

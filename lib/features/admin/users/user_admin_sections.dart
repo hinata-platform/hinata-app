@@ -320,6 +320,21 @@ class UserAdminSections extends StatelessWidget {
         ),
       );
     }
+    // Only an account that is bound has anything to undo; on an instance
+    // without SSO the row never shows.
+    if (u.ssoLinked) {
+      rows.add(
+        _ActRow(
+          icon: LucideIcons.unlink,
+          title: context.t('admin.um.unlinkSso'),
+          subtitle: context.t('admin.um.unlinkSsoSub'),
+          onTap: () {
+            close();
+            actions.openUnlinkSso(u);
+          },
+        ),
+      );
+    }
 
     return _withGaps(rows);
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -9,16 +10,24 @@ import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/core_models.dart';
 import '../../core/util/server_link.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/hive_loader.dart';
+import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'auth_shell.dart';
 import 'auth_flow_cubit.dart';
+import 'sso_launch.dart';
 
 /// Lands here from the invitation deep link (web URL or `hinata://invite`).
 /// Validates the invitation, lets the invitee set a password in the app's UI,
 /// then signs them in. [server] (carried by the link) points a freshly opened
 /// web/app at the right backend.
+///
+/// Where the server has SSO, the invitee can join with it instead: the sign-in
+/// carries the invitation, which proves the address, and completes it. With
+/// local sign-in off that is the only way, as a password could not be used
+/// (HIN-179).
 class AcceptInviteScreen extends StatelessWidget {
   const AcceptInviteScreen({super.key, required this.token, this.server});
 
@@ -52,6 +61,11 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
   String? _email;
   String? _loadError; // token invalid/expired
   String? _submitError;
+  List<SsoProvider> _providers = const [];
+  bool _providersFailed = false;
+
+  /// Id of the SSO provider currently launching, or null.
+  String? _launchingSsoId;
 
   @override
   void initState() {
@@ -86,8 +100,11 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
       _loading = true;
       _loadError = null;
     });
+    final flow = context.read<AuthFlowCubit>();
+    final providers = _loadProviders(flow);
     try {
-      final info = await context.read<AuthFlowCubit>().inviteInfo(widget.token);
+      final info = await flow.inviteInfo(widget.token);
+      await providers;
       if (!mounted) return;
       setState(() {
         _email = info.email;
@@ -99,6 +116,49 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
         _loading = false;
         _loadError = failure.message;
       });
+    }
+  }
+
+  /// The SSO providers an invitee can join with. A failed lookup only matters
+  /// where SSO is the only way in, and is said there with a retry.
+  Future<void> _loadProviders(AuthFlowCubit flow) async {
+    try {
+      final providers = await flow.ssoProviders();
+      if (!mounted) return;
+      setState(() {
+        _providers = providers;
+        _providersFailed = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _providersFailed = true);
+    }
+  }
+
+  Future<void> _joinWithSso(SsoProvider provider) async {
+    final serverUrl = context.read<AuthBloc>().storage.serverUrl ?? '';
+    setState(() => _launchingSsoId = provider.id);
+    try {
+      // As on the login screen: let the loader reach the screen before the
+      // web app hands this tab to the provider.
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      if (!mounted) return;
+      final launched = await launchSso(
+        serverUrl,
+        provider,
+        invite: widget.token,
+      );
+      if (!mounted) return;
+      // On the web a launched sign-in has left this page; anywhere else the
+      // browser took over, and the buttons come back for a retry.
+      if (!kIsWeb || !launched) setState(() => _launchingSsoId = null);
+      if (!launched) {
+        showGlassErrorToast(context, context.t('auth.ssoLaunchFailed'));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _launchingSsoId = null);
+      showGlassErrorToast(context, context.t('auth.ssoLaunchFailed'));
     }
   }
 
@@ -179,6 +239,10 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
     final passwordMin = context.select(
       (AppConfigBloc b) => b.state.meta?.passwordMinLength ?? 10,
     );
+    final localAuth = context.select(
+      (AppConfigBloc b) => b.state.meta?.localAuthEnabled ?? true,
+    );
+    final busy = _submitting || _launchingSsoId != null;
     return Form(
       key: _formKey,
       // Lets a password manager capture the new password (and offer to save it
@@ -196,58 +260,123 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
             ),
             const SizedBox(height: 8),
             Text(
-              context.t('invite.subtitle', variables: {'email': _email ?? ''}),
+              context.t(
+                localAuth ? 'invite.subtitle' : 'invite.subtitleSso',
+                variables: {'email': _email ?? ''},
+              ),
               style: TextStyle(color: AppColors.textSecondary),
             ),
-            const SizedBox(height: 20),
-            TextFormField(
-              controller: _password,
-              obscureText: _obscure,
-              autofocus: true,
-              autofillHints: const [AutofillHints.newPassword],
-              textInputAction: TextInputAction.done,
-              decoration: InputDecoration(
-                labelText: context.t('invite.passwordLabel'),
-                hintText: context.t('invite.passwordHint'),
-                prefixIcon: const Icon(LucideIcons.lock),
-                suffixIcon: IconButton(
-                  tooltip: context.t(
-                    _obscure ? 'auth.showPassword' : 'auth.hidePassword',
-                  ),
-                  icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                ),
-              ),
-              onFieldSubmitted: (_) => _submit(),
-              validator: (v) => (v ?? '').length >= passwordMin
-                  ? null
-                  : context.t(
-                      'errors.passwordTooShort',
-                      variables: {'min': passwordMin},
+            if (localAuth) ...[
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _password,
+                obscureText: _obscure,
+                autofocus: true,
+                autofillHints: const [AutofillHints.newPassword],
+                textInputAction: TextInputAction.done,
+                decoration: InputDecoration(
+                  labelText: context.t('invite.passwordLabel'),
+                  hintText: context.t('invite.passwordHint'),
+                  prefixIcon: const Icon(LucideIcons.lock),
+                  suffixIcon: IconButton(
+                    tooltip: context.t(
+                      _obscure ? 'auth.showPassword' : 'auth.hidePassword',
                     ),
-            ),
-            if (_submitError != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                context.t(_submitError!),
-                style: TextStyle(color: AppColors.dangerInk),
-                textAlign: TextAlign.center,
+                    icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
+                    onPressed: () => setState(() => _obscure = !_obscure),
+                  ),
+                ),
+                onFieldSubmitted: (_) => _submit(),
+                validator: (v) => (v ?? '').length >= passwordMin
+                    ? null
+                    : context.t(
+                        'errors.passwordTooShort',
+                        variables: {'min': passwordMin},
+                      ),
+              ),
+              if (_submitError != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  context.t(_submitError!),
+                  style: TextStyle(color: AppColors.dangerInk),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+              const SizedBox(height: 16),
+              FilledButton(
+                onPressed: busy ? null : _submit,
+                child: _submitting
+                    ? SizedBox(
+                        width: 22,
+                        height: 22,
+                        child: HiveLoader(
+                          strokeWidth: 2,
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : Text(context.t('invite.createAccount')),
               ),
             ],
-            const SizedBox(height: 16),
-            FilledButton(
-              onPressed: _submitting ? null : _submit,
-              child: _submitting
-                  ? SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: HiveLoader(
-                        strokeWidth: 2,
-                        color: AppColors.primary,
-                      ),
-                    )
-                  : Text(context.t('invite.createAccount')),
-            ),
+            if (localAuth && _providers.isNotEmpty) ...[
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  const Expanded(child: Divider()),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      context.t('auth.or'),
+                      style: TextStyle(color: AppColors.textSecondary),
+                    ),
+                  ),
+                  const Expanded(child: Divider()),
+                ],
+              ),
+            ],
+            if (_providers.isNotEmpty) const SizedBox(height: 12),
+            for (final provider in _providers)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: OutlinedButton.icon(
+                  onPressed: busy ? null : () => _joinWithSso(provider),
+                  icon: _launchingSsoId == provider.id
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: HiveLoader(size: 18, strokeWidth: 2),
+                        )
+                      : const Icon(LucideIcons.shield, size: 18),
+                  label: Text(
+                    _launchingSsoId == provider.id
+                        ? context.t('auth.signingIn')
+                        : context.t(
+                            'invite.joinWith',
+                            variables: {'provider': provider.displayName},
+                          ),
+                  ),
+                ),
+              ),
+            // SSO is the only way in here, so a lookup that failed or found
+            // nothing must say so: silence would be a dead end.
+            if (!localAuth && _providers.isEmpty) ...[
+              const SizedBox(height: 16),
+              Text(
+                context.t(
+                  _providersFailed
+                      ? 'auth.ssoLoadFailed'
+                      : 'auth.ssoOnlyNoProviders',
+                ),
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+              if (_providersFailed)
+                TextButton.icon(
+                  onPressed: () =>
+                      _loadProviders(context.read<AuthFlowCubit>()),
+                  icon: const Icon(LucideIcons.refreshCw, size: 15),
+                  label: Text(context.t('common.retry')),
+                ),
+            ],
           ],
         ),
       ),

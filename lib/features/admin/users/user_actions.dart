@@ -150,6 +150,10 @@ UserActions buildUserActions(
       'admin.um.toastSessionsRevoked',
       clearSel: true,
     ),
+    openUnlinkSso: (u) async {
+      if (!await showUnlinkSsoModal(context, u)) return;
+      await run(() => users.unlinkSso(u.id), 'admin.um.toastSsoUnlinked');
+    },
     openDelete: (ids) async {
       if (!await showDeleteModal(context, usersFor(ids))) return;
       await run(

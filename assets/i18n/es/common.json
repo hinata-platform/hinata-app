@@ -356,6 +356,15 @@
       "confirm": "Cambiar de servidor"
     },
     "ssoProviderFailed": "el servicio de inicio de sesión de tu organización no la completó. Inténtalo de nuevo.",
+    "ssoRefused": {
+      "ssoAccountNotLinked": "Ya existe una cuenta con esta dirección de correo que no está vinculada a este inicio de sesión. Inicia sesión con tu contraseña o contacta con la administración.",
+      "ssoAccountNotLinkedSsoOnly": "Ya existe una cuenta con esta dirección de correo que no está vinculada a este inicio de sesión. Contacta con la administración.",
+      "ssoEmailNotVerified": "Tu servicio de inicio de sesión indica que esta dirección de correo no está confirmada. Una cuenta existente nunca se vincula a una dirección sin confirmar. Contacta con la administración.",
+      "ssoNoEmail": "Tu servicio de inicio de sesión no ha enviado ninguna dirección de correo, y sin ella no se puede crear una cuenta. Contacta con la administración.",
+      "accountDeactivated": "Tu cuenta está desactivada. Contacta con la administración.",
+      "pendingApproval": "Tu cuenta está pendiente de aprobación por parte de la administración.",
+      "emailNotVerified": "Primero confirma tu dirección de correo. Encontrarás el enlace en tu bandeja de entrada."
+    },
     "showPassword": "Mostrar contraseña",
     "hidePassword": "Ocultar contraseña"
   },
@@ -3410,6 +3419,11 @@
       "sendPasswordResetSub": "Envía un enlace de restablecimiento seguro a {{email}}",
       "revokeAllSessions": "Revocar todas las sesiones",
       "revokeAllSessionsSub": "Fuerza el cierre de sesión en todos los dispositivos ({{n}} activos)",
+      "unlinkSso": "Desvincular el inicio de sesión SSO",
+      "unlinkSsoSub": "Solo si la cuenta de la persona en el proveedor de identidad ha cambiado",
+      "unlinkSsoConfirm": "El próximo inicio de sesión SSO con {{email}} puede volver a vincular esta cuenta, venga de la cuenta del proveedor que venga. Hazlo solo si sabes que será esta persona. Todas las sesiones de la persona se cierran.",
+      "unlinkSsoAction": "Desvincular",
+      "toastSsoUnlinked": "Inicio de sesión SSO desvinculado",
       "deleteThisUser": "Eliminar este usuario",
       "deleteThisUserSub": "Quita de forma permanente la cuenta y sus pertenencias",
       "tlLastActive": "Última actividad",
@@ -3670,6 +3684,7 @@
       "LOGIN_BLOCKED": "Inicio de sesión bloqueado",
       "MFA_FAILURE": "Verificación en dos pasos fallida",
       "SSO_LOGIN": "Sesión iniciada mediante SSO",
+      "SSO_LINKED": "Cuenta vinculada a SSO",
       "SESSION_REVOKED": "Sesión revocada",
       "USER_REGISTERED": "Usuario registrado",
       "EMAIL_VERIFIED": "Correo verificado",
@@ -3691,6 +3706,7 @@
       "USER_DELETED": "Usuario eliminado",
       "USER_PASSWORD_RESET_SENT": "Restablecimiento de contraseña enviado",
       "USER_SESSIONS_REVOKED": "Sesiones revocadas",
+      "USER_SSO_LINK_REMOVED": "Vinculación SSO eliminada por un administrador",
       "SETTINGS_CHANGED": "Ajustes cambiados",
       "CONNECT_ENROLLED": "Hinata Connect registrado",
       "CONNECT_HANDSHAKE_STARTED": "Handshake de Hinata Connect iniciado",
@@ -4685,9 +4701,11 @@
   "invite": {
     "title": "Configura tu cuenta",
     "subtitle": "Te unes como {{email}}. Elige una contraseña para terminar.",
+    "subtitleSso": "Te unes como {{email}}. Inicia sesión con tu servicio de inicio de sesión para terminar.",
     "passwordLabel": "Contraseña",
     "passwordHint": "Al menos 10 caracteres",
     "createAccount": "Crear cuenta",
+    "joinWith": "Unirse con {{provider}}",
     "invalidTitle": "Invitación no válida o caducada",
     "invalidBody": "Pide a un administrador que te envíe una invitación nueva.",
     "goToLogin": "Ir al inicio de sesión"

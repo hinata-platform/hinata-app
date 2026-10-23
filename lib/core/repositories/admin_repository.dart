@@ -258,6 +258,10 @@ class AdminRepository {
   Future<void> adminRevokeSessions(List<String> ids) =>
       _api.post('/api/v1/admin/users/revoke-sessions', body: {'ids': ids});
 
+  /// Undoes the account's binding to its SSO identity (HIN-179).
+  Future<void> adminUnlinkSso(String id) =>
+      _api.delete('/api/v1/admin/users/$id/sso-link');
+
   Future<void> adminUpdateUserDetails(
     String id, {
     String? displayName,
