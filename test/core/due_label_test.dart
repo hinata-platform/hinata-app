@@ -15,12 +15,18 @@ import 'package:hinata/core/widgets/hive_widgets.dart';
 
 void main() {
   testWidgets('due labels speak the app language', (tester) async {
-    /// Renders the label for a date [days] away, in [locale]. `days == 999`
-    /// stands for "no due date at all".
-    Future<String?> label(int days, {required String locale}) async {
+    /// Renders the label for a date [days] calendar days after [now], in
+    /// [locale]. `days == 999` stands for "no due date at all". A fixed clock,
+    /// so a run shortly after midnight before a clock change counts the same.
+    Future<String?> label(
+      int days, {
+      required String locale,
+      DateTime? now,
+    }) async {
+      final clock = now ?? DateTime(2026, 7, 15, 9, 30);
       final due = days == 999
           ? null
-          : DateUtils.dateOnly(DateTime.now().add(Duration(days: days)));
+          : DateTime(clock.year, clock.month, clock.day + days);
       String? text;
       await tester.pumpWidget(
         MaterialApp(
@@ -30,7 +36,7 @@ void main() {
           localizationsDelegates: I18n.delegates(),
           home: Builder(
             builder: (context) {
-              text = dueLabel(context, due)?.text;
+              text = dueLabel(context, due, now: clock)?.text;
               return const SizedBox();
             },
           ),
@@ -56,6 +62,12 @@ void main() {
     expect(await label(0, locale: 'de'), 'Heute');
     expect(await label(1, locale: 'de'), 'Morgen');
     expect(await label(4, locale: 'de'), 'in 4 T.');
+    // Across the spring clock change one of those days has 23 hours: still four
+    // days on the calendar.
+    expect(
+      await label(4, locale: 'de', now: DateTime(2027, 3, 26, 0, 30)),
+      'in 4 T.',
+    );
 
     final farDe = await label(40, locale: 'de');
     expect(farDe, isNotNull);

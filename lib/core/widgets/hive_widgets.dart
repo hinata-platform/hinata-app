@@ -901,17 +901,26 @@ class SegmentedControl extends StatelessWidget {
 // ───────────────────────────── helpers ──────────────────────────────────
 
 /// Relative due label + lateness: "3 T. überfällig", "Heute", "in 4 T.", and
-/// a plain date once the deadline is more than a week out.
+/// a plain date once the deadline is more than a week out. [now] stands in for
+/// the clock in tests.
 ///
 /// Localized end to end — the near terms through the message bundle, the far
 /// date through [DateFormat] in the app's locale, so a German user never reads
 /// "23d overdue" or "Jul 24".
-({String text, bool late})? dueLabel(BuildContext context, DateTime? due) {
+({String text, bool late})? dueLabel(
+  BuildContext context,
+  DateTime? due, {
+  DateTime? now,
+}) {
   if (due == null) return null;
-  final d = DateTime(due.year, due.month, due.day);
-  final now = DateTime.now();
-  final today = DateTime(now.year, now.month, now.day);
-  final diff = d.difference(today).inDays;
+  final clock = now ?? DateTime.now();
+  // Counted on the calendar: across a clock change one of the days has 23 or
+  // 25 hours, and counting hours put a date four days out at three.
+  final diff = DateTime.utc(
+    due.year,
+    due.month,
+    due.day,
+  ).difference(DateTime.utc(clock.year, clock.month, clock.day)).inDays;
   // Interpolated, not pluralized: these strings use the same wording for one
   // day and for many ("1 T. überfällig" / "23 T. überfällig"), and asking
   // i18next for a plural form that no bundle defines renders the bare key.
@@ -924,7 +933,7 @@ class SegmentedControl extends StatelessWidget {
   if (diff == 1) return (text: t('tomorrow'), late: false);
   if (diff <= 7) return (text: t('inDays', diff), late: false);
   final locale = Localizations.localeOf(context).toString();
-  return (text: DateFormat.MMMd(locale).format(d), late: false);
+  return (text: DateFormat.MMMd(locale).format(due), late: false);
 }
 
 // ───────────────────────── directional chevrons ─────────────────────────
