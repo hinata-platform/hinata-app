@@ -18,7 +18,7 @@ permissions:
 # One place per file for the SDK version — see the comment on the first
 # flutter-action use below.
 env:
-  FLUTTER_VERSION: 3.47.0
+  FLUTTER_VERSION: 3.47.7
 
 jobs:
   quality:
@@ -224,6 +224,9 @@ jobs:
         with:
           context: .
           push: true
+          # The web image builds with the SDK the quality job just tested,
+          # not with whatever a base image happens to ship.
+          build-args: FLUTTER_VERSION=${{ env.FLUTTER_VERSION }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

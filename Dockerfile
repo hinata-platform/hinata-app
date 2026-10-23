@@ -1,5 +1,18 @@
 # ---- Build stage: compile the Flutter web app ----
-FROM ghcr.io/cirruslabs/flutter:stable AS build
+# The SDK is cloned from its flutter/flutter release tag, the same release CI
+# tests against: ci.yml passes its FLUTTER_VERSION in as a build arg, and the
+# default here follows .fvmrc. No prebuilt Flutter image any more —
+# ghcr.io/cirruslabs/flutter:stable stopped at 3.44.0 in May 2026, so the
+# production image quietly built with an older SDK than the one CI had tested.
+FROM debian:trixie-slim AS build
+ARG FLUTTER_VERSION=3.47.7
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends ca-certificates curl git unzip xz-utils \
+ && rm -rf /var/lib/apt/lists/*
+RUN git clone --depth 1 --branch "$FLUTTER_VERSION" \
+      https://github.com/flutter/flutter.git /sdks/flutter
+ENV PATH="/sdks/flutter/bin:$PATH"
+RUN flutter config --no-analytics && flutter precache --web
 WORKDIR /app
 
 # Generic build: NO backend is baked in. The default server is resolved at
@@ -8,9 +21,9 @@ WORKDIR /app
 # every container start. The image on ghcr is therefore server-agnostic — the
 # operator sets the backend purely at deployment.
 
-# Copy the full source first: the app has a path dependency
-# (packages/liquid_glass_widgets), so `pub get` needs the vendored package
-# present. pubspec.lock is gitignored, so it isn't in the build context anyway.
+# Copy the full source first: the app has path dependencies under packages/,
+# so `pub get` needs them present. pubspec.lock is checked in, so the image
+# resolves exactly the versions CI tested.
 COPY . .
 RUN flutter pub get
 # WasmGC build (ships a JS fallback bundle for browsers without WasmGC). Fixes a
