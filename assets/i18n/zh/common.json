@@ -356,6 +356,15 @@
       "confirm": "切换服务器"
     },
     "ssoProviderFailed": "你所在组织的登录服务未能完成登录。请重试。",
+    "ssoRefused": {
+      "ssoAccountNotLinked": "已存在使用此邮箱地址的账户，但它未与此登录方式关联。请使用密码登录，或联系管理员。",
+      "ssoAccountNotLinkedSsoOnly": "已存在使用此邮箱地址的账户，但它未与此登录方式关联。请联系管理员。",
+      "ssoEmailNotVerified": "你的登录服务报告此邮箱地址尚未确认。现有账户绝不会关联到未确认的地址。请联系管理员。",
+      "ssoNoEmail": "你的登录服务没有发送邮箱地址，没有地址就无法创建账户。请联系管理员。",
+      "accountDeactivated": "你的账户已停用。请联系管理员。",
+      "pendingApproval": "你的账户正在等待管理员审批。",
+      "emailNotVerified": "请先确认你的邮箱地址。确认链接已发送到你的收件箱。"
+    },
     "showPassword": "显示密码",
     "hidePassword": "隐藏密码"
   },
@@ -3410,6 +3419,11 @@
       "sendPasswordResetSub": "向 {{email}} 发送安全的重置链接",
       "revokeAllSessions": "撤销全部会话",
       "revokeAllSessionsSub": "强制所有设备退出登录（当前 {{n}} 个活动会话）",
+      "unlinkSso": "解除 SSO 登录关联",
+      "unlinkSsoSub": "仅在此人在身份提供商处的账户发生变化时使用",
+      "unlinkSsoConfirm": "下一次使用 {{email}} 的 SSO 登录可能会重新关联此账户，无论它来自身份提供商的哪个账户。只有在确定会是此人时才这样做。此人的所有会话都会结束。",
+      "unlinkSsoAction": "解除关联",
+      "toastSsoUnlinked": "已解除 SSO 登录关联",
       "deleteThisUser": "删除该用户",
       "deleteThisUserSub": "永久移除该账户及其成员关系",
       "tlLastActive": "最后活跃",
@@ -3670,6 +3684,7 @@
       "LOGIN_BLOCKED": "登录被阻止",
       "MFA_FAILURE": "双重验证失败",
       "SSO_LOGIN": "通过 SSO 登录",
+      "SSO_LINKED": "账户已关联 SSO",
       "SESSION_REVOKED": "会话已撤销",
       "USER_REGISTERED": "用户已注册",
       "EMAIL_VERIFIED": "邮箱已验证",
@@ -3691,6 +3706,7 @@
       "USER_DELETED": "用户已删除",
       "USER_PASSWORD_RESET_SENT": "已发送密码重置邮件",
       "USER_SESSIONS_REVOKED": "会话已撤销",
+      "USER_SSO_LINK_REMOVED": "管理员解除了 SSO 关联",
       "SETTINGS_CHANGED": "设置已更改",
       "CONNECT_ENROLLED": "已接入 Hinata Connect",
       "CONNECT_HANDSHAKE_STARTED": "Hinata Connect 握手已开始",
@@ -4685,9 +4701,11 @@
   "invite": {
     "title": "设置你的账户",
     "subtitle": "你将以 {{email}} 的身份加入。设置密码即可完成。",
+    "subtitleSso": "你将以 {{email}} 的身份加入。通过你的登录服务登录即可完成。",
     "passwordLabel": "密码",
     "passwordHint": "至少 10 个字符",
     "createAccount": "创建账户",
+    "joinWith": "通过 {{provider}} 加入",
     "invalidTitle": "邀请无效或已过期",
     "invalidBody": "请联系管理员重新发送一封邀请。",
     "goToLogin": "前往登录"

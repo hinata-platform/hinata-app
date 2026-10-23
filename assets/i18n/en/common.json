@@ -356,6 +356,15 @@
       "confirm": "Switch server"
     },
     "ssoProviderFailed": "your organization's sign-in service did not complete it. Please try again.",
+    "ssoRefused": {
+      "ssoAccountNotLinked": "There is already an account with this email address that is not connected to this sign-in. Sign in with your password or contact your administrator.",
+      "ssoAccountNotLinkedSsoOnly": "There is already an account with this email address that is not connected to this sign-in. Contact your administrator.",
+      "ssoEmailNotVerified": "Your sign-in service reports this email address as unconfirmed. An existing account is never connected to an unconfirmed address. Contact your administrator.",
+      "ssoNoEmail": "Your sign-in service did not send an email address, and an account can't be created without one. Contact your administrator.",
+      "accountDeactivated": "Your account is deactivated. Contact your administrator.",
+      "pendingApproval": "Your account is waiting for approval by an administrator.",
+      "emailNotVerified": "Confirm your email address first. You will find the link in your inbox."
+    },
     "showPassword": "Show password",
     "hidePassword": "Hide password"
   },
@@ -3410,6 +3419,11 @@
       "sendPasswordResetSub": "Email a secure reset link to {{email}}",
       "revokeAllSessions": "Revoke all sessions",
       "revokeAllSessionsSub": "Force sign-out on every device ({{n}} active)",
+      "unlinkSso": "Disconnect SSO sign-in",
+      "unlinkSsoSub": "Only if the person's account at the identity provider changed",
+      "unlinkSsoConfirm": "The next SSO sign-in with {{email}} may connect this account again, whichever account at the identity provider it comes from. Only do this when you know it will be this person. All of the person's sessions end with it.",
+      "unlinkSsoAction": "Disconnect",
+      "toastSsoUnlinked": "SSO sign-in disconnected",
       "deleteThisUser": "Delete this user",
       "deleteThisUserSub": "Permanently remove the account & memberships",
       "tlLastActive": "Last active",
@@ -3670,6 +3684,7 @@
       "LOGIN_BLOCKED": "Sign-in blocked",
       "MFA_FAILURE": "Two-factor failed",
       "SSO_LOGIN": "Signed in via SSO",
+      "SSO_LINKED": "Account connected to SSO",
       "SESSION_REVOKED": "Session revoked",
       "USER_REGISTERED": "User registered",
       "EMAIL_VERIFIED": "Email verified",
@@ -3691,6 +3706,7 @@
       "USER_DELETED": "User deleted",
       "USER_PASSWORD_RESET_SENT": "Password reset sent",
       "USER_SESSIONS_REVOKED": "Sessions revoked",
+      "USER_SSO_LINK_REMOVED": "SSO connection removed by an admin",
       "SETTINGS_CHANGED": "Settings changed",
       "CONNECT_ENROLLED": "Hinata Connect enrolled",
       "CONNECT_HANDSHAKE_STARTED": "Hinata Connect handshake started",
@@ -4685,9 +4701,11 @@
   "invite": {
     "title": "Set up your account",
     "subtitle": "You're joining as {{email}}. Choose a password to finish.",
+    "subtitleSso": "You're joining as {{email}}. Sign in with your sign-in service to finish.",
     "passwordLabel": "Password",
     "passwordHint": "At least 10 characters",
     "createAccount": "Create account",
+    "joinWith": "Join with {{provider}}",
     "invalidTitle": "Invitation invalid or expired",
     "invalidBody": "Please ask an administrator to send you a fresh invitation.",
     "goToLogin": "Go to sign in"

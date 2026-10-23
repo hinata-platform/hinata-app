@@ -446,6 +446,7 @@ class UserActions {
     required this.openResend,
     required this.openReset,
     required this.revokeSessions,
+    required this.openUnlinkSso,
     required this.openDelete,
     required this.isLastActiveAdmin,
     required this.nameById,
@@ -466,6 +467,9 @@ class UserActions {
   final void Function(List<String> ids) openResend;
   final void Function(List<String> ids) openReset;
   final void Function(List<String> ids) revokeSessions;
+
+  /// Asks, then undoes the account's binding to its SSO identity (HIN-179).
+  final void Function(AdminUser u) openUnlinkSso;
   final void Function(List<String> ids) openDelete;
   final bool Function(AdminUser u) isLastActiveAdmin;
   final String? Function(String? id) nameById;
