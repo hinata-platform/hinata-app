@@ -206,10 +206,13 @@ class _GlassPanelShadowPainter extends CustomPainter {
     canvas.save();
     canvas.clipPath(outside);
     for (final s in shadows) {
-      canvas.drawRRect(
-        rrect.shift(s.offset).inflate(s.spreadRadius),
-        s.toPaint(),
-      );
+      final shadow = rrect.shift(s.offset).inflate(s.spreadRadius);
+      // As in CSS, a spread that shrinks the shape to nothing casts no
+      // shadow. Painted anyway, the inverted rect came out as a hard grey
+      // sliver under a 42-point switcher, whose height the panel shadow's
+      // -30 spread more than swallows.
+      if (shadow.width <= 0 || shadow.height <= 0) continue;
+      canvas.drawRRect(shadow, s.toPaint());
     }
     canvas.restore();
   }
