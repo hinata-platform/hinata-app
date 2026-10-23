@@ -565,14 +565,14 @@ parts:
       # $CRAFT_PART_BUILD/flutter-distro is missing, so leaving it to the
       # plugin means building against whatever `stable` pointed at that
       # morning: a new SDK brings a new formatter and new analysis defaults,
-      # and this repository has been bitten by exactly that. 3.47.0 is what
-      # .fvmrc and both workflows pin — bump all three in one commit, so a red
-      # build points at the bump.
+      # and this repository has been bitten by exactly that. 3.47.7 is what
+      # .fvmrc, both workflows and the Dockerfile pin — bump them in one
+      # commit, so a red build points at the bump.
       #
       # Cloning by hand also means taking over the step the plugin would have
       # run alongside its clone, since it skips them together.
       if [ ! -d "$CRAFT_PART_BUILD/flutter-distro" ]; then
-        git clone --depth 1 -b 3.47.0 \
+        git clone --depth 1 -b 3.47.7 \
           https://github.com/flutter/flutter.git "$CRAFT_PART_BUILD/flutter-distro"
         flutter precache --linux
       fi
