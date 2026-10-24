@@ -63,6 +63,7 @@ import 'issue_move_wizard.dart';
 import 'participants/mention_access_hint.dart';
 import 'participants/participant_banner.dart';
 import 'participants/share_issue_sheet.dart';
+import '../blocks/block_actions.dart' show confirmBlock;
 import '../git/widgets/deployment_panel.dart';
 import '../git/widgets/development_summary.dart';
 import '../knowledge/knowledge_location.dart' show KnowledgePaths;

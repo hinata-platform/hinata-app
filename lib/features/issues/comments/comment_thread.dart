@@ -1,5 +1,6 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassContainer,
@@ -20,6 +21,8 @@ import '../../../core/lexical/hinata_document.dart';
 import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'voice/voice_player.dart';
 import '../../../core/theme/app_type.dart';
+import '../../blocks/collapsed_content_line.dart';
+import '../../blocks/hidden_content_cubit.dart';
 import '../../people/person_link.dart';
 
 part 'comment_thread.bubbles.dart';
@@ -255,6 +258,7 @@ class CommentInteractions {
     required this.threadOf,
     required this.onToggleReplies,
     required this.onLoadMoreReplies,
+    this.onBlockAuthor,
   });
 
   final String? meId;
@@ -288,6 +292,10 @@ class CommentInteractions {
 
   /// Load the next page of a root's replies.
   final void Function(IssueComment root) onLoadMoreReplies;
+
+  /// Blocks the author of somebody else's comment, after asking (HIN-168).
+  /// Null where blocking is not offered, such as on an older server.
+  final void Function(IssueComment comment)? onBlockAuthor;
 }
 
 /// Jira-style comment feed (flat text, always left-aligned). Each top-level

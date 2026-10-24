@@ -4467,6 +4467,10 @@
       "requestModalConfirm": "Bericht anfordern",
       "requestedToast": "Datenbericht angefordert – prüfe deine E-Mails"
     },
+    "blocked": {
+      "title": "Blockierte Personen",
+      "subtitle": "Blockieren wirkt nur für dich. Willst du, dass jemand etwas prüft, nutze Melden."
+    },
     "danger": {
       "title": "Gefahrenzone",
       "subtitle": "Unwiderrufliche Kontoaktionen.",
@@ -5788,5 +5792,37 @@
     },
     "loadFailed": "Das Profil ließ sich nicht laden",
     "open": "Profil von {{name}} öffnen"
+  },
+  "blocks": {
+    "action": "Person blockieren",
+    "profile": {
+      "section": "Privatsphäre",
+      "block": "Blockieren",
+      "blockDetail": "Keine Mitteilungen mehr, Kommentare eingeklappt",
+      "unblock": "Blockierung aufheben",
+      "unblockDetail": "Du hast {{name}} blockiert"
+    },
+    "confirm": {
+      "title": "{{name}} blockieren?",
+      "subtitle": "Was sich ändert und was bleibt",
+      "notifications": "Du bekommst keine Mitteilungen mehr, die {{name}} auslöst, auch keine Erwähnungen.",
+      "folded": "Kommentare und Sprachnachrichten von {{name}} siehst du eingeklappt.",
+      "contact": "{{name}} kann dich nicht mehr an Vorgängen beteiligen und dir keine Zeiteinträge teilen.",
+      "work": "Die Zusammenarbeit bleibt: Vorgänge, Anhänge und Seiten siehst du weiter, und Zuweisungen von {{name}} kommen an.",
+      "private": "{{name}} erfährt nichts davon. Du kannst es jederzeit aufheben.",
+      "button": "Blockieren"
+    },
+    "blockedToast": "{{name}} ist blockiert",
+    "unblockedToast": "Blockierung von {{name}} aufgehoben",
+    "folded": "Eingeklappt, weil du {{name}} blockiert hast",
+    "show": "Anzeigen",
+    "list": {
+      "since": "Seit {{date}}",
+      "unblock": "Aufheben",
+      "unblockLabel": "Blockierung von {{name}} aufheben",
+      "emptyTitle": "Du hast niemanden blockiert",
+      "emptyMessage": "Blockieren kannst du im Profil einer Person und im Menü eines Kommentars.",
+      "more": "Mehr laden"
+    }
   }
 }

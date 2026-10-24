@@ -4467,6 +4467,10 @@
       "requestModalConfirm": "申请报告",
       "requestedToast": "已申请数据报告，请查收邮件"
     },
+    "blocked": {
+      "title": "已屏蔽的人",
+      "subtitle": "屏蔽只对你生效。如需有人审核内容，请使用举报。"
+    },
     "danger": {
       "title": "危险操作",
       "subtitle": "不可逆的账户操作。",
@@ -5788,5 +5792,37 @@
     },
     "loadFailed": "无法加载个人资料",
     "open": "打开 {{name}} 的个人资料"
+  },
+  "blocks": {
+    "action": "屏蔽此人",
+    "profile": {
+      "section": "隐私",
+      "block": "屏蔽",
+      "blockDetail": "不再收到通知，评论折叠显示",
+      "unblock": "取消屏蔽",
+      "unblockDetail": "你已屏蔽 {{name}}"
+    },
+    "confirm": {
+      "title": "屏蔽 {{name}}？",
+      "subtitle": "哪些会改变，哪些保持不变",
+      "notifications": "你将不再收到由 {{name}} 触发的通知，包括提及。",
+      "folded": "{{name}} 的评论和语音消息将折叠显示。",
+      "contact": "{{name}} 将无法再把你加入事项，也无法与你共享工时记录。",
+      "work": "协作照常进行：你仍能看到事项、附件和页面，{{name}} 的分配也照常送达。",
+      "private": "{{name}} 不会知道此事。你可以随时取消。",
+      "button": "屏蔽"
+    },
+    "blockedToast": "已屏蔽 {{name}}",
+    "unblockedToast": "已取消屏蔽 {{name}}",
+    "folded": "已折叠，因为你屏蔽了 {{name}}",
+    "show": "显示",
+    "list": {
+      "since": "自 {{date}} 起",
+      "unblock": "取消屏蔽",
+      "unblockLabel": "取消屏蔽 {{name}}",
+      "emptyTitle": "你还没有屏蔽任何人",
+      "emptyMessage": "你可以在某人的个人资料或评论菜单中屏蔽对方。",
+      "more": "加载更多"
+    }
   }
 }
