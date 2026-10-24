@@ -18,9 +18,10 @@ import '../../../core/platform/pdf_annotations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_panel.dart';
+import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassToast;
+    show GlassToastKind, anchorRectOfContext, showGlassToast;
 import 'attachment_kind.dart';
 import 'attachment_viewer_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart'
@@ -152,6 +153,8 @@ class ViewerItem {
     this.blurHash,
     this.mime,
     this.subtitle,
+    this.reportable = false,
+    this.load,
   });
 
   final String id;
@@ -159,8 +162,11 @@ class ViewerItem {
   final String kind;
   final int size;
 
-  /// API path of the attachment's bytes. Null disables every inline preview —
-  /// the stage falls back to the type card.
+  /// Whether the reader may report this file: somebody else's (HIN-173).
+  final bool reportable;
+
+  /// API path of the attachment's bytes. Null, and no [load], disables every
+  /// inline preview — the stage falls back to the type card.
   final String? url;
 
   /// API path of the small server-side preview. Shown — sharp, at the right
@@ -174,8 +180,13 @@ class ViewerItem {
   final String? mime;
   final String? subtitle;
 
+  /// Fetches the bytes itself, past the viewer's shared cache and out of the
+  /// image cache once the page goes: for what has to be asked for on every
+  /// look and kept no longer than it is looked at, like a case's evidence.
+  final Future<Uint8List> Function()? load;
+
   /// Which renderer this item gets on the stage.
-  AttachmentPreviewKind get preview => url == null
+  AttachmentPreviewKind get preview => url == null && load == null
       ? AttachmentPreviewKind.none
       : previewKindFor(kind: kind, name: name, size: size, mime: mime);
 }
@@ -191,7 +202,8 @@ Future<void> showAttachmentViewer(
   BuildContext context, {
   required List<ViewerItem> items,
   required int initialIndex,
-  required Future<void> Function(ViewerItem item) onDownload,
+  required Future<void> Function(ViewerItem item)? onDownload,
+  void Function(ViewerItem item, Rect? anchor)? onReport,
 }) {
   if (items.isEmpty) return Future<void>.value();
   return showGeneralDialog<void>(
@@ -209,6 +221,7 @@ Future<void> showAttachmentViewer(
         items: items,
         initialIndex: initialIndex.clamp(0, items.length - 1),
         onDownload: onDownload,
+        onReport: onReport,
       ),
     ),
     transitionBuilder: (_, _, _, child) => child,
@@ -308,11 +321,18 @@ class _ViewerScaffold extends StatefulWidget {
     required this.items,
     required this.initialIndex,
     required this.onDownload,
+    this.onReport,
   });
 
   final List<ViewerItem> items;
   final int initialIndex;
-  final Future<void> Function(ViewerItem item) onDownload;
+
+  /// Null for files that are only looked at, never saved: a case's evidence
+  /// on the moderation page (HIN-174).
+  final Future<void> Function(ViewerItem item)? onDownload;
+
+  /// Reports a file somebody else uploaded (HIN-173), beside the menu.
+  final void Function(ViewerItem item, Rect? anchor)? onReport;
 
   @override
   State<_ViewerScaffold> createState() => _ViewerScaffoldState();
@@ -846,11 +866,14 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
               _Counter(label: '${_index + 1} / ${widget.items.length}'),
             ],
             const SizedBox(width: 8),
-            _IconAction(
-              icon: LucideIcons.download,
-              tooltip: context.t('issues.attachments.download'),
-              onTap: () => widget.onDownload(cur),
-            ),
+            if (widget.onDownload case final download?)
+              _IconAction(
+                icon: LucideIcons.download,
+                tooltip: context.t('issues.attachments.download'),
+                onTap: () => download(cur),
+              ),
+            if (widget.onReport != null && cur.reportable)
+              _MoreMenu(onReport: (anchor) => widget.onReport!(cur, anchor)),
           ],
         ),
       ),
@@ -1081,6 +1104,41 @@ class _IconAction extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The "…" beside the download (HIN-173): what else there is to do with the
+/// file, which today is reporting it.
+class _MoreMenu extends StatelessWidget {
+  const _MoreMenu({required this.onReport});
+
+  final ValueChanged<Rect?> onReport;
+
+  @override
+  Widget build(BuildContext context) => GlassPopupMenu<int>(
+    value: -1,
+    width: 220,
+    items: [
+      GlassMenuItem(
+        value: 0,
+        label: context.t('moderation.report.action'),
+        // The menu's own ink: it stands on the app's glass, not the stage.
+        leading: const Icon(LucideIcons.flag, size: 16),
+      ),
+    ],
+    onSelected: (_) => onReport(anchorRectOfContext(context)),
+    child: Tooltip(
+      message: context.t('issues.attachments.viewer.more'),
+      child: Semantics(
+        button: true,
+        label: context.t('issues.attachments.viewer.more'),
+        child: const SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(LucideIcons.ellipsis, size: 17, color: _ViewerInk.ink),
+        ),
+      ),
+    ),
+  );
 }
 
 class _Divider extends StatelessWidget {

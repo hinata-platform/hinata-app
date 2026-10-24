@@ -81,6 +81,7 @@ class ServerMeta extends Equatable {
     this.uploadLimits = const UploadLimits(),
     this.defaultDeadlineBasis = RelativeDateBasis.calendar,
     this.shiftPlanningAvailable = true,
+    this.moderation = const ModerationMeta(),
   });
 
   final String serverVersion;
@@ -131,6 +132,9 @@ class ServerMeta extends Equatable {
   /// on a server that predates the field.
   final bool shiftPlanningAvailable;
 
+  /// Reporting, blocking and the operator's contact for reports (HIN-26).
+  final ModerationMeta moderation;
+
   factory ServerMeta.fromJson(Map<String, dynamic> json) => ServerMeta(
     serverVersion: json['serverVersion'] as String? ?? '0.0.0',
     minAppVersion: json['minAppVersion'] as String? ?? '0.0.0',
@@ -159,6 +163,9 @@ class ServerMeta extends Equatable {
       json['defaultDeadlineBasis'] as String?,
     ),
     shiftPlanningAvailable: json['shiftPlanningAvailable'] as bool? ?? true,
+    moderation: json['moderation'] is Map<String, dynamic>
+        ? ModerationMeta.fromJson(json['moderation'] as Map<String, dynamic>)
+        : const ModerationMeta(),
   );
 
   bool isFlagEnabled(String flag) => featureFlags[flag] ?? false;
@@ -192,6 +199,10 @@ class ServerMeta extends Equatable {
   /// and the `/shifts` routes exist for this client.
   bool get shiftPlanning => isFlagEnabled(PlatformFlags.shiftPlanning);
 
+  /// Whether this server moderates: reporting and blocking are offered only
+  /// then. Not a switch; a server that predates moderation sends nothing.
+  bool get supportsModeration => moderation.version >= 1;
+
   @override
   List<Object?> get props => [
     serverVersion,
@@ -217,6 +228,7 @@ class ServerMeta extends Equatable {
     uploadLimits,
     defaultDeadlineBasis,
     shiftPlanningAvailable,
+    moderation,
   ];
 }
 
@@ -257,6 +269,63 @@ class ServerProbe {
 
   /// The organization name, when the server advertises one.
   final String? org;
+}
+
+/// What a server says about moderation before anyone signs in (HIN-26): which
+/// version of reporting and blocking it speaks, and whom the operator names for
+/// reports. A server that predates moderation sends nothing, which reads as
+/// version 0 with no contact.
+class ModerationMeta extends Equatable {
+  const ModerationMeta({
+    this.version = 0,
+    this.contactEmail,
+    this.imprintUrl,
+    this.contactMissing = false,
+    this.rulesVersion,
+    this.rulesUrl,
+  });
+
+  final int version;
+
+  /// Where reports and questions about moderation go.
+  final String? contactEmail;
+
+  /// The operator's imprint.
+  final String? imprintUrl;
+
+  /// No contact for reports is named yet; the admin area warns until there is.
+  final bool contactMissing;
+
+  /// The current version of the house rules (HIN-175); null on a server
+  /// without them.
+  final int? rulesVersion;
+
+  /// The house rules as a page anybody can open, without an account.
+  final String? rulesUrl;
+
+  static String? _text(Object? value) {
+    final text = (value as String?)?.trim();
+    return text == null || text.isEmpty ? null : text;
+  }
+
+  factory ModerationMeta.fromJson(Map<String, dynamic> json) => ModerationMeta(
+    version: (json['version'] as num?)?.toInt() ?? 0,
+    contactEmail: _text(json['contactEmail']),
+    imprintUrl: _text(json['imprintUrl']),
+    contactMissing: json['contactMissing'] as bool? ?? false,
+    rulesVersion: (json['rulesVersion'] as num?)?.toInt(),
+    rulesUrl: _text(json['rulesUrl']),
+  );
+
+  @override
+  List<Object?> get props => [
+    version,
+    contactEmail,
+    imprintUrl,
+    contactMissing,
+    rulesVersion,
+    rulesUrl,
+  ];
 }
 
 /// Attachment upload constraints supplied by the server so the client can
@@ -314,6 +383,8 @@ class AuthUser extends Equatable {
     this.title,
     this.pronouns,
     this.locale = 'en',
+    this.rulesPending = false,
+    this.rulesVersion,
   });
 
   final String id;
@@ -326,12 +397,23 @@ class AuthUser extends Equatable {
   final String? pronouns;
   final String locale;
 
+  /// Whether this person still has to accept the house rules before going on
+  /// (HIN-175). False on a server without them.
+  final bool rulesPending;
+
+  /// The current version of the house rules, as the server said at sign-in.
+  final int? rulesVersion;
+
   bool get isAdmin => roles.contains('ADMIN');
 
   /// Runs the organisation's time, absence and billing side (`ORG_ADMIN`).
   /// Independent of [isAdmin]: neither role implies the other, and neither
   /// opens anybody's projects.
   bool get isOrgAdmin => roles.contains('ORG_ADMIN');
+
+  /// Reviews reported content and decides on it (`MODERATOR`, HIN-26). Sees
+  /// only what was reported; independent of [isAdmin] like the role above.
+  bool get isModerator => roles.contains('MODERATOR');
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
     id: json['id'] as String,
@@ -343,6 +425,8 @@ class AuthUser extends Equatable {
     title: json['title'] as String?,
     pronouns: json['pronouns'] as String?,
     locale: json['locale'] as String? ?? 'en',
+    rulesPending: json['rulesPending'] as bool? ?? false,
+    rulesVersion: (json['rulesVersion'] as num?)?.toInt(),
   );
 
   @override
@@ -354,6 +438,8 @@ class AuthUser extends Equatable {
     roles,
     title,
     pronouns,
+    rulesPending,
+    rulesVersion,
   ];
 }
 

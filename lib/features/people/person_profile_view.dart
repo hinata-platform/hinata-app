@@ -8,9 +8,11 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/theme/hue_colors.dart' show colorFromHex;
+import '../../core/util/dates.dart';
 import '../../core/util/zone_clock.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
+import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
 import '../teams/team_widgets.dart' show teamIcon;
 
 /// What a person's profile does when somebody acts on it. The view only says
@@ -21,6 +23,10 @@ class PersonProfileActions {
     required this.openTeam,
     required this.openProject,
     this.writeEmail,
+    this.toggleBlock,
+    this.report,
+    this.suspend,
+    this.liftSuspension,
     this.close,
   });
 
@@ -30,6 +36,22 @@ class PersonProfileActions {
 
   /// Null where no address is known to the reader.
   final VoidCallback? writeEmail;
+
+  /// Blocks the person, or lifts the block (HIN-168). Null on one's own
+  /// profile and where the server does not know blocking.
+  final VoidCallback? toggleBlock;
+
+  /// Reports the person (HIN-173), beside the row on a wide window. Null
+  /// where blocking is.
+  final void Function(Rect? anchor)? report;
+
+  /// Opens a case to suspend the person (HIN-174). Null unless the reader
+  /// moderates, and never on one's own profile or an administrator's.
+  final VoidCallback? suspend;
+
+  /// Lifts the person's suspension, with a reason. Null unless the reader
+  /// moderates and the account is suspended.
+  final VoidCallback? liftSuspension;
 
   /// The side panel's close button; null on a page, which has its back button.
   final VoidCallback? close;
@@ -49,6 +71,7 @@ class PersonProfileView extends StatelessWidget {
     required this.actions,
     required this.clockReady,
     required this.padding,
+    this.blocked = false,
     this.admin,
     this.now,
   });
@@ -57,6 +80,10 @@ class PersonProfileView extends StatelessWidget {
   final PersonProfileActions actions;
   final bool clockReady;
   final EdgeInsets padding;
+
+  /// Whether the reader blocks this person, which turns the privacy row into
+  /// lifting it.
+  final bool blocked;
   final Widget? admin;
 
   /// The moment the local time is told for; now when null (tests pin it).
@@ -122,6 +149,63 @@ class PersonProfileView extends StatelessWidget {
             style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ],
+        if (actions.toggleBlock != null || actions.report != null) ...[
+          const SizedBox(height: 22),
+          _SectionLabel(context.t('blocks.profile.section')),
+          const SizedBox(height: 8),
+          if (actions.toggleBlock != null)
+            _LinkRow(
+              icon: blocked ? LucideIcons.userCheck : LucideIcons.userX,
+              label: context.t(
+                blocked ? 'blocks.profile.unblock' : 'blocks.profile.block',
+              ),
+              detail: blocked
+                  ? context.t(
+                      'blocks.profile.unblockDetail',
+                      variables: {'name': p.displayName},
+                    )
+                  : context.t('blocks.profile.blockDetail'),
+              onTap: actions.toggleBlock!,
+            ),
+          if (actions.report case final report?)
+            Builder(
+              builder: (rowContext) => _LinkRow(
+                icon: LucideIcons.flag,
+                label: context.t('moderation.report.action'),
+                detail: context.t(
+                  'moderation.report.personDetail',
+                  variables: {'name': p.displayName},
+                ),
+                onTap: () => report(anchorRectOfContext(rowContext)),
+              ),
+            ),
+        ],
+        if (actions.suspend != null || actions.liftSuspension != null) ...[
+          const SizedBox(height: 22),
+          _SectionLabel(context.t('moderation.queue.title')),
+          const SizedBox(height: 8),
+          if (actions.liftSuspension case final lift?)
+            _LinkRow(
+              icon: LucideIcons.userCheck,
+              label: context.t('moderation.suspension.lift'),
+              detail: p.suspension?.until == null
+                  ? context.t('moderation.suspension.indefinite')
+                  : context.t(
+                      'moderation.suspension.until',
+                      variables: {
+                        'date': recentMoment(context, p.suspension!.until!),
+                      },
+                    ),
+              onTap: lift,
+            )
+          else if (actions.suspend case final suspend?)
+            _LinkRow(
+              icon: LucideIcons.userX,
+              label: context.t('moderation.suspension.suspend'),
+              detail: context.t('moderation.suspension.suspendDetail'),
+              onTap: suspend,
+            ),
+        ],
         if (admin != null) ...[
           const SizedBox(height: 28),
           _SectionLabel(context.t('people.admin')),
@@ -147,6 +231,7 @@ class _Header extends StatelessWidget {
         switch (role) {
           'ADMIN' => context.t('admin.um.roleAdmin'),
           'ORG_ADMIN' => context.t('admin.um.orgAdminTitle'),
+          'MODERATOR' => context.t('people.role.moderator'),
           _ => context.t('people.role.member'),
         },
       if (!p.active) context.t('people.deactivated'),

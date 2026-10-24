@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/i18n/i18n.dart';
+import '../../core/models/moderation_models.dart' show OpenWay;
+import '../../core/theme/app_colors.dart';
+import '../../core/theme/app_type.dart';
 import 'admin_form_helpers.dart';
+import 'sections/admin_moderation_entry.dart';
 
 /// SSO provider configuration (OIDC, OAuth2, SAML, LDAP, Kerberos, CAS).
 class AdminSsoSection extends StatefulWidget {
@@ -50,6 +54,11 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               subtitle: context.t('admin.oidcSubtitle'),
               section: _section('oidc'),
               note: context.t('admin.ssoMappingHint'),
+              footer: _ProviderAdmission(
+                way: 'oidc',
+                section: _section('oidc'),
+                onChanged: () => setState(() {}),
+              ),
               fields: [
                 ('displayName', context.t('admin.displayName'), false),
                 ('issuerUri', context.t('admin.ssoField.issuerUri'), false),
@@ -70,6 +79,11 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               subtitle: context.t('admin.oauth2Subtitle'),
               section: _section('oauth2'),
               note: context.t('admin.ssoMappingHint'),
+              footer: _ProviderAdmission(
+                way: 'oauth2',
+                section: _section('oauth2'),
+                onChanged: () => setState(() {}),
+              ),
               fields: [
                 ('displayName', context.t('admin.displayName'), false),
                 (
@@ -95,6 +109,11 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               subtitle: context.t('admin.samlSubtitle'),
               section: _section('saml'),
               note: context.t('admin.ssoMappingHint'),
+              footer: _ProviderAdmission(
+                way: 'saml',
+                section: _section('saml'),
+                onChanged: () => setState(() {}),
+              ),
               fields: [
                 ('displayName', context.t('admin.displayName'), false),
                 (
@@ -113,6 +132,11 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
               subtitle: context.t('admin.ldapSubtitle'),
               section: _section('ldap'),
               note: context.t('admin.ssoMappingHint'),
+              footer: _ProviderAdmission(
+                way: 'ldap',
+                section: _section('ldap'),
+                onChanged: () => setState(() {}),
+              ),
               fields: [
                 ('url', context.t('admin.ssoField.ldapUrl'), false),
                 ('baseDn', context.t('admin.ssoField.baseDn'), false),
@@ -171,6 +195,88 @@ class _AdminSsoSectionState extends State<AdminSsoSection> {
             ),
           ],
         ),
+      ],
+    );
+  }
+}
+
+/// Who a first sign-in through this provider lets in (HIN-175): with approval
+/// it waits like a registration, with named domains only those come in
+/// straight away. With neither, the line below says what that means.
+class _ProviderAdmission extends StatefulWidget {
+  const _ProviderAdmission({
+    required this.way,
+    required this.section,
+    required this.onChanged,
+  });
+
+  /// The provider's settings block, which is also its name for the server.
+  final String way;
+  final Map<String, dynamic> section;
+  final VoidCallback onChanged;
+
+  @override
+  State<_ProviderAdmission> createState() => _ProviderAdmissionState();
+}
+
+class _ProviderAdmissionState extends State<_ProviderAdmission> {
+  static const _domainsMax = 50;
+
+  String get _domains =>
+      ((widget.section['allowedDomains'] as List?) ?? const [])
+          .whereType<String>()
+          .join(', ');
+
+  /// Commas, spaces or new lines between them; a leading @ is dropped.
+  void _putDomains(String text) {
+    widget.section['allowedDomains'] = [
+      for (final part in text.split(RegExp(r'[,;\s]+')))
+        if (part.replaceFirst('@', '').trim().toLowerCase() case final domain
+            when domain.isNotEmpty)
+          domain,
+    ].take(_domainsMax).toList();
+    setState(() {});
+    widget.onChanged();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final section = widget.section;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        AdminToggle(
+          label: context.t('admin.ssoApproval.title'),
+          subtitle: context.t('admin.ssoApproval.hint'),
+          value: section['requireApproval'] == true,
+          onChanged: (value) {
+            setState(() => section['requireApproval'] = value);
+            widget.onChanged();
+          },
+        ),
+        const SizedBox(height: 10),
+        TextFormField(
+          initialValue: _domains,
+          autocorrect: false,
+          keyboardType: TextInputType.url,
+          style: TextStyle(fontSize: AppType.body, color: AppColors.ink),
+          decoration: adminInputDecoration(
+            context,
+            label: context.t('admin.ssoApproval.domains'),
+            hint: 'example.org',
+            helper: context.t('admin.ssoApproval.domainsHint'),
+          ),
+          onChanged: _putDomains,
+        ),
+        if (providerIsOpen(section)) ...[
+          const SizedBox(height: 10),
+          OpenWayLine(
+            way: OpenWay(
+              way: widget.way,
+              name: section['displayName'] as String?,
+            ),
+          ),
+        ],
       ],
     );
   }

@@ -121,6 +121,27 @@ UserActions buildUserActions(
       await reload();
       return true;
     },
+    setModerator: (ids, moderator) async {
+      final involved = usersFor(ids);
+      if (!await confirmModeratorChange(context, involved, grant: moderator)) {
+        return false;
+      }
+      if (!context.mounted) return false;
+      try {
+        await users.setModerator(ids, moderator);
+      } on ApiFailure catch (failure) {
+        toastError(failure.message);
+        return false;
+      }
+      clearSelection?.call();
+      toast(
+        moderator
+            ? 'admin.um.toastModeratorGranted'
+            : 'admin.um.toastModeratorRevoked',
+      );
+      await reload();
+      return true;
+    },
     openDemote: (ids) async {
       if (!await showRevokeAdminModal(context, usersFor(ids))) return;
       await run(
@@ -153,6 +174,14 @@ UserActions buildUserActions(
     openUnlinkSso: (u) async {
       if (!await showUnlinkSsoModal(context, u)) return;
       await run(() => users.unlinkSso(u.id), 'admin.um.toastSsoUnlinked');
+    },
+    openLiftSuspension: (u) async {
+      final note = await showLiftSuspensionModal(context, u);
+      if (note == null) return;
+      await run(
+        () => users.liftSuspension(u.id, note),
+        'admin.um.toastSuspensionLifted',
+      );
     },
     openDelete: (ids) async {
       if (!await showDeleteModal(context, usersFor(ids))) return;

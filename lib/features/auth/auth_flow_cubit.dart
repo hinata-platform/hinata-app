@@ -16,8 +16,10 @@ class AuthFlowCubit extends Cubit<void> {
 
   Future<List<SsoProvider>> ssoProviders() => _auth.ssoProviders();
 
-  Future<({String access, String refresh})> exchangeSso(String code) =>
-      _auth.exchangeSso(code);
+  Future<({String access, String refresh})> exchangeSso(
+    String code,
+    String verifier,
+  ) => _auth.exchangeSso(code, verifier);
 
   Future<({String email, String displayName})> inviteInfo(String token) =>
       _auth.inviteInfo(token);

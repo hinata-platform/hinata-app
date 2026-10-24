@@ -1,12 +1,15 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart' show MultipartFile;
 
 import '../api/api_client.dart';
 import '../models/admin_user_models.dart';
 import '../models/audit_models.dart';
 import '../models/ingest_models.dart';
+import '../models/moderation_models.dart';
 
-/// Administration: platform settings, user management, and the security audit
-/// log.
+/// Administration: platform settings, user management, moderation's way in and
+/// house rules, and the security audit log.
 class AdminRepository {
   AdminRepository(this._api);
 
@@ -179,7 +182,7 @@ class AdminRepository {
   /// paginate server-side; a blank [query] / null filters return everything.
   Future<AdminUserPage> adminUsersPage({
     String query = '',
-    AdminRole? role,
+    UserRoleFilter? role,
     UserStatus? status,
     UserOrigin? origin,
     UserSortKey sort = UserSortKey.lastActive,
@@ -252,6 +255,14 @@ class AdminRepository {
     body: {'ids': ids, 'orgAdmin': orgAdmin},
   );
 
+  /// Grants ([moderator] true) or takes back the moderation role (HIN-26) for
+  /// every user in [ids]. Independent of the roles above.
+  Future<void> adminSetModeratorRole(List<String> ids, bool moderator) =>
+      _api.post(
+        '/api/v1/admin/users/moderator-role',
+        body: {'ids': ids, 'moderator': moderator},
+      );
+
   Future<void> adminSendPasswordReset(List<String> ids) =>
       _api.post('/api/v1/admin/users/password-reset', body: {'ids': ids});
 
@@ -261,6 +272,13 @@ class AdminRepository {
   /// Undoes the account's binding to its SSO identity (HIN-179).
   Future<void> adminUnlinkSso(String id) =>
       _api.delete('/api/v1/admin/users/$id/sso-link');
+
+  /// Ends a suspension moderation decided (HIN-172), with a note for the
+  /// record. The moderators hear that an administrator lifted it.
+  Future<void> adminLiftSuspension(String id, String note) => _api.post(
+    '/api/v1/admin/users/$id/suspension/lift',
+    body: {'note': note},
+  );
 
   Future<void> adminUpdateUserDetails(
     String id, {
@@ -274,6 +292,40 @@ class AdminRepository {
 
   Future<void> adminDeleteUsers(List<String> ids) =>
       _api.post('/api/v1/admin/users/delete', body: {'ids': ids});
+
+  // --- Moderation (HIN-175) ---------------------------------------------------
+
+  /// Every way in that lets people in without approval, and whether a proxy in
+  /// front is not trusted.
+  Future<AccountEntry> accountEntry() async => AccountEntry.fromJson(
+    await _api.get('/api/v1/admin/moderation/entry') as Map<String, dynamic>,
+  );
+
+  /// Which version of the house rules holds, since when, and the last one
+  /// everybody had to accept.
+  Future<HouseRulesVersions> houseRulesVersions() async =>
+      HouseRulesVersions.fromJson(
+        await _api.get('/api/v1/admin/moderation/rules')
+            as Map<String, dynamic>,
+      );
+
+  /// Makes a new version everybody has to accept before going on.
+  Future<HouseRulesVersions> requireRulesReacceptance() async =>
+      HouseRulesVersions.fromJson(
+        await _api.post('/api/v1/admin/moderation/rules/reacceptance')
+            as Map<String, dynamic>,
+      );
+
+  /// What the text check would say about [text]; nothing is stored, logged or
+  /// counted (HIN-176).
+  Future<TextCheckResult> testText(String text) async =>
+      TextCheckResult.fromJson(
+        await _api.post(
+              '/api/v1/admin/moderation/filter/test',
+              body: {'text': text},
+            )
+            as Map<String, dynamic>,
+      );
 
   // --- Audit log ---------------------------------------------------------------
 
@@ -310,4 +362,18 @@ class AdminRepository {
       ((await _api.get('/api/v1/admin/audit/event-types')) as List<dynamic>)
           .map((e) => AuditEventType.fromJson(e as Map<String, dynamic>))
           .toList();
+
+  /// The years there are moderation figures for, newest first (HIN-178).
+  Future<List<int>> moderationFigureYears() async => [
+    for (final year
+        in (await _api.get('/api/v1/admin/moderation/annual-figures/years')
+                as List<dynamic>? ??
+            const []))
+      (year as num).toInt(),
+  ];
+
+  /// The moderation figures of [year] in the Commission's template: a ZIP of
+  /// one CSV file per part (DSA Art. 15, HIN-178).
+  Future<Uint8List> moderationFigures(int year) =>
+      _api.getFileBytes('/api/v1/admin/moderation/annual-figures?year=$year');
 }

@@ -12,6 +12,11 @@ import '../../core/theme/app_type.dart';
 /// `/{lang}/{slug}`.
 const String _legalBaseUrl = 'https://hinata.ahmadre.com';
 
+/// Who provides the app, as section 1 of the terms of service names them.
+/// Only the app: every server is run by its own operator.
+const String appProviderName = 'Rebar Ahmad';
+const String appProviderEmail = 'mail@ahmadre.com';
+
 /// The languages the hosted legal pages are actually published in.
 ///
 /// Deliberately narrower than the languages the app itself speaks: a privacy
@@ -42,10 +47,21 @@ Future<void> openTermsOfService(BuildContext context) => launchUrl(
   mode: LaunchMode.externalApplication,
 );
 
+/// Opens the app provider's hosted imprint in the external browser (HIN-178).
+Future<void> openImprint(BuildContext context) => launchUrl(
+  legalUrl(context, 'impressum'),
+  mode: LaunchMode.externalApplication,
+);
+
 /// A centred pair of links to the hosted legal pages (terms of service +
 /// privacy policy), used as a footer in the auth area (login / register).
+///
+/// With [contactEmail], a third link reaches whoever runs the server, for
+/// questions about its content before anybody has an account (HIN-175).
 class LegalLinks extends StatelessWidget {
-  const LegalLinks({super.key});
+  const LegalLinks({super.key, this.contactEmail});
+
+  final String? contactEmail;
 
   @override
   Widget build(BuildContext context) {
@@ -55,6 +71,11 @@ class LegalLinks extends StatelessWidget {
       decoration: TextDecoration.underline,
       decorationColor: AppColors.textSecondary,
     );
+    // A visual separator only; a screen reader would read "middle dot".
+    Widget dot() => ExcludeSemantics(
+      child: Text('·', style: TextStyle(color: AppColors.textSecondary)),
+    );
+    final contact = contactEmail;
     return Wrap(
       alignment: WrapAlignment.center,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -67,10 +88,7 @@ class LegalLinks extends StatelessWidget {
             child: Text(context.t('auth.termsOfService'), style: linkStyle),
           ),
         ),
-        // A visual separator only; a screen reader would read "middle dot".
-        ExcludeSemantics(
-          child: Text('·', style: TextStyle(color: AppColors.textSecondary)),
-        ),
+        dot(),
         Semantics(
           link: true,
           child: InkWell(
@@ -78,6 +96,19 @@ class LegalLinks extends StatelessWidget {
             child: Text(context.t('auth.privacyPolicy'), style: linkStyle),
           ),
         ),
+        if (contact != null) ...[
+          dot(),
+          Semantics(
+            link: true,
+            child: InkWell(
+              onTap: () => launchUrl(
+                Uri(scheme: 'mailto', path: contact),
+                mode: LaunchMode.externalApplication,
+              ),
+              child: Text(context.t('auth.contact'), style: linkStyle),
+            ),
+          ),
+        ],
       ],
     );
   }

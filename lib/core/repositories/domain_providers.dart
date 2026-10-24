@@ -87,4 +87,7 @@ List<RepositoryProvider> domainRepositoryProviders(BuildContext source) => [
   RepositoryProvider<ShiftRepository>.value(
     value: source.read<ShiftRepository>(),
   ),
+  RepositoryProvider<ModerationRepository>.value(
+    value: source.read<ModerationRepository>(),
+  ),
 ];

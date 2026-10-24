@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../util/dates.dart';
+
 /// One managed e-mail-to-ticket connection: an IMAP mailbox/folder whose
 /// unseen messages become issues in the linked project.
 class IngestConnection extends Equatable {
@@ -16,6 +18,8 @@ class IngestConnection extends Equatable {
     this.projectId,
     this.pollSeconds = 60,
     this.passwordSet = false,
+    this.textRefusals = 0,
+    this.lastTextRefusalAt,
   });
 
   factory IngestConnection.fromJson(Map<String, dynamic> json) =>
@@ -31,6 +35,8 @@ class IngestConnection extends Equatable {
         projectId: json['projectId'] as String?,
         pollSeconds: (json['pollSeconds'] as num?)?.toInt() ?? 60,
         passwordSet: json['passwordSet'] == true,
+        textRefusals: (json['textRefusals'] as num?)?.toInt() ?? 0,
+        lastTextRefusalAt: parseInstant(json['lastTextRefusalAt']),
       );
 
   final String? id;
@@ -49,6 +55,11 @@ class IngestConnection extends Equatable {
 
   /// Read-only server flag: whether a password is stored for this connection.
   final bool passwordSet;
+
+  /// Read-only: mails the text check refused, and when last (HIN-176). Only
+  /// counted; nothing of them is kept.
+  final int textRefusals;
+  final DateTime? lastTextRefusalAt;
 
   Map<String, dynamic> toJson() => {
     'name': ?name,
@@ -89,6 +100,8 @@ class IngestConnection extends Equatable {
     projectId: projectId ?? this.projectId,
     pollSeconds: pollSeconds ?? this.pollSeconds,
     passwordSet: passwordSet ?? this.passwordSet,
+    textRefusals: textRefusals,
+    lastTextRefusalAt: lastTextRefusalAt,
   );
 
   /// Display label: explicit name, else mailbox identity.
@@ -110,6 +123,8 @@ class IngestConnection extends Equatable {
     projectId,
     pollSeconds,
     passwordSet,
+    textRefusals,
+    lastTextRefusalAt,
   ];
 }
 

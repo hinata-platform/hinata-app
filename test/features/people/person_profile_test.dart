@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hinata/core/api/api_client.dart';
+import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/models/admin_user_models.dart';
 import 'package:hinata/core/models/core_models.dart';
@@ -13,9 +14,14 @@ import 'package:hinata/core/widgets/glass_panel.dart';
 import 'package:hinata/features/admin/users/user_management_cubit.dart';
 import 'package:hinata/features/admin/users/user_management_widgets.dart'
     show UserAdminSections;
+import 'package:hinata/features/blocks/hidden_content_cubit.dart';
 import 'package:hinata/features/people/person_admin_cubit.dart';
 import 'package:hinata/features/people/person_profile_cubit.dart';
 import 'package:hinata/features/people/person_profile_screen.dart';
+
+import '../../support/recording_fake.dart';
+import '../../support/fixed_app_config.dart';
+import '../blocks/block_fakes.dart';
 
 /// A person's profile (HIN-165): what every member sees, what an admin sees on
 /// top, and how it opens at every width.
@@ -161,6 +167,83 @@ void main() {
     });
   });
 
+  group('blocking (HIN-168)', () {
+    testWidgets('a member can block somebody else, after a question', (
+      tester,
+    ) async {
+      final account = FakeAccountRepository()..answer<void>(#block, null);
+      final hidden = await hiddenContent(account);
+      addTearDown(hidden.close);
+      await _pumpPage(tester, mia, width: 390, hidden: hidden);
+      await tester.scrollUntilVisible(
+        find.text('blocks.profile.block'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+      expect(find.text('blocks.profile.section'), findsOneWidget);
+
+      await tester.tap(find.text('blocks.profile.block'));
+      await tester.pumpAndSettle();
+      expect(find.text('blocks.confirm.title'), findsOneWidget);
+      await tester.tap(find.text('blocks.confirm.button'));
+      await tester.pumpAndSettle();
+
+      expect(account.only, invoked(#block, positional: ['u1']));
+      expect(hidden.state.blocks('u1'), isTrue);
+      expect(find.text('blocks.profile.unblock'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
+    testWidgets('a blocked person offers lifting it, without a question', (
+      tester,
+    ) async {
+      final account = FakeAccountRepository()..answer<void>(#unblock, null);
+      final hidden = await hiddenContent(account, blocked: {'u1'});
+      addTearDown(hidden.close);
+      await _pumpPage(tester, mia, width: 390, hidden: hidden);
+      await tester.scrollUntilVisible(
+        find.text('blocks.profile.unblock'),
+        200,
+        scrollable: find.byType(Scrollable).first,
+      );
+
+      await tester.tap(find.text('blocks.profile.unblock'));
+      await tester.pumpAndSettle();
+
+      expect(account.only, invoked(#unblock, positional: ['u1']));
+      expect(find.text('blocks.profile.block'), findsOneWidget);
+      await tester.pump(const Duration(seconds: 10));
+    });
+
+    testWidgets("one's own profile has nothing to block", (tester) async {
+      final hidden = await hiddenContent(FakeAccountRepository());
+      addTearDown(hidden.close);
+      const me = PersonProfile(
+        id: 'u1',
+        displayName: 'Mia Berger',
+        username: 'mia',
+        roles: ['MEMBER'],
+        self: true,
+      );
+      await _pumpPage(tester, me, width: 390, hidden: hidden);
+      expect(find.text('blocks.profile.section'), findsNothing);
+      expect(find.text('blocks.profile.block'), findsNothing);
+    });
+
+    testWidgets('a server without blocking offers none', (tester) async {
+      final hidden = await hiddenContent(FakeAccountRepository());
+      addTearDown(hidden.close);
+      await _pumpPage(
+        tester,
+        mia,
+        width: 390,
+        hidden: hidden,
+        moderation: false,
+      );
+      expect(find.text('blocks.profile.section'), findsNothing);
+    });
+  });
+
   group('how it opens', () {
     testWidgets('wide: a panel from the right over the page', (tester) async {
       final router = await _pumpPage(
@@ -240,6 +323,8 @@ Future<GoRouter> _pumpPage(
   double textScale = 1,
   bool admin = false,
   bool openFromPage = false,
+  HiddenContentCubit? hidden,
+  bool moderation = true,
 }) async {
   tester.view.physicalSize = Size(width, 900);
   tester.view.devicePixelRatio = 1;
@@ -281,8 +366,16 @@ Future<GoRouter> _pumpPage(
         RepositoryProvider<UserRepository>.value(value: _FakeUsers(profile)),
         RepositoryProvider<AdminRepository>.value(value: _FakeAdmin()),
       ],
-      child: BlocProvider<AuthBloc>.value(
-        value: _FakeAuthBloc(admin: admin),
+      child: MultiBlocProvider(
+        providers: [
+          BlocProvider<AuthBloc>.value(value: _FakeAuthBloc(admin: admin)),
+          if (hidden != null) ...[
+            BlocProvider<AppConfigBloc>.value(
+              value: FixedAppConfig(moderation: ModerationMeta(version: moderation ? 1 : 0)),
+            ),
+            BlocProvider<HiddenContentCubit>.value(value: hidden),
+          ],
+        ],
         child: MediaQuery(
           data: MediaQueryData(
             size: Size(width, 900),
@@ -349,7 +442,7 @@ class _FakeAdmin implements AdminRepository {
   @override
   Future<AdminUserPage> adminUsersPage({
     String query = '',
-    AdminRole? role,
+    UserRoleFilter? role,
     UserStatus? status,
     UserOrigin? origin,
     UserSortKey sort = UserSortKey.lastActive,

@@ -43,9 +43,12 @@ import '../../core/models/issue_participation.dart';
 import '../../core/router/linked_target.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/models/work_models.dart';
+import '../../core/models/moderation_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
+import '../../core/widgets/content_refused_notice.dart';
+import '../../core/widgets/moderation_placeholder.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
@@ -63,6 +66,7 @@ import 'issue_move_wizard.dart';
 import 'participants/mention_access_hint.dart';
 import 'participants/participant_banner.dart';
 import 'participants/share_issue_sheet.dart';
+import '../blocks/block_actions.dart' show confirmBlock;
 import '../git/widgets/deployment_panel.dart';
 import '../git/widgets/development_summary.dart';
 import '../knowledge/knowledge_location.dart' show KnowledgePaths;
@@ -112,6 +116,9 @@ import '../../core/theme/app_type.dart';
 import '../../core/widgets/hover_builder.dart';
 import '../../core/widgets/budget/budget.dart';
 import '../time/budget/project_usage.dart';
+import '../moderation/house_rules_sheet.dart' show showHouseRulesSheet;
+import '../moderation/report/report_sheet.dart';
+import '../moderation/notice/notice_screen.dart' show noticeLocation;
 
 part 'issue_detail_sheet.view.dart';
 part 'issue_detail_sheet.dialogs.dart';
@@ -265,6 +272,7 @@ Future<void> showIssueDetailSheet(
             // the `header` update this builder is running for.
             watch: bodyKey.currentState?.watchMenu,
             onShare: bodyKey.currentState?.shareAction,
+            onReport: bodyKey.currentState?.reportAction,
             readOnly: bodyKey.currentState?.isParticipant ?? false,
             // Reply-by-email: only for email-sourced issues, gated on the flag.
             onReply: issue != null && issue.isEmailSourced && emailReplyEnabled
@@ -379,6 +387,7 @@ class _SheetActions extends StatelessWidget {
     this.canDelete = false,
     this.archived = false,
     this.onShare,
+    this.onReport,
     this.readOnly = false,
   });
 
@@ -404,6 +413,9 @@ class _SheetActions extends StatelessWidget {
 
   /// Opens the share dialog; null for a caller who may not share.
   final void Function(Rect anchorRect)? onShare;
+
+  /// Reports the issue (HIN-173); null where it is not offered.
+  final void Function(Rect anchorRect)? onReport;
 
   /// Whether the caller only takes part in the issue (reads and comments).
   final bool readOnly;
@@ -436,6 +448,7 @@ class _SheetActions extends StatelessWidget {
           archived: archived,
           watch: watch,
           onShare: onShare,
+          onReport: onReport,
           readOnly: readOnly,
         ),
         IconButton(

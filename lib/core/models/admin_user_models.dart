@@ -14,6 +14,18 @@ enum AdminRole {
       value == 'ADMIN' ? AdminRole.admin : AdminRole.user;
 }
 
+/// Whom the user list shows: a platform role, or the people who moderate
+/// (HIN-26), a role held beside it.
+enum UserRoleFilter {
+  admin('ADMIN'),
+  user('USER'),
+  moderator('MODERATOR');
+
+  const UserRoleFilter(this.wire);
+
+  final String wire;
+}
+
 enum UserOrigin {
   local,
   oidc,
@@ -75,6 +87,7 @@ class AdminUser {
     this.pronouns,
     required this.role,
     this.orgAdmin = false,
+    this.moderator = false,
     required this.origin,
     required this.status,
     required this.twoFA,
@@ -85,6 +98,8 @@ class AdminUser {
     this.invitedAt,
     this.invitedBy,
     this.joinedAt,
+    this.suspended = false,
+    this.suspendedUntil,
   });
 
   final String id;
@@ -100,6 +115,10 @@ class AdminUser {
   /// absences, holidays and billing for the organisation. Independent of
   /// [role] — neither implies the other.
   final bool orgAdmin;
+
+  /// Reviews reported content and decides on it (`MODERATOR`, HIN-26). Like
+  /// [orgAdmin], independent of [role].
+  final bool moderator;
   final UserOrigin origin;
   final UserStatus status;
   final bool twoFA;
@@ -113,6 +132,13 @@ class AdminUser {
   final DateTime? invitedAt;
   final String? invitedBy;
   final DateTime? joinedAt;
+
+  /// Moderation suspended the account (HIN-172). Its [status] stays
+  /// `disabled`; who decided it and why stays with moderation.
+  final bool suspended;
+
+  /// When the suspension ends by itself; null until further notice.
+  final DateTime? suspendedUntil;
 
   /// Invitation links live 7 days; anything older is expired and must be re-sent.
   bool get inviteExpired =>
@@ -133,6 +159,7 @@ class AdminUser {
     pronouns: json['pronouns'] as String?,
     role: AdminRole.fromWire(json['role'] as String?),
     orgAdmin: json['orgAdmin'] == true,
+    moderator: json['moderator'] == true,
     origin: UserOrigin.fromWire(json['origin'] as String?),
     status: UserStatus.fromWire(json['status'] as String?),
     twoFA: json['twoFA'] == true,
@@ -143,6 +170,8 @@ class AdminUser {
     invitedAt: _date(json['invitedAt']),
     invitedBy: json['invitedBy'] as String?,
     joinedAt: _date(json['joinedAt']),
+    suspended: json['suspended'] == true,
+    suspendedUntil: _date(json['suspendedUntil']),
   );
 }
 

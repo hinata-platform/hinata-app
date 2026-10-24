@@ -26,6 +26,13 @@ class AppStorage {
   static const _kAccessToken = 'access_token';
   static const _kRefreshToken = 'refresh_token';
   static const _kOnboardingDone = 'onboarding_done';
+  // The version is part of the key: new terms are a new key, and everybody
+  // agrees once more (HIN-175).
+  static const _kAppTermsAccepted = 'app_terms_accepted.v1';
+  // Whether this device's first launch with the terms looked for a session.
+  static const _kAppTermsGrandfathered = 'app_terms_grandfathered.v1';
+  // The verifier of the SSO sign-in this device started, and when.
+  static const _kSsoPending = 'sso_pending.v1';
   static const _kConnectHintSeen = 'connect_hint_seen';
   static const _kMultiSelectHintSeen = 'multi_select_hint_seen';
   static const _kLocale = 'locale';
@@ -142,6 +149,24 @@ class AppStorage {
     await _migrateToMultiServer();
     await _migrateTokensToSecureStorage();
     await _loadTokenCache();
+    await _grandfatherAppTerms();
+  }
+
+  /// A device signed in when the app's terms arrived keeps its session: it
+  /// counts as having agreed, once. The first launch of this version decides
+  /// it under a flag of its own, so a sign-in on a fresh device later meets
+  /// the terms like any other (HIN-175).
+  Future<void> _grandfatherAppTerms() async {
+    try {
+      if (_prefs.getBool(_kAppTermsGrandfathered) ?? false) return;
+      if (_refreshCache.values.any((token) => token.isNotEmpty) &&
+          !appTermsAccepted) {
+        await setAppTermsAccepted();
+      }
+      await _prefs.setBool(_kAppTermsGrandfathered, true);
+    } catch (_) {
+      // Nothing in the boot sequence may throw; the next launch asks again.
+    }
   }
 
   // --- current server --------------------------------------------------------
@@ -416,6 +441,53 @@ class AppStorage {
 
   bool get onboardingDone => _prefs.getBool(_kOnboardingDone) ?? false;
   Future<void> setOnboardingDone() => _prefs.setBool(_kOnboardingDone, true);
+
+  /// Whether this device agreed to the app's own terms, with the zero
+  /// tolerance the stores ask for, before anybody signs in (HIN-175). Per
+  /// device, not per server: the terms are the app's, not an instance's.
+  bool get appTermsAccepted => _prefs.getBool(_kAppTermsAccepted) ?? false;
+  Future<void> setAppTermsAccepted() =>
+      _prefs.setBool(_kAppTermsAccepted, true);
+
+  // --- SSO sign-in in flight -------------------------------------------------
+
+  /// How long a started SSO sign-in waits for its callback: longer than any
+  /// sign-in a person actually finishes at the provider takes.
+  static const ssoPendingFor = Duration(minutes: 30);
+
+  /// The verifier of the SSO sign-in this device started within
+  /// [ssoPendingFor], or null when none is waiting for its callback.
+  ///
+  /// Kept on disk rather than in memory: on the web the sign-in reloads the
+  /// app, and natively the system may end it while the browser has the
+  /// sign-in. Not a secret worth the keychain: it only completes a sign-in this
+  /// device started, and it is gone once that has.
+  String? pendingSsoVerifier({DateTime? now}) {
+    final raw = _prefs.getString(_kSsoPending);
+    if (raw == null) return null;
+    try {
+      final pending = jsonDecode(raw) as Map<String, dynamic>;
+      final started = DateTime.fromMillisecondsSinceEpoch(
+        pending['startedAt'] as int,
+      );
+      final age = (now ?? DateTime.now()).difference(started);
+      if (age.isNegative || age >= ssoPendingFor) return null;
+      return pending['verifier'] as String;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> setPendingSsoVerifier(String verifier, {DateTime? now}) =>
+      _prefs.setString(
+        _kSsoPending,
+        jsonEncode({
+          'verifier': verifier,
+          'startedAt': (now ?? DateTime.now()).millisecondsSinceEpoch,
+        }),
+      );
+
+  Future<void> clearPendingSsoVerifier() => _prefs.remove(_kSsoPending);
 
   // --- Hinata Connect first-login hint (scoped per server) -------------------
 

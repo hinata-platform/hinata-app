@@ -2,11 +2,12 @@ import 'package:dio/dio.dart';
 
 import '../api/api_client.dart';
 import '../models/account_models.dart';
+import '../models/moderation_models.dart';
 import '../models/personal_access_token.dart';
 
 /// The signed-in user's self-service account surface (`/me`): profile, avatar,
 /// sessions, notification preferences, 2FA management, access overview, GDPR,
-/// and personal access tokens.
+/// blocking, the house rules, reports, and personal access tokens.
 class AccountRepository {
   AccountRepository(this._api);
 
@@ -161,6 +162,52 @@ class AccountRepository {
   /// Erases the account (Art. 17). The body must literally be `DELETE`.
   Future<void> deleteMyAccount() =>
       _api.delete('/api/v1/me', body: {'confirm': 'DELETE'});
+
+  // Blocking (HIN-168) ----------------------------------------------------------
+
+  /// Blocks [userId]: what they set off no longer reaches the reader, and their
+  /// comments fold away. Idempotent, and nobody is told.
+  Future<void> block(String userId) => _api.put('/api/v1/me/blocks/$userId');
+
+  /// Lifts a block. Idempotent.
+  Future<void> unblock(String userId) =>
+      _api.delete('/api/v1/me/blocks/$userId');
+
+  /// The people the reader blocks, newest first.
+  Future<({List<BlockedPerson> items, int total})> blocksPage({
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get('/api/v1/me/blocks', query: {'page': page, 'size': size})
+            as Map<String, dynamic>;
+    return (
+      items: ((data['items'] as List<dynamic>?) ?? [])
+          .map((p) => BlockedPerson.fromJson(p as Map<String, dynamic>))
+          .toList(),
+      total: data['total'] as int? ?? 0,
+    );
+  }
+
+  /// Every id the reader blocks, at most a thousand, for folding their posts
+  /// away wherever they show.
+  Future<Set<String>> blockedIds() async =>
+      ((await _api.get('/api/v1/me/blocks/ids')) as List<dynamic>)
+          .cast<String>()
+          .toSet();
+
+  // House rules and reports (HIN-175) -----------------------------------------
+
+  /// The current house rules in the reader's language, and whether they still
+  /// wait for the reader.
+  Future<HouseRules> houseRules() async => HouseRules.fromJson(
+    await _api.get('/api/v1/me/rules') as Map<String, dynamic>,
+  );
+
+  /// Accepts [version] of the house rules. Only the current one counts, an
+  /// older one answers 409; accepting the same one again changes nothing.
+  Future<void> acceptHouseRules(int version) =>
+      _api.post('/api/v1/me/rules/acceptance', body: {'version': version});
 
   // Personal access tokens (MCP) ------------------------------------------------
 

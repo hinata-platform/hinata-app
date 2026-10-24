@@ -4,7 +4,7 @@ part of 'issue_detail_sheet.dart';
 
 /// Actions collapsed into the "…" overflow menu of the issue top bars. The
 /// export submenu reports an [IssueExportChoice] instead.
-enum _IssueMenuAction { toggleWatch, reply, share, clone, move, delete }
+enum _IssueMenuAction { toggleWatch, reply, share, clone, move, delete, report }
 
 /// The delete/archive/restore affordance shared by both top bars: label,
 /// icon and tint depend on the archived state and the delete permission.
@@ -43,12 +43,17 @@ class IssueActionsMenu extends StatelessWidget {
     this.onReply,
     this.watch,
     this.onShare,
+    this.onReport,
     this.readOnly = false,
   });
 
   /// Opens the share dialog under the rect this menu's button stands at; null
   /// for a caller who may not share (HIN-136).
   final void Function(Rect anchorRect)? onShare;
+
+  /// Reports the issue beside this menu's button (HIN-173); null where it is
+  /// not offered, such as on one's own issue.
+  final void Function(Rect anchorRect)? onReport;
 
   /// Somebody the issue is only shared with: watching and exporting are all
   /// the menu offers them.
@@ -170,6 +175,13 @@ class IssueActionsMenu extends StatelessWidget {
             color: canDelete && !archived ? AppColors.danger : null,
             dividerAbove: true,
           ),
+        if (onReport != null)
+          GlassMenuItem(
+            value: _IssueMenuAction.report,
+            label: context.t('moderation.report.action'),
+            leading: Icon(LucideIcons.flag, size: 16, color: AppColors.inkSoft),
+            dividerAbove: true,
+          ),
       ],
       onSelected: (action) {
         switch (action) {
@@ -188,6 +200,9 @@ class IssueActionsMenu extends StatelessWidget {
             onMove();
           case _IssueMenuAction.delete:
             onDelete();
+          case _IssueMenuAction.report:
+            final report = onReport;
+            if (report != null) _withMenuAnchor(context, report);
           default:
             break;
         }
@@ -255,11 +270,15 @@ class _RouteTopBar extends StatelessWidget {
     this.watch,
     this.canDelete = false,
     this.onShare,
+    this.onReport,
     this.readOnly = false,
   });
 
   /// Opens the share dialog; null for a caller who may not share.
   final void Function(Rect anchorRect)? onShare;
+
+  /// Reports the issue (HIN-173); null where it is not offered.
+  final void Function(Rect anchorRect)? onReport;
 
   /// Whether the caller only takes part in the issue (reads and comments).
   final bool readOnly;
@@ -365,6 +384,7 @@ class _RouteTopBar extends StatelessWidget {
               archived: issue.archived,
               watch: watch,
               onShare: onShare,
+              onReport: onReport,
               readOnly: readOnly,
             ),
           ],

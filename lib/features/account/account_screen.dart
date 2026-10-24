@@ -38,6 +38,11 @@ import 'account_cubit.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'tint_customizer.dart';
+import '../blocks/blocked_people_section.dart';
+import '../moderation/help_contact_section.dart';
+import '../moderation/queue/moderation_screen.dart' show moderationLocation;
+import '../moderation/queue/open_cases_badge.dart';
+import '../moderation/queue/moderation_summary_scope.dart';
 import 'availability_section.dart';
 import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
@@ -47,6 +52,7 @@ import 'shift_feed_section.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/util/published_link.dart';
 
 part 'account_screen.widgets.dart';
 
@@ -62,6 +68,8 @@ enum _SettingsSection {
   tokens,
   appearance,
   data,
+  blocked,
+  help,
   danger,
 }
 
@@ -69,7 +77,7 @@ enum _SettingsSection {
 /// are looked up per-section so the index row, the sub-page app bar and the
 /// section card header all stay in sync.
 /// Rail entries that leave the settings page for a page of their own.
-enum _RailLink { admin, organization }
+enum _RailLink { admin, organization, moderation }
 
 const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.security, icon: LucideIcons.shieldCheck),
@@ -80,6 +88,8 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.appearance, icon: LucideIcons.sunMoon),
   (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
   (section: _SettingsSection.data, icon: LucideIcons.fileText),
+  (section: _SettingsSection.blocked, icon: LucideIcons.userX),
+  (section: _SettingsSection.help, icon: LucideIcons.lifeBuoy),
   (section: _SettingsSection.danger, icon: LucideIcons.triangleAlert),
 ];
 
@@ -94,10 +104,17 @@ class AccountScreen extends StatelessWidget {
   final String? section;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (context) => AccountCubit(context.read<AccountRepository>()),
-    child: _AccountBody(section: section),
-  );
+  Widget build(BuildContext context) {
+    final moderator = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state.user?.isModerator ?? false,
+    );
+    final body = _AccountBody(section: section);
+    return BlocProvider(
+      create: (context) => AccountCubit(context.read<AccountRepository>()),
+      // The badge on Moderation (HIN-174) counts while the settings are open.
+      child: moderator ? ModerationSummaryScope(child: body) : body,
+    );
+  }
 }
 
 class _AccountBody extends StatefulWidget {
@@ -129,6 +146,9 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
   // Shift planning (HIN-46): assigned, changed, called off, the reminder a
   // day ahead. Listed only while the module is on.
   (id: 'shifts', icon: LucideIcons.calendarClock, locked: false),
+  // Moderation (HIN-174): new and overdue cases, a second pair of eyes, notes
+  // to the team. Listed only for moderators.
+  (id: 'moderation', icon: LucideIcons.flag, locked: false),
   (id: 'security', icon: LucideIcons.shieldCheck, locked: true),
 ];
 
@@ -142,6 +162,11 @@ class _AccountScreenState extends State<_AccountBody> {
         PlatformFlags.mcp,
       ) ??
       false;
+
+  /// Whether the server knows blocking (HIN-168); an older one has no route
+  /// for the list.
+  bool get _moderation =>
+      context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false;
 
   /// Whether the extended time module is on. Watched rather than read: an
   /// administrator can switch it on while this page is open, and a settings
@@ -549,7 +574,9 @@ class _AccountScreenState extends State<_AccountBody> {
       _SettingsSection.time ||
       _SettingsSection.appearance => 'account.rail.preferences',
       _SettingsSection.data ||
+      _SettingsSection.blocked ||
       _SettingsSection.danger => 'account.rail.privacy',
+      _SettingsSection.help => 'account.rail.help',
     });
     final adminGroup = context.t('account.rail.administration');
     return PageChrome(
@@ -593,6 +620,15 @@ class _AccountScreenState extends State<_AccountBody> {
                 group: adminGroup,
                 trailing: LucideIcons.externalLink,
               ),
+            if (user?.isModerator ?? false)
+              SettingsNavEntry<Object>(
+                id: _RailLink.moderation,
+                icon: LucideIcons.flag,
+                label: context.t('moderation.queue.title'),
+                group: adminGroup,
+                trailing: LucideIcons.externalLink,
+                badge: const OpenCasesBadge(gap: 6),
+              ),
           ],
           selected: section,
           onSelect: (id) {
@@ -601,6 +637,8 @@ class _AccountScreenState extends State<_AccountBody> {
                 context.go('/admin');
               case _RailLink.organization:
                 context.go('/organization');
+              case _RailLink.moderation:
+                context.go(moderationLocation());
               case final _SettingsSection s:
                 setState(() => _wideSection = s);
             }
@@ -627,11 +665,13 @@ class _AccountScreenState extends State<_AccountBody> {
   }
 
   /// The sections this account has, in the phone index's order: tokens only
-  /// with the MCP server, time only with the extended time module.
+  /// with the MCP server, time only with the extended time module, blocked
+  /// people only on a server that knows blocking.
   List<_SettingsSection> _visibleSections() => [
     for (final item in _settingsMenu)
       if (!(item.section == _SettingsSection.tokens && !_mcpEnabled) &&
-          !(item.section == _SettingsSection.time && !_advancedTime))
+          !(item.section == _SettingsSection.time && !_advancedTime) &&
+          !(item.section == _SettingsSection.blocked && !_moderation))
         item.section,
   ];
 
@@ -681,13 +721,12 @@ class _AccountScreenState extends State<_AccountBody> {
   Widget _sectionMenu() {
     final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
     final isOrgAdmin = context.read<AuthBloc>().state.user?.isOrgAdmin ?? false;
-    final mcpEnabled = _mcpEnabled;
-    final advancedTime = _advancedTime;
+    final isModerator =
+        context.read<AuthBloc>().state.user?.isModerator ?? false;
+    final visible = _visibleSections().toSet();
     final tiles = <Widget>[];
     for (final item in _settingsMenu) {
-      if (item.section == _SettingsSection.tokens && !mcpEnabled) continue;
-      // Nothing to configure where there is no pomodoro to configure.
-      if (item.section == _SettingsSection.time && !advancedTime) continue;
+      if (!visible.contains(item.section)) continue;
       tiles.add(
         _navTile(
           icon: item.icon,
@@ -715,6 +754,18 @@ class _AccountScreenState extends State<_AccountBody> {
             title: context.t('settings.organization'),
             subtitle: context.t('settings.organizationDesc'),
             onTap: () => context.go('/organization'),
+          ),
+        );
+      }
+      // Moderation (HIN-174), with the cases waiting.
+      if (item.section == _SettingsSection.appearance && isModerator) {
+        tiles.add(
+          _navTile(
+            icon: LucideIcons.flag,
+            title: context.t('moderation.queue.title'),
+            subtitle: context.t('moderation.queue.settingsHint'),
+            badge: const OpenCasesBadge(gap: 8),
+            onTap: () => context.go(moderationLocation()),
           ),
         );
       }
@@ -746,6 +797,7 @@ class _AccountScreenState extends State<_AccountBody> {
     required String subtitle,
     required VoidCallback onTap,
     bool danger = false,
+    Widget? badge,
   }) {
     final accent = danger ? AppColors.danger : AppColors.accentStrong;
     final accentBg = danger
@@ -800,6 +852,7 @@ class _AccountScreenState extends State<_AccountBody> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                ?badge,
                 Icon(
                   forwardChevron(context),
                   size: 18,
@@ -822,6 +875,8 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.tokens => 'account.tokens.title',
     _SettingsSection.appearance => 'account.appearance.title',
     _SettingsSection.data => 'account.data.title',
+    _SettingsSection.blocked => 'account.blocked.title',
+    _SettingsSection.help => 'account.help.title',
     _SettingsSection.danger => 'account.danger.title',
   });
 
@@ -834,6 +889,8 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.tokens => 'account.tokens.subtitle',
     _SettingsSection.appearance => 'account.appearance.subtitle',
     _SettingsSection.data => 'account.data.subtitle',
+    _SettingsSection.blocked => 'account.blocked.subtitle',
+    _SettingsSection.help => 'account.help.subtitle',
     _SettingsSection.danger => 'account.danger.subtitle',
   });
 
@@ -862,6 +919,8 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.tokens => const PatSection(),
     _SettingsSection.appearance => _appearanceSection(),
     _SettingsSection.data => _dataSection(),
+    _SettingsSection.blocked => const BlockedPeopleSection(),
+    _SettingsSection.help => const HelpContactSection(),
     _SettingsSection.danger => _dangerSection(),
   };
 
@@ -1367,9 +1426,13 @@ class _AccountScreenState extends State<_AccountBody> {
   List<({String id, IconData icon, bool locked})> get _visibleNotifEvents {
     final shifts =
         context.watch<AppConfigBloc>().state.meta?.shiftPlanning ?? false;
+    final moderator = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state.user?.isModerator ?? false,
+    );
     return [
       for (final e in _notifEvents)
-        if (e.id != 'shifts' || shifts) e,
+        if ((e.id != 'shifts' || shifts) && (e.id != 'moderation' || moderator))
+          e,
     ];
   }
 
@@ -1871,7 +1934,8 @@ class _AccountScreenState extends State<_AccountBody> {
         ),
         // Operator-configured external privacy notice (optional supplement to
         // the app's own policy above).
-        if ((config.meta?.privacyPolicyUrl ?? '').isNotEmpty) ...[
+        if (publishedLink(config.meta?.privacyPolicyUrl)
+            case final privacy?) ...[
           Divider(height: 1, color: AppColors.hairline2),
           SettingRow(
             label: context.t('settings.privacyPolicyExternal'),
@@ -1879,10 +1943,8 @@ class _AccountScreenState extends State<_AccountBody> {
             trailing: IconButton(
               tooltip: context.t('settings.privacyPolicyExternal'),
               icon: const Icon(LucideIcons.externalLink, size: 17),
-              onPressed: () => launchUrl(
-                Uri.parse(config.meta!.privacyPolicyUrl),
-                mode: LaunchMode.externalApplication,
-              ),
+              onPressed: () =>
+                  launchUrl(privacy, mode: LaunchMode.externalApplication),
             ),
           ),
         ],

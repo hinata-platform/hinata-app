@@ -64,6 +64,37 @@ def locked_app_error?(error)
   )
 end
 
+# App Review signs in with two accounts on the review server: a member in the
+# sign-in fields and a moderator at the end of the notes. The server, both
+# accounts and the phone number App Review calls come from repository secrets,
+# never from fastlane/metadata, because the repository is public. The review
+# server is an instance of its own with demo data and no real members: a
+# moderator sees every case of the server they moderate. Without the sign-in
+# fields deliver tells App Review that no account is needed, so a release
+# without them stops here.
+REVIEW_KEYS = %w[
+  APP_REVIEW_SERVER APP_REVIEW_PHONE
+  APP_REVIEW_DEMO_USER APP_REVIEW_DEMO_PASSWORD
+  APP_REVIEW_MODERATOR_USER APP_REVIEW_MODERATOR_PASSWORD
+].freeze
+
+def review_information
+  missing = REVIEW_KEYS.select { |key| ENV[key].to_s.strip.empty? }
+  UI.user_error!("App Review needs the repository secrets #{missing.join(', ')}") unless missing.empty?
+  # Read once and then gone from the environment: no build script and no
+  # child process started after this inherits them.
+  review = REVIEW_KEYS.to_h { |key| [key, ENV.delete(key).strip] }
+  notes = File.read(File.join(__dir__, "metadata", "review_information", "notes.txt")).rstrip
+              .gsub("{{REVIEW_SERVER}}", review["APP_REVIEW_SERVER"])
+  {
+    phone_number: review["APP_REVIEW_PHONE"],
+    demo_user: review["APP_REVIEW_DEMO_USER"],
+    demo_password: review["APP_REVIEW_DEMO_PASSWORD"],
+    notes: "#{notes}\n\nMODERATOR ACCOUNT\nUsername: #{review['APP_REVIEW_MODERATOR_USER']}\n" \
+           "Password: #{review['APP_REVIEW_MODERATOR_PASSWORD']}"
+  }
+end
+
 # Sets the global App Store Connect API key; nested actions read it from the
 # lane context (passing it on triggers an api_key/api_key_path conflict in cert).
 def auth!
@@ -208,6 +239,11 @@ platform :mac do
   # version and rewrites App Info). Used by "Publish (button)"; plain TestFlight
   # drops go through `beta`, which has no such requirement.
   lane :release do
+    # Before the build, so a missing secret costs seconds instead of a build.
+    review = review_information
+    # deliver prints its options as a table, the review notes and the
+    # moderator's password in them included; it masks only the demo password.
+    ENV["FASTLANE_SKIP_ALL_LANE_SUMMARIES"] = "1"
     # sync_screenshots is still behind fastlane's beta feature flag.
     ENV["FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS"] = "1"
     build
@@ -223,6 +259,10 @@ platform :mac do
       precheck_include_in_app_purchases: false,
       # Upload the localized macOS listing (fastlane/metadata).
       skip_metadata: false,
+      app_review_information: review,
+      # Only the answers age_rating.json names; the rest of the questionnaire
+      # stays as App Store Connect holds it.
+      app_rating_config_path: File.join(__dir__, "age_rating.json"),
       # The screenshots in fastlane/screenshots travel with every release, so a
       # version can never go out with an older set than the repo holds. Synced,
       # not overwritten: see the `screenshots` lane below for why

@@ -8,6 +8,7 @@ import '../../core/api/api_client.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart' show ArticleVersion;
+import '../../core/models/moderation_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -18,6 +19,7 @@ import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../issues/issue_detail_sheet.dart';
+import '../moderation/report/report_sheet.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassBottomSheet, showGlassConfirm, showGlassToast;
@@ -115,6 +117,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   bool _dirty = false;
   bool _saving = false;
 
+  /// What the text check refused in the last save (HIN-176); the editor keeps
+  /// the page and shows why.
+  ContentRefusal? _refusal;
+
   // ── history ──
   PagedCubit<ArticleVersion>? _versions;
   String? _versionsOf;
@@ -183,7 +189,11 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
 
   // ── navigation ──
 
-  void _go(KnowledgeLocation to) => context.go(to.path);
+  void _go(KnowledgeLocation to) {
+    // A refusal belongs to the page it was about.
+    _refusal = null;
+    context.go(to.path);
+  }
 
   void _openArticle(String id) => _go(KnowledgeArticleLocation(id));
   void _openSpace(String id) => _go(KnowledgeSpaceLocation(id));
@@ -258,7 +268,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
     final title = r.title.trim().isEmpty
         ? context.t('knowledge.untitled')
         : r.title.trim();
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _refusal = null;
+    });
     try {
       switch (_at) {
         case KnowledgeNewLocation(:final parentId):
@@ -294,7 +307,13 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
           break;
       }
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+      final refusal = ContentRefusal.of(failure);
+      if (!mounted) return;
+      if (refusal != null) {
+        setState(() => _refusal = refusal);
+      } else {
+        _toast(failure.message, kind: GlassToastKind.error);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -500,13 +519,34 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
 
   // ── menus ──
 
+  /// Somebody else's page that is still there, on a server that knows
+  /// reporting (HIN-173).
+  bool _reportable(KbArticle a) => canReport(
+    context,
+    authorId: a.authorId,
+    removed: a.isRemoved('title') && a.isRemoved('content'),
+  );
+
+  Future<void> _report(KbArticle a, Rect anchor) => showReportSheet(
+    context,
+    anchorRect: anchor,
+    subject: ReportSubject(
+      target: TargetRef(ContentKind.article, a.id),
+      title: context.t('moderation.report.titleArticle'),
+      subtitle: a.title,
+    ),
+  );
+
   Future<void> _pageMenu(KbArticle a, Rect? anchor) async {
     final rect = anchor ?? _fallbackAnchor();
     final canDelete = _store.childrenOf(a.id).isEmpty;
+    final reportable = _reportable(a);
     final chosen = await showGlassMenu<String>(
       context: context,
       anchorRect: rect,
       value: '',
+      // Room for the longest label, German "Unterseite hinzufügen", uncut.
+      width: 280,
       items: [
         GlassMenuItem(
           value: 'history',
@@ -531,6 +571,13 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
           label: context.t('knowledge.reader.copyLink'),
           leading: Icon(LucideIcons.link, size: 16, color: AppColors.inkSoft),
         ),
+        if (reportable)
+          GlassMenuItem(
+            value: 'report',
+            dividerAbove: true,
+            label: context.t('moderation.report.action'),
+            leading: Icon(LucideIcons.flag, size: 16, color: AppColors.inkSoft),
+          ),
         GlassMenuItem(
           value: 'delete',
           dividerAbove: true,
@@ -555,6 +602,8 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         _go(KnowledgeNewLocation(spaceId: a.spaceId, parentId: a.id));
       case 'link':
         await _copyLink(a.id);
+      case 'report':
+        await _report(a, rect);
       case 'delete':
         await _confirmDelete(a.id);
     }
@@ -1105,6 +1154,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         onSave: _save,
         onDirtyChanged: (dirty) => _dirty = dirty,
         bottomPadding: 32 + context.bottomGutter,
+        refusal: _refusal,
       ),
     );
   }
@@ -1134,6 +1184,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         onSave: _save,
         onDirtyChanged: (dirty) => _dirty = dirty,
         bottomPadding: 32 + context.bottomGutter,
+        refusal: _refusal,
       ),
     );
   }

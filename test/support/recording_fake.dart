@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/account_repository.dart';
+import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/comment_repository.dart';
@@ -19,6 +20,7 @@ import 'package:hinata/core/repositories/git_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/media_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
+import 'package:hinata/core/repositories/moderation_repository.dart';
 import 'package:hinata/core/repositories/notification_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/sprint_repository.dart';
@@ -74,6 +76,8 @@ class FakeAbsenceRepository with RecordingFake implements AbsenceRepository {}
 
 class FakeAccountRepository with RecordingFake implements AccountRepository {}
 
+class FakeAdminRepository with RecordingFake implements AdminRepository {}
+
 class FakeApiClient with RecordingFake implements ApiClient {}
 
 class FakeAuthRepository with RecordingFake implements AuthRepository {}
@@ -99,6 +103,10 @@ class FakeKnowledgeRepository
 class FakeMediaRepository with RecordingFake implements MediaRepository {}
 
 class FakeMetaRepository with RecordingFake implements MetaRepository {}
+
+class FakeModerationRepository
+    with RecordingFake
+    implements ModerationRepository {}
 
 class FakeNotificationRepository
     with RecordingFake

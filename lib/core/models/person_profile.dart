@@ -25,6 +25,7 @@ class PersonProfile extends Equatable {
     this.active = true,
     this.self = false,
     this.canAdmin = false,
+    this.suspension,
   });
 
   final String id;
@@ -34,7 +35,7 @@ class PersonProfile extends Equatable {
   final String? title;
   final String? pronouns;
 
-  /// A subset of `ADMIN`, `ORG_ADMIN`, `MEMBER`, in that order.
+  /// A subset of `ADMIN`, `ORG_ADMIN`, `MODERATOR`, `MEMBER`, in that order.
   final List<String> roles;
 
   /// The person's own IANA zone, else the instance's, else `UTC`.
@@ -56,8 +57,13 @@ class PersonProfile extends Equatable {
   /// beside the profile.
   final bool canAdmin;
 
+  /// Set while the account is suspended (HIN-172), for a reader who moderates
+  /// or administers; null for everybody else.
+  final ProfileSuspension? suspension;
+
   bool get isAdmin => roles.contains('ADMIN');
   bool get isOrgAdmin => roles.contains('ORG_ADMIN');
+  bool get isModerator => roles.contains('MODERATOR');
 
   factory PersonProfile.fromJson(Map<String, dynamic> json) => PersonProfile(
     id: json['id'] as String? ?? '',
@@ -81,6 +87,9 @@ class PersonProfile extends Equatable {
     active: json['active'] as bool? ?? true,
     self: json['self'] as bool? ?? false,
     canAdmin: json['canAdmin'] as bool? ?? false,
+    suspension: json['suspension'] is Map<String, dynamic>
+        ? ProfileSuspension.fromJson(json['suspension'] as Map<String, dynamic>)
+        : null,
   );
 
   @override
@@ -100,7 +109,26 @@ class PersonProfile extends Equatable {
     active,
     self,
     canAdmin,
+    suspension,
   ];
+}
+
+/// A suspension as the profile shows it: until when, null for until further
+/// notice, and the case behind it, which only moderators are told.
+class ProfileSuspension extends Equatable {
+  const ProfileSuspension({this.until, this.caseId});
+
+  final DateTime? until;
+  final String? caseId;
+
+  factory ProfileSuspension.fromJson(Map<String, dynamic> json) =>
+      ProfileSuspension(
+        until: parseInstant(json['until']),
+        caseId: json['caseId'] as String?,
+      );
+
+  @override
+  List<Object?> get props => [until, caseId];
 }
 
 class SharedTeam extends Equatable {

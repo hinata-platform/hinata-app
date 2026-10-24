@@ -17,6 +17,7 @@ class SettingsNavEntry<T> {
     required this.label,
     this.group,
     this.trailing,
+    this.badge,
   });
 
   final T id;
@@ -31,6 +32,12 @@ class SettingsNavEntry<T> {
 
   /// A glyph after the label, e.g. for an entry that leaves the page.
   final IconData? trailing;
+
+  /// What stands before the glyph, such as the count of cases waiting for
+  /// moderation. A widget of its own, so a new count rebuilds it and not the
+  /// page that lists the entry; it brings the space after it, and shows
+  /// nothing while there is nothing to count.
+  final Widget? badge;
 }
 
 /// A settings page on a wide window: the sections in a glass rail on the
@@ -389,6 +396,7 @@ class _NavItem<T> extends StatelessWidget {
                       ),
                     ),
                   ),
+                  ?entry.badge,
                   if (entry.trailing != null)
                     Icon(entry.trailing, size: 12, color: tokens.inkFaint),
                 ],

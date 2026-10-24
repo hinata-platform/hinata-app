@@ -113,6 +113,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
   bool _loading = true;
   String? _error;
 
+  /// The text check's refusal of the last save (HIN-176); the form keeps what
+  /// was typed.
+  ContentRefusal? _refusal;
+
   // Bumped on every project(-scoped) load so a slow response from a previously
   // selected project can't land after a newer one and overwrite its sprints /
   // issues (rapid project switching in the picker).
@@ -290,7 +294,10 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     }
     final title = _titleCtrl.text.trim();
     widget.controller.phase = IssueCreatePhase.saving;
-    setState(() => _error = null);
+    setState(() {
+      _error = null;
+      _refusal = null;
+    });
     try {
       final created = await _create.createIssue({
         'projectId': _projectId,
@@ -327,7 +334,11 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
     } on ApiFailure catch (failure) {
       if (mounted) {
         widget.controller.phase = IssueCreatePhase.idle;
-        setState(() => _error = failure.message);
+        final refusal = ContentRefusal.of(failure);
+        setState(() {
+          _refusal = refusal;
+          _error = refusal == null ? failure.message : null;
+        });
       }
     } catch (_) {
       // Any non-ApiFailure must still reset the save button out of its spinner,
@@ -504,6 +515,15 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           minHeight: 140,
           trailing: hinataEditorTools(context, _descCtrl),
         ),
+        // Where the person writes, not under the second column, which the
+        // pinned save bar covers on a phone.
+        if (_refusal case final refusal?) ...[
+          const SizedBox(height: 12),
+          ContentRefusedNotice(
+            refusal: refusal,
+            onReadRules: () => unawaited(showHouseRulesSheet(context)),
+          ),
+        ],
       ],
     );
   }

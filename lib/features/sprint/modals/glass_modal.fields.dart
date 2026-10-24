@@ -15,11 +15,18 @@ class GlassField extends StatelessWidget {
     required this.child,
     this.trailing,
     this.isTextInput,
+    this.wrapCaption = false,
   });
 
   final String label;
   final Widget child;
   final Widget? trailing;
+
+  /// Lets a long caption wrap instead of being cut off, for a sentence of a
+  /// caption over a full-width field ("What should moderation know?") that a
+  /// phone at a large text size cannot fit on one line. Off by default: over a
+  /// narrow field beside others the inputs have to stay in line.
+  final bool wrapCaption;
 
   /// Whether [child] is a text input that should carry [label] as its name.
   ///
@@ -48,8 +55,8 @@ class GlassField extends StatelessWidget {
                 excluding: labelsInput,
                 child: Text(
                   label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: wrapCaption ? null : 1,
+                  overflow: wrapCaption ? null : TextOverflow.ellipsis,
                   style: GlassFieldStyle.caption,
                 ),
               ),
@@ -183,6 +190,63 @@ class GlassSegmented extends StatelessWidget {
       ],
     );
   }
+}
+
+/// A field that shows what is chosen and opens the choice beside it: the
+/// app's pattern for a choice too long for a row of chips. [label] names it
+/// for a screen reader, [value] is the choice in words, or the prompt while
+/// nothing is chosen ([chosen] false). [onOpen] gets the field's rectangle to
+/// hang a popover off; null when it is not on screen.
+class GlassChoiceField extends StatelessWidget {
+  const GlassChoiceField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onOpen,
+    this.chosen = true,
+  });
+
+  final String label;
+  final String value;
+  final bool chosen;
+  final ValueChanged<Rect?> onOpen;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: label,
+    value: value,
+    // The tap on the node itself: the children are left out so the choice
+    // is heard once, and with them the tap of the InkWell.
+    onTap: () => onOpen(anchorRectOfContext(context)),
+    excludeSemantics: true,
+    child: InkWell(
+      onTap: () => onOpen(anchorRectOfContext(context)),
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl + 4),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl + 4),
+          border: Border.all(color: AppColors.hairline2),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: AppType.body,
+                  color: chosen ? AppColors.ink : AppColors.inkSoft,
+                ),
+              ),
+            ),
+            Icon(LucideIcons.chevronDown, size: 18, color: AppColors.inkSoft),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 /// A read-only "commitment" / info line used in the start & complete modals.

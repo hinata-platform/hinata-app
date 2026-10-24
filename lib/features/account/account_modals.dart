@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -7,6 +9,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/content_refused_notice.dart';
+import '../moderation/house_rules_sheet.dart' show showHouseRulesSheet;
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, GlassField, glassInputDecoration;
 import 'account_cubit.dart';
@@ -41,6 +45,9 @@ class _EditProfileModalState extends State<_EditProfileModal> {
   bool _busy = false;
   String? _error;
 
+  /// What the text check refused (HIN-176); the fields keep what was typed.
+  ContentRefusal? _refusal;
+
   @override
   void dispose() {
     _name.dispose();
@@ -54,6 +61,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
     setState(() {
       _busy = true;
       _error = null;
+      _refusal = null;
     });
     try {
       // No locale here: the language lives in Settings → Sprache, which applies
@@ -66,7 +74,13 @@ class _EditProfileModalState extends State<_EditProfileModal> {
       );
       if (mounted) Navigator.of(context).maybePop(saved);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      final refusal = ContentRefusal.of(f);
+      if (mounted) {
+        setState(() {
+          _refusal = refusal;
+          _error = refusal == null ? context.t(f.message) : null;
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -137,6 +151,13 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                     ),
                   ),
                 ),
+                if (_refusal case final refusal?) ...[
+                  const SizedBox(height: 14),
+                  ContentRefusedNotice(
+                    refusal: refusal,
+                    onReadRules: () => unawaited(showHouseRulesSheet(context)),
+                  ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 14),
                   AccountNote(
@@ -207,7 +228,7 @@ class _ChangeEmailModalState extends State<_ChangeEmailModal> {
       await widget.account.requestEmailChange(value);
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -339,7 +360,7 @@ class _ConfirmModalState extends State<_ConfirmModal> {
       await widget.onConfirm();
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -535,7 +556,7 @@ class _DeleteAccountModalState extends State<_DeleteAccountModal> {
       await widget.account.deleteAccount();
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -621,37 +642,45 @@ class _Footer extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            const Spacer(),
-            TextButton(
-              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-              child: Text(context.t('common.cancel')),
-            ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: busy ? null : onConfirm,
-              style: FilledButton.styleFrom(
-                backgroundColor: danger ? AppColors.danger : null,
-                foregroundColor: danger ? Colors.white : null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 13,
-                ),
+        // A wrap, not a row: at a large text size the two buttons do not fit
+        // side by side on a phone, and the confirm button moves below. Full
+        // width, or the wrap shrinks to its buttons and leaves the end.
+        child: SizedBox(
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+                child: Text(context.t('common.cancel')),
               ),
-              icon: busy
-                  ? SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: danger ? Colors.white : AppColors.navy,
-                      ),
-                    )
-                  : Icon(icon, size: 15),
-              label: Text(label),
-            ),
-          ],
+              FilledButton.icon(
+                onPressed: busy ? null : onConfirm,
+                style: FilledButton.styleFrom(
+                  backgroundColor: danger ? AppColors.danger : null,
+                  foregroundColor: danger ? Colors.white : null,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 13,
+                  ),
+                ),
+                icon: busy
+                    ? SizedBox(
+                        width: 15,
+                        height: 15,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: danger ? Colors.white : AppColors.navy,
+                        ),
+                      )
+                    : Icon(icon, size: 15),
+                label: Text(label),
+              ),
+            ],
+          ),
         ),
       ),
     );

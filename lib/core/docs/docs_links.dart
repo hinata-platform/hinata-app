@@ -22,6 +22,11 @@ abstract final class DocsPage {
   static const absences = 'absences';
   static const timeTrackingAdmin = 'admin-time-tracking';
   static const timeTrackingPrivacy = 'time-tracking-privacy';
+  static const adminArea = 'admin-area';
+
+  /// For moderators, with the procedure for content that endangers children
+  /// (HIN-174, written in HIN-178).
+  static const moderation = 'moderation';
 }
 
 /// Public URL of a documentation page in the reader's language, or in English

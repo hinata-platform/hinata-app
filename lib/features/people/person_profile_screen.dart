@@ -7,7 +7,9 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/moderation_models.dart';
 import '../../core/repositories/admin_repository.dart';
+import '../../core/repositories/moderation_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
@@ -18,6 +20,11 @@ import '../../core/widgets/hive_loader.dart';
 import '../admin/users/user_actions.dart';
 import '../admin/users/user_management_cubit.dart';
 import '../admin/users/user_management_widgets.dart' show UserAdminSections;
+import '../blocks/block_actions.dart';
+import '../blocks/hidden_content_cubit.dart';
+import '../moderation/person/person_moderation_actions.dart';
+import '../moderation/person/person_moderation_cubit.dart';
+import '../moderation/report/report_sheet.dart';
 import '../shell/page_chrome.dart';
 import 'person_admin_cubit.dart';
 import 'person_profile_cubit.dart';
@@ -156,9 +163,19 @@ class PersonProfileScreen extends StatelessWidget {
   final bool panel;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (context) =>
-        PersonProfileCubit(context.read<UserRepository>(), personId)..load(),
+  Widget build(BuildContext context) => MultiBlocProvider(
+    providers: [
+      BlocProvider(
+        create: (context) =>
+            PersonProfileCubit(context.read<UserRepository>(), personId)
+              ..load(),
+      ),
+      // Asks nothing until a moderator suspends or lifts (HIN-174).
+      BlocProvider(
+        create: (context) =>
+            PersonModerationCubit(context.read<ModerationRepository>()),
+      ),
+    ],
     child: _PersonProfileBody(panel: panel),
   );
 }
@@ -230,10 +247,21 @@ class _PersonProfileBody extends StatelessWidget {
       );
     }
     final email = profile.email;
+    final canBlock = !profile.self && moderationReachable(context);
+    final blocked = context.select<HiddenContentCubit?, bool>(
+      (hidden) => hidden?.state.blocks(profile.id) ?? false,
+    );
+    // Moderators suspend from here (HIN-174), never themselves and never an
+    // administrator, whom the server would refuse anyway.
+    final canModerate =
+        canBlock &&
+        !profile.isAdmin &&
+        (context.read<AuthBloc>().state.user?.isModerator ?? false);
     return PersonProfileView(
       profile: profile,
       clockReady: state.clockReady,
       padding: padding,
+      blocked: blocked,
       actions: PersonProfileActions(
         openIssues: () => context.go(
           Uri(
@@ -247,7 +275,48 @@ class _PersonProfileBody extends StatelessWidget {
         ),
         writeEmail: email == null
             ? null
-            : () => unawaited(launchUrl(Uri(scheme: 'mailto', path: email))),
+            : () => unawaited(
+                launchUrl(
+                  Uri(scheme: 'mailto', path: email),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
+        toggleBlock: canBlock
+            ? () => unawaited(
+                blocked
+                    ? liftBlock(
+                        context,
+                        personId: profile.id,
+                        name: profile.displayName,
+                      )
+                    : confirmBlock(
+                        context,
+                        personId: profile.id,
+                        name: profile.displayName,
+                      ),
+              )
+            : null,
+        report: canBlock
+            ? (anchor) => unawaited(
+                showReportSheet(
+                  context,
+                  anchorRect: anchor,
+                  subject: ReportSubject(
+                    target: TargetRef(ContentKind.person, profile.id),
+                    title: context.t('moderation.report.titlePerson'),
+                    subtitle: profile.displayName,
+                    authorId: blocked ? null : profile.id,
+                    authorName: profile.displayName,
+                  ),
+                ),
+              )
+            : null,
+        suspend: canModerate && profile.suspension == null
+            ? () => unawaited(suspendFromProfile(context, profile))
+            : null,
+        liftSuspension: canModerate && profile.suspension?.caseId != null
+            ? () => unawaited(liftFromProfile(context, profile))
+            : null,
         close: panel ? () => _leave(context) : null,
       ),
       admin: profile.canAdmin ? _PersonAdmin(personId: profile.id) : null,

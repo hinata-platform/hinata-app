@@ -5,6 +5,7 @@ library;
 
 import '../api/api_client.dart';
 import 'account_repository.dart';
+import 'moderation_repository.dart';
 import 'admin_repository.dart';
 import 'article_repository.dart';
 import 'auth_repository.dart';
@@ -33,6 +34,7 @@ import 'user_repository.dart';
 import 'weekly_summary_repository.dart';
 
 export 'account_repository.dart';
+export 'moderation_repository.dart';
 export 'admin_repository.dart';
 export 'article_repository.dart';
 export 'auth_repository.dart';
@@ -93,6 +95,7 @@ class HinataRepositories {
       teams: TeamRepository(api),
       git: GitRepository(api),
       shifts: ApiShiftRepository(api),
+      moderation: ModerationRepository(api),
     );
   }
 
@@ -124,6 +127,7 @@ class HinataRepositories {
     required this.teams,
     required this.git,
     required this.shifts,
+    required this.moderation,
   });
 
   final MetaRepository meta;
@@ -167,4 +171,8 @@ class HinataRepositories {
   /// Shift planning (HIN-27); its routes answer only while `shift_planning`
   /// is on.
   final ShiftRepository shifts;
+
+  /// Reporting, the reader's own reports and the moderation's notices
+  /// (HIN-173), and the moderators' cases, decisions and figures (HIN-174).
+  final ModerationRepository moderation;
 }

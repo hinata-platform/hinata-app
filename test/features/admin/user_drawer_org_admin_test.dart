@@ -45,11 +45,13 @@ void main() {
         return false;
       }
     },
+    setModerator: (_, _) async => true,
     openDemote: (_) {},
     openResend: (_) {},
     openReset: (_) {},
     revokeSessions: (_) {},
     openUnlinkSso: (_) {},
+    openLiftSuspension: (_) {},
     openDelete: (_) {},
     isLastActiveAdmin: (_) => false,
     nameById: (_) => null,

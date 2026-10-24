@@ -1,13 +1,17 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/content_refused_notice.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/lexical/hinata_editor.dart';
 import '../../core/lexical/hinata_editor_controller.dart';
 import '../../core/lexical/hinata_editor_tools.dart';
 import '../../core/lexical/hinata_markdown_preview.dart';
+import '../moderation/house_rules_sheet.dart' show showHouseRulesSheet;
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
@@ -65,7 +69,12 @@ class KnowledgeEditor extends StatefulWidget {
     this.choosePlace = false,
     this.onDirtyChanged,
     this.bottomPadding = 32,
+    this.refusal,
   });
+
+  /// What the text check refused in the last save (HIN-176), shown above the
+  /// page; the page itself keeps everything that was typed.
+  final ContentRefusal? refusal;
 
   /// Room under the text inside the scroll, so the end of a long page clears
   /// the floating navigation.
@@ -200,6 +209,13 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
+            if (widget.refusal case final refusal?) ...[
+              ContentRefusedNotice(
+                refusal: refusal,
+                onReadRules: () => unawaited(showHouseRulesSheet(context)),
+              ),
+              const SizedBox(height: 16),
+            ],
             TextField(
               controller: _title,
               autofocus: widget.isNew,
@@ -284,13 +300,17 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
                   color: AppColors.inkSoft,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  repo.spaceById(_spaceId)?.name ??
-                      context.t('knowledge.editor.pickSpace'),
-                  style: TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
+                // Flexible: a long space name at a large text size wraps
+                // instead of running off the screen.
+                Flexible(
+                  child: Text(
+                    repo.spaceById(_spaceId)?.name ??
+                        context.t('knowledge.editor.pickSpace'),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),

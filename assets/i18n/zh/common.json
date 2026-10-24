@@ -57,7 +57,8 @@
       "next": "下一页",
       "page": "第 {{page}} 页"
     },
-    "selectedOption": "已选择"
+    "selectedOption": "已选择",
+    "charCount": "{{count}} / {{max}}"
   },
   "delete": {
     "cta": "删除",
@@ -124,7 +125,8 @@
       "bodyRequired": "请输入消息内容。",
       "notEmailSourced": "该工单不是由邮件创建的，因此没有可回复的收件人。",
       "noSmtp": "尚未配置邮件服务器。请联系平台管理员以启用邮件发送。",
-      "sendFailed": "回复发送失败。请重试。"
+      "sendFailed": "回复发送失败。请重试。",
+      "attachmentsTooLarge": "附件太大，无法通过一封邮件发送。请减少文件数量或使用更小的文件。"
     },
     "sessionNotPersisted": {
       "snap": "hinata 尚无权使用本系统的密码存储，因此每次重启后都需要重新登录。其他功能一切正常。用 {{command}} 授权一次，或在 App Center 中为 hinata 打开“password manager service”，然后重新登录。",
@@ -361,12 +363,14 @@
       "ssoAccountNotLinkedSsoOnly": "已存在使用此邮箱地址的账户，但它未与此登录方式关联。请联系管理员。",
       "ssoEmailNotVerified": "你的登录服务报告此邮箱地址尚未确认。现有账户绝不会关联到未确认的地址。请联系管理员。",
       "ssoNoEmail": "你的登录服务没有发送邮箱地址，没有地址就无法创建账户。请联系管理员。",
+      "accountSuspended": "你的账户已被暂停。审核发来的邮件说明了原因、期限以及如何申诉。",
       "accountDeactivated": "你的账户已停用。请联系管理员。",
       "pendingApproval": "你的账户正在等待管理员审批。",
       "emailNotVerified": "请先确认你的邮箱地址。确认链接已发送到你的收件箱。"
     },
     "showPassword": "显示密码",
-    "hidePassword": "隐藏密码"
+    "hidePassword": "隐藏密码",
+    "contact": "联系"
   },
   "authShell": {
     "heroTitle": "让团队的工作汇聚于此。",
@@ -403,7 +407,9 @@
     "more": "更多",
     "collapse": "收起",
     "expandSidebar": "展开侧边栏",
-    "shifts": "排班"
+    "shifts": "排班",
+    "groupWork": "工作",
+    "groupPlan": "计划"
   },
   "dashboard": {
     "title": "仪表板",
@@ -539,7 +545,9 @@
       "cancelEdit": "停止编辑",
       "closeFormat": "关闭格式",
       "discardRecording": "放弃录音",
-      "sendVoice": "发送语音消息"
+      "sendVoice": "发送语音消息",
+      "retryVoice": "重新发送",
+      "voiceNotSent": "语音消息（{{time}}）未发送"
     },
     "moreReactions": "更多表情回应",
     "voice": {
@@ -734,7 +742,8 @@
         "emptyFile": "该文件为空。",
         "renderFailed": "该文件无法渲染。",
         "retry": "重试",
-        "tooLarge": "文件过大，无法内嵌预览，请下载后查看。"
+        "tooLarge": "文件过大，无法内嵌预览，请下载后查看。",
+        "more": "更多"
       },
       "source": {
         "title": "添加附件",
@@ -3490,7 +3499,26 @@
       "reasonOwnOrgRole": "此角色需由管理团队中的其他人授予你。",
       "selectUser": "选择 {{name}}",
       "selectPage": "选择本页所有用户",
-      "removeEmail": "移除 {{email}}"
+      "removeEmail": "移除 {{email}}",
+      "roleModerator": "内容审核",
+      "moderatorBadge": "审核员",
+      "moderatorTitle": "内容审核",
+      "moderatorHint": "审核被举报的内容并作出决定：删除帖子、停用账户，并写下所有相关人员都会收到的理由。只能看到被举报的内容，看不到项目本身。无法访问管理区域。",
+      "moderatorInfo": "内容审核可以做什么？",
+      "makeModerator": "设为审核员",
+      "moderatorConfirmOne": "{{name}} 将审核被举报的内容并作出决定，包括删除帖子和停用账户。{{name}} 只能看到被举报的内容。",
+      "moderatorConfirmMany": "{{names}} 将审核被举报的内容并作出决定，包括删除帖子和停用账户。他们只能看到被举报的内容。",
+      "toastModeratorGranted": "已授予审核角色",
+      "toastModeratorRevoked": "已撤销审核角色",
+      "reasonOwnModeratorRole": "此角色需由管理团队中的其他人授予你。",
+      "suspended": "已暂停",
+      "suspendedUntil": "暂停至 {{date}}",
+      "liftSuspension": "解除暂停",
+      "liftSuspensionSub": "审核暂停了此账户。解除后，此人可以重新登录，审核也会收到通知。",
+      "liftSuspensionRowSub": "被审核暂停。原因保留在审核中。",
+      "liftSuspensionNote": "记录备注（可选）",
+      "liftSuspensionAction": "解除暂停",
+      "toastSuspensionLifted": "暂停已解除"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3590,7 +3618,11 @@
       "reprocessFullTitle": "重新创建缺失的工单？",
       "reprocessFullBody": "“{{name}}”中每一封没有工单的邮件都会生成新工单，包括你有意删除的那些。此操作无法批量撤销。",
       "reprocessFullConfirm": "重新创建",
-      "reprocessDone": "已扫描 {{scanned}} 封 · 重建 {{updated}} 个 · 新建 {{created}} 个"
+      "reprocessDone": "已扫描 {{scanned}} 封 · 重建 {{updated}} 个 · 新建 {{created}} 个",
+      "textRefusals": "被文本检查拒绝的邮件：{{count}} 封",
+      "textRefusals_plural": "被文本检查拒绝的邮件：{{count}} 封",
+      "textRefusalsSince": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}",
+      "textRefusalsSince_plural": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}"
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux 下载 URL",
@@ -3611,7 +3643,116 @@
       "label": "排班计划",
       "desc": "关闭：Hinata 保持不变。开启：项目可以规划带班次的活动，成员可报名空余班次。",
       "unavailable": "需要 MongoDB 副本集。此服务器未使用副本集运行，因此排班计划保持关闭。"
-    }
+    },
+    "moderation": {
+      "title": "内容审核",
+      "whoTitle": "审核人员",
+      "whoHint": "这些人负责审核举报并作出决定。角色在用户管理中授予。",
+      "nobody": "目前还没有人负责审核。请在用户管理中至少为一人授予该角色，否则举报将无人处理。",
+      "onlyOne": "最好至少有两人，这样就没有人会对针对自己的举报作出决定。",
+      "more": "另有 {{count}} 人，见用户管理",
+      "contactTitle": "举报联系方式",
+      "contactHint": "用户可通过应用内和登录页面联系此实例的运营方。应用商店和《数字服务法》都要求提供联系方式。",
+      "contactMissing": "尚未设置举报联系方式。请填写一个电子邮件地址，以便他人就内容问题联系你。",
+      "operatorName": "运营方（与法律声明一致）",
+      "contactEmail": "举报邮箱",
+      "imprintUrl": "法律声明链接",
+      "typesTitle": "文件类型",
+      "typesHint": "已停用的类型任何人都无法附加、嵌入或发送。SVG 或程序等不安全的类型始终不被允许。",
+      "types": {
+        "images": "图片",
+        "imagesHint": "PNG、JPEG、GIF 和 WebP，作为附件或在文本中。头像和徽标仍然允许。",
+        "pdf": "PDF",
+        "pdfHint": "作为附件的 PDF 文档",
+        "office": "Office 文档",
+        "officeHint": "Word 和 Excel（DOCX、XLSX）",
+        "text": "文本和表格",
+        "textHint": "TXT、CSV 和 JSON",
+        "zip": "ZIP 压缩包",
+        "zipHint": "作为附件的 ZIP 文件",
+        "voice": "语音消息",
+        "voiceHint": "评论中的录音"
+      },
+      "retentionTitle": "保留期限与统计",
+      "retentionHint": "已处理的案件、相关举报和隔离区内容在此期限后删除，除非已通知执法部门。",
+      "retentionLabel": "删除时间",
+      "retentionMonths": "{{count}} 个月",
+      "retentionMonths_plural": "{{count}} 个月",
+      "figures": "下载 {{year}} 年度数据",
+      "figuresHint": "采用欧盟委员会的模板，每个部分一个 CSV 文件，打包为 ZIP。发布前请检查数据，并补充 Hinata 不掌握的信息，例如主管机关的命令。",
+      "figuresDone": "年度数据已保存",
+      "figuresFailed": "无法保存年度数据"
+    },
+    "entry": {
+      "title": "谁可以加入",
+      "registration": "注册功能允许新账号无需批准即可加入。",
+      "provider": "通过“{{name}}”登录会在首次登录时直接创建有效账号，无需任何人批准。",
+      "consequence": "拥有此类账号的人可以阅读全组织页面和通讯录。根据 DSA，这些内容即被视为公开，你需承担在线平台的义务。",
+      "enable": "开启审批",
+      "proxy": "请求经过一个此服务器不信任的代理。这样每个请求都会被算作代理的地址，按地址的限制会对所有人合并计算。请将该代理加入 HINATA_TRUSTED_PROXIES。",
+      "confirmTitle": "允许新账号无需批准即可加入？",
+      "confirmBody": "通过 {{ways}}，任何人都可以在无人批准的情况下加入。拥有此类账号的人可以阅读全组织页面和通讯录。根据 DSA，这些内容即被视为公开，你需承担在线平台的义务。",
+      "confirm": "无需批准开放",
+      "way": {
+        "registration": "注册"
+      }
+    },
+    "ssoApproval": {
+      "title": "新账号需要审批",
+      "hint": "每次首次登录都需等待管理员批准，与注册相同。",
+      "domains": "允许的邮箱域名",
+      "domainsHint": "在无需审批的情况下，只有这些域名的地址可以直接加入，其他人需等待。多个域名请用逗号分隔。"
+    },
+    "rules": {
+      "title": "站规",
+      "hint": "每个人在写作前都要同意一次。",
+      "versionSince": "第 {{version}} 版，自 {{date}} 起。",
+      "mode": {
+        "builtIn": "标准",
+        "text": "自定义文本",
+        "url": "网址"
+      },
+      "builtInHint": "标准站规提供九种语言，并列出你们的联系方式。",
+      "text": "你们的站规",
+      "textHint": "Markdown。服务器总会附上“我们如何审核”。",
+      "url": "你们站规的网址",
+      "versionHint": "保存更改会生成新版本。已同意的人无需再次同意，除非你要求所有人重新同意。",
+      "reaccept": "请所有人重新同意",
+      "reacceptTitle": "请所有人重新同意？",
+      "reacceptBody": "每个人都要先同意当前版本才能继续工作。在此之前，任何人都无法获取新的访问令牌或连接 AI 客户端。",
+      "reacceptConfirm": "请所有人同意",
+      "reacceptDone": "所有人将重新同意第 {{version}} 版。"
+    },
+    "textCheck": {
+      "title": "自动文本检查",
+      "hint": "保存时将文本与词表比对。任何内容都不会离开服务器。",
+      "block": "拒绝明显违规",
+      "blockHint": "威胁、仇恨言论等不会被保存。作者会看到原因，草稿也会保留。",
+      "flag": "将不明确的情况交给审核",
+      "flagHint": "文本会被保存，审核会收到一条没有举报人的举报。",
+      "flagNote": "这样系统会自行检查成员的文本并创建举报。请先与员工代表和数据保护负责人商定。视组织而定，可能需要签订协议或进行数据保护影响评估。",
+      "confirmTitle": "将不明确的情况交给审核？",
+      "confirmBody": "此后系统会自行举报可能违反站规的文本，审核人员会阅读这些文本。请在员工代表和数据保护负责人同意后再开启。",
+      "confirm": "开启",
+      "ownTerms": "自定义词",
+      "ownTermsHint": "无论怎样书写都会被拒绝。最多 500 个，每个不超过 60 个字符。",
+      "ownTermsPublic": "自定义词语会原样出现在公开的站规中，之前的每个版本里也会保留。请不要填写人名或任何保密内容。",
+      "exceptions": "例外",
+      "exceptionsHint": "在你们这里无害的词，例如专业术语。危害儿童的内容始终会被拦截。",
+      "addTerm": "添加词",
+      "removeTerm": "移除 {{term}}",
+      "languages": "内置词表支持德语和英语。其他语言只有自定义词有效。",
+      "test": "试一段文本",
+      "testHint": "使用已保存的设置。不会保存或计数任何内容。",
+      "testButton": "检查",
+      "resultAllow": "会被保存。",
+      "resultFlag": "会被保存并交给审核：{{terms}}。",
+      "resultBlock": "会被拒绝：{{terms}}。",
+      "resultFound": "已找到，但没有影响：{{terms}}。",
+      "resultException": "例外生效：{{words}}。",
+      "images": "图片和附件不会被检查，可通过举报处理。"
+    },
+    "connectContactMissing": "Hinata Connect 的条款要求提供举报联系方式。请在“内容审核”中填写举报邮箱。"
   },
   "audit": {
     "title": "审计日志",
@@ -3676,7 +3817,8 @@
       "configuration": "配置",
       "data": "数据与隐私",
       "integration": "集成",
-      "unknown": "其他"
+      "unknown": "其他",
+      "moderation": "审核"
     },
     "action": {
       "LOGIN_SUCCESS": "已登录",
@@ -3832,7 +3974,31 @@
       "SHIFT_ASSIGNMENT_DECLINED": "已拒绝班次",
       "SHIFT_ASSIGNMENT_RELEASED": "已释放班次名额",
       "SHIFT_PLANNER_GRANTED": "已授予排班权限",
-      "SHIFT_PLANNER_REVOKED": "已撤销排班权限"
+      "SHIFT_PLANNER_REVOKED": "已撤销排班权限",
+      "USER_SUSPENDED": "账号已封禁",
+      "USER_SUSPENSION_LIFTED": "封禁已解除",
+      "USER_SUSPENSION_ENDED": "封禁已到期",
+      "TIME_CALENDAR_SUBSCRIPTION_CREATED": "已添加日历订阅",
+      "TIME_CALENDAR_SUBSCRIPTION_DELETED": "已移除日历订阅",
+      "SHIFT_FEED_TOKEN_CREATED": "已创建排班订阅链接",
+      "SHIFT_FEED_TOKEN_REVOKED": "已撤销排班订阅链接",
+      "SHIFT_SERIES_CREATED": "已创建活动系列",
+      "SHIFT_SERIES_UPDATED": "已更改活动系列",
+      "SHIFT_SERIES_DELETED": "已删除活动系列",
+      "SHIFT_PLAN_EXPORTED": "已导出排班表",
+      "MODERATION_CASE_CREATED": "已创建案件",
+      "MODERATION_CASE_CLAIMED": "已接手案件",
+      "MODERATION_REPORTER_REVEALED": "已显示举报人",
+      "MODERATION_EVIDENCE_REVEALED": "已为案件开放内容",
+      "MODERATION_EVIDENCE_VIEWED": "已查看内容",
+      "MODERATION_DECIDED": "案件已裁决",
+      "MODERATION_RESTORED": "内容已恢复",
+      "MODERATION_APPEAL_RECORDED": "已收到申诉",
+      "MODERATION_APPEAL_DECIDED": "申诉已裁决",
+      "MODERATION_LEGAL_HOLD_CHANGED": "为执法保留的设置已更改",
+      "MODERATION_RULES_VERSION_CREATED": "站规新版本",
+      "ACCOUNT_APPROVAL_CHANGED": "新账号审批设置已更改",
+      "MODERATION_FILTER_CHANGED": "文本检查已更改"
     },
     "meta": {
       "oldRole": "原角色",
@@ -3846,7 +4012,11 @@
       "newEmail": "新邮箱",
       "method": "方式",
       "setting": "设置项",
-      "provider": "提供方"
+      "provider": "提供方",
+      "block": "拒绝",
+      "flag": "交给审核",
+      "blockTerms": "自定义词",
+      "allowTerms": "例外"
     }
   },
   "sprint": {
@@ -4391,6 +4561,10 @@
         "shifts": {
           "label": "班次",
           "desc": "你被分配、班次有变或即将开始"
+        },
+        "moderation": {
+          "label": "内容审核",
+          "desc": "新案件和逾期案件、请求第二人确认、给团队的备注"
         }
       },
       "pushUnsupported": "此处没有推送服务，该设置仍对你的手机和其他设备生效",
@@ -4440,6 +4614,10 @@
       "requestModalMessage": "我们会整理一份你的数据导出，并在 24 小时内通过邮件把安全下载链接发送给你（GDPR 第 15 条）。",
       "requestModalConfirm": "申请报告",
       "requestedToast": "已申请数据报告，请查收邮件"
+    },
+    "blocked": {
+      "title": "已屏蔽的人",
+      "subtitle": "屏蔽只对你生效。如需有人审核内容，请使用举报。"
     },
     "danger": {
       "title": "危险操作",
@@ -4534,7 +4712,8 @@
       "account": "账户",
       "preferences": "偏好设置",
       "privacy": "隐私",
-      "administration": "管理"
+      "administration": "管理",
+      "help": "帮助"
     },
     "timerSurfaces": {
       "title": "应用外的计时器",
@@ -4668,6 +4847,10 @@
       "removeTitle": "移除订阅？",
       "removeMessage": "你的日历将不再收到班次。已显示的班次会在下次获取时消失。",
       "removed": "订阅已移除"
+    },
+    "help": {
+      "title": "帮助与联系",
+      "subtitle": "审核、站规、举报、版本说明与应用信息。"
     }
   },
   "twofa": {
@@ -5738,7 +5921,8 @@
     "you": "这是你",
     "deactivated": "已停用",
     "role": {
-      "member": "成员"
+      "member": "成员",
+      "moderator": "内容审核"
     },
     "localTime": "当地时间",
     "localTimeValue": "{{time}} · {{zone}}",
@@ -5761,5 +5945,543 @@
     },
     "loadFailed": "无法加载个人资料",
     "open": "打开 {{name}} 的个人资料"
+  },
+  "blocks": {
+    "action": "屏蔽此人",
+    "profile": {
+      "section": "隐私",
+      "block": "屏蔽",
+      "blockDetail": "不再收到通知，评论折叠显示",
+      "unblock": "取消屏蔽",
+      "unblockDetail": "你已屏蔽 {{name}}"
+    },
+    "confirm": {
+      "title": "屏蔽 {{name}}？",
+      "subtitle": "哪些会改变，哪些保持不变",
+      "notifications": "你将不再收到由 {{name}} 触发的通知，包括提及。",
+      "folded": "{{name}} 的评论和语音消息将折叠显示。",
+      "contact": "{{name}} 将无法再把你加入事项，也无法与你共享工时记录。",
+      "work": "协作照常进行：你仍能看到事项、附件和页面，{{name}} 的分配也照常送达。",
+      "private": "{{name}} 不会知道此事。你可以随时取消。",
+      "button": "屏蔽"
+    },
+    "blockedToast": "已屏蔽 {{name}}",
+    "unblockedToast": "已取消屏蔽 {{name}}",
+    "folded": "已折叠，因为你屏蔽了 {{name}}",
+    "show": "显示",
+    "list": {
+      "since": "自 {{date}} 起",
+      "unblock": "取消屏蔽",
+      "unblockLabel": "取消屏蔽 {{name}}",
+      "emptyTitle": "你还没有屏蔽任何人",
+      "emptyMessage": "你可以在某人的个人资料或评论菜单中屏蔽对方。",
+      "more": "加载更多"
+    },
+    "alsoReport": "同时举报这条评论",
+    "alsoReportHint": "接下来选择原因，审核会进行查看。"
+  },
+  "moderation": {
+    "appTerms": {
+      "title": "开始之前",
+      "body": "Hinata 将你连接到你所在组织的服务器。对侮辱性、威胁性或令人反感的内容以及骚扰他人的人零容忍。每个组织都设有审核，通常会在 24 小时内处理举报。",
+      "read": "阅读使用条款",
+      "accept": "同意并继续"
+    },
+    "rules": {
+      "title": "站规",
+      "gateTitle": "{{name}} 的站规",
+      "gateLead": "在你写作之前：这里有很多人一起工作。为了让合作顺利：",
+      "gateChanged": "站规已更改。请阅读并同意新版本。",
+      "respect": "尊重",
+      "respectText": "不得侮辱、威胁或贬低他人。对此零容忍。",
+      "lawful": "只发布合法内容",
+      "lawfulText": "不得发布违法内容，未经同意不得发布他人的私人信息。",
+      "report": "举报，而不是视而不见",
+      "reportText": "通过 ⋯ › 举报 即可联系审核，通常会在 24 小时内答复。",
+      "consequences": "后果",
+      "consequencesText": "审核会删除违规内容。情节严重或屡次违规时会封禁账号。",
+      "readAll": "完整站规",
+      "appTerms": "应用使用条款",
+      "accept": "同意并继续",
+      "loadFailed": "无法加载站规。",
+      "version": "第 {{version}} 版",
+      "versionSince": "第 {{version}} 版，自 {{date}} 起"
+    },
+    "help": {
+      "moderation": "{{name}} 的审核",
+      "moderationPlain": "此服务器的审核",
+      "reportElsewhere": "举报其他内容 …",
+      "reportElsewhereDetail": "说明位置，例如项目名称",
+      "imprint": "{{name}} 的法律信息",
+      "imprintPlain": "运营方的法律信息",
+      "aboutApp": "关于应用",
+      "aboutAppDetail": "提供者、使用条款、隐私",
+      "rulesAccepted": "第 {{version}} 版，已于 {{date}} 同意",
+      "aboutVersion": "Hinata {{version}}",
+      "provider": "应用提供者",
+      "operatorNote": "你所在的组织自行运营服务器，并对其中的内容负责。举报和屏蔽交由该组织的审核处理，而不是应用提供者。",
+      "appImprint": "法律信息"
+    },
+    "report": {
+      "thanks": "谢谢。审核会进行查看。",
+      "elsewhereTitle": "举报其他内容",
+      "whyTitle": "问题是什么？",
+      "elsewhereSubtitle": "在哪里，以及审核需要了解什么",
+      "send": "举报",
+      "change": "更改",
+      "location": "在哪里？",
+      "locationHint": "例如某个项目、看板或团队",
+      "locationRequired": "请说明在哪里可以找到。",
+      "explanationRequired": "审核需要了解什么？",
+      "explanationOptional": "审核需要了解什么？可选",
+      "explanationTooShort": "请至少用 {{min}} 个字符描述。",
+      "whoSees": "审核会看到是你举报的，其他人不会知道。",
+      "goodFaith": "发送即表示你确认所提供的信息据你所知真实无误。",
+      "action": "举报 …",
+      "alsoBlock": "同时屏蔽 {{name}}",
+      "alsoBlockHint": "你将不再收到来自 {{name}} 的通知。",
+      "byIn": "{{name}} 发布于 {{where}}",
+      "folded": "你已举报，已为你折叠",
+      "personDetail": "提交给审核，{{name}} 不会知道是谁举报的",
+      "titleArticle": "举报页面",
+      "titleAttachment": "举报文件",
+      "titleComment": "举报评论",
+      "titleIssue": "举报事项",
+      "titlePerson": "举报用户",
+      "titleVoice": "举报语音消息",
+      "tooMany": "你刚刚提交了大量举报。最晚 {{time}} 可以再次举报。",
+      "tooManyTomorrow": "你今天提交了大量举报。最晚明天 {{time}} 可以再次举报。",
+      "whoSeesNamed": "审核会看到是你举报的，{{name}} 不会知道。"
+    },
+    "category": {
+      "harassment": "骚扰、侮辱或仇恨",
+      "harassmentHint": "攻击个人或贬低某一群体",
+      "threat": "威胁或暴力",
+      "threatHint": "有人受到威胁，或有人赞同暴力",
+      "sexual": "色情内容",
+      "sexualHint": "带有性暗示或色情的材料",
+      "childSafety": "危害儿童",
+      "childSafetyHint": "会立即审核，且不显示预览",
+      "privacy": "未经同意的私人信息",
+      "privacyHint": "地址、号码、健康状况、他人照片",
+      "spam": "垃圾信息、诈骗或恶意软件",
+      "spamHint": "广告、网络钓鱼、危险文件",
+      "illegal": "违法内容",
+      "illegalHint": "版权或其他法律，请简要说明理由",
+      "other": "其他",
+      "otherHint": "请简要描述"
+    },
+    "refused": {
+      "title": "未保存",
+      "body": "文本中有站规不允许的内容：{{terms}}。你的草稿仍在这里，可以修改。",
+      "bodyPlain": "文本中有站规不允许的内容。你的草稿仍在这里，可以修改。",
+      "readRules": "阅读站规"
+    },
+    "appeal": {
+      "hint": "审核哪里判断有误？需要了解什么？",
+      "label": "你的申诉",
+      "send": "提交申诉",
+      "sent": "已收到你的申诉。",
+      "subtitle": "审核团队中的另一位成员会重新审查该决定。",
+      "title": "申诉"
+    },
+    "notice": {
+      "appeal": "申诉 …",
+      "failedTitle": "无法加载通知",
+      "from": "审核通知",
+      "goneMessage": "它已在期限届满后删除，或属于其他账户。",
+      "goneTitle": "此通知已不存在",
+      "pageTitle": "审核通知",
+      "rules": "站规"
+    },
+    "placeholder": {
+      "description": "描述已被审核移除",
+      "file": "文件已移除",
+      "fileBy": "由审核移除",
+      "page": "内容已被审核移除",
+      "removed": "已被审核移除",
+      "why": "为什么？"
+    },
+    "state": {
+      "removed": "已移除",
+      "suspended": "已封禁",
+      "open": "待处理",
+      "urgent": "紧急",
+      "inReview": "审查中",
+      "pending": "等待确认",
+      "appeal": "申诉",
+      "handled": "已解决",
+      "clear": "无违规"
+    },
+    "statement": {
+      "automation": "自动化手段",
+      "basis": "起因与查明的事实",
+      "law": "法律依据",
+      "measure": "措施",
+      "message": "审核留言",
+      "remedies": "你可以做什么",
+      "rule": "规则"
+    },
+    "queue": {
+      "title": "内容审核",
+      "target": "目标：24 小时内答复",
+      "more": "更多",
+      "settingsHint": "审查被举报的内容并作出决定",
+      "view": {
+        "open": "待处理",
+        "appeal": "申诉",
+        "done": "已处理"
+      },
+      "viewCount": "{{label}} · {{count}}",
+      "automated": "自动发现",
+      "reports": "{{count}} 条举报",
+      "reports_plural": "{{count}} 条举报",
+      "ownInitiative": "审核主动发起",
+      "reportedByMe": "由你举报",
+      "imageCovered": "图片已遮盖，可在案件中按需查看",
+      "textCovered": "文字已遮盖，可在案件中查看",
+      "openCount": "{{count}} 个待处理案件",
+      "openCount_plural": "{{count}} 个待处理案件",
+      "chooseTitle": "选择一个案件",
+      "chooseMessage": "列表显示等待答复的案件：紧急的在前，其次是最早的。",
+      "failedTitle": "无法加载案件",
+      "failedMessage": "请检查网络连接后重试。",
+      "empty": {
+        "open": "没有需要审查的内容",
+        "appeal": "没有待处理的申诉",
+        "done": "尚未作出任何决定"
+      },
+      "emptyMessage": {
+        "open": "新的举报会显示在这里，你也会收到通知。",
+        "appeal": "如果有人对决定提出申诉，会由另一人在这里重新审查。",
+        "done": "已决定的案件会保留在这里，直到保留期结束。"
+      },
+      "withYou": "由你处理"
+    },
+    "kind": {
+      "issue": "事项",
+      "comment": "评论",
+      "attachment": "附件",
+      "article": "页面",
+      "person": "人员",
+      "other": "其他"
+    },
+    "source": {
+      "member": "成员",
+      "public": "无账号",
+      "automated": "自动",
+      "ownInitiative": "主动发起"
+    },
+    "case": {
+      "age": {
+        "minutes": "{{count}} 分钟",
+        "minutes_plural": "{{count}} 分钟",
+        "hours": "{{count}} 小时",
+        "hours_plural": "{{count}} 小时",
+        "days": "{{count}} 天",
+        "days_plural": "{{count}} 天"
+      },
+      "ageSpoken": {
+        "minutes": "{{count}} 分钟",
+        "minutes_plural": "{{count}} 分钟",
+        "hours": "{{count}} 小时",
+        "hours_plural": "{{count}} 小时",
+        "days": "{{count}} 天",
+        "days_plural": "{{count}} 天"
+      },
+      "waited": "已等待 {{age}}",
+      "waitedOverdue": "已等待 {{age}}，已逾期",
+      "overdueSince": "已 {{age}}",
+      "kindBy": "{{name}} 的{{kind}}",
+      "withPerson": "由 {{name}} 处理",
+      "reported": "被举报的内容",
+      "asReported": "举报时的状态",
+      "someone": "某人",
+      "someoneModerating": "审核团队成员",
+      "fromMail": "来自 {{sender}} 的邮件",
+      "filesNeverShown": "Hinata 从不显示此文件。",
+      "procedure": "打开处理流程",
+      "fileNumber": "文件 {{n}}",
+      "viewFile": "查看文件",
+      "disturbingTitle": "内容可能令人不适",
+      "disturbingMessage": "该文件被举报为色情内容。它只在这里打开，不会被保存，查看操作会被记录。",
+      "noCopyKept": "没有违规：审核不保留内容副本。",
+      "removalIncomplete": "删除尚未完成。Hinata 会继续尝试。",
+      "otherUses": "其他使用位置",
+      "otherUsesHint": "被删除的图片也出现在这里。请一并查看这些位置。",
+      "scope": {
+        "issue": "你只能看到此事项的标题和描述。",
+        "comment": "你只能看到这条评论及其回复的内容。",
+        "attachment": "你只能看到这个文件。",
+        "article": "你只能看到这个页面。",
+        "person": "你只能看到头像和个人资料文字。",
+        "other": "你只能看到举报中描述的内容。"
+      },
+      "since": {
+        "unchanged": "自举报以来未更改。",
+        "changed": "此后已更改。",
+        "deleted": "此后已删除。"
+      },
+      "withheld": "内容已暂扣，需第二人开放后才能查看。",
+      "askedToOpen": "你已请求开放。将由第二人开放。",
+      "askToOpen": "请求开放 …",
+      "askToOpenTitle": "请求开放",
+      "askToOpenSubtitle": "无账号举报的内部内容。由第二人开放，你的理由会记入历史记录。",
+      "open": "开放 …",
+      "openTitle": "开放内容",
+      "openSubtitle": "他人已提出请求。填写理由后，审核即可看到内容。",
+      "revealReason": "理由",
+      "reports": "举报",
+      "reportNumber": "举报 {{n}}",
+      "quoted": "“{{text}}”",
+      "reportedBy": "举报人：{{name}}",
+      "unfoundedBefore": "该来源此前有 {{count}} 条关于儿童的举报明显无依据。",
+      "unfoundedBefore_plural": "该来源此前有 {{count}} 条关于儿童的举报明显无依据。",
+      "whoReported": "谁举报的？…",
+      "moreReports": "另有 {{count}} 条举报",
+      "moreReports_plural": "另有 {{count}} 条举报",
+      "reportersCovered": "举报人保持隐藏。揭示需要理由，并会记入历史记录。",
+      "reportersStayCovered": "出于儿童安全，举报人始终保持隐藏。",
+      "revealReporterTitle": "谁举报的？",
+      "revealReporterSubtitle": "只有填写理由才能揭示姓名，理由会记入案件历史。",
+      "reveal": "揭示",
+      "decision": "决定",
+      "measure": "措施",
+      "lawEnforcementTold": "已通知执法部门。案件将保留更长时间。",
+      "confirmedBy": "由 {{name}} 确认",
+      "restoredBy": {
+        "restored": "{{name}} 已恢复内容。",
+        "rewrittenSince": "{{name}} 已恢复。内容在此期间已被重写，保留重写后的文字。",
+        "gone": "{{name}} 已恢复，但内容已不存在。"
+      },
+      "pendingMine": "你决定了停用账号。需要第二人确认。",
+      "pendingOthers": "一项停用正在等待第二人确认。",
+      "claim": "接手",
+      "takeOver": "接管",
+      "release": "交还",
+      "decide": "作出决定 …",
+      "confirm": "确认",
+      "reject": "驳回 …",
+      "rejectTitle": "驳回停用",
+      "rejectSubtitle": "之后案件将重新开放。你的理由会记入历史记录。",
+      "confirmed": "已确认。停用生效。",
+      "rejected": "已驳回。案件重新开放。",
+      "more": "此案件的更多操作",
+      "viewProfile": "查看个人资料",
+      "restore": "恢复 …",
+      "restoreTitle": "恢复内容",
+      "restoreSubtitle": "被删除的内容将恢复，此案件的停用随之结束。当事人会收到通知。",
+      "restoreConfirm": "恢复",
+      "restored": "已恢复。",
+      "holdAction": "延长保留 …",
+      "holdTitle": "延长案件保留",
+      "holdSubtitle": "例如因为有关部门需要此案件。不能短于当前期限。",
+      "holdIndefinite": "无期限",
+      "holdIndefiniteHint": "直到有人再次更改。",
+      "holdUntil": "保留至",
+      "holdReason": "理由",
+      "hold": "延长",
+      "held": "案件保留期已延长。",
+      "why": "理由",
+      "noteLabel": "{{label}}，至少 {{min}} 个字符",
+      "decidedMeanwhile": "在此期间已有其他人作出决定。",
+      "changedMeanwhile": "案件已变化，请重新查看。",
+      "goneTitle": "此案件已不存在",
+      "goneMessage": "保留期已结束，或内容是你本人写的。",
+      "failedTitle": "无法加载案件"
+    },
+    "history": {
+      "reported": "已举报",
+      "claimed": "{{name}} 接手了案件",
+      "released": "{{name}} 交还了案件",
+      "reporterRevealed": "{{name}} 揭示了举报人：",
+      "evidenceRequested": "{{name}} 请求开放内容：",
+      "evidenceRevealed": "{{name}} 开放了内容：",
+      "decided": "{{name}} 作出决定：{{outcome}}",
+      "appealed": "收到申诉",
+      "appealDecided": "{{name}} 处理了申诉",
+      "restored": "{{name}} 已恢复",
+      "held": "{{name}} 延长了保留：",
+      "confirmationRequested": "{{name}} 决定停用账号，待第二人确认",
+      "confirmationRejected": "{{name}} 驳回了停用：",
+      "suspended": "账号已停用，{{length}}",
+      "suspensionLifted": "{{name}} 解除了停用："
+    },
+    "decision": {
+      "title": "决定",
+      "kindIn": "{{where}} 中的{{kind}}",
+      "send": "发送决定",
+      "sent": "已决定。",
+      "outcome": {
+        "noViolation": "无违规",
+        "unfounded": "明显无依据",
+        "action": "采取措施",
+        "handled": "已解决"
+      },
+      "outcomeHint": {
+        "noViolation": "内容保留。举报人会收到通知。",
+        "unfounded": "明显错误的举报。无需查看内容即可决定。",
+        "action": "{{name}} 会收到说明理由。被删除的内容进入隔离区。",
+        "actionAnyone": "当事人会收到说明理由。被删除的内容进入隔离区。",
+        "handled": "在 Hinata 之外解决，例如通过谈话。"
+      },
+      "remove": "删除内容",
+      "removeHint": "选择要删除的部分",
+      "scope": {
+        "issue": {
+          "title": "标题",
+          "description": "描述",
+          "whole": "标题和描述"
+        },
+        "comment": {
+          "whole": "整条评论"
+        },
+        "attachment": {
+          "whole": "整个文件"
+        },
+        "article": {
+          "revert": "将页面恢复到上一版本",
+          "whole": "整个页面"
+        },
+        "person": {
+          "avatar": "头像",
+          "profileText": "个人资料文字",
+          "whole": "头像和个人资料文字"
+        }
+      },
+      "scopeChip": {
+        "issue": {
+          "title": "标题",
+          "description": "描述",
+          "whole": "两者"
+        },
+        "article": {
+          "revert": "恢复",
+          "whole": "整页"
+        },
+        "person": {
+          "avatar": "头像",
+          "profileText": "文字",
+          "whole": "两者"
+        }
+      },
+      "suspend": "停用账号",
+      "suspendHint": "用于严重或屡次违规",
+      "suspendAdmin": "管理员账号不会被停用。",
+      "suspendNobody": "没有任何有账号的人对此负责。",
+      "suspendLoading": "正在检查 …",
+      "howLong": "多久？",
+      "suspendSignOut": "{{name}} 将在所有设备上退出登录，访问令牌暂停。内容保持不变。",
+      "suspendMail": "说明理由将通过邮件发送给 {{name}}。回复该邮件即视为申诉。",
+      "suspendEnds": "将于 {{date}} 自动结束。",
+      "suspendIndefinite": "持续到有人解除为止。",
+      "secondPerson": "需要第二人确认。",
+      "suspendedFor": "停用：{{length}}",
+      "ground": "依据",
+      "groundChip": {
+        "rules": "内部规则",
+        "law": "法律"
+      },
+      "rule": "规则",
+      "ruleHint": "例如：第 2 节，不贬低他人",
+      "pickRule": "选择内部规则",
+      "ruleLabel": "规则 {{number}}：{{title}}",
+      "searchRules": "搜索规则",
+      "noRule": "没有匹配的规则。",
+      "law": "法律条款",
+      "lawHint": "例如：§ 185 StGB",
+      "facts": "你发现了什么？",
+      "factsRequired": "你发现了什么？必填",
+      "factsOptional": "你发现了什么？选填",
+      "factsHint": "例如：评论称一位同事“蠢到干不了这份工作”。这是在贬低个人，而不是讨论事情本身。",
+      "message": "给当事人的消息",
+      "messageTo": "给 {{name}} 的消息，选填",
+      "messageToAnyone": "给当事人的消息，选填",
+      "more": "更多信息",
+      "responsible": "负责人",
+      "responsibleIs": "负责人：{{name}}",
+      "contributor": "参与者 {{n}}",
+      "lawEnforcement": "已通知执法部门",
+      "lawEnforcementHint": "案件随后将保留十二个月。",
+      "lawEnforcementYes": "执法部门：是",
+      "lawEnforcementNo": "执法部门：否",
+      "deceptive": "误导性群发广告",
+      "deceptiveHint": "仅适用于垃圾信息。计入年度统计。",
+      "internalNote": "内部备注",
+      "internalNoteHint": "仅审核可见。",
+      "noInternalNote": "无内部备注",
+      "withInternalNote": "有内部备注",
+      "previewTitle": "{{name}} 将收到的内容",
+      "previewTitleAnyone": "说明理由的原文",
+      "previewNone": "请选择结果。之后这里会显示相关人员将得知的内容。",
+      "previewNoStatement": {
+        "noViolation": "不会发送说明理由。举报人将得知没有违规。",
+        "unfounded": "不会发送说明理由。举报人将得知举报明显无依据。",
+        "handled": "不会发送说明理由。举报人将得知此事已解决。"
+      },
+      "previewIncomplete": "请选择措施的内容和依据。之后这里会逐字显示说明理由。",
+      "previewFailed": "无法加载预览。下次更改时会重试。",
+      "problem": {
+        "outcome": "请选择结果。",
+        "measure": "措施可以删除、停用或两者兼有。",
+        "scope": "请选择要删除的部分。",
+        "rule": "请选择被违反的规则。",
+        "law": "请写明法律条款。",
+        "facts": "请至少写 {{min}} 个字符说明你的发现。",
+        "suspension": "无法停用此人的账号。"
+      }
+    },
+    "suspension": {
+      "pageTitle": "已停用的账号",
+      "length": {
+        "days7": "7 天",
+        "days30": "30 天",
+        "indefinite": "无限期"
+      },
+      "until": "停用至 {{date}}",
+      "indefinite": "无限期停用",
+      "openCase": "打开案件",
+      "emptyTitle": "没有被停用的账号",
+      "emptyMessage": "审核停用账号后，该账号会显示在这里，直到停用结束。",
+      "failedTitle": "无法加载已停用的账号",
+      "lift": "解除停用 …",
+      "liftTitle": "解除停用",
+      "liftSubtitle": "之后此人可以重新登录。已删除的内容仍保持删除。",
+      "liftConfirm": "解除",
+      "lifted": "停用已解除。",
+      "suspend": "停用账号 …",
+      "suspendDetail": "由审核主动创建案件，然后由你决定。",
+      "ownTitle": "停用 {{name}}",
+      "ownSubtitle": "由审核主动创建的案件。之后你将决定停用并给出说明理由。",
+      "ownCategory": "涉及什么问题？",
+      "ownNext": "继续"
+    },
+    "appealReview": {
+      "title": "申诉",
+      "filedOn": "收到于 {{date}}",
+      "via": {
+        "app": "通过应用",
+        "reply": "通过回复邮件"
+      },
+      "notYours": "决定是你作出的。申诉由其他人处理。",
+      "uphold": "维持决定",
+      "reverse": "撤销决定",
+      "upholdTitle": "维持决定",
+      "upholdSubtitle": "决定维持不变。当事人会收到通知及你的理由。",
+      "reverseTitle": "撤销决定",
+      "reverseSubtitle": "内容将恢复，停用随之结束。当事人会收到通知及你的理由。",
+      "note": "理由",
+      "upheld": "已维持。",
+      "reversed": "已撤销。",
+      "wasUpheld": "{{name}} 维持了决定。",
+      "wasReversed": "{{name}} 撤销了决定。",
+      "recordAction": "登记申诉 …",
+      "recordTitle": "登记申诉",
+      "recordSubtitle": "用于登记对说明理由邮件的回复。之后由另一人重新审查决定。",
+      "recordText": "回复内容",
+      "receivedOn": "收到日期",
+      "record": "登记",
+      "recorded": "申诉已登记。"
+    }
   }
 }

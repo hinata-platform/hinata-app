@@ -38,6 +38,18 @@ class CommentBubbleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Removed by moderation (HIN-173): one quiet line in place of the whole
+    // row, voice messages included. The person who wrote it gets why.
+    if (_c.isRemoved) {
+      final mark = _c.moderation['text'];
+      final caseId = mark?.caseId;
+      return ModerationPlaceholder(
+        at: mark?.at,
+        onWhy: caseId != null && _c.authorId == _x.meId
+            ? () => context.push(noticeLocation(caseId))
+            : null,
+      );
+    }
     final avatarSize = isReply ? 26.0 : 32.0;
     final name = _x.nameFor(_c.authorId);
 
@@ -124,7 +136,7 @@ class CommentBubbleRow extends StatelessWidget {
 
     // In selection mode the whole row toggles the checkbox for own comments.
     if (selectionMode && _canManage) {
-      return Semantics(
+      row = Semantics(
         checked: selected,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -133,7 +145,14 @@ class CommentBubbleRow extends StatelessWidget {
         ),
       );
     }
-    return row;
+    // Somebody the reader blocks writes a folded line here, voice messages
+    // included, until the reader opens it (HIN-168).
+    return HiddenContentFold(
+      authorId: _c.authorId,
+      contentId: _c.id,
+      authorName: name,
+      child: row,
+    );
   }
 
   Widget _header(BuildContext context, String name) {
@@ -182,6 +201,9 @@ class CommentBubbleRow extends StatelessWidget {
 
 /// The persistent action row under a comment: Reply, a reaction popover and a
 /// "more" popover (edit/copy/pin/…). Left-aligned to the body on every platform.
+///
+/// Never for a removed comment: [CommentBubbleRow] shows the moderation's
+/// placeholder in its place.
 class _CommentActions extends StatefulWidget {
   const _CommentActions({
     required this.comment,
@@ -205,6 +227,10 @@ class _CommentActionsState extends State<_CommentActions> {
   // GlassPopover's animated triggerBuilder crashed on hover with a re-entrant
   // overlay layout (`!_skipMarkNeedsLayout`). See [[reference_web_hover_transform_assert]].
   Rect? _reactAnchor;
+
+  /// The menu button's screen rect, captured as the menu opens: the report
+  /// popover hangs off it once the menu has closed (HIN-173).
+  Rect? _moreAnchor;
 
   IssueComment get _c => widget.comment;
   CommentInteractions get _x => widget.interactions;
@@ -272,7 +298,10 @@ class _CommentActionsState extends State<_CommentActions> {
           triggerBuilder: (context, toggle) => _ActionButton(
             icon: LucideIcons.chevronDown,
             tooltip: context.t('comments.more'),
-            onTap: toggle,
+            onTap: () {
+              _moreAnchor = anchorRectOfContext(context) ?? _moreAnchor;
+              toggle();
+            },
           ),
           contentBuilder: (context, close) =>
               _ContextMenuCard(rows: _menuRows(context, close)),
@@ -322,6 +351,24 @@ class _CommentActionsState extends State<_CommentActions> {
         _c.pinned ? context.t('comments.unpin') : context.t('comments.pin'),
         () => run(() => _x.onTogglePin(_c)),
       ),
+      // Somebody else's comment, and not somebody already blocked: opened
+      // anyway, a folded comment offers nothing to block twice.
+      if (!widget.canManage &&
+          _x.onBlockAuthor != null &&
+          !(context.read<HiddenContentCubit?>()?.state.blocks(_c.authorId) ??
+              false))
+        _MenuRowData(
+          LucideIcons.userX,
+          context.t('blocks.action'),
+          () => run(() => _x.onBlockAuthor!(_c)),
+        ),
+      // Somebody else's comment (HIN-173).
+      if (!widget.canManage && _x.onReport != null)
+        _MenuRowData(
+          LucideIcons.flag,
+          context.t('moderation.report.action'),
+          () => run(() => _x.onReport!(_c, _moreAnchor)),
+        ),
       if (widget.canManage)
         _MenuRowData(
           LucideIcons.trash2,

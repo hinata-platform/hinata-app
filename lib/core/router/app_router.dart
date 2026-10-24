@@ -32,6 +32,11 @@ import '../../features/issues/issues_screen.dart';
 import '../../features/issues/watched_issues_screen.dart';
 import '../../features/knowledge/knowledge_location.dart';
 import '../../features/knowledge/knowledge_screen.dart';
+import '../../features/moderation/app_terms_screen.dart';
+import '../../features/moderation/house_rules_gate_screen.dart';
+import '../../features/moderation/notice/notice_screen.dart';
+import '../../features/moderation/queue/moderation_screen.dart';
+import '../../features/moderation/suspensions/suspensions_screen.dart';
 import '../../features/people/person_profile_screen.dart'
     show peopleRoute, personProfilePage;
 import '../../features/notifications/notifications_screen.dart';
@@ -118,6 +123,8 @@ class BootGate {
     '/register',
     '/forgot-password',
     '/verify-email',
+    '/terms',
+    '/rules',
   };
 
   /// The destination waiting for the app to become able to show it.
@@ -139,6 +146,9 @@ class BootGate {
     required AuthStatus auth,
     required bool hasServerUrl,
     required bool onboardingDone,
+    bool appTermsAccepted = true,
+    bool rulesPending = false,
+    bool ssoPending = false,
   }) {
     // Remember a real (non-gate) destination that we're about to bounce off a
     // gate, so we can return to it once the app is ready + authenticated.
@@ -153,13 +163,35 @@ class BootGate {
       pendingLogin = uri;
     }
 
-    // The SSO callback carries a one-time token pair in its query string.
-    // On a web login the whole app reloads at this URL, so AppConfig is still
+    // The app's own terms come before connecting and before signing in, once
+    // per device (HIN-175). Not while the session is still being checked: it
+    // may well be signed in, and a session from before the terms counts as
+    // having agreed (AppStorage). One that a link signed in on a fresh device
+    // meets them right after (below).
+    final termsDue = !appTermsAccepted && auth == AuthStatus.unauthenticated;
+
+    /// [entry], or the terms first while they are due.
+    String? toEntry(String entry) {
+      final target = termsDue ? '/terms' : entry;
+      if (location == target) return null;
+      parkIfDeepLink();
+      return target;
+    }
+
+    // The SSO callback carries a one-time code in its query string. On a web
+    // login the whole app reloads at this URL, so AppConfig is still
     // (re)connecting — without this guard the config switch below would bounce
-    // us to /connect and discard the tokens before SsoCallbackScreen reads
-    // them. Hold the route until the tokens have signed the user in.
+    // us to /connect and discard the code before SsoCallbackScreen reads it.
+    // Hold the route until the code has signed the user in.
+    //
+    // Only for a sign-in this device started ([ssoPending]), and while the
+    // tokens it redeemed sign the person in. Any page can link here, and a
+    // callback nobody here asked for carries somebody else's sign-in: it goes
+    // where the app would have gone without it.
     if (location == '/auth-callback' && auth != AuthStatus.authenticated) {
-      return null;
+      return ssoPending || auth == AuthStatus.authenticating
+          ? null
+          : '/dashboard';
     }
 
     // The invite + password-reset deep links are self-contained public flows
@@ -178,18 +210,12 @@ class BootGate {
         // No server chosen yet → URL-entry screen. Otherwise (boot with a
         // saved server, or a deliberate server switch) show a brief branded
         // splash rather than flashing the connect form.
-        if (!hasServerUrl) {
-          if (location == '/connect') return null;
-          parkIfDeepLink();
-          return '/connect';
-        }
+        if (!hasServerUrl) return toEntry('/connect');
         if (location == '/connecting') return null;
         parkIfDeepLink();
         return '/connecting';
       case AppConfigStatus.needsServerUrl:
-        if (location == '/connect') return null;
-        parkIfDeepLink();
-        return '/connect';
+        return toEntry('/connect');
       case AppConfigStatus.updateRequired:
         if (location == '/update') return null;
         parkIfDeepLink();
@@ -207,14 +233,9 @@ class BootGate {
       return '/onboarding';
     }
     if (auth != AuthStatus.authenticated) {
-      // /auth-callback carries the SSO token pair and signs the user in;
       // /register + /forgot-password are the public logged-out auth flows.
-      const allowed = {
-        '/login',
-        '/auth-callback',
-        '/register',
-        '/forgot-password',
-      };
+      const allowed = {'/login', '/register', '/forgot-password'};
+      if (termsDue) return toEntry('/login');
       if (allowed.contains(location)) {
         if (location == '/login' && uri == pendingLogin) pendingLogin = null;
         return null;
@@ -223,6 +244,21 @@ class BootGate {
       final login = pendingLogin ?? '/login';
       pendingLogin = null;
       return login;
+    }
+    // Signed in without the app's terms: an invitation, a reset, a verification
+    // or a sign-in by SSO passed the gate signed out and signed the person in
+    // on a fresh device. The terms first, then the house rules (HIN-175).
+    if (!appTermsAccepted) {
+      if (location == '/terms') return null;
+      parkIfDeepLink();
+      return '/terms';
+    }
+    // Signed in: the instance's house rules, whenever a version waits for this
+    // person, before anything else and before the parked link (HIN-175).
+    if (rulesPending) {
+      if (location == '/rules') return null;
+      parkIfDeepLink();
+      return '/rules';
     }
     // Authenticated and ready: hand back the parked deep link, wherever the
     // user is standing right now. Deliberately not limited to the gates: the
@@ -262,6 +298,9 @@ GoRouter buildRouter({
       auth: auth.state.status,
       hasServerUrl: storage.serverUrl != null,
       onboardingDone: storage.onboardingDone,
+      appTermsAccepted: storage.appTermsAccepted,
+      rulesPending: auth.state.user?.rulesPending ?? false,
+      ssoPending: storage.pendingSsoVerifier() != null,
     ),
     // A path that matches nothing used to render an empty page under the brand
     // mark, which reads as a broken app rather than a bad link.
@@ -289,6 +328,16 @@ GoRouter buildRouter({
           ),
         ),
       ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, _) => AppTermsScreen(
+          storage: storage,
+          // Wherever the boot goes next: connecting, signing in, the house
+          // rules, or the link that waited.
+          onDone: () => GoRouter.of(context).go('/dashboard'),
+        ),
+      ),
+      GoRoute(path: '/rules', builder: (_, _) => const HouseRulesGateScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
       GoRoute(
@@ -326,11 +375,8 @@ GoRouter buildRouter({
         path: '/auth-callback',
         builder: (_, state) => SsoCallbackScreen(
           // A single-use handoff code, redeemed for tokens via a POST — the
-          // bearer tokens are never carried in the URL. `access_token`/
-          // `refresh_token` are still read as a fallback for older redirects.
+          // bearer tokens are never carried in the URL.
           code: state.uri.queryParameters['code'],
-          accessToken: state.uri.queryParameters['access_token'],
-          refreshToken: state.uri.queryParameters['refresh_token'],
           error: state.uri.queryParameters['error'],
         ),
       ),
@@ -724,6 +770,49 @@ GoRouter buildRouter({
             pageBuilder: (_, state) =>
                 _transition(state, const NotificationsScreen()),
           ),
+          // The moderation's notice to the person concerned (HIN-173): the
+          // bell and the mail lead here. Outside /moderation on purpose, which
+          // is the moderators' own page with its own guard.
+          GoRoute(
+            path: '/notices/:caseId',
+            pageBuilder: (_, state) {
+              final caseId = state.pathParameters['caseId']!;
+              // Keyed by the case: the page is keyed by the route pattern, so
+              // a second notice from the bell would keep the first one's.
+              return _transition(
+                state,
+                NoticeScreen(key: ValueKey('notice-$caseId'), caseId: caseId),
+              );
+            },
+          ),
+          // Moderation (HIN-174): the moderators' page, a page of the
+          // settings like Organisation. One route for list and case, so the
+          // lists stay while cases are opened; a case's own address, which
+          // the notifications use, lands on it. The server refuses everybody
+          // else too; the guard keeps them from a page that could only say so.
+          GoRoute(
+            path: '/moderation',
+            redirect: (_, _) => moderationGuard(auth.state.user),
+            pageBuilder: (_, state) => _transition(
+              state,
+              ModerationScreen(
+                view: caseViewOf(state.uri.queryParameters['view']),
+                caseId: state.uri.queryParameters['case'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/moderation/cases/:id',
+            redirect: (_, state) =>
+                moderationGuard(auth.state.user) ??
+                moderationLocation(caseId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: suspensionsLocation,
+            redirect: (_, _) => moderationGuard(auth.state.user),
+            pageBuilder: (_, state) =>
+                _transition(state, const SuspensionsScreen()),
+          ),
           GoRoute(
             path: '/weekly-summary',
             pageBuilder: (_, state) =>
@@ -837,6 +926,12 @@ String adminUsersRedirect(Uri uri) {
     },
   ).toString();
 }
+
+/// Where somebody who does not moderate is sent from the moderation pages
+/// (HIN-174), or null to let a moderator through.
+@visibleForTesting
+String? moderationGuard(AuthUser? user) =>
+    (user?.isModerator ?? false) ? null : '/dashboard';
 
 /// Where somebody without the organisation role is sent from the Organisation
 /// pages, or null to let an organisation admin through.

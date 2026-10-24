@@ -1,6 +1,8 @@
 import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/models/moderation_models.dart';
+
 /// Domain models for the Confluence-style Knowledge Base.
 ///
 /// The feature is a faithful port of the standalone design reference
@@ -99,6 +101,7 @@ class KbArticle {
     this.createdAt,
     this.updatedAt,
     this.lastEditorId,
+    this.moderation = const {},
   });
 
   final String id;
@@ -132,6 +135,12 @@ class KbArticle {
   /// Who last changed title or text; the author on pages nobody has edited
   /// since this was recorded.
   final String? lastEditorId;
+
+  /// The moderation's marks by field, `title` and `content` (HIN-173).
+  final Map<String, ContentMark> moderation;
+
+  /// Whether moderation removed [field]; a rewritten one shows its text.
+  bool isRemoved(String field) => moderation[field]?.removed ?? false;
 
   KbPlace get place => placeOf(projectId, teamId, organization: organization);
 
@@ -170,6 +179,7 @@ class KbArticle {
     createdAt: createdAt,
     updatedAt: updatedAt,
     lastEditorId: lastEditorId,
+    moderation: moderation,
   );
 }
 

@@ -169,6 +169,7 @@ class Issue extends Equatable {
     this.subtaskDoneCount = 0,
     this.formerReadableIds = const [],
     this.epicId,
+    this.moderation = const {},
   });
 
   final String id;
@@ -287,6 +288,12 @@ class Issue extends Equatable {
   /// Leaf of the hierarchy — lives under a standard issue, holds no children.
   bool get isSubtask => type.toUpperCase() == 'SUBTASK';
 
+  /// The moderation's marks by field, `title` and `description` (HIN-173).
+  final Map<String, ContentMark> moderation;
+
+  /// Whether moderation removed [field]; a rewritten one shows its text.
+  bool isRemoved(String field) => moderation[field]?.removed ?? false;
+
   /// Story / Task / Bug / Feature — may sit under an epic and hold sub-tasks.
   bool get isStandard => !isEpic && !isSubtask;
 
@@ -330,6 +337,7 @@ class Issue extends Equatable {
     subtaskCount: json['subtaskCount'] as int? ?? 0,
     subtaskDoneCount: json['subtaskDoneCount'] as int? ?? 0,
     epicId: json['epicId'] as String?,
+    moderation: ContentMark.mapOf(json['moderation']),
   );
 
   /// Returns a copy with the given fields replaced — used for optimistic
@@ -383,6 +391,7 @@ class Issue extends Equatable {
     subtaskCount: subtaskCount,
     subtaskDoneCount: subtaskDoneCount,
     epicId: epicId,
+    moderation: moderation,
   );
 
   @override
@@ -390,6 +399,7 @@ class Issue extends Equatable {
     id,
     readableId,
     title,
+    moderation,
     state,
     assigneeId,
     assigneeIds,
@@ -535,6 +545,7 @@ class IssueAttachment extends Equatable {
     this.uploaderId,
     this.uploadedAt,
     this.blurHash,
+    this.moderation = const {},
   });
 
   final String id;
@@ -549,6 +560,12 @@ class IssueAttachment extends Equatable {
   /// server could not decode (e.g. webp).
   final String? blurHash;
 
+  /// The moderation's mark on the `file` (HIN-173).
+  final Map<String, ContentMark> moderation;
+
+  /// Whether moderation removed the file: no preview, no download.
+  bool get isRemoved => moderation['file']?.removed ?? false;
+
   factory IssueAttachment.fromJson(Map<String, dynamic> json) =>
       IssueAttachment(
         id: json['id'] as String,
@@ -558,10 +575,11 @@ class IssueAttachment extends Equatable {
         uploaderId: json['uploaderId'] as String?,
         uploadedAt: _instant(json['uploadedAt']),
         blurHash: json['blurHash'] as String?,
+        moderation: ContentMark.mapOf(json['moderation']),
       );
 
   @override
-  List<Object?> get props => [id, fileName, size];
+  List<Object?> get props => [id, fileName, size, moderation];
 }
 
 /// A comment is either plain Markdown ([text]) or a recorded [voice] message.
@@ -635,6 +653,7 @@ class IssueComment extends Equatable {
     this.editedAt,
     this.createdAt,
     this.updatedAt,
+    this.moderation = const {},
   });
 
   final String id;
@@ -672,6 +691,13 @@ class IssueComment extends Equatable {
 
   final DateTime? createdAt;
   final DateTime? updatedAt;
+
+  /// The moderation's mark on the `text` (HIN-173).
+  final Map<String, ContentMark> moderation;
+
+  /// Whether moderation removed this comment; the server already wrote its
+  /// placeholder text, and the app draws the placeholder in its place.
+  bool get isRemoved => moderation['text']?.removed ?? false;
 
   bool get isVoice => type == CommentType.voice && voice != null;
 
@@ -731,6 +757,7 @@ class IssueComment extends Equatable {
     editedAt: editedAt ?? this.editedAt,
     createdAt: createdAt,
     updatedAt: updatedAt,
+    moderation: moderation,
   );
 
   factory IssueComment.fromJson(Map<String, dynamic> json) => IssueComment(
@@ -758,6 +785,7 @@ class IssueComment extends Equatable {
     editedAt: _instant(json['editedAt']),
     createdAt: _instant(json['createdAt']),
     updatedAt: _instant(json['updatedAt']),
+    moderation: ContentMark.mapOf(json['moderation']),
   );
 
   @override
@@ -765,6 +793,7 @@ class IssueComment extends Equatable {
     id,
     authorId,
     text,
+    moderation,
     textDoc,
     type,
     voice,

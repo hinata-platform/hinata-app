@@ -1,14 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/content_refused_notice.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../connect/server_switcher.dart';
 import '../legal/legal_links.dart';
@@ -17,6 +22,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'auth_shell.dart';
 import 'auth_flow_cubit.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/util/published_link.dart';
 
 /// Public self-registration. Collects the new account's details, then shows a
 /// "confirm your email" state — the account is only usable once the emailed
@@ -52,6 +58,9 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
   bool _sent = false;
   String? _error;
 
+  /// What the text check refused in a name (HIN-176); the form keeps it.
+  ContentRefusal? _refusal;
+
   @override
   void dispose() {
     _displayName.dispose();
@@ -67,6 +76,7 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
     setState(() {
       _submitting = true;
       _error = null;
+      _refusal = null;
     });
     try {
       await context.read<AuthFlowCubit>().register(
@@ -85,9 +95,11 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
       });
     } on ApiFailure catch (failure) {
       if (!mounted) return;
+      final refusal = ContentRefusal.of(failure);
       setState(() {
         _submitting = false;
-        _error = failure.message;
+        _refusal = refusal;
+        _error = refusal == null ? failure.message : null;
       });
     }
   }
@@ -243,6 +255,22 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
               const SizedBox(height: 16),
               _InfoNote(text: context.t('register.approvalHint')),
             ],
+            if (_refusal case final refusal?) ...[
+              const SizedBox(height: 12),
+              ContentRefusedNotice(
+                refusal: refusal,
+                // Nobody is signed in yet: the rules as the instance publishes them.
+                onReadRules: switch (publishedLink(
+                  meta?.moderation.rulesUrl,
+                  server: context.read<AuthBloc>().storage.serverUrl,
+                )) {
+                  final rules? => () => unawaited(
+                    launchUrl(rules, mode: LaunchMode.externalApplication),
+                  ),
+                  null => null,
+                },
+              ),
+            ],
             if (_error != null) ...[
               const SizedBox(height: 12),
               Text(
@@ -266,8 +294,11 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
                   : Text(context.t('register.submit')),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // A wrap: at a large text size the question and the button do
+            // not fit on one line of a phone.
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   context.t('register.haveAccount'),

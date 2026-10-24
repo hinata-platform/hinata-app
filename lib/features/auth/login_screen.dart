@@ -219,6 +219,10 @@ class _LoginScreenState extends State<_LoginScreenBody>
     final registrationEnabled = context.select(
       (AppConfigBloc bloc) => bloc.state.meta?.registrationEnabled ?? true,
     );
+    // Whoever runs the server, once /meta has named them (HIN-175).
+    final contactEmail = context.select(
+      (AppConfigBloc bloc) => bloc.state.meta?.moderation.contactEmail,
+    );
     return AuthShell(
       maxContentWidth: 440,
       child: BlocListener<AppConfigBloc, AppConfigState>(
@@ -446,8 +450,11 @@ class _LoginScreenState extends State<_LoginScreenBody>
                       ],
                       if (localAuth && registrationEnabled) ...[
                         const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        // A wrap: at a large text size the question and
+                        // the button do not fit on one line of a phone.
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               context.t('auth.noAccount'),
@@ -463,7 +470,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
                         ),
                       ],
                       const SizedBox(height: 8),
-                      const LegalLinks(),
+                      LegalLinks(contactEmail: contactEmail),
                     ],
                   ),
                 ),
@@ -545,7 +552,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
   }
 
   Future<void> _launchSso(SsoProvider provider) async {
-    final serverUrl = context.read<AuthBloc>().storage.serverUrl ?? '';
+    final storage = context.read<AuthBloc>().storage;
     setState(() => _launchingSsoId = provider.id);
     try {
       // Let the disabled/loading state actually reach the screen before we
@@ -556,7 +563,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
       // frames (loader visible, buttons disabled) first.
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
-      final launched = await launchSso(serverUrl, provider);
+      final launched = await launchSso(storage, provider);
       if (kIsWeb) {
         // Only keep the buttons disabled if the tab is genuinely on its way to
         // the provider — re-enabling them then would let the user start a

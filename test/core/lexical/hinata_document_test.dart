@@ -404,6 +404,58 @@ void main() {
   });
 
   group('links', () {
+    test('outside a browser only an address with a scheme reaches the '
+        'platform', () {
+      expect(
+        hinataLinkTarget(' https://example.org/a ', resolvesRelative: false),
+        Uri.parse('https://example.org/a'),
+      );
+      expect(
+        hinataLinkTarget('mailto:team@example.org', resolvesRelative: false),
+        isNotNull,
+      );
+      // No base to resolve against: a Windows shell would take the bare
+      // string as a program, or as SMB.
+      for (final url in [
+        '/Windows/System32/calc.exe',
+        '//evil.example/share',
+        r'\\evil.example\share',
+      ]) {
+        expect(hinataLinkTarget(url, resolvesRelative: false), isNull);
+      }
+    });
+
+    test('in a browser a path of the app opens, a script never', () {
+      expect(
+        hinataLinkTarget('/issues/ACME-1', resolvesRelative: true),
+        Uri.parse('/issues/ACME-1'),
+      );
+      expect(
+        hinataLinkTarget('javascript:alert(1)', resolvesRelative: true),
+        isNull,
+      );
+      expect(hinataLinkTarget('   ', resolvesRelative: true), isNull);
+    });
+
+    test('in a browser a path that signs a person in does not open', () {
+      // Any document can link to these, and they act on what the address
+      // carries: a code or token from somebody else's sign-in or account.
+      for (final url in [
+        '/auth-callback?code=c1',
+        '/auth-callback/?code=c1',
+        '/./auth-callback?code=c1',
+        '/invite?token=t1',
+        '/reset-password?token=t1',
+        '/verify-email?token=t1',
+      ]) {
+        expect(
+          hinataLinkTarget(url, resolvesRelative: true),
+          isNull,
+          reason: url,
+        );
+      }
+    });
+
     testWidgets('a document with no host callback still reacts to a tap', (
       tester,
     ) async {

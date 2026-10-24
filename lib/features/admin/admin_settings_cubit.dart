@@ -88,7 +88,14 @@ class AdminSettingsCubit extends Cubit<AdminSettingsState> {
 
   /// Writes the draft and keeps what the server answered. A failure passes
   /// through as the repository's [ApiFailure], for the screen to report.
-  Future<void> save() async {
+  ///
+  /// [openAccessConfirmed] goes with this one save only: the administrator
+  /// confirmed that new accounts may come in without approval (HIN-175).
+  /// [flagConfirmed] the same for putting texts before moderation (HIN-176).
+  Future<void> save({
+    bool openAccessConfirmed = false,
+    bool flagConfirmed = false,
+  }) async {
     final settings = state.settings;
     if (settings == null) return;
     emit(state.copyWith(saving: true));
@@ -97,7 +104,11 @@ class AdminSettingsCubit extends Cubit<AdminSettingsState> {
       // now (HIN-129), and for an admin who also holds that role the copy
       // loaded here would overwrite what was saved there in the meantime.
       final saved = await _admin.updateAdminSettings(
-        {...settings}..remove('timeTracking'),
+        {
+          ...settings,
+          if (openAccessConfirmed) 'openAccessConfirmed': true,
+          if (flagConfirmed) 'flagConfirmed': true,
+        }..remove('timeTracking'),
       );
       emit(state.copyWith(settings: saved, saving: false));
     } catch (_) {

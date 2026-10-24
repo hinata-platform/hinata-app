@@ -398,6 +398,12 @@ List<PaletteCommand> accountCommands(PaletteAccess access) => [
       'data export privacy gdpr download',
     ),
     (
+      'help',
+      'account.help.title',
+      LucideIcons.lifeBuoy,
+      'help contact moderation house rules report imprint about terms',
+    ),
+    (
       'danger',
       'account.danger.title',
       LucideIcons.triangleAlert,
@@ -448,6 +454,14 @@ const List<PaletteCommand> kAdminCommands = [
     icon: LucideIcons.shield,
     route: '/admin?section=security',
     keywords: 'admin security policy password',
+  ),
+  PaletteCommand.route(
+    id: 'admin.moderation',
+    labelKey: 'admin.moderation.title',
+    contextKey: 'admin.title',
+    icon: LucideIcons.shieldUser,
+    route: '/admin?section=moderation',
+    keywords: 'admin moderation moderator report contact imprint',
   ),
   PaletteCommand.route(
     id: 'admin.authentication',

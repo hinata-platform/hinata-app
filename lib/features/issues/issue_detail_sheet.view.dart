@@ -69,6 +69,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// text is loaded into [_comment]); submitting saves the edit instead of
   /// posting a new comment.
   IssueComment? _editingComment;
+
+  /// What the text check refused in the last send (HIN-176); the draft stays
+  /// in the composer, and this says why it did not go out.
+  ContentRefusal? _commentRefusal;
   final _titleCtrl = TextEditingController();
   final _descCtrl = HinataEditorController();
   // Lets the composer's "+" → Anhang drive the attachments section's own
@@ -236,6 +240,31 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       ? (anchor) => shareIssue(anchorRect: anchor)
       : null;
 
+  /// The "Report …" entry of the "…" menu (HIN-173), or null: on somebody
+  /// else's issue that is still there, on a server that knows reporting.
+  void Function(Rect anchorRect)? get reportAction {
+    final issue = _issue;
+    if (issue == null ||
+        !canReport(
+          context,
+          authorId: issue.reporterId,
+          removed: issue.isRemoved('title') && issue.isRemoved('description'),
+        )) {
+      return null;
+    }
+    return (anchor) => unawaited(_reportIssue(issue, anchor));
+  }
+
+  Future<void> _reportIssue(Issue issue, Rect anchor) => showReportSheet(
+    context,
+    anchorRect: anchor,
+    subject: ReportSubject(
+      target: TargetRef(ContentKind.issue, issue.id),
+      title: context.t('moderation.report.titleIssue'),
+      subtitle: '${issue.readableId} · ${issue.title}',
+    ),
+  );
+
   /// Who is watching this issue, plus the caller's own subscription. Owned here
   /// rather than by the "…" menu that renders it: three separate top bars host
   /// that menu (wolt sheet, wide route, compact route), each in its own subtree
@@ -244,6 +273,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   // Inline editing + activity filter state.
   bool _editingTitle = false;
+
+  /// The text check's refusal of the last title or description save (HIN-176):
+  /// the editor comes back with the draft, and this says why.
+  ContentRefusal? _titleRefusal;
+  ContentRefusal? _descRefusal;
   bool _editingDesc = false;
   // Default the activity panel to the Comments tab so the conversation shows
   // up front when an issue is opened.
@@ -781,7 +815,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  Future<void> _patch(Map<String, dynamic> patch) async {
+  Future<void> _patch(
+    Map<String, dynamic> patch, {
+    void Function(ContentRefusal refusal)? onRefused,
+  }) async {
     if (!mounted) return;
     setState(() => _busy = true);
     try {
@@ -806,7 +843,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       // A re-parent changes the breadcrumb ancestors — keep them in sync.
       await _reloadHierarchy();
     } on ApiFailure catch (failure) {
-      if (!_offerShareForRefusedAssignee(failure)) _toast(failure.message);
+      final refusal = ContentRefusal.of(failure);
+      if (refusal != null && onRefused != null && mounted) {
+        onRefused(refusal);
+      } else if (!_offerShareForRefusedAssignee(failure)) {
+        _toast(failure.message);
+      }
     } catch (_) {
       _toast('errors.unexpected');
     } finally {
@@ -940,6 +982,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     // mirrored plain text alone silently threw those away: the sheet closed
     // and nothing was posted.
     if ((text.isEmpty && doc == null) || _sendingComment) return;
+    _showCommentRefusal(null);
     // Editing an existing comment inline → save instead of posting a new one.
     // Text only: format mode is not reachable while editing (the composer
     // swaps the "+" menu for a cancel button), so there is no document here to
@@ -975,12 +1018,28 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         await _refreshTopLevelAfterPost();
       }
     } on ApiFailure catch (failure) {
-      _toast(failure.message);
+      _refusedOrToast(failure);
     } catch (_) {
       _toast('errors.unexpected');
     } finally {
       _sendingComment = false;
     }
+  }
+
+  /// The text check's refusal above the composer, or the failure as a toast.
+  void _refusedOrToast(ApiFailure failure) {
+    final refusal = ContentRefusal.of(failure);
+    if (refusal == null) {
+      _toast(failure.message);
+    } else {
+      _showCommentRefusal(refusal);
+    }
+  }
+
+  void _showCommentRefusal(ContentRefusal? refusal) {
+    if (!mounted || _commentRefusal == refusal) return;
+    setState(() => _commentRefusal = refusal);
+    _bumpComposer();
   }
 
   /// After a top-level comment: reload the newest window so it appears (top for
@@ -1059,6 +1118,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   void _cancelEditComment() {
     setState(() {
       _editingComment = null;
+      _commentRefusal = null;
       _comment.clear();
     });
     _bumpComposer();
@@ -1080,7 +1140,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       }
       return true;
     } on ApiFailure catch (failure) {
-      _toast(failure.message);
+      _refusedOrToast(failure);
       return false;
     } catch (_) {
       _toast('errors.unexpected');
@@ -1570,19 +1630,48 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   Future<void> _saveTitle() async {
     final value = _titleCtrl.text.trim();
-    setState(() => _editingTitle = false);
+    setState(() {
+      _editingTitle = false;
+      _titleRefusal = null;
+    });
     if (value.isEmpty || value == _issue!.title) return;
-    await _patch({'title': value});
+    await _patch(
+      {'title': value},
+      // Refused: the draft comes back into the editor, with why.
+      onRefused: (refusal) {
+        _titleCtrl.text = value;
+        setState(() {
+          _editingTitle = true;
+          _titleRefusal = refusal;
+        });
+      },
+    );
   }
 
   Future<void> _saveDesc() async {
     final value = _descCtrl.doc;
-    setState(() => _editingDesc = false);
+    setState(() {
+      _editingDesc = false;
+      _descRefusal = null;
+    });
     // Nothing changed: comparing documents rather than a dirty flag means an
     // edit that was typed and undone does not write.
     if (!_descCtrl.isDirty) return;
+    var refused = false;
+    await _patch(
+      {'descriptionDoc': value},
+      // Refused: the editor opens again on the very document that was refused,
+      // still unsaved, so saving it once fixed goes through.
+      onRefused: (refusal) {
+        refused = true;
+        setState(() {
+          _editingDesc = true;
+          _descRefusal = refusal;
+        });
+      },
+    );
+    if (refused) return;
     _descCtrl.markSaved();
-    await _patch({'descriptionDoc': value});
     // The edited description may reference new issues — resolve their chips.
     await _syncReferencedIssues();
   }
@@ -1907,6 +1996,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 watch: watchMenu,
                 canDelete: _canDelete,
                 onShare: shareAction,
+                onReport: reportAction,
                 readOnly: isParticipant,
               ),
             if (isParticipant)
@@ -2175,13 +2265,24 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           // are clickable; the current issue is the last, inert crumb.
           _breadcrumb(issue),
           // Title — double-tap to edit inline.
-          if (_editingTitle)
+          if (_editingTitle) ...[
             _InlineTitleEditor(
               controller: _titleCtrl,
               onSave: _saveTitle,
-              onCancel: () => setState(() => _editingTitle = false),
-            )
-          else
+              onCancel: () => setState(() {
+                _editingTitle = false;
+                _titleRefusal = null;
+              }),
+            ),
+            if (_titleRefusal case final refusal?)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: ContentRefusedNotice(
+                  refusal: refusal,
+                  onReadRules: () => unawaited(showHouseRulesSheet(context)),
+                ),
+              ),
+          ] else
             Tooltip(
               message: context.t('issues.editTitleHint'),
               waitDuration: const Duration(milliseconds: 700),
@@ -2192,7 +2293,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onDoubleTap: isParticipant ? null : beginTitleEdit,
-                  child: Text(issue.title, style: titleStyle),
+                  // A title the moderation removed reads as its placeholder,
+                  // quiet and with the glyph (HIN-173).
+                  child: issue.isRemoved('title')
+                      ? RemovedTitle(text: issue.title, style: titleStyle)
+                      : Text(issue.title, style: titleStyle),
                 ),
               ),
             ),
@@ -2206,6 +2311,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               children: [
                 _sectionLabel(context.t('issues.description')),
                 const SizedBox(height: 8),
+                if (_descRefusal case final refusal?) ...[
+                  ContentRefusedNotice(
+                    refusal: refusal,
+                    onReadRules: () => unawaited(showHouseRulesSheet(context)),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 HinataEditor(
                   controller: _descCtrl,
                   fontSize: AppType.body,
@@ -2226,7 +2338,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     ),
                     const SizedBox(width: 8),
                     TextButton(
-                      onPressed: () => setState(() => _editingDesc = false),
+                      onPressed: () => setState(() {
+                        _editingDesc = false;
+                        _descRefusal = null;
+                      }),
                       child: Text(
                         context.t('common.cancel'),
                         style: TextStyle(color: AppColors.inkSoft),
@@ -2253,7 +2368,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 // A description the backfill could not convert still has its
                 // markdown; "no description" would be a lie about a row that has
                 // one.
-                child: _describedDoc(issue) != null
+                child: issue.isRemoved('description')
+                    ? ModerationPlaceholder(
+                        part: RemovedPart.description,
+                        at: issue.moderation['description']?.at,
+                        onWhy: _whyRemoved(issue, 'description'),
+                      )
+                    : _describedDoc(issue) != null
                     ? HinataDocument(
                         doc: _describedDoc(issue),
                         fontSize: AppType.body,
@@ -2278,6 +2399,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         ],
       ),
     );
+  }
+
+  /// "Why?" beside a removed [field] of [issue], for the person who wrote it
+  /// (HIN-173); null for everybody else.
+  VoidCallback? _whyRemoved(Issue issue, String field) {
+    final caseId = issue.moderation[field]?.caseId;
+    final me = context.read<AuthBloc>().state.user?.id;
+    if (caseId == null || me == null || issue.reporterId != me) return null;
+    return () => context.push(noticeLocation(caseId));
   }
 
   /// The description to render: the stored document, or the legacy markdown
@@ -3249,6 +3379,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               watch: watchMenu,
               canDelete: _canDelete,
               onShare: shareAction,
+              onReport: reportAction,
               readOnly: isParticipant,
             ),
           ),
@@ -3469,6 +3600,26 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// morph, live voice recording and a Markdown format toolbar. Wraps a
   /// [MentionField] so `@`-smart-link autocomplete keeps working.
   Widget _commentComposer() {
+    final refusal = _commentRefusal;
+    final composer = _composerField();
+    if (refusal == null) return composer;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: ContentRefusedNotice(
+            refusal: refusal,
+            onReadRules: () => unawaited(showHouseRulesSheet(context)),
+          ),
+        ),
+        composer,
+      ],
+    );
+  }
+
+  Widget _composerField() {
     final replying = _replyingTo;
     final composer = GlassCommentComposer(
       controller: _comment,
@@ -3549,10 +3700,35 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  /// Uploads a recorded voice message as a comment, then refreshes to the newest
-  /// page so the playable bubble appears at the bottom of the thread.
-  Future<void> _sendVoiceComment(VoiceRecording recording) async {
-    if (_sendingComment) return;
+  /// Reports somebody else's comment (HIN-173): beside its menu on a wide
+  /// window, as a sheet on a phone.
+  Future<void> _reportComment(IssueComment c, Rect? anchor) async {
+    final name = _names[c.authorId] ?? c.authorId;
+    final issue = _issue;
+    await showReportSheet(
+      context,
+      anchorRect: anchor,
+      subject: ReportSubject(
+        target: TargetRef(ContentKind.comment, c.id, parentId: issue?.id),
+        title: context.t(
+          c.isVoice
+              ? 'moderation.report.titleVoice'
+              : 'moderation.report.titleComment',
+        ),
+        subtitle: context.t(
+          'moderation.report.byIn',
+          variables: {'name': name, 'where': issue?.readableId ?? ''},
+        ),
+        authorId: c.authorId,
+        authorName: name,
+      ),
+    );
+  }
+
+  /// Posts a voice message; false when it did not go out, so the composer
+  /// keeps the recording to send again.
+  Future<bool> _sendVoiceComment(VoiceRecording recording) async {
+    if (_sendingComment) return false;
     _sendingComment = true;
     try {
       final replyTarget = _replyingTo;
@@ -3564,7 +3740,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         peaks: recording.peaks,
         replyToId: replyTarget?.id,
       );
-      if (!mounted) return;
+      if (!mounted) return true;
       setState(() => _replyingTo = null);
       _bumpComposer();
       if (created.isReply) {
@@ -3573,9 +3749,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         await _refreshTopLevelAfterPost();
       }
       _notifyChanged();
+      return true;
     } catch (_) {
-      if (!mounted) return;
-      showGlassErrorToast(context, context.t('comments.voiceFailed'));
+      if (mounted) {
+        showGlassErrorToast(context, context.t('comments.voiceFailed'));
+      }
+      return false;
     } finally {
       _sendingComment = false;
     }
@@ -3596,6 +3775,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     ]) {
       _commentKeys.putIfAbsent(c.id, () => GlobalKey());
     }
+    // Reporting and blocking reach a server that knows them (HIN-26).
+    final moderated = moderationReachable(context);
     final interactions = CommentInteractions(
       meId: me?.id,
       nameFor: (id) => _names[id] ?? id,
@@ -3616,6 +3797,18 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       threadOf: _threadOf,
       onToggleReplies: _toggleReplies,
       onLoadMoreReplies: _loadMoreReplies,
+      // The sheet's own context: the comment folds the moment the block
+      // lands, and the toast that confirms it still needs somewhere to go.
+      // Blocking from a comment offers to report it too (HIN-173).
+      onBlockAuthor: moderated
+          ? (c) => confirmBlock(
+              context,
+              personId: c.authorId,
+              name: _names[c.authorId] ?? c.authorId,
+              reportAfter: () => _reportComment(c, null),
+            )
+          : null,
+      onReport: moderated ? _reportComment : null,
     );
     // Same flat tile as the Comments tab, so comments look identical in every
     // tab (voice comments stay playable in the merged "All" feed too). The

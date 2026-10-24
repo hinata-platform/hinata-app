@@ -1,5 +1,7 @@
 import 'package:emoji_picker_flutter/emoji_picker_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:liquid_glass_widgets/liquid_glass_widgets.dart'
     show
         GlassContainer,
@@ -15,11 +17,16 @@ import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../../../core/widgets/moderation_placeholder.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/lexical/hinata_document.dart';
-import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
+import '../../sprint/modals/glass_modal.dart'
+    show anchorRectOfContext, showGlassErrorToast;
 import 'voice/voice_player.dart';
 import '../../../core/theme/app_type.dart';
+import '../../blocks/hidden_content_fold.dart';
+import '../../blocks/hidden_content_cubit.dart';
+import '../../moderation/notice/notice_screen.dart' show noticeLocation;
 import '../../people/person_link.dart';
 
 part 'comment_thread.bubbles.dart';
@@ -255,6 +262,8 @@ class CommentInteractions {
     required this.threadOf,
     required this.onToggleReplies,
     required this.onLoadMoreReplies,
+    this.onBlockAuthor,
+    this.onReport,
   });
 
   final String? meId;
@@ -288,6 +297,14 @@ class CommentInteractions {
 
   /// Load the next page of a root's replies.
   final void Function(IssueComment root) onLoadMoreReplies;
+
+  /// Blocks the author of somebody else's comment, after asking (HIN-168).
+  /// Null where blocking is not offered, such as on an older server.
+  final void Function(IssueComment comment)? onBlockAuthor;
+
+  /// Reports somebody else's comment (HIN-173), the popover hanging off
+  /// [anchor], the comment's menu button. Null where reporting is not offered.
+  final void Function(IssueComment comment, Rect? anchor)? onReport;
 }
 
 /// Jira-style comment feed (flat text, always left-aligned). Each top-level

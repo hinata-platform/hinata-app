@@ -230,6 +230,7 @@ class _OverviewState extends State<_Overview> {
       await launchUrl(
         Uri.parse('data:$mime;charset=utf-8,${Uri.encodeComponent(content)}'),
         webOnlyWindowName: '_blank',
+        mode: LaunchMode.externalApplication,
       );
       if (!mounted) return;
       _toast(

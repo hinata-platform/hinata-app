@@ -219,7 +219,21 @@ class OrgAdminBadge extends StatelessWidget {
   );
 }
 
-/// The platform role, followed by the organisation role when the user holds it.
+/// Marks a holder of the moderation role (HIN-26), like [OrgAdminBadge].
+class ModeratorBadge extends StatelessWidget {
+  const ModeratorBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) => _Badge(
+    icon: LucideIcons.shieldUser,
+    label: context.t('admin.um.moderatorBadge'),
+    bg: _hue(160, s: .38, l: .91),
+    fg: _hue(160, s: .5, l: .3),
+  );
+}
+
+/// The platform role, followed by the organisation and the moderation role
+/// when the user holds them.
 class RoleBadges extends StatelessWidget {
   const RoleBadges(this.user, {super.key});
   final AdminUser user;
@@ -229,7 +243,11 @@ class RoleBadges extends StatelessWidget {
     spacing: 6,
     runSpacing: 6,
     crossAxisAlignment: WrapCrossAlignment.center,
-    children: [RoleBadge(user.role), if (user.orgAdmin) const OrgAdminBadge()],
+    children: [
+      RoleBadge(user.role),
+      if (user.orgAdmin) const OrgAdminBadge(),
+      if (user.moderator) const ModeratorBadge(),
+    ],
   );
 }
 
@@ -248,6 +266,15 @@ class StatusBadge extends StatelessWidget {
       );
     }
     final (bg, fg) = statusColors(user.status);
+    if (user.suspended) {
+      // Suspended by moderation (HIN-172): disabled, with an end to say.
+      return _Badge(
+        icon: LucideIcons.lock,
+        label: suspensionLabel(context, user),
+        bg: bg,
+        fg: fg,
+      );
+    }
     return _Badge(
       icon: statusIcon(user.status),
       label: statusLabel(context, user.status),
@@ -256,6 +283,14 @@ class StatusBadge extends StatelessWidget {
     );
   }
 }
+
+/// "Suspended until 31 Oct 2026", or "Suspended" until further notice.
+String suspensionLabel(BuildContext c, AdminUser u) => u.suspendedUntil == null
+    ? c.t('admin.um.suspended')
+    : c.t(
+        'admin.um.suspendedUntil',
+        variables: {'date': umPrettyDate(c, u.suspendedUntil)},
+      );
 
 class OriginTag extends StatelessWidget {
   const OriginTag(this.origin, {super.key});
@@ -442,11 +477,13 @@ class UserActions {
     required this.openDeactivate,
     required this.setRole,
     required this.setOrgAdmin,
+    required this.setModerator,
     required this.openDemote,
     required this.openResend,
     required this.openReset,
     required this.revokeSessions,
     required this.openUnlinkSso,
+    required this.openLiftSuspension,
     required this.openDelete,
     required this.isLastActiveAdmin,
     required this.nameById,
@@ -463,6 +500,9 @@ class UserActions {
   /// Grants or takes back the organisation role (HIN-129). Completes with
   /// whether the server accepted it, so a switch can settle on the truth.
   final Future<bool> Function(List<String> ids, bool orgAdmin) setOrgAdmin;
+
+  /// Grants or takes back the moderation role (HIN-26), with the same answer.
+  final Future<bool> Function(List<String> ids, bool moderator) setModerator;
   final void Function(List<String> ids) openDemote;
   final void Function(List<String> ids) openResend;
   final void Function(List<String> ids) openReset;
@@ -470,6 +510,9 @@ class UserActions {
 
   /// Asks, then undoes the account's binding to its SSO identity (HIN-179).
   final void Function(AdminUser u) openUnlinkSso;
+
+  /// Ends a suspension moderation decided, after asking for a note (HIN-172).
+  final void Function(AdminUser u) openLiftSuspension;
   final void Function(List<String> ids) openDelete;
   final bool Function(AdminUser u) isLastActiveAdmin;
   final String? Function(String? id) nameById;

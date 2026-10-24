@@ -37,6 +37,9 @@ import 'core/blocs/time_policy_cubit.dart';
 import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
 import 'core/blocs/tint_cubit.dart';
+import 'features/blocks/hidden_content_cubit.dart';
+import 'features/issues/attachments/attachment_viewer.dart'
+    show clearViewerBytes;
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/shifts/bloc/my_shifts_snapshot_cubit.dart';
 import 'features/time/time_shortcuts.dart';
@@ -170,6 +173,26 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final TimeUsageCubit _timeUsage = TimeUsageCubit(
     widget.repositories.timeUsage,
     enabled: () => _appConfig.state.meta?.advancedTimeTracking ?? false,
+  );
+
+  /// What the reader folds away: the people they block (HIN-168) and the
+  /// comments they reported (HIN-173). App-wide because every comment and
+  /// every profile asks; see [HiddenContentCubit].
+  late final HiddenContentCubit _hiddenContent = HiddenContentCubit(
+    widget.repositories.account,
+    widget.repositories.moderation,
+    // Once the server's meta has said so: the sign-in can be checked before
+    // it arrives, and asking a server without moderation then cost two
+    // failed requests on every sign-in.
+    enabled: () async {
+      final meta =
+          _appConfig.state.meta ??
+          (await _appConfig.stream.firstWhere(
+            (state) => state.meta != null,
+            orElse: () => _appConfig.state,
+          )).meta;
+      return meta?.supportsModeration ?? false;
+    },
   );
 
   /// The identity [_timer] was built for, so the rebuild happens once.
@@ -326,6 +349,15 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       status: _auth.state.status,
       hasToken: widget.storage.accessToken != null,
     )) {
+      // The meta is read again on every resume; the gate for the house rules
+      // reads the session, which a running app would otherwise only refresh
+      // at its next start.
+      if (houseRulesMoved(
+        inForce: state.meta?.moderation.rulesVersion,
+        auth: _auth.state,
+      )) {
+        _auth.add(const AuthChecked());
+      }
       return;
     }
     _authServer = server;
@@ -404,6 +436,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // The knowledge base is held for the app's lifetime; what it loaded
     // belongs to the account that just left.
     _knowledge.reset();
+    // So is who that account blocks, and what it opened anyway, and the files
+    // the viewer kept for a swipe back.
+    _hiddenContent.reset();
+    clearViewerBytes();
     final previous = _timer;
     final previousPrefs = _surfacePrefs;
     final previousShifts = _shiftSnapshot;
@@ -447,6 +483,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // a stale copy of somebody's break length is worth less than the round
       // trip costs.
       unawaited(_loadAccountPreferences());
+      unawaited(_hiddenContent.load());
     } else {
       // Another server may freeze another month. Held rules from the session
       // that ended would grey out a day that is perfectly editable on the next.
@@ -626,13 +663,12 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     if (uri.scheme == 'hinata') {
       switch (uri.host) {
         case 'auth-callback':
-          // SSO handoff. Modern servers redirect natively with a single-use
-          // `code` (hinata://auth-callback?code=…); older ones embed the token
-          // pair directly. Forward the whole query to the /auth-callback route
-          // so SsoCallbackScreen redeems the code (or accepts the legacy
-          // tokens) through the exact same path the web flow uses. The previous
+          // SSO handoff. The server redirects natively with a single-use
+          // `code` (hinata://auth-callback?code=…). Forward the whole query to
+          // the /auth-callback route so SsoCallbackScreen redeems the code
+          // through the exact same path the web flow uses. The previous
           // handler only understood access_token/refresh_token and silently
-          // dropped the modern `code`, so a native SSO login stored nothing and
+          // dropped the `code`, so a native SSO login stored nothing and
           // stranded the user on the login screen.
           _router.go('/auth-callback?${uri.query}');
         case 'invite':
@@ -836,6 +872,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _locale.close();
     _orgLogo.close();
     unawaited(_timeUsage.close());
+    unawaited(_hiddenContent.close());
     super.dispose();
   }
 
@@ -886,6 +923,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         RepositoryProvider<TeamRepository>.value(value: domains.teams),
         RepositoryProvider<GitRepository>.value(value: domains.git),
         RepositoryProvider<ShiftRepository>.value(value: domains.shifts),
+        RepositoryProvider<ModerationRepository>.value(
+          value: domains.moderation,
+        ),
         RepositoryProvider<TimerSurfaceClearSignal>.value(value: _surfaceClear),
         RepositoryProvider<HotkeyStatus>.value(value: _hotkeys),
       ],
@@ -904,6 +944,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _myAbsences),
           BlocProvider.value(value: _timePrivacy),
           BlocProvider.value(value: _timeUsage),
+          BlocProvider.value(value: _hiddenContent),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         // Light/dark and the tint reach the widgets that read AppColors
@@ -1067,6 +1108,15 @@ Future<void> forgetLeftoverShiftSnapshot(AppStorage storage) async {
   await MyShiftsSnapshotCubit.forgetStored(id);
   await storage.setShiftSnapshotId(null);
 }
+
+/// Whether the house rules [inForce] (from `/meta`) are not the version the
+/// signed-in session knows (HIN-175): an administrator demanded they be
+/// accepted anew while the app ran, and the session has to say so.
+@visibleForTesting
+bool houseRulesMoved({required int? inForce, required AuthState auth}) =>
+    inForce != null &&
+    auth.status == AuthStatus.authenticated &&
+    auth.user?.rulesVersion != inForce;
 
 @visibleForTesting
 bool needsAuthCheck({
