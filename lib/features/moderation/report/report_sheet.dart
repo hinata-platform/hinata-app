@@ -118,6 +118,9 @@ Future<bool> showReportSheet(
           context,
           anchorRect: anchor,
           width: _popoverWidth,
+          // The reasons in full: with less room below a menu low in the
+          // window, it opens above instead of squeezing them.
+          minHeight: 560,
           maxHeight: 680,
           builder: body,
         )
