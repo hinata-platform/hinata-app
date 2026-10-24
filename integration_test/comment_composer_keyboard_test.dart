@@ -42,7 +42,7 @@ void main() {
                   controller: controller,
                   focusNode: fieldFocus,
                   onSubmitText: (_) {},
-                  onSendVoice: (_) {},
+                  onSendVoice: (_) async => true,
                   onAttach: (_) {},
                 ),
               ),

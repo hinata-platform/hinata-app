@@ -499,6 +499,87 @@ class _RecordingBar extends StatelessWidget {
   }
 }
 
+/// A voice message that did not go out (HIN-173): how long it is, that it was
+/// not sent, and the ways on, sending again or letting it go.
+class _UnsentVoiceBar extends StatelessWidget {
+  const _UnsentVoiceBar({
+    required this.duration,
+    required this.buttonSize,
+    required this.sending,
+    required this.onDiscard,
+    required this.onRetry,
+  });
+
+  final Duration duration;
+  final double buttonSize;
+  final bool sending;
+  final VoidCallback onDiscard;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    final dark = AppColors.brightness == Brightness.dark;
+    final s = duration.inSeconds;
+    final time = '${s ~/ 60}:${(s % 60).toString().padLeft(2, '0')}';
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        _CircleButton(
+          icon: LucideIcons.trash2,
+          label: context.t('comments.composer.discardRecording'),
+          size: buttonSize,
+          danger: true,
+          onTap: sending ? null : onDiscard,
+        ),
+        const SizedBox(width: 11),
+        Expanded(
+          child: Semantics(
+            liveRegion: true,
+            child: _composerSurface(
+              dark: dark,
+              radius: 26,
+              height: 52,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
+                  Icon(
+                    LucideIcons.micOff,
+                    size: 18,
+                    color: AppColors.inkSoft,
+                  ),
+                  const SizedBox(width: 10),
+                  Flexible(
+                    child: Text(
+                      context.t(
+                        'comments.composer.voiceNotSent',
+                        variables: {'time': time},
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 11),
+        _CircleButton(
+          icon: LucideIcons.refreshCw,
+          label: context.t('comments.composer.retryVoice'),
+          size: buttonSize,
+          send: true,
+          onTap: sending ? null : onRetry,
+        ),
+      ],
+    );
+  }
+}
+
 class _PulsingDot extends StatefulWidget {
   const _PulsingDot();
 
