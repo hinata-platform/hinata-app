@@ -19,6 +19,7 @@ import 'package:hinata/core/repositories/git_repository.dart';
 import 'package:hinata/core/repositories/issue_repository.dart';
 import 'package:hinata/core/repositories/media_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
+import 'package:hinata/core/repositories/moderation_repository.dart';
 import 'package:hinata/core/repositories/notification_repository.dart';
 import 'package:hinata/core/repositories/project_repository.dart';
 import 'package:hinata/core/repositories/sprint_repository.dart';
@@ -99,6 +100,10 @@ class FakeKnowledgeRepository
 class FakeMediaRepository with RecordingFake implements MediaRepository {}
 
 class FakeMetaRepository with RecordingFake implements MetaRepository {}
+
+class FakeModerationRepository
+    with RecordingFake
+    implements ModerationRepository {}
 
 class FakeNotificationRepository
     with RecordingFake
