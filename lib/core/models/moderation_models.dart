@@ -304,13 +304,17 @@ enum ContentKind {
 class TargetRef extends Equatable {
   const TargetRef(this.kind, this.id, {this.parentId});
 
+  /// Something that is no post, page or person (HIN-175): it has no id, and
+  /// the report names where it is instead.
+  static const elsewhere = TargetRef(ContentKind.other, '');
+
   final ContentKind kind;
   final String id;
   final String? parentId;
 
   Map<String, dynamic> toJson() => {
     'kind': kind.wire,
-    'id': id,
+    if (id.isNotEmpty) 'id': id,
     'parentId': ?parentId,
   };
 

@@ -44,6 +44,43 @@ void main() {
   );
 
   blocTest<ReportCubit, ReportState>(
+    'something without a menu of its own is not sent without where it is',
+    build: () => ReportCubit(moderation, TargetRef.elsewhere, now: () => now),
+    act: (cubit) async {
+      cubit.choose(ReportCategory.illegal);
+      await cubit.send('kurz', location: '  ');
+    },
+    skip: 1,
+    expect: () => const [
+      ReportState(
+        category: ReportCategory.illegal,
+        locationMissing: true,
+        explanationMissing: true,
+      ),
+    ],
+    verify: (_) => expect(moderation.calls, isEmpty),
+  );
+
+  blocTest<ReportCubit, ReportState>(
+    'sends where it is with something without a menu of its own',
+    setUp: () => moderation.answer<void>(#report, null),
+    build: () => ReportCubit(moderation, TargetRef.elsewhere, now: () => now),
+    act: (cubit) async {
+      cubit.choose(ReportCategory.spam);
+      await cubit.send('', location: ' Board "Messe 2026" ');
+    },
+    verify: (_) {
+      final call = moderation.only;
+      expect(call.positionalArguments, [
+        TargetRef.elsewhere,
+        ReportCategory.spam,
+      ]);
+      expect(call.namedArguments[#location], 'Board "Messe 2026"');
+      expect(call.namedArguments[#explanation], isNull);
+    },
+  );
+
+  blocTest<ReportCubit, ReportState>(
     'sends the reason, the words and the block, and is done',
     setUp: () => moderation.answer<void>(#report, null),
     build: build,

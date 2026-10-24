@@ -244,12 +244,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// else's issue that is still there, on a server that knows reporting.
   void Function(Rect anchorRect)? get reportAction {
     final issue = _issue;
-    final me = context.read<AuthBloc>().state.user;
-    final moderated =
-        context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false;
-    if (issue == null || me == null || !moderated) return null;
-    if (issue.reporterId == me.id) return null;
-    if (issue.isRemoved('title') && issue.isRemoved('description')) {
+    if (issue == null ||
+        !canReport(
+          context,
+          authorId: issue.reporterId,
+          removed: issue.isRemoved('title') && issue.isRemoved('description'),
+        )) {
       return null;
     }
     return (anchor) => unawaited(_reportIssue(issue, anchor));
@@ -3778,9 +3778,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       _commentKeys.putIfAbsent(c.id, () => GlobalKey());
     }
     // Reporting and blocking reach a server that knows them (HIN-26).
-    final moderated =
-        me != null &&
-        (context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false);
+    final moderated = moderationReachable(context);
     final interactions = CommentInteractions(
       meId: me?.id,
       nameFor: (id) => _names[id] ?? id,
