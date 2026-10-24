@@ -14,13 +14,13 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/util/dates.dart';
+import '../../../core/widgets/char_counter.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/quiet_info_line.dart';
 import '../../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../../sprint/modals/glass_modal.dart';
 import '../case/case_detail_cubit.dart' show CaseNotice;
-import '../case/case_dialogs.dart' show noteCounter;
 import '../case/case_sections.dart' show removalScopeWord;
 import '../report/report_reasons.dart' show reportCategoryTitle;
 import '../widgets/case_look.dart';
@@ -878,7 +878,7 @@ class _TextFieldState extends State<_TextField> {
       minLines: widget.lines,
       maxLines: widget.lines == 1 ? 1 : widget.lines + 6,
       maxLength: widget.max,
-      buildCounter: widget.lines == 1 ? _noCounter : noteCounter,
+      buildCounter: widget.lines == 1 ? _noCounter : charCounter,
       onChanged: widget.onChanged,
       decoration: glassInputDecoration(hint: widget.hint),
     ),
