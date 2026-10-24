@@ -16,6 +16,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
+import '../../issues/attachments/attachment_kind.dart' show kindFromName;
 import '../../issues/attachments/attachment_viewer.dart';
 import '../../people/person_profile_screen.dart' show personLocation;
 import '../../sprint/modals/glass_modal.dart';
@@ -216,19 +217,17 @@ class _CaseBody extends StatelessWidget {
       if (go != true || !context.mounted) return;
     }
     final media = detail.evidence!.media;
+    String nameOf(int i) =>
+        media[i].fileName ??
+        context.t('moderation.case.fileNumber', variables: {'n': '${i + 1}'});
     await showAttachmentViewer(
       context,
       items: [
         for (var i = 0; i < media.length; i++)
           ViewerItem(
             id: '${detail.id}-$i',
-            name:
-                media[i].fileName ??
-                context.t(
-                  'moderation.case.fileNumber',
-                  variables: {'n': '${i + 1}'},
-                ),
-            kind: media[i].contentType ?? '',
+            name: nameOf(i),
+            kind: kindFromName(nameOf(i), media[i].contentType),
             mime: media[i].contentType,
             size: media[i].size,
             // Through the server and never by a link that could be passed
