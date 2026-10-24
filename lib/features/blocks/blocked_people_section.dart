@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/blocs/paged_cubit.dart';
@@ -11,6 +10,7 @@ import '../../core/models/account_models.dart';
 import '../../core/repositories/account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/util/dates.dart';
 import '../../core/widgets/hive_empty_state.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart';
@@ -113,17 +113,6 @@ class _BlockedRow extends StatelessWidget {
   final BlockedPerson person;
   final VoidCallback onLift;
 
-  /// The day alone within this year, as the rest of the app tells a recent
-  /// date; with the year once it is older.
-  String _since(BuildContext context, DateTime at) {
-    final locale = Localizations.localeOf(context).toString();
-    final local = at.toLocal();
-    final format = local.year == DateTime.now().year
-        ? DateFormat.MMMd(locale)
-        : DateFormat.yMMMd(locale);
-    return format.format(local);
-  }
-
   @override
   Widget build(BuildContext context) {
     final blockedAt = person.blockedAt;
@@ -153,7 +142,7 @@ class _BlockedRow extends StatelessWidget {
                   Text(
                     context.t(
                       'blocks.list.since',
-                      variables: {'date': _since(context, blockedAt)},
+                      variables: {'date': recentDay(context, blockedAt)},
                     ),
                     style: TextStyle(
                       fontSize: AppType.caption,
