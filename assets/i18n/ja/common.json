@@ -3645,7 +3645,23 @@
       "contactMissing": "報告の連絡先がまだ設定されていません。コンテンツについて連絡を受けられるよう、メールアドレスを入力してください。",
       "operatorName": "運営者（法的表示のとおり）",
       "contactEmail": "報告用メールアドレス",
-      "imprintUrl": "法的表示へのリンク"
+      "imprintUrl": "法的表示へのリンク",
+      "typesTitle": "ファイル形式",
+      "typesHint": "オフにした形式は、誰も添付、埋め込み、送信できません。SVG やプログラムなどの安全でない形式は常に許可されません。",
+      "types": {
+        "images": "画像",
+        "imagesHint": "PNG、JPEG、GIF、WebP。添付ファイルと本文内の画像です。プロフィール画像とロゴは引き続き使えます。",
+        "pdf": "PDF",
+        "pdfHint": "添付ファイルの PDF 文書",
+        "office": "Office 文書",
+        "officeHint": "Word と Excel（DOCX、XLSX）",
+        "text": "テキストと表",
+        "textHint": "TXT、CSV、JSON",
+        "zip": "ZIP アーカイブ",
+        "zipHint": "添付ファイルの ZIP",
+        "voice": "ボイスメッセージ",
+        "voiceHint": "コメントの録音"
+      }
     }
   },
   "audit": {
