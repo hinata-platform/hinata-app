@@ -115,24 +115,15 @@ class _HouseRulesCardState extends State<HouseRulesCard> {
           ? context.t('admin.rules.hint')
           : '${context.t('admin.rules.hint')} ${context.t('admin.rules.versionSince', variables: {'version': '$version', 'date': recentDay(context, since)})}',
       children: [
-        // Start-aligned: in the card's stretching column the bar would take
-        // the whole width and trail an empty track after its last choice.
-        LayoutBuilder(
-          builder: (context, constraints) => Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: GlassSwitchBar(
-              inline: true,
-              maxWidth: constraints.maxWidth,
-              chips: [
-                for (final option in HouseRulesMode.values)
-                  GlassSwitchChip(
-                    label: context.t('admin.rules.mode.${option.name}'),
-                    active: option == mode,
-                    onTap: () => _choose(option),
-                  ),
-              ],
-            ),
-          ),
+        InlineSwitchBar(
+          chips: [
+            for (final option in HouseRulesMode.values)
+              GlassSwitchChip(
+                label: context.t('admin.rules.mode.${option.name}'),
+                active: option == mode,
+                onTap: () => _choose(option),
+              ),
+          ],
         ),
         const SizedBox(height: 12),
         switch (mode) {
