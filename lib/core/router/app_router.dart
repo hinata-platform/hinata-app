@@ -775,10 +775,15 @@ GoRouter buildRouter({
           // is the moderators' own page with its own guard.
           GoRoute(
             path: '/notices/:caseId',
-            pageBuilder: (_, state) => _transition(
-              state,
-              NoticeScreen(caseId: state.pathParameters['caseId']!),
-            ),
+            pageBuilder: (_, state) {
+              final caseId = state.pathParameters['caseId']!;
+              // Keyed by the case: the page is keyed by the route pattern, so
+              // a second notice from the bell would keep the first one's.
+              return _transition(
+                state,
+                NoticeScreen(key: ValueKey('notice-$caseId'), caseId: caseId),
+              );
+            },
           ),
           // Moderation (HIN-174): the moderators' page, a page of the
           // settings like Organisation. One route for list and case, so the
