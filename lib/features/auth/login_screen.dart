@@ -552,7 +552,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
   }
 
   Future<void> _launchSso(SsoProvider provider) async {
-    final serverUrl = context.read<AuthBloc>().storage.serverUrl ?? '';
+    final storage = context.read<AuthBloc>().storage;
     setState(() => _launchingSsoId = provider.id);
     try {
       // Let the disabled/loading state actually reach the screen before we
@@ -563,7 +563,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
       // frames (loader visible, buttons disabled) first.
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
-      final launched = await launchSso(serverUrl, provider);
+      final launched = await launchSso(storage, provider);
       if (kIsWeb) {
         // Only keep the buttons disabled if the tab is genuinely on its way to
         // the provider — re-enabling them then would let the user start a

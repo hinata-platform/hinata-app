@@ -30,6 +30,7 @@ void main() {
     bool onboardingDone = true,
     bool appTermsAccepted = true,
     bool rulesPending = false,
+    bool ssoPending = false,
   }) => gate.redirect(
     location: location,
     uri: uri ?? location,
@@ -39,6 +40,7 @@ void main() {
     onboardingDone: onboardingDone,
     appTermsAccepted: appTermsAccepted,
     rulesPending: rulesPending,
+    ssoPending: ssoPending,
   );
 
   const issue = '/issues/HIN-4?comment=c1';
@@ -210,25 +212,52 @@ void main() {
       expect(at('/connecting', auth: AuthStatus.unauthenticated), '/login');
     });
 
-    test(
-      '/auth-callback holds its tokens until they have signed the user in',
-      () {
+    test('/auth-callback holds the code of a sign-in started here until it has '
+        'signed the user in', () {
+      expect(
+        at(
+          '/auth-callback',
+          uri: '/auth-callback?code=abc',
+          config: AppConfigStatus.connecting,
+          auth: AuthStatus.unknown,
+          ssoPending: true,
+        ),
+        null,
+      );
+      // Redeemed: the sign-in is no longer pending, the tokens are on their
+      // way into the session.
+      expect(
+        at(
+          '/auth-callback',
+          uri: '/auth-callback?code=abc',
+          auth: AuthStatus.authenticating,
+        ),
+        null,
+      );
+      // Signed in: the callback screen is done, so it goes home like any gate.
+      expect(
+        at('/auth-callback', uri: '/auth-callback?code=abc'),
+        '/dashboard',
+      );
+    });
+
+    test('a callback for a sign-in this device did not start goes where the '
+        'app would have gone', () {
+      // A link to it in a comment, opened in a new tab while the session is
+      // still being checked: somebody else's code, and nobody here asked.
+      for (final auth in [AuthStatus.unknown, AuthStatus.unauthenticated]) {
         expect(
           at(
             '/auth-callback',
             uri: '/auth-callback?code=abc',
             config: AppConfigStatus.connecting,
-            auth: AuthStatus.unknown,
+            auth: auth,
           ),
-          null,
-        );
-        // Signed in: the callback screen is done, so it goes home like any gate.
-        expect(
-          at('/auth-callback', uri: '/auth-callback?code=abc'),
           '/dashboard',
+          reason: '$auth',
         );
-      },
-    );
+      }
+    });
   });
 
   // HIN-175: the app's terms once per device before connecting or signing in,
@@ -316,6 +345,7 @@ void main() {
             uri: link,
             auth: AuthStatus.unauthenticated,
             appTermsAccepted: false,
+            ssoPending: true,
           ),
           null,
           reason: link,
