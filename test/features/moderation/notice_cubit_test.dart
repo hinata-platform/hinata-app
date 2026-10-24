@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/moderation_models.dart';
@@ -31,6 +33,18 @@ void main() {
     addTearDown(notice.close);
     return notice;
   }
+
+  test('a page left while it loads takes nothing late', () async {
+    final answer = Completer<Statement>();
+    moderation.answerWith(#notice, (_) => answer.future);
+    final notice = NoticeCubit(moderation, 'k1');
+
+    final loading = notice.load();
+    await notice.close();
+    answer.complete(open);
+
+    await expectLater(loading, completes);
+  });
 
   test('reads the notice of the case', () async {
     moderation.answer<Statement>(#notice, open);
