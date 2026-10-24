@@ -230,24 +230,38 @@ class DecisionState extends Equatable {
 /// here, so typing costs no requests from the shared budget of 300 a minute.
 /// Only the newest answer counts.
 class DecisionCubit extends Cubit<DecisionState> {
+  /// [person] is the person the case is about when the caller has them at
+  /// hand already, as a profile does: they are not read again.
   DecisionCubit(
     this._moderation,
     this._users, {
     required this.detail,
     bool suspendPerson = false,
     String facts = '',
+    PersonProfile? person,
+    this.previewDelay = const Duration(milliseconds: 250),
   }) : super(
          DecisionState(
            outcome: suspendPerson ? CaseOutcome.action : null,
            suspend: suspendPerson,
            facts: facts,
            responsibleId: detail.evidence?.suggestedResponsible,
+           responsible:
+               person != null &&
+                   person.id == detail.evidence?.suggestedResponsible
+               ? person
+               : null,
          ),
        );
 
   final ModerationRepository _moderation;
   final UserRepository _users;
   final CaseDetail detail;
+
+  /// How long a structured change waits for the next before the server words
+  /// the preview: quick taps through the lengths ask once.
+  final Duration previewDelay;
+  Timer? _previewTimer;
 
   /// Where the free texts go in a preview; never shown, always replaced.
   static const factsMark = '[[hinata.preview.facts]]';
@@ -326,7 +340,7 @@ class DecisionCubit extends Cubit<DecisionState> {
   Future<void> _loadResponsible() async {
     final id = state.responsibleId;
     final token = ++_personToken;
-    if (id == null) return;
+    if (id == null || state.responsible?.id == id) return;
     try {
       final person = await _users.profile(id);
       if (isClosed || token != _personToken) return;
@@ -456,6 +470,7 @@ class DecisionCubit extends Cubit<DecisionState> {
 
   void _maybePreview() {
     if (!_previewable) {
+      _previewTimer?.cancel();
       _previewKey = null;
       _previewToken++;
       if (state.previewBase != null || state.previewLoading) {
@@ -466,7 +481,10 @@ class DecisionCubit extends Cubit<DecisionState> {
     final key = _structure;
     if (key == _previewKey) return;
     _previewKey = key;
-    unawaited(_preview());
+    // An answer for what was chosen before no longer counts.
+    _previewToken++;
+    _previewTimer?.cancel();
+    _previewTimer = Timer(previewDelay, () => unawaited(_preview()));
   }
 
   Future<void> _preview() async {
@@ -546,6 +564,12 @@ class DecisionCubit extends Cubit<DecisionState> {
       if (isClosed) return;
       emit(state.copyWith(sending: false, errorKey: 'errors.unexpected'));
     }
+  }
+
+  @override
+  Future<void> close() {
+    _previewTimer?.cancel();
+    return super.close();
   }
 }
 
