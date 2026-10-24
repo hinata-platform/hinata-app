@@ -6,8 +6,8 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_case_models.dart';
 import '../../../core/models/moderation_models.dart';
+import '../../../core/widgets/char_counter.dart';
 import '../../sprint/modals/glass_modal.dart';
-import '../case/case_dialogs.dart' show noteCounter;
 import '../report/report_reasons.dart';
 
 /// Why moderation opens a case of its own on a person: the category and what
@@ -116,7 +116,7 @@ class _OwnCaseDialogState extends State<_OwnCaseDialog> {
                   minLines: 3,
                   maxLines: 8,
                   maxLength: caseNoteMax,
-                  buildCounter: noteCounter,
+                  buildCounter: charCounter,
                   decoration: glassInputDecoration(
                     hint: context.t('moderation.decision.factsHint'),
                   ),
