@@ -35,12 +35,6 @@ class _OwnCaseDialogState extends State<_OwnCaseDialog> {
   ReportCategory _category = ReportCategory.harassment;
 
   @override
-  void initState() {
-    super.initState();
-    _facts.addListener(() => setState(() {}));
-  }
-
-  @override
   void dispose() {
     _facts.dispose();
     super.dispose();
@@ -106,14 +100,17 @@ class _OwnCaseDialogState extends State<_OwnCaseDialog> {
           ),
         ),
       ),
-      GlassModalFooter(
-        confirmLabel: context.t('moderation.suspension.ownNext'),
-        confirmIcon: LucideIcons.arrowRight,
-        onConfirm: _facts.text.trim().length < caseNoteMin
-            ? null
-            : () => Navigator.of(
-                context,
-              ).pop((category: _category, facts: _facts.text.trim())),
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _facts,
+        builder: (context, value, _) => GlassModalFooter(
+          confirmLabel: context.t('moderation.suspension.ownNext'),
+          confirmIcon: LucideIcons.arrowRight,
+          onConfirm: value.text.trim().length < caseNoteMin
+              ? null
+              : () => Navigator.of(
+                  context,
+                ).pop((category: _category, facts: value.text.trim())),
+        ),
       ),
     ],
   );

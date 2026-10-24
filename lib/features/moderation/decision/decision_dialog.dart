@@ -70,6 +70,25 @@ class _DecisionDialogState extends State<DecisionDialog> {
   /// Wide enough for the form and the statement side by side.
   static const double _twoColumns = 760;
 
+  /// Whether [current] changes more of the form than what is typed.
+  ///
+  /// The fields keep their own text, and the preview follows it on its own
+  /// ([_Preview]). Of the text the form itself shows only whether there is an
+  /// internal note and, once sending was tried, the problems left.
+  static bool _formChanged(DecisionState previous, DecisionState current) =>
+      current.showProblems ||
+      previous.internalNote.trim().isEmpty !=
+          current.internalNote.trim().isEmpty ||
+      previous.copyWith(
+            facts: current.facts,
+            message: current.message,
+            internalNote: current.internalNote,
+            lawReference: current.lawReference,
+            ruleText: current.ruleText,
+            errorKey: current.errorKey,
+          ) !=
+          current;
+
   @override
   Widget build(BuildContext context) =>
       BlocConsumer<DecisionCubit, DecisionState>(
@@ -77,6 +96,7 @@ class _DecisionDialogState extends State<DecisionDialog> {
             previous.closedWith == null && current.closedWith != null,
         listener: (context, state) =>
             Navigator.of(context).pop(state.closedWith),
+        buildWhen: _formChanged,
         builder: (context, state) {
           final cubit = context.read<DecisionCubit>();
           final detail = cubit.detail;
@@ -106,14 +126,14 @@ class _DecisionDialogState extends State<DecisionDialog> {
                   child: LayoutBuilder(
                     builder: (context, constraints) {
                       final form = _Form(state: state);
-                      final preview = _Preview(state: state);
+                      const preview = _Preview();
                       if (constraints.maxWidth >= _twoColumns) {
                         return Row(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(child: form),
                             const SizedBox(width: 20),
-                            Expanded(child: preview),
+                            const Expanded(child: preview),
                           ],
                         );
                       }
@@ -932,18 +952,36 @@ class _Problem extends StatelessWidget {
 }
 
 /// The statement as the person will read it, beside or below the form.
-class _Preview extends StatelessWidget {
-  const _Preview({required this.state});
+/// What the preview shows: it follows the facts and the message as they are
+/// typed, and nothing else typed reaches it.
+typedef _PreviewView = ({
+  CaseOutcome? outcome,
+  Statement? statement,
+  bool loading,
+  bool failed,
+  String? person,
+});
 
-  final DecisionState state;
+class _Preview extends StatelessWidget {
+  const _Preview();
 
   @override
   Widget build(BuildContext context) {
+    final view = context.select<DecisionCubit, _PreviewView>((cubit) {
+      final state = cubit.state;
+      return (
+        outcome: state.outcome,
+        statement: state.preview,
+        loading: state.previewLoading,
+        failed: state.previewFailed,
+        person: _personName(state),
+      );
+    });
     final dark = Theme.of(context).brightness == Brightness.dark;
-    final preview = state.preview;
-    final outcome = state.outcome;
+    final outcome = view.outcome;
+    final preview = view.statement;
     final Widget body;
-    if (outcome == null || !state.acting) {
+    if (outcome != CaseOutcome.action) {
       body = Text(
         context.t(
           outcome == null
@@ -958,7 +996,7 @@ class _Preview extends StatelessWidget {
       );
     } else if (preview != null) {
       body = StatementView(statement: preview, compact: true);
-    } else if (state.previewLoading) {
+    } else if (view.loading) {
       body = const Padding(
         padding: EdgeInsets.symmetric(vertical: 20),
         child: Center(child: HiveLoader(size: 28)),
@@ -968,10 +1006,10 @@ class _Preview extends StatelessWidget {
       // by keystroke, and a live region around it would read the whole
       // statement again on each one.
       body = Semantics(
-        liveRegion: state.previewFailed,
+        liveRegion: view.failed,
         child: Text(
           context.t(
-            state.previewFailed
+            view.failed
                 ? 'moderation.decision.previewFailed'
                 : 'moderation.decision.previewIncomplete',
           ),
@@ -1003,11 +1041,11 @@ class _Preview extends StatelessWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    _personName(state) == null
+                    view.person == null
                         ? context.t('moderation.decision.previewTitleAnyone')
                         : context.t(
                             'moderation.decision.previewTitle',
-                            variables: {'name': _personName(state)!},
+                            variables: {'name': view.person!},
                           ),
                     style: TextStyle(
                       fontSize: AppType.label,
