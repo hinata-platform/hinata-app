@@ -3,6 +3,7 @@ import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/moderation_case_models.dart';
 import 'package:hinata/features/moderation/queue/moderation_cases_cubit.dart';
 import 'package:hinata/features/moderation/queue/moderation_summary_cubit.dart';
+import 'package:hinata/features/moderation/suspensions/suspensions_cubit.dart';
 
 import '../../support/recording_fake.dart';
 import 'case_fixtures.dart';
@@ -27,6 +28,29 @@ void main() {
       invoked(#cases, positional: [CaseView.appeal, 0, 50]),
     );
     expect(appeals.state.items.single.id, 'k1');
+  });
+
+  test('the suspended accounts are read a page at a time', () async {
+    moderation
+        .answer<({List<SuspendedAccount> items, int total})>(#suspensions, (
+          items: [
+            SuspendedAccount(
+              person: const PersonRef(id: 'jonas', displayName: 'Jonas Becker'),
+              until: DateTime.utc(2026, 10, 31),
+              caseId: 'k1',
+            ),
+          ],
+          total: 1,
+        ));
+    final suspended = SuspensionsCubit(moderation);
+    addTearDown(suspended.close);
+    await suspended.load();
+
+    expect(
+      moderation.callTo(#suspensions),
+      invoked(#suspensions, positional: [0, 50]),
+    );
+    expect(suspended.state.items.single.person.displayName, 'Jonas Becker');
   });
 
   // A widget test only for its clock: the minute passes without waiting.
