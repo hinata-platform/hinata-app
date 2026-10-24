@@ -4467,6 +4467,10 @@
       "requestModalConfirm": "Demander le rapport",
       "requestedToast": "Rapport de données demandé — consultez votre boîte de réception"
     },
+    "blocked": {
+      "title": "Personnes bloquées",
+      "subtitle": "Le blocage ne concerne que vous. Si vous voulez que quelqu'un examine un contenu, signalez-le."
+    },
     "danger": {
       "title": "Zone sensible",
       "subtitle": "Actions irréversibles sur le compte.",
@@ -5788,5 +5792,37 @@
     },
     "loadFailed": "Impossible de charger le profil",
     "open": "Ouvrir le profil de {{name}}"
+  },
+  "blocks": {
+    "action": "Bloquer cette personne",
+    "profile": {
+      "section": "Confidentialité",
+      "block": "Bloquer",
+      "blockDetail": "Plus de notifications, commentaires repliés",
+      "unblock": "Débloquer",
+      "unblockDetail": "Vous avez bloqué {{name}}"
+    },
+    "confirm": {
+      "title": "Bloquer {{name}} ?",
+      "subtitle": "Ce qui change et ce qui reste",
+      "notifications": "Vous ne recevez plus les notifications déclenchées par {{name}}, y compris les mentions.",
+      "folded": "Les commentaires et messages vocaux de {{name}} s'affichent repliés.",
+      "contact": "{{name}} ne peut plus vous associer à des tickets ni partager des saisies de temps avec vous.",
+      "work": "La collaboration continue : vous voyez toujours les tickets, les pièces jointes et les pages, et les attributions de {{name}} vous parviennent.",
+      "private": "{{name}} n'en saura rien. Vous pouvez annuler à tout moment.",
+      "button": "Bloquer"
+    },
+    "blockedToast": "Vous avez bloqué {{name}}",
+    "unblockedToast": "Vous avez débloqué {{name}}",
+    "folded": "Replié, car vous avez bloqué {{name}}",
+    "show": "Afficher",
+    "list": {
+      "since": "Depuis le {{date}}",
+      "unblock": "Débloquer",
+      "unblockLabel": "Débloquer {{name}}",
+      "emptyTitle": "Vous n'avez bloqué personne",
+      "emptyMessage": "Vous pouvez bloquer quelqu'un depuis son profil ou depuis le menu d'un commentaire.",
+      "more": "Charger plus"
+    }
   }
 }

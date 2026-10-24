@@ -4467,6 +4467,10 @@
       "requestModalConfirm": "Request report",
       "requestedToast": "Data report requested — check your email"
     },
+    "blocked": {
+      "title": "Blocked people",
+      "subtitle": "Blocking only affects you. If you want someone to look into something, report it."
+    },
     "danger": {
       "title": "Danger zone",
       "subtitle": "Irreversible account actions.",
@@ -5788,5 +5792,37 @@
     },
     "loadFailed": "The profile couldn't be loaded",
     "open": "Open {{name}}'s profile"
+  },
+  "blocks": {
+    "action": "Block person",
+    "profile": {
+      "section": "Privacy",
+      "block": "Block",
+      "blockDetail": "No more notifications, comments folded away",
+      "unblock": "Unblock",
+      "unblockDetail": "You blocked {{name}}"
+    },
+    "confirm": {
+      "title": "Block {{name}}?",
+      "subtitle": "What changes and what stays",
+      "notifications": "You no longer get notifications that {{name}} sets off, mentions included.",
+      "folded": "Comments and voice messages from {{name}} show folded away.",
+      "contact": "{{name}} can no longer add you to issues or share time entries with you.",
+      "work": "Your work together stays: you still see issues, attachments and pages, and assignments from {{name}} still reach you.",
+      "private": "{{name}} is not told. You can undo it at any time.",
+      "button": "Block"
+    },
+    "blockedToast": "{{name}} is blocked",
+    "unblockedToast": "{{name}} is unblocked",
+    "folded": "Folded away because you blocked {{name}}",
+    "show": "Show",
+    "list": {
+      "since": "Since {{date}}",
+      "unblock": "Unblock",
+      "unblockLabel": "Unblock {{name}}",
+      "emptyTitle": "You have not blocked anyone",
+      "emptyMessage": "You can block someone from their profile or from the menu of a comment.",
+      "more": "Load more"
+    }
   }
 }
