@@ -404,6 +404,21 @@ void main() {
   });
 
   group('links', () {
+    test('only an address with a scheme reaches the platform', () {
+      expect(
+        hinataLinkTarget(' https://example.org/a '),
+        Uri.parse('https://example.org/a'),
+      );
+      expect(hinataLinkTarget('mailto:team@example.org'), isNotNull);
+      // A relative address has no base to resolve against here; a Windows
+      // shell would take the bare string as a program or as SMB.
+      expect(hinataLinkTarget('/Windows/System32/calc.exe'), isNull);
+      expect(hinataLinkTarget('//evil.example/share'), isNull);
+      expect(hinataLinkTarget(r'\\evil.example\share'), isNull);
+      expect(hinataLinkTarget('javascript:alert(1)'), isNull);
+      expect(hinataLinkTarget('   '), isNull);
+    });
+
     testWidgets('a document with no host callback still reacts to a tap', (
       tester,
     ) async {
