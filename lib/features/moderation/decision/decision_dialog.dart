@@ -964,22 +964,27 @@ class _Preview extends StatelessWidget {
         child: Center(child: HiveLoader(size: 28)),
       );
     } else {
-      body = Text(
-        context.t(
-          state.previewFailed
-              ? 'moderation.decision.previewFailed'
-              : 'moderation.decision.previewIncomplete',
-        ),
-        style: TextStyle(
-          fontSize: AppType.label,
-          height: 1.45,
-          color: AppColors.inkSoft,
+      // Only a failure is announced: the preview follows the fields keystroke
+      // by keystroke, and a live region around it would read the whole
+      // statement again on each one.
+      body = Semantics(
+        liveRegion: state.previewFailed,
+        child: Text(
+          context.t(
+            state.previewFailed
+                ? 'moderation.decision.previewFailed'
+                : 'moderation.decision.previewIncomplete',
+          ),
+          style: TextStyle(
+            fontSize: AppType.label,
+            height: 1.45,
+            color: AppColors.inkSoft,
+          ),
         ),
       );
     }
     return Semantics(
       container: true,
-      liveRegion: true,
       child: Container(
         padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
         decoration: BoxDecoration(

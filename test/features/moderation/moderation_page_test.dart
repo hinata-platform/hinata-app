@@ -449,6 +449,47 @@ void main() {
     });
   });
 
+  testWidgets('the statement preview is not read out again on every change', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    moderation.answer<ModerationRules>(
+      #rules,
+      const ModerationRules(
+        rules: [HouseRule(2, 'Niemanden herabsetzen')],
+        categoryRules: {ReportCategory.harassment: 2},
+      ),
+    );
+    moderation.answer<Statement>(
+      #statementPreview,
+      const Statement(caseId: 'k1', measure: 'Dein Kommentar wurde entfernt.'),
+    );
+    await tester.pumpWidget(
+      app(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showDecisionDialog(context, caseDetail()),
+            child: const Text('decide'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('decide'));
+    await tester.pumpAndSettle();
+    final action = find.text('moderation.decision.outcome.action');
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+
+    // It follows the fields keystroke by keystroke.
+    expect(
+      tester.getSemantics(find.text('Dein Kommentar wurde entfernt.')),
+      isSemantics(isLiveRegion: false),
+    );
+    semantics.dispose();
+  });
+
   testWidgets('the decision fits a phone at twice the text size, and the '
       'length of a suspension hugs its choices', (tester) async {
     tester.view
