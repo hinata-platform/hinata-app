@@ -190,54 +190,6 @@ class CaseAgeChip extends StatelessWidget {
   }
 }
 
-/// A quiet line with a glyph: what a case says about itself.
-class CaseInfoLine extends StatelessWidget {
-  const CaseInfoLine({
-    super.key,
-    required this.icon,
-    required this.text,
-    this.action,
-  });
-
-  final IconData icon;
-  final String text;
-
-  /// A step offered at the end of the line, such as "Freigeben …".
-  final Widget? action;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 5),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: Icon(icon, size: 16, color: AppColors.inkSoft),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                text,
-                style: TextStyle(
-                  fontSize: AppType.label,
-                  height: 1.4,
-                  color: AppColors.inkSoft,
-                ),
-              ),
-              if (action != null)
-                Padding(padding: const EdgeInsets.only(top: 4), child: action),
-            ],
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
 /// A small heading over a part of a case, with a quiet note at its end.
 class CaseSectionLabel extends StatelessWidget {
   const CaseSectionLabel(this.text, {super.key, this.trailing});
