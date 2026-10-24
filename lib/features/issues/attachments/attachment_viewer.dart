@@ -154,6 +154,7 @@ class ViewerItem {
     this.mime,
     this.subtitle,
     this.reportable = false,
+    this.load,
   });
 
   final String id;
@@ -164,8 +165,8 @@ class ViewerItem {
   /// Whether the reader may report this file: somebody else's (HIN-173).
   final bool reportable;
 
-  /// API path of the attachment's bytes. Null disables every inline preview —
-  /// the stage falls back to the type card.
+  /// API path of the attachment's bytes. Null, and no [load], disables every
+  /// inline preview — the stage falls back to the type card.
   final String? url;
 
   /// API path of the small server-side preview. Shown — sharp, at the right
@@ -179,8 +180,13 @@ class ViewerItem {
   final String? mime;
   final String? subtitle;
 
+  /// Fetches the bytes itself, past the viewer's shared cache and out of the
+  /// image cache once the page goes: for what has to be asked for on every
+  /// look and kept no longer than it is looked at, like a case's evidence.
+  final Future<Uint8List> Function()? load;
+
   /// Which renderer this item gets on the stage.
-  AttachmentPreviewKind get preview => url == null
+  AttachmentPreviewKind get preview => url == null && load == null
       ? AttachmentPreviewKind.none
       : previewKindFor(kind: kind, name: name, size: size, mime: mime);
 }
@@ -320,6 +326,7 @@ class _ViewerScaffold extends StatefulWidget {
 
   final List<ViewerItem> items;
   final int initialIndex;
+
   /// Null for files that are only looked at, never saved: a case's evidence
   /// on the moderation page (HIN-174).
   final Future<void> Function(ViewerItem item)? onDownload;

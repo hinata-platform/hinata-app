@@ -16,7 +16,10 @@ const int _kBytesCacheMaxBytes = 48 * 1024 * 1024;
 /// so paging back to an already viewed item is instant. The object store is
 /// internal-only, so the client never talks to it directly; [ViewerItem.url]
 /// holds the relative API download path, not a storage URL.
-Future<Uint8List> _fetchBytes(BuildContext context, String path) async {
+Future<Uint8List> _fetchBytes(BuildContext context, ViewerItem item) async {
+  final load = item.load;
+  if (load != null) return load();
+  final path = item.url!;
   final cached = _bytesCache.remove(path);
   if (cached != null) {
     _bytesCache[path] = cached; // move to most-recently-used
@@ -50,8 +53,8 @@ Future<Uint8List> _fetchBytes(BuildContext context, String path) async {
 /// comes back around three times its size. What a swipe back costs instead is
 /// one redraw of a document that carries visible annotations at all — a
 /// millisecond or so for the forms this is for.
-Future<Uint8List> _fetchPdfBytes(BuildContext context, String path) =>
-    _fetchBytes(context, path).then(PdfAnnotations.flatten);
+Future<Uint8List> _fetchPdfBytes(BuildContext context, ViewerItem item) =>
+    _fetchBytes(context, item).then(PdfAnnotations.flatten);
 
 /// Forgets a memoized download, so the next [_fetchBytes] really goes back to
 /// the server. What "retry" has to mean: re-awaiting the same future — or
@@ -60,6 +63,13 @@ Future<Uint8List> _fetchPdfBytes(BuildContext context, String path) =>
 void _dropCachedBytes(String path) {
   final removed = _bytesCache.remove(path);
   if (removed != null) _bytesCacheSize -= removed.lengthInBytes;
+}
+
+/// Forgets every file the viewer kept, for when the account or the server
+/// changes: what one person looked at is not the next one's.
+void clearViewerBytes() {
+  _bytesCache.clear();
+  _bytesCacheSize = 0;
 }
 
 // ═══════════════════════════ Text preparation ═════════════════════════════
@@ -262,6 +272,10 @@ class _ImagePageState extends State<_ImagePage>
   static final _range = _zoomRange(AttachmentPreviewKind.image);
 
   Future<Uint8List>? _bytes;
+
+  /// The picture as last decoded, to take out of the image cache with the
+  /// page when [ViewerItem.load] fetched it.
+  ImageProvider? _decoded;
   final TransformationController _view = TransformationController();
   late final AnimationController _zoomAnim = AnimationController(
     vsync: this,
@@ -316,11 +330,13 @@ class _ImagePageState extends State<_ImagePage>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _bytes ??= _fetchBytes(context, widget.item.url!);
+    _bytes ??= _fetchBytes(context, widget.item);
   }
 
   @override
   void dispose() {
+    // A picture fetched past the cache leaves memory with its page.
+    if (widget.item.load != null) _decoded?.evict().ignore();
     widget.zoom.removeListener(_onRequestedZoom);
     _view.removeListener(_report);
     _zoomCurve.dispose();
@@ -535,11 +551,14 @@ class _ImagePageState extends State<_ImagePage>
                     ),
                   if (hasFull)
                     Center(
-                      child: Image.memory(
-                        bytes,
+                      child: Image(
+                        image: _decoded = ResizeImage.resizeIfNeeded(
+                          decodeWidth,
+                          null,
+                          MemoryImage(bytes),
+                        ),
                         semanticLabel: item.name,
                         fit: BoxFit.contain,
-                        cacheWidth: decodeWidth,
                         filterQuality: FilterQuality.medium,
                         errorBuilder: (_, _, _) => _FileCard(item: item),
                       ),
@@ -643,14 +662,14 @@ class _PdfPageState extends State<_PdfPage> {
     if (old.item.id != widget.item.id) {
       _failed = false;
       _attempt++;
-      _bytes = _fetchPdfBytes(context, widget.item.url!);
+      _bytes = _fetchPdfBytes(context, widget.item);
     }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _bytes ??= _fetchPdfBytes(context, widget.item.url!);
+    _bytes ??= _fetchPdfBytes(context, widget.item);
   }
 
   @override
@@ -707,12 +726,12 @@ class _PdfPageState extends State<_PdfPage> {
   /// the LRU, the preview element — and starts over.
   void _retry() {
     final url = widget.item.url;
-    if (url == null) return;
-    _dropCachedBytes(url);
+    if (url == null && widget.item.load == null) return;
+    if (url != null) _dropCachedBytes(url);
     setState(() {
       _failed = false;
       _attempt++;
-      _bytes = _fetchPdfBytes(context, url);
+      _bytes = _fetchPdfBytes(context, widget.item);
     });
   }
 
@@ -957,7 +976,7 @@ class _TextPageState extends State<_TextPage> {
   }
 
   Future<_TextDoc?> _read() async {
-    final bytes = await _fetchBytes(context, widget.item.url!);
+    final bytes = await _fetchBytes(context, widget.item);
     final name = widget.item.name.toLowerCase();
     final isJson =
         widget.item.mime?.split(';').first.trim() == 'application/json' ||

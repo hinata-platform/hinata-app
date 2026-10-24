@@ -406,6 +406,38 @@ void main() {
       expect(find.text('ZIP · 4.0 KB'), findsOneWidget);
     });
 
+    testWidgets('a file that loads itself is asked for on every look, never '
+        'kept for the next, and leaves the image cache with its page', (
+      tester,
+    ) async {
+      var loads = 0;
+      final item = ViewerItem(
+        id: 'e',
+        name: 'evidence.png',
+        kind: 'image',
+        size: 128,
+        mime: 'image/png',
+        load: () async {
+          loads++;
+          return base64Decode(_png8x8);
+        },
+      );
+      await openViewer(tester, [item]);
+      await pumpUntil(tester, find.byType(InteractiveViewer));
+      expect(loads, 1);
+      expect(api.requested, isEmpty, reason: 'the cubit fetched it itself');
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(imageCache.currentSize, 0, reason: 'evicted with the page');
+
+      await tester.tap(find.text('open'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      await pumpUntil(tester, find.byType(InteractiveViewer));
+      expect(loads, 2);
+    });
+
     testWidgets('a picture zooms from the toolbar and then owns its drags', (
       tester,
     ) async {
