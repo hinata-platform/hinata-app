@@ -542,7 +542,9 @@
       "cancelEdit": "Stop editing",
       "closeFormat": "Close formatting",
       "discardRecording": "Discard recording",
-      "sendVoice": "Send voice message"
+      "sendVoice": "Send voice message",
+      "retryVoice": "Send again",
+      "voiceNotSent": "Voice message ({{time}}) not sent"
     },
     "moreReactions": "More reactions",
     "voice": {
@@ -737,7 +739,8 @@
         "emptyFile": "This file is empty.",
         "renderFailed": "This file couldn't be rendered.",
         "retry": "Try again",
-        "tooLarge": "Too large for an inline preview — download it to read it."
+        "tooLarge": "Too large for an inline preview — download it to read it.",
+        "more": "More"
       },
       "source": {
         "title": "Add attachment",
@@ -5955,7 +5958,9 @@
       "emptyTitle": "You have not blocked anyone",
       "emptyMessage": "You can block someone from their profile or from the menu of a comment.",
       "more": "Load more"
-    }
+    },
+    "alsoReport": "Report this comment too",
+    "alsoReportHint": "Then you choose the reason, and moderation looks at it."
   },
   "moderation": {
     "appTerms": {
@@ -6012,7 +6017,23 @@
       "explanationOptional": "What should moderation know? Optional",
       "explanationTooShort": "Please describe it in at least {{min}} characters.",
       "whoSees": "Moderation sees that you reported this. Nobody else learns of it.",
-      "goodFaith": "By sending you confirm that your details are true to the best of your knowledge."
+      "goodFaith": "By sending you confirm that your details are true to the best of your knowledge.",
+      "action": "Report …",
+      "alsoBlock": "Also block {{name}}",
+      "alsoBlockHint": "You no longer get notifications from {{name}}.",
+      "byIn": "By {{name}} in {{where}}",
+      "counter": "{{count}} of {{max}}",
+      "folded": "Reported by you, folded away for you",
+      "personDetail": "Goes to moderation, and {{name}} does not learn who reported",
+      "titleArticle": "Report page",
+      "titleAttachment": "Report file",
+      "titleComment": "Report comment",
+      "titleIssue": "Report issue",
+      "titlePerson": "Report person",
+      "titleVoice": "Report voice message",
+      "tooMany": "You have sent a great many reports just now. You can report again by {{time}} at the latest.",
+      "tooManyTomorrow": "You have sent a great many reports today. You can report again tomorrow by {{time}} at the latest.",
+      "whoSeesNamed": "Moderation sees that you reported this. {{name}} does not learn of it."
     },
     "category": {
       "harassment": "Harassment, insults or hate",
@@ -6037,6 +6058,44 @@
       "body": "The text contains something the house rules do not allow: {{terms}}. Your draft stays here so you can change it.",
       "bodyPlain": "The text contains something the house rules do not allow. Your draft stays here so you can change it.",
       "readRules": "Read the house rules"
+    },
+    "appeal": {
+      "hint": "What did moderation get wrong? What should it know?",
+      "label": "Your appeal",
+      "send": "Send appeal",
+      "sent": "Your appeal arrived.",
+      "subtitle": "Somebody else in moderation looks at the decision again.",
+      "title": "Appeal"
+    },
+    "notice": {
+      "appeal": "Appeal …",
+      "failedTitle": "The notice could not be loaded",
+      "from": "Notice from moderation",
+      "goneMessage": "It was deleted when its time ran out, or it belongs to another account.",
+      "goneTitle": "This notice no longer exists",
+      "pageTitle": "Notice from moderation",
+      "rules": "House rules"
+    },
+    "placeholder": {
+      "description": "Description removed by moderation",
+      "file": "File removed",
+      "fileBy": "By moderation",
+      "page": "Content removed by moderation",
+      "removed": "Removed by moderation",
+      "why": "Why?"
+    },
+    "state": {
+      "removed": "Removed",
+      "suspended": "Suspended"
+    },
+    "statement": {
+      "automation": "Automated means",
+      "basis": "Occasion and findings",
+      "law": "Legal basis",
+      "measure": "Measure",
+      "message": "Message from moderation",
+      "remedies": "What you can do",
+      "rule": "Rule"
     }
   }
 }
