@@ -21,10 +21,7 @@ import '../widgets/statement_view.dart';
 import 'appeal_sheet.dart';
 import 'notice_cubit.dart';
 
-/// Where the notice about case [caseId] lives: the bell and the mail lead
-/// here, and so does "Why?" beside a removed post.
-String noticeLocation(String caseId) =>
-    '/notices/${Uri.encodeComponent(caseId)}';
+export '../moderation_locations.dart' show noticeLocation;
 
 /// The notice of the moderation to the person concerned (HIN-173), for
 /// `/notices/:caseId`.

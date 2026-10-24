@@ -20,6 +20,7 @@ import 'package:flutter/widgets.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/responsive/responsive.dart';
+import '../moderation/moderation_locations.dart';
 
 /// One entry in the navigation: where it goes, what it is called, what it looks
 /// like.
@@ -238,8 +239,8 @@ String? subPageTitleKey(
   }
   if (location == '/absences/year-run') return 'absence.yearRun.pageTitle';
   if (location == '/notifications') return 'nav.notifications';
-  if (location.startsWith('/notices/')) return 'moderation.notice.pageTitle';
-  if (location == '/moderation/suspensions') {
+  if (location.startsWith(noticesPrefix)) return 'moderation.notice.pageTitle';
+  if (location == suspensionsLocation) {
     return 'moderation.suspension.pageTitle';
   }
   if (location.startsWith('/moderation')) return 'moderation.queue.title';
@@ -314,7 +315,7 @@ String subPageBackRoute(String location) {
     return '/time/reports';
   }
   // The bell is where a notice is reached from, and where it leads back.
-  if (location.startsWith('/notices/')) return '/notifications';
+  if (location.startsWith(noticesPrefix)) return '/notifications';
   // Moderation is a page of the settings; its own pages lead back to it.
   if (location.startsWith('/moderation/')) return '/moderation';
   if (location == '/moderation') return '/settings';

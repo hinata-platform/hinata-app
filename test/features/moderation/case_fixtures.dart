@@ -16,7 +16,8 @@ CaseSummary caseRow({
   String? listExcerpt = 'Du bist echt zu blöd für diesen Job.',
   PersonRef? assignee,
   bool reportedByMe = false,
-  bool urgent = false,
+  bool overdue = false,
+  CaseOutcome? outcome,
   int rev = 3,
 }) => CaseSummary(
   id: id,
@@ -30,7 +31,8 @@ CaseSummary caseRow({
   listExcerpt: listExcerpt,
   assignee: assignee,
   reportedByMe: reportedByMe,
-  urgent: urgent,
+  overdue: overdue,
+  outcome: outcome,
   rev: rev,
 );
 
@@ -57,7 +59,7 @@ CaseContent comment({
 CaseDetail caseDetail({
   CaseSummary? summary,
   CaseContent? evidence,
-  CaseContent? current,
+  String? currentHash,
   bool withheld = false,
   EvidenceReveal? reveal,
   List<CaseReport>? reports,
@@ -68,6 +70,7 @@ CaseDetail caseDetail({
   bool removalIncomplete = false,
   List<OtherUse> otherUses = const [],
   bool noCurrent = false,
+  bool takeOverAllowed = false,
 }) {
   final shown =
       reports ??
@@ -83,12 +86,15 @@ CaseDetail caseDetail({
   return CaseDetail(
     summary: summary ?? caseRow(),
     evidence: withheld ? null : evidence ?? comment(),
-    current: withheld || noCurrent ? null : current ?? evidence ?? comment(),
+    currentHash: withheld || noCurrent
+        ? null
+        : currentHash ?? (evidence ?? comment()).contentHash,
     evidenceWithheld: withheld,
     evidenceReveal: reveal,
     reports: shown,
     reportTotal: reportTotal ?? shown.length,
     history: history,
+    takeOverAllowed: takeOverAllowed,
     decision: decision,
     appeal: appeal,
     removalIncomplete: removalIncomplete,

@@ -104,7 +104,7 @@ void main() {
         'Zu viele Meldungen',
         statusCode: 429,
         details: const {
-          'code': 'moderation.tooManyReports',
+          'code': 'error.moderation.tooManyReports',
           'retryAfter': '3600',
         },
       ),
