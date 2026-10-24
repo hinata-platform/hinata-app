@@ -1111,7 +1111,8 @@ class _MoreMenu extends StatelessWidget {
       GlassMenuItem(
         value: 0,
         label: context.t('moderation.report.action'),
-        leading: Icon(LucideIcons.flag, size: 16, color: AppColors.inkSoft),
+        // The menu's own ink: it stands on the app's glass, not the stage.
+        leading: const Icon(LucideIcons.flag, size: 16),
       ),
     ],
     onSelected: (_) => onReport(_anchorOf(context)),
