@@ -279,7 +279,12 @@ class _PersonProfileBody extends StatelessWidget {
         ),
         writeEmail: email == null
             ? null
-            : () => unawaited(launchUrl(Uri(scheme: 'mailto', path: email))),
+            : () => unawaited(
+                launchUrl(
+                  Uri(scheme: 'mailto', path: email),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
         toggleBlock: canBlock
             ? () => unawaited(
                 blocked

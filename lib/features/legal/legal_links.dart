@@ -95,7 +95,10 @@ class LegalLinks extends StatelessWidget {
           Semantics(
             link: true,
             child: InkWell(
-              onTap: () => launchUrl(Uri(scheme: 'mailto', path: contact)),
+              onTap: () => launchUrl(
+                Uri(scheme: 'mailto', path: contact),
+                mode: LaunchMode.externalApplication,
+              ),
               child: Text(context.t('auth.contact'), style: linkStyle),
             ),
           ),
