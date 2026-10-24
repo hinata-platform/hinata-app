@@ -1242,35 +1242,3 @@ class _PeoplePickerState extends State<_PeoplePicker> {
     );
   }
 }
-
-/// A title the moderation removed (HIN-173): the server's placeholder words,
-/// italic and quiet, behind the glyph that marks every removal.
-class _RemovedTitle extends StatelessWidget {
-  const _RemovedTitle({required this.text, required this.style});
-
-  final String text;
-  final TextStyle style;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: ExcludeSemantics(
-          child: Icon(LucideIcons.eyeOff, size: 18, color: AppColors.inkSoft),
-        ),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          text,
-          style: style.copyWith(
-            fontStyle: FontStyle.italic,
-            color: AppColors.inkSoft,
-          ),
-        ),
-      ),
-    ],
-  );
-}

@@ -10,6 +10,7 @@ import '../../../core/docs/docs_links.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_case_models.dart';
 import '../../../core/models/moderation_models.dart';
+import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
@@ -343,9 +344,7 @@ class _Head extends StatelessWidget {
     // title keeps the width and never breaks inside a word.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stacked =
-            constraints.maxWidth < 420 &&
-            MediaQuery.textScalerOf(context).scale(10) > 15;
+        final stacked = constraints.maxWidth < 420 && context.largeText;
         final hex = CaseHex(summary: summary, size: 36, words: false);
         if (stacked) {
           return Column(
