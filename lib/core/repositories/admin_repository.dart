@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:dio/dio.dart' show MultipartFile;
 
 import '../api/api_client.dart';
@@ -360,4 +362,18 @@ class AdminRepository {
       ((await _api.get('/api/v1/admin/audit/event-types')) as List<dynamic>)
           .map((e) => AuditEventType.fromJson(e as Map<String, dynamic>))
           .toList();
+
+  /// The years there are moderation figures for, newest first (HIN-178).
+  Future<List<int>> moderationFigureYears() async => [
+    for (final year
+        in (await _api.get('/api/v1/admin/moderation/annual-figures/years')
+                as List<dynamic>? ??
+            const []))
+      (year as num).toInt(),
+  ];
+
+  /// The moderation figures of [year] in the Commission's template: a ZIP of
+  /// one CSV file per part (DSA Art. 15, HIN-178).
+  Future<Uint8List> moderationFigures(int year) =>
+      _api.getFileBytes('/api/v1/admin/moderation/annual-figures?year=$year');
 }

@@ -3676,7 +3676,11 @@
       "retentionHint": "Les cas traités, leurs signalements et la quarantaine sont supprimés après ce délai, sauf si les autorités de poursuite ont été informées.",
       "retentionLabel": "Supprimer après",
       "retentionMonths": "{{count}} mois",
-      "retentionMonths_plural": "{{count}} mois"
+      "retentionMonths_plural": "{{count}} mois",
+      "figures": "Télécharger les chiffres {{year}}",
+      "figuresHint": "Dans le modèle de la Commission européenne, un fichier CSV par partie dans un ZIP. Vérifie les chiffres et ajoute ce que Hinata ne connaît pas, comme les injonctions des autorités, avant de les publier.",
+      "figuresDone": "Chiffres enregistrés",
+      "figuresFailed": "Les chiffres n'ont pas pu être enregistrés"
     },
     "entry": {
       "title": "Qui peut entrer",

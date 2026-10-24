@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../admin_form_helpers.dart';
+import 'admin_moderation_figures.dart';
 
 /// How long the moderation keeps what it decided (HIN-174): six or twelve
 /// months, after which done cases, their reports and the quarantine go,
@@ -68,6 +69,8 @@ class _RetentionCardState extends State<RetentionCard> {
           ],
         ),
       ),
+      const SizedBox(height: 14),
+      const FiguresDownload(),
     ],
   );
 }
