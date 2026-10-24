@@ -54,6 +54,28 @@ void main() {
     expect(faces, isNot(contains(LucideIcons.bell)));
   });
 
+  test('what moderators are told has a face per kind, and leads into the '
+      'case, the list or the users', () {
+    const types = [
+      'MODERATION_CASE_OPENED',
+      'MODERATION_CASE_OVERDUE',
+      'MODERATION_APPEAL_FILED',
+      'MODERATION_CONFIRM_REQUESTED',
+      'MODERATION_TEAM_NOTE',
+      'MODERATION_ADMIN_ALERT',
+    ];
+    final faces = {for (final type in types) notificationVisual(type).$1};
+    expect(faces, hasLength(types.length));
+    expect(faces, isNot(contains(LucideIcons.bell)));
+
+    expect(
+      notificationTarget('/moderation/cases/k1', 'MODERATION_CASE_OPENED'),
+      '/moderation/cases/k1',
+    );
+    expect(notificationTarget(null, 'MODERATION_CASE_OVERDUE'), '/moderation');
+    expect(notificationTarget(null, 'MODERATION_ADMIN_ALERT'), '/admin/users');
+  });
+
   test('every shift type is one family, today\'s and later ones', () {
     for (final type in const [
       'SHIFT_ASSIGNED',
