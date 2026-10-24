@@ -13,6 +13,7 @@ enum AuditCategory {
   configuration,
   data,
   integration,
+  moderation,
   unknown;
 
   String get wire => this == AuditCategory.unknown ? '' : name.toUpperCase();
@@ -24,6 +25,7 @@ enum AuditCategory {
     'CONFIGURATION' => AuditCategory.configuration,
     'DATA' => AuditCategory.data,
     'INTEGRATION' => AuditCategory.integration,
+    'MODERATION' => AuditCategory.moderation,
     _ => AuditCategory.unknown,
   };
 
