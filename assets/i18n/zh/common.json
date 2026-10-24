@@ -3671,7 +3671,12 @@
         "zipHint": "作为附件的 ZIP 文件",
         "voice": "语音消息",
         "voiceHint": "评论中的录音"
-      }
+      },
+      "retentionTitle": "保留期限与统计",
+      "retentionHint": "已处理的案件、相关举报和隔离区内容在此期限后删除，除非已通知执法部门。",
+      "retentionLabel": "删除时间",
+      "retentionMonths": "{{count}} 个月",
+      "retentionMonths_plural": "{{count}} 个月"
     },
     "entry": {
       "title": "谁可以加入",
@@ -4549,6 +4554,10 @@
         "shifts": {
           "label": "班次",
           "desc": "你被分配、班次有变或即将开始"
+        },
+        "moderation": {
+          "label": "内容审核",
+          "desc": "新案件和逾期案件、请求第二人确认、给团队的备注"
         }
       },
       "pushUnsupported": "此处没有推送服务，该设置仍对你的手机和其他设备生效",
@@ -6088,7 +6097,14 @@
     },
     "state": {
       "removed": "已移除",
-      "suspended": "已封禁"
+      "suspended": "已封禁",
+      "open": "待处理",
+      "urgent": "紧急",
+      "inReview": "审查中",
+      "pending": "等待确认",
+      "appeal": "申诉",
+      "handled": "已解决",
+      "clear": "无违规"
     },
     "statement": {
       "automation": "自动化手段",
@@ -6098,6 +6114,366 @@
       "message": "审核留言",
       "remedies": "你可以做什么",
       "rule": "规则"
+    },
+    "queue": {
+      "title": "内容审核",
+      "target": "目标：24 小时内答复",
+      "more": "更多",
+      "settingsHint": "审查被举报的内容并作出决定",
+      "view": {
+        "open": "待处理",
+        "appeal": "申诉",
+        "done": "已处理"
+      },
+      "viewCount": "{{label}} · {{count}}",
+      "automated": "自动发现",
+      "reports": "{{count}} 条举报",
+      "reports_plural": "{{count}} 条举报",
+      "ownInitiative": "审核主动发起",
+      "reportedByMe": "由你举报",
+      "imageCovered": "图片已遮盖，可在案件中按需查看",
+      "textCovered": "文字已遮盖，可在案件中查看",
+      "openCount": "{{count}} 个待处理案件",
+      "openCount_plural": "{{count}} 个待处理案件",
+      "chooseTitle": "选择一个案件",
+      "chooseMessage": "列表显示等待答复的案件：紧急的在前，其次是最早的。",
+      "failedTitle": "无法加载案件",
+      "failedMessage": "请检查网络连接后重试。",
+      "empty": {
+        "open": "没有需要审查的内容",
+        "appeal": "没有待处理的申诉",
+        "done": "尚未作出任何决定"
+      },
+      "emptyMessage": {
+        "open": "新的举报会显示在这里，你也会收到通知。",
+        "appeal": "如果有人对决定提出申诉，会由另一人在这里重新审查。",
+        "done": "已决定的案件会保留在这里，直到保留期结束。"
+      }
+    },
+    "kind": {
+      "issue": "事项",
+      "comment": "评论",
+      "attachment": "附件",
+      "article": "页面",
+      "person": "人员",
+      "other": "其他"
+    },
+    "source": {
+      "member": "成员",
+      "public": "无账号",
+      "automated": "自动",
+      "ownInitiative": "主动发起"
+    },
+    "case": {
+      "age": {
+        "minutes": "{{count}} 分钟",
+        "minutes_plural": "{{count}} 分钟",
+        "hours": "{{count}} 小时",
+        "hours_plural": "{{count}} 小时",
+        "days": "{{count}} 天",
+        "days_plural": "{{count}} 天"
+      },
+      "ageSpoken": {
+        "minutes": "{{count}} 分钟",
+        "minutes_plural": "{{count}} 分钟",
+        "hours": "{{count}} 小时",
+        "hours_plural": "{{count}} 小时",
+        "days": "{{count}} 天",
+        "days_plural": "{{count}} 天"
+      },
+      "waited": "已等待 {{age}}",
+      "waitedOverdue": "已等待 {{age}}，已逾期",
+      "overdueSince": "已 {{age}}",
+      "kindBy": "{{name}} 的{{kind}}",
+      "withPerson": "由 {{name}} 处理",
+      "reported": "被举报的内容",
+      "asReported": "举报时的状态",
+      "someone": "某人",
+      "someoneModerating": "审核团队成员",
+      "fromMail": "来自 {{sender}} 的邮件",
+      "filesNeverShown": "Hinata 从不显示此文件。",
+      "procedure": "打开处理流程",
+      "fileNumber": "文件 {{n}}",
+      "viewFile": "查看文件",
+      "disturbingTitle": "内容可能令人不适",
+      "disturbingMessage": "该文件被举报为色情内容。它只在这里打开，不会被保存，查看操作会被记录。",
+      "noCopyKept": "没有违规：审核不保留内容副本。",
+      "removalIncomplete": "删除尚未完成。Hinata 会继续尝试。",
+      "otherUses": "其他使用位置",
+      "otherUsesHint": "被删除的图片也出现在这里。请一并查看这些位置。",
+      "scope": {
+        "issue": "你只能看到此事项的标题和描述。",
+        "comment": "你只能看到这条评论及其回复的内容。",
+        "attachment": "你只能看到这个文件。",
+        "article": "你只能看到这个页面。",
+        "person": "你只能看到头像和个人资料文字。",
+        "other": "你只能看到举报中描述的内容。"
+      },
+      "since": {
+        "unchanged": "自举报以来未更改。",
+        "changed": "此后已更改。",
+        "deleted": "此后已删除。"
+      },
+      "withheld": "内容已暂扣，需第二人开放后才能查看。",
+      "askedToOpen": "你已请求开放。将由第二人开放。",
+      "askToOpen": "请求开放 …",
+      "askToOpenTitle": "请求开放",
+      "askToOpenSubtitle": "无账号举报的内部内容。由第二人开放，你的理由会记入历史记录。",
+      "open": "开放 …",
+      "openTitle": "开放内容",
+      "openSubtitle": "他人已提出请求。填写理由后，审核即可看到内容。",
+      "revealReason": "理由",
+      "reports": "举报",
+      "reportNumber": "举报 {{n}}",
+      "quoted": "“{{text}}”",
+      "reportedBy": "举报人：{{name}}",
+      "unfoundedBefore": "该来源此前有 {{count}} 条关于儿童的举报明显无依据。",
+      "unfoundedBefore_plural": "该来源此前有 {{count}} 条关于儿童的举报明显无依据。",
+      "whoReported": "谁举报的？…",
+      "moreReports": "另有 {{count}} 条举报",
+      "moreReports_plural": "另有 {{count}} 条举报",
+      "reportersCovered": "举报人保持隐藏。揭示需要理由，并会记入历史记录。",
+      "reportersStayCovered": "出于儿童安全，举报人始终保持隐藏。",
+      "revealReporterTitle": "谁举报的？",
+      "revealReporterSubtitle": "只有填写理由才能揭示姓名，理由会记入案件历史。",
+      "reveal": "揭示",
+      "decision": "决定",
+      "measure": "措施",
+      "lawEnforcementTold": "已通知执法部门。案件将保留更长时间。",
+      "confirmedBy": "由 {{name}} 确认",
+      "restoredBy": {
+        "restored": "{{name}} 已恢复内容。",
+        "rewrittenSince": "{{name}} 已恢复。内容在此期间已被重写，保留重写后的文字。",
+        "gone": "{{name}} 已恢复，但内容已不存在。"
+      },
+      "pendingMine": "你决定了停用账号。需要第二人确认。",
+      "pendingOthers": "一项停用正在等待第二人确认。",
+      "claim": "接手",
+      "takeOver": "接管",
+      "release": "交还",
+      "decide": "作出决定 …",
+      "confirm": "确认",
+      "reject": "驳回 …",
+      "rejectTitle": "驳回停用",
+      "rejectSubtitle": "之后案件将重新开放。你的理由会记入历史记录。",
+      "confirmed": "已确认。停用生效。",
+      "rejected": "已驳回。案件重新开放。",
+      "more": "此案件的更多操作",
+      "viewProfile": "查看个人资料",
+      "restore": "恢复 …",
+      "restoreTitle": "恢复内容",
+      "restoreSubtitle": "被删除的内容将恢复，此案件的停用随之结束。当事人会收到通知。",
+      "restoreConfirm": "恢复",
+      "restored": "已恢复。",
+      "holdAction": "延长保留 …",
+      "holdTitle": "延长案件保留",
+      "holdSubtitle": "例如因为有关部门需要此案件。不能短于当前期限。",
+      "holdIndefinite": "无期限",
+      "holdIndefiniteHint": "直到有人再次更改。",
+      "holdUntil": "保留至",
+      "holdReason": "理由",
+      "hold": "延长",
+      "held": "案件保留期已延长。",
+      "why": "理由",
+      "noteLabel": "{{label}}，至少 {{min}} 个字符",
+      "decidedMeanwhile": "在此期间已有其他人作出决定。",
+      "changedMeanwhile": "案件已变化，请重新查看。",
+      "goneTitle": "此案件已不存在",
+      "goneMessage": "保留期已结束，或内容是你本人写的。",
+      "failedTitle": "无法加载案件"
+    },
+    "history": {
+      "reported": "已举报",
+      "claimed": "{{name}} 接手了案件",
+      "released": "{{name}} 交还了案件",
+      "reporterRevealed": "{{name}} 揭示了举报人：",
+      "evidenceRequested": "{{name}} 请求开放内容：",
+      "evidenceRevealed": "{{name}} 开放了内容：",
+      "decided": "{{name}} 作出决定：{{outcome}}",
+      "appealed": "收到申诉",
+      "appealDecided": "{{name}} 处理了申诉",
+      "restored": "{{name}} 已恢复",
+      "held": "{{name}} 延长了保留：",
+      "confirmationRequested": "{{name}} 决定停用账号，待第二人确认",
+      "confirmationRejected": "{{name}} 驳回了停用：",
+      "suspended": "账号已停用，{{length}}",
+      "suspensionLifted": "{{name}} 解除了停用："
+    },
+    "decision": {
+      "title": "决定",
+      "kindIn": "{{where}} 中的{{kind}}",
+      "send": "发送决定",
+      "sent": "已决定。",
+      "outcome": {
+        "noViolation": "无违规",
+        "unfounded": "明显无依据",
+        "action": "采取措施",
+        "handled": "已解决"
+      },
+      "outcomeHint": {
+        "noViolation": "内容保留。举报人会收到通知。",
+        "unfounded": "明显错误的举报。无需查看内容即可决定。",
+        "action": "{{name}} 会收到说明理由。被删除的内容进入隔离区。",
+        "actionAnyone": "当事人会收到说明理由。被删除的内容进入隔离区。",
+        "handled": "在 Hinata 之外解决，例如通过谈话。"
+      },
+      "remove": "删除内容",
+      "removeHint": "选择要删除的部分",
+      "scope": {
+        "issue": {
+          "title": "标题",
+          "description": "描述",
+          "whole": "标题和描述"
+        },
+        "comment": {
+          "whole": "整条评论"
+        },
+        "attachment": {
+          "whole": "整个文件"
+        },
+        "article": {
+          "revert": "将页面恢复到上一版本",
+          "whole": "整个页面"
+        },
+        "person": {
+          "avatar": "头像",
+          "profileText": "个人资料文字",
+          "whole": "头像和个人资料文字"
+        }
+      },
+      "scopeChip": {
+        "issue": {
+          "title": "标题",
+          "description": "描述",
+          "whole": "两者"
+        },
+        "article": {
+          "revert": "恢复",
+          "whole": "整页"
+        },
+        "person": {
+          "avatar": "头像",
+          "profileText": "文字",
+          "whole": "两者"
+        }
+      },
+      "suspend": "停用账号",
+      "suspendHint": "用于严重或屡次违规",
+      "suspendAdmin": "管理员账号不会被停用。",
+      "suspendNobody": "没有任何有账号的人对此负责。",
+      "suspendLoading": "正在检查 …",
+      "howLong": "多久？",
+      "suspendSignOut": "{{name}} 将在所有设备上退出登录，访问令牌暂停。内容保持不变。",
+      "suspendMail": "说明理由将通过邮件发送给 {{name}}。回复该邮件即视为申诉。",
+      "suspendEnds": "将于 {{date}} 自动结束。",
+      "suspendIndefinite": "持续到有人解除为止。",
+      "secondPerson": "需要第二人确认。",
+      "suspendedFor": "停用：{{length}}",
+      "ground": "依据",
+      "groundChip": {
+        "rules": "内部规则",
+        "law": "法律"
+      },
+      "rule": "规则",
+      "ruleHint": "例如：第 2 节，不贬低他人",
+      "pickRule": "选择内部规则",
+      "ruleLabel": "规则 {{number}}：{{title}}",
+      "searchRules": "搜索规则",
+      "noRule": "没有匹配的规则。",
+      "law": "法律条款",
+      "lawHint": "例如：§ 185 StGB",
+      "facts": "你发现了什么？",
+      "factsRequired": "你发现了什么？必填",
+      "factsOptional": "你发现了什么？选填",
+      "factsHint": "例如：评论称一位同事“蠢到干不了这份工作”。这是在贬低个人，而不是讨论事情本身。",
+      "message": "给当事人的消息",
+      "messageTo": "给 {{name}} 的消息，选填",
+      "messageToAnyone": "给当事人的消息，选填",
+      "more": "更多信息",
+      "responsible": "负责人",
+      "responsibleIs": "负责人：{{name}}",
+      "contributor": "参与者 {{n}}",
+      "lawEnforcement": "已通知执法部门",
+      "lawEnforcementHint": "案件随后将保留十二个月。",
+      "lawEnforcementYes": "执法部门：是",
+      "lawEnforcementNo": "执法部门：否",
+      "deceptive": "误导性群发广告",
+      "deceptiveHint": "仅适用于垃圾信息。计入年度统计。",
+      "internalNote": "内部备注",
+      "internalNoteHint": "仅审核可见。",
+      "noInternalNote": "无内部备注",
+      "withInternalNote": "有内部备注",
+      "previewTitle": "{{name}} 将收到的内容",
+      "previewTitleAnyone": "说明理由的原文",
+      "previewNone": "请选择结果。之后这里会显示相关人员将得知的内容。",
+      "previewNoStatement": {
+        "noViolation": "不会发送说明理由。举报人将得知没有违规。",
+        "unfounded": "不会发送说明理由。举报人将得知举报明显无依据。",
+        "handled": "不会发送说明理由。举报人将得知此事已解决。"
+      },
+      "previewIncomplete": "请选择措施的内容和依据。之后这里会逐字显示说明理由。",
+      "previewFailed": "无法加载预览。下次更改时会重试。",
+      "problem": {
+        "outcome": "请选择结果。",
+        "measure": "措施可以删除、停用或两者兼有。",
+        "scope": "请选择要删除的部分。",
+        "rule": "请选择被违反的规则。",
+        "law": "请写明法律条款。",
+        "facts": "请至少写 {{min}} 个字符说明你的发现。",
+        "suspension": "无法停用此人的账号。"
+      }
+    },
+    "suspension": {
+      "pageTitle": "已停用的账号",
+      "length": {
+        "days7": "7 天",
+        "days30": "30 天",
+        "indefinite": "无限期"
+      },
+      "until": "停用至 {{date}}",
+      "indefinite": "无限期停用",
+      "openCase": "打开案件",
+      "emptyTitle": "没有被停用的账号",
+      "emptyMessage": "审核停用账号后，该账号会显示在这里，直到停用结束。",
+      "failedTitle": "无法加载已停用的账号",
+      "lift": "解除停用 …",
+      "liftTitle": "解除停用",
+      "liftSubtitle": "之后此人可以重新登录。已删除的内容仍保持删除。",
+      "liftConfirm": "解除",
+      "lifted": "停用已解除。",
+      "suspend": "停用账号 …",
+      "suspendDetail": "由审核主动创建案件，然后由你决定。",
+      "ownTitle": "停用 {{name}}",
+      "ownSubtitle": "由审核主动创建的案件。之后你将决定停用并给出说明理由。",
+      "ownCategory": "涉及什么问题？",
+      "ownNext": "继续"
+    },
+    "appealReview": {
+      "title": "申诉",
+      "filedOn": "收到于 {{date}}",
+      "via": {
+        "app": "通过应用",
+        "reply": "通过回复邮件"
+      },
+      "notYours": "决定是你作出的。申诉由其他人处理。",
+      "uphold": "维持决定",
+      "reverse": "撤销决定",
+      "upholdTitle": "维持决定",
+      "upholdSubtitle": "决定维持不变。当事人会收到通知及你的理由。",
+      "reverseTitle": "撤销决定",
+      "reverseSubtitle": "内容将恢复，停用随之结束。当事人会收到通知及你的理由。",
+      "note": "理由",
+      "upheld": "已维持。",
+      "reversed": "已撤销。",
+      "wasUpheld": "{{name}} 维持了决定。",
+      "wasReversed": "{{name}} 撤销了决定。",
+      "recordAction": "登记申诉 …",
+      "recordTitle": "登记申诉",
+      "recordSubtitle": "用于登记对说明理由邮件的回复。之后由另一人重新审查决定。",
+      "recordText": "回复内容",
+      "receivedOn": "收到日期",
+      "record": "登记",
+      "recorded": "申诉已登记。"
     }
   }
 }
