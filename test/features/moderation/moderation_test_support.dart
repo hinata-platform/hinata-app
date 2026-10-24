@@ -10,7 +10,7 @@ import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/core/repositories/moderation_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 
-/// A phone at 390 points, with the text as large as a person may set it.
+/// A phone at 390 points; the text size is [moderationApp]'s.
 void onPhone(WidgetTester tester) {
   tester.view
     ..physicalSize = const Size(390, 844)
