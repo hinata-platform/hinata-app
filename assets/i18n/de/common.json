@@ -3749,7 +3749,8 @@
       "resultFound": "Gefunden, aber ohne Folge: {{terms}}.",
       "resultException": "Ausnahmen greifen: {{words}}.",
       "images": "Bilder und Anhänge prüft das System nicht. Dafür gibt es Meldungen."
-    }
+    },
+    "connectContactMissing": "Die Bedingungen von Hinata Connect verlangen einen Kontakt für Meldungen. Trag unter Moderation eine E-Mail für Meldungen ein."
   },
   "audit": {
     "title": "Audit-Protokoll",
