@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -12,30 +14,59 @@ import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../admin_cards.dart';
+import '../admin_settings_cubit.dart';
 import '../admin_form_helpers.dart';
 import 'admin_moderation_cubit.dart';
+import 'admin_moderation_entry.dart';
+import 'admin_moderation_rules.dart';
 
-/// Admin → Moderation (HIN-26): who moderates, the contact the operator
-/// publishes for reports, and the file types people may upload. The role
-/// itself is handed out in user management; the contact and the file types
-/// are saved with the other settings.
+/// Admin → Moderation (HIN-26): who comes in without anybody deciding, who
+/// moderates, the contact the operator publishes for reports, the house rules
+/// and the file types people may upload. The role itself is handed out in
+/// user management; the contact, the rules and the file types are saved with
+/// the other settings.
 class AdminModerationSection extends StatelessWidget {
-  const AdminModerationSection({super.key, required this.settings});
+  const AdminModerationSection({
+    super.key,
+    required this.settings,
+    required this.onSave,
+  });
 
   final Map<String, dynamic> settings;
 
+  /// Saves the settings draft as the Save action does; true once saved.
+  final Future<bool> Function() onSave;
+
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (context) =>
-        ModeratorsCubit(context.read<AdminRepository>())..load(),
-    child: _AdminModerationView(settings: settings),
-  );
+  Widget build(BuildContext context) {
+    final admin = context.read<AdminRepository>();
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => ModeratorsCubit(admin)..load()),
+        BlocProvider(create: (_) => AccountEntryCubit(admin)..load()),
+        BlocProvider(create: (_) => HouseRulesVersionsCubit(admin)..load()),
+      ],
+      // A save makes a new version of the rules when they read differently,
+      // and may close a way in: both are read again once it is done. Not by
+      // comparing the settings: the sections edit the draft in place, so the
+      // answer equals what was sent whatever changed.
+      child: BlocListener<AdminSettingsCubit, AdminSettingsState>(
+        listenWhen: (before, now) => before.saving && !now.saving,
+        listener: (context, _) {
+          unawaited(context.read<AccountEntryCubit>().load());
+          unawaited(context.read<HouseRulesVersionsCubit>().load());
+        },
+        child: _AdminModerationView(settings: settings, onSave: onSave),
+      ),
+    );
+  }
 }
 
 class _AdminModerationView extends StatelessWidget {
-  const _AdminModerationView({required this.settings});
+  const _AdminModerationView({required this.settings, required this.onSave});
 
   final Map<String, dynamic> settings;
+  final Future<bool> Function() onSave;
 
   Map<String, dynamic> get _moderation =>
       (settings['moderation'] ??= <String, dynamic>{}) as Map<String, dynamic>;
@@ -54,7 +85,15 @@ class _AdminModerationView extends StatelessWidget {
     final contactMissing = context.select<AppConfigBloc, bool>(
       (bloc) => bloc.state.meta?.moderation.contactMissing ?? false,
     );
+    final entry = context.watch<AccountEntryCubit>().state;
     return AdminCards(
+      note: accountEntryWorthShowing(entry)
+          ? AccountEntryNotice(
+              entry: entry!,
+              settings: settings,
+              onSave: onSave,
+            )
+          : null,
       cards: {
         'moderators': AdminSectionCard(
           icon: LucideIcons.shieldUser,
@@ -95,6 +134,7 @@ class _AdminModerationView extends StatelessWidget {
             ),
           ],
         ),
+        'rules': HouseRulesCard(moderation: _moderation),
         'types': AdminSectionCard(
           icon: LucideIcons.fileCheck,
           title: context.t('admin.moderation.typesTitle'),

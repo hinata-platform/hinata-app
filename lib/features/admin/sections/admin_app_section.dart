@@ -3,11 +3,13 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart' show PlatformFlags;
+import '../../../core/models/moderation_models.dart' show OpenWay;
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/hive_widgets.dart';
 import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import '../policy_controls.dart' show PolicySwitch;
+import 'admin_moderation_entry.dart' show OpenWayLine, registrationIsOpen;
 import '../../../core/theme/app_type.dart';
 
 /// Platform settings served to the apps via /api/v1/meta: the minimum required
@@ -162,6 +164,12 @@ class _AdminAppSectionState extends State<AdminAppSection> {
               onChanged: (v) =>
                   setState(() => _app['requireAdminApproval'] = v),
             ),
+            // The same line Moderation shows first while this way is open
+            // (HIN-175).
+            if (registrationIsOpen(_app)) ...[
+              const SizedBox(height: 14),
+              const OpenWayLine(way: OpenWay(way: 'registration')),
+            ],
           ],
         ),
         'platform': AdminSectionCard(
