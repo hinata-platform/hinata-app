@@ -21,7 +21,6 @@ void main() {
     version: version,
     markdown: '# Hausregeln\n\nSeid freundlich.',
     createdAt: DateTime.utc(2026, 10, 2),
-    pending: true,
     acceptedVersion: accepted,
   );
 

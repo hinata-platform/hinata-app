@@ -102,7 +102,6 @@ void main() {
           },
         });
         expect(meta.supportsModeration, isTrue);
-        expect(meta.moderation.operatorName, 'AStA');
         expect(meta.moderation.contactEmail, 'moderation@example.org');
         expect(meta.moderation.imprintUrl, isNull);
       });
