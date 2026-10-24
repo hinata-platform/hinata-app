@@ -9,9 +9,17 @@ import '../models/moderation_models.dart';
 /// notice to the person concerned (HIN-173); for moderators, the cases and
 /// every step on them (HIN-174).
 class ModerationRepository {
-  ModerationRepository(this._api);
+  ModerationRepository(this._api, {DateTime Function()? now})
+    : _now = now ?? DateTime.now;
 
   final ApiClient _api;
+  final DateTime Function() _now;
+
+  /// How long one read of the house rules serves the decisions that follow.
+  static const rulesHeldFor = Duration(minutes: 10);
+
+  /// The last rules read, for the server and language they were read in.
+  ({String server, String locale, DateTime at, ModerationRules rules})? _rules;
 
   /// Reports [target] for [category]. With [alsoBlock] the author is blocked
   /// in the same step. Nobody is told who reported.
@@ -201,9 +209,26 @@ class ModerationRepository {
   });
 
   /// The house rules a decision can rest on, in the reader's language.
-  Future<ModerationRules> rules() async => ModerationRules.fromJson(
-    await _api.get('$_base/rules') as Map<String, dynamic>,
-  );
+  ///
+  /// They are the same for every decision on an instance and change rarely,
+  /// so one read serves for [rulesHeldFor]: a moderator deciding case after
+  /// case asks once.
+  Future<ModerationRules> rules() async {
+    final server = _api.baseUrl;
+    final locale = _api.localeCode;
+    final held = _rules;
+    if (held != null &&
+        held.server == server &&
+        held.locale == locale &&
+        _now().difference(held.at) < rulesHeldFor) {
+      return held.rules;
+    }
+    final rules = ModerationRules.fromJson(
+      await _api.get('$_base/rules') as Map<String, dynamic>,
+    );
+    _rules = (server: server, locale: locale, at: _now(), rules: rules);
+    return rules;
+  }
 
   /// The accounts moderation suspended, newest first.
   Future<PageResult<SuspendedAccount>> suspensions(int page, int size) async =>
