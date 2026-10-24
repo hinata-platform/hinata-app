@@ -66,6 +66,9 @@ class UserManagementCubit extends Cubit<void> {
 
   Future<void> unlinkSso(String id) => _admin.adminUnlinkSso(id);
 
+  Future<void> liftSuspension(String id, String note) =>
+      _admin.adminLiftSuspension(id, note);
+
   Future<void> revokeSessions(List<String> ids) =>
       _admin.adminRevokeSessions(ids);
 

@@ -232,6 +232,21 @@ class UserAdminSections extends StatelessWidget {
           },
         ),
       );
+    } else if (u.suspended) {
+      // Moderation decided it, and its reasons stay there (HIN-172); the
+      // admin area only ends it, with a note.
+      rows.add(
+        _ActRow(
+          icon: LucideIcons.lockOpen,
+          success: true,
+          title: context.t('admin.um.liftSuspension'),
+          subtitle: context.t('admin.um.liftSuspensionRowSub'),
+          onTap: () {
+            close();
+            actions.openLiftSuspension(u);
+          },
+        ),
+      );
     } else if (u.status == UserStatus.pendingApproval) {
       rows.add(
         _ActRow(

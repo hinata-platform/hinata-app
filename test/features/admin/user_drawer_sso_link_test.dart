@@ -39,6 +39,7 @@ void main() {
     openReset: (_) {},
     revokeSessions: (_) {},
     openUnlinkSso: (u) => unlinked.add(u.id),
+    openLiftSuspension: (_) {},
     openDelete: (_) {},
     isLastActiveAdmin: (_) => false,
     nameById: (_) => null,

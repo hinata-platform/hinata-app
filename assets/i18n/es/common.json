@@ -362,6 +362,7 @@
       "ssoAccountNotLinkedSsoOnly": "Ya existe una cuenta con esta dirección de correo que no está vinculada a este inicio de sesión. Contacta con la administración.",
       "ssoEmailNotVerified": "Tu servicio de inicio de sesión indica que esta dirección de correo no está confirmada. Una cuenta existente nunca se vincula a una dirección sin confirmar. Contacta con la administración.",
       "ssoNoEmail": "Tu servicio de inicio de sesión no ha enviado ninguna dirección de correo, y sin ella no se puede crear una cuenta. Contacta con la administración.",
+      "accountSuspended": "Tu cuenta está suspendida. El correo de la moderación explica por qué, hasta cuándo y cómo puedes recurrir.",
       "accountDeactivated": "Tu cuenta está desactivada. Contacta con la administración.",
       "pendingApproval": "Tu cuenta está pendiente de aprobación por parte de la administración.",
       "emailNotVerified": "Primero confirma tu dirección de correo. Encontrarás el enlace en tu bandeja de entrada."
@@ -3502,7 +3503,15 @@
       "moderatorConfirmMany": "{{names}} revisarán entonces el contenido denunciado y decidirán sobre él, incluso retirar publicaciones y suspender cuentas. Solo ven lo que se ha denunciado.",
       "toastModeratorGranted": "Rol de moderación asignado",
       "toastModeratorRevoked": "Rol de moderación retirado",
-      "reasonOwnModeratorRole": "Este rol te lo da otra persona de la administración."
+      "reasonOwnModeratorRole": "Este rol te lo da otra persona de la administración.",
+      "suspended": "Suspendida",
+      "suspendedUntil": "Suspendida hasta el {{date}}",
+      "liftSuspension": "Levantar la suspensión",
+      "liftSuspensionSub": "La moderación suspendió esta cuenta. Al levantarla, la persona puede volver a iniciar sesión y se avisa a la moderación.",
+      "liftSuspensionRowSub": "Suspendida por la moderación. Los motivos quedan en la moderación.",
+      "liftSuspensionNote": "Nota para el expediente (opcional)",
+      "liftSuspensionAction": "Levantar la suspensión",
+      "toastSuspensionLifted": "Suspensión levantada"
     },
     "iosStoreUrl": "URL de la App Store de iOS",
     "androidStoreUrl": "URL de Google Play para Android",
