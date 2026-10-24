@@ -12,14 +12,14 @@ void main() {
     caseId: 'k1',
     headline: 'Eine Entscheidung der Moderation zu deinem Inhalt',
     measure: 'Dein Kommentar wurde entfernt.',
-    scope: StatementScope.whole,
+    scope: RemovalScope.whole,
     appealable: true,
   );
   const appealed = Statement(
     caseId: 'k1',
     headline: 'Eine Entscheidung der Moderation zu deinem Inhalt',
     measure: 'Dein Kommentar wurde entfernt.',
-    scope: StatementScope.whole,
+    scope: RemovalScope.whole,
     appealState: AppealState.pending,
   );
   late FakeModerationRepository moderation;
