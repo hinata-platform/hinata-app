@@ -64,7 +64,6 @@ import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
 import '../blocs/auth_bloc.dart';
 import '../models/core_models.dart' show AuthUser;
-import '../models/moderation_case_models.dart' show CaseView;
 import '../models/time_share_models.dart' show TimeShareBox;
 import '../storage/app_storage.dart';
 import 'board_routes.dart';
@@ -782,10 +781,7 @@ GoRouter buildRouter({
             pageBuilder: (_, state) => _transition(
               state,
               ModerationScreen(
-                view: CaseView.values.firstWhere(
-                  (view) => view.name == state.uri.queryParameters['view'],
-                  orElse: () => CaseView.open,
-                ),
+                view: caseViewOf(state.uri.queryParameters['view']),
                 caseId: state.uri.queryParameters['case'],
               ),
             ),

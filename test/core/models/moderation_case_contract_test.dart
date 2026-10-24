@@ -104,24 +104,19 @@ void main() {
     };
 
     test('names its first category in the order the report sheet lists '
-        'them, and is overdue after a day', () {
+        'them, and is overdue when the server says so', () {
       final row = CaseSummary.fromJson(summary());
       expect(row.category, ReportCategory.harassment);
       expect(row.sources, {ReportSource.member});
-      final reported = DateTime.utc(2026, 10, 22, 9, 14);
-      expect(row.overdueAt(reported.add(const Duration(hours: 23))), isFalse);
-      expect(row.overdueAt(reported.add(const Duration(hours: 24))), isTrue);
-      // Decided is never overdue.
+      expect(row.overdue, isFalse);
       expect(
-        CaseSummary.fromJson(
-          summary(state: 'ACTED'),
-        ).overdueAt(reported.add(const Duration(days: 3))),
-        isFalse,
+        CaseSummary.fromJson({...summary(), 'overdue': true}).overdue,
+        isTrue,
       );
     });
 
     test('tells unchanged, changed and deleted apart while it is open', () {
-      CaseDetail detail({Object? current, String state = 'OPEN'}) =>
+      CaseDetail detail({String? current, String state = 'OPEN'}) =>
           CaseDetail.fromJson({
             'summary': summary(state: state),
             'evidence': const {
@@ -129,18 +124,14 @@ void main() {
               'contentHash': 'a',
               'excerpt': 'Du bist zu blöd.',
             },
-            'current': current,
+            'currentHash': current,
             'removalState': 'INCOMPLETE',
+            'takeOverAllowed': true,
           });
 
-      expect(
-        detail(current: {'contentHash': 'a'}).sinceReport,
-        SinceReport.unchanged,
-      );
-      expect(
-        detail(current: {'contentHash': 'b'}).sinceReport,
-        SinceReport.changed,
-      );
+      expect(detail(current: 'a').sinceReport, SinceReport.unchanged);
+      expect(detail(current: 'b').sinceReport, SinceReport.changed);
+      expect(detail().takeOverAllowed, isTrue);
       expect(detail().sinceReport, SinceReport.deleted);
       expect(detail(state: 'ACTED').sinceReport, isNull);
       expect(detail().removalIncomplete, isTrue);

@@ -45,13 +45,6 @@ enum CaseView {
   const CaseView(this.wire);
 
   final String wire;
-
-  static CaseView? of(Object? wire) {
-    for (final view in values) {
-      if (view.wire == wire) return view;
-    }
-    return null;
-  }
 }
 
 /// Who brought a case: a member, somebody without an account, the text check,
@@ -290,7 +283,7 @@ class CaseSummary extends Equatable {
   const CaseSummary({
     required this.id,
     this.state = CaseState.open,
-    this.urgent = false,
+    this.overdue = false,
     this.kind = ContentKind.other,
     this.categories = const [],
     this.sources = const {},
@@ -306,12 +299,12 @@ class CaseSummary extends Equatable {
     this.rev = 0,
   });
 
-  /// A case answers within a day.
-  static const overdueAfter = Duration(hours: 24);
-
   final String id;
   final CaseState state;
-  final bool urgent;
+
+  /// Waiting past the time moderation answers in, on the server's clock: a
+  /// device a few minutes off must not count it differently from the pills.
+  final bool overdue;
   final ContentKind kind;
 
   /// In the order the report sheet lists them, so the first is the one the
@@ -345,13 +338,6 @@ class CaseSummary extends Equatable {
 
   bool get childSafety => categories.contains(ReportCategory.childSafety);
 
-  /// Undecided for longer than a day at [now].
-  bool overdueAt(DateTime now) =>
-      state.undecided &&
-      firstReportedAt != null &&
-      !now.difference(firstReportedAt!).isNegative &&
-      now.difference(firstReportedAt!) >= overdueAfter;
-
   factory CaseSummary.fromJson(Map<String, dynamic> json) {
     final categories = {
       for (final wire in (json['categories'] as List<dynamic>?) ?? const [])
@@ -360,7 +346,7 @@ class CaseSummary extends Equatable {
     return CaseSummary(
       id: json['id'] as String? ?? '',
       state: CaseState.of(json['state']),
-      urgent: json['urgent'] as bool? ?? false,
+      overdue: json['overdue'] as bool? ?? false,
       kind: ContentKind.of(json['kind']),
       categories: [
         for (final category in ReportCategory.values)
@@ -387,7 +373,7 @@ class CaseSummary extends Equatable {
   List<Object?> get props => [
     id,
     state,
-    urgent,
+    overdue,
     kind,
     categories,
     sources,
@@ -842,13 +828,14 @@ class CaseDetail extends Equatable {
   const CaseDetail({
     required this.summary,
     this.evidence,
-    this.current,
+    this.currentHash,
     this.evidenceWithheld = false,
     this.evidenceReveal,
     this.reports = const [],
     this.reportTotal = 0,
     this.history = const [],
     this.claimedAt,
+    this.takeOverAllowed = false,
     this.decision,
     this.appeal,
     this.restoration,
@@ -862,8 +849,9 @@ class CaseDetail extends Equatable {
   /// wrong.
   final CaseContent? evidence;
 
-  /// How it stands now, while the case is open.
-  final CaseContent? current;
+  /// The hash of the content as it stands now, while the case is open; null
+  /// once it is gone.
+  final String? currentHash;
 
   /// Reported without an account on internal content: closed until a second
   /// person opens it.
@@ -875,6 +863,10 @@ class CaseDetail extends Equatable {
   final int reportTotal;
   final List<CaseEvent> history;
   final DateTime? claimedAt;
+
+  /// Whether the reader may take over somebody else's claim, by its age on the
+  /// server's clock.
+  final bool takeOverAllowed;
   final CaseDecision? decision;
   final CaseAppeal? appeal;
   final CaseRestoration? restoration;
@@ -894,12 +886,29 @@ class CaseDetail extends Equatable {
         summary.kind == ContentKind.other) {
       return null;
     }
-    final now = current;
+    final now = currentHash;
     if (now == null) return SinceReport.deleted;
-    return now.contentHash == evidence!.contentHash
+    return now == evidence!.contentHash
         ? SinceReport.unchanged
         : SinceReport.changed;
   }
+
+  /// Who asked for the second pair of eyes the case waits for; null otherwise.
+  String? get confirmationRequestedBy =>
+      summary.state == CaseState.pendingConfirmation
+      ? history
+            .lastWhere(
+              (event) => event.kind == CaseEventKind.confirmationRequested,
+              orElse: () => const CaseEvent(),
+            )
+            .actorId
+      : null;
+
+  /// The person the case is about, or who the content suggests is responsible
+  /// for it; null when there is nobody to open a profile of.
+  String? get personConcerned => summary.kind == ContentKind.person
+      ? evidence?.id
+      : evidence?.suggestedResponsible;
 
   /// Every person the case names by id, to look their names up at once.
   Set<String> get personIds => {
@@ -915,30 +924,30 @@ class CaseDetail extends Equatable {
     ...?evidence?.contributorIds,
   };
 
-  CaseDetail copyWith({CaseSummary? summary, List<CaseReport>? reports}) =>
-      CaseDetail(
-        summary: summary ?? this.summary,
-        evidence: evidence,
-        current: current,
-        evidenceWithheld: evidenceWithheld,
-        evidenceReveal: evidenceReveal,
-        reports: reports ?? this.reports,
-        reportTotal: reportTotal,
-        history: history,
-        claimedAt: claimedAt,
-        decision: decision,
-        appeal: appeal,
-        restoration: restoration,
-        removalIncomplete: removalIncomplete,
-        otherUses: otherUses,
-      );
+  CaseDetail copyWith({List<CaseReport>? reports}) => CaseDetail(
+    summary: summary,
+    evidence: evidence,
+    currentHash: currentHash,
+    evidenceWithheld: evidenceWithheld,
+    evidenceReveal: evidenceReveal,
+    reports: reports ?? this.reports,
+    reportTotal: reportTotal,
+    history: history,
+    claimedAt: claimedAt,
+    takeOverAllowed: takeOverAllowed,
+    decision: decision,
+    appeal: appeal,
+    restoration: restoration,
+    removalIncomplete: removalIncomplete,
+    otherUses: otherUses,
+  );
 
   factory CaseDetail.fromJson(Map<String, dynamic> json) => CaseDetail(
     summary: CaseSummary.fromJson(
       json['summary'] as Map<String, dynamic>? ?? const {},
     ),
     evidence: CaseContent.fromJson(json['evidence']),
-    current: CaseContent.fromJson(json['current']),
+    currentHash: json['currentHash'] as String?,
     evidenceWithheld: json['evidenceWithheld'] as bool? ?? false,
     evidenceReveal: EvidenceReveal.fromJson(json['evidenceReveal']),
     reports: [
@@ -951,6 +960,7 @@ class CaseDetail extends Equatable {
         if (event is Map<String, dynamic>) CaseEvent.fromJson(event),
     ],
     claimedAt: parseInstant(json['claimedAt']),
+    takeOverAllowed: json['takeOverAllowed'] as bool? ?? false,
     decision: CaseDecision.fromJson(json['decision']),
     appeal: CaseAppeal.fromJson(json['appeal']),
     restoration: CaseRestoration.fromJson(json['restoration']),
@@ -965,13 +975,14 @@ class CaseDetail extends Equatable {
   List<Object?> get props => [
     summary,
     evidence,
-    current,
+    currentHash,
     evidenceWithheld,
     evidenceReveal,
     reports,
     reportTotal,
     history,
     claimedAt,
+    takeOverAllowed,
     decision,
     appeal,
     restoration,

@@ -38,7 +38,11 @@ Future<void> suspendFromProfile(
   );
   if (!context.mounted) return;
   if (notice != null) {
-    showGlassToast(context, context.t(notice), kind: GlassToastKind.success);
+    showGlassToast(
+      context,
+      context.t(notice.key),
+      kind: notice.moved ? GlassToastKind.info : GlassToastKind.success,
+    );
   }
   unawaited(person.load());
 }

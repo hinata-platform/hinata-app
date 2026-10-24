@@ -76,7 +76,7 @@ class CaseRow extends StatelessWidget {
                             ),
                           ),
                           if (c.state.undecided)
-                            CaseAgeChip(since: c, now: now),
+                            CaseAgeChip(summary: c, now: now),
                         ],
                       ),
                     ),

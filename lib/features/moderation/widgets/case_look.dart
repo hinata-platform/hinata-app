@@ -129,17 +129,17 @@ String caseAgeSpoken(BuildContext context, Duration waited, bool overdue) {
 /// overdue case says so with a honey wash, a different glyph and a word, so it
 /// reads without its colour.
 class CaseAgeChip extends StatelessWidget {
-  const CaseAgeChip({super.key, required this.since, required this.now});
+  const CaseAgeChip({super.key, required this.summary, required this.now});
 
-  final CaseSummary since;
+  final CaseSummary summary;
   final DateTime now;
 
   @override
   Widget build(BuildContext context) {
-    final first = since.firstReportedAt;
+    final first = summary.firstReportedAt;
     if (first == null) return const SizedBox.shrink();
     final waited = now.difference(first);
-    final overdue = since.overdueAt(now);
+    final overdue = summary.overdue;
     final dark = Theme.of(context).brightness == Brightness.dark;
     final ink = overdue ? AppColors.warningInk : AppColors.inkSoft;
     final age = caseAge(context, waited.isNegative ? Duration.zero : waited);

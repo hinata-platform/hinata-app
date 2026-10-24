@@ -17,6 +17,7 @@ import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../../sprint/modals/glass_modal.dart';
+import '../case/case_detail_cubit.dart' show CaseNotice;
 import '../case/case_dialogs.dart' show noteCounter;
 import '../case/case_sections.dart' show removalScopeWord;
 import '../report/report_reasons.dart' show reportCategoryTitle;
@@ -34,7 +35,7 @@ const messageMax = 1000;
 ///
 /// With [suspendPerson] it opens on "Maßnahme · Konto sperren", for a case
 /// just opened from a person's profile.
-Future<String?> showDecisionDialog(
+Future<CaseNotice?> showDecisionDialog(
   BuildContext context,
   CaseDetail detail, {
   bool suspendPerson = false,
@@ -42,7 +43,7 @@ Future<String?> showDecisionDialog(
 }) {
   final moderation = context.read<ModerationRepository>();
   final users = context.read<UserRepository>();
-  return showGlassModal<String>(
+  return showGlassModal<CaseNotice>(
     context,
     width: 860,
     builder: (_) => BlocProvider(
