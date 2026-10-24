@@ -608,11 +608,12 @@ class _RuleListState extends State<_RuleList> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
-            child: TextField(
-              autofocus: true,
-              onChanged: (text) => setState(() => _query = text),
-              decoration: glassInputDecoration(
-                hint: context.t('moderation.decision.searchRules'),
+            child: GlassField(
+              label: context.t('moderation.decision.searchRules'),
+              child: TextField(
+                autofocus: true,
+                onChanged: (text) => setState(() => _query = text),
+                decoration: glassInputDecoration(),
               ),
             ),
           ),

@@ -166,18 +166,20 @@ class CaseAgeChip extends StatelessWidget {
                 color: ink,
               ),
               const SizedBox(width: 5),
-              Text(
-                overdue
-                    ? context.t(
-                        'moderation.case.overdueSince',
-                        variables: {'age': age},
-                      )
-                    : age,
-                style: TextStyle(
-                  fontSize: AppType.caption,
-                  fontWeight: FontWeight.w700,
-                  color: ink,
-                  fontFeatures: const [FontFeature.tabularFigures()],
+              Flexible(
+                child: Text(
+                  overdue
+                      ? context.t(
+                          'moderation.case.overdueSince',
+                          variables: {'age': age},
+                        )
+                      : age,
+                  style: TextStyle(
+                    fontSize: AppType.caption,
+                    fontWeight: FontWeight.w700,
+                    color: ink,
+                    fontFeatures: const [FontFeature.tabularFigures()],
+                  ),
                 ),
               ),
             ],
