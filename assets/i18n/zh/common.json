@@ -3676,7 +3676,11 @@
       "retentionHint": "已处理的案件、相关举报和隔离区内容在此期限后删除，除非已通知执法部门。",
       "retentionLabel": "删除时间",
       "retentionMonths": "{{count}} 个月",
-      "retentionMonths_plural": "{{count}} 个月"
+      "retentionMonths_plural": "{{count}} 个月",
+      "figures": "下载 {{year}} 年度数据",
+      "figuresHint": "采用欧盟委员会的模板，每个部分一个 CSV 文件，打包为 ZIP。发布前请检查数据，并补充 Hinata 不掌握的信息，例如主管机关的命令。",
+      "figuresDone": "年度数据已保存",
+      "figuresFailed": "无法保存年度数据"
     },
     "entry": {
       "title": "谁可以加入",

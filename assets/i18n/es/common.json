@@ -3676,7 +3676,11 @@
       "retentionHint": "Los casos resueltos, sus denuncias y la cuarentena se eliminan después, salvo que se haya informado a las autoridades.",
       "retentionLabel": "Eliminar después de",
       "retentionMonths": "{{count}} mes",
-      "retentionMonths_plural": "{{count}} meses"
+      "retentionMonths_plural": "{{count}} meses",
+      "figures": "Descargar cifras de {{year}}",
+      "figuresHint": "En la plantilla de la Comisión Europea, un archivo CSV por parte en un ZIP. Revisa las cifras y añade lo que Hinata no conoce, como las órdenes de las autoridades, antes de publicarlas.",
+      "figuresDone": "Cifras guardadas",
+      "figuresFailed": "No se pudieron guardar las cifras"
     },
     "entry": {
       "title": "Quién entra",

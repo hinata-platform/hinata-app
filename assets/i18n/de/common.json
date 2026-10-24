@@ -3676,7 +3676,11 @@
       "retentionHint": "Erledigte Fälle, Meldungen und Quarantäne werden danach gelöscht, außer bei einer Meldung an die Strafverfolgung.",
       "retentionLabel": "Löschen nach",
       "retentionMonths": "{{count}} Monat",
-      "retentionMonths_plural": "{{count}} Monate"
+      "retentionMonths_plural": "{{count}} Monate",
+      "figures": "Jahreszahlen {{year}} herunterladen",
+      "figuresHint": "Im Muster der EU-Kommission, eine CSV-Datei je Teil in einem ZIP. Prüfe die Zahlen und ergänze, was Hinata nicht kennt, etwa Anordnungen von Behörden, bevor du sie veröffentlichst.",
+      "figuresDone": "Jahreszahlen gespeichert",
+      "figuresFailed": "Die Jahreszahlen konnten nicht gespeichert werden"
     },
     "entry": {
       "title": "Wer hereinkommt",
