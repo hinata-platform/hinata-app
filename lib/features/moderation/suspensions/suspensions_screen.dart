@@ -105,62 +105,67 @@ class _SuspendedRow extends StatelessWidget {
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-      child: InkWell(
-        onTap: person.id.isEmpty
-            ? null
-            : () => context.go(personLocation(person.id)),
-        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 64),
-          padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusCard),
-            border: Border.all(color: AppColors.hairline),
-          ),
-          child: Row(
-            children: [
-              AppAvatar(
-                name: person.displayName,
-                imageUrl: person.avatarUrl,
-                radius: 18,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      person.displayName,
-                      style: TextStyle(
-                        fontSize: AppType.body,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                    Text(
-                      until == null
-                          ? context.t('moderation.suspension.indefinite')
-                          : context.t(
-                              'moderation.suspension.until',
-                              variables: {'date': recentMoment(context, until)},
-                            ),
-                      style: TextStyle(
-                        fontSize: AppType.label,
-                        color: AppColors.inkSoft,
-                      ),
-                    ),
-                  ],
+      child: Semantics(
+        button: true,
+        child: InkWell(
+          onTap: person.id.isEmpty
+              ? null
+              : () => context.go(personLocation(person.id)),
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          child: Container(
+            constraints: const BoxConstraints(minHeight: 64),
+            padding: const EdgeInsets.fromLTRB(14, 10, 8, 10),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(color: AppColors.hairline),
+            ),
+            child: Row(
+              children: [
+                AppAvatar(
+                  name: person.displayName,
+                  imageUrl: person.avatarUrl,
+                  radius: 18,
                 ),
-              ),
-              if (caseId != null)
-                TextButton.icon(
-                  onPressed: () => context.go(
-                    moderationLocation(view: CaseView.done, caseId: caseId),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        person.displayName,
+                        style: TextStyle(
+                          fontSize: AppType.body,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.ink,
+                        ),
+                      ),
+                      Text(
+                        until == null
+                            ? context.t('moderation.suspension.indefinite')
+                            : context.t(
+                                'moderation.suspension.until',
+                                variables: {
+                                  'date': recentMoment(context, until),
+                                },
+                              ),
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ],
                   ),
-                  icon: const Icon(LucideIcons.gavel, size: 16),
-                  label: Text(context.t('moderation.suspension.openCase')),
                 ),
-            ],
+                if (caseId != null)
+                  TextButton.icon(
+                    onPressed: () => context.go(
+                      moderationLocation(view: CaseView.done, caseId: caseId),
+                    ),
+                    icon: const Icon(LucideIcons.gavel, size: 16),
+                    label: Text(context.t('moderation.suspension.openCase')),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
