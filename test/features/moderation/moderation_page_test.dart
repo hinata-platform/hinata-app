@@ -417,6 +417,46 @@ void main() {
       expect(find.text('MODERATION.CASE.REPORTED'), findsNothing);
     });
 
+    testWidgets('a suspension waiting for a second person is theirs to '
+        'confirm or reject', (tester) async {
+      moderation.answer<CaseSummary>(#confirm, caseRow());
+      final waiting = caseDetail(
+        summary: caseRow(state: CaseState.pendingConfirmation),
+        history: [
+          CaseEvent(
+            at: reportedAt,
+            kind: CaseEventKind.confirmationRequested,
+            actorId: 'lena',
+          ),
+        ],
+      );
+      await pumpCase(tester, waiting);
+      expect(find.text('moderation.case.reject'), findsOneWidget);
+
+      await tester.tap(find.text('moderation.case.confirm'));
+      await tester.pumpAndSettle();
+
+      expect(moderation.callTo(#confirm).positionalArguments, ['k1', 3]);
+    });
+
+    testWidgets('the one who asked waits and confirms nothing', (tester) async {
+      await pumpCase(
+        tester,
+        caseDetail(
+          summary: caseRow(state: CaseState.pendingConfirmation),
+          history: [
+            CaseEvent(
+              at: reportedAt,
+              kind: CaseEventKind.confirmationRequested,
+              actorId: 'sara',
+            ),
+          ],
+        ),
+      );
+      expect(find.text('moderation.case.confirm'), findsNothing);
+      expect(find.text('moderation.case.reject'), findsNothing);
+    });
+
     testWidgets('a removal still under way says so', (tester) async {
       await pumpCase(
         tester,
