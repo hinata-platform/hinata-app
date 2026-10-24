@@ -406,7 +406,9 @@
     "more": "More",
     "collapse": "Collapse",
     "expandSidebar": "Expand sidebar",
-    "shifts": "Shifts"
+    "shifts": "Shifts",
+    "groupWork": "Work",
+    "groupPlan": "Plan"
   },
   "dashboard": {
     "title": "Dashboard",

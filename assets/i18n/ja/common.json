@@ -406,7 +406,9 @@
     "more": "その他",
     "collapse": "折りたたむ",
     "expandSidebar": "サイドバーを開く",
-    "shifts": "シフト"
+    "shifts": "シフト",
+    "groupWork": "作業",
+    "groupPlan": "計画"
   },
   "dashboard": {
     "title": "ダッシュボード",

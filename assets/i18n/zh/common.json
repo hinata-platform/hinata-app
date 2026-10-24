@@ -406,7 +406,9 @@
     "more": "更多",
     "collapse": "收起",
     "expandSidebar": "展开侧边栏",
-    "shifts": "排班"
+    "shifts": "排班",
+    "groupWork": "工作",
+    "groupPlan": "计划"
   },
   "dashboard": {
     "title": "仪表板",
