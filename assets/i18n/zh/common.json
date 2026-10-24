@@ -542,7 +542,9 @@
       "cancelEdit": "停止编辑",
       "closeFormat": "关闭格式",
       "discardRecording": "放弃录音",
-      "sendVoice": "发送语音消息"
+      "sendVoice": "发送语音消息",
+      "retryVoice": "重新发送",
+      "voiceNotSent": "语音消息（{{time}}）未发送"
     },
     "moreReactions": "更多表情回应",
     "voice": {
@@ -737,7 +739,8 @@
         "emptyFile": "该文件为空。",
         "renderFailed": "该文件无法渲染。",
         "retry": "重试",
-        "tooLarge": "文件过大，无法内嵌预览，请下载后查看。"
+        "tooLarge": "文件过大，无法内嵌预览，请下载后查看。",
+        "more": "更多"
       },
       "source": {
         "title": "添加附件",
@@ -5955,7 +5958,9 @@
       "emptyTitle": "你还没有屏蔽任何人",
       "emptyMessage": "你可以在某人的个人资料或评论菜单中屏蔽对方。",
       "more": "加载更多"
-    }
+    },
+    "alsoReport": "同时举报这条评论",
+    "alsoReportHint": "接下来选择原因，审核会进行查看。"
   },
   "moderation": {
     "appTerms": {
@@ -6012,7 +6017,23 @@
       "explanationOptional": "审核需要了解什么？可选",
       "explanationTooShort": "请至少用 {{min}} 个字符描述。",
       "whoSees": "审核会看到是你举报的，其他人不会知道。",
-      "goodFaith": "发送即表示你确认所提供的信息据你所知真实无误。"
+      "goodFaith": "发送即表示你确认所提供的信息据你所知真实无误。",
+      "action": "举报 …",
+      "alsoBlock": "同时屏蔽 {{name}}",
+      "alsoBlockHint": "你将不再收到来自 {{name}} 的通知。",
+      "byIn": "{{name}} 发布于 {{where}}",
+      "counter": "{{count}} / {{max}}",
+      "folded": "你已举报，已为你折叠",
+      "personDetail": "提交给审核，{{name}} 不会知道是谁举报的",
+      "titleArticle": "举报页面",
+      "titleAttachment": "举报文件",
+      "titleComment": "举报评论",
+      "titleIssue": "举报事项",
+      "titlePerson": "举报用户",
+      "titleVoice": "举报语音消息",
+      "tooMany": "你刚刚提交了大量举报。最晚 {{time}} 可以再次举报。",
+      "tooManyTomorrow": "你今天提交了大量举报。最晚明天 {{time}} 可以再次举报。",
+      "whoSeesNamed": "审核会看到是你举报的，{{name}} 不会知道。"
     },
     "category": {
       "harassment": "骚扰、侮辱或仇恨",
@@ -6037,6 +6058,44 @@
       "body": "文本中有站规不允许的内容：{{terms}}。你的草稿仍在这里，可以修改。",
       "bodyPlain": "文本中有站规不允许的内容。你的草稿仍在这里，可以修改。",
       "readRules": "阅读站规"
+    },
+    "appeal": {
+      "hint": "审核哪里判断有误？需要了解什么？",
+      "label": "你的申诉",
+      "send": "提交申诉",
+      "sent": "已收到你的申诉。",
+      "subtitle": "审核团队中的另一位成员会重新审查该决定。",
+      "title": "申诉"
+    },
+    "notice": {
+      "appeal": "申诉 …",
+      "failedTitle": "无法加载通知",
+      "from": "审核通知",
+      "goneMessage": "它已在期限届满后删除，或属于其他账户。",
+      "goneTitle": "此通知已不存在",
+      "pageTitle": "审核通知",
+      "rules": "站规"
+    },
+    "placeholder": {
+      "description": "描述已被审核移除",
+      "file": "文件已移除",
+      "fileBy": "由审核移除",
+      "page": "内容已被审核移除",
+      "removed": "已被审核移除",
+      "why": "为什么？"
+    },
+    "state": {
+      "removed": "已移除",
+      "suspended": "已封禁"
+    },
+    "statement": {
+      "automation": "自动化手段",
+      "basis": "起因与查明的事实",
+      "law": "法律依据",
+      "measure": "措施",
+      "message": "审核留言",
+      "remedies": "你可以做什么",
+      "rule": "规则"
     }
   }
 }

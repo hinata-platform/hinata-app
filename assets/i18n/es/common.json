@@ -542,7 +542,9 @@
       "cancelEdit": "Dejar de editar",
       "closeFormat": "Cerrar formato",
       "discardRecording": "Descartar grabación",
-      "sendVoice": "Enviar mensaje de voz"
+      "sendVoice": "Enviar mensaje de voz",
+      "retryVoice": "Volver a enviar",
+      "voiceNotSent": "Mensaje de voz ({{time}}) no enviado"
     },
     "moreReactions": "Más reacciones",
     "voice": {
@@ -737,7 +739,8 @@
         "emptyFile": "Este archivo está vacío.",
         "renderFailed": "No se pudo mostrar este archivo.",
         "retry": "Reintentar",
-        "tooLarge": "Demasiado grande para la vista previa: descárgalo para leerlo."
+        "tooLarge": "Demasiado grande para la vista previa: descárgalo para leerlo.",
+        "more": "Más"
       },
       "source": {
         "title": "Añadir adjunto",
@@ -5955,7 +5958,9 @@
       "emptyTitle": "No has bloqueado a nadie",
       "emptyMessage": "Puedes bloquear a alguien desde su perfil o desde el menú de un comentario.",
       "more": "Cargar más"
-    }
+    },
+    "alsoReport": "Denunciar también este comentario",
+    "alsoReportHint": "Después eliges el motivo y la moderación lo revisa."
   },
   "moderation": {
     "appTerms": {
@@ -6012,7 +6017,23 @@
       "explanationOptional": "¿Qué debe saber la moderación? Opcional",
       "explanationTooShort": "Descríbelo con al menos {{min}} caracteres.",
       "whoSees": "La moderación ve que has denunciado. Nadie más se entera.",
-      "goodFaith": "Al enviar confirmas que tus datos son ciertos según tu leal saber."
+      "goodFaith": "Al enviar confirmas que tus datos son ciertos según tu leal saber.",
+      "action": "Denunciar …",
+      "alsoBlock": "Bloquear también a {{name}}",
+      "alsoBlockHint": "Ya no recibes notificaciones de {{name}}.",
+      "byIn": "De {{name}} en {{where}}",
+      "counter": "{{count}} de {{max}}",
+      "folded": "Denunciado por ti, plegado para ti",
+      "personDetail": "Llega a la moderación, y {{name}} no sabe quién lo denunció",
+      "titleArticle": "Denunciar página",
+      "titleAttachment": "Denunciar archivo",
+      "titleComment": "Denunciar comentario",
+      "titleIssue": "Denunciar incidencia",
+      "titlePerson": "Denunciar persona",
+      "titleVoice": "Denunciar mensaje de voz",
+      "tooMany": "Acabas de enviar muchísimas denuncias. Podrás volver a denunciar a más tardar a las {{time}}.",
+      "tooManyTomorrow": "Hoy has enviado muchísimas denuncias. Podrás volver a denunciar mañana a más tardar a las {{time}}.",
+      "whoSeesNamed": "La moderación ve que has denunciado. {{name}} no se entera."
     },
     "category": {
       "harassment": "Acoso, insultos u odio",
@@ -6037,6 +6058,44 @@
       "body": "El texto contiene algo que las normas de la casa no permiten: {{terms}}. Tu borrador sigue aquí y puedes cambiarlo.",
       "bodyPlain": "El texto contiene algo que las normas de la casa no permiten. Tu borrador sigue aquí y puedes cambiarlo.",
       "readRules": "Leer las normas de la casa"
+    },
+    "appeal": {
+      "hint": "¿Qué ha valorado mal la moderación? ¿Qué debe saber?",
+      "label": "Tu recurso",
+      "send": "Enviar recurso",
+      "sent": "Tu recurso ha llegado.",
+      "subtitle": "Otra persona de la moderación revisa la decisión de nuevo.",
+      "title": "Recurrir"
+    },
+    "notice": {
+      "appeal": "Recurrir …",
+      "failedTitle": "No se pudo cargar el aviso",
+      "from": "Aviso de la moderación",
+      "goneMessage": "Se eliminó al vencer el plazo, o pertenece a otra cuenta.",
+      "goneTitle": "Este aviso ya no existe",
+      "pageTitle": "Aviso de la moderación",
+      "rules": "Normas de la casa"
+    },
+    "placeholder": {
+      "description": "Descripción retirada por la moderación",
+      "file": "Archivo retirado",
+      "fileBy": "Por la moderación",
+      "page": "Contenido retirado por la moderación",
+      "removed": "Retirado por la moderación",
+      "why": "¿Por qué?"
+    },
+    "state": {
+      "removed": "Retirado",
+      "suspended": "Suspendido"
+    },
+    "statement": {
+      "automation": "Medios automatizados",
+      "basis": "Motivo y hechos",
+      "law": "Base legal",
+      "measure": "Medida",
+      "message": "Mensaje de la moderación",
+      "remedies": "Qué puedes hacer",
+      "rule": "Norma"
     }
   }
 }
