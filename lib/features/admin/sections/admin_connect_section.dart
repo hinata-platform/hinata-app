@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/api/api_client.dart';
+import '../../../core/blocs/app_config_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/repositories/admin_repository.dart';
 import '../../../core/theme/app_colors.dart';
@@ -300,7 +301,18 @@ class _AdminConnectSectionState extends State<_AdminConnectView> {
       );
     }
 
+    // Connect takes in instances that publish a contact for reports (HIN-178).
+    final contactMissing = context.select<AppConfigBloc, bool>(
+      (bloc) => bloc.state.meta?.moderation.contactMissing ?? false,
+    );
     return AdminCards(
+      note: contactMissing
+          ? AdminNote(
+              text: context.t('admin.connectContactMissing'),
+              icon: LucideIcons.triangleAlert,
+              tone: AdminNoteTone.warning,
+            )
+          : null,
       cards: {
         'status': AdminSectionCard(
           icon: LucideIcons.radioTower,
