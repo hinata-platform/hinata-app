@@ -239,6 +239,10 @@ String? subPageTitleKey(
   if (location == '/absences/year-run') return 'absence.yearRun.pageTitle';
   if (location == '/notifications') return 'nav.notifications';
   if (location.startsWith('/notices/')) return 'moderation.notice.pageTitle';
+  if (location == '/moderation/suspensions') {
+    return 'moderation.suspension.pageTitle';
+  }
+  if (location.startsWith('/moderation')) return 'moderation.queue.title';
   if (location == '/weekly-summary') return 'weeklySummary.title';
   if (location == '/settings') return 'nav.settings';
   // With the module off, its routes lead nowhere, and a bar that says so beats
@@ -311,6 +315,9 @@ String subPageBackRoute(String location) {
   }
   // The bell is where a notice is reached from, and where it leads back.
   if (location.startsWith('/notices/')) return '/notifications';
+  // Moderation is a page of the settings; its own pages lead back to it.
+  if (location.startsWith('/moderation/')) return '/moderation';
+  if (location == '/moderation') return '/settings';
   if (location.startsWith('/issues/')) return '/issues';
   if (location.startsWith('/knowledge/')) return '/knowledge';
   if (location.startsWith('/board/')) return '/board';
