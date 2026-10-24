@@ -349,6 +349,15 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       status: _auth.state.status,
       hasToken: widget.storage.accessToken != null,
     )) {
+      // The meta is read again on every resume; the gate for the house rules
+      // reads the session, which a running app would otherwise only refresh
+      // at its next start.
+      if (houseRulesMoved(
+        inForce: state.meta?.moderation.rulesVersion,
+        auth: _auth.state,
+      )) {
+        _auth.add(const AuthChecked());
+      }
       return;
     }
     _authServer = server;
@@ -1099,6 +1108,15 @@ Future<void> forgetLeftoverShiftSnapshot(AppStorage storage) async {
   await MyShiftsSnapshotCubit.forgetStored(id);
   await storage.setShiftSnapshotId(null);
 }
+
+/// Whether the house rules [inForce] (from `/meta`) are not the version the
+/// signed-in session knows (HIN-175): an administrator demanded they be
+/// accepted anew while the app ran, and the session has to say so.
+@visibleForTesting
+bool houseRulesMoved({required int? inForce, required AuthState auth}) =>
+    inForce != null &&
+    auth.status == AuthStatus.authenticated &&
+    auth.user?.rulesVersion != inForce;
 
 @visibleForTesting
 bool needsAuthCheck({
