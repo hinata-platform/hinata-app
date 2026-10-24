@@ -22,7 +22,6 @@ Future<String?> askCaseNote(
   required String subtitle,
   required String label,
   required String confirmLabel,
-  String? hint,
   int min = caseNoteMin,
   int max = caseNoteMax,
   bool destructive = false,
@@ -35,7 +34,6 @@ Future<String?> askCaseNote(
     title: title,
     subtitle: subtitle,
     label: label,
-    hint: hint,
     confirmLabel: confirmLabel,
     min: min,
     max: max,
@@ -70,14 +68,12 @@ class _NoteDialog extends StatefulWidget {
     required this.min,
     required this.max,
     required this.destructive,
-    this.hint,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
   final String label;
-  final String? hint;
   final String confirmLabel;
   final int min;
   final int max;
@@ -124,7 +120,7 @@ class _NoteDialogState extends State<_NoteDialog> {
               maxLines: 8,
               maxLength: widget.max,
               buildCounter: noteCounter,
-              decoration: glassInputDecoration(hint: widget.hint),
+              decoration: glassInputDecoration(),
             ),
           ),
         ),

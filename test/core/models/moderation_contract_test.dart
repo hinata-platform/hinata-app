@@ -80,7 +80,6 @@ void main() {
       isFalse,
     );
     expect(notice.lawGround, isTrue);
-    expect(notice.appealState, AppealState.pending);
     expect(notice.appealable, isFalse);
     expect(notice.headline, isEmpty);
   });

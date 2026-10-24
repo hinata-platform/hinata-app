@@ -254,28 +254,19 @@ class PersonRef extends Equatable {
 /// The numbers on the moderation page's pills, without the cases the reader
 /// wrote content for.
 class ModerationSummary extends Equatable {
-  const ModerationSummary({
-    this.open = 0,
-    this.urgent = 0,
-    this.overdue = 0,
-    this.appeals = 0,
-  });
+  const ModerationSummary({this.open = 0, this.appeals = 0});
 
   final int open;
-  final int urgent;
-  final int overdue;
   final int appeals;
 
   factory ModerationSummary.fromJson(Map<String, dynamic> json) =>
       ModerationSummary(
         open: _int(json['open']),
-        urgent: _int(json['urgent']),
-        overdue: _int(json['overdue']),
         appeals: _int(json['appeals']),
       );
 
   @override
-  List<Object?> get props => [open, urgent, overdue, appeals];
+  List<Object?> get props => [open, appeals];
 }
 
 /// One row of a list, built from the case alone.
@@ -612,7 +603,6 @@ class CaseDecision extends Equatable {
     this.messageToAuthor,
     this.internalNote,
     this.lawEnforcementNotified = false,
-    this.automatedDetection = false,
     this.decidedBy,
     this.decidedAt,
     this.suspension,
@@ -631,7 +621,6 @@ class CaseDecision extends Equatable {
   final String? messageToAuthor;
   final String? internalNote;
   final bool lawEnforcementNotified;
-  final bool automatedDetection;
   final String? decidedBy;
   final DateTime? decidedAt;
   final SuspensionLength? suspension;
@@ -658,7 +647,6 @@ class CaseDecision extends Equatable {
           internalNote: _blankToNull(json['internalNote']),
           lawEnforcementNotified:
               json['lawEnforcementNotified'] as bool? ?? false,
-          automatedDetection: json['automatedDetection'] as bool? ?? false,
           decidedBy: json['decidedBy'] as String?,
           decidedAt: parseInstant(json['decidedAt']),
           suspension: SuspensionLength.of(json['suspension']),
@@ -680,7 +668,6 @@ class CaseDecision extends Equatable {
     messageToAuthor,
     internalNote,
     lawEnforcementNotified,
-    automatedDetection,
     decidedBy,
     decidedAt,
     suspension,
@@ -696,7 +683,6 @@ class CaseAppeal extends Equatable {
     this.filedAt,
     this.via = AppealVia.app,
     this.decidedBy,
-    this.decidedAt,
     this.note,
     this.restored,
   });
@@ -706,7 +692,6 @@ class CaseAppeal extends Equatable {
   final DateTime? filedAt;
   final AppealVia via;
   final String? decidedBy;
-  final DateTime? decidedAt;
   final String? note;
   final RestoreOutcome? restored;
 
@@ -719,7 +704,6 @@ class CaseAppeal extends Equatable {
           filedAt: parseInstant(json['filedAt']),
           via: AppealVia.of(json['via']),
           decidedBy: json['decidedBy'] as String?,
-          decidedAt: parseInstant(json['decidedAt']),
           note: _blankToNull(json['note']),
           restored: RestoreOutcome.of(json['restored']),
         )
@@ -732,7 +716,6 @@ class CaseAppeal extends Equatable {
     filedAt,
     via,
     decidedBy,
-    decidedAt,
     note,
     restored,
   ];
@@ -740,16 +723,14 @@ class CaseAppeal extends Equatable {
 
 /// A removal undone, after an appeal or by moderation itself.
 class CaseRestoration extends Equatable {
-  const CaseRestoration({this.at, this.by, this.note, this.outcome});
+  const CaseRestoration({this.by, this.note, this.outcome});
 
-  final DateTime? at;
   final String? by;
   final String? note;
   final RestoreOutcome? outcome;
 
   static CaseRestoration? fromJson(Object? json) => json is Map<String, dynamic>
       ? CaseRestoration(
-          at: parseInstant(json['at']),
           by: json['by'] as String?,
           note: _blankToNull(json['note']),
           outcome: RestoreOutcome.of(json['outcome']),
@@ -757,46 +738,28 @@ class CaseRestoration extends Equatable {
       : null;
 
   @override
-  List<Object?> get props => [at, by, note, outcome];
+  List<Object?> get props => [by, note, outcome];
 }
 
 /// Opening what somebody without an account reported on internal content: a
 /// second person confirms what the first asked for.
 class EvidenceReveal extends Equatable {
-  const EvidenceReveal({
-    this.requestedBy,
-    this.requestedAt,
-    this.reason,
-    this.revealedBy,
-    this.revealedAt,
-  });
+  const EvidenceReveal({this.requestedBy, this.reason, this.revealedBy});
 
   final String? requestedBy;
-  final DateTime? requestedAt;
   final String? reason;
   final String? revealedBy;
-  final DateTime? revealedAt;
-
-  bool get revealed => revealedAt != null;
 
   static EvidenceReveal? fromJson(Object? json) => json is Map<String, dynamic>
       ? EvidenceReveal(
           requestedBy: json['requestedBy'] as String?,
-          requestedAt: parseInstant(json['requestedAt']),
           reason: _blankToNull(json['reason']),
           revealedBy: json['revealedBy'] as String?,
-          revealedAt: parseInstant(json['revealedAt']),
         )
       : null;
 
   @override
-  List<Object?> get props => [
-    requestedBy,
-    requestedAt,
-    reason,
-    revealedBy,
-    revealedAt,
-  ];
+  List<Object?> get props => [requestedBy, reason, revealedBy];
 }
 
 /// Other content that showed an image the removal moved out of all of them,
@@ -1052,28 +1015,21 @@ class ModerationRules extends Equatable {
 /// An account moderation suspended, as the list of suspended accounts shows
 /// it; [until] null for until further notice.
 class SuspendedAccount extends Equatable {
-  const SuspendedAccount({
-    required this.person,
-    this.since,
-    this.until,
-    this.caseId,
-  });
+  const SuspendedAccount({required this.person, this.until, this.caseId});
 
   final PersonRef person;
-  final DateTime? since;
   final DateTime? until;
   final String? caseId;
 
   factory SuspendedAccount.fromJson(Map<String, dynamic> json) =>
       SuspendedAccount(
         person: PersonRef.fromJson(json['person']) ?? const PersonRef(id: ''),
-        since: parseInstant(json['since']),
         until: parseInstant(json['until']),
         caseId: json['caseId'] as String?,
       );
 
   @override
-  List<Object?> get props => [person, since, until, caseId];
+  List<Object?> get props => [person, until, caseId];
 }
 
 /// A decision as a moderator makes it, sent with the revision they saw.

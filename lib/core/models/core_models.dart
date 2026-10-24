@@ -278,19 +278,14 @@ class ServerProbe {
 class ModerationMeta extends Equatable {
   const ModerationMeta({
     this.version = 0,
-    this.operatorName,
     this.contactEmail,
     this.imprintUrl,
     this.contactMissing = false,
     this.rulesVersion,
     this.rulesUrl,
-    this.reportUrl,
   });
 
   final int version;
-
-  /// Who runs the instance, as the imprint names them.
-  final String? operatorName;
 
   /// Where reports and questions about moderation go.
   final String? contactEmail;
@@ -308,9 +303,6 @@ class ModerationMeta extends Equatable {
   /// The house rules as a page anybody can open, without an account.
   final String? rulesUrl;
 
-  /// The form for reports from people without an account.
-  final String? reportUrl;
-
   static String? _text(Object? value) {
     final text = (value as String?)?.trim();
     return text == null || text.isEmpty ? null : text;
@@ -318,25 +310,21 @@ class ModerationMeta extends Equatable {
 
   factory ModerationMeta.fromJson(Map<String, dynamic> json) => ModerationMeta(
     version: (json['version'] as num?)?.toInt() ?? 0,
-    operatorName: _text(json['operatorName']),
     contactEmail: _text(json['contactEmail']),
     imprintUrl: _text(json['imprintUrl']),
     contactMissing: json['contactMissing'] as bool? ?? false,
     rulesVersion: (json['rulesVersion'] as num?)?.toInt(),
     rulesUrl: _text(json['rulesUrl']),
-    reportUrl: _text(json['reportUrl']),
   );
 
   @override
   List<Object?> get props => [
     version,
-    operatorName,
     contactEmail,
     imprintUrl,
     contactMissing,
     rulesVersion,
     rulesUrl,
-    reportUrl,
   ];
 }
 
