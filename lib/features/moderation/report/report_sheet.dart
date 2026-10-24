@@ -12,6 +12,7 @@ import '../../../core/repositories/moderation_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/char_counter.dart';
 import '../../../core/widgets/quiet_info_line.dart';
 import '../../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../../blocks/hidden_content_cubit.dart';
@@ -365,7 +366,7 @@ class _Details extends StatelessWidget {
                     controller: location,
                     enabled: !state.sending,
                     maxLength: _locationMax,
-                    buildCounter: _counter,
+                    buildCounter: charCounter,
                     textInputAction: TextInputAction.next,
                     decoration:
                         glassInputDecoration(
@@ -392,7 +393,7 @@ class _Details extends StatelessWidget {
                   minLines: 3,
                   maxLines: 6,
                   maxLength: ReportCategory.explanationMax,
-                  buildCounter: _counter,
+                  buildCounter: charCounter,
                   decoration: glassInputDecoration().copyWith(
                     errorText: state.explanationMissing
                         ? context.t(
@@ -453,20 +454,6 @@ class _Details extends StatelessWidget {
       ],
     );
   }
-
-  /// What is typed against what fits: 118 von 2000.
-  static Widget _counter(
-    BuildContext context, {
-    required int currentLength,
-    required bool isFocused,
-    required int? maxLength,
-  }) => Text(
-    context.t(
-      'moderation.report.counter',
-      variables: {'count': '$currentLength', 'max': '$maxLength'},
-    ),
-    style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
-  );
 
   /// When reporting works again, today or tomorrow.
   static String _retryText(BuildContext context, DateTime at) {

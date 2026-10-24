@@ -57,7 +57,8 @@
       "next": "Página siguiente",
       "page": "Página {{page}}"
     },
-    "selectedOption": "Seleccionado"
+    "selectedOption": "Seleccionado",
+    "charCount": "{{count}} de {{max}}"
   },
   "delete": {
     "cta": "Eliminar",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "Bloquear también a {{name}}",
       "alsoBlockHint": "Ya no recibes notificaciones de {{name}}.",
       "byIn": "De {{name}} en {{where}}",
-      "counter": "{{count}} de {{max}}",
       "folded": "Denunciado por ti, plegado para ti",
       "personDetail": "Llega a la moderación, y {{name}} no sabe quién lo denunció",
       "titleArticle": "Denunciar página",

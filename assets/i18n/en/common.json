@@ -57,7 +57,8 @@
       "next": "Next page",
       "page": "Page {{page}}"
     },
-    "selectedOption": "Selected"
+    "selectedOption": "Selected",
+    "charCount": "{{count}} of {{max}}"
   },
   "delete": {
     "cta": "Delete",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "Also block {{name}}",
       "alsoBlockHint": "You no longer get notifications from {{name}}.",
       "byIn": "By {{name}} in {{where}}",
-      "counter": "{{count}} of {{max}}",
       "folded": "Reported by you, folded away for you",
       "personDetail": "Goes to moderation, and {{name}} does not learn who reported",
       "titleArticle": "Report page",

@@ -57,7 +57,8 @@
       "next": "下一页",
       "page": "第 {{page}} 页"
     },
-    "selectedOption": "已选择"
+    "selectedOption": "已选择",
+    "charCount": "{{count}} / {{max}}"
   },
   "delete": {
     "cta": "删除",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "同时屏蔽 {{name}}",
       "alsoBlockHint": "你将不再收到来自 {{name}} 的通知。",
       "byIn": "{{name}} 发布于 {{where}}",
-      "counter": "{{count}} / {{max}}",
       "folded": "你已举报，已为你折叠",
       "personDetail": "提交给审核，{{name}} 不会知道是谁举报的",
       "titleArticle": "举报页面",
