@@ -3612,7 +3612,11 @@
       "reprocessFullTitle": "不足しているチケットを作り直しますか?",
       "reprocessFullBody": "「{{name}}」の中でチケットのないメールすべてに、新しいチケットが作成されます。意図的に削除したものも含まれます。まとめて元に戻すことはできません。",
       "reprocessFullConfirm": "作り直す",
-      "reprocessDone": "スキャン {{scanned}} 件 · 再構築 {{updated}} 件 · 作成 {{created}} 件"
+      "reprocessDone": "スキャン {{scanned}} 件 · 再構築 {{updated}} 件 · 作成 {{created}} 件",
+      "textRefusals": "テキストチェックで拒否されたメール：{{count}} 件",
+      "textRefusals_plural": "テキストチェックで拒否されたメール：{{count}} 件",
+      "textRefusalsSince": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}",
+      "textRefusalsSince_plural": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}"
     },
     "windowsStoreUrl": "Microsoft Store の URL",
     "linuxStoreUrl": "Linux のダウンロード URL",
@@ -3703,6 +3707,34 @@
       "reacceptBody": "全員が作業を続ける前に現在の版に同意します。それまでは誰も新しいアクセストークンを取得できず、AI クライアントも接続できません。",
       "reacceptConfirm": "全員に求める",
       "reacceptDone": "全員が第 {{version}} 版に改めて同意します。"
+    },
+    "textCheck": {
+      "title": "自動テキストチェック",
+      "hint": "保存時にテキストを単語リストと照合します。サーバーの外には何も送られません。",
+      "block": "明らかな違反を拒否する",
+      "blockHint": "脅迫やヘイトスピーチなどは保存されません。書いた人には理由が表示され、下書きは残ります。",
+      "flag": "判断が難しいものをモデレーションに回す",
+      "flagHint": "テキストは保存され、モデレーションには報告者のいない報告が届きます。",
+      "flagNote": "これによりシステムがメンバーのテキストを自動でチェックし、報告を作成します。事前に従業員代表とデータ保護担当者と取り決めてください。組織によっては協定やデータ保護影響評価が必要です。",
+      "confirmTitle": "判断が難しいものをモデレーションに回しますか？",
+      "confirmBody": "以後、ハウスルールに違反しているかもしれないテキストをシステムが自ら報告し、モデレーションがそれを読みます。従業員代表とデータ保護担当者の同意を得てから有効にしてください。",
+      "confirm": "有効にする",
+      "ownTerms": "独自の語句",
+      "ownTermsHint": "どのように書かれていても常に拒否されます。最大 500 件、各 60 文字まで。",
+      "exceptions": "例外",
+      "exceptionsHint": "専門用語など、組織内では問題のない語句。子どもを危険にさらす内容は常にブロックされたままです。",
+      "addTerm": "語句を追加",
+      "removeTerm": "{{term}} を削除",
+      "languages": "同梱のリストはドイツ語と英語に対応しています。その他の言語では独自の語句のみが有効です。",
+      "test": "テキストを試す",
+      "testHint": "保存済みの設定で確認します。何も保存も集計もされません。",
+      "testButton": "チェック",
+      "resultAllow": "保存されます。",
+      "resultFlag": "保存され、モデレーションに回されます：{{terms}}。",
+      "resultBlock": "拒否されます：{{terms}}。",
+      "resultFound": "見つかりましたが、影響はありません：{{terms}}。",
+      "resultException": "例外が適用されました：{{words}}。",
+      "images": "画像と添付ファイルはチェックされません。それらには報告機能があります。"
     }
   },
   "audit": {
@@ -3948,7 +3980,8 @@
       "MODERATION_APPEAL_DECIDED": "異議申し立てを判断",
       "MODERATION_LEGAL_HOLD_CHANGED": "捜査機関向けの保管を変更",
       "MODERATION_RULES_VERSION_CREATED": "ハウスルールの新しい版",
-      "ACCOUNT_APPROVAL_CHANGED": "新規アカウントの承認を変更"
+      "ACCOUNT_APPROVAL_CHANGED": "新規アカウントの承認を変更",
+      "MODERATION_FILTER_CHANGED": "テキストチェックを変更"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -3962,7 +3995,11 @@
       "newEmail": "新しいメールアドレス",
       "method": "方式",
       "setting": "設定",
-      "provider": "プロバイダー"
+      "provider": "プロバイダー",
+      "block": "拒否",
+      "flag": "モデレーションに回す",
+      "blockTerms": "独自の語句",
+      "allowTerms": "例外"
     }
   },
   "sprint": {
@@ -5994,6 +6031,12 @@
       "illegalHint": "著作権やその他の法律。理由を簡単に書いてください",
       "other": "その他",
       "otherHint": "簡単に説明してください"
+    },
+    "refused": {
+      "title": "保存されませんでした",
+      "body": "テキストにハウスルールで認められていない内容が含まれています：{{terms}}。下書きはここに残っているので、修正できます。",
+      "bodyPlain": "テキストにハウスルールで認められていない内容が含まれています。下書きはここに残っているので、修正できます。",
+      "readRules": "ハウスルールを読む"
     }
   }
 }
