@@ -91,18 +91,10 @@ class _NoteDialogState extends State<_NoteDialog> {
   final _text = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _text.addListener(() => setState(() {}));
-  }
-
-  @override
   void dispose() {
     _text.dispose();
     super.dispose();
   }
-
-  bool get _ready => _text.text.trim().length >= widget.min;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -137,12 +129,16 @@ class _NoteDialogState extends State<_NoteDialog> {
           ),
         ),
       ),
-      GlassModalFooter(
-        confirmLabel: widget.confirmLabel,
-        confirmColor: widget.destructive ? AppColors.danger : null,
-        onConfirm: _ready
-            ? () => Navigator.of(context).pop(_text.text.trim())
-            : null,
+      // Only the footer follows the typing.
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _text,
+        builder: (context, value, _) => GlassModalFooter(
+          confirmLabel: widget.confirmLabel,
+          confirmColor: widget.destructive ? AppColors.danger : null,
+          onConfirm: value.text.trim().length >= widget.min
+              ? () => Navigator.of(context).pop(value.text.trim())
+              : null,
+        ),
       ),
     ],
   );
@@ -183,12 +179,6 @@ class _RecordAppealDialog extends StatefulWidget {
 class _RecordAppealDialogState extends State<_RecordAppealDialog> {
   final _text = TextEditingController();
   DateTime _received = dateOnly(DateTime.now());
-
-  @override
-  void initState() {
-    super.initState();
-    _text.addListener(() => setState(() {}));
-  }
 
   @override
   void dispose() {
@@ -255,13 +245,16 @@ class _RecordAppealDialogState extends State<_RecordAppealDialog> {
             ),
           ),
         ),
-        GlassModalFooter(
-          confirmLabel: context.t('moderation.appealReview.record'),
-          onConfirm: _text.text.trim().isEmpty
-              ? null
-              : () => Navigator.of(
-                  context,
-                ).pop((text: _text.text.trim(), receivedAt: receivedAt)),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _text,
+          builder: (context, value, _) => GlassModalFooter(
+            confirmLabel: context.t('moderation.appealReview.record'),
+            onConfirm: value.text.trim().isEmpty
+                ? null
+                : () => Navigator.of(
+                    context,
+                  ).pop((text: value.text.trim(), receivedAt: receivedAt)),
+          ),
         ),
       ],
     );
@@ -291,12 +284,6 @@ class _LegalHoldDialogState extends State<_LegalHoldDialog> {
   final _reason = TextEditingController();
   late DateTime _until = addDays(dateOnly(DateTime.now()), 365);
   bool _indefinite = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _reason.addListener(() => setState(() {}));
-  }
 
   @override
   void dispose() {
@@ -364,15 +351,18 @@ class _LegalHoldDialogState extends State<_LegalHoldDialog> {
           ),
         ),
       ),
-      GlassModalFooter(
-        confirmLabel: context.t('moderation.case.hold'),
-        onConfirm: _reason.text.trim().isEmpty
-            ? null
-            : () => Navigator.of(context).pop((
-                until: _indefinite ? null : _until,
-                indefinite: _indefinite,
-                reason: _reason.text.trim(),
-              )),
+      ValueListenableBuilder<TextEditingValue>(
+        valueListenable: _reason,
+        builder: (context, value, _) => GlassModalFooter(
+          confirmLabel: context.t('moderation.case.hold'),
+          onConfirm: value.text.trim().isEmpty
+              ? null
+              : () => Navigator.of(context).pop((
+                  until: _indefinite ? null : _until,
+                  indefinite: _indefinite,
+                  reason: value.text.trim(),
+                )),
+        ),
       ),
     ],
   );

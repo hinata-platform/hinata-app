@@ -19,8 +19,9 @@ import 'package:hinata/features/moderation/queue/case_row.dart';
 import 'package:hinata/features/moderation/queue/moderation_screen.dart';
 import 'package:hinata/features/moderation/widgets/moderation_hex.dart';
 import 'package:hinata/features/shell/page_chrome.dart';
+import 'package:hinata/features/moderation/widgets/statement_view.dart';
 import 'package:hinata/features/sprint/modals/glass_modal.dart'
-    show GlassOptionRow;
+    show GlassField, GlassOptionRow;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/recording_fake.dart';
@@ -488,6 +489,67 @@ void main() {
       isSemantics(isLiveRegion: false),
     );
     semantics.dispose();
+  });
+
+  testWidgets('what is typed reaches the preview and settles its problem', (
+    tester,
+  ) async {
+    // The form leaves pure typing to the fields; the preview and the problems
+    // still follow it.
+    moderation.answer<ModerationRules>(
+      #rules,
+      const ModerationRules(
+        rules: [HouseRule(2, 'Niemanden herabsetzen')],
+        categoryRules: {ReportCategory.harassment: 2},
+      ),
+    );
+    moderation.answer<Statement>(
+      #statementPreview,
+      const Statement(caseId: 'k1', measure: 'Dein Kommentar wurde entfernt.'),
+    );
+    await tester.pumpWidget(
+      app(
+        Builder(
+          builder: (context) => TextButton(
+            onPressed: () => showDecisionDialog(context, caseDetail()),
+            child: const Text('decide'),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('decide'));
+    await tester.pumpAndSettle();
+    final action = find.text('moderation.decision.outcome.action');
+    await tester.ensureVisible(action);
+    await tester.pumpAndSettle();
+    await tester.tap(action);
+    await tester.pumpAndSettle();
+    final facts = find.descendant(
+      of: find.ancestor(
+        of: find.text('moderation.decision.factsRequired'),
+        matching: find.byType(GlassField),
+      ),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(facts, 'Beleidigt eine andere Person mit Namen.');
+    await tester.pump();
+    expect(
+      find.descendant(
+        of: find.byType(StatementView),
+        matching: find.textContaining('Beleidigt eine andere Person'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.enterText(facts, 'Zu kurz.');
+    final send = find.text('moderation.decision.send');
+    await tester.ensureVisible(send);
+    await tester.tap(send);
+    await tester.pumpAndSettle();
+    expect(find.text('moderation.decision.problem.facts'), findsOneWidget);
+    await tester.enterText(facts, 'Beleidigt eine andere Person mit Namen.');
+    await tester.pump();
+    expect(find.text('moderation.decision.problem.facts'), findsNothing);
   });
 
   testWidgets('the decision fits a phone at twice the text size, and the '
