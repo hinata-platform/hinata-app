@@ -529,49 +529,19 @@ class _RuleField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final rule = state.rule;
-    final label = rule == null
-        ? context.t('moderation.decision.pickRule')
-        : ruleLabel(context, rule);
-    return Semantics(
-      button: true,
+    return GlassChoiceField(
       label: context.t('moderation.decision.rule'),
-      value: label,
-      child: InkWell(
-        onTap: () => unawaited(_pick(context)),
-        borderRadius: BorderRadius.circular(AppTheme.radiusControl + 4),
-        child: Container(
-          constraints: const BoxConstraints(minHeight: 48),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppTheme.radiusControl + 4),
-            border: Border.all(color: AppColors.hairline2),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: AppType.body,
-                    color: rule == null ? AppColors.inkSoft : AppColors.ink,
-                  ),
-                ),
-              ),
-              Icon(LucideIcons.chevronDown, size: 18, color: AppColors.inkSoft),
-            ],
-          ),
-        ),
-      ),
+      value: rule == null
+          ? context.t('moderation.decision.pickRule')
+          : ruleLabel(context, rule),
+      chosen: rule != null,
+      onOpen: (anchor) => unawaited(_pick(context, anchor)),
     );
   }
 
-  Future<void> _pick(BuildContext context) async {
+  Future<void> _pick(BuildContext context, Rect? anchor) async {
     final cubit = context.read<DecisionCubit>();
     final rules = state.rules?.rules ?? const <HouseRule>[];
-    final box = context.findRenderObject() as RenderBox?;
-    final anchor = box == null || !box.hasSize
-        ? null
-        : box.localToGlobal(Offset.zero) & box.size;
     final view = View.of(context);
     final wide =
         view.physicalSize.width / view.devicePixelRatio >=
@@ -843,26 +813,23 @@ class _ResponsiblePicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cubit = context.read<DecisionCubit>();
+    final contributors = cubit.contributors;
     return GlassField(
       label: context.t('moderation.decision.responsible'),
-      child: Wrap(
-        spacing: 8,
-        runSpacing: 8,
-        children: [
-          for (final id in cubit.contributors)
-            ChoiceChip(
-              label: Text(
-                id == state.responsible?.id
-                    ? state.responsible!.displayName
-                    : context.t(
-                        'moderation.decision.contributor',
-                        variables: {
-                          'n': '${cubit.contributors.indexOf(id) + 1}',
-                        },
-                      ),
-              ),
-              selected: id == state.responsibleId,
-              onSelected: (_) => cubit.chooseResponsible(id),
+      child: InlineSwitchBar(
+        chips: [
+          for (var i = 0; i < contributors.length; i++)
+            GlassSwitchChip(
+              label: contributors[i] == state.responsible?.id
+                  ? state.responsible!.displayName
+                  : context.t(
+                      'moderation.decision.contributor',
+                      variables: {'n': '${i + 1}'},
+                    ),
+              active: contributors[i] == state.responsibleId,
+              onTap: contributors[i] == state.responsibleId
+                  ? null
+                  : () => cubit.chooseResponsible(contributors[i]),
             ),
         ],
       ),
