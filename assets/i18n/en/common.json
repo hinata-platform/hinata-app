@@ -3671,7 +3671,12 @@
         "zipHint": "ZIP files as attachments",
         "voice": "Voice messages",
         "voiceHint": "Recordings in comments"
-      }
+      },
+      "retentionTitle": "Retention and figures",
+      "retentionHint": "Done cases, their reports and the quarantine are deleted after this, unless law enforcement was told.",
+      "retentionLabel": "Delete after",
+      "retentionMonths": "{{count}} month",
+      "retentionMonths_plural": "{{count}} months"
     },
     "entry": {
       "title": "Who comes in",
@@ -4549,6 +4554,10 @@
         "shifts": {
           "label": "Shifts",
           "desc": "You are assigned, a shift changes or starts soon"
+        },
+        "moderation": {
+          "label": "Moderation",
+          "desc": "New and overdue cases, a second person asked for, notes to the team"
         }
       },
       "pushUnsupported": "No push service here. The setting still applies to your phone and your other devices.",
@@ -6088,7 +6097,14 @@
     },
     "state": {
       "removed": "Removed",
-      "suspended": "Suspended"
+      "suspended": "Suspended",
+      "open": "Open",
+      "urgent": "Urgent",
+      "inReview": "In review",
+      "pending": "Waiting for confirmation",
+      "appeal": "Appeal",
+      "handled": "Done",
+      "clear": "No violation"
     },
     "statement": {
       "automation": "Automated means",
@@ -6098,6 +6114,366 @@
       "message": "Message from moderation",
       "remedies": "What you can do",
       "rule": "Rule"
+    },
+    "queue": {
+      "title": "Moderation",
+      "target": "Aim: an answer within 24 hours",
+      "more": "More",
+      "settingsHint": "Review reported content and decide",
+      "view": {
+        "open": "Open",
+        "appeal": "Appeals",
+        "done": "Done"
+      },
+      "viewCount": "{{label}} · {{count}}",
+      "automated": "Found automatically",
+      "reports": "{{count}} report",
+      "reports_plural": "{{count}} reports",
+      "ownInitiative": "On moderation's own initiative",
+      "reportedByMe": "Reported by you",
+      "imageCovered": "Picture covered, shown in the case on request",
+      "textCovered": "Text covered, shown in the case",
+      "openCount": "{{count}} open case",
+      "openCount_plural": "{{count}} open cases",
+      "chooseTitle": "Choose a case",
+      "chooseMessage": "The list shows what is waiting for an answer: urgent first, then the oldest.",
+      "failedTitle": "The cases could not be loaded",
+      "failedMessage": "Check the connection and try again.",
+      "empty": {
+        "open": "Nothing to review",
+        "appeal": "No appeal waiting",
+        "done": "Nothing decided yet"
+      },
+      "emptyMessage": {
+        "open": "New reports appear here, and you get a notification.",
+        "appeal": "When somebody appeals a decision, somebody else reviews it here.",
+        "done": "Decided cases stay here until their retention ends."
+      }
+    },
+    "kind": {
+      "issue": "Issue",
+      "comment": "Comment",
+      "attachment": "Attachment",
+      "article": "Page",
+      "person": "Person",
+      "other": "Something else"
+    },
+    "source": {
+      "member": "member",
+      "public": "without an account",
+      "automated": "automatic",
+      "ownInitiative": "own initiative"
+    },
+    "case": {
+      "age": {
+        "minutes": "{{count}} min",
+        "minutes_plural": "{{count}} min",
+        "hours": "{{count}} h",
+        "hours_plural": "{{count}} h",
+        "days": "{{count}} d",
+        "days_plural": "{{count}} d"
+      },
+      "ageSpoken": {
+        "minutes": "{{count}} minute",
+        "minutes_plural": "{{count}} minutes",
+        "hours": "{{count}} hour",
+        "hours_plural": "{{count}} hours",
+        "days": "{{count}} day",
+        "days_plural": "{{count}} days"
+      },
+      "waited": "waiting for {{age}}",
+      "waitedOverdue": "waiting for {{age}}, overdue",
+      "overdueSince": "for {{age}}",
+      "kindBy": "{{kind}} by {{name}}",
+      "withPerson": "With {{name}}",
+      "reported": "Reported content",
+      "asReported": "As reported",
+      "someone": "Somebody",
+      "someoneModerating": "Somebody in moderation",
+      "fromMail": "By mail from {{sender}}",
+      "filesNeverShown": "Hinata never shows this file.",
+      "procedure": "Open the procedure",
+      "fileNumber": "File {{n}}",
+      "viewFile": "View file",
+      "disturbingTitle": "This may be disturbing",
+      "disturbingMessage": "The file was reported as sexual content. It opens only here, is not saved, and viewing it is logged.",
+      "noCopyKept": "Nothing was wrong: moderation keeps no copy of the content.",
+      "removalIncomplete": "Removal not finished yet. Hinata keeps trying.",
+      "otherUses": "Other uses",
+      "otherUsesHint": "The removed picture also appeared here. Look at these places as well.",
+      "scope": {
+        "issue": "You see only this issue's title and description.",
+        "comment": "You see only this comment and what it answers.",
+        "attachment": "You see only this file.",
+        "article": "You see only this page.",
+        "person": "You see only the profile picture and the profile texts.",
+        "other": "You see only what the report describes."
+      },
+      "since": {
+        "unchanged": "Unchanged since it was reported.",
+        "changed": "Changed since.",
+        "deleted": "Deleted since."
+      },
+      "withheld": "Content withheld until a second person opens it.",
+      "askedToOpen": "You asked to open it. A second person opens it.",
+      "askToOpen": "Ask to open …",
+      "askToOpenTitle": "Ask to open",
+      "askToOpenSubtitle": "Reported without an account, on internal content. A second person opens it, and your reason goes into the history.",
+      "open": "Open …",
+      "openTitle": "Open the content",
+      "openSubtitle": "Somebody else asked. With your reason the content becomes visible to moderation.",
+      "revealReason": "Reason",
+      "reports": "Reports",
+      "reportNumber": "Report {{n}}",
+      "quoted": "“{{text}}”",
+      "reportedBy": "Reported by {{name}}",
+      "unfoundedBefore": "This source sent {{count}} earlier report about children that was manifestly unfounded.",
+      "unfoundedBefore_plural": "This source sent {{count}} earlier reports about children that were manifestly unfounded.",
+      "whoReported": "Who reported? …",
+      "moreReports": "{{count}} more report",
+      "moreReports_plural": "{{count}} more reports",
+      "reportersCovered": "Who reported stays covered. Uncovering takes a reason, which goes into the history.",
+      "reportersStayCovered": "For the safety of children, who reported always stays covered.",
+      "revealReporterTitle": "Who reported?",
+      "revealReporterSubtitle": "The name is uncovered only with a reason, which goes into the case's history.",
+      "reveal": "Uncover",
+      "decision": "Decision",
+      "measure": "Measure",
+      "lawEnforcementTold": "Law enforcement was told. The case is kept longer.",
+      "confirmedBy": "Confirmed by {{name}}",
+      "restoredBy": {
+        "restored": "{{name}} restored the content.",
+        "rewrittenSince": "{{name}} restored it. The content had been written anew meanwhile, and that text stays.",
+        "gone": "{{name}} restored it, but the content no longer exists."
+      },
+      "pendingMine": "You decided a suspension. A second person has to confirm it.",
+      "pendingOthers": "A suspension is waiting for a second person to confirm it.",
+      "claim": "Take",
+      "takeOver": "Take over",
+      "release": "Give back",
+      "decide": "Decide …",
+      "confirm": "Confirm",
+      "reject": "Turn down …",
+      "rejectTitle": "Turn down the suspension",
+      "rejectSubtitle": "The case is open again afterwards. Your reason goes into the history.",
+      "confirmed": "Confirmed. The suspension is in effect.",
+      "rejected": "Turned down. The case is open again.",
+      "more": "More for this case",
+      "viewProfile": "View profile",
+      "restore": "Restore …",
+      "restoreTitle": "Restore the content",
+      "restoreSubtitle": "The removed content comes back, and a suspension from this case ends. The person is told.",
+      "restoreConfirm": "Restore",
+      "restored": "Restored.",
+      "holdAction": "Keep longer …",
+      "holdTitle": "Keep the case longer",
+      "holdSubtitle": "For example because an authority needs the case. It cannot be shorter than it is now.",
+      "holdIndefinite": "Without an end",
+      "holdIndefiniteHint": "Until somebody changes it again.",
+      "holdUntil": "Keep until",
+      "holdReason": "Reason",
+      "hold": "Keep longer",
+      "held": "The case is kept longer.",
+      "why": "Reason",
+      "noteLabel": "{{label}}, at least {{min}} characters",
+      "decidedMeanwhile": "Somebody else decided meanwhile.",
+      "changedMeanwhile": "The case changed, please look at it again.",
+      "goneTitle": "This case no longer exists",
+      "goneMessage": "Its retention ran out, or you wrote the content yourself.",
+      "failedTitle": "The case could not be loaded"
+    },
+    "history": {
+      "reported": "Reported",
+      "claimed": "{{name}} took the case",
+      "released": "{{name}} gave the case back",
+      "reporterRevealed": "{{name}} uncovered who reported:",
+      "evidenceRequested": "{{name}} asked to open the content:",
+      "evidenceRevealed": "{{name}} opened the content:",
+      "decided": "{{name}} decided: {{outcome}}",
+      "appealed": "Appeal received",
+      "appealDecided": "{{name}} decided the appeal",
+      "restored": "{{name}} restored it",
+      "held": "{{name}} kept the case longer:",
+      "confirmationRequested": "{{name}} decided a suspension for a second person to confirm",
+      "confirmationRejected": "{{name}} turned the suspension down:",
+      "suspended": "Account suspended, {{length}}",
+      "suspensionLifted": "{{name}} lifted the suspension:"
+    },
+    "decision": {
+      "title": "Decision",
+      "kindIn": "{{kind}} in {{where}}",
+      "send": "Send decision",
+      "sent": "Decided.",
+      "outcome": {
+        "noViolation": "No violation",
+        "unfounded": "Manifestly unfounded",
+        "action": "Action",
+        "handled": "Dealt with"
+      },
+      "outcomeHint": {
+        "noViolation": "It stays. The people who reported it are told.",
+        "unfounded": "A report that is plainly wrong. Possible without looking at the content.",
+        "action": "{{name}} gets the statement. Removed content goes into the quarantine.",
+        "actionAnyone": "The person gets the statement. Removed content goes into the quarantine.",
+        "handled": "Dealt with outside Hinata, for example in a conversation."
+      },
+      "remove": "Remove content",
+      "removeHint": "Choose what is removed",
+      "scope": {
+        "issue": {
+          "title": "The title",
+          "description": "The description",
+          "whole": "Title and description"
+        },
+        "comment": {
+          "whole": "The whole comment"
+        },
+        "attachment": {
+          "whole": "The whole file"
+        },
+        "article": {
+          "revert": "Reset the page to the version before",
+          "whole": "The whole page"
+        },
+        "person": {
+          "avatar": "The profile picture",
+          "profileText": "The profile texts",
+          "whole": "Profile picture and texts"
+        }
+      },
+      "scopeChip": {
+        "issue": {
+          "title": "Title",
+          "description": "Description",
+          "whole": "Both"
+        },
+        "article": {
+          "revert": "Reset",
+          "whole": "Whole"
+        },
+        "person": {
+          "avatar": "Picture",
+          "profileText": "Texts",
+          "whole": "Both"
+        }
+      },
+      "suspend": "Suspend account",
+      "suspendHint": "For serious or repeated violations",
+      "suspendAdmin": "Admin accounts are never suspended.",
+      "suspendNobody": "Nobody with an account is responsible for it.",
+      "suspendLoading": "Checking …",
+      "howLong": "How long?",
+      "suspendSignOut": "{{name}} is signed out everywhere and access tokens rest. Content stays as it is.",
+      "suspendMail": "The statement goes to {{name}} by mail. A reply to it counts as an appeal.",
+      "suspendEnds": "Ends by itself on {{date}}.",
+      "suspendIndefinite": "Stays until somebody lifts it.",
+      "secondPerson": "A second person has to confirm.",
+      "suspendedFor": "Suspended: {{length}}",
+      "ground": "Ground",
+      "groundChip": {
+        "rules": "House rule",
+        "law": "Law"
+      },
+      "rule": "Rule",
+      "ruleHint": "For example: section 2, belittle nobody",
+      "pickRule": "Choose a house rule",
+      "ruleLabel": "House rule {{number}}: {{title}}",
+      "searchRules": "Search rules",
+      "noRule": "No rule matches.",
+      "law": "Provision",
+      "lawHint": "For example: § 185 StGB",
+      "facts": "What did you find?",
+      "factsRequired": "What did you find? Required",
+      "factsOptional": "What did you find? Optional",
+      "factsHint": "For example: The comment calls a colleague “too stupid for this job”. That belittles a person instead of discussing the matter.",
+      "message": "Message to the person",
+      "messageTo": "Message to {{name}}. Optional",
+      "messageToAnyone": "Message to the person. Optional",
+      "more": "More details",
+      "responsible": "Person responsible",
+      "responsibleIs": "Responsible: {{name}}",
+      "contributor": "Contributor {{n}}",
+      "lawEnforcement": "Law enforcement told",
+      "lawEnforcementHint": "The case is then kept for twelve months.",
+      "lawEnforcementYes": "Law enforcement: yes",
+      "lawEnforcementNo": "Law enforcement: no",
+      "deceptive": "Deceptive bulk advertising",
+      "deceptiveHint": "Spam only. Counted in the annual figures.",
+      "internalNote": "Internal note",
+      "internalNoteHint": "Only moderation sees it.",
+      "noInternalNote": "no internal note",
+      "withInternalNote": "with an internal note",
+      "previewTitle": "This is what {{name}} receives",
+      "previewTitleAnyone": "This is how the statement reads",
+      "previewNone": "Choose an outcome. Then this shows what the people involved are told.",
+      "previewNoStatement": {
+        "noViolation": "No statement goes out. The people who reported it learn that there was no violation.",
+        "unfounded": "No statement goes out. The people who reported it learn that the report was manifestly unfounded.",
+        "handled": "No statement goes out. The people who reported it learn that it was dealt with."
+      },
+      "previewIncomplete": "Choose what the action does and its ground. Then the statement appears here word for word.",
+      "previewFailed": "The preview could not be loaded. It tries again with the next change.",
+      "problem": {
+        "outcome": "Choose an outcome.",
+        "measure": "An action removes, suspends or both.",
+        "scope": "Choose what is removed.",
+        "rule": "Choose the rule that was broken.",
+        "law": "Name the provision.",
+        "facts": "Write at least {{min}} characters about what you found.",
+        "suspension": "This person cannot be suspended."
+      }
+    },
+    "suspension": {
+      "pageTitle": "Suspended accounts",
+      "length": {
+        "days7": "7 days",
+        "days30": "30 days",
+        "indefinite": "Indefinitely"
+      },
+      "until": "Suspended until {{date}}",
+      "indefinite": "Suspended indefinitely",
+      "openCase": "Open case",
+      "emptyTitle": "Nobody is suspended",
+      "emptyMessage": "When moderation suspends an account, it is listed here until the suspension ends.",
+      "failedTitle": "The suspended accounts could not be loaded",
+      "lift": "Lift suspension …",
+      "liftTitle": "Lift the suspension",
+      "liftSubtitle": "The person can sign in again afterwards. What was removed stays removed.",
+      "liftConfirm": "Lift",
+      "lifted": "The suspension is lifted.",
+      "suspend": "Suspend account …",
+      "suspendDetail": "Opens a case on moderation's own initiative, then you decide.",
+      "ownTitle": "Suspend {{name}}",
+      "ownSubtitle": "A case on moderation's own initiative. Then you decide the suspension with a statement.",
+      "ownCategory": "What is it about?",
+      "ownNext": "Continue"
+    },
+    "appealReview": {
+      "title": "Appeal",
+      "filedOn": "Received on {{date}}",
+      "via": {
+        "app": "in the app",
+        "reply": "by reply to the mail"
+      },
+      "notYours": "You decided. Somebody else decides the appeal.",
+      "uphold": "Uphold decision",
+      "reverse": "Reverse decision",
+      "upholdTitle": "Uphold the decision",
+      "upholdSubtitle": "The decision stands. The person is told, with your reason.",
+      "reverseTitle": "Reverse the decision",
+      "reverseSubtitle": "The content comes back and a suspension ends. The person is told, with your reason.",
+      "note": "Reason",
+      "upheld": "Upheld.",
+      "reversed": "Reversed.",
+      "wasUpheld": "{{name}} upheld the decision.",
+      "wasReversed": "{{name}} reversed the decision.",
+      "recordAction": "Enter appeal …",
+      "recordTitle": "Enter an appeal",
+      "recordSubtitle": "For a reply to the mail with the statement. Somebody else then reviews the decision.",
+      "recordText": "Text of the reply",
+      "receivedOn": "Received on",
+      "record": "Enter",
+      "recorded": "Appeal entered."
     }
   }
 }

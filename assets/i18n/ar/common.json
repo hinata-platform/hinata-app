@@ -3671,7 +3671,12 @@
         "zipHint": "ملفات ZIP كمرفقات",
         "voice": "الرسائل الصوتية",
         "voiceHint": "التسجيلات في التعليقات"
-      }
+      },
+      "retentionTitle": "الحفظ والأرقام",
+      "retentionHint": "تُحذف الحالات المنتهية وبلاغاتها والحجر بعد هذه المدة، إلا إذا أُبلغت جهات إنفاذ القانون.",
+      "retentionLabel": "الحذف بعد",
+      "retentionMonths": "أشهر: {{count}}",
+      "retentionMonths_plural": "أشهر: {{count}}"
     },
     "entry": {
       "title": "من يدخل",
@@ -4549,6 +4554,10 @@
         "shifts": {
           "label": "النوبات",
           "desc": "عُيّنت، أو تغيّرت نوبة، أو تبدأ قريبًا"
+        },
+        "moderation": {
+          "label": "الإشراف",
+          "desc": "حالات جديدة ومتأخرة، وطلب شخص ثانٍ، وملاحظات للفريق"
         }
       },
       "pushUnsupported": "لا توجد خدمة إشعارات فورية هنا. يظل الإعداد ساريًا على هاتفك وأجهزتك الأخرى.",
@@ -6088,7 +6097,14 @@
     },
     "state": {
       "removed": "أُزيل",
-      "suspended": "موقوف"
+      "suspended": "موقوف",
+      "open": "مفتوحة",
+      "urgent": "عاجلة",
+      "inReview": "قيد المراجعة",
+      "pending": "بانتظار التأكيد",
+      "appeal": "اعتراض",
+      "handled": "تمت معالجتها",
+      "clear": "لا مخالفة"
     },
     "statement": {
       "automation": "الوسائل الآلية",
@@ -6098,6 +6114,366 @@
       "message": "رسالة الإشراف",
       "remedies": "ما يمكنك فعله",
       "rule": "القاعدة"
+    },
+    "queue": {
+      "title": "الإشراف",
+      "target": "الهدف: الرد خلال 24 ساعة",
+      "more": "المزيد",
+      "settingsHint": "مراجعة المحتوى المبلّغ عنه واتخاذ القرار",
+      "view": {
+        "open": "مفتوحة",
+        "appeal": "اعتراضات",
+        "done": "منتهية"
+      },
+      "viewCount": "{{label}} · {{count}}",
+      "automated": "اكتُشف تلقائيًا",
+      "reports": "البلاغات: {{count}}",
+      "reports_plural": "البلاغات: {{count}}",
+      "ownInitiative": "بمبادرة من الإشراف",
+      "reportedByMe": "أبلغتَ عنه",
+      "imageCovered": "الصورة مخفية، تظهر في الحالة عند الطلب",
+      "textCovered": "النص مخفي، يظهر في الحالة",
+      "openCount": "الحالات المفتوحة: {{count}}",
+      "openCount_plural": "الحالات المفتوحة: {{count}}",
+      "chooseTitle": "اختر حالة",
+      "chooseMessage": "تعرض القائمة ما ينتظر ردًا: العاجل أولًا، ثم الأقدم.",
+      "failedTitle": "تعذّر تحميل الحالات",
+      "failedMessage": "تحقق من الاتصال وحاول مرة أخرى.",
+      "empty": {
+        "open": "لا شيء للمراجعة",
+        "appeal": "لا اعتراض بانتظار القرار",
+        "done": "لم يُتخذ أي قرار بعد"
+      },
+      "emptyMessage": {
+        "open": "تظهر البلاغات الجديدة هنا، وتصلك إشعارات بها.",
+        "appeal": "إذا اعترض أحد على قرار، يراجعه شخص آخر هنا.",
+        "done": "تبقى الحالات المحسومة هنا حتى تنتهي مدة حفظها."
+      }
+    },
+    "kind": {
+      "issue": "مهمة",
+      "comment": "تعليق",
+      "attachment": "مرفق",
+      "article": "صفحة",
+      "person": "شخص",
+      "other": "شيء آخر"
+    },
+    "source": {
+      "member": "عضو",
+      "public": "بلا حساب",
+      "automated": "تلقائي",
+      "ownInitiative": "مبادرة ذاتية"
+    },
+    "case": {
+      "age": {
+        "minutes": "{{count}} د",
+        "minutes_plural": "{{count}} د",
+        "hours": "{{count}} س",
+        "hours_plural": "{{count}} س",
+        "days": "{{count}} ي",
+        "days_plural": "{{count}} ي"
+      },
+      "ageSpoken": {
+        "minutes": "دقائق: {{count}}",
+        "minutes_plural": "دقائق: {{count}}",
+        "hours": "ساعات: {{count}}",
+        "hours_plural": "ساعات: {{count}}",
+        "days": "أيام: {{count}}",
+        "days_plural": "أيام: {{count}}"
+      },
+      "waited": "تنتظر منذ {{age}}",
+      "waitedOverdue": "تنتظر منذ {{age}}، متأخرة",
+      "overdueSince": "منذ {{age}}",
+      "kindBy": "{{kind}} من {{name}}",
+      "withPerson": "لدى {{name}}",
+      "reported": "المحتوى المبلّغ عنه",
+      "asReported": "كما كان عند البلاغ",
+      "someone": "شخص ما",
+      "someoneModerating": "شخص من الإشراف",
+      "fromMail": "بالبريد من {{sender}}",
+      "filesNeverShown": "لا يعرض Hinata هذا الملف أبدًا.",
+      "procedure": "فتح خطة الإجراءات",
+      "fileNumber": "ملف {{n}}",
+      "viewFile": "عرض الملف",
+      "disturbingTitle": "قد يكون المحتوى صادمًا",
+      "disturbingMessage": "أُبلغ عن الملف بوصفه محتوى جنسيًا. يُفتح هنا فقط، ولا يُحفظ، ويُسجَّل الاطلاع عليه.",
+      "noCopyKept": "لم يكن هناك خطأ: لا يحتفظ الإشراف بنسخة من المحتوى.",
+      "removalIncomplete": "لم تكتمل الإزالة بعد. يواصل Hinata المحاولة.",
+      "otherUses": "استخدامات أخرى",
+      "otherUsesHint": "ظهرت الصورة المحذوفة هنا أيضًا. راجع هذه المواضع كذلك.",
+      "scope": {
+        "issue": "لا ترى إلا عنوان هذه المهمة ووصفها.",
+        "comment": "لا ترى إلا هذا التعليق وما يرد عليه.",
+        "attachment": "لا ترى إلا هذا الملف.",
+        "article": "لا ترى إلا هذه الصفحة.",
+        "person": "لا ترى إلا صورة الملف الشخصي ونصوصه.",
+        "other": "لا ترى إلا ما يصفه البلاغ."
+      },
+      "since": {
+        "unchanged": "لم يتغير منذ البلاغ.",
+        "changed": "تغيّر منذ ذلك الحين.",
+        "deleted": "حُذف منذ ذلك الحين."
+      },
+      "withheld": "المحتوى محجوب حتى يفتحه شخص ثانٍ.",
+      "askedToOpen": "طلبتَ فتحه. سيفتحه شخص ثانٍ.",
+      "askToOpen": "طلب الفتح …",
+      "askToOpenTitle": "طلب الفتح",
+      "askToOpenSubtitle": "بلاغ بلا حساب على محتوى داخلي. يفتحه شخص ثانٍ، ويُسجَّل سببك في السجل.",
+      "open": "فتح …",
+      "openTitle": "فتح المحتوى",
+      "openSubtitle": "طلبه شخص آخر. بسببك يصبح المحتوى مرئيًا للإشراف.",
+      "revealReason": "السبب",
+      "reports": "البلاغات",
+      "reportNumber": "البلاغ {{n}}",
+      "quoted": "«{{text}}»",
+      "reportedBy": "أبلغ عنه: {{name}}",
+      "unfoundedBefore": "بلاغات سابقة عن الأطفال من هذا المصدر كانت بلا أساس واضح: {{count}}.",
+      "unfoundedBefore_plural": "بلاغات سابقة عن الأطفال من هذا المصدر كانت بلا أساس واضح: {{count}}.",
+      "whoReported": "من أبلغ؟ …",
+      "moreReports": "بلاغات أخرى: {{count}}",
+      "moreReports_plural": "بلاغات أخرى: {{count}}",
+      "reportersCovered": "يبقى المبلّغ مخفيًا. الكشف يتطلب سببًا يُسجَّل في السجل.",
+      "reportersStayCovered": "حفاظًا على سلامة الأطفال يبقى المبلّغ مخفيًا دائمًا.",
+      "revealReporterTitle": "من أبلغ؟",
+      "revealReporterSubtitle": "لا يُكشف الاسم إلا مع سبب يُسجَّل في سجل الحالة.",
+      "reveal": "كشف",
+      "decision": "القرار",
+      "measure": "الإجراء",
+      "lawEnforcementTold": "أُبلغت جهات إنفاذ القانون. تُحفظ الحالة مدة أطول.",
+      "confirmedBy": "أكّده: {{name}}",
+      "restoredBy": {
+        "restored": "استعاد {{name}} المحتوى.",
+        "rewrittenSince": "استعاده {{name}}. كان المحتوى قد كُتب من جديد في الأثناء، ويبقى ذلك النص.",
+        "gone": "استعاده {{name}}، لكن المحتوى لم يعد موجودًا."
+      },
+      "pendingMine": "قررتَ إيقافًا. يجب أن يؤكده شخص ثانٍ.",
+      "pendingOthers": "إيقاف ينتظر تأكيد شخص ثانٍ.",
+      "claim": "تولّي",
+      "takeOver": "استلام",
+      "release": "إرجاع",
+      "decide": "اتخاذ القرار …",
+      "confirm": "تأكيد",
+      "reject": "رفض …",
+      "rejectTitle": "رفض الإيقاف",
+      "rejectSubtitle": "بعدها تُفتح الحالة من جديد. يُسجَّل سببك في السجل.",
+      "confirmed": "تم التأكيد. الإيقاف ساري.",
+      "rejected": "تم الرفض. الحالة مفتوحة من جديد.",
+      "more": "المزيد لهذه الحالة",
+      "viewProfile": "عرض الملف الشخصي",
+      "restore": "استعادة …",
+      "restoreTitle": "استعادة المحتوى",
+      "restoreSubtitle": "يعود المحتوى المحذوف، وينتهي إيقاف هذه الحالة. يُبلَّغ الشخص بذلك.",
+      "restoreConfirm": "استعادة",
+      "restored": "تمت الاستعادة.",
+      "holdAction": "تمديد الحفظ …",
+      "holdTitle": "تمديد حفظ الحالة",
+      "holdSubtitle": "مثلًا لأن جهة رسمية تحتاج الحالة. لا يمكن أن يكون أقصر من الآن.",
+      "holdIndefinite": "بلا نهاية",
+      "holdIndefiniteHint": "حتى يغيّره أحد من جديد.",
+      "holdUntil": "الحفظ حتى",
+      "holdReason": "السبب",
+      "hold": "تمديد",
+      "held": "مُدّد حفظ الحالة.",
+      "why": "السبب",
+      "noteLabel": "{{label}}، {{min}} حرفًا على الأقل",
+      "decidedMeanwhile": "قرر شخص آخر في الأثناء.",
+      "changedMeanwhile": "تغيرت الحالة، يرجى مراجعتها مرة أخرى.",
+      "goneTitle": "هذه الحالة لم تعد موجودة",
+      "goneMessage": "انتهت مدة حفظها، أو أنك كتبت المحتوى بنفسك.",
+      "failedTitle": "تعذّر تحميل الحالة"
+    },
+    "history": {
+      "reported": "أُبلغ عنه",
+      "claimed": "تولّى {{name}} الحالة",
+      "released": "أرجع {{name}} الحالة",
+      "reporterRevealed": "كشف {{name}} من أبلغ:",
+      "evidenceRequested": "طلب {{name}} فتح المحتوى:",
+      "evidenceRevealed": "فتح {{name}} المحتوى:",
+      "decided": "قرر {{name}}: {{outcome}}",
+      "appealed": "ورد اعتراض",
+      "appealDecided": "قرر {{name}} بشأن الاعتراض",
+      "restored": "استعاد {{name}}",
+      "held": "مدّد {{name}} الحفظ:",
+      "confirmationRequested": "قرر {{name}} إيقافًا يؤكده شخص ثانٍ",
+      "confirmationRejected": "رفض {{name}} الإيقاف:",
+      "suspended": "أُوقف الحساب، {{length}}",
+      "suspensionLifted": "رفع {{name}} الإيقاف:"
+    },
+    "decision": {
+      "title": "القرار",
+      "kindIn": "{{kind}} في {{where}}",
+      "send": "إرسال القرار",
+      "sent": "تم القرار.",
+      "outcome": {
+        "noViolation": "لا مخالفة",
+        "unfounded": "بلا أساس واضح",
+        "action": "إجراء",
+        "handled": "تمت معالجته"
+      },
+      "outcomeHint": {
+        "noViolation": "يبقى. يُبلَّغ المبلّغون بذلك.",
+        "unfounded": "بلاغ خاطئ بوضوح. ممكن دون الاطلاع على المحتوى.",
+        "action": "يتلقى {{name}} التعليل. يذهب المحتوى المحذوف إلى الحجر.",
+        "actionAnyone": "يتلقى الشخص التعليل. يذهب المحتوى المحذوف إلى الحجر.",
+        "handled": "عولج خارج Hinata، مثلًا في محادثة."
+      },
+      "remove": "إزالة المحتوى",
+      "removeHint": "اختر ما يُزال",
+      "scope": {
+        "issue": {
+          "title": "العنوان",
+          "description": "الوصف",
+          "whole": "العنوان والوصف"
+        },
+        "comment": {
+          "whole": "التعليق كاملًا"
+        },
+        "attachment": {
+          "whole": "الملف كاملًا"
+        },
+        "article": {
+          "revert": "إرجاع الصفحة إلى النسخة السابقة",
+          "whole": "الصفحة كاملة"
+        },
+        "person": {
+          "avatar": "صورة الملف الشخصي",
+          "profileText": "نصوص الملف الشخصي",
+          "whole": "الصورة ونصوص الملف الشخصي"
+        }
+      },
+      "scopeChip": {
+        "issue": {
+          "title": "العنوان",
+          "description": "الوصف",
+          "whole": "كلاهما"
+        },
+        "article": {
+          "revert": "إرجاع",
+          "whole": "كاملة"
+        },
+        "person": {
+          "avatar": "الصورة",
+          "profileText": "النصوص",
+          "whole": "كلاهما"
+        }
+      },
+      "suspend": "إيقاف الحساب",
+      "suspendHint": "للمخالفات الجسيمة أو المتكررة",
+      "suspendAdmin": "لا تُوقف حسابات المسؤولين.",
+      "suspendNobody": "لا أحد بحساب مسؤول عن ذلك.",
+      "suspendLoading": "جارٍ التحقق …",
+      "howLong": "إلى متى؟",
+      "suspendSignOut": "يُسجَّل خروج {{name}} من كل مكان، وتتوقف رموز الوصول. يبقى المحتوى كما هو.",
+      "suspendMail": "يصل التعليل إلى {{name}} بالبريد. يُعد الرد عليه اعتراضًا.",
+      "suspendEnds": "ينتهي تلقائيًا في {{date}}.",
+      "suspendIndefinite": "يبقى حتى يرفعه أحد.",
+      "secondPerson": "يجب أن يؤكد شخص ثانٍ.",
+      "suspendedFor": "موقوف: {{length}}",
+      "ground": "الأساس",
+      "groundChip": {
+        "rules": "قاعدة داخلية",
+        "law": "القانون"
+      },
+      "rule": "القاعدة",
+      "ruleHint": "مثلًا: القسم 2، عدم الحط من أحد",
+      "pickRule": "اختيار قاعدة داخلية",
+      "ruleLabel": "القاعدة {{number}}: {{title}}",
+      "searchRules": "البحث عن قاعدة",
+      "noRule": "لا توجد قاعدة مطابقة.",
+      "law": "النص القانوني",
+      "lawHint": "مثلًا: § 185 StGB",
+      "facts": "ما الذي وجدته؟",
+      "factsRequired": "ما الذي وجدته؟ إلزامي",
+      "factsOptional": "ما الذي وجدته؟ اختياري",
+      "factsHint": "مثلًا: يصف التعليق زميلة بأنها «أغبى من أن تصلح لهذا العمل». هذا يحط من شخص بدل مناقشة الموضوع.",
+      "message": "رسالة إلى الشخص",
+      "messageTo": "رسالة إلى {{name}}. اختيارية",
+      "messageToAnyone": "رسالة إلى الشخص. اختيارية",
+      "more": "تفاصيل أخرى",
+      "responsible": "الشخص المسؤول",
+      "responsibleIs": "المسؤول: {{name}}",
+      "contributor": "المشارك {{n}}",
+      "lawEnforcement": "أُبلغت جهات إنفاذ القانون",
+      "lawEnforcementHint": "عندها تُحفظ الحالة اثني عشر شهرًا.",
+      "lawEnforcementYes": "جهات إنفاذ القانون: نعم",
+      "lawEnforcementNo": "جهات إنفاذ القانون: لا",
+      "deceptive": "إعلانات جماعية مضللة",
+      "deceptiveHint": "للبريد العشوائي فقط. يُحتسب في الأرقام السنوية.",
+      "internalNote": "ملاحظة داخلية",
+      "internalNoteHint": "لا يراها إلا الإشراف.",
+      "noInternalNote": "بلا ملاحظة داخلية",
+      "withInternalNote": "مع ملاحظة داخلية",
+      "previewTitle": "هكذا يصل إلى {{name}}",
+      "previewTitleAnyone": "هكذا يبدو التعليل",
+      "previewNone": "اختر نتيجة. بعدها يظهر هنا ما يعرفه المعنيون.",
+      "previewNoStatement": {
+        "noViolation": "لا يُرسل تعليل. يعرف المبلّغون أنه لا توجد مخالفة.",
+        "unfounded": "لا يُرسل تعليل. يعرف المبلّغون أن البلاغ كان بلا أساس واضح.",
+        "handled": "لا يُرسل تعليل. يعرف المبلّغون أن الأمر عولج."
+      },
+      "previewIncomplete": "اختر ما يفعله الإجراء وأساسه. بعدها يظهر التعليل هنا حرفيًا.",
+      "previewFailed": "تعذّر تحميل المعاينة. ستحاول مجددًا مع التغيير التالي.",
+      "problem": {
+        "outcome": "اختر نتيجة.",
+        "measure": "الإجراء يزيل أو يوقف أو كليهما.",
+        "scope": "اختر ما يُزال.",
+        "rule": "اختر القاعدة المخالَفة.",
+        "law": "اذكر النص القانوني.",
+        "facts": "اكتب {{min}} حرفًا على الأقل عما وجدته.",
+        "suspension": "لا يمكن إيقاف هذا الشخص."
+      }
+    },
+    "suspension": {
+      "pageTitle": "الحسابات الموقوفة",
+      "length": {
+        "days7": "7 أيام",
+        "days30": "30 يومًا",
+        "indefinite": "بلا مدة"
+      },
+      "until": "موقوف حتى {{date}}",
+      "indefinite": "موقوف بلا مدة",
+      "openCase": "فتح الحالة",
+      "emptyTitle": "لا أحد موقوف",
+      "emptyMessage": "عندما يوقف الإشراف حسابًا، يظهر هنا حتى ينتهي الإيقاف.",
+      "failedTitle": "تعذّر تحميل الحسابات الموقوفة",
+      "lift": "رفع الإيقاف …",
+      "liftTitle": "رفع الإيقاف",
+      "liftSubtitle": "يستطيع الشخص بعدها تسجيل الدخول من جديد. ما أُزيل يبقى مُزالًا.",
+      "liftConfirm": "رفع",
+      "lifted": "رُفع الإيقاف.",
+      "suspend": "إيقاف الحساب …",
+      "suspendDetail": "يفتح حالة بمبادرة من الإشراف، ثم تقرر.",
+      "ownTitle": "إيقاف {{name}}",
+      "ownSubtitle": "حالة بمبادرة من الإشراف. بعدها تقرر الإيقاف مع تعليل.",
+      "ownCategory": "عمّ يدور الأمر؟",
+      "ownNext": "متابعة"
+    },
+    "appealReview": {
+      "title": "الاعتراض",
+      "filedOn": "ورد في {{date}}",
+      "via": {
+        "app": "في التطبيق",
+        "reply": "بالرد على البريد"
+      },
+      "notYours": "أنت من قرر. يبت شخص آخر في الاعتراض.",
+      "uphold": "تأكيد القرار",
+      "reverse": "إلغاء القرار",
+      "upholdTitle": "تأكيد القرار",
+      "upholdSubtitle": "يبقى القرار. يُبلَّغ الشخص مع سببك.",
+      "reverseTitle": "إلغاء القرار",
+      "reverseSubtitle": "يعود المحتوى وينتهي الإيقاف. يُبلَّغ الشخص مع سببك.",
+      "note": "السبب",
+      "upheld": "تم التأكيد.",
+      "reversed": "تم الإلغاء.",
+      "wasUpheld": "أكّد {{name}} القرار.",
+      "wasReversed": "ألغى {{name}} القرار.",
+      "recordAction": "تسجيل اعتراض …",
+      "recordTitle": "تسجيل اعتراض",
+      "recordSubtitle": "لرد على البريد الذي يحمل التعليل. بعدها يراجع شخص آخر القرار.",
+      "recordText": "نص الرد",
+      "receivedOn": "ورد في",
+      "record": "تسجيل",
+      "recorded": "سُجّل الاعتراض."
     }
   }
 }
