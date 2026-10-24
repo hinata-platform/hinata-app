@@ -37,18 +37,20 @@ void main() {
       await SharedPreferences.getInstance(),
       const FlutterSecureStorage(),
     );
+    // The sign-in these callbacks complete was started on this device.
+    await storage.setPendingSsoVerifier(_verifier);
     resetSsoHandoffLedger();
   });
 
   /// Boots just the callback route + a login marker, with [repository] behind
-  /// the screen. Returns the router so a test can assert the landing location.
+  /// the screen, at [link] or else the callback with [code] and [error].
+  /// Returns the router so a test can assert the landing location.
   Future<GoRouter> pumpCallback(
     WidgetTester tester,
     AuthRepository repository, {
     String? code,
-    String? accessToken,
-    String? refreshToken,
     String? error,
+    String? link,
   }) async {
     // Deliberately not closed here: awaiting Bloc.close() inside a
     // testWidgets body (or its teardown) runs against the fake clock and never
@@ -57,21 +59,16 @@ void main() {
     final auth = AuthBloc(repository: repository, storage: storage);
     final query = <String>[
       if (code != null) 'code=$code',
-      if (accessToken != null) 'access_token=$accessToken',
-      if (refreshToken != null) 'refresh_token=$refreshToken',
       if (error != null) 'error=$error',
     ].join('&');
     final router = GoRouter(
-      initialLocation: query.isEmpty
-          ? '/auth-callback'
-          : '/auth-callback?$query',
+      initialLocation:
+          link ?? (query.isEmpty ? '/auth-callback' : '/auth-callback?$query'),
       routes: [
         GoRoute(
           path: '/auth-callback',
           builder: (_, state) => SsoCallbackScreen(
             code: state.uri.queryParameters['code'],
-            accessToken: state.uri.queryParameters['access_token'],
-            refreshToken: state.uri.queryParameters['refresh_token'],
             error: state.uri.queryParameters['error'],
           ),
         ),
@@ -170,6 +167,57 @@ void main() {
     // The screen keeps a watchdog armed while it waits; tear the tree down so
     // it is cancelled and the test doesn't trip the pending-timer check.
     await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the code is redeemed with the verifier this device keeps', (
+    tester,
+  ) async {
+    final verifiers = <String>[];
+    final repository = _FakeAuthRepository(
+      onExchangeWith: (code, verifier) {
+        verifiers.add(verifier);
+        return (access: 'access-1', refresh: 'refresh-1');
+      },
+    );
+    await pumpCallback(tester, repository, code: 'good-code');
+    await advance(tester);
+
+    expect(verifiers, [_verifier]);
+    // Done: a later link to the callback finds no sign-in waiting for it.
+    expect(storage.pendingSsoVerifier(), isNull);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('a code is not redeemed while no sign-in is pending here', (
+    tester,
+  ) async {
+    // A link to the callback in a comment: somebody else's sign-in.
+    await storage.clearPendingSsoVerifier();
+    var exchanges = 0;
+    final repository = _FakeAuthRepository(
+      onExchange: () {
+        exchanges++;
+        return (access: 'access-1', refresh: 'refresh-1');
+      },
+    );
+    final router = await pumpCallback(tester, repository, code: 'foreign');
+    await advance(tester);
+
+    expect(exchanges, 0);
+    expect(storage.accessToken, isNull);
+    expect(location(router), '/login');
+  });
+
+  testWidgets('tokens in the link sign no one in', (tester) async {
+    final router = await pumpCallback(
+      tester,
+      _FakeAuthRepository(),
+      link: '/auth-callback?access_token=A&refresh_token=R',
+    );
+    await advance(tester);
+
+    expect(storage.accessToken, isNull);
+    expect(location(router), '/login');
   });
 
   testWidgets('a replayed code does not throw the signed-in user out', (
@@ -369,18 +417,28 @@ class _FakeAuthRepository extends AuthRepository {
     this.onExchange,
     this.onExchangeAsync,
     this.onExchangeCode,
+    this.onExchangeWith,
     this.onMe,
   }) : super(ApiClient(_UnusedStorage()));
 
   final ({String access, String refresh}) Function()? onExchange;
   final Future<({String access, String refresh})> Function()? onExchangeAsync;
   final ({String access, String refresh}) Function(String code)? onExchangeCode;
+  final ({String access, String refresh}) Function(
+    String code,
+    String verifier,
+  )?
+  onExchangeWith;
   final AuthUser Function()? onMe;
 
   @override
-  Future<({String access, String refresh})> exchangeSso(String code) async {
+  Future<({String access, String refresh})> exchangeSso(
+    String code,
+    String verifier,
+  ) async {
     if (onExchangeAsync != null) return onExchangeAsync!();
     if (onExchangeCode != null) return onExchangeCode!(code);
+    if (onExchangeWith != null) return onExchangeWith!(code, verifier);
     if (onExchange == null) throw StateError('exchange not scripted');
     return onExchange!();
   }
@@ -397,6 +455,9 @@ class _FakeAuthRepository extends AuthRepository {
     );
   }
 }
+
+/// What [launchSso] kept on this device for the sign-in.
+final _verifier = 'v' * 43;
 
 /// The fake repository never issues a request, but [ApiClient] needs a storage
 /// to construct. Nothing on it is ever read.

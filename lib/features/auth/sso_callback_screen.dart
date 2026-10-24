@@ -45,15 +45,13 @@ const _handoffTimeout = Duration(seconds: 45);
 /// must therefore navigate to `/login` itself, or the user is left staring at a
 /// spinner forever with the app unusable.
 class SsoCallbackScreen extends StatelessWidget {
-  const SsoCallbackScreen({
-    super.key,
-    this.code,
-    required this.accessToken,
-    required this.refreshToken,
-    this.error,
-  });
+  const SsoCallbackScreen({super.key, this.code, this.error});
 
-  /// Single-use handoff code; redeemed for the token pair. Preferred path.
+  /// Single-use handoff code; redeemed for the token pair with the verifier
+  /// [launchSso] kept for the sign-in this device started.
+  ///
+  /// Tokens in the link are not taken, as older servers sent them: any page
+  /// can link here, and a pair in the link would be somebody else's account.
   final String? code;
 
   /// What the server reported when the sign-in did not end in the app: why
@@ -65,34 +63,18 @@ class SsoCallbackScreen extends StatelessWidget {
   /// page can link here with any text.
   final String? error;
 
-  /// Legacy fallback: tokens directly in the URL (older server redirects).
-  final String? accessToken;
-  final String? refreshToken;
-
   @override
   Widget build(BuildContext context) => BlocProvider(
     create: (context) => AuthFlowCubit(context.read<AuthRepository>()),
-    child: _SsoCallbackScreenBody(
-      code: code,
-      accessToken: accessToken,
-      refreshToken: refreshToken,
-      error: error,
-    ),
+    child: _SsoCallbackScreenBody(code: code, error: error),
   );
 }
 
 class _SsoCallbackScreenBody extends StatefulWidget {
-  const _SsoCallbackScreenBody({
-    this.code,
-    required this.accessToken,
-    required this.refreshToken,
-    this.error,
-  });
+  const _SsoCallbackScreenBody({this.code, this.error});
 
   final String? code;
   final String? error;
-  final String? accessToken;
-  final String? refreshToken;
 
   @override
   State<_SsoCallbackScreenBody> createState() => _SsoCallbackScreenState();
@@ -132,9 +114,7 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
   @override
   void didUpdateWidget(covariant _SsoCallbackScreenBody oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.code != oldWidget.code ||
-        widget.error != oldWidget.error ||
-        widget.accessToken != oldWidget.accessToken) {
+    if (widget.code != oldWidget.code || widget.error != oldWidget.error) {
       _follow();
     }
   }
@@ -153,8 +133,6 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
 
   void _follow() {
     final code = widget.code;
-    final access = widget.accessToken;
-    final refresh = widget.refreshToken;
     if (code != null && code.isNotEmpty) {
       if (_handoffAttempts.containsKey(code)) {
         switch (_handoffAttempts[code]) {
@@ -173,9 +151,6 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
       } else {
         _redeem(code);
       }
-    } else if (access != null && refresh != null) {
-      // Legacy redirect that still carried tokens in the URL.
-      _auth.add(SsoTokensReceived(access, refresh));
     } else if (widget.error != null) {
       // Hinata refused the person, or the provider did, or the server could
       // not finish with it. The reason goes on as it came: the login screen
@@ -188,10 +163,22 @@ class _SsoCallbackScreenState extends State<_SsoCallbackScreenBody> {
   }
 
   Future<void> _redeem(String code) async {
+    // No sign-in of this device waits for a code: the link came from somewhere
+    // else, and its code is somebody else's sign-in. The router keeps such a
+    // link off this screen; this is the screen's own word on it.
+    final verifier = _auth.storage.pendingSsoVerifier();
+    if (verifier == null) {
+      _bail('auth.ssoExchangeFailed');
+      return;
+    }
     _handoffAttempts[code] = null;
     try {
-      final pair = await _flow.exchangeSso(code);
+      final pair = await _flow.exchangeSso(code, verifier);
       _handoffAttempts[code] = true;
+      // Before the tokens go in: from here the router lets the callback stand
+      // only while they sign the person in, and a later link to it finds no
+      // sign-in waiting.
+      await _auth.storage.clearPendingSsoVerifier();
       // Deliberately not gated on `mounted`: if a duplicate delivery replaced
       // this screen mid-request, dropping the tokens here would waste the one
       // redemption the code has and strand the user.
