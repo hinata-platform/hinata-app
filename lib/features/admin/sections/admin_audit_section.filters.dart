@@ -216,6 +216,7 @@ class _CategoryFilterChip extends StatelessWidget {
           AuditCategory.configuration,
           AuditCategory.data,
           AuditCategory.integration,
+          AuditCategory.moderation,
         ])
           GlassMenuItem(
             value: c,
