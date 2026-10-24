@@ -398,6 +398,12 @@ List<PaletteCommand> accountCommands(PaletteAccess access) => [
       'data export privacy gdpr download',
     ),
     (
+      'help',
+      'account.help.title',
+      LucideIcons.lifeBuoy,
+      'help contact moderation house rules report imprint about terms',
+    ),
+    (
       'danger',
       'account.danger.title',
       LucideIcons.triangleAlert,
