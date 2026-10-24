@@ -15,11 +15,18 @@ class GlassField extends StatelessWidget {
     required this.child,
     this.trailing,
     this.isTextInput,
+    this.wrapCaption = false,
   });
 
   final String label;
   final Widget child;
   final Widget? trailing;
+
+  /// Lets a long caption wrap instead of being cut off, for a sentence of a
+  /// caption over a full-width field ("What should moderation know?") that a
+  /// phone at a large text size cannot fit on one line. Off by default: over a
+  /// narrow field beside others the inputs have to stay in line.
+  final bool wrapCaption;
 
   /// Whether [child] is a text input that should carry [label] as its name.
   ///
@@ -48,8 +55,8 @@ class GlassField extends StatelessWidget {
                 excluding: labelsInput,
                 child: Text(
                   label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  maxLines: wrapCaption ? null : 1,
+                  overflow: wrapCaption ? null : TextOverflow.ellipsis,
                   style: GlassFieldStyle.caption,
                 ),
               ),
