@@ -38,6 +38,8 @@ import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
 import 'core/blocs/tint_cubit.dart';
 import 'features/blocks/hidden_content_cubit.dart';
+import 'features/issues/attachments/attachment_viewer.dart'
+    show clearViewerBytes;
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/shifts/bloc/my_shifts_snapshot_cubit.dart';
 import 'features/time/time_shortcuts.dart';
@@ -416,8 +418,10 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // The knowledge base is held for the app's lifetime; what it loaded
     // belongs to the account that just left.
     _knowledge.reset();
-    // So is who that account blocks, and what it opened anyway.
+    // So is who that account blocks, and what it opened anyway, and the files
+    // the viewer kept for a swipe back.
     _hiddenContent.reset();
+    clearViewerBytes();
     final previous = _timer;
     final previousPrefs = _surfacePrefs;
     final previousShifts = _shiftSnapshot;
