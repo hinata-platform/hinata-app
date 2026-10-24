@@ -20,7 +20,7 @@ void main() {
     caseId: 'k1',
     headline: 'Eine Entscheidung der Moderation zu deinem Inhalt',
     measure: 'Dein Kommentar vom 21. Okt. in MESSE-14 wurde entfernt.',
-    scope: StatementScope.whole,
+    scope: RemovalScope.whole,
     basis: 'Meldungen von Mitgliedern.',
     facts: 'Der Kommentar wertet eine Kollegin ab.',
     automation: 'Eine Person hat geprüft und entschieden.',
@@ -87,7 +87,7 @@ void main() {
         caseId: 'k1',
         headline: 'Eine Entscheidung der Moderation zu deinem Inhalt',
         measure: 'Dein Kommentar wurde entfernt.',
-        scope: StatementScope.whole,
+        scope: RemovalScope.whole,
       ),
     );
     await pump(tester);
