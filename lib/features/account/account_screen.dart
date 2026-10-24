@@ -52,6 +52,7 @@ import 'shift_feed_section.dart';
 import 'twofa_modals.dart';
 import 'package:hinata/core/widgets/user_pronouns.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/util/published_link.dart';
 
 part 'account_screen.widgets.dart';
 
@@ -1933,7 +1934,8 @@ class _AccountScreenState extends State<_AccountBody> {
         ),
         // Operator-configured external privacy notice (optional supplement to
         // the app's own policy above).
-        if ((config.meta?.privacyPolicyUrl ?? '').isNotEmpty) ...[
+        if (publishedLink(config.meta?.privacyPolicyUrl)
+            case final privacy?) ...[
           Divider(height: 1, color: AppColors.hairline2),
           SettingRow(
             label: context.t('settings.privacyPolicyExternal'),
@@ -1941,10 +1943,8 @@ class _AccountScreenState extends State<_AccountBody> {
             trailing: IconButton(
               tooltip: context.t('settings.privacyPolicyExternal'),
               icon: const Icon(LucideIcons.externalLink, size: 17),
-              onPressed: () => launchUrl(
-                Uri.parse(config.meta!.privacyPolicyUrl),
-                mode: LaunchMode.externalApplication,
-              ),
+              onPressed: () =>
+                  launchUrl(privacy, mode: LaunchMode.externalApplication),
             ),
           ),
         ],

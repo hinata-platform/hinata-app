@@ -13,6 +13,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../../core/util/dates.dart';
+import '../../core/util/published_link.dart';
 import '../account/account_widgets.dart' show AccountSection;
 import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart';
@@ -64,16 +65,13 @@ class HelpContactSection extends StatelessWidget {
             detail: context.t('moderation.help.reportElsewhereDetail'),
             onTap: () => unawaited(showReportElsewhereSheet(context)),
           ),
-          if (moderation.imprintUrl case final imprint?)
+          if (publishedLink(moderation.imprintUrl) case final imprint?)
             _LinkRow(
               icon: LucideIcons.landmark,
               label: _named(context, 'moderation.help.imprint', meta.name),
               external: true,
               onTap: () => unawaited(
-                launchUrl(
-                  Uri.parse(imprint),
-                  mode: LaunchMode.externalApplication,
-                ),
+                launchUrl(imprint, mode: LaunchMode.externalApplication),
               ),
             ),
         ],
