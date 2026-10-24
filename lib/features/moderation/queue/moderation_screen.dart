@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/blocs/paged_cubit.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_case_models.dart';
@@ -403,6 +404,9 @@ class _CaseList extends StatelessWidget {
             );
           }
           final now = DateTime.now();
+          final me = context.select<AuthBloc, String?>(
+            (bloc) => bloc.state.user?.id,
+          );
           return RefreshIndicator(
             onRefresh: cubit.load,
             child: ListView.builder(
@@ -424,6 +428,7 @@ class _CaseList extends StatelessWidget {
                   child: CaseRow(
                     summary: summary,
                     now: now,
+                    meId: me,
                     selected: summary.id == selected,
                     onTap: () => onOpen(summary.id),
                   ),

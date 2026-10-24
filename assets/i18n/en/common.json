@@ -6148,7 +6148,8 @@
         "open": "New reports appear here, and you get a notification.",
         "appeal": "When somebody appeals a decision, somebody else reviews it here.",
         "done": "Decided cases stay here until their retention ends."
-      }
+      },
+      "withYou": "With you"
     },
     "kind": {
       "issue": "Issue",
