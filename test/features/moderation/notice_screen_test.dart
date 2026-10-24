@@ -34,7 +34,14 @@ void main() {
 
   late FakeModerationRepository moderation;
 
-  setUp(() => moderation = FakeModerationRepository());
+  setUp(
+    () => moderation = FakeModerationRepository()
+      ..answerWith(
+        #page,
+        (call) =>
+            Uri.parse('https://server.test${call.positionalArguments[0]}'),
+      ),
+  );
 
   Future<void> pump(WidgetTester tester) async {
     tester.view
