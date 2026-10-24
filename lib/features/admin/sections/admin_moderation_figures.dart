@@ -14,7 +14,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/util/file_download.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show showGlassToast, GlassToastKind;
+    show anchorRectOfContext, showGlassToast, GlassToastKind;
 
 class FiguresState extends Equatable {
   const FiguresState({this.years = const [], this.year, this.busy = false});
@@ -140,7 +140,9 @@ class FiguresDownload extends StatelessWidget {
               builder: (anchor) => OutlinedButton.icon(
                 onPressed: state.busy
                     ? null
-                    : () => unawaited(_download(context, _rectOf(anchor))),
+                    : () => unawaited(
+                        _download(context, anchorRectOfContext(anchor)),
+                      ),
                 icon: state.busy
                     ? const SizedBox(
                         width: 16,
@@ -170,10 +172,4 @@ class FiguresDownload extends StatelessWidget {
       );
     },
   );
-
-  static Rect? _rectOf(BuildContext context) {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize || !box.attached) return null;
-    return box.localToGlobal(Offset.zero) & box.size;
-  }
 }

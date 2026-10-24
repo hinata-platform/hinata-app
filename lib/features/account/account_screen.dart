@@ -664,7 +664,8 @@ class _AccountScreenState extends State<_AccountBody> {
   }
 
   /// The sections this account has, in the phone index's order: tokens only
-  /// with the MCP server, time only with the extended time module.
+  /// with the MCP server, time only with the extended time module, blocked
+  /// people only on a server that knows blocking.
   List<_SettingsSection> _visibleSections() => [
     for (final item in _settingsMenu)
       if (!(item.section == _SettingsSection.tokens && !_mcpEnabled) &&
@@ -721,15 +722,10 @@ class _AccountScreenState extends State<_AccountBody> {
     final isOrgAdmin = context.read<AuthBloc>().state.user?.isOrgAdmin ?? false;
     final isModerator =
         context.read<AuthBloc>().state.user?.isModerator ?? false;
-    final mcpEnabled = _mcpEnabled;
-    final advancedTime = _advancedTime;
-    final moderation = _moderation;
+    final visible = _visibleSections().toSet();
     final tiles = <Widget>[];
     for (final item in _settingsMenu) {
-      if (item.section == _SettingsSection.tokens && !mcpEnabled) continue;
-      // Nothing to configure where there is no pomodoro to configure.
-      if (item.section == _SettingsSection.time && !advancedTime) continue;
-      if (item.section == _SettingsSection.blocked && !moderation) continue;
+      if (!visible.contains(item.section)) continue;
       tiles.add(
         _navTile(
           icon: item.icon,

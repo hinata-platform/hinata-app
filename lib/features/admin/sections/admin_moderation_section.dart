@@ -16,7 +16,7 @@ import '../../../core/widgets/hive_widgets.dart' show HiveAvatar;
 import '../admin_cards.dart';
 import '../admin_settings_cubit.dart';
 import '../admin_form_helpers.dart';
-import 'admin_moderation_cubit.dart';
+import 'moderators_cubit.dart';
 import 'admin_moderation_entry.dart';
 import 'admin_moderation_figures.dart';
 import 'admin_moderation_filter.dart';
@@ -24,10 +24,10 @@ import 'admin_moderation_retention.dart';
 import 'admin_moderation_rules.dart';
 
 /// Admin → Moderation (HIN-26): who comes in without anybody deciding, who
-/// moderates, the contact the operator publishes for reports, the house rules
-/// and the file types people may upload. The role itself is handed out in
-/// user management; the contact, the rules and the file types are saved with
-/// the other settings.
+/// moderates, the contact the operator publishes for reports, how long cases
+/// are kept with the yearly figures, the house rules, the text check and the
+/// file types people may upload. The role itself is handed out in user
+/// management; everything else is saved with the other settings.
 class AdminModerationSection extends StatelessWidget {
   const AdminModerationSection({
     super.key,

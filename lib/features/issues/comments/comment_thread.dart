@@ -20,10 +20,11 @@ import '../../../core/widgets/hive_widgets.dart';
 import '../../../core/widgets/moderation_placeholder.dart';
 import '../../../core/widgets/user_pronouns.dart';
 import '../../../core/lexical/hinata_document.dart';
-import '../../sprint/modals/glass_modal.dart' show showGlassErrorToast;
+import '../../sprint/modals/glass_modal.dart'
+    show anchorRectOfContext, showGlassErrorToast;
 import 'voice/voice_player.dart';
 import '../../../core/theme/app_type.dart';
-import '../../blocks/collapsed_content_line.dart';
+import '../../blocks/hidden_content_fold.dart';
 import '../../blocks/hidden_content_cubit.dart';
 import '../../moderation/notice/notice_screen.dart' show noticeLocation;
 import '../../people/person_link.dart';
