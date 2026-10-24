@@ -6148,7 +6148,8 @@
         "open": "Les nouveaux signalements apparaissent ici, et tu reçois une notification.",
         "appeal": "Quand quelqu'un conteste une décision, une autre personne la réexamine ici.",
         "done": "Les cas décidés restent ici jusqu'à la fin de leur conservation."
-      }
+      },
+      "withYou": "Chez toi"
     },
     "kind": {
       "issue": "Ticket",
