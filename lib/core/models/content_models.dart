@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 import '../util/dates.dart';
+import 'moderation_models.dart';
 
 import 'work_models.dart';
 
@@ -60,6 +61,7 @@ class Article extends Equatable {
     this.createdAt,
     this.updatedAt,
     this.lastEditorId,
+    this.moderation = const {},
   });
 
   final String id;
@@ -100,6 +102,9 @@ class Article extends Equatable {
   /// since the server started recording it.
   final String? lastEditorId;
 
+  /// The moderation's marks by field, `title` and `content` (HIN-173).
+  final Map<String, ContentMark> moderation;
+
   factory Article.fromJson(Map<String, dynamic> json) => Article(
     id: json['id'] as String,
     title: json['title'] as String? ?? '',
@@ -117,12 +122,14 @@ class Article extends Equatable {
     createdAt: parseInstant(json['createdAt']),
     updatedAt: parseInstant(json['updatedAt']),
     lastEditorId: json['lastEditorId'] as String?,
+    moderation: ContentMark.mapOf(json['moderation']),
   );
 
   @override
   List<Object?> get props => [
     id,
     title,
+    moderation,
     parentId,
     projectId,
     teamId,

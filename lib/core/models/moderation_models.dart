@@ -270,3 +270,246 @@ class TextCheckResult extends Equatable {
   @override
   List<Object?> get props => [verdict, terms, found, exceptions];
 }
+
+/// What a report or a mark is about, with the server's name for it (HIN-170).
+enum ContentKind {
+  issue('ISSUE'),
+  comment('COMMENT'),
+  attachment('ATTACHMENT'),
+  article('ARTICLE'),
+  person('PERSON'),
+  other('OTHER');
+
+  const ContentKind(this.wire);
+
+  final String wire;
+
+  /// Something else for a value this app does not know.
+  static ContentKind of(Object? wire) => values.firstWhere(
+    (kind) => kind.wire == wire,
+    orElse: () => ContentKind.other,
+  );
+}
+
+/// What a report names: the kind, the id and, for an attachment or a comment,
+/// what it lives in (HIN-170). The server resolves it; nothing here is trusted.
+class TargetRef extends Equatable {
+  const TargetRef(this.kind, this.id, {this.parentId});
+
+  final ContentKind kind;
+  final String id;
+  final String? parentId;
+
+  Map<String, dynamic> toJson() => {
+    'kind': kind.wire,
+    'id': id,
+    'parentId': ?parentId,
+  };
+
+  @override
+  List<Object?> get props => [kind, id, parentId];
+}
+
+/// How the moderation left a field of a content (HIN-171): removed, so the
+/// placeholder stands in its place, or written anew, so it shows its text.
+enum MarkState {
+  removed('REMOVED'),
+  rewritten('REWRITTEN');
+
+  const MarkState(this.wire);
+
+  final String wire;
+
+  /// Written anew for a value this app does not know: the field shows its
+  /// text, which is what the server sent.
+  static MarkState of(Object? wire) => values.firstWhere(
+    (state) => state.wire == wire,
+    orElse: () => MarkState.rewritten,
+  );
+}
+
+/// The moderation's mark on one field of a content.
+class ContentMark extends Equatable {
+  const ContentMark({required this.state, this.caseId, this.at});
+
+  final MarkState state;
+
+  /// The case the decision belongs to, for the notice to the person concerned.
+  final String? caseId;
+  final DateTime? at;
+
+  bool get removed => state == MarkState.removed;
+
+  factory ContentMark.fromJson(Map<String, dynamic> json) => ContentMark(
+    state: MarkState.of(json['state']),
+    caseId: json['caseId'] as String?,
+    at: parseInstant(json['at']),
+  );
+
+  /// The marks of a content by field name, from its `moderation` object; an
+  /// older server sends none.
+  static Map<String, ContentMark> mapOf(Object? json) => {
+    if (json is Map)
+      for (final entry in json.entries)
+        if (entry.value is Map<String, dynamic>)
+          '${entry.key}': ContentMark.fromJson(
+            entry.value as Map<String, dynamic>,
+          ),
+  };
+
+  @override
+  List<Object?> get props => [state, caseId, at];
+}
+
+/// What a decision did to the content, as the notice names it (HIN-171); none
+/// for a suspension alone.
+enum StatementScope {
+  whole('WHOLE'),
+  title('TITLE'),
+  description('DESCRIPTION'),
+  revert('REVERT'),
+  avatar('AVATAR'),
+  profileText('PROFILE_TEXT');
+
+  const StatementScope(this.wire);
+
+  final String wire;
+
+  static StatementScope? of(Object? wire) {
+    for (final scope in values) {
+      if (scope.wire == wire) return scope;
+    }
+    return null;
+  }
+}
+
+/// Where an appeal stands.
+enum AppealState {
+  pending('PENDING'),
+  upheld('UPHELD'),
+  reversed('REVERSED');
+
+  const AppealState(this.wire);
+
+  final String wire;
+
+  static AppealState? of(Object? wire) {
+    for (final state in values) {
+      if (state.wire == wire) return state;
+    }
+    return null;
+  }
+}
+
+/// The moderation's notice to the person concerned (HIN-171), with every
+/// statement DSA Art. 17(3) asks for, in the reader's language as the server
+/// wrote it, and where an appeal stands.
+class Statement extends Equatable {
+  const Statement({
+    required this.caseId,
+    this.headline = '',
+    this.measure = '',
+    this.scope,
+    this.until,
+    this.basis,
+    this.facts,
+    this.automatedDetection = false,
+    this.automation,
+    this.lawGround = false,
+    this.groundText,
+    this.rulesUrl,
+    this.appealUntil,
+    this.appealable = false,
+    this.appeal,
+    this.appealState,
+    this.courtsNote,
+    this.messageToAuthor,
+  });
+
+  final String caseId;
+  final String headline;
+
+  /// What was done, how far, and for how long.
+  final String measure;
+  final StatementScope? scope;
+
+  /// When a suspension ends; none for none, or for one without an end.
+  final DateTime? until;
+
+  /// What led to it, and what moderation found.
+  final String? basis;
+  final String? facts;
+
+  /// Whether a machine found it; the decision is always a person's.
+  final bool automatedDetection;
+  final String? automation;
+
+  /// Whether it rests on the law rather than on the house rules.
+  final bool lawGround;
+
+  /// The rule or the law it rests on, in words.
+  final String? groundText;
+
+  /// The house rules as they read when it was decided, as a path of the
+  /// server.
+  final String? rulesUrl;
+
+  /// Until when the person may appeal, and whether they still may.
+  final DateTime? appealUntil;
+  final bool appealable;
+
+  /// Where an appeal stands, in words, and as a state.
+  final String? appeal;
+  final AppealState? appealState;
+
+  final String? courtsNote;
+
+  /// What moderation wrote to the person, if anything.
+  final String? messageToAuthor;
+
+  /// Whether the decision suspended the account rather than removed content.
+  bool get suspends => scope == null || until != null;
+
+  factory Statement.fromJson(Map<String, dynamic> json) => Statement(
+    caseId: json['caseId'] as String? ?? '',
+    headline: json['headline'] as String? ?? '',
+    measure: json['measure'] as String? ?? '',
+    scope: StatementScope.of(json['scope']),
+    until: parseInstant(json['until']),
+    basis: json['basis'] as String?,
+    facts: json['facts'] as String?,
+    automatedDetection: json['automatedDetection'] as bool? ?? false,
+    automation: json['automation'] as String?,
+    lawGround: json['ground'] == 'LAW',
+    groundText: json['groundText'] as String?,
+    rulesUrl: json['rulesUrl'] as String?,
+    appealUntil: parseInstant(json['appealUntil']),
+    appealable: json['appealable'] as bool? ?? false,
+    appeal: json['appeal'] as String?,
+    appealState: AppealState.of(json['appealState']),
+    courtsNote: json['courtsNote'] as String?,
+    messageToAuthor: json['messageToAuthor'] as String?,
+  );
+
+  @override
+  List<Object?> get props => [
+    caseId,
+    headline,
+    measure,
+    scope,
+    until,
+    basis,
+    facts,
+    automatedDetection,
+    automation,
+    lawGround,
+    groundText,
+    rulesUrl,
+    appealUntil,
+    appealable,
+    appeal,
+    appealState,
+    courtsNote,
+    messageToAuthor,
+  ];
+}

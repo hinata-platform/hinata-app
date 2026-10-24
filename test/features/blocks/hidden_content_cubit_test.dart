@@ -5,15 +5,24 @@ import 'package:hinata/features/blocks/hidden_content_cubit.dart';
 
 import '../../support/recording_fake.dart';
 
-/// What the reader folds away (HIN-168): read once per sign-in, changed by
-/// every block and unblock, forgotten on sign-out.
+/// What the reader folds away (HIN-168, HIN-173): read once per sign-in,
+/// changed by every block, unblock and report, forgotten on sign-out.
 void main() {
   late FakeAccountRepository account;
+  late FakeModerationRepository moderation;
 
-  setUp(() => account = FakeAccountRepository());
+  setUp(() {
+    account = FakeAccountRepository();
+    moderation = FakeModerationRepository()
+      ..answer<Set<String>>(#reportedIds, const {});
+  });
 
   HiddenContentCubit cubit({bool enabled = true}) {
-    final hidden = HiddenContentCubit(account, enabled: () => enabled);
+    final hidden = HiddenContentCubit(
+      account,
+      moderation,
+      enabled: () => enabled,
+    );
     addTearDown(hidden.close);
     return hidden;
   }
@@ -31,7 +40,42 @@ void main() {
     final hidden = cubit(enabled: false);
     await hidden.load();
     expect(account.calls, isEmpty);
+    expect(moderation.calls, isEmpty);
     expect(hidden.state, const HiddenContentState());
+  });
+
+  test('folds the comments one reported, and says why', () async {
+    account.answer<Set<String>>(#blockedIds, {'jonas'});
+    moderation.answer<Set<String>>(#reportedIds, {'c2'});
+    final hidden = cubit();
+    await hidden.load();
+
+    expect(
+      hidden.state.foldOf(authorId: 'lena', contentId: 'c2'),
+      FoldReason.reported,
+    );
+    expect(
+      hidden.state.foldOf(authorId: 'jonas', contentId: 'c2'),
+      FoldReason.blocked,
+    );
+    expect(hidden.state.foldOf(authorId: 'lena', contentId: 'c3'), isNull);
+  });
+
+  test('one list failing keeps the other', () async {
+    account.answer<Set<String>>(#blockedIds, {'jonas'});
+    moderation.fail(#reportedIds, failure);
+    final hidden = cubit();
+    await hidden.load();
+    expect(hidden.state.blocks('jonas'), isTrue);
+    expect(hidden.state.reported, isEmpty);
+  });
+
+  test('a report folds the comment at once, also one shown anyway', () async {
+    final hidden = cubit();
+    hidden
+      ..reveal('c1')
+      ..noteReported('c1');
+    expect(hidden.state.folds(authorId: 'lena', contentId: 'c1'), isTrue);
   });
 
   test('a failed read folds nothing', () async {
