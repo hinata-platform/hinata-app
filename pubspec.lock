@@ -1127,10 +1127,10 @@ packages:
     dependency: transitive
     description:
       name: lexical_link
-      sha256: "0289a675a3f854bbd0df91a101c0fd3ac00e9e215305727fa30e0b93f86d5c50"
+      sha256: cfa82fe626a7c05aea7e8ab8d319663a173dc8f982c1c01ff2488174b204e456
       url: "https://pub.dev"
     source: hosted
-    version: "1.7.4"
+    version: "1.7.7"
   lexical_list:
     dependency: transitive
     description:
