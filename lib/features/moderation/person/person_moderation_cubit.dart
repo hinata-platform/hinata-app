@@ -28,7 +28,7 @@ class PersonModerationCubit extends Cubit<String?> {
       );
       return await _moderation.detail(id);
     } on ApiFailure catch (failure) {
-      emit(failure.message);
+      if (!isClosed) emit(failure.message);
       return null;
     }
   }
@@ -41,7 +41,7 @@ class PersonModerationCubit extends Cubit<String?> {
       await _moderation.liftSuspension(caseId, detail.summary.rev, note);
       return true;
     } on ApiFailure catch (failure) {
-      emit(failure.message);
+      if (!isClosed) emit(failure.message);
       return false;
     }
   }
