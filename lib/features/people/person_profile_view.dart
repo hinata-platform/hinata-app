@@ -8,6 +8,7 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/theme/hue_colors.dart' show colorFromHex;
+import '../../core/util/dates.dart';
 import '../../core/util/zone_clock.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
@@ -23,6 +24,8 @@ class PersonProfileActions {
     this.writeEmail,
     this.toggleBlock,
     this.report,
+    this.suspend,
+    this.liftSuspension,
     this.close,
   });
 
@@ -40,6 +43,14 @@ class PersonProfileActions {
   /// Reports the person (HIN-173), beside the row on a wide window. Null
   /// where blocking is, and on a removed profile.
   final void Function(Rect? anchor)? report;
+
+  /// Opens a case to suspend the person (HIN-174). Null unless the reader
+  /// moderates, and never on one's own profile or an administrator's.
+  final VoidCallback? suspend;
+
+  /// Lifts the person's suspension, with a reason. Null unless the reader
+  /// moderates and the account is suspended.
+  final VoidCallback? liftSuspension;
 
   /// The side panel's close button; null on a page, which has its back button.
   final VoidCallback? close;
@@ -166,6 +177,32 @@ class PersonProfileView extends StatelessWidget {
                 ),
                 onTap: () => report(_rectOf(rowContext)),
               ),
+            ),
+        ],
+        if (actions.suspend != null || actions.liftSuspension != null) ...[
+          const SizedBox(height: 22),
+          _SectionLabel(context.t('moderation.queue.title')),
+          const SizedBox(height: 8),
+          if (actions.liftSuspension case final lift?)
+            _LinkRow(
+              icon: LucideIcons.userCheck,
+              label: context.t('moderation.suspension.lift'),
+              detail: p.suspension?.until == null
+                  ? context.t('moderation.suspension.indefinite')
+                  : context.t(
+                      'moderation.suspension.until',
+                      variables: {
+                        'date': recentMoment(context, p.suspension!.until!),
+                      },
+                    ),
+              onTap: lift,
+            )
+          else if (actions.suspend case final suspend?)
+            _LinkRow(
+              icon: LucideIcons.userX,
+              label: context.t('moderation.suspension.suspend'),
+              detail: context.t('moderation.suspension.suspendDetail'),
+              onTap: suspend,
             ),
         ],
         if (admin != null) ...[
