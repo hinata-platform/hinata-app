@@ -209,22 +209,6 @@ class AccountRepository {
   Future<void> acceptHouseRules(int version) =>
       _api.post('/api/v1/me/rules/acceptance', body: {'version': version});
 
-  /// Reports something that is no post, page or person, at [location] as the
-  /// reader describes it. Nobody is told who reported.
-  Future<void> reportElsewhere({
-    required String location,
-    required ReportCategory category,
-    String? explanation,
-  }) => _api.post(
-    '/api/v1/me/moderation/reports',
-    body: {
-      'target': {'kind': 'OTHER'},
-      'category': category.wire,
-      'location': location,
-      'explanation': ?explanation,
-    },
-  );
-
   // Personal access tokens (MCP) ------------------------------------------------
 
   /// The caller's Personal Access Tokens (metadata only; secrets never returned).

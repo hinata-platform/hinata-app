@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
-import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/content_models.dart' show ArticleVersion;
@@ -522,10 +521,11 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
 
   /// Somebody else's page that is still there, on a server that knows
   /// reporting (HIN-173).
-  bool _reportable(KbArticle a) =>
-      (context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false) &&
-      a.authorId != _store.me.id &&
-      !(a.isRemoved('title') && a.isRemoved('content'));
+  bool _reportable(KbArticle a) => canReport(
+    context,
+    authorId: a.authorId,
+    removed: a.isRemoved('title') && a.isRemoved('content'),
+  );
 
   Future<void> _report(KbArticle a, Rect anchor) => showReportSheet(
     context,
