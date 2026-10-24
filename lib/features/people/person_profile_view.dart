@@ -21,6 +21,7 @@ class PersonProfileActions {
     required this.openTeam,
     required this.openProject,
     this.writeEmail,
+    this.toggleBlock,
     this.close,
   });
 
@@ -30,6 +31,10 @@ class PersonProfileActions {
 
   /// Null where no address is known to the reader.
   final VoidCallback? writeEmail;
+
+  /// Blocks the person, or lifts the block (HIN-168). Null on one's own
+  /// profile and where the server does not know blocking.
+  final VoidCallback? toggleBlock;
 
   /// The side panel's close button; null on a page, which has its back button.
   final VoidCallback? close;
@@ -49,6 +54,7 @@ class PersonProfileView extends StatelessWidget {
     required this.actions,
     required this.clockReady,
     required this.padding,
+    this.blocked = false,
     this.admin,
     this.now,
   });
@@ -57,6 +63,10 @@ class PersonProfileView extends StatelessWidget {
   final PersonProfileActions actions;
   final bool clockReady;
   final EdgeInsets padding;
+
+  /// Whether the reader blocks this person, which turns the privacy row into
+  /// lifting it.
+  final bool blocked;
   final Widget? admin;
 
   /// The moment the local time is told for; now when null (tests pin it).
@@ -120,6 +130,24 @@ class PersonProfileView extends StatelessWidget {
           Text(
             context.t('people.noneShared'),
             style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
+          ),
+        ],
+        if (actions.toggleBlock != null) ...[
+          const SizedBox(height: 22),
+          _SectionLabel(context.t('blocks.profile.section')),
+          const SizedBox(height: 8),
+          _LinkRow(
+            icon: blocked ? LucideIcons.userCheck : LucideIcons.userX,
+            label: context.t(
+              blocked ? 'blocks.profile.unblock' : 'blocks.profile.block',
+            ),
+            detail: blocked
+                ? context.t(
+                    'blocks.profile.unblockDetail',
+                    variables: {'name': p.displayName},
+                  )
+                : context.t('blocks.profile.blockDetail'),
+            onTap: actions.toggleBlock!,
           ),
         ],
         if (admin != null) ...[

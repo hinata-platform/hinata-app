@@ -788,4 +788,30 @@ class AccessProject extends Equatable {
   List<Object?> get props => [id, role];
 }
 
+/// Somebody the reader blocks (HIN-168), as their list in the settings shows
+/// them. Private to the reader: the person is never told.
+class BlockedPerson extends Equatable {
+  const BlockedPerson({
+    required this.id,
+    required this.displayName,
+    this.avatarUrl,
+    this.blockedAt,
+  });
+
+  final String id;
+  final String displayName;
+  final String? avatarUrl;
+  final DateTime? blockedAt;
+
+  factory BlockedPerson.fromJson(Map<String, dynamic> json) => BlockedPerson(
+    id: json['id'] as String,
+    displayName: json['displayName'] as String? ?? '',
+    avatarUrl: json['avatarUrl'] as String?,
+    blockedAt: _date(json['blockedAt']),
+  );
+
+  @override
+  List<Object?> get props => [id, displayName, avatarUrl, blockedAt];
+}
+
 DateTime? _date(dynamic value) => parseInstant(value);
