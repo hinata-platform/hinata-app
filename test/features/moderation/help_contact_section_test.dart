@@ -74,6 +74,19 @@ void main() {
     expect(account.calls, isEmpty);
   });
 
+  testWidgets('about the app names its provider, its terms, its privacy '
+      'policy and its imprint (HIN-178)', (tester) async {
+    await pump(tester);
+
+    await tester.tap(find.text('moderation.help.aboutApp'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('moderation.help.provider'), findsOneWidget);
+    expect(find.text('auth.termsOfService'), findsOneWidget);
+    expect(find.text('auth.privacyPolicy'), findsOneWidget);
+    expect(find.text('moderation.help.appImprint'), findsOneWidget);
+  });
+
   testWidgets('reporting something else asks why, then where, and sends it '
       'as a report of kind other', (tester) async {
     final account = await pump(tester);

@@ -6017,7 +6017,8 @@
       "rulesAccepted": "Version {{version}}, agreed on {{date}}",
       "aboutVersion": "Hinata {{version}}",
       "provider": "Provider of the app",
-      "operatorNote": "Your organisation runs its own server and is responsible for what is on it. Reports and blocks go to its moderation, not to the provider of the app."
+      "operatorNote": "Your organisation runs its own server and is responsible for what is on it. Reports and blocks go to its moderation, not to the provider of the app.",
+      "appImprint": "Imprint"
     },
     "report": {
       "thanks": "Thank you. Moderation will look into it.",

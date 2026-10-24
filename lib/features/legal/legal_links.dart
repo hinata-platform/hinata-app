@@ -47,6 +47,12 @@ Future<void> openTermsOfService(BuildContext context) => launchUrl(
   mode: LaunchMode.externalApplication,
 );
 
+/// Opens the app provider's hosted imprint in the external browser (HIN-178).
+Future<void> openImprint(BuildContext context) => launchUrl(
+  legalUrl(context, 'impressum'),
+  mode: LaunchMode.externalApplication,
+);
+
 /// A centred pair of links to the hosted legal pages (terms of service +
 /// privacy policy), used as a footer in the auth area (login / register).
 ///
