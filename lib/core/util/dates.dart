@@ -90,7 +90,8 @@ DateTime addDays(DateTime day, int days) =>
 /// The name of [weekday] ([DateTime.monday] to [DateTime.sunday]) in the reader's
 /// language, "Freitag". Through a date of that weekday, since `intl` names days of
 /// dates: 1 January 2024 was a Monday.
-String weekdayName(BuildContext context, int weekday) => DateFormat.EEEE(
+String weekdayName(BuildContext context, int weekday) => dateFormatFor(
+  DateFormat.WEEKDAY,
   Localizations.localeOf(context).toLanguageTag(),
 ).format(DateTime(2024, 1, weekday));
 
@@ -99,14 +100,25 @@ String weekdayName(BuildContext context, int weekday) => DateFormat.EEEE(
 String recentDay(BuildContext context, DateTime at) {
   final locale = Localizations.localeOf(context).toString();
   final local = at.toLocal();
-  final format = local.year == DateTime.now().year
-      ? DateFormat.MMMd(locale)
-      : DateFormat.yMMMd(locale);
-  return format.format(local);
+  return dateFormatFor(
+    local.year == DateTime.now().year
+        ? DateFormat.ABBR_MONTH_DAY
+        : DateFormat.YEAR_ABBR_MONTH_DAY,
+    locale,
+  ).format(local);
 }
 
 /// The day and time of [at] as the app tells a recent moment: 22. Okt., 09:14.
 String recentMoment(BuildContext context, DateTime at) {
   final locale = Localizations.localeOf(context).toString();
-  return '${recentDay(context, at)}, ${DateFormat.Hm(locale).format(at.toLocal())}';
+  final time = dateFormatFor(DateFormat.HOUR24_MINUTE, locale);
+  return '${recentDay(context, at)}, ${time.format(at.toLocal())}';
 }
+
+/// The formatter for [pattern] (a skeleton such as [DateFormat.ABBR_MONTH_DAY])
+/// in [locale], one per pair: building one parses its pattern, and a list
+/// asks for the same few for every row it shows.
+DateFormat dateFormatFor(String pattern, String locale) =>
+    _formats[(pattern, locale)] ??= DateFormat(pattern, locale);
+
+final _formats = <(String, String), DateFormat>{};
