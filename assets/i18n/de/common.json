@@ -3736,6 +3736,7 @@
       "confirm": "Einschalten",
       "ownTerms": "Eigene Begriffe",
       "ownTermsHint": "Werden immer abgelehnt, in jeder Schreibweise. Bis zu 500 Begriffe mit je 60 Zeichen.",
+      "ownTermsPublic": "Eigene Begriffe stehen Wort für Wort in euren öffentlichen Hausregeln, auch in jeder früheren Version. Tragt keine Namen von Personen und nichts Vertrauliches ein.",
       "exceptions": "Ausnahmen",
       "exceptionsHint": "Wörter, die bei euch harmlos sind, etwa Fachbegriffe. Inhalte, die Kinder gefährden, bleiben immer gesperrt.",
       "addTerm": "Begriff hinzufügen",

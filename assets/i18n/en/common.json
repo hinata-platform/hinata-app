@@ -3736,6 +3736,7 @@
       "confirm": "Turn on",
       "ownTerms": "Own terms",
       "ownTermsHint": "Always refused, however they are spelled. Up to 500 terms of 60 characters each.",
+      "ownTermsPublic": "Your own terms appear word for word in your public house rules, in every earlier version as well. Do not enter anybody's name or anything confidential.",
       "exceptions": "Exceptions",
       "exceptionsHint": "Words that are harmless for you, such as technical terms. Content that endangers children always stays blocked.",
       "addTerm": "Add term",
