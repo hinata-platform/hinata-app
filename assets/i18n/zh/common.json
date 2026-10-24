@@ -362,6 +362,7 @@
       "ssoAccountNotLinkedSsoOnly": "已存在使用此邮箱地址的账户，但它未与此登录方式关联。请联系管理员。",
       "ssoEmailNotVerified": "你的登录服务报告此邮箱地址尚未确认。现有账户绝不会关联到未确认的地址。请联系管理员。",
       "ssoNoEmail": "你的登录服务没有发送邮箱地址，没有地址就无法创建账户。请联系管理员。",
+      "accountSuspended": "你的账户已被暂停。审核发来的邮件说明了原因、期限以及如何申诉。",
       "accountDeactivated": "你的账户已停用。请联系管理员。",
       "pendingApproval": "你的账户正在等待管理员审批。",
       "emailNotVerified": "请先确认你的邮箱地址。确认链接已发送到你的收件箱。"
@@ -3502,7 +3503,15 @@
       "moderatorConfirmMany": "{{names}} 将审核被举报的内容并作出决定，包括删除帖子和停用账户。他们只能看到被举报的内容。",
       "toastModeratorGranted": "已授予审核角色",
       "toastModeratorRevoked": "已撤销审核角色",
-      "reasonOwnModeratorRole": "此角色需由管理团队中的其他人授予你。"
+      "reasonOwnModeratorRole": "此角色需由管理团队中的其他人授予你。",
+      "suspended": "已暂停",
+      "suspendedUntil": "暂停至 {{date}}",
+      "liftSuspension": "解除暂停",
+      "liftSuspensionSub": "审核暂停了此账户。解除后，此人可以重新登录，审核也会收到通知。",
+      "liftSuspensionRowSub": "被审核暂停。原因保留在审核中。",
+      "liftSuspensionNote": "记录备注（可选）",
+      "liftSuspensionAction": "解除暂停",
+      "toastSuspensionLifted": "暂停已解除"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",

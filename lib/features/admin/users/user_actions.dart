@@ -175,6 +175,14 @@ UserActions buildUserActions(
       if (!await showUnlinkSsoModal(context, u)) return;
       await run(() => users.unlinkSso(u.id), 'admin.um.toastSsoUnlinked');
     },
+    openLiftSuspension: (u) async {
+      final note = await showLiftSuspensionModal(context, u);
+      if (note == null) return;
+      await run(
+        () => users.liftSuspension(u.id, note),
+        'admin.um.toastSuspensionLifted',
+      );
+    },
     openDelete: (ids) async {
       if (!await showDeleteModal(context, usersFor(ids))) return;
       await run(

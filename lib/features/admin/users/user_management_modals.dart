@@ -440,6 +440,77 @@ Future<bool> showUnlinkSsoModal(BuildContext context, AdminUser user) {
   );
 }
 
+// ─────────────────────────── Lift a suspension (HIN-172) ─────────────────
+
+/// Asks before a suspension moderation decided is lifted, with a note for the
+/// record. Answers the note, empty when none was given, or null when the
+/// administrator thought better of it. The case and why it was decided stay
+/// with moderation.
+Future<String?> showLiftSuspensionModal(BuildContext context, AdminUser user) {
+  return showGlassModal<String>(
+    context,
+    width: 480,
+    builder: (_) => _LiftSuspensionModal(user: user),
+  );
+}
+
+class _LiftSuspensionModal extends StatefulWidget {
+  const _LiftSuspensionModal({required this.user});
+  final AdminUser user;
+
+  @override
+  State<_LiftSuspensionModal> createState() => _LiftSuspensionModalState();
+}
+
+class _LiftSuspensionModalState extends State<_LiftSuspensionModal> {
+  final _note = TextEditingController();
+
+  @override
+  void dispose() {
+    _note.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return _scaffold(
+      header: _Header(
+        icon: LucideIcons.lockOpen,
+        title: context.t('admin.um.liftSuspension'),
+        subtitle: context.t('admin.um.liftSuspensionSub'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 4, 22, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _previewList(context, [widget.user]),
+            const SizedBox(height: 14),
+            Semantics(
+              label: context.t('admin.um.liftSuspensionNote'),
+              textField: true,
+              child: TextField(
+                controller: _note,
+                maxLength: 500,
+                minLines: 2,
+                maxLines: 4,
+                decoration: glassInputDecoration(
+                  hint: context.t('admin.um.liftSuspensionNote'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      footer: _Footer(
+        confirmLabel: context.t('admin.um.liftSuspensionAction'),
+        confirmIcon: LucideIcons.lockOpen,
+        onConfirm: () => Navigator.of(context).pop(_note.text.trim()),
+      ),
+    );
+  }
+}
+
 // ─────────────────────────── Delete (type DELETE) ────────────────────────
 
 Future<bool> showDeleteModal(
