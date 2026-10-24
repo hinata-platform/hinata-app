@@ -173,6 +173,6 @@ class HinataRepositories {
   final ShiftRepository shifts;
 
   /// Reporting, the reader's own reports and the moderation's notices
-  /// (HIN-173).
+  /// (HIN-173), and the moderators' cases, decisions and figures (HIN-174).
   final ModerationRepository moderation;
 }
