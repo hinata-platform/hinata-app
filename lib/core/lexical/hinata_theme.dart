@@ -75,35 +75,21 @@ LexicalImageStyle hinataImageStyle() => LexicalImageStyle(
 /// Read at call time rather than held in a `const`: the neutral tokens are
 /// theme-aware getters, so a cached palette would keep the light colours after
 /// a switch to dark.
+///
+/// The accent is the text shade, not the honey: Lexical draws links and the
+/// ticked check-list box in it, and honey reaches 2.3:1 on white, short of what
+/// text (4.5:1) and a control (3:1) owe the page. The caret and the selection
+/// keep the honey; [hinataLexicalTheme] sets them apart. The tick is white on
+/// the text shade in light and the accent's own ink in dark, pairs the tint
+/// palette guarantees for every hue.
 LexicalPalette hinataPalette() => LexicalPalette(
   text: AppColors.ink,
   muted: AppColors.inkSoft,
-  accent: AppColors.accent,
+  accent: AppColors.accentInk,
   surface: AppColors.surfaceMuted,
   border: AppColors.hairline,
   highlight: AppColors.accentSoft.withValues(alpha: 0.5),
-);
-
-/// The palette the list markers draw with, the tick box above all.
-///
-/// Lexical rims an empty box in [LexicalPalette.border], fills a ticked one
-/// with [LexicalPalette.accent] and draws the tick in [LexicalPalette.surface].
-/// Through the document palette that was a divider hairline (1.1 to 1.3:1 in
-/// either theme) and a near-white tick on honey at 2.2:1, the honey itself at
-/// 2.3:1 on white. A tick box is a control, so it owes 3:1 to the page
-/// and its tick 3:1 to the box (WCAG 1.4.11). Each pair below is one the tint
-/// palette already guarantees for every hue: the hint ink as the empty rim,
-/// white on the deep accent in light, the accent's own ink on it in dark.
-///
-/// Bullets and numbers read [LexicalPalette.muted], which matches the document
-/// palette, so they look the same as before.
-LexicalPalette hinataMarkerPalette() => LexicalPalette(
-  text: AppColors.ink,
-  muted: AppColors.inkSoft,
-  accent: _dark ? AppColors.accent : AppColors.accentDeep,
-  surface: _dark ? AppColors.onAccent : AppColors.surfaceLight,
-  border: AppColors.inkFaint,
-  highlight: AppColors.accentSoft.withValues(alpha: 0.5),
+  onAccent: _dark ? AppColors.onAccent : AppColors.surfaceLight,
 );
 
 /// Default space below each top-level block, derived from the body size.
@@ -156,14 +142,6 @@ LexicalTheme hinataLexicalTheme({
     blockSpacing: spacing,
     monospaceFamily: AppTheme.fontMono,
   );
-  // The markers come from a second build over the marker palette: the bundle
-  // has no other way to colour the tick box apart from rules and code fills.
-  final markers = defaultLexicalTheme(
-    baseTextStyle: base,
-    palette: hinataMarkerPalette(),
-    blockSpacing: spacing,
-    monospaceFamily: AppTheme.fontMono,
-  ).markerBuilders;
 
   return LexicalTheme(
     baseTextStyle: theme.baseTextStyle,
@@ -180,7 +158,7 @@ LexicalTheme hinataLexicalTheme({
     },
     blockStyleResolver: theme.blockStyleResolver,
     textStyleResolver: theme.textStyleResolver,
-    markerBuilders: markers,
+    markerBuilders: theme.markerBuilders,
     blockLayouts: {...theme.blockLayouts, ...extraLayouts},
     tokenBuilders: theme.tokenBuilders,
     // A colour and an underline are the whole vocabulary text styling has for
@@ -192,8 +170,8 @@ LexicalTheme hinataLexicalTheme({
     defaultBlockStyle: theme.defaultBlockStyle,
     linkStyle: theme.linkStyle,
     codeTextStyle: theme.codeTextStyle,
-    selectionColor: theme.selectionColor,
-    caretColor: theme.caretColor,
+    selectionColor: AppColors.accent.withValues(alpha: 0.28),
+    caretColor: AppColors.accent,
     caretWidth: theme.caretWidth,
   );
 }
