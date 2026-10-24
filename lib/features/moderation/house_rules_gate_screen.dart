@@ -151,7 +151,12 @@ class _Rules extends StatelessWidget {
           spacing: 4,
           children: [
             TextButton(
-              onPressed: () => unawaited(showHouseRulesSheet(context, rules)),
+              onPressed: () => unawaited(
+                showHouseRulesSheet(
+                  context,
+                  cubit: context.read<HouseRulesCubit>(),
+                ),
+              ),
               child: Text(context.t('moderation.rules.readAll')),
             ),
             TextButton(

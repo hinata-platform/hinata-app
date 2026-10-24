@@ -129,7 +129,12 @@ class _RulesRow extends StatelessWidget {
         },
         onTap: () {
           if (rules != null) {
-            unawaited(showHouseRulesSheet(context, rules));
+            unawaited(
+              showHouseRulesSheet(
+                context,
+                cubit: context.read<HouseRulesCubit>(),
+              ),
+            );
           } else {
             unawaited(context.read<HouseRulesCubit>().load());
           }
