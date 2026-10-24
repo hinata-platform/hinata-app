@@ -18,6 +18,7 @@ import '../admin_settings_cubit.dart';
 import '../admin_form_helpers.dart';
 import 'admin_moderation_cubit.dart';
 import 'admin_moderation_entry.dart';
+import 'admin_moderation_filter.dart';
 import 'admin_moderation_rules.dart';
 
 /// Admin → Moderation (HIN-26): who comes in without anybody deciding, who
@@ -45,6 +46,7 @@ class AdminModerationSection extends StatelessWidget {
         BlocProvider(create: (_) => ModeratorsCubit(admin)..load()),
         BlocProvider(create: (_) => AccountEntryCubit(admin)..load()),
         BlocProvider(create: (_) => HouseRulesVersionsCubit(admin)..load()),
+        BlocProvider(create: (_) => TextTestCubit(admin)),
       ],
       // A save makes a new version of the rules when they read differently,
       // and may close a way in: both are read again once it is done. Not by
@@ -135,6 +137,7 @@ class _AdminModerationView extends StatelessWidget {
           ],
         ),
         'rules': HouseRulesCard(moderation: _moderation),
+        'textCheck': TextCheckCard(moderation: _moderation),
         'types': AdminSectionCard(
           icon: LucideIcons.fileCheck,
           title: context.t('admin.moderation.typesTitle'),
