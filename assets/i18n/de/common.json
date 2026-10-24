@@ -368,7 +368,8 @@
       "emailNotVerified": "Bestätige zuerst deine E-Mail-Adresse. Den Link dazu findest du in deinem Postfach."
     },
     "showPassword": "Passwort anzeigen",
-    "hidePassword": "Passwort verbergen"
+    "hidePassword": "Passwort verbergen",
+    "contact": "Kontakt"
   },
   "authShell": {
     "heroTitle": "Wo die Arbeit deines Teams zusammenläuft.",
@@ -3662,6 +3663,46 @@
         "voice": "Sprachnachrichten",
         "voiceHint": "Aufnahmen in Kommentaren"
       }
+    },
+    "entry": {
+      "title": "Wer hereinkommt",
+      "registration": "Die Registrierung lässt neue Konten ohne Freigabe herein.",
+      "provider": "Die Anmeldung über „{{name}}“ legt beim ersten Mal aktive Konten an, ohne dass jemand zustimmt.",
+      "consequence": "Wer so ein Konto hat, liest organisationsweite Seiten und das Verzeichnis. Nach dem DSA gelten diese Inhalte dann als öffentlich, mit den Pflichten einer Online-Plattform.",
+      "enable": "Freigabe einschalten",
+      "proxy": "Anfragen kommen über einen Proxy, dem dieser Server nicht vertraut. Dann zählt jede Anfrage als Adresse des Proxys, und die Grenzen je Adresse gelten für alle zusammen. Trag den Proxy in HINATA_TRUSTED_PROXIES ein.",
+      "confirmTitle": "Neue Konten ohne Freigabe hereinlassen?",
+      "confirmBody": "Über {{ways}} kommt dann jede Person herein, ohne dass jemand zustimmt. Wer so ein Konto hat, liest organisationsweite Seiten und das Verzeichnis. Nach dem DSA gelten diese Inhalte dann als öffentlich, mit den Pflichten einer Online-Plattform.",
+      "confirm": "Ohne Freigabe öffnen",
+      "way": {
+        "registration": "die Registrierung"
+      }
+    },
+    "ssoApproval": {
+      "title": "Neue Konten brauchen eine Freigabe",
+      "hint": "Jede erste Anmeldung wartet, bis jemand aus der Administration zustimmt, wie bei einer Registrierung.",
+      "domains": "Erlaubte E-Mail-Domains",
+      "domainsHint": "Ohne Freigabe kommen nur Adressen dieser Domains gleich herein, alle anderen warten. Mehrere mit Komma trennen."
+    },
+    "rules": {
+      "title": "Hausregeln",
+      "hint": "Alle stimmen einmal zu, bevor sie schreiben.",
+      "versionSince": "Fassung {{version}} seit {{date}}.",
+      "mode": {
+        "builtIn": "Standard",
+        "text": "Eigener Text",
+        "url": "Adresse"
+      },
+      "builtInHint": "Der Standard ist in neun Sprachen dabei und nennt euren Kontakt.",
+      "text": "Eure Hausregeln",
+      "textHint": "Markdown. „So moderieren wir“ hängt der Server immer an.",
+      "url": "Adresse eurer Hausregeln",
+      "versionHint": "Speichern einer Änderung ergibt eine neue Fassung. Wer schon zugestimmt hat, muss nicht neu zustimmen, außer du lässt alle neu zustimmen.",
+      "reaccept": "Alle neu zustimmen lassen",
+      "reacceptTitle": "Alle neu zustimmen lassen?",
+      "reacceptBody": "Jede Person stimmt der aktuellen Fassung zu, bevor sie weiterarbeitet. Bis dahin bekommt niemand ein neues Zugriffstoken oder verbindet einen KI-Client.",
+      "reacceptConfirm": "Alle neu zustimmen lassen",
+      "reacceptDone": "Alle stimmen Fassung {{version}} neu zu."
     }
   },
   "audit": {
@@ -3727,7 +3768,8 @@
       "configuration": "Konfiguration",
       "data": "Daten & Datenschutz",
       "integration": "Integration",
-      "unknown": "Sonstige"
+      "unknown": "Sonstige",
+      "moderation": "Moderation"
     },
     "action": {
       "LOGIN_SUCCESS": "Angemeldet",
@@ -3883,7 +3925,30 @@
       "SHIFT_ASSIGNMENT_DECLINED": "Schicht abgelehnt",
       "SHIFT_ASSIGNMENT_RELEASED": "Platz auf Schicht freigegeben",
       "SHIFT_PLANNER_GRANTED": "Schichtplanung erlaubt",
-      "SHIFT_PLANNER_REVOKED": "Schichtplanung entzogen"
+      "SHIFT_PLANNER_REVOKED": "Schichtplanung entzogen",
+      "USER_SUSPENDED": "Konto gesperrt",
+      "USER_SUSPENSION_LIFTED": "Sperre aufgehoben",
+      "USER_SUSPENSION_ENDED": "Sperre abgelaufen",
+      "TIME_CALENDAR_SUBSCRIPTION_CREATED": "Kalenderabo angelegt",
+      "TIME_CALENDAR_SUBSCRIPTION_DELETED": "Kalenderabo entfernt",
+      "SHIFT_FEED_TOKEN_CREATED": "Link zum Schichtabo erstellt",
+      "SHIFT_FEED_TOKEN_REVOKED": "Link zum Schichtabo widerrufen",
+      "SHIFT_SERIES_CREATED": "Eventreihe angelegt",
+      "SHIFT_SERIES_UPDATED": "Eventreihe geändert",
+      "SHIFT_SERIES_DELETED": "Eventreihe gelöscht",
+      "SHIFT_PLAN_EXPORTED": "Schichtplan exportiert",
+      "MODERATION_CASE_CREATED": "Fall eröffnet",
+      "MODERATION_CASE_CLAIMED": "Fall übernommen",
+      "MODERATION_REPORTER_REVEALED": "Meldende Person aufgedeckt",
+      "MODERATION_EVIDENCE_REVEALED": "Inhalt für den Fall freigegeben",
+      "MODERATION_EVIDENCE_VIEWED": "Inhalt angesehen",
+      "MODERATION_DECIDED": "Fall entschieden",
+      "MODERATION_RESTORED": "Inhalt wiederhergestellt",
+      "MODERATION_APPEAL_RECORDED": "Widerspruch eingegangen",
+      "MODERATION_APPEAL_DECIDED": "Widerspruch entschieden",
+      "MODERATION_LEGAL_HOLD_CHANGED": "Aufbewahrung für die Strafverfolgung geändert",
+      "MODERATION_RULES_VERSION_CREATED": "Neue Fassung der Hausregeln",
+      "ACCOUNT_APPROVAL_CHANGED": "Freigabe neuer Konten geändert"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -4589,7 +4654,8 @@
       "account": "Konto",
       "preferences": "Präferenzen",
       "privacy": "Datenschutz",
-      "administration": "Verwaltung"
+      "administration": "Verwaltung",
+      "help": "Hilfe"
     },
     "timerSurfaces": {
       "title": "Timer außerhalb der App",
@@ -4723,6 +4789,10 @@
       "removeTitle": "Abo entfernen?",
       "removeMessage": "Deine Kalender bekommen dann keine Schichten mehr. Bereits angezeigte verschwinden beim nächsten Abruf.",
       "removed": "Abo entfernt"
+    },
+    "help": {
+      "title": "Hilfe und Kontakt",
+      "subtitle": "Moderation, Hausregeln, Melden, Impressum und die App."
     }
   },
   "twofa": {
@@ -5848,6 +5918,82 @@
       "emptyTitle": "Du hast niemanden blockiert",
       "emptyMessage": "Blockieren kannst du im Profil einer Person und im Menü eines Kommentars.",
       "more": "Mehr laden"
+    }
+  },
+  "moderation": {
+    "appTerms": {
+      "title": "Bevor es losgeht",
+      "body": "Hinata verbindet dich mit dem Server deiner Organisation. Für beleidigende, bedrohende oder anstößige Inhalte und für Menschen, die andere belästigen, gibt es keine Toleranz. Jede Organisation hat dafür eine Moderation, die Meldungen in der Regel binnen 24 Stunden prüft.",
+      "read": "Nutzungsbedingungen lesen",
+      "accept": "Zustimmen und weiter"
+    },
+    "rules": {
+      "title": "Hausregeln",
+      "gateTitle": "Hausregeln von {{name}}",
+      "gateLead": "Bevor du schreibst: Hier arbeiten viele Menschen zusammen. Damit das gut geht, gilt:",
+      "gateChanged": "Die Hausregeln haben sich geändert. Bitte lies sie und stimme der neuen Fassung zu.",
+      "respect": "Respekt",
+      "respectText": "Keine Beleidigungen, Drohungen oder Herabsetzung. Dafür gibt es keine Toleranz.",
+      "lawful": "Nur Erlaubtes",
+      "lawfulText": "Nichts Rechtswidriges, keine fremden privaten Daten ohne Zustimmung.",
+      "report": "Melden statt wegsehen",
+      "reportText": "Über ⋯ › Melden erreichst du die Moderation. Sie antwortet in der Regel binnen 24 Stunden.",
+      "consequences": "Folgen",
+      "consequencesText": "Verstöße entfernt die Moderation. Bei schweren oder wiederholten Fällen sperrt sie Konten.",
+      "readAll": "Ganze Hausregeln",
+      "appTerms": "Nutzungsbedingungen der App",
+      "accept": "Zustimmen und weiter",
+      "loadFailed": "Die Hausregeln ließen sich nicht laden.",
+      "version": "Fassung {{version}}",
+      "versionSince": "Fassung {{version}} seit {{date}}"
+    },
+    "help": {
+      "moderation": "Moderation von {{name}}",
+      "moderationPlain": "Moderation dieses Servers",
+      "reportElsewhere": "Etwas anderes melden …",
+      "reportElsewhereDetail": "Mit Fundstelle, zum Beispiel ein Projektname",
+      "imprint": "Impressum von {{name}}",
+      "imprintPlain": "Impressum des Betreibers",
+      "aboutApp": "Über die App",
+      "aboutAppDetail": "Anbieter, Nutzungsbedingungen, Datenschutz",
+      "rulesAccepted": "Fassung {{version}}, zugestimmt am {{date}}",
+      "aboutVersion": "Hinata {{version}}",
+      "provider": "Anbieter der App",
+      "operatorNote": "Deine Organisation betreibt ihren Server selbst und ist für die Inhalte dort verantwortlich. Meldungen und Blockierungen gehen an ihre Moderation, nicht an den Anbieter der App."
+    },
+    "report": {
+      "thanks": "Danke. Die Moderation sieht sich das an.",
+      "elsewhereTitle": "Etwas anderes melden",
+      "whyTitle": "Was ist das Problem?",
+      "elsewhereSubtitle": "Wo es ist und was die Moderation wissen soll",
+      "send": "Melden",
+      "change": "Ändern",
+      "location": "Wo ist es?",
+      "locationHint": "Zum Beispiel ein Projekt, ein Board oder ein Team",
+      "locationRequired": "Sag, wo es zu finden ist.",
+      "explanationRequired": "Was soll die Moderation wissen?",
+      "explanationOptional": "Was soll die Moderation wissen? Freiwillig",
+      "explanationTooShort": "Bitte beschreib es in mindestens {{min}} Zeichen.",
+      "whoSees": "Die Moderation sieht, dass du gemeldet hast. Sonst erfährt es niemand.",
+      "goodFaith": "Mit dem Senden bestätigst du, dass deine Angaben nach bestem Wissen stimmen."
+    },
+    "category": {
+      "harassment": "Belästigung, Beleidigung oder Hass",
+      "harassmentHint": "Angriffe auf eine Person oder Herabsetzung einer Gruppe",
+      "threat": "Drohung oder Gewalt",
+      "threatHint": "Jemand wird bedroht oder Gewalt wird gutgeheißen",
+      "sexual": "Sexuelle Inhalte",
+      "sexualHint": "Anzügliches oder pornografisches Material",
+      "childSafety": "Gefährdung von Kindern",
+      "childSafetyHint": "Wird sofort und ohne Vorschau geprüft",
+      "privacy": "Private Daten ohne Zustimmung",
+      "privacyHint": "Adressen, Nummern, Gesundheit, Fotos von Personen",
+      "spam": "Spam, Betrug oder Schadsoftware",
+      "spamHint": "Werbung, Phishing, gefährliche Dateien",
+      "illegal": "Rechtsverletzung",
+      "illegalHint": "Urheberrecht oder ein anderes Gesetz, bitte kurz begründen",
+      "other": "Etwas anderes",
+      "otherHint": "Bitte kurz beschreiben"
     }
   }
 }

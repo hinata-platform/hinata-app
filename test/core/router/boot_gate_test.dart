@@ -28,6 +28,8 @@ void main() {
     AuthStatus auth = AuthStatus.authenticated,
     bool hasServerUrl = true,
     bool onboardingDone = true,
+    bool appTermsAccepted = true,
+    bool rulesPending = false,
   }) => gate.redirect(
     location: location,
     uri: uri ?? location,
@@ -35,6 +37,8 @@ void main() {
     auth: auth,
     hasServerUrl: hasServerUrl,
     onboardingDone: onboardingDone,
+    appTermsAccepted: appTermsAccepted,
+    rulesPending: rulesPending,
   );
 
   const issue = '/issues/HIN-4?comment=c1';
@@ -225,5 +229,116 @@ void main() {
         );
       },
     );
+  });
+
+  // HIN-175: the app's terms once per device before connecting or signing in,
+  // the instance's house rules after signing in whenever a version waits.
+  group('the app terms', () {
+    test('come before connecting on a fresh device', () {
+      expect(
+        at(
+          '/dashboard',
+          config: AppConfigStatus.needsServerUrl,
+          auth: AuthStatus.unauthenticated,
+          hasServerUrl: false,
+          appTermsAccepted: false,
+        ),
+        '/terms',
+      );
+      expect(
+        at(
+          '/terms',
+          config: AppConfigStatus.needsServerUrl,
+          auth: AuthStatus.unauthenticated,
+          hasServerUrl: false,
+          appTermsAccepted: false,
+        ),
+        null,
+      );
+      // Agreed: on to connecting.
+      expect(
+        at(
+          '/login',
+          config: AppConfigStatus.needsServerUrl,
+          auth: AuthStatus.unauthenticated,
+          hasServerUrl: false,
+        ),
+        '/connect',
+      );
+    });
+
+    test('come before signing in on a device that has none yet', () {
+      for (final screen in ['/login', '/register', '/forgot-password']) {
+        expect(
+          at(screen, auth: AuthStatus.unauthenticated, appTermsAccepted: false),
+          '/terms',
+          reason: screen,
+        );
+      }
+      expect(at('/terms', auth: AuthStatus.unauthenticated), '/login');
+    });
+
+    test('hold a deep link like every other gate', () {
+      expect(
+        at(
+          '/issues/HIN-4',
+          uri: issue,
+          auth: AuthStatus.unauthenticated,
+          appTermsAccepted: false,
+        ),
+        '/terms',
+      );
+      expect(at('/terms', auth: AuthStatus.unauthenticated), '/login');
+      expect(at('/login'), issue);
+    });
+
+    test('never interrupt a session that is still being checked or is on', () {
+      expect(
+        at('/dashboard', auth: AuthStatus.unknown, appTermsAccepted: false),
+        '/login',
+      );
+      expect(at('/dashboard', appTermsAccepted: false), null);
+    });
+
+    test('leave the public flows alone', () {
+      expect(
+        at(
+          '/invite',
+          uri: '/invite?token=t1',
+          auth: AuthStatus.unauthenticated,
+          appTermsAccepted: false,
+        ),
+        null,
+      );
+    });
+  });
+
+  group('the house rules', () {
+    test('come first once signed in, and the link waits behind them', () {
+      expect(
+        at('/issues/HIN-4', uri: issue, auth: AuthStatus.unknown),
+        '/login',
+      );
+      expect(at('/login', rulesPending: true), '/rules');
+      expect(at('/rules', rulesPending: true), null);
+      // Agreed: the parked link, not the dashboard.
+      expect(at('/rules'), issue);
+    });
+
+    test('hold any page that was open when they became due', () {
+      expect(at('/knowledge/a1', rulesPending: true), '/rules');
+      expect(at('/rules'), '/knowledge/a1');
+    });
+
+    test('mean nothing while signed out', () {
+      expect(
+        at('/rules', auth: AuthStatus.unauthenticated, rulesPending: true),
+        '/login',
+      );
+    });
+
+    test('send an idle visit home once nothing waits', () {
+      expect(at('/rules'), '/dashboard');
+    });
   });
 }
