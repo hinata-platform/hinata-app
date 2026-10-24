@@ -362,6 +362,7 @@
       "ssoAccountNotLinkedSsoOnly": "Un compte avec cette adresse e-mail existe déjà, mais il n'est pas associé à cette connexion. Contactez votre administrateur.",
       "ssoEmailNotVerified": "Votre service de connexion indique que cette adresse e-mail n'est pas confirmée. Un compte existant n'est jamais associé à une adresse non confirmée. Contactez votre administrateur.",
       "ssoNoEmail": "Votre service de connexion n'a transmis aucune adresse e-mail, et sans adresse aucun compte ne peut être créé. Contactez votre administrateur.",
+      "accountSuspended": "Votre compte est suspendu. Le courriel de la modération indique pourquoi, jusqu’à quand et comment former un recours.",
       "accountDeactivated": "Votre compte est désactivé. Contactez votre administrateur.",
       "pendingApproval": "Votre compte attend l'approbation d'un administrateur.",
       "emailNotVerified": "Confirmez d'abord votre adresse e-mail. Vous trouverez le lien dans votre boîte de réception."
@@ -3502,7 +3503,15 @@
       "moderatorConfirmMany": "{{names}} examineront alors les contenus signalés et décideront à leur sujet, jusqu’au retrait de publications et à la suspension de comptes. Ces personnes ne voient que ce qui a été signalé.",
       "toastModeratorGranted": "Rôle de modération attribué",
       "toastModeratorRevoked": "Rôle de modération retiré",
-      "reasonOwnModeratorRole": "Ce rôle t’est attribué par une autre personne de l’administration."
+      "reasonOwnModeratorRole": "Ce rôle t’est attribué par une autre personne de l’administration.",
+      "suspended": "Suspendu",
+      "suspendedUntil": "Suspendu jusqu’au {{date}}",
+      "liftSuspension": "Lever la suspension",
+      "liftSuspensionSub": "La modération a suspendu ce compte. Après la levée, la personne peut se reconnecter et les modérateurs en sont informés.",
+      "liftSuspensionRowSub": "Suspendu par la modération. Les raisons restent auprès de la modération.",
+      "liftSuspensionNote": "Note pour le dossier (facultatif)",
+      "liftSuspensionAction": "Lever la suspension",
+      "toastSuspensionLifted": "Suspension levée"
     },
     "iosStoreUrl": "URL de l'App Store iOS",
     "androidStoreUrl": "URL du Play Store Android",

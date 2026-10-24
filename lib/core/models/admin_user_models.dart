@@ -98,6 +98,8 @@ class AdminUser {
     this.invitedAt,
     this.invitedBy,
     this.joinedAt,
+    this.suspended = false,
+    this.suspendedUntil,
   });
 
   final String id;
@@ -131,6 +133,13 @@ class AdminUser {
   final String? invitedBy;
   final DateTime? joinedAt;
 
+  /// Moderation suspended the account (HIN-172). Its [status] stays
+  /// `disabled`; who decided it and why stays with moderation.
+  final bool suspended;
+
+  /// When the suspension ends by itself; null until further notice.
+  final DateTime? suspendedUntil;
+
   /// Invitation links live 7 days; anything older is expired and must be re-sent.
   bool get inviteExpired =>
       status == UserStatus.invited &&
@@ -161,6 +170,8 @@ class AdminUser {
     invitedAt: _date(json['invitedAt']),
     invitedBy: json['invitedBy'] as String?,
     joinedAt: _date(json['joinedAt']),
+    suspended: json['suspended'] == true,
+    suspendedUntil: _date(json['suspendedUntil']),
   );
 }
 
