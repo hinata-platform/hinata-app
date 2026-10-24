@@ -82,5 +82,60 @@ void main() {
         },
       );
     });
+
+    group('moderation (HIN-26)', () {
+      test('a server that predates moderation offers none of it', () {
+        final meta = ServerMeta.fromJson(const {'serverVersion': '1.0.0'});
+        expect(meta.supportsModeration, isFalse);
+        expect(meta.moderation.contactEmail, isNull);
+        expect(meta.moderation.contactMissing, isFalse);
+      });
+
+      test('reads the version and the contact, blanks as none', () {
+        final meta = ServerMeta.fromJson(const {
+          'moderation': {
+            'version': 1,
+            'operatorName': ' AStA ',
+            'contactEmail': 'moderation@example.org',
+            'imprintUrl': '',
+            'contactMissing': false,
+          },
+        });
+        expect(meta.supportsModeration, isTrue);
+        expect(meta.moderation.operatorName, 'AStA');
+        expect(meta.moderation.contactEmail, 'moderation@example.org');
+        expect(meta.moderation.imprintUrl, isNull);
+      });
+
+      test(
+        'a contact named later yields a different meta, so the warning goes',
+        () {
+          final missing = ServerMeta.fromJson(const {
+            'moderation': {'version': 1, 'contactMissing': true},
+          });
+          final named = ServerMeta.fromJson(const {
+            'moderation': {
+              'version': 1,
+              'contactEmail': 'moderation@example.org',
+              'contactMissing': false,
+            },
+          });
+          expect(named, isNot(missing));
+        },
+      );
+    });
+  });
+
+  test('the moderation role reads from the roles, beside the others', () {
+    AuthUser withRoles(Set<String> roles) => AuthUser(
+      id: 'u1',
+      email: 'a@example.org',
+      username: 'a',
+      displayName: 'A',
+      roles: roles,
+    );
+    expect(withRoles({'MODERATOR', 'MEMBER'}).isModerator, isTrue);
+    expect(withRoles({'MODERATOR', 'MEMBER'}).isAdmin, isFalse);
+    expect(withRoles({'ADMIN', 'MEMBER'}).isModerator, isFalse);
   });
 }

@@ -33,11 +33,14 @@ class UserAdminSections extends StatelessWidget {
         ],
         const SizedBox(height: 22),
         // The roles, each with one line on what it grants: the
-        // organisation role is a switch of its own, beside the platform
-        // role and independent of it (HIN-129).
+        // organisation role (HIN-129) and the moderation role (HIN-26) are
+        // switches of their own, beside the platform role and independent
+        // of it.
         _sectionLabel(context, context.t('admin.um.roles')),
         const SizedBox(height: 12),
         OrgAdminToggle(user: u, actions: actions),
+        const SizedBox(height: 8),
+        ModeratorToggle(user: u, actions: actions),
         const SizedBox(height: 22),
         _sectionLabel(context, context.t('admin.um.manage')),
         const SizedBox(height: 12),
