@@ -7,7 +7,6 @@ import '../responsive/responsive.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_type.dart';
-import 'count_badge.dart';
 import 'glass_panel.dart';
 
 /// One section of a settings page, as the wide layout's rail lists it.
@@ -19,7 +18,6 @@ class SettingsNavEntry<T> {
     this.group,
     this.trailing,
     this.badge,
-    this.badgeLabel,
   });
 
   final T id;
@@ -35,12 +33,11 @@ class SettingsNavEntry<T> {
   /// A glyph after the label, e.g. for an entry that leaves the page.
   final IconData? trailing;
 
-  /// A count before the glyph, such as the cases waiting for moderation;
-  /// none at zero.
-  final int? badge;
-
-  /// What [badge] means, for a screen reader.
-  final String? badgeLabel;
+  /// What stands before the glyph, such as the count of cases waiting for
+  /// moderation. A widget of its own, so a new count rebuilds it and not the
+  /// page that lists the entry; it brings the space after it, and shows
+  /// nothing while there is nothing to count.
+  final Widget? badge;
 }
 
 /// A settings page on a wide window: the sections in a glass rail on the
@@ -399,10 +396,7 @@ class _NavItem<T> extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (entry.badge case final count? when count > 0) ...[
-                    CountBadge(count, semanticLabel: entry.badgeLabel),
-                    const SizedBox(width: 6),
-                  ],
+                  ?entry.badge,
                   if (entry.trailing != null)
                     Icon(entry.trailing, size: 12, color: tokens.inkFaint),
                 ],

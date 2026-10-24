@@ -25,7 +25,6 @@ import '../../core/theme/app_theme.dart';
 import '../../core/util/file_pick.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/app_avatar.dart';
-import '../../core/widgets/count_badge.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch, forwardChevron;
@@ -42,7 +41,7 @@ import 'tint_customizer.dart';
 import '../blocks/blocked_people_section.dart';
 import '../moderation/help_contact_section.dart';
 import '../moderation/queue/moderation_screen.dart' show moderationLocation;
-import '../moderation/queue/moderation_summary_cubit.dart';
+import '../moderation/queue/open_cases_badge.dart';
 import '../moderation/queue/moderation_summary_scope.dart';
 import 'availability_section.dart';
 import 'calendar_subscriptions_section.dart';
@@ -627,8 +626,7 @@ class _AccountScreenState extends State<_AccountBody> {
                 label: context.t('moderation.queue.title'),
                 group: adminGroup,
                 trailing: LucideIcons.externalLink,
-                badge: _openCases,
-                badgeLabel: _openCasesLabel,
+                badge: const OpenCasesBadge(gap: 6),
               ),
           ],
           selected: section,
@@ -769,8 +767,7 @@ class _AccountScreenState extends State<_AccountBody> {
             icon: LucideIcons.flag,
             title: context.t('moderation.queue.title'),
             subtitle: context.t('moderation.queue.settingsHint'),
-            badge: _openCases,
-            badgeLabel: _openCasesLabel,
+            badge: const OpenCasesBadge(gap: 8),
             onTap: () => context.go(moderationLocation()),
           ),
         );
@@ -795,17 +792,6 @@ class _AccountScreenState extends State<_AccountBody> {
     );
   }
 
-  /// The cases waiting for moderation, for the badge on its entry; null
-  /// before the first count or for somebody who does not moderate.
-  int? get _openCases => context.watch<ModerationSummaryCubit?>()?.state?.open;
-
-  String? get _openCasesLabel {
-    final open = _openCases;
-    return open == null
-        ? null
-        : context.t('moderation.queue.openCount', count: open);
-  }
-
   /// A tappable navigation row: amber (or red) icon tile, title, subtitle and a
   /// chevron, as the compact index lists them.
   Widget _navTile({
@@ -814,8 +800,7 @@ class _AccountScreenState extends State<_AccountBody> {
     required String subtitle,
     required VoidCallback onTap,
     bool danger = false,
-    int? badge,
-    String? badgeLabel,
+    Widget? badge,
   }) {
     final accent = danger ? AppColors.danger : AppColors.accentStrong;
     final accentBg = danger
@@ -870,10 +855,7 @@ class _AccountScreenState extends State<_AccountBody> {
                   ),
                 ),
                 const SizedBox(width: 8),
-                if (badge case final count? when count > 0) ...[
-                  CountBadge(count, semanticLabel: badgeLabel),
-                  const SizedBox(width: 8),
-                ],
+                ?badge,
                 Icon(
                   forwardChevron(context),
                   size: 18,
