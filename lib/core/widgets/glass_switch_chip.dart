@@ -258,3 +258,25 @@ class GlassInlineTrack extends StatelessWidget {
     );
   }
 }
+
+/// An inline [GlassSwitchBar] as wide as its chips, at the start of the room
+/// it is given. In a stretching column a bar would otherwise take the whole
+/// width and trail an empty run of track after its last choice, which reads
+/// as missing options.
+class InlineSwitchBar extends StatelessWidget {
+  const InlineSwitchBar({super.key, required this.chips});
+
+  final List<Widget> chips;
+
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) => Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: GlassSwitchBar(
+        inline: true,
+        maxWidth: constraints.maxWidth,
+        chips: chips,
+      ),
+    ),
+  );
+}
