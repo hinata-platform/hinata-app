@@ -3645,7 +3645,23 @@
       "contactMissing": "Noch ist kein Kontakt für Meldungen hinterlegt. Trag eine E-Mail-Adresse ein, damit man dich zu Inhalten erreicht.",
       "operatorName": "Betreiber, wie im Impressum",
       "contactEmail": "E-Mail für Meldungen",
-      "imprintUrl": "Link zum Impressum"
+      "imprintUrl": "Link zum Impressum",
+      "typesTitle": "Dateitypen",
+      "typesHint": "Abgeschaltete Typen kann niemand mehr anhängen, einbetten oder senden. Unsichere Typen wie SVG oder Programme sind nie erlaubt.",
+      "types": {
+        "images": "Bilder",
+        "imagesHint": "PNG, JPEG, GIF und WebP, als Anhang und in Texten. Profilbilder und das Logo bleiben erlaubt.",
+        "pdf": "PDF",
+        "pdfHint": "PDF-Dokumente als Anhang",
+        "office": "Office-Dokumente",
+        "officeHint": "Word und Excel (DOCX, XLSX)",
+        "text": "Text und Tabellen",
+        "textHint": "TXT, CSV und JSON",
+        "zip": "ZIP-Archive",
+        "zipHint": "ZIP-Dateien als Anhang",
+        "voice": "Sprachnachrichten",
+        "voiceHint": "Aufnahmen in Kommentaren"
+      }
     }
   },
   "audit": {

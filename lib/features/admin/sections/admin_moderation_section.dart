@@ -15,9 +15,10 @@ import '../admin_cards.dart';
 import '../admin_form_helpers.dart';
 import 'admin_moderation_cubit.dart';
 
-/// Admin → Moderation (HIN-26): who moderates, and the contact the operator
-/// publishes for reports. The role itself is handed out in user management;
-/// the contact is saved with the other settings.
+/// Admin → Moderation (HIN-26): who moderates, the contact the operator
+/// publishes for reports, and the file types people may upload. The role
+/// itself is handed out in user management; the contact and the file types
+/// are saved with the other settings.
 class AdminModerationSection extends StatelessWidget {
   const AdminModerationSection({super.key, required this.settings});
 
@@ -94,7 +95,78 @@ class _AdminModerationView extends StatelessWidget {
             ),
           ],
         ),
+        'types': AdminSectionCard(
+          icon: LucideIcons.fileCheck,
+          title: context.t('admin.moderation.typesTitle'),
+          subtitle: context.t('admin.moderation.typesHint'),
+          children: [_FileTypes(moderation: _moderation)],
+        ),
       },
+    );
+  }
+}
+
+/// The groups of file types an instance can switch off (HIN-177), by the name
+/// the server gives them and the key of their words, in the order they are
+/// listed. Switching one off only narrows the server's safe list; nothing
+/// here can widen it.
+const _fileTypeGroups = {
+  'IMAGES': 'images',
+  'PDF': 'pdf',
+  'OFFICE': 'office',
+  'TEXT': 'text',
+  'ZIP': 'zip',
+  'VOICE': 'voice',
+};
+
+/// One switch per group, on while the group is allowed. Written into the
+/// settings draft the shell saves, under `moderation.uploads.disabledGroups`.
+class _FileTypes extends StatefulWidget {
+  const _FileTypes({required this.moderation});
+
+  final Map<String, dynamic> moderation;
+
+  @override
+  State<_FileTypes> createState() => _FileTypesState();
+}
+
+class _FileTypesState extends State<_FileTypes> {
+  /// Read without writing: a draft nobody touched stays as the server sent it.
+  Set<String> get _disabled {
+    final uploads = widget.moderation['uploads'];
+    final groups = uploads is Map ? uploads['disabledGroups'] : null;
+    return {if (groups is List) ...groups.whereType<String>()};
+  }
+
+  void _allow(String group, bool allowed) => setState(() {
+    final disabled = _disabled;
+    allowed ? disabled.remove(group) : disabled.add(group);
+    final uploads =
+        (widget.moderation['uploads'] ??= <String, dynamic>{})
+            as Map<String, dynamic>;
+    // A group a newer server knows and this app does not stays as it is.
+    uploads['disabledGroups'] = [
+      for (final known in _fileTypeGroups.keys)
+        if (disabled.contains(known)) known,
+      ...disabled.where((name) => !_fileTypeGroups.containsKey(name)),
+    ];
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final disabled = _disabled;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (final MapEntry(key: group, value: words)
+            in _fileTypeGroups.entries)
+          AdminToggle(
+            label: context.t('admin.moderation.types.$words'),
+            subtitle: context.t('admin.moderation.types.${words}Hint'),
+            value: !disabled.contains(group),
+            onChanged: (allowed) => _allow(group, allowed),
+          ),
+      ],
     );
   }
 }

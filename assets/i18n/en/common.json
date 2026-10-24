@@ -3645,7 +3645,23 @@
       "contactMissing": "No contact for reports is set yet. Enter an email address so people can reach you about content.",
       "operatorName": "Operator, as named in the imprint",
       "contactEmail": "Email for reports",
-      "imprintUrl": "Link to the imprint"
+      "imprintUrl": "Link to the imprint",
+      "typesTitle": "File types",
+      "typesHint": "Nobody can attach, embed or send a type that is switched off. Unsafe types such as SVG or programs are never allowed.",
+      "types": {
+        "images": "Images",
+        "imagesHint": "PNG, JPEG, GIF and WebP, as attachments and in texts. Profile pictures and the logo stay allowed.",
+        "pdf": "PDF",
+        "pdfHint": "PDF documents as attachments",
+        "office": "Office documents",
+        "officeHint": "Word and Excel (DOCX, XLSX)",
+        "text": "Text and spreadsheets",
+        "textHint": "TXT, CSV and JSON",
+        "zip": "ZIP archives",
+        "zipHint": "ZIP files as attachments",
+        "voice": "Voice messages",
+        "voiceHint": "Recordings in comments"
+      }
     }
   },
   "audit": {

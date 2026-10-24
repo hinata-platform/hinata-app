@@ -7,6 +7,7 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
+import 'package:hinata/features/admin/admin_form_helpers.dart';
 import 'package:hinata/features/admin/sections/admin_moderation_section.dart';
 
 /// Admin → Moderation (HIN-26): who moderates, a word when one person alone
@@ -114,6 +115,50 @@ void main() {
     final moderation = settings['moderation'] as Map<String, dynamic>;
     expect(moderation['contactEmail'], 'moderation@example.org');
     expect(moderation['imprintUrl'], isNull);
+  });
+
+  bool allowed(WidgetTester tester, String words) => tester
+      .widget<AdminToggle>(
+        find.widgetWithText(AdminToggle, 'admin.moderation.types.$words'),
+      )
+      .value;
+
+  testWidgets('every file type is on until the server says otherwise, and '
+      'looking writes nothing', (tester) async {
+    final settings = <String, dynamic>{'moderation': <String, dynamic>{}};
+    await pump(tester, moderators: [], settings: settings);
+
+    for (final words in ['images', 'pdf', 'office', 'text', 'zip', 'voice']) {
+      expect(allowed(tester, words), isTrue, reason: words);
+    }
+    expect((settings['moderation'] as Map).containsKey('uploads'), isFalse);
+  });
+
+  testWidgets('switching a file type writes the groups into the draft', (
+    tester,
+  ) async {
+    // As decoded from JSON, with a group only a newer server knows.
+    final settings = <String, dynamic>{
+      'moderation': <String, dynamic>{
+        'uploads': <String, dynamic>{
+          'disabledGroups': <dynamic>['ZIP', 'FUTURE'],
+        },
+      },
+    };
+    await pump(tester, moderators: [], settings: settings);
+    expect(allowed(tester, 'zip'), isFalse);
+
+    for (final words in ['pdf', 'zip']) {
+      final toggle = find.text('admin.moderation.types.$words');
+      await tester.ensureVisible(toggle);
+      await tester.tap(toggle);
+      await tester.pumpAndSettle();
+    }
+
+    expect(allowed(tester, 'pdf'), isFalse);
+    expect(allowed(tester, 'zip'), isTrue);
+    final uploads = (settings['moderation'] as Map)['uploads'] as Map;
+    expect(uploads['disabledGroups'], ['PDF', 'FUTURE']);
   });
 }
 

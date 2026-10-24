@@ -3645,7 +3645,23 @@
       "contactMissing": "尚未设置举报联系方式。请填写一个电子邮件地址，以便他人就内容问题联系你。",
       "operatorName": "运营方（与法律声明一致）",
       "contactEmail": "举报邮箱",
-      "imprintUrl": "法律声明链接"
+      "imprintUrl": "法律声明链接",
+      "typesTitle": "文件类型",
+      "typesHint": "已停用的类型任何人都无法附加、嵌入或发送。SVG 或程序等不安全的类型始终不被允许。",
+      "types": {
+        "images": "图片",
+        "imagesHint": "PNG、JPEG、GIF 和 WebP，作为附件或在文本中。头像和徽标仍然允许。",
+        "pdf": "PDF",
+        "pdfHint": "作为附件的 PDF 文档",
+        "office": "Office 文档",
+        "officeHint": "Word 和 Excel（DOCX、XLSX）",
+        "text": "文本和表格",
+        "textHint": "TXT、CSV 和 JSON",
+        "zip": "ZIP 压缩包",
+        "zipHint": "作为附件的 ZIP 文件",
+        "voice": "语音消息",
+        "voiceHint": "评论中的录音"
+      }
     }
   },
   "audit": {
