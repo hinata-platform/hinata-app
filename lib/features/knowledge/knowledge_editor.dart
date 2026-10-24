@@ -11,7 +11,7 @@ import '../../core/lexical/hinata_editor.dart';
 import '../../core/lexical/hinata_editor_controller.dart';
 import '../../core/lexical/hinata_editor_tools.dart';
 import '../../core/lexical/hinata_markdown_preview.dart';
-import '../moderation/house_rules_sheet.dart' show openHouseRules;
+import '../moderation/house_rules_sheet.dart' show showHouseRulesSheet;
 import '../sprint/modals/glass_modal.dart' show showGlassErrorToast;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
@@ -212,7 +212,7 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
             if (widget.refusal case final refusal?) ...[
               ContentRefusedNotice(
                 refusal: refusal,
-                onReadRules: () => unawaited(openHouseRules(context)),
+                onReadRules: () => unawaited(showHouseRulesSheet(context)),
               ),
               const SizedBox(height: 16),
             ],

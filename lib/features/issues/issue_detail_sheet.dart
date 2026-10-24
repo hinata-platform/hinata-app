@@ -116,7 +116,7 @@ import '../../core/theme/app_type.dart';
 import '../../core/widgets/hover_builder.dart';
 import '../../core/widgets/budget/budget.dart';
 import '../time/budget/project_usage.dart';
-import '../moderation/house_rules_sheet.dart' show openHouseRules;
+import '../moderation/house_rules_sheet.dart' show showHouseRulesSheet;
 import '../moderation/report/report_sheet.dart';
 import '../moderation/notice/notice_screen.dart' show noticeLocation;
 

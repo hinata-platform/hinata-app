@@ -46,6 +46,24 @@ void main() {
     await expectLater(loading, completes);
   });
 
+  test('the rules it rests on open as a page of the server', () async {
+    moderation
+      ..answer<Statement>(
+        #notice,
+        const Statement(caseId: 'k1', rulesUrl: '/rules/v3'),
+      )
+      ..answerWith(
+        #page,
+        (call) =>
+            Uri.parse('https://server.test${call.positionalArguments[0]}'),
+      );
+    final notice = cubit();
+
+    await notice.load();
+
+    expect(notice.state.rulesPage, Uri.parse('https://server.test/rules/v3'));
+  });
+
   test('reads the notice of the case', () async {
     moderation.answer<Statement>(#notice, open);
     final notice = cubit();
