@@ -3749,7 +3749,8 @@
       "resultFound": "Encontrado, pero sin efecto: {{terms}}.",
       "resultException": "Se aplican excepciones: {{words}}.",
       "images": "Las imágenes y los adjuntos no se revisan. Para eso están las denuncias."
-    }
+    },
+    "connectContactMissing": "Las condiciones de Hinata Connect piden un contacto para denuncias. Indica un correo para denuncias en Moderación."
   },
   "audit": {
     "title": "Registro de auditoría",

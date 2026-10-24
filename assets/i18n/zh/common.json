@@ -3749,7 +3749,8 @@
       "resultFound": "已找到，但没有影响：{{terms}}。",
       "resultException": "例外生效：{{words}}。",
       "images": "图片和附件不会被检查，可通过举报处理。"
-    }
+    },
+    "connectContactMissing": "Hinata Connect 的条款要求提供举报联系方式。请在“内容审核”中填写举报邮箱。"
   },
   "audit": {
     "title": "审计日志",
