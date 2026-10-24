@@ -300,13 +300,17 @@ class KnowledgeEditorState extends State<KnowledgeEditor> {
                   color: AppColors.inkSoft,
                 ),
                 const SizedBox(width: 6),
-                Text(
-                  repo.spaceById(_spaceId)?.name ??
-                      context.t('knowledge.editor.pickSpace'),
-                  style: TextStyle(
-                    fontSize: AppType.label,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
+                // Flexible: a long space name at a large text size wraps
+                // instead of running off the screen.
+                Flexible(
+                  child: Text(
+                    repo.spaceById(_spaceId)?.name ??
+                        context.t('knowledge.editor.pickSpace'),
+                    style: TextStyle(
+                      fontSize: AppType.label,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.ink,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 4),

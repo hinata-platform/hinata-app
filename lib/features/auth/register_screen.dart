@@ -291,8 +291,11 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
                   : Text(context.t('register.submit')),
             ),
             const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            // A wrap: at a large text size the question and the button do
+            // not fit on one line of a phone.
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
                   context.t('register.haveAccount'),
