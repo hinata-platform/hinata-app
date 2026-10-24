@@ -15,12 +15,13 @@ import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/repositories/admin_repository.dart';
 import '../../core/repositories/meta_repository.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/moderation_models.dart' show OpenWay;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../shell/page_chrome.dart';
 import '../sprint/modals/glass_modal.dart'
-    show showGlassToast, showGlassErrorToast, GlassToastKind;
+    show showGlassConfirm, showGlassToast, showGlassErrorToast, GlassToastKind;
 import 'admin_settings_cubit.dart';
 import 'admin_sso_section.dart';
 import 'sections/admin_app_section.dart';
@@ -31,6 +32,7 @@ import 'sections/admin_email_section.dart';
 import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
 import 'sections/admin_mcp_section.dart';
+import 'sections/admin_moderation_entry.dart';
 import 'sections/admin_moderation_section.dart';
 import 'sections/admin_security_section.dart';
 import 'users/user_management_screen.dart';
@@ -215,11 +217,17 @@ class _AdminViewState extends State<_AdminView> {
     }
   }
 
-  Future<void> _save() async {
+  /// Saves the draft; true once the server took it.
+  ///
+  /// A save that would let new accounts in without approval comes back with
+  /// the ways it opens (HIN-175). It goes through only once the administrator
+  /// confirmed what that makes of the instance, in the same words the
+  /// Moderation section uses.
+  Future<bool> _save({bool openAccessConfirmed = false}) async {
     final cubit = context.read<AdminSettingsCubit>();
-    if (cubit.state.settings == null) return;
+    if (cubit.state.settings == null) return false;
     try {
-      await cubit.save();
+      await cubit.save(openAccessConfirmed: openAccessConfirmed);
       if (mounted) {
         // These settings decide what /meta reports — feature flags above all.
         // Re-read it so the admin sees the nav entry they just switched on
@@ -237,11 +245,44 @@ class _AdminViewState extends State<_AdminView> {
           kind: GlassToastKind.success,
         );
       }
+      return true;
     } on ApiFailure catch (failure) {
-      if (mounted) {
-        showGlassErrorToast(context, context.t(failure.message));
+      if (!mounted) return false;
+      final opening = OpenAccessRefusal.of(failure);
+      if (opening != null && !openAccessConfirmed) {
+        return await _confirmOpenAccess(opening) &&
+            mounted &&
+            await _save(openAccessConfirmed: true);
       }
+      showGlassErrorToast(context, context.t(failure.message));
+      return false;
     }
+  }
+
+  Future<bool> _confirmOpenAccess(OpenAccessRefusal opening) async {
+    final settings = context.read<AdminSettingsCubit>().state.settings ?? {};
+    final ways = [
+      for (final way in opening.ways)
+        openWayName(
+          context,
+          OpenWay(
+            way: way,
+            name: way == 'ldap'
+                ? 'LDAP'
+                : (settings[way] as Map?)?['displayName'] as String?,
+          ),
+        ),
+    ].join(', ');
+    final confirmed = await showGlassConfirm(
+      context,
+      icon: LucideIcons.doorOpen,
+      title: context.t('admin.entry.confirmTitle'),
+      message: context.t('admin.entry.confirmBody', variables: {'ways': ways}),
+      confirmLabel: context.t('admin.entry.confirm'),
+      confirmIcon: LucideIcons.doorOpen,
+      destructive: true,
+    );
+    return confirmed == true;
   }
 
   void _selectSection(_AdminSection sec, {required bool mobile}) {
@@ -313,6 +354,7 @@ class _AdminViewState extends State<_AdminView> {
                 section: current,
                 settings: settings,
                 onOpenTimeTracking: _openTimeTracking(context),
+                onSave: _save,
               ),
             );
           }
@@ -339,6 +381,7 @@ class _AdminViewState extends State<_AdminView> {
             settings: settings,
             onSectionChanged: (s) => _selectSection(s, mobile: false),
             onOpenTimeTracking: _openTimeTracking(context),
+            onSave: _save,
             focusUserId: widget.focusUserId,
             inviteController: _invite,
           ),
@@ -541,10 +584,15 @@ class _MobileDetailView extends StatelessWidget {
     required this.section,
     required this.settings,
     required this.onOpenTimeTracking,
+    required this.onSave,
   });
 
   final _AdminSection section;
   final Map<String, dynamic> settings;
+
+  /// The Save action, for a card whose one button changes the draft and saves
+  /// it at once.
+  final Future<bool> Function() onSave;
 
   /// Opens Organisation, where the time-tracking module is switched — the App
   /// section points at it rather than duplicating the master switch. Null for
@@ -589,7 +637,10 @@ class _MobileDetailView extends StatelessWidget {
     _AdminSection.git => AdminGitSection(settings: settings),
     _AdminSection.mcp => AdminMcpSection(settings: settings),
     _AdminSection.security => AdminSecuritySection(settings: settings),
-    _AdminSection.moderation => AdminModerationSection(settings: settings),
+    _AdminSection.moderation => AdminModerationSection(
+      settings: settings,
+      onSave: onSave,
+    ),
     // Rendered directly by the shell (self-scrolling); never reached here.
     _AdminSection.auditLog => const SizedBox.shrink(),
     _AdminSection.users => const SizedBox.shrink(),
@@ -607,6 +658,7 @@ class _WideAdminShell extends StatelessWidget {
     required this.settings,
     required this.onSectionChanged,
     required this.inviteController,
+    required this.onSave,
     this.onOpenTimeTracking,
     this.focusUserId,
   });
@@ -614,6 +666,9 @@ class _WideAdminShell extends StatelessWidget {
   final _AdminSection section;
   final Map<String, dynamic> settings;
   final ValueChanged<_AdminSection> onSectionChanged;
+
+  /// The Save action, as on the compact layout.
+  final Future<bool> Function() onSave;
 
   /// Same jump as on the compact layout: the App section's row for the extended
   /// time-tracking flag opens the Organisation page that owns it.
@@ -685,7 +740,10 @@ class _WideAdminShell extends StatelessWidget {
     _AdminSection.git => AdminGitSection(settings: settings),
     _AdminSection.mcp => AdminMcpSection(settings: settings),
     _AdminSection.security => AdminSecuritySection(settings: settings),
-    _AdminSection.moderation => AdminModerationSection(settings: settings),
+    _AdminSection.moderation => AdminModerationSection(
+      settings: settings,
+      onSave: onSave,
+    ),
     // Rendered directly (self-scrolling); never reached here.
     _AdminSection.auditLog => const SizedBox.shrink(),
     _AdminSection.users => const SizedBox.shrink(),

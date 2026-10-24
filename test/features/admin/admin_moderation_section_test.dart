@@ -4,15 +4,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/blocs/app_config_bloc.dart';
 import 'package:hinata/core/models/admin_user_models.dart';
 import 'package:hinata/core/models/core_models.dart';
+import 'package:hinata/core/models/moderation_models.dart';
 import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/features/admin/admin_form_helpers.dart';
+import 'package:hinata/features/admin/admin_settings_cubit.dart';
 import 'package:hinata/features/admin/sections/admin_moderation_section.dart';
 
-/// Admin → Moderation (HIN-26): who moderates, a word when one person alone
-/// would decide, and the contact for reports with a warning while none is
-/// published.
+/// Admin → Moderation (HIN-26): who comes in without approval, who moderates,
+/// a word when one person alone would decide, the contact for reports with a
+/// warning while none is published, and the house rules (HIN-175).
 ///
 /// Nothing here asserts on translated copy: widget tests render raw i18n keys.
 void main() {
@@ -29,17 +31,32 @@ void main() {
     int? total,
     bool contactMissing = false,
     Map<String, dynamic>? settings,
+    AccountEntry entry = const AccountEntry(),
+    Future<bool> Function()? onSave,
   }) async {
-    final repository = _FakeAdminRepository(moderators, total);
+    final repository = _FakeAdminRepository(moderators, total)..entry = entry;
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
           body: RepositoryProvider<AdminRepository>.value(
             value: repository,
-            child: BlocProvider<AppConfigBloc>.value(
-              value: _StubAppConfig(contactMissing: contactMissing),
+            child: MultiBlocProvider(
+              providers: [
+                BlocProvider<AppConfigBloc>.value(
+                  value: _StubAppConfig(contactMissing: contactMissing),
+                ),
+                BlocProvider(
+                  create: (_) => AdminSettingsCubit(
+                    admin: repository,
+                    meta: _UnusedMeta(),
+                  ),
+                ),
+              ],
               child: SingleChildScrollView(
-                child: AdminModerationSection(settings: settings ?? {}),
+                child: AdminModerationSection(
+                  settings: settings ?? {},
+                  onSave: onSave ?? () async => true,
+                ),
               ),
             ),
           ),
@@ -160,6 +177,97 @@ void main() {
     final uploads = (settings['moderation'] as Map)['uploads'] as Map;
     expect(uploads['disabledGroups'], ['PDF', 'FUTURE']);
   });
+
+  testWidgets('nothing about who comes in while every way waits for approval', (
+    tester,
+  ) async {
+    await pump(tester, moderators: []);
+    expect(find.text('admin.entry.title'), findsNothing);
+    expect(find.text('admin.entry.proxy'), findsNothing);
+  });
+
+  testWidgets('an open way comes first, and switching approval on closes it '
+      'in the draft and saves', (tester) async {
+    final settings = <String, dynamic>{
+      'app': <String, dynamic>{'registrationEnabled': true},
+      'oidc': <String, dynamic>{'enabled': true, 'displayName': 'Firmen-SSO'},
+    };
+    late _FakeAdminRepository repository;
+    var saves = 0;
+    repository = await pump(
+      tester,
+      moderators: [],
+      settings: settings,
+      entry: const AccountEntry(
+        openWays: [
+          OpenWay(way: 'registration'),
+          OpenWay(way: 'oidc', name: 'Firmen-SSO'),
+        ],
+      ),
+      onSave: () async {
+        saves++;
+        repository.entry = const AccountEntry();
+        return true;
+      },
+    );
+    expect(find.text('admin.entry.title'), findsOneWidget);
+
+    await tester.tap(find.text('admin.entry.enable'));
+    await tester.pumpAndSettle();
+
+    expect((settings['app'] as Map)['requireAdminApproval'], isTrue);
+    expect((settings['oidc'] as Map)['requireApproval'], isTrue);
+    expect(saves, 1);
+    expect(find.text('admin.entry.title'), findsNothing);
+  });
+
+  testWidgets('a proxy the server does not trust is named on its own', (
+    tester,
+  ) async {
+    await pump(
+      tester,
+      moderators: [],
+      entry: const AccountEntry(proxyNotTrusted: true),
+    );
+    expect(find.text('admin.entry.proxy'), findsOneWidget);
+    expect(find.text('admin.entry.enable'), findsNothing);
+  });
+
+  testWidgets('the house rules mode and text write into the draft', (
+    tester,
+  ) async {
+    final settings = <String, dynamic>{'moderation': <String, dynamic>{}};
+    await pump(tester, moderators: [], settings: settings);
+
+    final own = find.text('admin.rules.mode.text');
+    await tester.ensureVisible(own);
+    await tester.tap(own);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('rulesText')),
+      '  # Unsere Regeln  ',
+    );
+
+    final rules = (settings['moderation'] as Map)['rules'] as Map;
+    expect(rules['mode'], 'TEXT');
+    expect(rules['text'], '# Unsere Regeln');
+  });
+
+  testWidgets('asking everybody to agree again takes a confirmation', (
+    tester,
+  ) async {
+    final repository = await pump(tester, moderators: []);
+
+    final ask = find.text('admin.rules.reaccept');
+    await tester.ensureVisible(ask);
+    await tester.tap(ask);
+    await tester.pumpAndSettle();
+    expect(repository.reacceptances, 0);
+
+    await tester.tap(find.text('admin.rules.reacceptConfirm'));
+    await tester.pumpAndSettle();
+    expect(repository.reacceptances, 1);
+  });
 }
 
 class _FakeAdminRepository implements AdminRepository {
@@ -168,6 +276,29 @@ class _FakeAdminRepository implements AdminRepository {
   final List<Map<String, dynamic>> moderators;
   final int? total;
   final List<UserRoleFilter?> roles = [];
+  AccountEntry entry = const AccountEntry();
+  HouseRulesVersions versions = HouseRulesVersions(
+    version: 3,
+    since: DateTime.utc(2026, 10, 2),
+    requiredVersion: 1,
+  );
+  int reacceptances = 0;
+
+  @override
+  Future<AccountEntry> accountEntry() async => entry;
+
+  @override
+  Future<HouseRulesVersions> houseRulesVersions() async => versions;
+
+  @override
+  Future<HouseRulesVersions> requireRulesReacceptance() async {
+    reacceptances++;
+    return versions = HouseRulesVersions(
+      version: (versions.version ?? 0) + 1,
+      since: DateTime.utc(2026, 10, 24),
+      requiredVersion: (versions.version ?? 0) + 1,
+    );
+  }
 
   @override
   Future<AdminUserPage> adminUsersPage({

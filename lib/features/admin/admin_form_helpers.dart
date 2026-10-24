@@ -441,11 +441,15 @@ class ProviderTile extends StatefulWidget {
     this.initiallyExpanded = false,
     this.toggles = const [],
     this.note,
+    this.footer,
   });
 
   final String title;
   final String? subtitle;
   final Map<String, dynamic> section;
+
+  /// What follows the fields and toggles: who a first sign-in lets in.
+  final Widget? footer;
 
   /// (jsonKey, label, isSecret)
   final List<(String, String, bool)> fields;
@@ -578,6 +582,7 @@ class _ProviderTileState extends State<ProviderTile> {
                     widget.onChanged();
                   },
                 ),
+              ?widget.footer,
             ],
           ),
         ),

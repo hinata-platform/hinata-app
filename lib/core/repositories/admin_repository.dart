@@ -4,9 +4,10 @@ import '../api/api_client.dart';
 import '../models/admin_user_models.dart';
 import '../models/audit_models.dart';
 import '../models/ingest_models.dart';
+import '../models/moderation_models.dart';
 
-/// Administration: platform settings, user management, and the security audit
-/// log.
+/// Administration: platform settings, user management, moderation's way in and
+/// house rules, and the security audit log.
 class AdminRepository {
   AdminRepository(this._api);
 
@@ -289,6 +290,29 @@ class AdminRepository {
 
   Future<void> adminDeleteUsers(List<String> ids) =>
       _api.post('/api/v1/admin/users/delete', body: {'ids': ids});
+
+  // --- Moderation (HIN-175) ---------------------------------------------------
+
+  /// Every way in that lets people in without approval, and whether a proxy in
+  /// front is not trusted.
+  Future<AccountEntry> accountEntry() async => AccountEntry.fromJson(
+    await _api.get('/api/v1/admin/moderation/entry') as Map<String, dynamic>,
+  );
+
+  /// Which version of the house rules holds, since when, and the last one
+  /// everybody had to accept.
+  Future<HouseRulesVersions> houseRulesVersions() async =>
+      HouseRulesVersions.fromJson(
+        await _api.get('/api/v1/admin/moderation/rules')
+            as Map<String, dynamic>,
+      );
+
+  /// Makes a new version everybody has to accept before going on.
+  Future<HouseRulesVersions> requireRulesReacceptance() async =>
+      HouseRulesVersions.fromJson(
+        await _api.post('/api/v1/admin/moderation/rules/reacceptance')
+            as Map<String, dynamic>,
+      );
 
   // --- Audit log ---------------------------------------------------------------
 
