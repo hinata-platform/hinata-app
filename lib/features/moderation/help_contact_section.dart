@@ -50,8 +50,12 @@ class HelpContactSection extends StatelessWidget {
               icon: LucideIcons.shieldCheck,
               label: _named(context, 'moderation.help.moderation', meta.name),
               detail: email,
-              onTap: () =>
-                  unawaited(launchUrl(Uri(scheme: 'mailto', path: email))),
+              onTap: () => unawaited(
+                launchUrl(
+                  Uri(scheme: 'mailto', path: email),
+                  mode: LaunchMode.externalApplication,
+                ),
+              ),
             ),
           const _RulesRow(),
           _LinkRow(
@@ -233,7 +237,10 @@ Future<void> _showAboutApp(BuildContext context) {
                 label: context.t('moderation.help.provider'),
                 detail: '$appProviderName · $appProviderEmail',
                 onTap: () => unawaited(
-                  launchUrl(Uri(scheme: 'mailto', path: appProviderEmail)),
+                  launchUrl(
+                    Uri(scheme: 'mailto', path: appProviderEmail),
+                    mode: LaunchMode.externalApplication,
+                  ),
                 ),
               ),
               _LinkRow(
