@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hinata/core/models/moderation_models.dart';
 import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/core/theme/app_colors.dart';
@@ -126,11 +127,34 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    await pump(tester, removed, interactions: _mine);
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+          path: '/',
+          builder: (_, _) => Scaffold(
+            body: SingleChildScrollView(
+              child: CommentBubbleRow(comment: removed, interactions: _mine),
+            ),
+          ),
+        ),
+        GoRoute(
+          path: '/notices/:caseId',
+          builder: (_, state) =>
+              Text('notice ${state.pathParameters['caseId']}'),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     expect(
       tester.getSemantics(find.text('moderation.placeholder.why')),
       isSemantics(isButton: true, hasTapAction: true),
     );
+
+    await tester.tap(find.text('moderation.placeholder.why'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('notice k1'), findsOneWidget);
     semantics.dispose();
   });
 

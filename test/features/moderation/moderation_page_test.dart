@@ -195,19 +195,33 @@ void main() {
     testWidgets('sexual content and the safety of children stay covered', (
       tester,
     ) async {
-      await pumpRow(
-        tester,
-        caseRow(
-          kind: ContentKind.attachment,
-          categories: const [ReportCategory.sexual],
-          listExcerpt: 'Etwas, das nicht in der Liste stehen soll',
+      for (final (kind, category, covered) in const [
+        (
+          ContentKind.attachment,
+          ReportCategory.sexual,
+          'moderation.queue.imageCovered',
         ),
-      );
-      expect(find.text('moderation.queue.imageCovered'), findsOneWidget);
-      expect(
-        find.text('Etwas, das nicht in der Liste stehen soll'),
-        findsNothing,
-      );
+        (
+          ContentKind.comment,
+          ReportCategory.childSafety,
+          'moderation.queue.textCovered',
+        ),
+      ]) {
+        await pumpRow(
+          tester,
+          caseRow(
+            kind: kind,
+            categories: [category],
+            listExcerpt: 'Etwas, das nicht in der Liste stehen soll',
+          ),
+        );
+        expect(find.text(covered), findsOneWidget, reason: '$category');
+        expect(
+          find.text('Etwas, das nicht in der Liste stehen soll'),
+          findsNothing,
+          reason: '$category',
+        );
+      }
     });
   });
 
@@ -447,6 +461,11 @@ void main() {
         tester.getSemantics(find.text('moderation.case.decide')),
         isSemantics(isButton: true, hasTapAction: true),
       );
+
+      await tester.tap(find.text('moderation.case.decide'));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DecisionDialog), findsOneWidget);
       semantics.dispose();
     });
   });
