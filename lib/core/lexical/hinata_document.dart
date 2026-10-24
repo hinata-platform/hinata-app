@@ -1,7 +1,7 @@
 /// Rendering a stored document, in hinata's design language.
 library;
 
-import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:flutter/material.dart' show InkWell, Material;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart' show ReadContext;
@@ -272,15 +272,19 @@ Future<void> openHinataLink(String url) async {
 /// What [openHinataLink] hands the platform for [url], or null when it opens
 /// nothing.
 ///
-/// A relative address is refused too, though [isSafeUrl] lets it through: it
-/// names nothing until it is resolved against a base, and there is none here.
-/// A launcher reads the bare string as a path, and on Windows the shell takes
-/// `/Windows/System32/calc.exe` as a program and `//host/share` as SMB.
-Uri? hinataLinkTarget(String url) {
+/// A relative address such as `/issues/ACME-1` is a path of this app, and in
+/// a browser it resolves against the page, which is the app. Anywhere else it
+/// names nothing, because there is no base to resolve it against: a launcher
+/// reads the bare string as a path, and on Windows the shell takes
+/// `/Windows/System32/calc.exe` as a program to run. So there it opens
+/// nothing, though [isSafeUrl] lets it through. [resolvesRelative] is whether
+/// this runs in a browser.
+Uri? hinataLinkTarget(String url, {bool resolvesRelative = kIsWeb}) {
   final trimmed = url.trim();
   if (trimmed.isEmpty || !isSafeUrl(trimmed)) return null;
   final uri = Uri.tryParse(trimmed);
-  return uri != null && uri.hasScheme ? uri : null;
+  if (uri == null) return null;
+  return uri.hasScheme || resolvesRelative ? uri : null;
 }
 
 /// The resolver a surface uses, given the API client it can reach.
