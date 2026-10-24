@@ -223,11 +223,17 @@ class _AdminViewState extends State<_AdminView> {
   /// the ways it opens (HIN-175). It goes through only once the administrator
   /// confirmed what that makes of the instance, in the same words the
   /// Moderation section uses.
-  Future<bool> _save({bool openAccessConfirmed = false}) async {
+  Future<bool> _save({
+    bool openAccessConfirmed = false,
+    bool flagConfirmed = false,
+  }) async {
     final cubit = context.read<AdminSettingsCubit>();
     if (cubit.state.settings == null) return false;
     try {
-      await cubit.save(openAccessConfirmed: openAccessConfirmed);
+      await cubit.save(
+        openAccessConfirmed: openAccessConfirmed,
+        flagConfirmed: flagConfirmed,
+      );
       if (mounted) {
         // These settings decide what /meta reports — feature flags above all.
         // Re-read it so the admin sees the nav entry they just switched on
@@ -252,7 +258,29 @@ class _AdminViewState extends State<_AdminView> {
       if (opening != null && !openAccessConfirmed) {
         return await _confirmOpenAccess(opening) &&
             mounted &&
-            await _save(openAccessConfirmed: true);
+            await _save(
+              openAccessConfirmed: true,
+              flagConfirmed: flagConfirmed,
+            );
+      }
+      // Putting the unclear before moderation, said in words first (HIN-176).
+      if (failure.statusCode == 409 &&
+          failure.details['code'] == 'moderation.flagConfirm' &&
+          !flagConfirmed) {
+        final confirmed = await showGlassConfirm(
+          context,
+          icon: LucideIcons.scale,
+          title: context.t('admin.textCheck.confirmTitle'),
+          message: context.t('admin.textCheck.confirmBody'),
+          confirmLabel: context.t('admin.textCheck.confirm'),
+          confirmIcon: LucideIcons.check,
+        );
+        return confirmed == true &&
+            mounted &&
+            await _save(
+              openAccessConfirmed: openAccessConfirmed,
+              flagConfirmed: true,
+            );
       }
       showGlassErrorToast(context, context.t(failure.message));
       return false;

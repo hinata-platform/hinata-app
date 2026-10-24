@@ -22,6 +22,7 @@ abstract final class DocsPage {
   static const absences = 'absences';
   static const timeTrackingAdmin = 'admin-time-tracking';
   static const timeTrackingPrivacy = 'time-tracking-privacy';
+  static const adminArea = 'admin-area';
 }
 
 /// Public URL of a documentation page in the reader's language, or in English
