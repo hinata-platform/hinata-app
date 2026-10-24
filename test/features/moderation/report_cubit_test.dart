@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
@@ -16,6 +18,18 @@ void main() {
   setUp(() => moderation = FakeModerationRepository());
 
   ReportCubit build() => ReportCubit(moderation, comment, now: () => now);
+
+  test('a popover tapped away while it sends takes nothing late', () async {
+    final answer = Completer<void>();
+    moderation.answerWith(#report, (_) => answer.future);
+    final cubit = build()..choose(ReportCategory.spam);
+
+    final sending = cubit.send('');
+    await cubit.close();
+    answer.complete();
+
+    await expectLater(sending, completes);
+  });
 
   blocTest<ReportCubit, ReportState>(
     'choosing a reason opens the details, going back remembers it',

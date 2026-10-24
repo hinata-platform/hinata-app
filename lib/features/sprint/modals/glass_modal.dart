@@ -35,6 +35,12 @@ part 'glass_modal.wheels.dart';
 /// φ-stepped phone breakpoint, shared with the search palette.
 const double _kPhoneBreakpoint = 610;
 
+/// Whether [context] sits in a bottom sheet already. A second sheet would
+/// stack on it, so what opens from there opens as a card: pass the opposite as
+/// [showGlassModal]'s `adaptive`.
+bool insideGlassSheet(BuildContext context) =>
+    ModalRoute.of(context) is WoltModalSheetRoute;
+
 /// Opens a modal on the app's Liquid-Glass material — the shared presenter for
 /// every form and confirmation in the app, not only the sprint ones it was
 /// written for.
@@ -49,12 +55,6 @@ const double _kPhoneBreakpoint = 610;
 /// The sheet is bounded here rather than by its body: Wolt hands a page
 /// unbounded height, and these bodies pin their footer with a `Flexible`, which
 /// does not flex without a bound — the footer would sit below the fold.
-/// Whether [context] sits in a bottom sheet already. A second sheet would
-/// stack on it, so what opens from there opens as a card: pass the opposite as
-/// [showGlassModal]'s `adaptive`.
-bool insideGlassSheet(BuildContext context) =>
-    ModalRoute.of(context) is WoltModalSheetRoute;
-
 Future<T?> showGlassModal<T>(
   BuildContext context, {
   required WidgetBuilder builder,
