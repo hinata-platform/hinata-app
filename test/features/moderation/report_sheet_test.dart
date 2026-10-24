@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -6,6 +5,7 @@ import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/moderation_models.dart';
 import 'package:hinata/core/repositories/moderation_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/blocks/hidden_content_cubit.dart';
 import 'package:hinata/features/moderation/report/report_sheet.dart';
 
@@ -119,7 +119,7 @@ void main() {
       isNull,
     );
 
-    final alsoBlock = find.byType(CupertinoSwitch);
+    final alsoBlock = find.byType(HiveSwitch);
     await tester.ensureVisible(alsoBlock);
     await tester.tap(alsoBlock);
     await tester.pump();
