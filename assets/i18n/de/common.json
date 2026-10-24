@@ -3671,7 +3671,12 @@
         "zipHint": "ZIP-Dateien als Anhang",
         "voice": "Sprachnachrichten",
         "voiceHint": "Aufnahmen in Kommentaren"
-      }
+      },
+      "retentionTitle": "Aufbewahrung und Zahlen",
+      "retentionHint": "Erledigte Fälle, Meldungen und Quarantäne werden danach gelöscht, außer bei einer Meldung an die Strafverfolgung.",
+      "retentionLabel": "Löschen nach",
+      "retentionMonths": "{{count}} Monat",
+      "retentionMonths_plural": "{{count}} Monate"
     },
     "entry": {
       "title": "Wer hereinkommt",
@@ -4549,6 +4554,10 @@
         "shifts": {
           "label": "Schichten",
           "desc": "Du wirst eingeteilt, eine Schicht ändert sich oder beginnt bald"
+        },
+        "moderation": {
+          "label": "Moderation",
+          "desc": "Neue und überfällige Fälle, eine zweite Person gefragt, Hinweise ans Team"
         }
       },
       "pushUnsupported": "Hier gibt es keinen Push-Dienst. Die Einstellung gilt weiterhin für dein Handy und deine anderen Geräte.",
@@ -6088,7 +6097,14 @@
     },
     "state": {
       "removed": "Entfernt",
-      "suspended": "Gesperrt"
+      "suspended": "Gesperrt",
+      "open": "Offen",
+      "urgent": "Dringend",
+      "inReview": "In Prüfung",
+      "pending": "Wartet auf Bestätigung",
+      "appeal": "Widerspruch",
+      "handled": "Erledigt",
+      "clear": "Kein Verstoß"
     },
     "statement": {
       "automation": "Automatische Mittel",
@@ -6098,6 +6114,366 @@
       "message": "Nachricht der Moderation",
       "remedies": "Was du tun kannst",
       "rule": "Regel"
+    },
+    "queue": {
+      "title": "Moderation",
+      "target": "Ziel: Antwort binnen 24 Stunden",
+      "more": "Mehr",
+      "settingsHint": "Gemeldete Inhalte prüfen und entscheiden",
+      "view": {
+        "open": "Offen",
+        "appeal": "Widerspruch",
+        "done": "Erledigt"
+      },
+      "viewCount": "{{label}} · {{count}}",
+      "automated": "Automatisch erkannt",
+      "reports": "{{count}} Meldung",
+      "reports_plural": "{{count}} Meldungen",
+      "ownInitiative": "Aus eigener Initiative",
+      "reportedByMe": "Von dir gemeldet",
+      "imageCovered": "Bild verdeckt, erst im Fall auf Wunsch",
+      "textCovered": "Text verdeckt, erst im Fall",
+      "openCount": "{{count}} offener Fall",
+      "openCount_plural": "{{count}} offene Fälle",
+      "chooseTitle": "Wähle einen Fall",
+      "chooseMessage": "Links steht, was auf eine Antwort wartet. Dringendes zuerst, dann das Älteste.",
+      "failedTitle": "Die Fälle konnten nicht geladen werden",
+      "failedMessage": "Prüfe die Verbindung und versuche es noch einmal.",
+      "empty": {
+        "open": "Nichts zu prüfen",
+        "appeal": "Kein Widerspruch offen",
+        "done": "Noch nichts entschieden"
+      },
+      "emptyMessage": {
+        "open": "Neue Meldungen erscheinen hier, und du bekommst eine Mitteilung.",
+        "appeal": "Widerspricht jemand einer Entscheidung, prüft eine andere Person hier neu.",
+        "done": "Entschiedene Fälle stehen hier, bis ihre Aufbewahrung endet."
+      }
+    },
+    "kind": {
+      "issue": "Vorgang",
+      "comment": "Kommentar",
+      "attachment": "Anhang",
+      "article": "Seite",
+      "person": "Person",
+      "other": "Etwas anderes"
+    },
+    "source": {
+      "member": "Mitglied",
+      "public": "ohne Konto",
+      "automated": "automatisch",
+      "ownInitiative": "eigene Initiative"
+    },
+    "case": {
+      "age": {
+        "minutes": "{{count}} Min.",
+        "minutes_plural": "{{count}} Min.",
+        "hours": "{{count}} Std.",
+        "hours_plural": "{{count}} Std.",
+        "days": "{{count}} Tg.",
+        "days_plural": "{{count}} Tg."
+      },
+      "ageSpoken": {
+        "minutes": "{{count}} Minute",
+        "minutes_plural": "{{count}} Minuten",
+        "hours": "{{count}} Stunde",
+        "hours_plural": "{{count}} Stunden",
+        "days": "{{count}} Tag",
+        "days_plural": "{{count}} Tagen"
+      },
+      "waited": "seit {{age}}",
+      "waitedOverdue": "seit {{age}}, überfällig",
+      "overdueSince": "seit {{age}}",
+      "kindBy": "{{kind}} von {{name}}",
+      "withPerson": "Bei {{name}}",
+      "reported": "Gemeldeter Inhalt",
+      "asReported": "Stand beim Melden",
+      "someone": "Jemand",
+      "someoneModerating": "Jemand aus der Moderation",
+      "fromMail": "Per E-Mail von {{sender}}",
+      "filesNeverShown": "Diese Datei zeigt Hinata nie an.",
+      "procedure": "Ablaufplan öffnen",
+      "fileNumber": "Datei {{n}}",
+      "viewFile": "Datei ansehen",
+      "disturbingTitle": "Der Inhalt kann verstörend sein",
+      "disturbingMessage": "Die Datei wurde als sexueller Inhalt gemeldet. Sie öffnet sich nur hier, wird nicht gespeichert, und das Ansehen steht im Protokoll.",
+      "noCopyKept": "Nichts war falsch: Die Moderation behält keine Kopie des Inhalts.",
+      "removalIncomplete": "Entfernen noch nicht abgeschlossen. Hinata versucht es weiter.",
+      "otherUses": "Weitere Verwendungen",
+      "otherUsesHint": "Das entfernte Bild stand auch hier. Sieh dir diese Stellen ebenfalls an.",
+      "scope": {
+        "issue": "Du siehst nur Titel und Beschreibung dieses Vorgangs.",
+        "comment": "Du siehst nur diesen Kommentar und worauf er antwortet.",
+        "attachment": "Du siehst nur diese Datei.",
+        "article": "Du siehst nur diese Seite.",
+        "person": "Du siehst nur Profilbild und Profiltexte.",
+        "other": "Du siehst nur, was die Meldung beschreibt."
+      },
+      "since": {
+        "unchanged": "Seit dem Melden unverändert.",
+        "changed": "Seitdem geändert.",
+        "deleted": "Inzwischen gelöscht."
+      },
+      "withheld": "Inhalt zurückgehalten, bis eine zweite Person freigibt.",
+      "askedToOpen": "Du hast die Freigabe angefragt. Eine zweite Person gibt frei.",
+      "askToOpen": "Freigabe anfragen …",
+      "askToOpenTitle": "Freigabe anfragen",
+      "askToOpenSubtitle": "Gemeldet ohne Konto, auf internem Inhalt. Eine zweite Person gibt ihn frei, deine Begründung steht im Verlauf.",
+      "open": "Freigeben …",
+      "openTitle": "Inhalt freigeben",
+      "openSubtitle": "Jemand anderes hat angefragt. Mit deiner Begründung wird der Inhalt für die Moderation sichtbar.",
+      "revealReason": "Begründung",
+      "reports": "Meldungen",
+      "reportNumber": "Meldung {{n}}",
+      "quoted": "„{{text}}“",
+      "reportedBy": "Gemeldet von {{name}}",
+      "unfoundedBefore": "Von dieser Stelle kam schon {{count}} Meldung zu Kindern, die offensichtlich unbegründet war.",
+      "unfoundedBefore_plural": "Von dieser Stelle kamen schon {{count}} Meldungen zu Kindern, die offensichtlich unbegründet waren.",
+      "whoReported": "Wer hat gemeldet? …",
+      "moreReports": "{{count}} weitere Meldung",
+      "moreReports_plural": "{{count}} weitere Meldungen",
+      "reportersCovered": "Wer gemeldet hat, bleibt verdeckt. Aufdecken nur mit Begründung, sie steht im Verlauf.",
+      "reportersStayCovered": "Bei Gefährdung von Kindern bleibt verdeckt, wer gemeldet hat.",
+      "revealReporterTitle": "Wer hat gemeldet?",
+      "revealReporterSubtitle": "Der Name wird nur mit Begründung aufgedeckt. Sie steht im Verlauf des Falls.",
+      "reveal": "Aufdecken",
+      "decision": "Entscheidung",
+      "measure": "Maßnahme",
+      "lawEnforcementTold": "Die Strafverfolgung wurde informiert. Der Fall bleibt länger aufbewahrt.",
+      "confirmedBy": "Bestätigt von {{name}}",
+      "restoredBy": {
+        "restored": "{{name}} hat den Inhalt wiederhergestellt.",
+        "rewrittenSince": "{{name}} hat wiederhergestellt. Der Inhalt war inzwischen neu geschrieben, dieser Text bleibt.",
+        "gone": "{{name}} hat wiederhergestellt, aber den Inhalt gibt es nicht mehr."
+      },
+      "pendingMine": "Du hast eine Sperre entschieden. Eine zweite Person muss bestätigen.",
+      "pendingOthers": "Eine Sperre wartet auf die Bestätigung einer zweiten Person.",
+      "claim": "Übernehmen",
+      "takeOver": "Übernehmen",
+      "release": "Zurückgeben",
+      "decide": "Entscheiden …",
+      "confirm": "Bestätigen",
+      "reject": "Zurückweisen …",
+      "rejectTitle": "Sperre zurückweisen",
+      "rejectSubtitle": "Der Fall ist danach wieder offen. Deine Begründung steht im Verlauf.",
+      "confirmed": "Bestätigt. Die Sperre gilt.",
+      "rejected": "Zurückgewiesen. Der Fall ist wieder offen.",
+      "more": "Mehr zum Fall",
+      "viewProfile": "Profil ansehen",
+      "restore": "Wiederherstellen …",
+      "restoreTitle": "Inhalt wiederherstellen",
+      "restoreSubtitle": "Der entfernte Inhalt kommt zurück, eine Sperre aus diesem Fall endet. Die Person erfährt es.",
+      "restoreConfirm": "Wiederherstellen",
+      "restored": "Wiederhergestellt.",
+      "holdAction": "Aufbewahrung verlängern …",
+      "holdTitle": "Aufbewahrung verlängern",
+      "holdSubtitle": "Zum Beispiel, weil eine Behörde den Fall braucht. Kürzer als jetzt geht nicht.",
+      "holdIndefinite": "Ohne Ende",
+      "holdIndefiniteHint": "Bis jemand die Aufbewahrung wieder ändert.",
+      "holdUntil": "Aufbewahren bis",
+      "holdReason": "Begründung",
+      "hold": "Verlängern",
+      "held": "Die Aufbewahrung ist verlängert.",
+      "why": "Begründung",
+      "noteLabel": "{{label}}, mindestens {{min}} Zeichen",
+      "decidedMeanwhile": "Inzwischen hat jemand anderes entschieden.",
+      "changedMeanwhile": "Der Fall hat sich geändert, bitte prüfe ihn noch einmal.",
+      "goneTitle": "Diesen Fall gibt es nicht mehr",
+      "goneMessage": "Seine Aufbewahrung ist abgelaufen, oder du hast den Inhalt selbst geschrieben.",
+      "failedTitle": "Der Fall konnte nicht geladen werden"
+    },
+    "history": {
+      "reported": "Gemeldet",
+      "claimed": "{{name}} hat den Fall übernommen",
+      "released": "{{name}} hat den Fall zurückgegeben",
+      "reporterRevealed": "{{name}} hat aufgedeckt, wer gemeldet hat:",
+      "evidenceRequested": "{{name}} hat die Freigabe angefragt:",
+      "evidenceRevealed": "{{name}} hat den Inhalt freigegeben:",
+      "decided": "{{name}} hat entschieden: {{outcome}}",
+      "appealed": "Widerspruch eingegangen",
+      "appealDecided": "{{name}} hat über den Widerspruch entschieden",
+      "restored": "{{name}} hat wiederhergestellt",
+      "held": "{{name}} hat die Aufbewahrung verlängert:",
+      "confirmationRequested": "{{name}} hat eine Sperre entschieden, die eine zweite Person bestätigt",
+      "confirmationRejected": "{{name}} hat die Sperre zurückgewiesen:",
+      "suspended": "Konto gesperrt, {{length}}",
+      "suspensionLifted": "{{name}} hat die Sperre aufgehoben:"
+    },
+    "decision": {
+      "title": "Entscheidung",
+      "kindIn": "{{kind}} in {{where}}",
+      "send": "Entscheidung senden",
+      "sent": "Entschieden.",
+      "outcome": {
+        "noViolation": "Kein Verstoß",
+        "unfounded": "Offensichtlich unbegründet",
+        "action": "Maßnahme",
+        "handled": "Erledigt"
+      },
+      "outcomeHint": {
+        "noViolation": "Bleibt stehen. Die meldenden Personen erfahren es.",
+        "unfounded": "Erkennbar falsche Meldung. Geht auch, ohne den Inhalt anzusehen.",
+        "action": "{{name}} bekommt die Begründung. Ein entfernter Inhalt geht in die Quarantäne.",
+        "actionAnyone": "Die Person bekommt die Begründung. Ein entfernter Inhalt geht in die Quarantäne.",
+        "handled": "Außerhalb von Hinata erledigt, zum Beispiel in einem Gespräch."
+      },
+      "remove": "Inhalt entfernen",
+      "removeHint": "Wähle, was entfernt wird",
+      "scope": {
+        "issue": {
+          "title": "Der Titel",
+          "description": "Die Beschreibung",
+          "whole": "Titel und Beschreibung"
+        },
+        "comment": {
+          "whole": "Der ganze Kommentar"
+        },
+        "attachment": {
+          "whole": "Die ganze Datei"
+        },
+        "article": {
+          "revert": "Die Seite auf die Fassung davor zurücksetzen",
+          "whole": "Die ganze Seite"
+        },
+        "person": {
+          "avatar": "Das Profilbild",
+          "profileText": "Die Profiltexte",
+          "whole": "Profilbild und Profiltexte"
+        }
+      },
+      "scopeChip": {
+        "issue": {
+          "title": "Titel",
+          "description": "Beschreibung",
+          "whole": "Beides"
+        },
+        "article": {
+          "revert": "Zurücksetzen",
+          "whole": "Ganz"
+        },
+        "person": {
+          "avatar": "Profilbild",
+          "profileText": "Profiltexte",
+          "whole": "Beides"
+        }
+      },
+      "suspend": "Konto sperren",
+      "suspendHint": "Für schwere oder wiederholte Verstöße",
+      "suspendAdmin": "Admin-Konten werden nicht gesperrt.",
+      "suspendNobody": "Niemand mit Konto ist dafür verantwortlich.",
+      "suspendLoading": "Wird geprüft …",
+      "howLong": "Wie lange?",
+      "suspendSignOut": "{{name}} wird überall abgemeldet, Zugriffstokens ruhen. Inhalte bleiben, wie sie sind.",
+      "suspendMail": "Die Begründung geht per E-Mail an {{name}}. Eine Antwort darauf gilt als Widerspruch.",
+      "suspendEnds": "Endet am {{date}} von selbst.",
+      "suspendIndefinite": "Bleibt, bis jemand sie aufhebt.",
+      "secondPerson": "Eine zweite Person muss bestätigen.",
+      "suspendedFor": "Gesperrt: {{length}}",
+      "ground": "Grund",
+      "groundChip": {
+        "rules": "Hausregel",
+        "law": "Gesetz"
+      },
+      "rule": "Regel",
+      "ruleHint": "Zum Beispiel: Abschnitt 2, niemanden herabsetzen",
+      "pickRule": "Hausregel wählen",
+      "ruleLabel": "Hausregel {{number}}: {{title}}",
+      "searchRules": "Regel suchen",
+      "noRule": "Keine Regel passt.",
+      "law": "Vorschrift",
+      "lawHint": "Zum Beispiel: § 185 StGB",
+      "facts": "Was hast du festgestellt?",
+      "factsRequired": "Was hast du festgestellt? Pflicht",
+      "factsOptional": "Was hast du festgestellt? Freiwillig",
+      "factsHint": "Zum Beispiel: Der Kommentar nennt eine Kollegin „zu blöd für diesen Job“. Das wertet eine Person ab, statt die Sache zu besprechen.",
+      "message": "Nachricht an die Person",
+      "messageTo": "Nachricht an {{name}}. Freiwillig",
+      "messageToAnyone": "Nachricht an die Person. Freiwillig",
+      "more": "Weitere Angaben",
+      "responsible": "Verantwortliche Person",
+      "responsibleIs": "Verantwortlich: {{name}}",
+      "contributor": "Beteiligte Person {{n}}",
+      "lawEnforcement": "Strafverfolgung informiert",
+      "lawEnforcementHint": "Der Fall bleibt dann zwölf Monate aufbewahrt.",
+      "lawEnforcementYes": "Strafverfolgung: ja",
+      "lawEnforcementNo": "Strafverfolgung: nein",
+      "deceptive": "Irreführende Massenwerbung",
+      "deceptiveHint": "Nur bei Spam. Zählt für die Jahreszahlen.",
+      "internalNote": "Interne Notiz",
+      "internalNoteHint": "Sieht nur die Moderation.",
+      "noInternalNote": "keine interne Notiz",
+      "withInternalNote": "mit interner Notiz",
+      "previewTitle": "So kommt es bei {{name}} an",
+      "previewTitleAnyone": "So kommt die Begründung an",
+      "previewNone": "Wähle einen Ausgang. Dann steht hier, was die Beteiligten erfahren.",
+      "previewNoStatement": {
+        "noViolation": "Es geht keine Begründung raus. Die meldenden Personen erfahren, dass kein Verstoß vorliegt.",
+        "unfounded": "Es geht keine Begründung raus. Die meldenden Personen erfahren, dass die Meldung offensichtlich unbegründet war.",
+        "handled": "Es geht keine Begründung raus. Die meldenden Personen erfahren, dass es erledigt ist."
+      },
+      "previewIncomplete": "Wähle, was die Maßnahme tut, und den Grund. Dann steht hier die Begründung im Wortlaut.",
+      "previewFailed": "Die Vorschau konnte nicht geladen werden. Sie kommt bei der nächsten Änderung wieder.",
+      "problem": {
+        "outcome": "Wähle einen Ausgang.",
+        "measure": "Eine Maßnahme entfernt, sperrt oder beides.",
+        "scope": "Wähle, was entfernt wird.",
+        "rule": "Wähle die Regel, gegen die verstoßen wurde.",
+        "law": "Nenne die Vorschrift.",
+        "facts": "Schreib mindestens {{min}} Zeichen dazu, was du festgestellt hast.",
+        "suspension": "Diese Person kann nicht gesperrt werden."
+      }
+    },
+    "suspension": {
+      "pageTitle": "Gesperrte Konten",
+      "length": {
+        "days7": "7 Tage",
+        "days30": "30 Tage",
+        "indefinite": "Unbefristet"
+      },
+      "until": "Gesperrt bis {{date}}",
+      "indefinite": "Unbefristet gesperrt",
+      "openCase": "Fall öffnen",
+      "emptyTitle": "Niemand ist gesperrt",
+      "emptyMessage": "Sperrt die Moderation ein Konto, steht es hier, bis die Sperre endet.",
+      "failedTitle": "Die gesperrten Konten konnten nicht geladen werden",
+      "lift": "Sperre aufheben …",
+      "liftTitle": "Sperre aufheben",
+      "liftSubtitle": "Die Person kann sich danach wieder anmelden. Was entfernt wurde, bleibt entfernt.",
+      "liftConfirm": "Aufheben",
+      "lifted": "Die Sperre ist aufgehoben.",
+      "suspend": "Konto sperren …",
+      "suspendDetail": "Legt einen Fall aus eigener Initiative an, danach entscheidest du.",
+      "ownTitle": "{{name}} sperren",
+      "ownSubtitle": "Ein Fall aus eigener Initiative. Danach entscheidest du die Sperre mit Begründung.",
+      "ownCategory": "Worum geht es?",
+      "ownNext": "Weiter"
+    },
+    "appealReview": {
+      "title": "Widerspruch",
+      "filedOn": "Eingegangen am {{date}}",
+      "via": {
+        "app": "in der App",
+        "reply": "per Antwort auf die E-Mail"
+      },
+      "notYours": "Du hast entschieden. Über den Widerspruch entscheidet jemand anderes.",
+      "uphold": "Entscheidung bestätigen",
+      "reverse": "Entscheidung aufheben",
+      "upholdTitle": "Entscheidung bestätigen",
+      "upholdSubtitle": "Die Entscheidung bleibt. Die Person erfährt es mit deiner Begründung.",
+      "reverseTitle": "Entscheidung aufheben",
+      "reverseSubtitle": "Der Inhalt kommt zurück, eine Sperre endet. Die Person erfährt es mit deiner Begründung.",
+      "note": "Begründung",
+      "upheld": "Bestätigt.",
+      "reversed": "Aufgehoben.",
+      "wasUpheld": "{{name}} hat die Entscheidung bestätigt.",
+      "wasReversed": "{{name}} hat die Entscheidung aufgehoben.",
+      "recordAction": "Widerspruch eintragen …",
+      "recordTitle": "Widerspruch eintragen",
+      "recordSubtitle": "Für eine Antwort auf die E-Mail mit der Begründung. Eine andere Person prüft dann neu.",
+      "recordText": "Text der Antwort",
+      "receivedOn": "Eingegangen am",
+      "record": "Eintragen",
+      "recorded": "Widerspruch eingetragen."
     }
   }
 }

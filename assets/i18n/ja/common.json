@@ -3671,7 +3671,12 @@
         "zipHint": "添付ファイルの ZIP",
         "voice": "ボイスメッセージ",
         "voiceHint": "コメントの録音"
-      }
+      },
+      "retentionTitle": "保存期間と統計",
+      "retentionHint": "処理済みの案件、その通報、隔離された内容はこの期間の後に削除されます。法執行機関に通知した場合を除きます。",
+      "retentionLabel": "削除まで",
+      "retentionMonths": "{{count}} か月",
+      "retentionMonths_plural": "{{count}} か月"
     },
     "entry": {
       "title": "誰が入れるか",
@@ -4549,6 +4554,10 @@
         "shifts": {
           "label": "シフト",
           "desc": "割り当てられた、シフトが変わった、まもなく始まる"
+        },
+        "moderation": {
+          "label": "モデレーション",
+          "desc": "新しい案件と期限切れの案件、2 人目の確認依頼、チームへのメモ"
         }
       },
       "pushUnsupported": "ここではプッシュ通知を利用できません。設定はスマートフォンや他のデバイスに適用されます",
@@ -6088,7 +6097,14 @@
     },
     "state": {
       "removed": "削除",
-      "suspended": "停止"
+      "suspended": "停止",
+      "open": "未処理",
+      "urgent": "緊急",
+      "inReview": "確認中",
+      "pending": "確認待ち",
+      "appeal": "異議",
+      "handled": "対応済み",
+      "clear": "違反なし"
     },
     "statement": {
       "automation": "自動化された手段",
@@ -6098,6 +6114,366 @@
       "message": "モデレーションからのメッセージ",
       "remedies": "できること",
       "rule": "ルール"
+    },
+    "queue": {
+      "title": "モデレーション",
+      "target": "目標：24 時間以内に回答",
+      "more": "その他",
+      "settingsHint": "通報された内容を確認して判断する",
+      "view": {
+        "open": "未処理",
+        "appeal": "異議",
+        "done": "処理済み"
+      },
+      "viewCount": "{{label}} · {{count}}",
+      "automated": "自動検出",
+      "reports": "通報 {{count}} 件",
+      "reports_plural": "通報 {{count}} 件",
+      "ownInitiative": "モデレーション自身の判断",
+      "reportedByMe": "あなたが通報",
+      "imageCovered": "画像は非表示、案件内で必要に応じて表示",
+      "textCovered": "テキストは非表示、案件内で表示",
+      "openCount": "未処理の案件 {{count}} 件",
+      "openCount_plural": "未処理の案件 {{count}} 件",
+      "chooseTitle": "案件を選択",
+      "chooseMessage": "回答を待っている案件の一覧です。緊急のものが先、次に古いものです。",
+      "failedTitle": "案件を読み込めませんでした",
+      "failedMessage": "接続を確認して、もう一度お試しください。",
+      "empty": {
+        "open": "確認するものはありません",
+        "appeal": "保留中の異議はありません",
+        "done": "まだ判断はありません"
+      },
+      "emptyMessage": {
+        "open": "新しい通報はここに表示され、通知も届きます。",
+        "appeal": "判断に異議が出ると、別の人がここで見直します。",
+        "done": "判断済みの案件は保存期間が終わるまでここに残ります。"
+      }
+    },
+    "kind": {
+      "issue": "課題",
+      "comment": "コメント",
+      "attachment": "添付ファイル",
+      "article": "ページ",
+      "person": "ユーザー",
+      "other": "その他"
+    },
+    "source": {
+      "member": "メンバー",
+      "public": "アカウントなし",
+      "automated": "自動",
+      "ownInitiative": "自主的"
+    },
+    "case": {
+      "age": {
+        "minutes": "{{count}} 分",
+        "minutes_plural": "{{count}} 分",
+        "hours": "{{count}} 時間",
+        "hours_plural": "{{count}} 時間",
+        "days": "{{count}} 日",
+        "days_plural": "{{count}} 日"
+      },
+      "ageSpoken": {
+        "minutes": "{{count}} 分",
+        "minutes_plural": "{{count}} 分",
+        "hours": "{{count}} 時間",
+        "hours_plural": "{{count}} 時間",
+        "days": "{{count}} 日",
+        "days_plural": "{{count}} 日"
+      },
+      "waited": "{{age}}待機中",
+      "waitedOverdue": "{{age}}待機中、期限超過",
+      "overdueSince": "{{age}}経過",
+      "kindBy": "{{name}} の{{kind}}",
+      "withPerson": "{{name}} が担当",
+      "reported": "通報された内容",
+      "asReported": "通報時点",
+      "someone": "誰か",
+      "someoneModerating": "モデレーション担当者",
+      "fromMail": "{{sender}} からのメール",
+      "filesNeverShown": "Hinata はこのファイルを決して表示しません。",
+      "procedure": "対応手順を開く",
+      "fileNumber": "ファイル {{n}}",
+      "viewFile": "ファイルを表示",
+      "disturbingTitle": "不快な内容の可能性があります",
+      "disturbingMessage": "このファイルは性的な内容として通報されています。ここでのみ開き、保存されず、閲覧は記録されます。",
+      "noCopyKept": "問題はありませんでした。モデレーションは内容のコピーを保持しません。",
+      "removalIncomplete": "削除はまだ完了していません。Hinata が再試行を続けます。",
+      "otherUses": "その他の使用箇所",
+      "otherUsesHint": "削除した画像はここにもありました。これらの箇所も確認してください。",
+      "scope": {
+        "issue": "この課題のタイトルと説明だけが表示されます。",
+        "comment": "このコメントと、その返信先だけが表示されます。",
+        "attachment": "このファイルだけが表示されます。",
+        "article": "このページだけが表示されます。",
+        "person": "プロフィール画像とプロフィールのテキストだけが表示されます。",
+        "other": "通報に書かれた内容だけが表示されます。"
+      },
+      "since": {
+        "unchanged": "通報時から変更なし。",
+        "changed": "その後変更あり。",
+        "deleted": "その後削除済み。"
+      },
+      "withheld": "2 人目が開示するまで内容は保留されています。",
+      "askedToOpen": "開示を依頼しました。2 人目が開示します。",
+      "askToOpen": "開示を依頼 …",
+      "askToOpenTitle": "開示を依頼",
+      "askToOpenSubtitle": "アカウントなしで内部の内容が通報されました。2 人目が開示し、あなたの理由は履歴に残ります。",
+      "open": "開示 …",
+      "openTitle": "内容を開示",
+      "openSubtitle": "別の人が依頼しました。あなたの理由とともに、内容がモデレーションに表示されます。",
+      "revealReason": "理由",
+      "reports": "通報",
+      "reportNumber": "通報 {{n}}",
+      "quoted": "「{{text}}」",
+      "reportedBy": "通報者：{{name}}",
+      "unfoundedBefore": "この通報元からの子どもに関する過去の通報のうち、明らかに根拠のないもの：{{count}} 件。",
+      "unfoundedBefore_plural": "この通報元からの子どもに関する過去の通報のうち、明らかに根拠のないもの：{{count}} 件。",
+      "whoReported": "通報者は？ …",
+      "moreReports": "ほかの通報 {{count}} 件",
+      "moreReports_plural": "ほかの通報 {{count}} 件",
+      "reportersCovered": "通報者は非公開のままです。開示には理由が必要で、履歴に残ります。",
+      "reportersStayCovered": "子どもの安全のため、通報者は常に非公開です。",
+      "revealReporterTitle": "通報者は？",
+      "revealReporterSubtitle": "名前は理由を添えた場合にのみ開示され、理由は案件の履歴に残ります。",
+      "reveal": "開示",
+      "decision": "判断",
+      "measure": "措置",
+      "lawEnforcementTold": "法執行機関に通知済みです。案件は長く保存されます。",
+      "confirmedBy": "{{name}} が確認",
+      "restoredBy": {
+        "restored": "{{name}} が内容を復元しました。",
+        "rewrittenSince": "{{name}} が復元しました。内容はその間に書き直されており、そのテキストが残ります。",
+        "gone": "{{name}} が復元しましたが、内容はもう存在しません。"
+      },
+      "pendingMine": "あなたが利用停止を判断しました。2 人目の確認が必要です。",
+      "pendingOthers": "利用停止が 2 人目の確認を待っています。",
+      "claim": "担当する",
+      "takeOver": "引き継ぐ",
+      "release": "戻す",
+      "decide": "判断する …",
+      "confirm": "確認する",
+      "reject": "却下 …",
+      "rejectTitle": "利用停止を却下",
+      "rejectSubtitle": "その後、案件は再び未処理になります。理由は履歴に残ります。",
+      "confirmed": "確認しました。利用停止が有効です。",
+      "rejected": "却下しました。案件は再び未処理です。",
+      "more": "この案件のその他の操作",
+      "viewProfile": "プロフィールを表示",
+      "restore": "復元 …",
+      "restoreTitle": "内容を復元",
+      "restoreSubtitle": "削除した内容が戻り、この案件の利用停止は終了します。本人に通知されます。",
+      "restoreConfirm": "復元",
+      "restored": "復元しました。",
+      "holdAction": "保存を延長 …",
+      "holdTitle": "案件の保存を延長",
+      "holdSubtitle": "例えば当局が案件を必要とする場合。現在より短くはできません。",
+      "holdIndefinite": "期限なし",
+      "holdIndefiniteHint": "誰かが再び変更するまで。",
+      "holdUntil": "保存期限",
+      "holdReason": "理由",
+      "hold": "延長",
+      "held": "案件の保存を延長しました。",
+      "why": "理由",
+      "noteLabel": "{{label}}（{{min}} 文字以上）",
+      "decidedMeanwhile": "その間に別の人が判断しました。",
+      "changedMeanwhile": "案件が変わりました。もう一度確認してください。",
+      "goneTitle": "この案件はもう存在しません",
+      "goneMessage": "保存期間が終了したか、内容をあなた自身が書きました。",
+      "failedTitle": "案件を読み込めませんでした"
+    },
+    "history": {
+      "reported": "通報",
+      "claimed": "{{name}} が案件を担当",
+      "released": "{{name}} が案件を戻しました",
+      "reporterRevealed": "{{name}} が通報者を開示：",
+      "evidenceRequested": "{{name}} が開示を依頼：",
+      "evidenceRevealed": "{{name}} が内容を開示：",
+      "decided": "{{name}} の判断：{{outcome}}",
+      "appealed": "異議を受け付けました",
+      "appealDecided": "{{name}} が異議を判断",
+      "restored": "{{name}} が復元",
+      "held": "{{name}} が保存を延長：",
+      "confirmationRequested": "{{name}} が利用停止を判断、2 人目が確認",
+      "confirmationRejected": "{{name}} が利用停止を却下：",
+      "suspended": "アカウント利用停止、{{length}}",
+      "suspensionLifted": "{{name}} が利用停止を解除："
+    },
+    "decision": {
+      "title": "判断",
+      "kindIn": "{{where}} の{{kind}}",
+      "send": "判断を送信",
+      "sent": "判断しました。",
+      "outcome": {
+        "noViolation": "違反なし",
+        "unfounded": "明らかに根拠なし",
+        "action": "措置",
+        "handled": "対応済み"
+      },
+      "outcomeHint": {
+        "noViolation": "そのまま残ります。通報者に知らされます。",
+        "unfounded": "明らかに誤った通報。内容を見なくても判断できます。",
+        "action": "{{name}} に理由が届きます。削除した内容は隔離されます。",
+        "actionAnyone": "本人に理由が届きます。削除した内容は隔離されます。",
+        "handled": "Hinata の外で対応済み。例えば話し合いで。"
+      },
+      "remove": "内容を削除",
+      "removeHint": "削除する部分を選択",
+      "scope": {
+        "issue": {
+          "title": "タイトル",
+          "description": "説明",
+          "whole": "タイトルと説明"
+        },
+        "comment": {
+          "whole": "コメント全体"
+        },
+        "attachment": {
+          "whole": "ファイル全体"
+        },
+        "article": {
+          "revert": "ページを前の版に戻す",
+          "whole": "ページ全体"
+        },
+        "person": {
+          "avatar": "プロフィール画像",
+          "profileText": "プロフィールのテキスト",
+          "whole": "プロフィール画像とテキスト"
+        }
+      },
+      "scopeChip": {
+        "issue": {
+          "title": "タイトル",
+          "description": "説明",
+          "whole": "両方"
+        },
+        "article": {
+          "revert": "戻す",
+          "whole": "全体"
+        },
+        "person": {
+          "avatar": "画像",
+          "profileText": "テキスト",
+          "whole": "両方"
+        }
+      },
+      "suspend": "アカウントを利用停止",
+      "suspendHint": "重大な違反や繰り返しの違反の場合",
+      "suspendAdmin": "管理者アカウントは利用停止されません。",
+      "suspendNobody": "アカウントを持つ責任者がいません。",
+      "suspendLoading": "確認中 …",
+      "howLong": "期間は？",
+      "suspendSignOut": "{{name}} はすべての端末でログアウトし、アクセストークンは停止します。内容はそのままです。",
+      "suspendMail": "理由はメールで {{name}} に届きます。返信は異議として扱われます。",
+      "suspendEnds": "{{date}} に自動で終了します。",
+      "suspendIndefinite": "誰かが解除するまで続きます。",
+      "secondPerson": "2 人目の確認が必要です。",
+      "suspendedFor": "利用停止：{{length}}",
+      "ground": "根拠",
+      "groundChip": {
+        "rules": "ハウスルール",
+        "law": "法律"
+      },
+      "rule": "ルール",
+      "ruleHint": "例：第 2 節、他人をおとしめない",
+      "pickRule": "ハウスルールを選択",
+      "ruleLabel": "ルール {{number}}：{{title}}",
+      "searchRules": "ルールを検索",
+      "noRule": "該当するルールはありません。",
+      "law": "条文",
+      "lawHint": "例：§ 185 StGB",
+      "facts": "何を確認しましたか？",
+      "factsRequired": "何を確認しましたか？必須",
+      "factsOptional": "何を確認しましたか？任意",
+      "factsHint": "例：コメントは同僚を「この仕事には頭が悪すぎる」と呼んでいます。これは議論ではなく、人をおとしめるものです。",
+      "message": "本人へのメッセージ",
+      "messageTo": "{{name}} へのメッセージ（任意）",
+      "messageToAnyone": "本人へのメッセージ（任意）",
+      "more": "その他の情報",
+      "responsible": "責任者",
+      "responsibleIs": "責任者：{{name}}",
+      "contributor": "関与者 {{n}}",
+      "lawEnforcement": "法執行機関に通知済み",
+      "lawEnforcementHint": "その場合、案件は 12 か月保存されます。",
+      "lawEnforcementYes": "法執行機関：はい",
+      "lawEnforcementNo": "法執行機関：いいえ",
+      "deceptive": "誤解を招く大量広告",
+      "deceptiveHint": "スパムのみ。年次統計に計上されます。",
+      "internalNote": "内部メモ",
+      "internalNoteHint": "モデレーションだけが見られます。",
+      "noInternalNote": "内部メモなし",
+      "withInternalNote": "内部メモあり",
+      "previewTitle": "{{name}} に届く内容",
+      "previewTitleAnyone": "理由の文面",
+      "previewNone": "結果を選んでください。関係者に伝わる内容がここに表示されます。",
+      "previewNoStatement": {
+        "noViolation": "理由は送信されません。通報者には違反がなかったことが伝わります。",
+        "unfounded": "理由は送信されません。通報者には通報が明らかに根拠のないものだったことが伝わります。",
+        "handled": "理由は送信されません。通報者には対応済みであることが伝わります。"
+      },
+      "previewIncomplete": "措置の内容と根拠を選んでください。理由の文面がそのままここに表示されます。",
+      "previewFailed": "プレビューを読み込めませんでした。次の変更で再試行します。",
+      "problem": {
+        "outcome": "結果を選んでください。",
+        "measure": "措置は削除、利用停止、またはその両方です。",
+        "scope": "削除する部分を選んでください。",
+        "rule": "違反したルールを選んでください。",
+        "law": "条文を記入してください。",
+        "facts": "確認した内容を {{min}} 文字以上書いてください。",
+        "suspension": "この人は利用停止にできません。"
+      }
+    },
+    "suspension": {
+      "pageTitle": "利用停止中のアカウント",
+      "length": {
+        "days7": "7 日",
+        "days30": "30 日",
+        "indefinite": "無期限"
+      },
+      "until": "{{date}} まで利用停止",
+      "indefinite": "無期限で利用停止",
+      "openCase": "案件を開く",
+      "emptyTitle": "利用停止中の人はいません",
+      "emptyMessage": "モデレーションがアカウントを利用停止にすると、停止が終わるまでここに表示されます。",
+      "failedTitle": "利用停止中のアカウントを読み込めませんでした",
+      "lift": "利用停止を解除 …",
+      "liftTitle": "利用停止を解除",
+      "liftSubtitle": "その後、本人は再びログインできます。削除された内容は削除されたままです。",
+      "liftConfirm": "解除",
+      "lifted": "利用停止を解除しました。",
+      "suspend": "アカウントを利用停止 …",
+      "suspendDetail": "モデレーション自身の判断で案件を作成し、その後あなたが判断します。",
+      "ownTitle": "{{name}} を利用停止",
+      "ownSubtitle": "モデレーション自身の判断による案件です。その後、理由を添えて利用停止を判断します。",
+      "ownCategory": "何についてですか？",
+      "ownNext": "続ける"
+    },
+    "appealReview": {
+      "title": "異議",
+      "filedOn": "{{date}} に受付",
+      "via": {
+        "app": "アプリから",
+        "reply": "メールへの返信で"
+      },
+      "notYours": "あなたが判断しました。異議は別の人が判断します。",
+      "uphold": "判断を維持",
+      "reverse": "判断を取り消す",
+      "upholdTitle": "判断を維持",
+      "upholdSubtitle": "判断はそのままです。本人にはあなたの理由とともに知らされます。",
+      "reverseTitle": "判断を取り消す",
+      "reverseSubtitle": "内容が戻り、利用停止は終了します。本人にはあなたの理由とともに知らされます。",
+      "note": "理由",
+      "upheld": "維持しました。",
+      "reversed": "取り消しました。",
+      "wasUpheld": "{{name}} が判断を維持しました。",
+      "wasReversed": "{{name}} が判断を取り消しました。",
+      "recordAction": "異議を登録 …",
+      "recordTitle": "異議を登録",
+      "recordSubtitle": "理由を伝えるメールへの返信を登録します。その後、別の人が判断を見直します。",
+      "recordText": "返信の本文",
+      "receivedOn": "受付日",
+      "record": "登録",
+      "recorded": "異議を登録しました。"
     }
   }
 }
