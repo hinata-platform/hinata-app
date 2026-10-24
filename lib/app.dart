@@ -173,10 +173,12 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     enabled: () => _appConfig.state.meta?.advancedTimeTracking ?? false,
   );
 
-  /// What the reader folds away: the people they block (HIN-168). App-wide
-  /// because every comment and every profile asks; see [HiddenContentCubit].
+  /// What the reader folds away: the people they block (HIN-168) and the
+  /// comments they reported (HIN-173). App-wide because every comment and
+  /// every profile asks; see [HiddenContentCubit].
   late final HiddenContentCubit _hiddenContent = HiddenContentCubit(
     widget.repositories.account,
+    widget.repositories.moderation,
     // Unknown until the server's meta arrives; asking then costs one request
     // that an older server answers with an error the cubit swallows.
     enabled: () => _appConfig.state.meta?.supportsModeration ?? true,
@@ -900,6 +902,9 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
         RepositoryProvider<TeamRepository>.value(value: domains.teams),
         RepositoryProvider<GitRepository>.value(value: domains.git),
         RepositoryProvider<ShiftRepository>.value(value: domains.shifts),
+        RepositoryProvider<ModerationRepository>.value(
+          value: domains.moderation,
+        ),
         RepositoryProvider<TimerSurfaceClearSignal>.value(value: _surfaceClear),
         RepositoryProvider<HotkeyStatus>.value(value: _hotkeys),
       ],
