@@ -255,6 +255,12 @@ Future<void> _showAboutApp(BuildContext context) {
                 external: true,
                 onTap: () => unawaited(openPrivacyPolicy(context)),
               ),
+              _LinkRow(
+                icon: LucideIcons.landmark,
+                label: context.t('moderation.help.appImprint'),
+                external: true,
+                onTap: () => unawaited(openImprint(context)),
+              ),
               const SizedBox(height: 8),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
