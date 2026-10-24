@@ -3645,7 +3645,23 @@
       "contactMissing": "Aucun contact pour les signalements n’est encore défini. Indique une adresse e-mail pour qu’on puisse te joindre au sujet des contenus.",
       "operatorName": "Exploitant, comme dans les mentions légales",
       "contactEmail": "E-mail pour les signalements",
-      "imprintUrl": "Lien vers les mentions légales"
+      "imprintUrl": "Lien vers les mentions légales",
+      "typesTitle": "Types de fichiers",
+      "typesHint": "Personne ne peut joindre, intégrer ou envoyer un type désactivé. Les types dangereux comme SVG ou les programmes ne sont jamais autorisés.",
+      "types": {
+        "images": "Images",
+        "imagesHint": "PNG, JPEG, GIF et WebP, en pièce jointe et dans les textes. Les photos de profil et le logo restent autorisés.",
+        "pdf": "PDF",
+        "pdfHint": "Documents PDF en pièce jointe",
+        "office": "Documents Office",
+        "officeHint": "Word et Excel (DOCX, XLSX)",
+        "text": "Texte et tableaux",
+        "textHint": "TXT, CSV et JSON",
+        "zip": "Archives ZIP",
+        "zipHint": "Fichiers ZIP en pièce jointe",
+        "voice": "Messages vocaux",
+        "voiceHint": "Enregistrements dans les commentaires"
+      }
     }
   },
   "audit": {
