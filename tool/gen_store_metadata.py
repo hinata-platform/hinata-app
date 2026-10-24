@@ -194,32 +194,44 @@ RELEASE_NOTES = {
 • Flüssigere Glaseffekte und mehrere kleinere Korrekturen""",
 }
 
-# Apple App Review sign-in (the app is server-first: reviewers must connect to a
-# reachable demo server, then log in). See the Manual Steps Report — the demo
-# server URL below MUST be a reviewer-reachable instance seeded with demo data.
+# Apple App Review information. The sign-in accounts (a member and a moderator)
+# never live here: the repository is public. The release lanes read them from
+# the APP_REVIEW_* secrets and add the moderator to these notes on upload.
 REVIEW = {
     "first_name": "Rebar",
     "last_name": "Ahmad",
     "email_address": "mail@ahmadre.com",
     "phone_number": "***REMOVED***",   # TODO: real reachable number for review
-    "demo_user": "4hm4dr3",
-    "demo_password": "w%D0T63u]P'VWYOLIYdB$oRu0OC-\\nNB",
-    "notes": """Hinata is a CLIENT for a self-hosted Hinata Server; it has no built-in backend.
+    "notes": """Hinata is the app for a self-hosted Hinata server. It has no backend of its own, so it first asks which server to connect to.
 
-TO REVIEW:
-1. Launch the app. On the first screen ("Connect"), enter the demo server URL:
-      https://api.track.asta.hn        <-- please confirm this is reachable
-2. Tap Continue, then sign in on the Login screen with:
-      Username: 4hm4dr3
-      Password: w%D0T63u]P'VWYOLIYdB$oRu0OC-\\nNB
-3. You now have full access to a demo organization (projects, boards, sprints,
-   issues, reports, knowledge base).
+SIGNING IN
+1. On first launch the app asks you to agree to its terms of service: zero tolerance for objectionable content and for people who harass others. Tap "Agree and continue".
+2. On "Connect to your server", enter https://api.track.asta.hn and tap Connect.
+3. Sign in with the account in the Sign-In Information fields. It is a regular member of the demo organization.
+4. The server then asks you to agree to its house rules. They end with how reporting and moderation work.
 
-Notes:
-- SSO buttons open an external browser and return via the hinata://auth-callback
-  deep link; local login above is sufficient to review all features.
-- The app bakes in no server URL by design (self-hosting), which is why the demo
-  server must be entered on first launch.""",
+A second account with the moderator role is at the end of these notes. To switch accounts, open My account and tap Sign out.
+
+REPORTING
+Open the menu of an issue, a comment, a voice message, a file or a knowledge base page and choose "Report …". Every person's profile has the same entry. Pick a reason (harassment, threat, sexual content, child safety, privacy, spam and more), add a note if needed and send. The reported person never learns who reported. For anything without a menu of its own, such as the name of a project, use My account, Help and contact, Report something else.
+
+BLOCKING
+Choose "Block person" in the menu of a comment, or Privacy, Block on a person's profile. The app first shows what changes. Nothing the blocked person sets off reaches you any more (no notifications, mentions or replies), and their comments and voice messages are folded away. My account, Blocked people lists every block, each with Unblock.
+
+HOUSE RULES AND CONTACT
+My account, Help and contact holds the house rules in full, the email address of the server's moderation and the imprint. The sign in screen has a Contact link as well.
+
+MODERATION
+Sign in with the moderator account and open My account, Moderation. Reports on the same content form one case, and a new case notifies the moderators at once. A moderator opens the case, sees the reported content and decides: remove the content, suspend the account for a time or for good, or take no action. The author receives a statement of reasons and can appeal. A different moderator decides the appeal. Cases waiting longer than 24 hours are marked overdue.
+
+CONTENT CHECKS AND INTIMATE IMAGES
+Texts are checked when they are saved, and clear violations such as threats or hate speech are refused. Uploads are checked by file type. Images are not checked by a machine. Hinata is the closed workspace of one organization, not a public network, and these measures work against non-consensual intimate images:
+• Administrators decide who comes in. They can switch self sign-up off and let every new account wait for their approval.
+• The house rules forbid sexual and pornographic content.
+• "Sexual content" is a report reason, and every new case reaches the moderators at once.
+• A removed image goes into a quarantine that only moderators can open. It is deleted after the retention period unless law enforcement was told.
+
+Links open in the system browser. The app has no browser of its own.""",
 }
 
 # ---------------------------------------------------------------------------
@@ -276,8 +288,7 @@ def apple(base: str, platform: str):
         w(f"{md}/{loc}/privacy_url.txt", PRIVACY_URL)
     # App review information
     ri = f"{md}/review_information"
-    for k in ("first_name", "last_name", "email_address", "phone_number",
-              "demo_user", "demo_password", "notes"):
+    for k in ("first_name", "last_name", "email_address", "phone_number", "notes"):
         w(f"{ri}/{k}.txt", REVIEW[k])
 
 
