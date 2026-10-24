@@ -10,8 +10,9 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/util/dates.dart';
 import '../../sprint/modals/glass_modal.dart';
 
-/// The longest reason for uncovering a reporter or withheld content.
-const revealReasonMax = 500;
+/// The longest short reason a step takes: uncovering a reporter or withheld
+/// content, holding a case beyond its time.
+const shortReasonMax = 500;
 
 /// Asks for the reason a step on a case needs (HIN-174): at least [min]
 /// characters, kept in the case's history. Null when cancelled.
@@ -55,7 +56,7 @@ Future<String?> askRevealReason(
   label: context.t('moderation.case.revealReason'),
   confirmLabel: confirmLabel,
   min: 1,
-  max: revealReasonMax,
+  max: shortReasonMax,
 );
 
 class _NoteDialog extends StatefulWidget {
@@ -338,7 +339,7 @@ class _LegalHoldDialogState extends State<_LegalHoldDialog> {
                   controller: _reason,
                   minLines: 2,
                   maxLines: 5,
-                  maxLength: revealReasonMax,
+                  maxLength: shortReasonMax,
                   buildCounter: noteCounter,
                   decoration: glassInputDecoration(),
                 ),
