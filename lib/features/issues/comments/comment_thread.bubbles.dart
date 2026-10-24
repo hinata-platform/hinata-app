@@ -201,6 +201,9 @@ class CommentBubbleRow extends StatelessWidget {
 
 /// The persistent action row under a comment: Reply, a reaction popover and a
 /// "more" popover (edit/copy/pin/…). Left-aligned to the body on every platform.
+///
+/// Never for a removed comment: [CommentBubbleRow] shows the moderation's
+/// placeholder in its place.
 class _CommentActions extends StatefulWidget {
   const _CommentActions({
     required this.comment,
@@ -296,10 +299,7 @@ class _CommentActionsState extends State<_CommentActions> {
             icon: LucideIcons.chevronDown,
             tooltip: context.t('comments.more'),
             onTap: () {
-              final box = context.findRenderObject() as RenderBox?;
-              if (box != null && box.hasSize) {
-                _moreAnchor = box.localToGlobal(Offset.zero) & box.size;
-              }
+              _moreAnchor = anchorRectOfContext(context) ?? _moreAnchor;
               toggle();
             },
           ),
@@ -335,8 +335,7 @@ class _CommentActionsState extends State<_CommentActions> {
           context.t('comments.select'),
           () => run(() => _x.onEnterSelection(_c)),
         ),
-      // A removed comment cannot be edited; the server answers 409.
-      if (widget.canManage && !isVoice && !_c.isRemoved)
+      if (widget.canManage && !isVoice)
         _MenuRowData(
           LucideIcons.pencil,
           context.t('common.edit'),
@@ -363,8 +362,8 @@ class _CommentActionsState extends State<_CommentActions> {
           context.t('blocks.action'),
           () => run(() => _x.onBlockAuthor!(_c)),
         ),
-      // Somebody else's comment that is still there (HIN-173).
-      if (!widget.canManage && _x.onReport != null && !_c.isRemoved)
+      // Somebody else's comment (HIN-173).
+      if (!widget.canManage && _x.onReport != null)
         _MenuRowData(
           LucideIcons.flag,
           context.t('moderation.report.action'),

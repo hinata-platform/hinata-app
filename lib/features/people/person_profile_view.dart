@@ -12,6 +12,7 @@ import '../../core/util/dates.dart';
 import '../../core/util/zone_clock.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
+import '../sprint/modals/glass_modal.dart' show anchorRectOfContext;
 import '../teams/team_widgets.dart' show teamIcon;
 
 /// What a person's profile does when somebody acts on it. The view only says
@@ -41,7 +42,7 @@ class PersonProfileActions {
   final VoidCallback? toggleBlock;
 
   /// Reports the person (HIN-173), beside the row on a wide window. Null
-  /// where blocking is, and on a removed profile.
+  /// where blocking is.
   final void Function(Rect? anchor)? report;
 
   /// Opens a case to suspend the person (HIN-174). Null unless the reader
@@ -175,7 +176,7 @@ class PersonProfileView extends StatelessWidget {
                   'moderation.report.personDetail',
                   variables: {'name': p.displayName},
                 ),
-                onTap: () => report(_rectOf(rowContext)),
+                onTap: () => report(anchorRectOfContext(rowContext)),
               ),
             ),
         ],
@@ -607,11 +608,4 @@ class _ProjectKey extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Where [context]'s box stands on screen, for a popover to hang off it.
-Rect? _rectOf(BuildContext context) {
-  final box = context.findRenderObject() as RenderBox?;
-  if (box == null || !box.hasSize || !box.attached) return null;
-  return box.localToGlobal(Offset.zero) & box.size;
 }

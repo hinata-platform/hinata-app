@@ -21,7 +21,7 @@ import '../../../core/widgets/glass_panel.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart'
-    show GlassToastKind, showGlassToast;
+    show GlassToastKind, anchorRectOfContext, showGlassToast;
 import 'attachment_kind.dart';
 import 'attachment_viewer_cubit.dart';
 import '../../../core/widgets/hive_widgets.dart'
@@ -1125,7 +1125,7 @@ class _MoreMenu extends StatelessWidget {
         leading: const Icon(LucideIcons.flag, size: 16),
       ),
     ],
-    onSelected: (_) => onReport(_anchorOf(context)),
+    onSelected: (_) => onReport(anchorRectOfContext(context)),
     child: Tooltip(
       message: context.t('issues.attachments.viewer.more'),
       child: Semantics(
@@ -1139,12 +1139,6 @@ class _MoreMenu extends StatelessWidget {
       ),
     ),
   );
-
-  static Rect? _anchorOf(BuildContext context) {
-    final box = context.findRenderObject() as RenderBox?;
-    if (box == null || !box.hasSize || !box.attached) return null;
-    return box.localToGlobal(Offset.zero) & box.size;
-  }
 }
 
 class _Divider extends StatelessWidget {
