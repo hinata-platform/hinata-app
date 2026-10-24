@@ -1,14 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show TextInput;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/content_refused_notice.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../connect/server_switcher.dart';
 import '../legal/legal_links.dart';
@@ -52,6 +56,9 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
   bool _sent = false;
   String? _error;
 
+  /// What the text check refused in a name (HIN-176); the form keeps it.
+  ContentRefusal? _refusal;
+
   @override
   void dispose() {
     _displayName.dispose();
@@ -67,6 +74,7 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
     setState(() {
       _submitting = true;
       _error = null;
+      _refusal = null;
     });
     try {
       await context.read<AuthFlowCubit>().register(
@@ -85,9 +93,11 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
       });
     } on ApiFailure catch (failure) {
       if (!mounted) return;
+      final refusal = ContentRefusal.of(failure);
       setState(() {
         _submitting = false;
-        _error = failure.message;
+        _refusal = refusal;
+        _error = refusal == null ? failure.message : null;
       });
     }
   }
@@ -242,6 +252,21 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
             if (meta?.adminApprovalRequired ?? false) ...[
               const SizedBox(height: 16),
               _InfoNote(text: context.t('register.approvalHint')),
+            ],
+            if (_refusal case final refusal?) ...[
+              const SizedBox(height: 12),
+              ContentRefusedNotice(
+                refusal: refusal,
+                // Nobody is signed in yet: the rules as the instance publishes them.
+                onReadRules: meta?.moderation.rulesUrl == null
+                    ? null
+                    : () => unawaited(
+                        launchUrl(
+                          Uri.parse(meta!.moderation.rulesUrl!),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                      ),
+              ),
             ],
             if (_error != null) ...[
               const SizedBox(height: 12),
