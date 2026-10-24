@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/api/api_client.dart';
 import '../../core/repositories/auth_repository.dart';
 import '../../core/blocs/app_config_bloc.dart';
+import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/widgets/content_refused_notice.dart';
@@ -21,6 +22,7 @@ import '../sprint/modals/glass_modal.dart'
 import 'auth_shell.dart';
 import 'auth_flow_cubit.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/util/published_link.dart';
 
 /// Public self-registration. Collects the new account's details, then shows a
 /// "confirm your email" state — the account is only usable once the emailed
@@ -258,14 +260,15 @@ class _RegisterScreenState extends State<_RegisterScreenBody> {
               ContentRefusedNotice(
                 refusal: refusal,
                 // Nobody is signed in yet: the rules as the instance publishes them.
-                onReadRules: meta?.moderation.rulesUrl == null
-                    ? null
-                    : () => unawaited(
-                        launchUrl(
-                          Uri.parse(meta!.moderation.rulesUrl!),
-                          mode: LaunchMode.externalApplication,
-                        ),
-                      ),
+                onReadRules: switch (publishedLink(
+                  meta?.moderation.rulesUrl,
+                  server: context.read<AuthBloc>().storage.serverUrl,
+                )) {
+                  final rules? => () => unawaited(
+                    launchUrl(rules, mode: LaunchMode.externalApplication),
+                  ),
+                  null => null,
+                },
               ),
             ],
             if (_error != null) ...[
