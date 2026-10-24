@@ -219,6 +219,10 @@ class _LoginScreenState extends State<_LoginScreenBody>
     final registrationEnabled = context.select(
       (AppConfigBloc bloc) => bloc.state.meta?.registrationEnabled ?? true,
     );
+    // Whoever runs the server, once /meta has named them (HIN-175).
+    final contactEmail = context.select(
+      (AppConfigBloc bloc) => bloc.state.meta?.moderation.contactEmail,
+    );
     return AuthShell(
       maxContentWidth: 440,
       child: BlocListener<AppConfigBloc, AppConfigState>(
@@ -463,7 +467,7 @@ class _LoginScreenState extends State<_LoginScreenBody>
                         ),
                       ],
                       const SizedBox(height: 8),
-                      const LegalLinks(),
+                      LegalLinks(contactEmail: contactEmail),
                     ],
                   ),
                 ),
