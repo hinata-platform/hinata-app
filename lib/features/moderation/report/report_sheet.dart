@@ -3,8 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:wolt_modal_sheet/wolt_modal_sheet.dart'
-    show WoltModalSheetRoute;
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_models.dart';
@@ -74,7 +72,7 @@ Future<bool> showReportSheet(
   final anchor = anchorRect;
   // Never a sheet on a sheet: from inside one, such as an issue on a phone,
   // the report is a card over it.
-  final inSheet = ModalRoute.of(context) is WoltModalSheetRoute;
+  final inSheet = insideGlassSheet(context);
   final outcome = wide && anchor != null
       ? await showGlassAnchoredPopover<ReportOutcome>(
           context,

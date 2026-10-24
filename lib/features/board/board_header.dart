@@ -15,7 +15,7 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/board_page_models.dart' show kBoardSearchMaxLength;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/widgets/count_badge.dart';
 import '../../core/widgets/glass_filter_bar.dart';
 import '../../core/widgets/glass_switch_chip.dart';
 import '../../core/widgets/hive_widgets.dart' show SegmentItem;
@@ -112,7 +112,7 @@ class BoardFilterPill extends StatelessWidget {
                   ),
                 ),
               ],
-              if (active) ...[const SizedBox(width: 6), _CountBadge(count)],
+              if (active) ...[const SizedBox(width: 6), CountBadge(count)],
             ],
           ),
         ),
@@ -121,33 +121,6 @@ class BoardFilterPill extends StatelessWidget {
     // Only where the word is gone; a tooltip repeating visible text is noise.
     return showLabel ? pill : Tooltip(message: label, child: pill);
   }
-}
-
-class _CountBadge extends StatelessWidget {
-  const _CountBadge(this.count);
-
-  final int count;
-
-  @override
-  Widget build(BuildContext context) => Container(
-    constraints: const BoxConstraints(minWidth: 18),
-    height: 18,
-    alignment: Alignment.center,
-    padding: const EdgeInsets.symmetric(horizontal: 5),
-    decoration: BoxDecoration(
-      color: AppColors.accent,
-      borderRadius: BorderRadius.circular(9),
-    ),
-    child: Text(
-      '$count',
-      style: TextStyle(
-        fontFamily: AppTheme.fontMono,
-        fontSize: AppType.caption,
-        fontWeight: FontWeight.w700,
-        color: AppColors.onAccent,
-      ),
-    ),
-  );
 }
 
 /// A board's search on a wide window, where it has room to be a field.

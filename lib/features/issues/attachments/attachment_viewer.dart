@@ -196,7 +196,7 @@ Future<void> showAttachmentViewer(
   BuildContext context, {
   required List<ViewerItem> items,
   required int initialIndex,
-  required Future<void> Function(ViewerItem item) onDownload,
+  required Future<void> Function(ViewerItem item)? onDownload,
   void Function(ViewerItem item, Rect? anchor)? onReport,
 }) {
   if (items.isEmpty) return Future<void>.value();
@@ -320,7 +320,9 @@ class _ViewerScaffold extends StatefulWidget {
 
   final List<ViewerItem> items;
   final int initialIndex;
-  final Future<void> Function(ViewerItem item) onDownload;
+  /// Null for files that are only looked at, never saved: a case's evidence
+  /// on the moderation page (HIN-174).
+  final Future<void> Function(ViewerItem item)? onDownload;
 
   /// Reports a file somebody else uploaded (HIN-173), beside the menu.
   final void Function(ViewerItem item, Rect? anchor)? onReport;
@@ -857,11 +859,12 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
               _Counter(label: '${_index + 1} / ${widget.items.length}'),
             ],
             const SizedBox(width: 8),
-            _IconAction(
-              icon: LucideIcons.download,
-              tooltip: context.t('issues.attachments.download'),
-              onTap: () => widget.onDownload(cur),
-            ),
+            if (widget.onDownload case final download?)
+              _IconAction(
+                icon: LucideIcons.download,
+                tooltip: context.t('issues.attachments.download'),
+                onTap: () => download(cur),
+              ),
             if (widget.onReport != null && cur.reportable)
               _MoreMenu(onReport: (anchor) => widget.onReport!(cur, anchor)),
           ],
