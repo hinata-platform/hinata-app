@@ -125,7 +125,7 @@ class DesktopCameraDelegate extends ImagePickerCameraDelegate {
           : LucideIcons.externalLink,
     );
     if (settings != null && (open ?? false)) {
-      await launchUrl(settings);
+      await launchUrl(settings, mode: LaunchMode.externalApplication);
     }
   }
 }
@@ -370,7 +370,8 @@ class _CaptureError extends StatelessWidget {
           if (settings != null) ...[
             const SizedBox(height: 20),
             TextButton.icon(
-              onPressed: () => launchUrl(settings),
+              onPressed: () =>
+                  launchUrl(settings, mode: LaunchMode.externalApplication),
               icon: const Icon(LucideIcons.externalLink, size: 16),
               label: Text(context.t('camera.openSettings')),
               style: TextButton.styleFrom(foregroundColor: Colors.white),
