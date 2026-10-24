@@ -64,7 +64,7 @@ dependencies:
   # sheets and the half-folded iPhone Duo. 1.14.0 carries the menu mouse-hover
   # fix (#430), so the fork tag is gone again; 1.14.2 adds the ProgressiveBlur
   # repaint under moving ancestors (#444) and live submenu cards (#443).
-  liquid_glass_widgets: ^1.14.2
+  liquid_glass_widgets: ^1.15.0
 
   # Rich text. Documents are stored as Lexical JSON, so this is both the editor
   # and the renderer; there is no second markdown path any more. The bundle
