@@ -57,7 +57,8 @@
       "next": "Page suivante",
       "page": "Page {{page}}"
     },
-    "selectedOption": "Sélectionné"
+    "selectedOption": "Sélectionné",
+    "charCount": "{{count}} sur {{max}}"
   },
   "delete": {
     "cta": "Supprimer",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "Bloquer aussi {{name}}",
       "alsoBlockHint": "Tu ne reçois plus de notifications de {{name}}.",
       "byIn": "De {{name}} dans {{where}}",
-      "counter": "{{count}} sur {{max}}",
       "folded": "Signalé par toi, replié pour toi",
       "personDetail": "Va à la modération, et {{name}} ne sait pas qui l'a signalé",
       "titleArticle": "Signaler la page",
