@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/auth_bloc.dart';
 import 'package:hinata/core/models/core_models.dart';
@@ -10,12 +11,14 @@ import 'package:hinata/core/models/person_profile.dart';
 import 'package:hinata/core/repositories/moderation_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/theme/app_colors.dart';
+import 'package:hinata/core/widgets/glass_scope_row.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/moderation/decision/decision_dialog.dart';
 import 'package:hinata/features/moderation/queue/case_row.dart';
 import 'package:hinata/features/moderation/queue/moderation_screen.dart';
 import 'package:hinata/features/moderation/widgets/moderation_hex.dart';
+import 'package:hinata/features/shell/page_chrome.dart';
 import 'package:hinata/features/sprint/modals/glass_modal.dart'
     show GlassOptionRow;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -40,7 +43,7 @@ void main() {
       )
       ..answer<({List<CaseSummary> items, int total})>(#cases, (
         items: [
-          caseRow(id: 'k0', state: CaseState.urgent, urgent: true),
+          caseRow(id: 'k0', state: CaseState.urgent),
           caseRow(),
         ],
         total: 2,
@@ -158,7 +161,7 @@ void main() {
       tester,
     ) async {
       final semantics = tester.ensureSemantics();
-      await pumpRow(tester, caseRow());
+      await pumpRow(tester, caseRow(overdue: true));
       expect(find.byIcon(LucideIcons.alarmClock), findsOneWidget);
       expect(
         tester.getSemantics(find.byType(CaseRow)).label,
@@ -207,6 +210,117 @@ void main() {
   });
 
   group('the page', () {
+    /// The shell draws a page's docked row in its own bar, above the page's
+    /// navigator and outside everything the page provides.
+    testWidgets('on a phone the pills render in the shell bar, with their '
+        'numbers', (tester) async {
+      tester.view
+        ..physicalSize = const Size(390, 844)
+        ..devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      final chrome = PageChromeController();
+      addTearDown(chrome.dispose);
+      final router = GoRouter(
+        initialLocation: '/moderation',
+        routes: [
+          GoRoute(
+            path: '/moderation',
+            builder: (_, _) => const Scaffold(body: ModerationScreen()),
+          ),
+        ],
+      );
+      addTearDown(router.dispose);
+      await tester.pumpWidget(
+        MultiRepositoryProvider(
+          providers: [
+            RepositoryProvider<ModerationRepository>.value(value: moderation),
+            RepositoryProvider<UserRepository>.value(value: users),
+          ],
+          child: BlocProvider<AuthBloc>(
+            create: (_) => _FakeAuthBloc(),
+            child: PageChromeScope(
+              controller: chrome,
+              child: MaterialApp.router(
+                routerConfig: router,
+                builder: (context, page) => Column(
+                  children: [
+                    SizedBox(
+                      height: 64,
+                      child: ListenableBuilder(
+                        listenable: chrome,
+                        builder: (_, _) =>
+                            chrome.bottomFor('/moderation') ??
+                            const SizedBox.shrink(),
+                      ),
+                    ),
+                    Expanded(child: page!),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      expect(find.byType(GlassScopeRow), findsOneWidget);
+      expect(find.text('moderation.queue.viewCount'), findsNWidgets(2));
+    });
+
+    testWidgets('a step changes the case\'s row in place, and a case decided '
+        'meanwhile leaves the open list with its numbers read again', (
+      tester,
+    ) async {
+      var reads = 0;
+      CaseDetail read() {
+        reads++;
+        return switch (reads) {
+          1 => caseDetail(),
+          2 => caseDetail(
+            summary: caseRow(
+              state: CaseState.inReview,
+              assignee: const PersonRef(id: 'sara', displayName: 'Sara Klein'),
+              rev: 4,
+            ),
+          ),
+          _ => caseDetail(
+            summary: caseRow(
+              state: CaseState.acted,
+              outcome: CaseOutcome.action,
+              rev: 5,
+            ),
+          ),
+        };
+      }
+
+      moderation
+        ..answerWith(#detail, (_) => Future.value(read()))
+        ..answer<CaseSummary>(#claim, caseRow())
+        ..answer<CaseSummary>(#release, caseRow());
+      await pumpPage(tester, size: const Size(1400, 1400), caseId: 'k1');
+      int calls(Symbol member) =>
+          moderation.calls.where((call) => call.memberName == member).length;
+      final summaries = calls(#summary);
+
+      await tester.tap(find.text('moderation.case.claim'));
+      await tester.pumpAndSettle();
+      expect(calls(#cases), 1, reason: 'the row changes in place');
+      expect(calls(#summary), summaries, reason: 'no number moved');
+      expect(
+        tester
+            .widgetList<CaseRow>(find.byType(CaseRow))
+            .map((row) => row.summary.state),
+        contains(CaseState.inReview),
+      );
+
+      await tester.tap(find.text('moderation.case.release'));
+      await tester.pumpAndSettle();
+      expect(find.byType(CaseRow), findsOneWidget);
+      expect(calls(#cases), 1);
+      expect(calls(#summary), summaries + 1);
+    });
+
     testWidgets('on a phone at twice the text size: the list, urgent first', (
       tester,
     ) async {
@@ -267,7 +381,7 @@ void main() {
         findsOneWidget,
       );
 
-      await pumpCase(tester, caseDetail(current: comment(hash: 'b')));
+      await pumpCase(tester, caseDetail(currentHash: 'b'));
       expect(
         find.textContaining('moderation.case.since.changed'),
         findsOneWidget,

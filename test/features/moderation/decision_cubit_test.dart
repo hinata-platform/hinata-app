@@ -5,6 +5,8 @@ import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/moderation_case_models.dart';
 import 'package:hinata/core/models/moderation_models.dart';
 import 'package:hinata/core/models/person_profile.dart';
+import 'package:hinata/features/moderation/case/case_detail_cubit.dart'
+    show CaseNotice;
 import 'package:hinata/features/moderation/decision/decision_cubit.dart';
 
 import '../../support/recording_fake.dart';
@@ -178,13 +180,16 @@ void main() {
       expect(draft.category, ReportCategory.harassment);
       expect(draft.messageToAuthor, 'Bitte bleib sachlich.');
       expect(draft.responsibleId, jonas);
-      expect(cubit.state.closedWith, 'moderation.decision.sent');
+      expect(
+        cubit.state.closedWith,
+        const CaseNotice('moderation.decision.sent'),
+      );
     },
   );
 
   for (final (code, key) in const [
-    ('decided', 'moderation.case.decidedMeanwhile'),
-    ('changed', 'moderation.case.changedMeanwhile'),
+    ('error.moderation.caseDecided', 'moderation.case.decidedMeanwhile'),
+    ('error.moderation.caseChanged', 'moderation.case.changedMeanwhile'),
   ]) {
     test('a 409 with "$code" closes the dialog and says so', () async {
       moderation.fail(
@@ -200,7 +205,7 @@ void main() {
         ..choose(CaseOutcome.unfounded)
         ..setFacts('Die Meldung nennt den falschen Kommentar.');
       await cubit.submit();
-      expect(cubit.state.closedWith, key);
+      expect(cubit.state.closedWith, CaseNotice(key, moved: true));
     });
   }
 

@@ -28,9 +28,6 @@ import 'case_detail_cubit.dart';
 import 'case_dialogs.dart';
 import 'case_sections.dart';
 
-/// Somebody else's claim older than this can be taken over.
-const _claimStale = Duration(hours: 2);
-
 /// One case on the moderation page (HIN-174); dumb, it renders
 /// [CaseDetailCubit] and hands every step to it.
 class CaseDetailView extends StatelessWidget {
@@ -44,17 +41,15 @@ class CaseDetailView extends StatelessWidget {
   Widget build(BuildContext context) =>
       BlocConsumer<CaseDetailCubit, CaseDetailState>(
         listenWhen: (previous, current) =>
-            current.noticeKey != null || current.errorKey != null,
+            current.notice != null || current.errorKey != null,
         listener: (context, state) {
-          final notice = state.noticeKey;
+          final notice = state.notice;
           final error = state.errorKey;
           if (notice != null) {
             showGlassToast(
               context,
-              context.t(notice),
-              kind: notice.endsWith('Meanwhile')
-                  ? GlassToastKind.info
-                  : GlassToastKind.success,
+              context.t(notice.key),
+              kind: notice.moved ? GlassToastKind.info : GlassToastKind.success,
             );
           } else if (error != null) {
             showGlassToast(
@@ -343,7 +338,7 @@ class _Head extends StatelessWidget {
       ],
     );
     final age = summary.state.undecided
-        ? CaseAgeChip(since: summary, now: DateTime.now())
+        ? CaseAgeChip(summary: summary, now: DateTime.now())
         : null;
     // Large text in a narrow column: the cell goes above the title, so the
     // title keeps the width and never breaks inside a word.
@@ -460,12 +455,7 @@ class _PendingConfirmation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final requestedBy = detail.history
-        .lastWhere(
-          (event) => event.kind == CaseEventKind.confirmationRequested,
-          orElse: () => const CaseEvent(),
-        )
-        .actorId;
+    final requestedBy = detail.confirmationRequestedBy;
     final mine = requestedBy != null && requestedBy == me;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -495,24 +485,13 @@ class _Actions extends StatelessWidget {
     final cubit = context.read<CaseDetailCubit>();
     final assignee = summary.assignee?.id;
     final mine = assignee != null && assignee == me;
-    final claimedAt = detail.claimedAt;
-    final stale =
-        claimedAt != null && DateTime.now().difference(claimedAt) > _claimStale;
     final open =
         summary.state == CaseState.open ||
         summary.state == CaseState.urgent ||
         summary.state == CaseState.inReview;
     final free = assignee == null || mine;
-    final requestedBy = detail.history
-        .lastWhere(
-          (event) => event.kind == CaseEventKind.confirmationRequested,
-          orElse: () => const CaseEvent(),
-        )
-        .actorId;
-    final secondPerson =
-        summary.state == CaseState.pendingConfirmation &&
-        requestedBy != null &&
-        requestedBy != me;
+    final requestedBy = detail.confirmationRequestedBy;
+    final secondPerson = requestedBy != null && requestedBy != me;
     final menu = _menuItems(context);
     final buttons = <Widget>[
       if (menu.isNotEmpty)
@@ -528,7 +507,7 @@ class _Actions extends StatelessWidget {
           onPressed: busy ? null : () => unawaited(cubit.release()),
           child: Text(context.t('moderation.case.release')),
         )
-      else if (open && (assignee == null || stale))
+      else if (open && (assignee == null || detail.takeOverAllowed))
         OutlinedButton(
           onPressed: busy
               ? null
@@ -575,12 +554,9 @@ class _Actions extends StatelessWidget {
     final acted =
         summary.state == CaseState.acted &&
         decision?.outcome == CaseOutcome.action;
-    final person = summary.kind == ContentKind.person
-        ? detail.evidence?.id
-        : detail.evidence?.suggestedResponsible;
     final appealPending = detail.appeal?.pending ?? false;
     return [
-      if (person != null)
+      if (detail.personConcerned != null)
         GlassMenuItem(
           value: 'profile',
           leading: const Icon(LucideIcons.userRound, size: 16),
@@ -617,9 +593,7 @@ class _Actions extends StatelessWidget {
     final cubit = context.read<CaseDetailCubit>();
     switch (key) {
       case 'profile':
-        final person = detail.summary.kind == ContentKind.person
-            ? detail.evidence?.id
-            : detail.evidence?.suggestedResponsible;
+        final person = detail.personConcerned;
         if (person != null) context.go(personLocation(person));
       case 'restore':
         final note = await askCaseNote(

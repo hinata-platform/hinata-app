@@ -34,11 +34,13 @@ void main() {
   CaseDetailCubit build() => CaseDetailCubit(moderation, users, 'k1');
 
   blocTest<CaseDetailCubit, CaseDetailState>(
-    'reads the case and the names of everyone it names, in one request',
+    'shows the case as soon as it is read, then the names of everyone it '
+    'names, in one request',
     build: build,
     act: (cubit) => cubit.load(),
     expect: () => [
       const CaseDetailState(),
+      CaseDetailState(load: CaseLoad.ready, detail: detail),
       CaseDetailState(
         load: CaseLoad.ready,
         detail: detail,
@@ -88,7 +90,7 @@ void main() {
       ApiFailure(
         'Der Fall hat sich geändert',
         statusCode: 409,
-        details: const {'code': 'decided'},
+        details: const {'code': 'error.moderation.caseDecided'},
       ),
     ),
     build: build,
@@ -96,13 +98,16 @@ void main() {
       await cubit.load();
       await cubit.claim();
     },
-    skip: 3,
+    skip: 4,
     expect: () => [
       CaseDetailState(
         load: CaseLoad.ready,
         detail: detail,
         names: const {'sara': 'Sara Klein', jonas: 'Jonas Becker'},
-        noticeKey: 'moderation.case.decidedMeanwhile',
+        notice: const CaseNotice(
+          'moderation.case.decidedMeanwhile',
+          moved: true,
+        ),
       ),
     ],
   );
@@ -121,7 +126,7 @@ void main() {
       await cubit.load();
       await cubit.revealReporter('r1', 'Wiederholte Meldungen derselben Art');
     },
-    skip: 3,
+    skip: 4,
     expect: () => [
       CaseDetailState(
         load: CaseLoad.ready,
@@ -134,20 +139,26 @@ void main() {
 
   blocTest<CaseDetailCubit, CaseDetailState>(
     'asking to open withheld content goes out with the reason, and the answer '
-    'is read as the case now stands',
+    'is shown as the case now stands, without reading it again',
     setUp: () => moderation.answer<CaseDetail>(#revealEvidence, detail),
     build: build,
     act: (cubit) async {
       await cubit.load();
       await cubit.revealEvidence('Die Meldung nennt eine Drohung');
     },
-    verify: (_) => expect(
-      moderation.callTo(#revealEvidence),
-      invoked(
-        #revealEvidence,
-        positional: ['k1', 'Die Meldung nennt eine Drohung'],
-      ),
-    ),
+    verify: (_) {
+      expect(
+        moderation.callTo(#revealEvidence),
+        invoked(
+          #revealEvidence,
+          positional: ['k1', 'Die Meldung nennt eine Drohung'],
+        ),
+      );
+      expect(
+        moderation.calls.where((call) => call.memberName == #detail),
+        hasLength(1),
+      );
+    },
   );
 
   blocTest<CaseDetailCubit, CaseDetailState>(
@@ -174,7 +185,10 @@ void main() {
           ],
         ),
       );
-      expect(cubit.state.noticeKey, 'moderation.appealReview.reversed');
+      expect(
+        cubit.state.notice,
+        const CaseNotice('moderation.appealReview.reversed'),
+      );
     },
   );
 
