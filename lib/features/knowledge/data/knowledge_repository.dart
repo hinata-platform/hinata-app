@@ -463,6 +463,7 @@ class KnowledgeRepository {
     createdAt: a.createdAt,
     updatedAt: a.updatedAt,
     lastEditorId: a.lastEditorId,
+    moderation: a.moderation,
   );
 
   KbSpace _spaceFor(String name) {
