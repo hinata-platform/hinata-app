@@ -6017,7 +6017,8 @@
       "rulesAccepted": "第 {{version}} 版，已于 {{date}} 同意",
       "aboutVersion": "Hinata {{version}}",
       "provider": "应用提供者",
-      "operatorNote": "你所在的组织自行运营服务器，并对其中的内容负责。举报和屏蔽交由该组织的审核处理，而不是应用提供者。"
+      "operatorNote": "你所在的组织自行运营服务器，并对其中的内容负责。举报和屏蔽交由该组织的审核处理，而不是应用提供者。",
+      "appImprint": "法律信息"
     },
     "report": {
       "thanks": "谢谢。审核会进行查看。",

@@ -6017,7 +6017,8 @@
       "rulesAccepted": "Version {{version}}, acceptée le {{date}}",
       "aboutVersion": "Hinata {{version}}",
       "provider": "Fournisseur de l'app",
-      "operatorNote": "Ton organisation exploite elle-même son serveur et répond de ce qui s'y trouve. Les signalements et les blocages vont à sa modération, pas au fournisseur de l'app."
+      "operatorNote": "Ton organisation exploite elle-même son serveur et répond de ce qui s'y trouve. Les signalements et les blocages vont à sa modération, pas au fournisseur de l'app.",
+      "appImprint": "Mentions légales"
     },
     "report": {
       "thanks": "Merci. La modération va s'en occuper.",

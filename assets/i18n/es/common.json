@@ -6017,7 +6017,8 @@
       "rulesAccepted": "Versión {{version}}, aceptada el {{date}}",
       "aboutVersion": "Hinata {{version}}",
       "provider": "Proveedor de la app",
-      "operatorNote": "Tu organización gestiona su propio servidor y responde de lo que hay en él. Las denuncias y los bloqueos van a su moderación, no al proveedor de la app."
+      "operatorNote": "Tu organización gestiona su propio servidor y responde de lo que hay en él. Las denuncias y los bloqueos van a su moderación, no al proveedor de la app.",
+      "appImprint": "Aviso legal"
     },
     "report": {
       "thanks": "Gracias. La moderación lo revisará.",
