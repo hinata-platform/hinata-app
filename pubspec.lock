@@ -1079,10 +1079,10 @@ packages:
     dependency: "direct main"
     description:
       name: lexical_editor_flutter
-      sha256: "55091272cd3f7f4da9ab769aeffc61d28d872152a74a5db968cb35d9cba9177c"
+      sha256: "72d9f82b424b24c5bc7919d7eafae4f0c5195114d74869354f39f70a1536820a"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.2"
+    version: "1.10.0"
   lexical_embed:
     dependency: transitive
     description:
