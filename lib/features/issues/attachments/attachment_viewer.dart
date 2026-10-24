@@ -18,6 +18,7 @@ import '../../../core/platform/pdf_annotations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/glass_panel.dart';
+import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, showGlassToast;
@@ -152,12 +153,16 @@ class ViewerItem {
     this.blurHash,
     this.mime,
     this.subtitle,
+    this.reportable = false,
   });
 
   final String id;
   final String name;
   final String kind;
   final int size;
+
+  /// Whether the reader may report this file: somebody else's (HIN-173).
+  final bool reportable;
 
   /// API path of the attachment's bytes. Null disables every inline preview —
   /// the stage falls back to the type card.
@@ -192,6 +197,7 @@ Future<void> showAttachmentViewer(
   required List<ViewerItem> items,
   required int initialIndex,
   required Future<void> Function(ViewerItem item) onDownload,
+  void Function(ViewerItem item, Rect? anchor)? onReport,
 }) {
   if (items.isEmpty) return Future<void>.value();
   return showGeneralDialog<void>(
@@ -209,6 +215,7 @@ Future<void> showAttachmentViewer(
         items: items,
         initialIndex: initialIndex.clamp(0, items.length - 1),
         onDownload: onDownload,
+        onReport: onReport,
       ),
     ),
     transitionBuilder: (_, _, _, child) => child,
@@ -308,11 +315,15 @@ class _ViewerScaffold extends StatefulWidget {
     required this.items,
     required this.initialIndex,
     required this.onDownload,
+    this.onReport,
   });
 
   final List<ViewerItem> items;
   final int initialIndex;
   final Future<void> Function(ViewerItem item) onDownload;
+
+  /// Reports a file somebody else uploaded (HIN-173), beside the menu.
+  final void Function(ViewerItem item, Rect? anchor)? onReport;
 
   @override
   State<_ViewerScaffold> createState() => _ViewerScaffoldState();
@@ -851,6 +862,8 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
               tooltip: context.t('issues.attachments.download'),
               onTap: () => widget.onDownload(cur),
             ),
+            if (widget.onReport != null && cur.reportable)
+              _MoreMenu(onReport: (anchor) => widget.onReport!(cur, anchor)),
           ],
         ),
       ),
@@ -1080,6 +1093,46 @@ class _IconAction extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// The "…" beside the download (HIN-173): what else there is to do with the
+/// file, which today is reporting it.
+class _MoreMenu extends StatelessWidget {
+  const _MoreMenu({required this.onReport});
+
+  final ValueChanged<Rect?> onReport;
+
+  @override
+  Widget build(BuildContext context) => GlassPopupMenu<int>(
+    value: -1,
+    width: 220,
+    items: [
+      GlassMenuItem(
+        value: 0,
+        label: context.t('moderation.report.action'),
+        leading: Icon(LucideIcons.flag, size: 16, color: AppColors.inkSoft),
+      ),
+    ],
+    onSelected: (_) => onReport(_anchorOf(context)),
+    child: Tooltip(
+      message: context.t('issues.attachments.viewer.more'),
+      child: Semantics(
+        button: true,
+        label: context.t('issues.attachments.viewer.more'),
+        child: const SizedBox(
+          width: 38,
+          height: 38,
+          child: Icon(LucideIcons.ellipsis, size: 17, color: _ViewerInk.ink),
+        ),
+      ),
+    ),
+  );
+
+  static Rect? _anchorOf(BuildContext context) {
+    final box = context.findRenderObject() as RenderBox?;
+    if (box == null || !box.hasSize || !box.attached) return null;
+    return box.localToGlobal(Offset.zero) & box.size;
   }
 }
 

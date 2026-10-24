@@ -22,6 +22,7 @@ class PersonProfileActions {
     required this.openProject,
     this.writeEmail,
     this.toggleBlock,
+    this.report,
     this.close,
   });
 
@@ -35,6 +36,10 @@ class PersonProfileActions {
   /// Blocks the person, or lifts the block (HIN-168). Null on one's own
   /// profile and where the server does not know blocking.
   final VoidCallback? toggleBlock;
+
+  /// Reports the person (HIN-173), beside the row on a wide window. Null
+  /// where blocking is, and on a removed profile.
+  final void Function(Rect? anchor)? report;
 
   /// The side panel's close button; null on a page, which has its back button.
   final VoidCallback? close;
@@ -132,23 +137,36 @@ class PersonProfileView extends StatelessWidget {
             style: TextStyle(fontSize: AppType.label, color: AppColors.inkSoft),
           ),
         ],
-        if (actions.toggleBlock != null) ...[
+        if (actions.toggleBlock != null || actions.report != null) ...[
           const SizedBox(height: 22),
           _SectionLabel(context.t('blocks.profile.section')),
           const SizedBox(height: 8),
-          _LinkRow(
-            icon: blocked ? LucideIcons.userCheck : LucideIcons.userX,
-            label: context.t(
-              blocked ? 'blocks.profile.unblock' : 'blocks.profile.block',
+          if (actions.toggleBlock != null)
+            _LinkRow(
+              icon: blocked ? LucideIcons.userCheck : LucideIcons.userX,
+              label: context.t(
+                blocked ? 'blocks.profile.unblock' : 'blocks.profile.block',
+              ),
+              detail: blocked
+                  ? context.t(
+                      'blocks.profile.unblockDetail',
+                      variables: {'name': p.displayName},
+                    )
+                  : context.t('blocks.profile.blockDetail'),
+              onTap: actions.toggleBlock!,
             ),
-            detail: blocked
-                ? context.t(
-                    'blocks.profile.unblockDetail',
-                    variables: {'name': p.displayName},
-                  )
-                : context.t('blocks.profile.blockDetail'),
-            onTap: actions.toggleBlock!,
-          ),
+          if (actions.report case final report?)
+            Builder(
+              builder: (rowContext) => _LinkRow(
+                icon: LucideIcons.flag,
+                label: context.t('moderation.report.action'),
+                detail: context.t(
+                  'moderation.report.personDetail',
+                  variables: {'name': p.displayName},
+                ),
+                onTap: () => report(_rectOf(rowContext)),
+              ),
+            ),
         ],
         if (admin != null) ...[
           const SizedBox(height: 28),
@@ -552,4 +570,11 @@ class _ProjectKey extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Where [context]'s box stands on screen, for a popover to hang off it.
+Rect? _rectOf(BuildContext context) {
+  final box = context.findRenderObject() as RenderBox?;
+  if (box == null || !box.hasSize || !box.attached) return null;
+  return box.localToGlobal(Offset.zero) & box.size;
 }

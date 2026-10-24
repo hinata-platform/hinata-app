@@ -93,3 +93,14 @@ DateTime addDays(DateTime day, int days) =>
 String weekdayName(BuildContext context, int weekday) => DateFormat.EEEE(
   Localizations.localeOf(context).toLanguageTag(),
 ).format(DateTime(2024, 1, weekday));
+
+/// The day of [at] as the app tells a recent date: without the year within
+/// this one, with it once it is older.
+String recentDay(BuildContext context, DateTime at) {
+  final locale = Localizations.localeOf(context).toString();
+  final local = at.toLocal();
+  final format = local.year == DateTime.now().year
+      ? DateFormat.MMMd(locale)
+      : DateFormat.yMMMd(locale);
+  return format.format(local);
+}

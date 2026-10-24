@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:lexical_editor_flutter/lexical_editor_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -6,10 +7,12 @@ import '../../core/i18n/i18n.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_avatar.dart';
+import '../../core/widgets/moderation_placeholder.dart';
 import '../../core/lexical/hinata_document.dart';
 import '../../core/lexical/hinata_lexical.dart';
 import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/lexical/hinata_outline.dart';
+import '../moderation/notice/notice_screen.dart' show noticeLocation;
 import 'data/knowledge_models.dart';
 import 'data/knowledge_repository.dart';
 import 'knowledge_place_field.dart';
@@ -214,7 +217,10 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
               fontWeight: FontWeight.w800,
               height: 1.15,
               letterSpacing: -0.7,
-              color: AppColors.ink,
+              // A title the moderation removed is its placeholder: quiet and
+              // italic (HIN-173).
+              fontStyle: a.isRemoved('title') ? FontStyle.italic : null,
+              color: a.isRemoved('title') ? AppColors.inkSoft : AppColors.ink,
             ),
           ),
         ),
@@ -287,17 +293,36 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
         // The stored document, rendered. Not scrollable: the page around it
         // already scrolls, and the outline reveals blocks through that same
         // position.
-        HinataDocument(
-          // An article the backfill could not convert still has its markdown;
-          // rendering that beats rendering an empty page.
-          doc: documentOrLegacy(widget.article.doc, widget.article.body),
-          registry: _blocks,
-          onDocument: _onDocument,
-        ),
+        if (a.isRemoved('content'))
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: ModerationPlaceholder(
+              part: RemovedPart.page,
+              at: a.moderation['content']?.at,
+              onWhy: _whyRemoved(a),
+            ),
+          )
+        else
+          HinataDocument(
+            // An article the backfill could not convert still has its
+            // markdown; rendering that beats rendering an empty page.
+            doc: documentOrLegacy(widget.article.doc, widget.article.body),
+            registry: _blocks,
+            onDocument: _onDocument,
+          ),
         if (children.isNotEmpty) _subpages(children),
         if (linkedIds.isNotEmpty) _linkedIssues(linkedIds),
       ],
     );
+  }
+
+  /// "Why?" beside removed content, for the person who wrote the page
+  /// (HIN-173); null for everybody else.
+  VoidCallback? _whyRemoved(KbArticle a) {
+    final caseId = a.moderation['content']?.caseId;
+    final me = KnowledgeScope.of(context).repo.me.id;
+    if (caseId == null || a.authorId != me) return null;
+    return () => context.push(noticeLocation(caseId));
   }
 
   /// The pages filed under this one, so a reader can go deeper without the tree.
