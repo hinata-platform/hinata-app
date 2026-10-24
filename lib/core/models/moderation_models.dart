@@ -30,10 +30,7 @@ class HouseRules extends Equatable {
   const HouseRules({
     required this.version,
     required this.markdown,
-    this.mode = HouseRulesMode.builtIn,
-    this.url,
     this.createdAt,
-    this.pending = false,
     this.acceptedVersion,
     this.acceptedAt,
   });
@@ -44,16 +41,8 @@ class HouseRules extends Equatable {
   /// The rules with "How we moderate" at the end, as Markdown.
   final String markdown;
 
-  final HouseRulesMode mode;
-
-  /// Where the instance keeps its own rules, in [HouseRulesMode.url].
-  final String? url;
-
   /// Since when this version holds.
   final DateTime? createdAt;
-
-  /// Whether this person still has to accept them before going on.
-  final bool pending;
 
   /// The last version this person accepted, and when.
   final int? acceptedVersion;
@@ -62,10 +51,7 @@ class HouseRules extends Equatable {
   factory HouseRules.fromJson(Map<String, dynamic> json) => HouseRules(
     version: (json['version'] as num).toInt(),
     markdown: json['markdown'] as String? ?? '',
-    mode: HouseRulesMode.of(json['mode']),
-    url: json['url'] as String?,
     createdAt: parseInstant(json['createdAt']),
-    pending: json['pending'] as bool? ?? false,
     acceptedVersion: (json['acceptedVersion'] as num?)?.toInt(),
     acceptedAt: parseInstant(json['acceptedAt']),
   );
@@ -74,43 +60,28 @@ class HouseRules extends Equatable {
   List<Object?> get props => [
     version,
     markdown,
-    mode,
-    url,
     createdAt,
-    pending,
     acceptedVersion,
     acceptedAt,
   ];
 }
 
 /// The house rules as the admin area shows them
-/// (`GET /api/v1/admin/moderation/rules`): which version holds since when,
-/// and the last one everybody had to accept anew.
+/// (`GET /api/v1/admin/moderation/rules`): which version holds since when.
 class HouseRulesVersions extends Equatable {
-  const HouseRulesVersions({
-    this.version,
-    this.since,
-    this.requiredVersion,
-    this.publicUrl,
-  });
+  const HouseRulesVersions({this.version, this.since});
 
   final int? version;
   final DateTime? since;
-  final int? requiredVersion;
-
-  /// The public page of the current version, for anybody without an account.
-  final String? publicUrl;
 
   factory HouseRulesVersions.fromJson(Map<String, dynamic> json) =>
       HouseRulesVersions(
         version: (json['version'] as num?)?.toInt(),
         since: parseInstant(json['since']),
-        requiredVersion: (json['requiredVersion'] as num?)?.toInt(),
-        publicUrl: json['publicUrl'] as String?,
       );
 
   @override
-  List<Object?> get props => [version, since, requiredVersion, publicUrl];
+  List<Object?> get props => [version, since];
 }
 
 /// A way in that lets people in without anybody deciding (HIN-175): the
@@ -208,42 +179,8 @@ enum TextVerdict {
   );
 }
 
-/// One find of the text check, with what it weighs where it stands.
-class TextFind extends Equatable {
-  const TextFind({
-    required this.term,
-    required this.category,
-    required this.weight,
-    this.technical = false,
-    this.own = false,
-  });
-
-  final String term;
-
-  /// The server's name of the category, as [ReportCategory.wire].
-  final String category;
-  final int weight;
-
-  /// Found in code, a log or an identifier, where it weighs less.
-  final bool technical;
-
-  /// One of the administrator's own terms.
-  final bool own;
-
-  factory TextFind.fromJson(Map<String, dynamic> json) => TextFind(
-    term: json['term'] as String? ?? '',
-    category: json['category'] as String? ?? 'OTHER',
-    weight: (json['weight'] as num?)?.toInt() ?? 0,
-    technical: json['technical'] as bool? ?? false,
-    own: json['own'] as bool? ?? false,
-  );
-
-  @override
-  List<Object?> get props => [term, category, weight, technical, own];
-}
-
 /// The answer to "test a text" in Admin → Moderation: what would happen with
-/// the settings as they are, what was found whatever the switches say, and
+/// the settings as they are, the terms found whatever the switches say, and
 /// the technical words that kept a rule from counting.
 class TextCheckResult extends Equatable {
   const TextCheckResult({
@@ -255,7 +192,7 @@ class TextCheckResult extends Equatable {
 
   final TextVerdict verdict;
   final List<String> terms;
-  final List<TextFind> found;
+  final List<String> found;
   final List<String> exceptions;
 
   factory TextCheckResult.fromJson(Map<String, dynamic> json) =>
@@ -267,7 +204,8 @@ class TextCheckResult extends Equatable {
         ],
         found: [
           for (final find in (json['found'] as List<dynamic>?) ?? const [])
-            TextFind.fromJson(find as Map<String, dynamic>),
+            if (find is Map<String, dynamic> && find['term'] is String)
+              find['term'] as String,
         ],
         exceptions: [
           for (final word in (json['exceptions'] as List<dynamic>?) ?? const [])
@@ -427,15 +365,12 @@ class Statement extends Equatable {
     this.suspends = false,
     this.basis,
     this.facts,
-    this.automatedDetection = false,
     this.automation,
     this.lawGround = false,
     this.groundText,
     this.rulesUrl,
-    this.appealUntil,
     this.appealable = false,
     this.appeal,
-    this.appealState,
     this.courtsNote,
     this.messageToAuthor,
   });
@@ -459,8 +394,8 @@ class Statement extends Equatable {
   final String? basis;
   final String? facts;
 
-  /// Whether a machine found it; the decision is always a person's.
-  final bool automatedDetection;
+  /// Whether a machine found it, in words; the decision is always a
+  /// person's.
   final String? automation;
 
   /// Whether it rests on the law rather than on the house rules.
@@ -473,13 +408,10 @@ class Statement extends Equatable {
   /// server.
   final String? rulesUrl;
 
-  /// Until when the person may appeal, and whether they still may.
-  final DateTime? appealUntil;
+  /// Whether the person may still appeal; [appeal] says until when, or
+  /// where an appeal stands, in words.
   final bool appealable;
-
-  /// Where an appeal stands, in words, and as a state.
   final String? appeal;
-  final AppealState? appealState;
 
   final String? courtsNote;
 
@@ -502,15 +434,12 @@ class Statement extends Equatable {
     suspends: suspends,
     basis: basis,
     facts: facts,
-    automatedDetection: automatedDetection,
     automation: automation,
     lawGround: lawGround,
     groundText: groundText,
     rulesUrl: rulesUrl,
-    appealUntil: appealUntil,
     appealable: appealable,
     appeal: appeal,
-    appealState: appealState,
     courtsNote: courtsNote,
     messageToAuthor: messageToAuthor,
   );
@@ -524,15 +453,12 @@ class Statement extends Equatable {
     suspends: json['suspension'] != null,
     basis: json['basis'] as String?,
     facts: json['facts'] as String?,
-    automatedDetection: json['automatedDetection'] as bool? ?? false,
     automation: json['automation'] as String?,
     lawGround: json['ground'] == 'LAW',
     groundText: json['groundText'] as String?,
     rulesUrl: json['rulesUrl'] as String?,
-    appealUntil: parseInstant(json['appealUntil']),
     appealable: json['appealable'] as bool? ?? false,
     appeal: json['appeal'] as String?,
-    appealState: AppealState.of(json['appealState']),
     courtsNote: json['courtsNote'] as String?,
     messageToAuthor: json['messageToAuthor'] as String?,
   );
@@ -547,15 +473,12 @@ class Statement extends Equatable {
     suspends,
     basis,
     facts,
-    automatedDetection,
     automation,
     lawGround,
     groundText,
     rulesUrl,
-    appealUntil,
     appealable,
     appeal,
-    appealState,
     courtsNote,
     messageToAuthor,
   ];

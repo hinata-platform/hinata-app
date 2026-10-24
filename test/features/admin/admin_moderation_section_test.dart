@@ -387,7 +387,7 @@ void main() {
     final repository = await pump(tester, moderators: []);
     repository.verdict = const TextCheckResult(
       verdict: TextVerdict.allow,
-      found: [TextFind(term: 'kill', category: 'THREAT', weight: 40)],
+      found: ['kill'],
       exceptions: ['kill -9'],
     );
 
@@ -420,7 +420,6 @@ class _FakeAdminRepository implements AdminRepository {
   HouseRulesVersions versions = HouseRulesVersions(
     version: 3,
     since: DateTime.utc(2026, 10, 2),
-    requiredVersion: 1,
   );
   int reacceptances = 0;
   TextCheckResult verdict = const TextCheckResult(verdict: TextVerdict.allow);
@@ -444,7 +443,6 @@ class _FakeAdminRepository implements AdminRepository {
     return versions = HouseRulesVersions(
       version: (versions.version ?? 0) + 1,
       since: DateTime.utc(2026, 10, 24),
-      requiredVersion: (versions.version ?? 0) + 1,
     );
   }
 
