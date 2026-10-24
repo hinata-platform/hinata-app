@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../i18n/i18n.dart';
+import '../theme/app_colors.dart';
 import '../util/dates.dart';
 import 'quiet_content_line.dart';
 
@@ -57,4 +58,49 @@ class ModerationPlaceholder extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A title the moderation removed (HIN-173): the server's placeholder words,
+/// italic and quiet, behind the glyph that marks every removal. [glyphSize]
+/// and [glyphTop] set the glyph against the first line of [style].
+class RemovedTitle extends StatelessWidget {
+  const RemovedTitle({
+    super.key,
+    required this.text,
+    required this.style,
+    this.glyphSize = 18,
+    this.glyphTop = 4,
+  });
+
+  final String text;
+  final TextStyle style;
+  final double glyphSize;
+  final double glyphTop;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Padding(
+        padding: EdgeInsets.only(top: glyphTop),
+        child: ExcludeSemantics(
+          child: Icon(
+            LucideIcons.eyeOff,
+            size: glyphSize,
+            color: AppColors.inkSoft,
+          ),
+        ),
+      ),
+      SizedBox(width: glyphSize / 2),
+      Expanded(
+        child: Text(
+          text,
+          style: style.copyWith(
+            fontStyle: FontStyle.italic,
+            color: AppColors.inkSoft,
+          ),
+        ),
+      ),
+    ],
+  );
 }

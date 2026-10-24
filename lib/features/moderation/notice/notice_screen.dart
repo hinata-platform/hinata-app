@@ -177,9 +177,7 @@ class _Head extends StatelessWidget {
     );
     return LayoutBuilder(
       builder: (context, constraints) {
-        final stacked =
-            constraints.maxWidth < 420 &&
-            MediaQuery.textScalerOf(context).scale(10) > 15;
+        final stacked = constraints.maxWidth < 420 && context.largeText;
         if (stacked) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
