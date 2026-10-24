@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/shift_models.dart';
+import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
@@ -92,7 +93,7 @@ class SeriesScopeBody extends StatelessWidget {
     final label = recurrenceLabel;
     // From one and a half times the text size the tile gives its width to
     // the title, which would otherwise break inside its one long word.
-    final large = MediaQuery.textScalerOf(context).scale(10) >= 15;
+    final large = context.largeText;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,

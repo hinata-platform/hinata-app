@@ -8,6 +8,7 @@ import '../../../core/i18n/i18n.dart';
 import '../../../core/models/shift_models.dart';
 import '../../../core/models/shift_plan_export.dart';
 import '../../../core/repositories/shift_repository.dart';
+import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
@@ -406,7 +407,7 @@ class _Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final large = MediaQuery.textScalerOf(context).scale(10) >= 15;
+    final large = context.largeText;
     return Padding(
       padding: EdgeInsets.fromLTRB(22, 20, large ? 22 : 14, 8),
       child: Row(
