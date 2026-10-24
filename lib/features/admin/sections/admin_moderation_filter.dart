@@ -396,7 +396,7 @@ class _TextTest extends StatelessWidget {
       },
     ];
     if (result.verdict == TextVerdict.allow) {
-      final found = result.found.map((find) => find.term).toSet();
+      final found = result.found.toSet();
       if (found.isNotEmpty) {
         parts.add(
           context.t(

@@ -22,7 +22,7 @@ void main() {
     headline: 'Eine Entscheidung der Moderation zu deinem Inhalt',
     measure: 'Dein Kommentar wurde entfernt.',
     scope: RemovalScope.whole,
-    appealState: AppealState.pending,
+    appeal: 'Dein Widerspruch liegt vor.',
   );
   late FakeModerationRepository moderation;
 

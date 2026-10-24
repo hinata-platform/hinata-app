@@ -32,8 +32,8 @@ void main() {
     final hidden = cubit();
     await hidden.load();
     expect(hidden.state.blocks('jonas'), isTrue);
-    expect(hidden.state.folds(authorId: 'jonas', contentId: 'c1'), isTrue);
-    expect(hidden.state.folds(authorId: 'lena', contentId: 'c2'), isFalse);
+    expect(hidden.state.foldOf(authorId: 'jonas', contentId: 'c1'), isNotNull);
+    expect(hidden.state.foldOf(authorId: 'lena', contentId: 'c2'), isNull);
   });
 
   test('a server without blocking is not asked', () async {
@@ -116,7 +116,7 @@ void main() {
     hidden
       ..reveal('c1')
       ..noteReported('c1');
-    expect(hidden.state.folds(authorId: 'lena', contentId: 'c1'), isTrue);
+    expect(hidden.state.foldOf(authorId: 'lena', contentId: 'c1'), isNotNull);
   });
 
   test('a failed read folds nothing', () async {
@@ -133,7 +133,7 @@ void main() {
     final hidden = cubit();
     await hidden.block('jonas');
     expect(account.only, invoked(#block, positional: ['jonas']));
-    expect(hidden.state.folds(authorId: 'jonas', contentId: 'c1'), isTrue);
+    expect(hidden.state.foldOf(authorId: 'jonas', contentId: 'c1'), isNotNull);
 
     await hidden.unblock('jonas');
     expect(account.callTo(#unblock), invoked(#unblock, positional: ['jonas']));
@@ -152,8 +152,8 @@ void main() {
     final hidden = cubit();
     await hidden.load();
     hidden.reveal('c1');
-    expect(hidden.state.folds(authorId: 'jonas', contentId: 'c1'), isFalse);
-    expect(hidden.state.folds(authorId: 'jonas', contentId: 'c2'), isTrue);
+    expect(hidden.state.foldOf(authorId: 'jonas', contentId: 'c1'), isNull);
+    expect(hidden.state.foldOf(authorId: 'jonas', contentId: 'c2'), isNotNull);
   });
 
   test('signing out forgets the blocks and what was shown anyway', () async {
