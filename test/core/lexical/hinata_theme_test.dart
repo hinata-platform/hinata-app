@@ -13,8 +13,9 @@ void main() {
   });
 
   // A tick box is a control: 3:1 to every page it sits on, and its tick 3:1 to
-  // the filled box (WCAG 1.4.11).
-  group('tick box contrast', () {
+  // the filled box (WCAG 1.4.11). Links are drawn in the same accent and are
+  // text, so they owe 4.5:1.
+  group('document palette contrast', () {
     final palettes = {
       'standard': TintPalette.standard,
       for (var hue = 0; hue < 360; hue += 15)
@@ -33,14 +34,18 @@ void main() {
         };
         for (final MapEntry(key: tint, value: palette) in palettes.entries) {
           AppColors.palette = palette;
-          final marker = hinataMarkerPalette();
+          final doc = hinataPalette();
           for (final MapEntry(key: page, value: ground) in pages.entries) {
-            final rim = contrastRatio(marker.border, ground);
+            final rim = contrastRatio(doc.muted, ground);
             expect(rim, greaterThanOrEqualTo(3), reason: 'rim on $page, $tint');
-            final box = contrastRatio(marker.accent, ground);
-            expect(box, greaterThanOrEqualTo(3), reason: 'box on $page, $tint');
+            final link = contrastRatio(doc.accent, ground);
+            expect(
+              link,
+              greaterThanOrEqualTo(4.5),
+              reason: 'link and box on $page, $tint',
+            );
           }
-          final tick = contrastRatio(marker.surface, marker.accent);
+          final tick = contrastRatio(doc.onAccent, doc.accent);
           expect(tick, greaterThanOrEqualTo(3), reason: 'tick, $tint');
         }
       });
