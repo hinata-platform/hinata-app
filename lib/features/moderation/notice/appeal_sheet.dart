@@ -41,12 +41,6 @@ class _AppealSheetState extends State<AppealSheet> {
   final _text = TextEditingController();
 
   @override
-  void initState() {
-    super.initState();
-    _text.addListener(() => setState(() {}));
-  }
-
-  @override
   void dispose() {
     _text.dispose();
     super.dispose();
@@ -125,13 +119,16 @@ class _AppealSheetState extends State<AppealSheet> {
             ),
           ),
         ),
-        GlassModalFooter(
-          confirmLabel: context.t('moderation.appeal.send'),
-          confirmIcon: LucideIcons.send,
-          busy: state.appealing,
-          onConfirm: _text.text.trim().isEmpty
-              ? null
-              : () => unawaited(_send()),
+        ValueListenableBuilder<TextEditingValue>(
+          valueListenable: _text,
+          builder: (context, value, _) => GlassModalFooter(
+            confirmLabel: context.t('moderation.appeal.send'),
+            confirmIcon: LucideIcons.send,
+            busy: state.appealing,
+            onConfirm: value.text.trim().isEmpty
+                ? null
+                : () => unawaited(_send()),
+          ),
         ),
       ],
     );
