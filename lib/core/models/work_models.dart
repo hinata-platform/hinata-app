@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 import '../util/dates.dart';
 import 'git_connection.dart';
+import 'moderation_models.dart';
 
 part 'work_models.issues.dart';
 part 'work_models.boards.dart';

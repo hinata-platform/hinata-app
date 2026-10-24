@@ -32,7 +32,9 @@ Future<HiddenContentCubit> hiddenContent(
   Set<String> blocked = const {},
 }) async {
   account.answer<Set<String>>(#blockedIds, blocked);
-  final cubit = HiddenContentCubit(account, enabled: () => true);
+  final moderation = FakeModerationRepository()
+    ..answer<Set<String>>(#reportedIds, const {});
+  final cubit = HiddenContentCubit(account, moderation, enabled: () => true);
   await cubit.load();
   account.calls.clear();
   return cubit;
