@@ -216,6 +216,9 @@ class GlassChoiceField extends StatelessWidget {
     button: true,
     label: label,
     value: value,
+    // The tap on the node itself: the children are left out so the choice
+    // is heard once, and with them the tap of the InkWell.
+    onTap: () => onOpen(anchorRectOfContext(context)),
     excludeSemantics: true,
     child: InkWell(
       onTap: () => onOpen(anchorRectOfContext(context)),
