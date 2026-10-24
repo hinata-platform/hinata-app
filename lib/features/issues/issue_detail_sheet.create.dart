@@ -521,7 +521,7 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           const SizedBox(height: 12),
           ContentRefusedNotice(
             refusal: refusal,
-            onReadRules: () => unawaited(openHouseRules(context)),
+            onReadRules: () => unawaited(showHouseRulesSheet(context)),
           ),
         ],
       ],
