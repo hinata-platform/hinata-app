@@ -14,7 +14,8 @@ import 'package:hinata/features/admin/sections/admin_moderation_section.dart';
 
 /// Admin → Moderation (HIN-26): who comes in without approval, who moderates,
 /// a word when one person alone would decide, the contact for reports with a
-/// warning while none is published, and the house rules (HIN-175).
+/// warning while none is published, the house rules (HIN-175) and the text
+/// check (HIN-176).
 ///
 /// Nothing here asserts on translated copy: widget tests render raw i18n keys.
 void main() {
@@ -268,6 +269,93 @@ void main() {
     await tester.pumpAndSettle();
     expect(repository.reacceptances, 1);
   });
+
+  bool switchedOn(WidgetTester tester, String label) =>
+      tester.widget<AdminToggle>(find.widgetWithText(AdminToggle, label)).value;
+
+  testWidgets('the text check refuses until switched off, and looking writes '
+      'nothing', (tester) async {
+    final settings = <String, dynamic>{'moderation': <String, dynamic>{}};
+    await pump(tester, moderators: [], settings: settings);
+
+    expect(switchedOn(tester, 'admin.textCheck.block'), isTrue);
+    expect(switchedOn(tester, 'admin.textCheck.flag'), isFalse);
+    expect(find.text('admin.textCheck.flagNote'), findsNothing);
+    expect((settings['moderation'] as Map).containsKey('filter'), isFalse);
+  });
+
+  testWidgets('putting texts before moderation comes with its note', (
+    tester,
+  ) async {
+    final settings = <String, dynamic>{'moderation': <String, dynamic>{}};
+    await pump(tester, moderators: [], settings: settings);
+
+    final flag = find.text('admin.textCheck.flag');
+    await tester.ensureVisible(flag);
+    await tester.tap(flag);
+    await tester.pumpAndSettle();
+
+    final filter = (settings['moderation'] as Map)['filter'] as Map;
+    expect(filter['flagEnabled'], isTrue);
+    expect(find.text('admin.textCheck.flagNote'), findsOneWidget);
+  });
+
+  testWidgets('an own term is added once, in any case, and removed by its '
+      'chip', (tester) async {
+    // As decoded from JSON, with an exception already kept.
+    final settings = <String, dynamic>{
+      'moderation': <String, dynamic>{
+        'filter': <String, dynamic>{
+          'allowTerms': <dynamic>['Kill-Switch'],
+        },
+      },
+    };
+    await pump(tester, moderators: [], settings: settings);
+    final filter = (settings['moderation'] as Map)['filter'] as Map;
+    final field = find
+        .widgetWithText(TextField, 'admin.textCheck.addTerm')
+        .first;
+
+    for (final term in ['  Spoiler ', 'spoiler']) {
+      await tester.ensureVisible(field);
+      await tester.enterText(field, term);
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+    }
+    expect(filter['blockTerms'], ['Spoiler']);
+    expect(filter['allowTerms'], ['Kill-Switch']);
+
+    await tester.ensureVisible(find.text('Spoiler'));
+    await tester.tap(find.text('Spoiler'));
+    await tester.pumpAndSettle();
+    expect(filter['blockTerms'], isEmpty);
+  });
+
+  testWidgets('trying a text says what the server would do', (tester) async {
+    final repository = await pump(tester, moderators: []);
+    repository.verdict = const TextCheckResult(
+      verdict: TextVerdict.allow,
+      found: [TextFind(term: 'kill', category: 'THREAT', weight: 40)],
+      exceptions: ['kill -9'],
+    );
+
+    final field = find.widgetWithText(TextField, 'admin.textCheck.test');
+    await tester.ensureVisible(field);
+    await tester.enterText(field, 'Run kill -9 on the stuck worker');
+    final check = find.text('admin.textCheck.testButton');
+    await tester.ensureVisible(check);
+    await tester.tap(check);
+    await tester.pumpAndSettle();
+
+    expect(repository.tested.single, 'Run kill -9 on the stuck worker');
+    expect(
+      find.text(
+        'admin.textCheck.resultAllow admin.textCheck.resultFound '
+        'admin.textCheck.resultException',
+      ),
+      findsOneWidget,
+    );
+  });
 }
 
 class _FakeAdminRepository implements AdminRepository {
@@ -283,9 +371,17 @@ class _FakeAdminRepository implements AdminRepository {
     requiredVersion: 1,
   );
   int reacceptances = 0;
+  TextCheckResult verdict = const TextCheckResult(verdict: TextVerdict.allow);
+  final List<String> tested = [];
 
   @override
   Future<AccountEntry> accountEntry() async => entry;
+
+  @override
+  Future<TextCheckResult> testText(String text) async {
+    tested.add(text);
+    return verdict;
+  }
 
   @override
   Future<HouseRulesVersions> houseRulesVersions() async => versions;

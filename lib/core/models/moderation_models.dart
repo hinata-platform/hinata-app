@@ -182,3 +182,91 @@ enum ReportCategory {
   static const explanationMin = 10;
   static const explanationMax = 1000;
 }
+
+/// What the text check says when nothing is stored (HIN-176):
+/// `ALLOW`, `FLAG` or `BLOCK`.
+enum TextVerdict {
+  allow('ALLOW'),
+  flag('FLAG'),
+  block('BLOCK');
+
+  const TextVerdict(this.wire);
+
+  final String wire;
+
+  static TextVerdict of(Object? wire) => values.firstWhere(
+    (verdict) => verdict.wire == wire,
+    orElse: () => TextVerdict.allow,
+  );
+}
+
+/// One find of the text check, with what it weighs where it stands.
+class TextFind extends Equatable {
+  const TextFind({
+    required this.term,
+    required this.category,
+    required this.weight,
+    this.technical = false,
+    this.own = false,
+  });
+
+  final String term;
+
+  /// The server's name of the category, as [ReportCategory.wire].
+  final String category;
+  final int weight;
+
+  /// Found in code, a log or an identifier, where it weighs less.
+  final bool technical;
+
+  /// One of the administrator's own terms.
+  final bool own;
+
+  factory TextFind.fromJson(Map<String, dynamic> json) => TextFind(
+    term: json['term'] as String? ?? '',
+    category: json['category'] as String? ?? 'OTHER',
+    weight: (json['weight'] as num?)?.toInt() ?? 0,
+    technical: json['technical'] as bool? ?? false,
+    own: json['own'] as bool? ?? false,
+  );
+
+  @override
+  List<Object?> get props => [term, category, weight, technical, own];
+}
+
+/// The answer to "test a text" in Admin → Moderation: what would happen with
+/// the settings as they are, what was found whatever the switches say, and
+/// the technical words that kept a rule from counting.
+class TextCheckResult extends Equatable {
+  const TextCheckResult({
+    required this.verdict,
+    this.terms = const [],
+    this.found = const [],
+    this.exceptions = const [],
+  });
+
+  final TextVerdict verdict;
+  final List<String> terms;
+  final List<TextFind> found;
+  final List<String> exceptions;
+
+  factory TextCheckResult.fromJson(Map<String, dynamic> json) =>
+      TextCheckResult(
+        verdict: TextVerdict.of(json['verdict']),
+        terms: [
+          for (final term in (json['terms'] as List<dynamic>?) ?? const [])
+            '$term',
+        ],
+        found: [
+          for (final find in (json['found'] as List<dynamic>?) ?? const [])
+            TextFind.fromJson(find as Map<String, dynamic>),
+        ],
+        exceptions: [
+          for (final word in (json['exceptions'] as List<dynamic>?) ?? const [])
+            '$word',
+        ],
+      );
+
+  @override
+  List<Object?> get props => [verdict, terms, found, exceptions];
+}
