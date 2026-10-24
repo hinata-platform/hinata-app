@@ -209,19 +209,41 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
         const SizedBox(height: 12),
         Semantics(
           header: true,
-          child: Text(
-            a.title,
-            style: TextStyle(
-              fontFamily: AppTheme.fontBrand,
-              fontSize: AppType.hero,
-              fontWeight: FontWeight.w800,
-              height: 1.15,
-              letterSpacing: -0.7,
-              // A title the moderation removed is its placeholder: quiet and
-              // italic (HIN-173).
-              fontStyle: a.isRemoved('title') ? FontStyle.italic : null,
-              color: a.isRemoved('title') ? AppColors.inkSoft : AppColors.ink,
-            ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // A title the moderation removed is its placeholder: quiet,
+              // italic and behind the glyph of every removal (HIN-173).
+              if (a.isRemoved('title')) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: ExcludeSemantics(
+                    child: Icon(
+                      LucideIcons.eyeOff,
+                      size: 24,
+                      color: AppColors.inkSoft,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+              Expanded(
+                child: Text(
+                  a.title,
+                  style: TextStyle(
+                    fontFamily: AppTheme.fontBrand,
+                    fontSize: AppType.hero,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                    letterSpacing: -0.7,
+                    fontStyle: a.isRemoved('title') ? FontStyle.italic : null,
+                    color: a.isRemoved('title')
+                        ? AppColors.inkSoft
+                        : AppColors.ink,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 14),
