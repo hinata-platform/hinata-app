@@ -303,6 +303,82 @@ void main() {
     },
   );
 
+  test('removing from an issue asks which part', () async {
+    final cubit = await started(
+      detail: caseDetail(summary: caseRow(kind: ContentKind.issue)),
+    );
+    cubit.choose(CaseOutcome.action);
+    expect(cubit.problems, contains(DecisionProblem.scope));
+
+    cubit.setScope(RemovalScope.title);
+    expect(cubit.problems, isNot(contains(DecisionProblem.scope)));
+  });
+
+  test(
+    'a ground needs what it rests on, the law or an own rule in words',
+    () async {
+      moderation.answer<ModerationRules>(
+        #rules,
+        const ModerationRules(builtIn: false),
+      );
+      final cubit = await started();
+      cubit
+        ..choose(CaseOutcome.action)
+        ..setGround(DecisionGround.law);
+      expect(cubit.problems, contains(DecisionProblem.reference));
+      cubit.setLawReference('§ 185 StGB');
+      expect(cubit.problems, isNot(contains(DecisionProblem.reference)));
+
+      cubit.setGround(DecisionGround.rules);
+      expect(cubit.problems, contains(DecisionProblem.reference));
+      cubit.setRuleText('Werbung gehört nicht in die Projekte.');
+      expect(cubit.problems, isNot(contains(DecisionProblem.reference)));
+    },
+  );
+
+  test('a suspension asked for where nobody can be found is refused', () async {
+    users.fail(#profile, ApiFailure('error.notFound', statusCode: 404));
+    final cubit = DecisionCubit(
+      moderation,
+      users,
+      detail: caseDetail(),
+      suspendPerson: true,
+      previewDelay: Duration.zero,
+    );
+    addTearDown(cubit.close);
+    await cubit.start();
+
+    expect(cubit.problems, contains(DecisionProblem.suspension));
+  });
+
+  test('something dealt with goes out without a measure', () async {
+    moderation.answer<CaseSummary>(#decide, caseRow(state: CaseState.acted));
+    final cubit = await started();
+    cubit
+      ..choose(CaseOutcome.handled)
+      ..setFacts('Mit der Person gesprochen, sie nimmt es selbst zurück.')
+      ..setMessage('Bleibt nicht stehen.');
+    await cubit.submit();
+
+    final draft =
+        moderation.callTo(#decide).positionalArguments[1] as DecisionDraft;
+    expect(draft.outcome, CaseOutcome.handled);
+    expect(draft.removal, isNull);
+    expect(draft.suspension, isNull);
+    expect(draft.responsibleId, isNull);
+    expect(draft.messageToAuthor, isEmpty);
+    expect(draft.ground, DecisionGround.rules);
+  });
+
+  test('rules that cannot be read are written out by hand', () async {
+    moderation.fail(#rules, ApiFailure('errors.network'));
+    final cubit = await started();
+
+    expect(cubit.state.pickRule, isFalse);
+    cubit.choose(CaseOutcome.action);
+    expect(cubit.problems, contains(DecisionProblem.reference));
+  });
+
   test('something else is dealt with, never acted on', () {
     expect(outcomesOf(ContentKind.other), [
       CaseOutcome.noViolation,
