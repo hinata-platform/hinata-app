@@ -240,6 +240,31 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       ? (anchor) => shareIssue(anchorRect: anchor)
       : null;
 
+  /// The "Report …" entry of the "…" menu (HIN-173), or null: on somebody
+  /// else's issue that is still there, on a server that knows reporting.
+  void Function(Rect anchorRect)? get reportAction {
+    final issue = _issue;
+    final me = context.read<AuthBloc>().state.user;
+    final moderated =
+        context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false;
+    if (issue == null || me == null || !moderated) return null;
+    if (issue.reporterId == me.id) return null;
+    if (issue.isRemoved('title') && issue.isRemoved('description')) {
+      return null;
+    }
+    return (anchor) => unawaited(_reportIssue(issue, anchor));
+  }
+
+  Future<void> _reportIssue(Issue issue, Rect anchor) => showReportSheet(
+    context,
+    anchorRect: anchor,
+    subject: ReportSubject(
+      target: TargetRef(ContentKind.issue, issue.id),
+      title: context.t('moderation.report.titleIssue'),
+      subtitle: '${issue.readableId} · ${issue.title}',
+    ),
+  );
+
   /// Who is watching this issue, plus the caller's own subscription. Owned here
   /// rather than by the "…" menu that renders it: three separate top bars host
   /// that menu (wolt sheet, wide route, compact route), each in its own subtree
@@ -1971,6 +1996,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 watch: watchMenu,
                 canDelete: _canDelete,
                 onShare: shareAction,
+                onReport: reportAction,
                 readOnly: isParticipant,
               ),
             if (isParticipant)
@@ -2267,7 +2293,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
                   onDoubleTap: isParticipant ? null : beginTitleEdit,
-                  child: Text(issue.title, style: titleStyle),
+                  // A title the moderation removed reads as its placeholder,
+                  // quiet and with the glyph (HIN-173).
+                  child: issue.isRemoved('title')
+                      ? _RemovedTitle(text: issue.title, style: titleStyle)
+                      : Text(issue.title, style: titleStyle),
                 ),
               ),
             ),
@@ -2338,7 +2368,13 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 // A description the backfill could not convert still has its
                 // markdown; "no description" would be a lie about a row that has
                 // one.
-                child: _describedDoc(issue) != null
+                child: issue.isRemoved('description')
+                    ? ModerationPlaceholder(
+                        part: RemovedPart.description,
+                        at: issue.moderation['description']?.at,
+                        onWhy: _whyRemoved(issue, 'description'),
+                      )
+                    : _describedDoc(issue) != null
                     ? HinataDocument(
                         doc: _describedDoc(issue),
                         fontSize: AppType.body,
@@ -2363,6 +2399,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         ],
       ),
     );
+  }
+
+  /// "Why?" beside a removed [field] of [issue], for the person who wrote it
+  /// (HIN-173); null for everybody else.
+  VoidCallback? _whyRemoved(Issue issue, String field) {
+    final caseId = issue.moderation[field]?.caseId;
+    final me = context.read<AuthBloc>().state.user?.id;
+    if (caseId == null || me == null || issue.reporterId != me) return null;
+    return () => context.push(noticeLocation(caseId));
   }
 
   /// The description to render: the stored document, or the legacy markdown
@@ -3334,6 +3379,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
               watch: watchMenu,
               canDelete: _canDelete,
               onShare: shareAction,
+              onReport: reportAction,
               readOnly: isParticipant,
             ),
           ),
@@ -3656,6 +3702,31 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Uploads a recorded voice message as a comment, then refreshes to the newest
   /// page so the playable bubble appears at the bottom of the thread.
+  /// Reports somebody else's comment (HIN-173): beside its menu on a wide
+  /// window, as a sheet on a phone.
+  Future<void> _reportComment(IssueComment c, Rect? anchor) async {
+    final name = _names[c.authorId] ?? c.authorId;
+    final issue = _issue;
+    await showReportSheet(
+      context,
+      anchorRect: anchor,
+      subject: ReportSubject(
+        target: TargetRef(ContentKind.comment, c.id, parentId: issue?.id),
+        title: context.t(
+          c.isVoice
+              ? 'moderation.report.titleVoice'
+              : 'moderation.report.titleComment',
+        ),
+        subtitle: context.t(
+          'moderation.report.byIn',
+          variables: {'name': name, 'where': issue?.readableId ?? ''},
+        ),
+        authorId: c.authorId,
+        authorName: name,
+      ),
+    );
+  }
+
   /// Posts a voice message; false when it did not go out, so the composer
   /// keeps the recording to send again.
   Future<bool> _sendVoiceComment(VoiceRecording recording) async {
@@ -3706,6 +3777,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     ]) {
       _commentKeys.putIfAbsent(c.id, () => GlobalKey());
     }
+    // Reporting and blocking reach a server that knows them (HIN-26).
+    final moderated =
+        me != null &&
+        (context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false);
     final interactions = CommentInteractions(
       meId: me?.id,
       nameFor: (id) => _names[id] ?? id,
@@ -3728,16 +3803,16 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       onLoadMoreReplies: _loadMoreReplies,
       // The sheet's own context: the comment folds the moment the block
       // lands, and the toast that confirms it still needs somewhere to go.
-      onBlockAuthor:
-          me != null &&
-              (context.read<AppConfigBloc>().state.meta?.supportsModeration ??
-                  false)
+      // Blocking from a comment offers to report it too (HIN-173).
+      onBlockAuthor: moderated
           ? (c) => confirmBlock(
               context,
               personId: c.authorId,
               name: _names[c.authorId] ?? c.authorId,
+              reportAfter: () => _reportComment(c, null),
             )
           : null,
+      onReport: moderated ? _reportComment : null,
     );
     // Same flat tile as the Comments tab, so comments look identical in every
     // tab (voice comments stay playable in the merged "All" feed too). The
