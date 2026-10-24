@@ -7,6 +7,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_case_models.dart';
 import '../../../core/models/moderation_models.dart';
+import '../../../core/models/person_profile.dart';
 import '../../../core/repositories/moderation_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/theme/app_colors.dart';
@@ -34,12 +35,14 @@ const messageMax = 1000;
 /// changed by somebody else meanwhile; null when cancelled.
 ///
 /// With [suspendPerson] it opens on "Maßnahme · Konto sperren", for a case
-/// just opened from a person's profile.
+/// just opened from a person's profile; [person] is that profile, which is
+/// then not read again.
 Future<CaseNotice?> showDecisionDialog(
   BuildContext context,
   CaseDetail detail, {
   bool suspendPerson = false,
   String facts = '',
+  PersonProfile? person,
 }) {
   final moderation = context.read<ModerationRepository>();
   final users = context.read<UserRepository>();
@@ -53,6 +56,7 @@ Future<CaseNotice?> showDecisionDialog(
         detail: detail,
         suspendPerson: suspendPerson,
         facts: facts,
+        person: person,
       )..start(),
       child: const DecisionDialog(),
     ),
