@@ -13,73 +13,91 @@ import '../widgets/case_look.dart';
 /// The reports of a case (HIN-174): numbered, by kind of source, the reason
 /// in quotes, the reporter covered until somebody uncovers them with a reason
 /// (never for the safety of children), further ones a page at a time.
-class CaseReports extends StatelessWidget {
-  const CaseReports({
-    super.key,
-    required this.detail,
-    required this.loadingMore,
-    required this.onReveal,
+///
+/// As rows of the case's list rather than one block, so a case with many
+/// reports builds only the ones on screen. [onReveal] uncovers a report's
+/// reporter; null where nobody may.
+List<Widget> caseReportRows({
+  required CaseDetail detail,
+  required bool loadingMore,
+  required void Function(CaseReport report)? onReveal,
+  required VoidCallback onMore,
+}) {
+  final childSafety = detail.summary.childSafety;
+  final covered = detail.reports.any(
+    (report) => report.reporter == null && report.source == ReportSource.member,
+  );
+  return [
+    _ReportsHead(total: detail.reportTotal),
+    for (final report in detail.reports)
+      _ReportEntry(
+        report: report,
+        onReveal:
+            onReveal == null ||
+                childSafety ||
+                report.reporter != null ||
+                report.source != ReportSource.member
+            ? null
+            : () => onReveal(report),
+      ),
+    if (detail.reports.length < detail.reportTotal)
+      _MoreReports(
+        left: detail.reportTotal - detail.reports.length,
+        loading: loadingMore,
+        onMore: onMore,
+      ),
+    if (covered) _ReportersCovered(childSafety: childSafety),
+  ];
+}
+
+class _ReportsHead extends StatelessWidget {
+  const _ReportsHead({required this.total});
+
+  final int total;
+
+  @override
+  Widget build(BuildContext context) => CaseSectionLabel(
+    context.t('moderation.case.reports'),
+    trailing: '$total',
+  );
+}
+
+class _MoreReports extends StatelessWidget {
+  const _MoreReports({
+    required this.left,
+    required this.loading,
     required this.onMore,
   });
 
-  final CaseDetail detail;
-  final bool loadingMore;
-
-  /// Uncovers report [CaseReport]; null where nobody may.
-  final void Function(CaseReport report)? onReveal;
+  final int left;
+  final bool loading;
   final VoidCallback onMore;
 
   @override
-  Widget build(BuildContext context) {
-    final childSafety = detail.summary.childSafety;
-    final covered = detail.reports.any(
-      (report) =>
-          report.reporter == null && report.source == ReportSource.member,
-    );
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        CaseSectionLabel(
-          context.t('moderation.case.reports'),
-          trailing: '${detail.reportTotal}',
-        ),
-        for (final report in detail.reports)
-          _ReportEntry(
-            report: report,
-            onReveal:
-                onReveal == null ||
-                    childSafety ||
-                    report.reporter != null ||
-                    report.source != ReportSource.member
-                ? null
-                : () => onReveal!(report),
-          ),
-        if (detail.reports.length < detail.reportTotal)
-          Align(
-            alignment: AlignmentDirectional.centerStart,
-            child: TextButton.icon(
-              onPressed: loadingMore ? null : onMore,
-              icon: const Icon(LucideIcons.chevronsDown, size: 16),
-              label: Text(
-                context.t(
-                  'moderation.case.moreReports',
-                  count: detail.reportTotal - detail.reports.length,
-                ),
-              ),
-            ),
-          ),
-        if (covered)
-          CaseInfoLine(
-            icon: LucideIcons.eyeOff,
-            text: context.t(
-              childSafety
-                  ? 'moderation.case.reportersStayCovered'
-                  : 'moderation.case.reportersCovered',
-            ),
-          ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => Align(
+    alignment: AlignmentDirectional.centerStart,
+    child: TextButton.icon(
+      onPressed: loading ? null : onMore,
+      icon: const Icon(LucideIcons.chevronsDown, size: 16),
+      label: Text(context.t('moderation.case.moreReports', count: left)),
+    ),
+  );
+}
+
+class _ReportersCovered extends StatelessWidget {
+  const _ReportersCovered({required this.childSafety});
+
+  final bool childSafety;
+
+  @override
+  Widget build(BuildContext context) => CaseInfoLine(
+    icon: LucideIcons.eyeOff,
+    text: context.t(
+      childSafety
+          ? 'moderation.case.reportersStayCovered'
+          : 'moderation.case.reportersCovered',
+    ),
+  );
 }
 
 class _ReportEntry extends StatelessWidget {
@@ -200,22 +218,23 @@ class _ReportEntry extends StatelessWidget {
   }
 }
 
-/// What happened to the case, oldest first, as quiet centred lines.
-class CaseHistory extends StatelessWidget {
-  const CaseHistory({super.key, required this.events, required this.names});
+/// What happened to the case, oldest first, as quiet centred lines: rows of
+/// the case's list, so a long history builds only the lines on screen.
+List<Widget> caseHistoryRows({
+  required List<CaseEvent> events,
+  required Map<String, String> names,
+}) => [
+  for (final event in events)
+    if (event.kind != null) _HistoryLine(event: event, names: names),
+];
 
-  final List<CaseEvent> events;
+class _HistoryLine extends StatelessWidget {
+  const _HistoryLine({required this.event, required this.names});
+
+  final CaseEvent event;
   final Map<String, String> names;
 
-  @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      for (final event in events)
-        if (event.kind != null) _HistoryLine(text: _line(context, event)),
-    ],
-  );
-
-  String _line(BuildContext context, CaseEvent event) {
+  String _text(BuildContext context) {
     final name = event.actorId == null
         ? context.t('moderation.case.someoneModerating')
         : names[event.actorId] ??
@@ -250,12 +269,6 @@ class CaseHistory extends StatelessWidget {
       '$what$reason',
     ].join(' · ');
   }
-}
-
-class _HistoryLine extends StatelessWidget {
-  const _HistoryLine({required this.text});
-
-  final String text;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -267,7 +280,7 @@ class _HistoryLine extends StatelessWidget {
         Flexible(
           flex: 6,
           child: Text(
-            text,
+            _text(context),
             textAlign: TextAlign.center,
             maxLines: 4,
             overflow: TextOverflow.ellipsis,
