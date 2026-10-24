@@ -61,6 +61,17 @@ import '../theme/app_colors.dart';
   'MODERATION_DECISION' => (LucideIcons.circleCheck, AppColors.inkSoft),
   'MODERATION_NOTICE' => (LucideIcons.shieldAlert, AppColors.accentInk),
   'MODERATION_NOTICE_UPDATED' => (LucideIcons.rotateCcw, AppColors.accentInk),
+  // For moderators (HIN-174): a new case, cases waiting long, an appeal, a
+  // second person asked for, a word to the team; for admins, a warning.
+  'MODERATION_CASE_OPENED' => (LucideIcons.flag, AppColors.accentInk),
+  'MODERATION_CASE_OVERDUE' => (LucideIcons.alarmClock, AppColors.accentInk),
+  'MODERATION_APPEAL_FILED' => (LucideIcons.rotateCcw, AppColors.accentInk),
+  'MODERATION_CONFIRM_REQUESTED' => (
+    LucideIcons.usersRound,
+    AppColors.accentInk,
+  ),
+  'MODERATION_TEAM_NOTE' => (LucideIcons.info, AppColors.accentInk),
+  'MODERATION_ADMIN_ALERT' => (LucideIcons.shield, AppColors.accentInk),
   _ => (LucideIcons.bell, AppColors.inkSoft),
 };
 
@@ -84,6 +95,14 @@ String? notificationTimeAgo(DateTime? time) {
 /// opening the app on whatever page was last shown.
 String? notificationTarget(String? link, String? type) {
   if (link != null && link.startsWith('/') && link.length > 1) return link;
-  if ((type ?? '').toUpperCase().startsWith('SHIFT_')) return '/shifts';
+  final kind = (type ?? '').toUpperCase();
+  if (kind.startsWith('SHIFT_')) return '/shifts';
+  if (kind == 'MODERATION_ADMIN_ALERT') return '/admin/users';
+  if (kind.startsWith('MODERATION_CASE_') ||
+      kind == 'MODERATION_APPEAL_FILED' ||
+      kind == 'MODERATION_CONFIRM_REQUESTED' ||
+      kind == 'MODERATION_TEAM_NOTE') {
+    return '/moderation';
+  }
   return null;
 }
