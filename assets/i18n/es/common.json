@@ -4467,6 +4467,10 @@
       "requestModalConfirm": "Solicitar el informe",
       "requestedToast": "Informe de datos solicitado: revisa tu correo"
     },
+    "blocked": {
+      "title": "Personas bloqueadas",
+      "subtitle": "Bloquear solo te afecta a ti. Si quieres que alguien revise algo, repórtalo."
+    },
     "danger": {
       "title": "Zona de peligro",
       "subtitle": "Acciones irreversibles sobre la cuenta.",
@@ -5788,5 +5792,37 @@
     },
     "loadFailed": "No se pudo cargar el perfil",
     "open": "Abrir el perfil de {{name}}"
+  },
+  "blocks": {
+    "action": "Bloquear a esta persona",
+    "profile": {
+      "section": "Privacidad",
+      "block": "Bloquear",
+      "blockDetail": "Sin más notificaciones, comentarios plegados",
+      "unblock": "Desbloquear",
+      "unblockDetail": "Has bloqueado a {{name}}"
+    },
+    "confirm": {
+      "title": "¿Bloquear a {{name}}?",
+      "subtitle": "Qué cambia y qué se mantiene",
+      "notifications": "Ya no recibirás notificaciones que active {{name}}, tampoco menciones.",
+      "folded": "Verás plegados los comentarios y mensajes de voz de {{name}}.",
+      "contact": "{{name}} ya no podrá añadirte a incidencias ni compartir contigo registros de tiempo.",
+      "work": "El trabajo en común sigue: verás las incidencias, los adjuntos y las páginas como siempre, y las asignaciones de {{name}} te seguirán llegando.",
+      "private": "{{name}} no se entera de nada. Puedes deshacerlo cuando quieras.",
+      "button": "Bloquear"
+    },
+    "blockedToast": "Has bloqueado a {{name}}",
+    "unblockedToast": "Has desbloqueado a {{name}}",
+    "folded": "Plegado porque has bloqueado a {{name}}",
+    "show": "Mostrar",
+    "list": {
+      "since": "Desde el {{date}}",
+      "unblock": "Desbloquear",
+      "unblockLabel": "Desbloquear a {{name}}",
+      "emptyTitle": "No has bloqueado a nadie",
+      "emptyMessage": "Puedes bloquear a alguien desde su perfil o desde el menú de un comentario.",
+      "more": "Cargar más"
+    }
   }
 }

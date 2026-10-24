@@ -124,7 +124,7 @@ class CommentBubbleRow extends StatelessWidget {
 
     // In selection mode the whole row toggles the checkbox for own comments.
     if (selectionMode && _canManage) {
-      return Semantics(
+      row = Semantics(
         checked: selected,
         child: GestureDetector(
           behavior: HitTestBehavior.opaque,
@@ -133,7 +133,14 @@ class CommentBubbleRow extends StatelessWidget {
         ),
       );
     }
-    return row;
+    // Somebody the reader blocks writes a folded line here, voice messages
+    // included, until the reader opens it (HIN-168).
+    return HiddenContentFold(
+      authorId: _c.authorId,
+      contentId: _c.id,
+      authorName: name,
+      child: row,
+    );
   }
 
   Widget _header(BuildContext context, String name) {
@@ -322,6 +329,17 @@ class _CommentActionsState extends State<_CommentActions> {
         _c.pinned ? context.t('comments.unpin') : context.t('comments.pin'),
         () => run(() => _x.onTogglePin(_c)),
       ),
+      // Somebody else's comment, and not somebody already blocked: opened
+      // anyway, a folded comment offers nothing to block twice.
+      if (!widget.canManage &&
+          _x.onBlockAuthor != null &&
+          !(context.read<HiddenContentCubit?>()?.state.blocks(_c.authorId) ??
+              false))
+        _MenuRowData(
+          LucideIcons.userX,
+          context.t('blocks.action'),
+          () => run(() => _x.onBlockAuthor!(_c)),
+        ),
       if (widget.canManage)
         _MenuRowData(
           LucideIcons.trash2,
