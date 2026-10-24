@@ -58,6 +58,10 @@ void main() {
     await pump(tester, 5);
     expect(find.byType(CountBadge), findsOneWidget);
     expect(
+      tester.getTopLeft(find.byType(CountBadge)).dx,
+      lessThan(tester.getTopLeft(find.byIcon(LucideIcons.externalLink)).dx),
+    );
+    expect(
       find.bySemanticsLabel(RegExp('moderation.queue.openCount')),
       findsOneWidget,
     );
