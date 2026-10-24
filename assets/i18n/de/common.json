@@ -6148,7 +6148,8 @@
         "open": "Neue Meldungen erscheinen hier, und du bekommst eine Mitteilung.",
         "appeal": "Widerspricht jemand einer Entscheidung, prüft eine andere Person hier neu.",
         "done": "Entschiedene Fälle stehen hier, bis ihre Aufbewahrung endet."
-      }
+      },
+      "withYou": "Bei dir"
     },
     "kind": {
       "issue": "Vorgang",

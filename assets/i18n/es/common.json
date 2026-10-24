@@ -6148,7 +6148,8 @@
         "open": "Las denuncias nuevas aparecen aquí y recibes una notificación.",
         "appeal": "Si alguien recurre una decisión, otra persona la revisa aquí.",
         "done": "Los casos decididos quedan aquí hasta que termina su conservación."
-      }
+      },
+      "withYou": "Contigo"
     },
     "kind": {
       "issue": "Tarea",

@@ -20,12 +20,16 @@ class CaseRow extends StatelessWidget {
     required this.now,
     required this.onTap,
     this.selected = false,
+    this.meId,
   });
 
   final CaseSummary summary;
   final DateTime now;
   final VoidCallback onTap;
   final bool selected;
+
+  /// The reader, so a case they hold says "Bei dir" instead of a name.
+  final String? meId;
 
   @override
   Widget build(BuildContext context) {
@@ -109,8 +113,10 @@ class CaseRow extends StatelessWidget {
         context.t('moderation.queue.reports', count: c.reportCount),
       if (c.sources.contains(ReportSource.ownInitiative))
         context.t('moderation.queue.ownInitiative'),
-      if (c.assignee != null && c.state == CaseState.inReview)
-        c.assignee!.displayName,
+      if (c.assignee case final assignee? when c.state == CaseState.inReview)
+        assignee.id == meId
+            ? context.t('moderation.queue.withYou')
+            : assignee.displayName,
       if (c.reportedByMe) context.t('moderation.queue.reportedByMe'),
     ].join(' · ');
   }
