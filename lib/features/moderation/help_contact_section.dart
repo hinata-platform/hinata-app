@@ -18,7 +18,7 @@ import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart';
 import 'house_rules_cubit.dart';
 import 'house_rules_sheet.dart';
-import 'report_elsewhere_sheet.dart';
+import 'report/report_sheet.dart' show showReportElsewhereSheet;
 
 /// Settings › Help and contact (HIN-175): who moderates this instance and how
 /// to reach them, its house rules, a report of something without a menu of

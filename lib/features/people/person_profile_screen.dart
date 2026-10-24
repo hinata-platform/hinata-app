@@ -5,7 +5,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/moderation_models.dart';
@@ -248,10 +247,7 @@ class _PersonProfileBody extends StatelessWidget {
       );
     }
     final email = profile.email;
-    final canBlock =
-        !profile.self &&
-        (context.read<AppConfigBloc?>()?.state.meta?.supportsModeration ??
-            false);
+    final canBlock = !profile.self && moderationReachable(context);
     final blocked = context.select<HiddenContentCubit?, bool>(
       (hidden) => hidden?.state.blocks(profile.id) ?? false,
     );

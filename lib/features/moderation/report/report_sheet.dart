@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_models.dart';
 import '../../../core/repositories/moderation_repository.dart';
@@ -43,10 +45,46 @@ class ReportSubject {
   bool get canAlsoBlock =>
       authorId != null &&
       (target.kind == ContentKind.comment || target.kind == ContentKind.person);
+
+  /// Something without a menu of its own: the reader says where it is.
+  bool get asksWhere => target.kind == ContentKind.other;
 }
+
+/// Whether the server knows reporting and blocking (HIN-26) and somebody is
+/// signed in to do either.
+bool moderationReachable(BuildContext context) =>
+    context.read<AuthBloc?>()?.state.user != null &&
+    (context.read<AppConfigBloc?>()?.state.meta?.supportsModeration ?? false);
+
+/// Whether the reader may report what [authorId] made (HIN-173): somebody
+/// else's, still there ([removed] is whether moderation took it), on a server
+/// that knows reporting.
+bool canReport(
+  BuildContext context, {
+  required String? authorId,
+  bool removed = false,
+}) =>
+    moderationReachable(context) &&
+    !removed &&
+    authorId != context.read<AuthBloc?>()?.state.user?.id;
+
+/// "Report something else …" from Settings › Help and contact (HIN-175): for
+/// what has no menu of its own, a project's name, a board, a team. First the
+/// reason, then where it is and what moderation should know.
+Future<bool> showReportElsewhereSheet(BuildContext context) => showReportSheet(
+  context,
+  subject: ReportSubject(
+    target: TargetRef.elsewhere,
+    title: context.t('moderation.report.elsewhereTitle'),
+    subtitle: context.t('moderation.report.elsewhereSubtitle'),
+  ),
+);
 
 /// The width of the popover beside a menu.
 const double _popoverWidth = 400;
+
+/// The longest place the reader can name, as the server takes it.
+const int _locationMax = 300;
 
 /// Reports [subject] (HIN-173): beside the menu item it came from on a wide
 /// window ([anchorRect]), as a sheet on a phone, never a sheet on a sheet.
@@ -117,10 +155,12 @@ class ReportSheet extends StatefulWidget {
 }
 
 class _ReportSheetState extends State<ReportSheet> {
+  final _location = TextEditingController();
   final _explanation = TextEditingController();
 
   @override
   void dispose() {
+    _location.dispose();
     _explanation.dispose();
     super.dispose();
   }
@@ -150,6 +190,7 @@ class _ReportSheetState extends State<ReportSheet> {
                       subject: widget.subject,
                       category: category,
                       state: state,
+                      location: _location,
                       explanation: _explanation,
                       onChange: cubit.back,
                       onAlsoBlock: cubit.setAlsoBlock,
@@ -160,7 +201,9 @@ class _ReportSheetState extends State<ReportSheet> {
             details: category != null,
             busy: state.sending,
             onBack: cubit.back,
-            onSend: () => unawaited(cubit.send(_explanation.text)),
+            onSend: () => unawaited(
+              cubit.send(_explanation.text, location: _location.text),
+            ),
           ),
         ],
       );
@@ -266,13 +309,15 @@ class _Reasons extends StatelessWidget {
   );
 }
 
-/// The second step: the reason, what moderation should know, blocking with
-/// it, and what sending it means.
+/// The second step: the reason, where it is for something without a menu of
+/// its own, what moderation should know, blocking with it, and what sending it
+/// means.
 class _Details extends StatelessWidget {
   const _Details({
     required this.subject,
     required this.category,
     required this.state,
+    required this.location,
     required this.explanation,
     required this.onChange,
     required this.onAlsoBlock,
@@ -281,6 +326,7 @@ class _Details extends StatelessWidget {
   final ReportSubject subject;
   final ReportCategory category;
   final ReportState state;
+  final TextEditingController location;
   final TextEditingController explanation;
   final VoidCallback onChange;
   final ValueChanged<bool> onAlsoBlock;
@@ -310,6 +356,28 @@ class _Details extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (subject.asksWhere) ...[
+                GlassField(
+                  wrapCaption: true,
+                  label: context.t('moderation.report.location'),
+                  child: TextField(
+                    controller: location,
+                    enabled: !state.sending,
+                    maxLength: _locationMax,
+                    buildCounter: _counter,
+                    textInputAction: TextInputAction.next,
+                    decoration:
+                        glassInputDecoration(
+                          hint: context.t('moderation.report.locationHint'),
+                        ).copyWith(
+                          errorText: state.locationMissing
+                              ? context.t('moderation.report.locationRequired')
+                              : null,
+                        ),
+                  ),
+                ),
+                const SizedBox(height: 6),
+              ],
               GlassField(
                 wrapCaption: true,
                 label: context.t(
@@ -323,25 +391,7 @@ class _Details extends StatelessWidget {
                   minLines: 3,
                   maxLines: 6,
                   maxLength: ReportCategory.explanationMax,
-                  buildCounter:
-                      (
-                        context, {
-                        required currentLength,
-                        required isFocused,
-                        required maxLength,
-                      }) => Text(
-                        context.t(
-                          'moderation.report.counter',
-                          variables: {
-                            'count': '$currentLength',
-                            'max': '$maxLength',
-                          },
-                        ),
-                        style: TextStyle(
-                          fontSize: AppType.caption,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
+                  buildCounter: _counter,
                   decoration: glassInputDecoration().copyWith(
                     errorText: state.explanationMissing
                         ? context.t(
@@ -402,6 +452,20 @@ class _Details extends StatelessWidget {
       ],
     );
   }
+
+  /// What is typed against what fits: 118 von 2000.
+  static Widget _counter(
+    BuildContext context, {
+    required int currentLength,
+    required bool isFocused,
+    required int? maxLength,
+  }) => Text(
+    context.t(
+      'moderation.report.counter',
+      variables: {'count': '$currentLength', 'max': '$maxLength'},
+    ),
+    style: TextStyle(fontSize: AppType.caption, color: AppColors.inkSoft),
+  );
 
   /// When reporting works again, today or tomorrow.
   static String _retryText(BuildContext context, DateTime at) {
