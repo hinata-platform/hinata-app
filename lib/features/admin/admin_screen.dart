@@ -31,6 +31,7 @@ import 'sections/admin_email_section.dart';
 import 'sections/admin_general_section.dart';
 import 'sections/admin_git_section.dart';
 import 'sections/admin_mcp_section.dart';
+import 'sections/admin_moderation_section.dart';
 import 'sections/admin_security_section.dart';
 import 'users/user_management_screen.dart';
 import '../../core/widgets/hive_widgets.dart' show forwardChevron;
@@ -48,6 +49,7 @@ enum _AdminSection {
   git,
   mcp,
   security,
+  moderation,
   auditLog,
   users,
 }
@@ -77,6 +79,12 @@ const _navItems = <_SectionMeta>[
     section: _AdminSection.security,
     icon: LucideIcons.shield,
     labelKey: 'admin.security',
+    group: 'navGeneral',
+  ),
+  (
+    section: _AdminSection.moderation,
+    icon: LucideIcons.shieldUser,
+    labelKey: 'admin.moderation.title',
     group: 'navGeneral',
   ),
   (
@@ -392,6 +400,7 @@ String _sectionTitleKey(_AdminSection section) => switch (section) {
   _AdminSection.git => 'admin.gitIntegration',
   _AdminSection.mcp => 'admin.mcp',
   _AdminSection.security => 'admin.security',
+  _AdminSection.moderation => 'admin.moderation.title',
   _AdminSection.auditLog => 'admin.auditLog',
   _AdminSection.users => 'admin.users',
 };
@@ -580,6 +589,7 @@ class _MobileDetailView extends StatelessWidget {
     _AdminSection.git => AdminGitSection(settings: settings),
     _AdminSection.mcp => AdminMcpSection(settings: settings),
     _AdminSection.security => AdminSecuritySection(settings: settings),
+    _AdminSection.moderation => AdminModerationSection(settings: settings),
     // Rendered directly by the shell (self-scrolling); never reached here.
     _AdminSection.auditLog => const SizedBox.shrink(),
     _AdminSection.users => const SizedBox.shrink(),
@@ -675,6 +685,7 @@ class _WideAdminShell extends StatelessWidget {
     _AdminSection.git => AdminGitSection(settings: settings),
     _AdminSection.mcp => AdminMcpSection(settings: settings),
     _AdminSection.security => AdminSecuritySection(settings: settings),
+    _AdminSection.moderation => AdminModerationSection(settings: settings),
     // Rendered directly (self-scrolling); never reached here.
     _AdminSection.auditLog => const SizedBox.shrink(),
     _AdminSection.users => const SizedBox.shrink(),

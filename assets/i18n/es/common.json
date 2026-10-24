@@ -124,7 +124,8 @@
       "bodyRequired": "Introduce un mensaje.",
       "notEmailSourced": "Este ticket no se creó a partir de un correo, así que no hay nadie a quien responder.",
       "noSmtp": "Todavía no hay ningún servidor de correo configurado. Contacta con los administradores de la plataforma para poder enviar correos.",
-      "sendFailed": "No se pudo enviar la respuesta. Inténtalo de nuevo."
+      "sendFailed": "No se pudo enviar la respuesta. Inténtalo de nuevo.",
+      "attachmentsTooLarge": "Los adjuntos son demasiado grandes para un correo. Envía menos archivos o archivos más pequeños."
     },
     "sessionNotPersisted": {
       "snap": "Hinata todavía no tiene permiso para usar el almacén de contraseñas de este sistema, así que tendrás que iniciar sesión de nuevo tras cada reinicio. Todo lo demás funciona con normalidad. Concédelo una vez con {{command}} —o activa «password manager service» para Hinata en App Center— y vuelve a iniciar sesión.",
@@ -3490,7 +3491,18 @@
       "reasonOwnOrgRole": "Este rol te lo da otra persona de la administración.",
       "selectUser": "Seleccionar a {{name}}",
       "selectPage": "Seleccionar todos los usuarios de esta página",
-      "removeEmail": "Quitar {{email}}"
+      "removeEmail": "Quitar {{email}}",
+      "roleModerator": "Moderación",
+      "moderatorBadge": "Moderación",
+      "moderatorTitle": "Moderación",
+      "moderatorHint": "Revisa el contenido denunciado y decide sobre él: retira publicaciones, suspende cuentas y redacta los motivos que reciben todas las personas implicadas. Solo ve lo que se ha denunciado, nunca los proyectos en sí. Sin acceso al área de administración.",
+      "moderatorInfo": "¿Qué puede hacer la moderación?",
+      "makeModerator": "Asignar moderación",
+      "moderatorConfirmOne": "{{name}} revisará entonces el contenido denunciado y decidirá sobre él, incluso retirar publicaciones y suspender cuentas. {{name}} solo ve lo que se ha denunciado.",
+      "moderatorConfirmMany": "{{names}} revisarán entonces el contenido denunciado y decidirán sobre él, incluso retirar publicaciones y suspender cuentas. Solo ven lo que se ha denunciado.",
+      "toastModeratorGranted": "Rol de moderación asignado",
+      "toastModeratorRevoked": "Rol de moderación retirado",
+      "reasonOwnModeratorRole": "Este rol te lo da otra persona de la administración."
     },
     "iosStoreUrl": "URL de la App Store de iOS",
     "androidStoreUrl": "URL de Google Play para Android",
@@ -3611,6 +3623,20 @@
       "label": "Planificación de turnos",
       "desc": "Desactivado: Hinata sigue igual. Activado: los proyectos planifican eventos con turnos y los miembros se apuntan a los turnos libres.",
       "unavailable": "Necesita un replica set de MongoDB. Este servidor funciona sin él, así que la planificación de turnos sigue desactivada."
+    },
+    "moderation": {
+      "title": "Moderación",
+      "whoTitle": "Quién modera",
+      "whoHint": "Estas personas revisan las denuncias y deciden sobre ellas. El rol se asigna en la gestión de usuarios.",
+      "nobody": "Todavía no modera nadie. Asigna el rol al menos a una persona en la gestión de usuarios; si no, las denuncias quedarán sin respuesta.",
+      "onlyOne": "Lo ideal son al menos dos, para que nadie decida sobre una denuncia contra sí mismo.",
+      "more": "y {{count}} más en la gestión de usuarios",
+      "contactTitle": "Contacto para denuncias",
+      "contactHint": "Así se llega a quien gestiona esta instancia, en la app y en la página de inicio de sesión. Las tiendas de apps y la Ley de Servicios Digitales exigen un contacto.",
+      "contactMissing": "Todavía no hay contacto para denuncias. Introduce una dirección de correo para que puedan escribirte sobre el contenido.",
+      "operatorName": "Responsable, como en el aviso legal",
+      "contactEmail": "Correo para denuncias",
+      "imprintUrl": "Enlace al aviso legal"
     }
   },
   "audit": {
@@ -5738,7 +5764,8 @@
     "you": "Eres tú",
     "deactivated": "Desactivado",
     "role": {
-      "member": "Miembro"
+      "member": "Miembro",
+      "moderator": "Moderación"
     },
     "localTime": "Hora local",
     "localTimeValue": "{{time}} · {{zone}}",

@@ -14,6 +14,18 @@ enum AdminRole {
       value == 'ADMIN' ? AdminRole.admin : AdminRole.user;
 }
 
+/// Whom the user list shows: a platform role, or the people who moderate
+/// (HIN-26), a role held beside it.
+enum UserRoleFilter {
+  admin('ADMIN'),
+  user('USER'),
+  moderator('MODERATOR');
+
+  const UserRoleFilter(this.wire);
+
+  final String wire;
+}
+
 enum UserOrigin {
   local,
   oidc,
@@ -75,6 +87,7 @@ class AdminUser {
     this.pronouns,
     required this.role,
     this.orgAdmin = false,
+    this.moderator = false,
     required this.origin,
     required this.status,
     required this.twoFA,
@@ -100,6 +113,10 @@ class AdminUser {
   /// absences, holidays and billing for the organisation. Independent of
   /// [role] — neither implies the other.
   final bool orgAdmin;
+
+  /// Reviews reported content and decides on it (`MODERATOR`, HIN-26). Like
+  /// [orgAdmin], independent of [role].
+  final bool moderator;
   final UserOrigin origin;
   final UserStatus status;
   final bool twoFA;
@@ -133,6 +150,7 @@ class AdminUser {
     pronouns: json['pronouns'] as String?,
     role: AdminRole.fromWire(json['role'] as String?),
     orgAdmin: json['orgAdmin'] == true,
+    moderator: json['moderator'] == true,
     origin: UserOrigin.fromWire(json['origin'] as String?),
     status: UserStatus.fromWire(json['status'] as String?),
     twoFA: json['twoFA'] == true,

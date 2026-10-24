@@ -219,7 +219,21 @@ class OrgAdminBadge extends StatelessWidget {
   );
 }
 
-/// The platform role, followed by the organisation role when the user holds it.
+/// Marks a holder of the moderation role (HIN-26), like [OrgAdminBadge].
+class ModeratorBadge extends StatelessWidget {
+  const ModeratorBadge({super.key});
+
+  @override
+  Widget build(BuildContext context) => _Badge(
+    icon: LucideIcons.shieldUser,
+    label: context.t('admin.um.moderatorBadge'),
+    bg: _hue(160, s: .38, l: .91),
+    fg: _hue(160, s: .5, l: .3),
+  );
+}
+
+/// The platform role, followed by the organisation and the moderation role
+/// when the user holds them.
 class RoleBadges extends StatelessWidget {
   const RoleBadges(this.user, {super.key});
   final AdminUser user;
@@ -229,7 +243,11 @@ class RoleBadges extends StatelessWidget {
     spacing: 6,
     runSpacing: 6,
     crossAxisAlignment: WrapCrossAlignment.center,
-    children: [RoleBadge(user.role), if (user.orgAdmin) const OrgAdminBadge()],
+    children: [
+      RoleBadge(user.role),
+      if (user.orgAdmin) const OrgAdminBadge(),
+      if (user.moderator) const ModeratorBadge(),
+    ],
   );
 }
 
@@ -442,6 +460,7 @@ class UserActions {
     required this.openDeactivate,
     required this.setRole,
     required this.setOrgAdmin,
+    required this.setModerator,
     required this.openDemote,
     required this.openResend,
     required this.openReset,
@@ -463,6 +482,9 @@ class UserActions {
   /// Grants or takes back the organisation role (HIN-129). Completes with
   /// whether the server accepted it, so a switch can settle on the truth.
   final Future<bool> Function(List<String> ids, bool orgAdmin) setOrgAdmin;
+
+  /// Grants or takes back the moderation role (HIN-26), with the same answer.
+  final Future<bool> Function(List<String> ids, bool moderator) setModerator;
   final void Function(List<String> ids) openDemote;
   final void Function(List<String> ids) openResend;
   final void Function(List<String> ids) openReset;

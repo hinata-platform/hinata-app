@@ -147,6 +147,7 @@ class _Header extends StatelessWidget {
         switch (role) {
           'ADMIN' => context.t('admin.um.roleAdmin'),
           'ORG_ADMIN' => context.t('admin.um.orgAdminTitle'),
+          'MODERATOR' => context.t('people.role.moderator'),
           _ => context.t('people.role.member'),
         },
       if (!p.active) context.t('people.deactivated'),

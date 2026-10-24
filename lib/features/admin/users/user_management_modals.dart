@@ -371,6 +371,40 @@ Future<bool> showGrantOrgAdminModal(
   );
 }
 
+/// Whether the moderation role may change for [users]: granting asks first
+/// ([showGrantModeratorModal]); taking it back goes ahead at once, and the
+/// server keeps the last person who moderates.
+Future<bool> confirmModeratorChange(
+  BuildContext context,
+  List<AdminUser> users, {
+  required bool grant,
+}) async => !grant || await showGrantModeratorModal(context, users);
+
+/// Asks before the moderation role is granted, and says what it opens: the
+/// reported content, and decisions over other people's posts and accounts.
+Future<bool> showGrantModeratorModal(
+  BuildContext context,
+  List<AdminUser> users,
+) {
+  return _confirm(
+    context,
+    icon: LucideIcons.shieldUser,
+    title: context.t('admin.um.makeModerator'),
+    subtitle: users.length == 1
+        ? context.t(
+            'admin.um.moderatorConfirmOne',
+            variables: {'name': users.single.name},
+          )
+        : context.t(
+            'admin.um.moderatorConfirmMany',
+            variables: {'names': users.map((u) => u.name).join(', ')},
+          ),
+    confirmLabel: context.t('admin.um.makeModerator'),
+    confirmIcon: LucideIcons.shieldUser,
+    body: _previewList(context, users),
+  );
+}
+
 Future<bool> showResetModal(BuildContext context, List<AdminUser> users) {
   return _confirm(
     context,

@@ -33,6 +33,7 @@ void main() {
     openDeactivate: (_) {},
     setRole: (_, _) {},
     setOrgAdmin: (_, _) async => true,
+    setModerator: (_, _) async => true,
     openDemote: (_) {},
     openResend: (_) {},
     openReset: (_) {},
