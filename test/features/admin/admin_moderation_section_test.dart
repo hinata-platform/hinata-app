@@ -7,11 +7,13 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/models/moderation_models.dart';
 import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
-import 'package:hinata/core/storage/app_storage.dart';
 import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/features/admin/admin_form_helpers.dart';
 import 'package:hinata/features/admin/admin_settings_cubit.dart';
 import 'package:hinata/features/admin/sections/admin_moderation_section.dart';
+
+import '../../support/fixed_app_config.dart';
+import '../../support/recording_fake.dart';
 
 /// Admin → Moderation (HIN-26): who comes in without approval, who moderates,
 /// a word when one person alone would decide, the contact for reports with a
@@ -45,7 +47,12 @@ void main() {
             child: MultiBlocProvider(
               providers: [
                 BlocProvider<AppConfigBloc>.value(
-                  value: _StubAppConfig(contactMissing: contactMissing),
+                  value: FixedAppConfig(
+                    moderation: ModerationMeta(
+                      version: 1,
+                      contactMissing: contactMissing,
+                    ),
+                  ),
                 ),
                 BlocProvider(
                   create: (_) => AdminSettingsCubit(
@@ -410,7 +417,9 @@ void main() {
   });
 }
 
-class _FakeAdminRepository implements AdminRepository {
+/// Who moderates, the way in, the rules and the text check, with what the
+/// section writes back.
+class _FakeAdminRepository extends FakeAdminRepository {
   _FakeAdminRepository(this.moderators, this.total);
 
   final List<Map<String, dynamic>> moderators;
@@ -465,40 +474,9 @@ class _FakeAdminRepository implements AdminRepository {
       'perPage': perPage,
     });
   }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} is not faked');
-}
-
-/// Answers with one fixed meta and dispatches nothing.
-class _StubAppConfig extends AppConfigBloc {
-  _StubAppConfig({required bool contactMissing})
-    : super(repository: _UnusedMeta(), storage: _UnusedStorage()) {
-    emit(
-      AppConfigState(
-        status: AppConfigStatus.ready,
-        meta: ServerMeta(
-          serverVersion: '1.0.0',
-          minAppVersion: '1.0.0',
-          setupCompleted: true,
-          moderation: ModerationMeta(
-            version: 1,
-            contactMissing: contactMissing,
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _UnusedMeta implements MetaRepository {
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} is not faked');
-}
-
-class _UnusedStorage implements AppStorage {
   @override
   dynamic noSuchMethod(Invocation invocation) =>
       throw UnimplementedError('${invocation.memberName} is not faked');

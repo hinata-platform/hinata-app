@@ -11,6 +11,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/repositories/absence_repository.dart';
 import 'package:hinata/core/repositories/account_repository.dart';
+import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/core/repositories/availability_repository.dart';
 import 'package:hinata/core/repositories/comment_repository.dart';
@@ -74,6 +75,8 @@ mixin RecordingFake {
 class FakeAbsenceRepository with RecordingFake implements AbsenceRepository {}
 
 class FakeAccountRepository with RecordingFake implements AccountRepository {}
+
+class FakeAdminRepository with RecordingFake implements AdminRepository {}
 
 class FakeApiClient with RecordingFake implements ApiClient {}
 
