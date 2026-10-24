@@ -34,6 +34,7 @@ import '../../features/knowledge/knowledge_location.dart';
 import '../../features/knowledge/knowledge_screen.dart';
 import '../../features/moderation/app_terms_screen.dart';
 import '../../features/moderation/house_rules_gate_screen.dart';
+import '../../features/moderation/notice/notice_screen.dart';
 import '../../features/people/person_profile_screen.dart'
     show peopleRoute, personProfilePage;
 import '../../features/notifications/notifications_screen.dart';
@@ -756,6 +757,16 @@ GoRouter buildRouter({
             path: '/notifications',
             pageBuilder: (_, state) =>
                 _transition(state, const NotificationsScreen()),
+          ),
+          // The moderation's notice to the person concerned (HIN-173): the
+          // bell and the mail lead here. Outside /moderation on purpose, which
+          // is the moderators' own page with its own guard.
+          GoRoute(
+            path: '/notices/:caseId',
+            pageBuilder: (_, state) => _transition(
+              state,
+              NoticeScreen(caseId: state.pathParameters['caseId']!),
+            ),
           ),
           GoRoute(
             path: '/weekly-summary',

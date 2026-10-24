@@ -40,6 +40,20 @@ void main() {
     expect(notificationVisual('time_budget_alert').$1, LucideIcons.gauge);
   });
 
+  test('the notices of the moderation each have a face of their own', () {
+    final faces = {
+      for (final type in const [
+        'MODERATION_DECISION',
+        'MODERATION_NOTICE',
+        'MODERATION_NOTICE_UPDATED',
+      ])
+        notificationVisual(type).$1,
+    };
+
+    expect(faces, hasLength(3));
+    expect(faces, isNot(contains(LucideIcons.bell)));
+  });
+
   test('every shift type is one family, today\'s and later ones', () {
     for (final type in const [
       'SHIFT_ASSIGNED',
