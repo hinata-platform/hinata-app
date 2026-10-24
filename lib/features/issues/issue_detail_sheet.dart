@@ -46,6 +46,7 @@ import '../../core/models/work_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/hue_colors.dart';
+import '../../core/widgets/content_refused_notice.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/hive_widgets.dart';
 import '../../core/widgets/user_pronouns.dart';
@@ -113,6 +114,7 @@ import '../../core/theme/app_type.dart';
 import '../../core/widgets/hover_builder.dart';
 import '../../core/widgets/budget/budget.dart';
 import '../time/budget/project_usage.dart';
+import '../moderation/house_rules_sheet.dart' show openHouseRules;
 
 part 'issue_detail_sheet.view.dart';
 part 'issue_detail_sheet.dialogs.dart';

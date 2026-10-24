@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/models/moderation_models.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../sprint/modals/glass_modal.dart';
@@ -35,6 +38,24 @@ String houseRulesVersionLine(BuildContext context, HouseRules rules) {
             'date': moderationDay(context, since),
           },
         );
+}
+
+/// Reads the house rules and shows them, for a place that has none loaded: a
+/// refused text pointing at the rules it broke (HIN-176).
+Future<void> openHouseRules(BuildContext context) async {
+  final account = context.read<AccountRepository>();
+  try {
+    final rules = await account.houseRules();
+    if (context.mounted) await showHouseRulesSheet(context, rules);
+  } on ApiFailure catch (failure) {
+    if (context.mounted) {
+      showGlassErrorToast(context, context.t(failure.message));
+    }
+  } catch (_) {
+    if (context.mounted) {
+      showGlassErrorToast(context, context.t('errors.unexpected'));
+    }
+  }
 }
 
 /// The house rules in full, "How we moderate" included, as the server wrote
