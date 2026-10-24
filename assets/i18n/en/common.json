@@ -362,6 +362,7 @@
       "ssoAccountNotLinkedSsoOnly": "There is already an account with this email address that is not connected to this sign-in. Contact your administrator.",
       "ssoEmailNotVerified": "Your sign-in service reports this email address as unconfirmed. An existing account is never connected to an unconfirmed address. Contact your administrator.",
       "ssoNoEmail": "Your sign-in service did not send an email address, and an account can't be created without one. Contact your administrator.",
+      "accountSuspended": "Your account is suspended. The mail from moderation says why, until when, and how you can appeal.",
       "accountDeactivated": "Your account is deactivated. Contact your administrator.",
       "pendingApproval": "Your account is waiting for approval by an administrator.",
       "emailNotVerified": "Confirm your email address first. You will find the link in your inbox."
@@ -3502,7 +3503,15 @@
       "moderatorConfirmMany": "{{names}} will then review reported content and decide on it, up to removing posts and suspending accounts. They see only what was reported.",
       "toastModeratorGranted": "Moderation role granted",
       "toastModeratorRevoked": "Moderation role revoked",
-      "reasonOwnModeratorRole": "Another person from the administration gives you this role."
+      "reasonOwnModeratorRole": "Another person from the administration gives you this role.",
+      "suspended": "Suspended",
+      "suspendedUntil": "Suspended until {{date}}",
+      "liftSuspension": "Lift suspension",
+      "liftSuspensionSub": "Moderation suspended this account. Lifting it lets the person sign in again, and the moderators are told.",
+      "liftSuspensionRowSub": "Suspended by moderation. Why stays with moderation.",
+      "liftSuspensionNote": "Note for the record (optional)",
+      "liftSuspensionAction": "Lift suspension",
+      "toastSuspensionLifted": "Suspension lifted"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",

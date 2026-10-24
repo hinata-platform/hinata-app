@@ -14,6 +14,7 @@ const ssoRefusalReasons = {
   'ssoAccountNotLinked',
   'ssoEmailNotVerified',
   'ssoNoEmail',
+  'accountSuspended',
   'accountDeactivated',
   'pendingApproval',
   'emailNotVerified',
