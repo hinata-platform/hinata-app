@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/repositories/admin_repository.dart';
@@ -18,6 +19,8 @@ import '../../core/widgets/hive_loader.dart';
 import '../admin/users/user_actions.dart';
 import '../admin/users/user_management_cubit.dart';
 import '../admin/users/user_management_widgets.dart' show UserAdminSections;
+import '../blocks/block_actions.dart';
+import '../blocks/hidden_content_cubit.dart';
 import '../shell/page_chrome.dart';
 import 'person_admin_cubit.dart';
 import 'person_profile_cubit.dart';
@@ -230,10 +233,18 @@ class _PersonProfileBody extends StatelessWidget {
       );
     }
     final email = profile.email;
+    final canBlock =
+        !profile.self &&
+        (context.read<AppConfigBloc?>()?.state.meta?.supportsModeration ??
+            false);
+    final blocked = context.select<HiddenContentCubit?, bool>(
+      (hidden) => hidden?.state.blocks(profile.id) ?? false,
+    );
     return PersonProfileView(
       profile: profile,
       clockReady: state.clockReady,
       padding: padding,
+      blocked: blocked,
       actions: PersonProfileActions(
         openIssues: () => context.go(
           Uri(
@@ -248,6 +259,21 @@ class _PersonProfileBody extends StatelessWidget {
         writeEmail: email == null
             ? null
             : () => unawaited(launchUrl(Uri(scheme: 'mailto', path: email))),
+        toggleBlock: canBlock
+            ? () => unawaited(
+                blocked
+                    ? liftBlock(
+                        context,
+                        personId: profile.id,
+                        name: profile.displayName,
+                      )
+                    : confirmBlock(
+                        context,
+                        personId: profile.id,
+                        name: profile.displayName,
+                      ),
+              )
+            : null,
         close: panel ? () => _leave(context) : null,
       ),
       admin: profile.canAdmin ? _PersonAdmin(personId: profile.id) : null,

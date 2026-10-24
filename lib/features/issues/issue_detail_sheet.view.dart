@@ -3616,6 +3616,18 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       threadOf: _threadOf,
       onToggleReplies: _toggleReplies,
       onLoadMoreReplies: _loadMoreReplies,
+      // The sheet's own context: the comment folds the moment the block
+      // lands, and the toast that confirms it still needs somewhere to go.
+      onBlockAuthor:
+          me != null &&
+              (context.read<AppConfigBloc>().state.meta?.supportsModeration ??
+                  false)
+          ? (c) => confirmBlock(
+              context,
+              personId: c.authorId,
+              name: _names[c.authorId] ?? c.authorId,
+            )
+          : null,
     );
     // Same flat tile as the Comments tab, so comments look identical in every
     // tab (voice comments stay playable in the merged "All" feed too). The

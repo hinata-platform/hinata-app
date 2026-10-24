@@ -37,6 +37,7 @@ import 'core/blocs/time_policy_cubit.dart';
 import 'core/blocs/time_privacy_cubit.dart';
 import 'core/blocs/time_preferences_cubit.dart';
 import 'core/blocs/tint_cubit.dart';
+import 'features/blocks/hidden_content_cubit.dart';
 import 'features/knowledge/data/knowledge_repository.dart';
 import 'features/shifts/bloc/my_shifts_snapshot_cubit.dart';
 import 'features/time/time_shortcuts.dart';
@@ -170,6 +171,15 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final TimeUsageCubit _timeUsage = TimeUsageCubit(
     widget.repositories.timeUsage,
     enabled: () => _appConfig.state.meta?.advancedTimeTracking ?? false,
+  );
+
+  /// What the reader folds away: the people they block (HIN-168). App-wide
+  /// because every comment and every profile asks; see [HiddenContentCubit].
+  late final HiddenContentCubit _hiddenContent = HiddenContentCubit(
+    widget.repositories.account,
+    // Unknown until the server's meta arrives; asking then costs one request
+    // that an older server answers with an error the cubit swallows.
+    enabled: () => _appConfig.state.meta?.supportsModeration ?? true,
   );
 
   /// The identity [_timer] was built for, so the rebuild happens once.
@@ -404,6 +414,8 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     // The knowledge base is held for the app's lifetime; what it loaded
     // belongs to the account that just left.
     _knowledge.reset();
+    // So is who that account blocks, and what it opened anyway.
+    _hiddenContent.reset();
     final previous = _timer;
     final previousPrefs = _surfacePrefs;
     final previousShifts = _shiftSnapshot;
@@ -447,6 +459,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
       // a stale copy of somebody's break length is worth less than the round
       // trip costs.
       unawaited(_loadAccountPreferences());
+      unawaited(_hiddenContent.load());
     } else {
       // Another server may freeze another month. Held rules from the session
       // that ended would grey out a day that is perfectly editable on the next.
@@ -836,6 +849,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
     _locale.close();
     _orgLogo.close();
     unawaited(_timeUsage.close());
+    unawaited(_hiddenContent.close());
     super.dispose();
   }
 
@@ -904,6 +918,7 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
           BlocProvider.value(value: _myAbsences),
           BlocProvider.value(value: _timePrivacy),
           BlocProvider.value(value: _timeUsage),
+          BlocProvider.value(value: _hiddenContent),
           BlocProvider(create: (_) => ThemeCubit()),
         ],
         // Light/dark and the tint reach the widgets that read AppColors
