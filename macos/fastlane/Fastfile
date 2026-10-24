@@ -64,6 +64,28 @@ def locked_app_error?(error)
   )
 end
 
+# App Review signs in with two accounts of the review server: a member in the
+# sign-in fields and a moderator at the end of the notes. Both come from
+# repository secrets, never from fastlane/metadata, because the repository is
+# public. Without the sign-in fields deliver tells App Review that no account
+# is needed, so a release without them stops here.
+REVIEW_ACCOUNT_KEYS = %w[
+  APP_REVIEW_DEMO_USER APP_REVIEW_DEMO_PASSWORD
+  APP_REVIEW_MODERATOR_USER APP_REVIEW_MODERATOR_PASSWORD
+].freeze
+
+def review_information
+  missing = REVIEW_ACCOUNT_KEYS.select { |key| ENV[key].to_s.strip.empty? }
+  UI.user_error!("App Review needs the repository secrets #{missing.join(', ')}") unless missing.empty?
+  notes = File.read(File.join(__dir__, "metadata", "review_information", "notes.txt")).rstrip
+  {
+    demo_user: ENV["APP_REVIEW_DEMO_USER"],
+    demo_password: ENV["APP_REVIEW_DEMO_PASSWORD"],
+    notes: "#{notes}\n\nMODERATOR ACCOUNT\nUsername: #{ENV['APP_REVIEW_MODERATOR_USER']}\n" \
+           "Password: #{ENV['APP_REVIEW_MODERATOR_PASSWORD']}"
+  }
+end
+
 # Sets the global App Store Connect API key; nested actions read it from the
 # lane context (passing it on triggers an api_key/api_key_path conflict in cert).
 def auth!
@@ -208,6 +230,8 @@ platform :mac do
   # version and rewrites App Info). Used by "Publish (button)"; plain TestFlight
   # drops go through `beta`, which has no such requirement.
   lane :release do
+    # Before the build, so a missing secret costs seconds instead of a build.
+    review = review_information
     # sync_screenshots is still behind fastlane's beta feature flag.
     ENV["FASTLANE_ENABLE_BETA_DELIVER_SYNC_SCREENSHOTS"] = "1"
     build
@@ -223,6 +247,10 @@ platform :mac do
       precheck_include_in_app_purchases: false,
       # Upload the localized macOS listing (fastlane/metadata).
       skip_metadata: false,
+      app_review_information: review,
+      # Only the answers age_rating.json names; the rest of the questionnaire
+      # stays as App Store Connect holds it.
+      app_rating_config_path: File.join(__dir__, "age_rating.json"),
       # The screenshots in fastlane/screenshots travel with every release, so a
       # version can never go out with an older set than the repo holds. Synced,
       # not overwritten: see the `screenshots` lane below for why

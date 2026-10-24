@@ -303,20 +303,25 @@ def main(argv=None):
                       f"{i.get('fileName')}  |  {i.get('description', '')}")
         return outcome("dump")
 
-    if all(already_applied(listings[l], shots, text.get(l.lower()), l.lower())
-           for l in langs):
-        print("listings already carry these screenshots — nothing to do")
+    listing_due = not all(already_applied(listings[l], shots, text.get(l.lower()), l.lower())
+                          for l in langs)
+    # The notes for certification can change on their own, without a new image.
+    notes_due = bool(notes) and notes not in (sub.get("notesForCertification") or "")
+    if not listing_due and not notes_due:
+        print("listings already carry these screenshots and notes — nothing to do")
         return outcome("already-applied")
 
-    for lang in langs:
-        retired = swap_images(listings[lang], shots, lang.lower())
-        fields = swap_text(listings[lang], text.get(lang.lower()))
-        print(f"  {lang}: {retired} screenshot(s) removed, {len(shots)} added"
-              + (f", text rewritten: {', '.join(fields)}" if fields else ""))
+    if listing_due:
+        for lang in langs:
+            retired = swap_images(listings[lang], shots, lang.lower())
+            fields = swap_text(listings[lang], text.get(lang.lower()))
+            print(f"  {lang}: {retired} screenshot(s) removed, {len(shots)} added"
+                  + (f", text rewritten: {', '.join(fields)}" if fields else ""))
 
-    if notes and notes not in (sub.get("notesForCertification") or ""):
+    if notes_due:
         existing = (sub.get("notesForCertification") or "").strip()
         sub["notesForCertification"] = f"{existing}\n\n{notes}".strip()
+        print("  notes for certification added")
 
     if args.dry_run:
         print("dry run — nothing sent")
@@ -329,12 +334,13 @@ def main(argv=None):
         return outcome("busy") if args.tolerate_busy else 1
     print("submission updated")
 
-    blob = zip_images(shots)
-    r = requests.put(sub["fileUploadUrl"].replace("+", "%2B"), data=blob,
-                     headers={"x-ms-blob-type": "BlockBlob"}, timeout=600)
-    if r.status_code not in (200, 201):
-        die(f"image upload failed ({r.status_code}): {r.text[:400]}")
-    print(f"uploaded {len(shots)} images ({len(blob) / 1e6:.1f} MB zip)")
+    if listing_due:
+        blob = zip_images(shots)
+        r = requests.put(sub["fileUploadUrl"].replace("+", "%2B"), data=blob,
+                         headers={"x-ms-blob-type": "BlockBlob"}, timeout=600)
+        if r.status_code not in (200, 201):
+            die(f"image upload failed ({r.status_code}): {r.text[:400]}")
+        print(f"uploaded {len(shots)} images ({len(blob) / 1e6:.1f} MB zip)")
 
     if not args.commit:
         print("not committed (--commit to submit for certification)")
