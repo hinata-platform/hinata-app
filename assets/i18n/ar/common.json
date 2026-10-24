@@ -3676,7 +3676,11 @@
       "retentionHint": "تُحذف الحالات المنتهية وبلاغاتها والحجر بعد هذه المدة، إلا إذا أُبلغت جهات إنفاذ القانون.",
       "retentionLabel": "الحذف بعد",
       "retentionMonths": "أشهر: {{count}}",
-      "retentionMonths_plural": "أشهر: {{count}}"
+      "retentionMonths_plural": "أشهر: {{count}}",
+      "figures": "تنزيل أرقام عام {{year}}",
+      "figuresHint": "وفق نموذج المفوضية الأوروبية، ملف CSV لكل جزء داخل ملف ZIP. راجع الأرقام وأضف ما لا يعرفه Hinata، مثل أوامر السلطات، قبل نشرها.",
+      "figuresDone": "حُفظت الأرقام",
+      "figuresFailed": "تعذّر حفظ الأرقام"
     },
     "entry": {
       "title": "من يدخل",

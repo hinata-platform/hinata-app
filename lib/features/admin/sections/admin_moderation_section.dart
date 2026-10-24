@@ -18,6 +18,7 @@ import '../admin_settings_cubit.dart';
 import '../admin_form_helpers.dart';
 import 'admin_moderation_cubit.dart';
 import 'admin_moderation_entry.dart';
+import 'admin_moderation_figures.dart';
 import 'admin_moderation_filter.dart';
 import 'admin_moderation_retention.dart';
 import 'admin_moderation_rules.dart';
@@ -48,6 +49,7 @@ class AdminModerationSection extends StatelessWidget {
         BlocProvider(create: (_) => AccountEntryCubit(admin)..load()),
         BlocProvider(create: (_) => HouseRulesVersionsCubit(admin)..load()),
         BlocProvider(create: (_) => TextTestCubit(admin)),
+        BlocProvider(create: (_) => FiguresCubit(admin)..load()),
       ],
       // A save makes a new version of the rules when they read differently,
       // and may close a way in: both are read again once it is done. Not by
