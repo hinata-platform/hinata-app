@@ -1,11 +1,9 @@
 import 'dart:async';
 
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../../../core/api/api_client.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/moderation_models.dart';
 import '../../../core/repositories/admin_repository.dart';
@@ -164,26 +162,3 @@ bool registrationIsOpen(Map<String, dynamic> app) =>
     app['localAuthEnabled'] != false &&
     app['registrationEnabled'] != false &&
     app['requireAdminApproval'] != true;
-
-/// The settings answer of a save that would open a way: which ones.
-class OpenAccessRefusal extends Equatable {
-  const OpenAccessRefusal(this.ways);
-
-  /// As the server names them: `registration`, `oidc` and so on.
-  final List<String> ways;
-
-  /// The refusal in [failure], if it is one.
-  static OpenAccessRefusal? of(ApiFailure failure) =>
-      failure.statusCode == 409 &&
-          failure.details['code'] == 'moderation.openAccess'
-      ? OpenAccessRefusal(
-          (failure.details['ways'] ?? '')
-              .split(',')
-              .where((way) => way.isNotEmpty)
-              .toList(),
-        )
-      : null;
-
-  @override
-  List<Object?> get props => [ways];
-}

@@ -404,13 +404,6 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
                   );
                 },
               ),
-              if (_refusal case final refusal?) ...[
-                const SizedBox(height: 14),
-                ContentRefusedNotice(
-                  refusal: refusal,
-                  onReadRules: () => unawaited(openHouseRules(context)),
-                ),
-              ],
               if (_error != null) ...[
                 const SizedBox(height: 14),
                 Text(
@@ -522,6 +515,15 @@ class IssueCreateBodyState extends State<IssueCreateBody> {
           minHeight: 140,
           trailing: hinataEditorTools(context, _descCtrl),
         ),
+        // Where the person writes, not under the second column, which the
+        // pinned save bar covers on a phone.
+        if (_refusal case final refusal?) ...[
+          const SizedBox(height: 12),
+          ContentRefusedNotice(
+            refusal: refusal,
+            onReadRules: () => unawaited(openHouseRules(context)),
+          ),
+        ],
       ],
     );
   }

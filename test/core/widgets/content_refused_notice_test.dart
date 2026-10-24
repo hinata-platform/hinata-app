@@ -11,7 +11,7 @@ void main() {
   ApiFailure refused(Map<String, String> details) => ApiFailure(
     'Not allowed here',
     statusCode: 422,
-    details: {'code': 'moderation.refused', ...details},
+    details: {'code': 'error.moderation.refused', ...details},
   );
 
   test('a refusal is read by its code, with the words it names', () {
