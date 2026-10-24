@@ -27,17 +27,23 @@ void main() {
     acceptedAt: DateTime.utc(2026, 10, 2),
   );
 
+  late FakeModerationRepository reports;
+
+  Iterable<Invocation> sent() =>
+      reports.calls.where((c) => c.memberName == #report);
+
   Future<FakeAccountRepository> pump(
     WidgetTester tester, {
     ModerationMeta meta = moderation,
     double textScale = 1.0,
   }) async {
     final account = FakeAccountRepository()
-      ..answer<HouseRules>(#houseRules, accepted)
-      ..answer<void>(#reportElsewhere, null);
+      ..answer<HouseRules>(#houseRules, accepted);
+    reports = FakeModerationRepository()..answer<void>(#report, null);
     await tester.pumpWidget(
       moderationApp(
         account: account,
+        moderationRepository: reports,
         moderation: meta,
         textScale: textScale,
         child: const Scaffold(
@@ -89,7 +95,7 @@ void main() {
 
   testWidgets('reporting something else asks why, then where, and sends it '
       'as a report of kind other', (tester) async {
-    final account = await pump(tester);
+    await pump(tester);
 
     await tester.tap(find.text('moderation.help.reportElsewhere'));
     await tester.pumpAndSettle();
@@ -102,22 +108,22 @@ void main() {
     await tester.tap(find.text('moderation.report.send'));
     await tester.pumpAndSettle();
     expect(find.text('moderation.report.locationRequired'), findsOneWidget);
-    expect(
-      account.calls.where((c) => c.memberName == #reportElsewhere),
-      isEmpty,
-    );
+    expect(sent(), isEmpty);
 
     await tester.enterText(
-      find.byType(TextFormField).first,
+      find.byType(TextField).first,
       '  Board "Messe 2026"  ',
     );
     await tester.ensureVisible(find.text('moderation.report.send'));
     await tester.tap(find.text('moderation.report.send'));
     await tester.pumpAndSettle();
 
-    final call = account.callTo(#reportElsewhere);
+    final call = sent().single;
+    expect(call.positionalArguments, [
+      TargetRef.elsewhere,
+      ReportCategory.spam,
+    ]);
     expect(call.namedArguments[#location], 'Board "Messe 2026"');
-    expect(call.namedArguments[#category], ReportCategory.spam);
     expect(call.namedArguments[#explanation], isNull);
     expect(find.text('moderation.report.thanks'), findsOneWidget);
   });
@@ -125,23 +131,20 @@ void main() {
   testWidgets('a reason that needs explaining is not sent without one', (
     tester,
   ) async {
-    final account = await pump(tester);
+    await pump(tester);
 
     await tester.tap(find.text('moderation.help.reportElsewhere'));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('moderation.category.other'));
     await tester.tap(find.text('moderation.category.other'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextFormField).first, 'Team Aufbau');
-    await tester.enterText(find.byType(TextFormField).last, 'kurz');
+    await tester.enterText(find.byType(TextField).first, 'Team Aufbau');
+    await tester.enterText(find.byType(TextField).last, 'kurz');
     await tester.ensureVisible(find.text('moderation.report.send'));
     await tester.tap(find.text('moderation.report.send'));
     await tester.pumpAndSettle();
 
     expect(find.text('moderation.report.explanationTooShort'), findsOneWidget);
-    expect(
-      account.calls.where((c) => c.memberName == #reportElsewhere),
-      isEmpty,
-    );
+    expect(sent(), isEmpty);
   });
 }
