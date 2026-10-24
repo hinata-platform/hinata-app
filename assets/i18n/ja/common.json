@@ -57,7 +57,8 @@
       "next": "次のページ",
       "page": "{{page}} ページ"
     },
-    "selectedOption": "選択中"
+    "selectedOption": "選択中",
+    "charCount": "{{count}} / {{max}}"
   },
   "delete": {
     "cta": "削除",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "{{name}} さんもブロックする",
       "alsoBlockHint": "{{name}} さんからの通知は届かなくなります。",
       "byIn": "{{name}} さん・{{where}}",
-      "counter": "{{count}} / {{max}}",
       "folded": "あなたが報告したため、折りたたまれています",
       "personDetail": "モデレーションに届きます。誰が報告したかは {{name}} さんに伝わりません",
       "titleArticle": "ページを報告",

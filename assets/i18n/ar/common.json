@@ -57,7 +57,8 @@
       "next": "الصفحة التالية",
       "page": "الصفحة {{page}}"
     },
-    "selectedOption": "محدد"
+    "selectedOption": "محدد",
+    "charCount": "{{count}} من {{max}}"
   },
   "delete": {
     "cta": "حذف",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "حظر {{name}} أيضًا",
       "alsoBlockHint": "لن تصلك إشعارات من {{name}} بعد الآن.",
       "byIn": "من {{name}} في {{where}}",
-      "counter": "{{count}} من {{max}}",
       "folded": "أبلغت عنه، فطُوي لك",
       "personDetail": "يصل إلى الإشراف، ولا يعرف {{name}} من أبلغ",
       "titleArticle": "الإبلاغ عن الصفحة",

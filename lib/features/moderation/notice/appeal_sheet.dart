@@ -5,8 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
-import '../../../core/theme/app_colors.dart';
-import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/char_counter.dart';
 import '../../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../../sprint/modals/glass_modal.dart';
 import 'notice_cubit.dart';
@@ -80,25 +79,7 @@ class _AppealSheetState extends State<AppealSheet> {
                     minLines: 4,
                     maxLines: 10,
                     maxLength: appealMax,
-                    buildCounter:
-                        (
-                          context, {
-                          required currentLength,
-                          required isFocused,
-                          required maxLength,
-                        }) => Text(
-                          context.t(
-                            'moderation.report.counter',
-                            variables: {
-                              'count': '$currentLength',
-                              'max': '$maxLength',
-                            },
-                          ),
-                          style: TextStyle(
-                            fontSize: AppType.caption,
-                            color: AppColors.inkSoft,
-                          ),
-                        ),
+                    buildCounter: charCounter,
                     decoration: glassInputDecoration(
                       hint: context.t('moderation.appeal.hint'),
                     ),

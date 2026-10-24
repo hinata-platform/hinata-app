@@ -57,7 +57,8 @@
       "next": "अगला पृष्ठ",
       "page": "पृष्ठ {{page}}"
     },
-    "selectedOption": "चयनित"
+    "selectedOption": "चयनित",
+    "charCount": "{{max}} में से {{count}}"
   },
   "delete": {
     "cta": "हटाएँ",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "{{name}} को भी ब्लॉक करें",
       "alsoBlockHint": "आपको {{name}} से अब सूचनाएँ नहीं मिलेंगी।",
       "byIn": "{{name}} द्वारा, {{where}} में",
-      "counter": "{{max}} में से {{count}}",
       "folded": "आपने रिपोर्ट किया, आपके लिए समेटा गया",
       "personDetail": "मॉडरेशन तक जाता है, और {{name}} को पता नहीं चलता कि किसने",
       "titleArticle": "पेज की रिपोर्ट करें",

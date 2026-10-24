@@ -57,7 +57,8 @@
       "next": "Nächste Seite",
       "page": "Seite {{page}}"
     },
-    "selectedOption": "Ausgewählt"
+    "selectedOption": "Ausgewählt",
+    "charCount": "{{count}} von {{max}}"
   },
   "delete": {
     "cta": "Löschen",
@@ -6039,7 +6040,6 @@
       "alsoBlock": "{{name}} auch blockieren",
       "alsoBlockHint": "Du bekommst keine Mitteilungen mehr von {{name}}.",
       "byIn": "Von {{name}} in {{where}}",
-      "counter": "{{count}} von {{max}}",
       "folded": "Von dir gemeldet, für dich eingeklappt",
       "personDetail": "Geht an die Moderation, {{name}} erfährt nicht, von wem",
       "titleArticle": "Seite melden",
