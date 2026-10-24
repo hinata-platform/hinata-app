@@ -179,7 +179,7 @@ class AdminRepository {
   /// paginate server-side; a blank [query] / null filters return everything.
   Future<AdminUserPage> adminUsersPage({
     String query = '',
-    AdminRole? role,
+    UserRoleFilter? role,
     UserStatus? status,
     UserOrigin? origin,
     UserSortKey sort = UserSortKey.lastActive,
@@ -251,6 +251,14 @@ class AdminRepository {
     '/api/v1/admin/users/org-role',
     body: {'ids': ids, 'orgAdmin': orgAdmin},
   );
+
+  /// Grants ([moderator] true) or takes back the moderation role (HIN-26) for
+  /// every user in [ids]. Independent of the roles above.
+  Future<void> adminSetModeratorRole(List<String> ids, bool moderator) =>
+      _api.post(
+        '/api/v1/admin/users/moderator-role',
+        body: {'ids': ids, 'moderator': moderator},
+      );
 
   Future<void> adminSendPasswordReset(List<String> ids) =>
       _api.post('/api/v1/admin/users/password-reset', body: {'ids': ids});

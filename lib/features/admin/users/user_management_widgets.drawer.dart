@@ -195,29 +195,90 @@ class UserDrawerBody extends StatelessWidget {
 
 /// The organisation role in the drawer: a switch with one line on what the role
 /// grants and what it does not.
-///
-/// Holds the value itself so the switch moves at once; it returns to what the
-/// server holds when the change is refused (the board shows the error toast).
-/// An invitation nobody accepted yet has no account to hand the role to.
-class OrgAdminToggle extends StatefulWidget {
+class OrgAdminToggle extends StatelessWidget {
   const OrgAdminToggle({super.key, required this.user, required this.actions});
 
   final AdminUser user;
   final UserActions actions;
 
   @override
-  State<OrgAdminToggle> createState() => _OrgAdminToggleState();
+  Widget build(BuildContext context) => _RoleToggle(
+    user: user,
+    held: user.orgAdmin,
+    set: actions.setOrgAdmin,
+    currentUserId: actions.currentUserId,
+    icon: LucideIcons.building2,
+    titleKey: 'admin.um.orgAdminTitle',
+    hintKey: 'admin.um.orgAdminHint',
+    infoKey: 'admin.um.orgAdminInfo',
+    ownRoleKey: 'admin.um.reasonOwnOrgRole',
+  );
 }
 
-class _OrgAdminToggleState extends State<OrgAdminToggle> {
-  late bool _value = widget.user.orgAdmin;
+/// The moderation role in the drawer (HIN-26), beside the organisation role
+/// and built the same way.
+class ModeratorToggle extends StatelessWidget {
+  const ModeratorToggle({super.key, required this.user, required this.actions});
+
+  final AdminUser user;
+  final UserActions actions;
+
+  @override
+  Widget build(BuildContext context) => _RoleToggle(
+    user: user,
+    held: user.moderator,
+    set: actions.setModerator,
+    currentUserId: actions.currentUserId,
+    icon: LucideIcons.shieldUser,
+    titleKey: 'admin.um.moderatorTitle',
+    hintKey: 'admin.um.moderatorHint',
+    infoKey: 'admin.um.moderatorInfo',
+    ownRoleKey: 'admin.um.reasonOwnModeratorRole',
+  );
+}
+
+/// A role held beside the platform role, as a switch with its name, an "i"
+/// for what it grants, and the reason when the switch cannot move.
+///
+/// Holds the value itself so the switch moves at once; it returns to what the
+/// server holds when the change is refused (the board shows the error toast).
+/// An invitation nobody accepted yet has no account to hand the role to.
+class _RoleToggle extends StatefulWidget {
+  const _RoleToggle({
+    required this.user,
+    required this.held,
+    required this.set,
+    required this.currentUserId,
+    required this.icon,
+    required this.titleKey,
+    required this.hintKey,
+    required this.infoKey,
+    required this.ownRoleKey,
+  });
+
+  final AdminUser user;
+  final bool held;
+  final Future<bool> Function(List<String> ids, bool grant) set;
+  final String? currentUserId;
+  final IconData icon;
+  final String titleKey;
+  final String hintKey;
+  final String infoKey;
+  final String ownRoleKey;
+
+  @override
+  State<_RoleToggle> createState() => _RoleToggleState();
+}
+
+class _RoleToggleState extends State<_RoleToggle> {
+  late bool _value = widget.held;
   bool _busy = false;
 
   @override
-  void didUpdateWidget(OrgAdminToggle oldWidget) {
+  void didUpdateWidget(_RoleToggle oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.user.orgAdmin != widget.user.orgAdmin) {
-      _value = widget.user.orgAdmin;
+    if (oldWidget.held != widget.held) {
+      _value = widget.held;
     }
   }
 
@@ -226,7 +287,7 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
       _value = value;
       _busy = true;
     });
-    final ok = await widget.actions.setOrgAdmin([widget.user.id], value);
+    final ok = await widget.set([widget.user.id], value);
     if (!mounted) return;
     setState(() {
       _busy = false;
@@ -237,9 +298,9 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
   @override
   Widget build(BuildContext context) {
     final invited = widget.user.status == UserStatus.invited;
-    // Nobody hands this role to themselves; the server refuses it too.
-    final self = widget.user.id == widget.actions.currentUserId;
-    final title = context.t('admin.um.orgAdminTitle');
+    // Nobody hands these roles to themselves; the server refuses it too.
+    final self = widget.user.id == widget.currentUserId;
+    final title = context.t(widget.titleKey);
     // Not one merged node: the "i" next to the title is a control of its own,
     // and merged into the switch a screen reader could not reach it. The
     // switch carries the title as its name instead.
@@ -260,7 +321,7 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
               color: AppColors.surfaceMuted,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(LucideIcons.building2, size: 17, color: AppColors.ink),
+            child: Icon(widget.icon, size: 17, color: AppColors.ink),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -285,8 +346,8 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
                     // "i" instead of pushing the drawer's actions down.
                     InfoCircleButton(
                       title: title,
-                      message: context.t('admin.um.orgAdminHint'),
-                      tooltip: context.t('admin.um.orgAdminInfo'),
+                      message: context.t(widget.hintKey),
+                      tooltip: context.t(widget.infoKey),
                     ),
                   ],
                 ),
@@ -296,7 +357,7 @@ class _OrgAdminToggleState extends State<OrgAdminToggle> {
                     context.t(
                       invited
                           ? 'admin.um.reasonPendingInvite'
-                          : 'admin.um.reasonOwnOrgRole',
+                          : widget.ownRoleKey,
                     ),
                     style: TextStyle(
                       fontSize: AppType.caption,

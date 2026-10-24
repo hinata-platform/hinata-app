@@ -450,6 +450,14 @@ const List<PaletteCommand> kAdminCommands = [
     keywords: 'admin security policy password',
   ),
   PaletteCommand.route(
+    id: 'admin.moderation',
+    labelKey: 'admin.moderation.title',
+    contextKey: 'admin.title',
+    icon: LucideIcons.shieldUser,
+    route: '/admin?section=moderation',
+    keywords: 'admin moderation moderator report contact imprint',
+  ),
+  PaletteCommand.route(
     id: 'admin.authentication',
     labelKey: 'admin.authentication',
     contextKey: 'admin.title',

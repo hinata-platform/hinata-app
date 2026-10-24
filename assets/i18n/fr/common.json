@@ -124,7 +124,8 @@
       "bodyRequired": "Saisissez un message.",
       "notEmailSourced": "Ce ticket n'a pas été créé à partir d'un e-mail, il n'y a donc personne à qui répondre.",
       "noSmtp": "Aucun serveur de messagerie n'est encore configuré. Contactez les administrateurs de la plateforme pour activer l'envoi d'e-mails.",
-      "sendFailed": "La réponse n'a pas pu être envoyée. Réessayez."
+      "sendFailed": "La réponse n'a pas pu être envoyée. Réessayez.",
+      "attachmentsTooLarge": "Les pièces jointes sont trop volumineuses pour un seul e-mail. Envoyez moins de fichiers ou des fichiers plus petits."
     },
     "sessionNotPersisted": {
       "snap": "Hinata n'est pas encore autorisé à utiliser le gestionnaire de mots de passe du système, vous devrez donc vous reconnecter après chaque redémarrage. Tout le reste fonctionne normalement. Autorisez-le une fois avec {{command}} — ou activez « password manager service » pour Hinata dans App Center — puis reconnectez-vous.",
@@ -3490,7 +3491,18 @@
       "reasonOwnOrgRole": "Ce rôle t’est attribué par une autre personne de l’administration.",
       "selectUser": "Sélectionner {{name}}",
       "selectPage": "Sélectionner tous les utilisateurs de cette page",
-      "removeEmail": "Retirer {{email}}"
+      "removeEmail": "Retirer {{email}}",
+      "roleModerator": "Modération",
+      "moderatorBadge": "Modération",
+      "moderatorTitle": "Modération",
+      "moderatorHint": "Examine les contenus signalés et prend les décisions : retire des publications, suspend des comptes et rédige les motifs que reçoivent toutes les personnes concernées. Ne voit que ce qui a été signalé, jamais les projets eux-mêmes. Aucun accès à l’espace d’administration.",
+      "moderatorInfo": "Que peut faire la modération ?",
+      "makeModerator": "Confier la modération",
+      "moderatorConfirmOne": "{{name}} examinera alors les contenus signalés et décidera à leur sujet, jusqu’au retrait de publications et à la suspension de comptes. {{name}} ne voit que ce qui a été signalé.",
+      "moderatorConfirmMany": "{{names}} examineront alors les contenus signalés et décideront à leur sujet, jusqu’au retrait de publications et à la suspension de comptes. Ces personnes ne voient que ce qui a été signalé.",
+      "toastModeratorGranted": "Rôle de modération attribué",
+      "toastModeratorRevoked": "Rôle de modération retiré",
+      "reasonOwnModeratorRole": "Ce rôle t’est attribué par une autre personne de l’administration."
     },
     "iosStoreUrl": "URL de l'App Store iOS",
     "androidStoreUrl": "URL du Play Store Android",
@@ -3611,6 +3623,20 @@
       "label": "Planification des créneaux",
       "desc": "Désactivé : Hinata reste tel quel. Activé : les projets planifient des événements avec des créneaux, et les membres s'inscrivent sur les créneaux libres.",
       "unavailable": "Nécessite un replica set MongoDB. Ce serveur fonctionne sans, la planification des créneaux reste donc désactivée."
+    },
+    "moderation": {
+      "title": "Modération",
+      "whoTitle": "Qui modère",
+      "whoHint": "Ces personnes examinent les signalements et prennent les décisions. Le rôle s’attribue dans la gestion des utilisateurs.",
+      "nobody": "Personne ne modère encore. Attribue le rôle à au moins une personne dans la gestion des utilisateurs, sinon les signalements restent sans réponse.",
+      "onlyOne": "Au moins deux, c’est mieux, pour que personne ne décide d’un signalement qui le concerne.",
+      "more": "et {{count}} de plus dans la gestion des utilisateurs",
+      "contactTitle": "Contact pour les signalements",
+      "contactHint": "C’est par là qu’on joint qui exploite cette instance, dans l’app et sur la page de connexion. Les magasins d’applications et le règlement sur les services numériques exigent un contact.",
+      "contactMissing": "Aucun contact pour les signalements n’est encore défini. Indique une adresse e-mail pour qu’on puisse te joindre au sujet des contenus.",
+      "operatorName": "Exploitant, comme dans les mentions légales",
+      "contactEmail": "E-mail pour les signalements",
+      "imprintUrl": "Lien vers les mentions légales"
     }
   },
   "audit": {
@@ -5738,7 +5764,8 @@
     "you": "C'est vous",
     "deactivated": "Désactivé",
     "role": {
-      "member": "Membre"
+      "member": "Membre",
+      "moderator": "Modération"
     },
     "localTime": "Heure locale",
     "localTimeValue": "{{time}} · {{zone}}",

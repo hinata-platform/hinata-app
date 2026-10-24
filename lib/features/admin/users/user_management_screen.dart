@@ -111,7 +111,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
   /// the filter chips. See [GlassSearchDock].
   bool _searching = false;
   Timer? _debounce;
-  AdminRole? _roleF;
+  UserRoleFilter? _roleF;
   UserStatus? _statusF;
   UserOrigin? _originF;
   UserSortKey _sortKey = UserSortKey.lastActive;
@@ -302,7 +302,7 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
   }
 
   // ── Filters ────────────────────────────────────────────────────────────
-  void _setRoleFilter(AdminRole? role) {
+  void _setRoleFilter(UserRoleFilter? role) {
     setState(() {
       _roleF = role;
       _statusF = null;
@@ -447,9 +447,10 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
         iconFg: AppColors.accentStrong,
         value: '${c.admins}',
         label: context.t('admin.um.kpiAdmins'),
-        active: _roleF == AdminRole.admin,
-        onTap: () =>
-            _setRoleFilter(_roleF == AdminRole.admin ? null : AdminRole.admin),
+        active: _roleF == UserRoleFilter.admin,
+        onTap: () => _setRoleFilter(
+          _roleF == UserRoleFilter.admin ? null : UserRoleFilter.admin,
+        ),
       ),
       UmKpiCard(
         icon: LucideIcons.circleCheck,
@@ -523,14 +524,15 @@ class _UserManagementScreenState extends State<_UserManagementBoard> {
       controller: _searchCtrl,
       onChanged: _onSearch,
     );
-    final roleChip = GlassFilterChip<AdminRole?>(
+    final roleChip = GlassFilterChip<UserRoleFilter?>(
       icon: LucideIcons.shield,
       label: context.t('admin.um.filterRole'),
       value: _roleF,
       options: [
         (null, context.t('admin.um.allRoles')),
-        (AdminRole.admin, context.t('admin.um.roleAdmin')),
-        (AdminRole.user, context.t('admin.um.roleUser')),
+        (UserRoleFilter.admin, context.t('admin.um.roleAdmin')),
+        (UserRoleFilter.user, context.t('admin.um.roleUser')),
+        (UserRoleFilter.moderator, context.t('admin.um.roleModerator')),
       ],
       onChanged: _setRoleFilter,
     );

@@ -45,6 +45,7 @@ void main() {
         return false;
       }
     },
+    setModerator: (_, _) async => true,
     openDemote: (_) {},
     openResend: (_) {},
     openReset: (_) {},

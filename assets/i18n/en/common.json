@@ -124,7 +124,8 @@
       "bodyRequired": "Please enter a message.",
       "notEmailSourced": "This ticket wasn't created from an email, so there's no one to reply to.",
       "noSmtp": "No mail server is configured yet. Please contact your platform admins to enable sending emails.",
-      "sendFailed": "The reply couldn't be sent. Please try again."
+      "sendFailed": "The reply couldn't be sent. Please try again.",
+      "attachmentsTooLarge": "The attachments are too large for one email. Please send fewer or smaller files."
     },
     "sessionNotPersisted": {
       "snap": "Hinata isn’t allowed to use this system’s password store yet, so you’ll have to sign in again after every restart. Everything else works normally. Allow it once with {{command}} — or switch on “password manager service” for Hinata in App Center — then sign in again.",
@@ -3490,7 +3491,18 @@
       "reasonOwnOrgRole": "Another person from the administration gives you this role.",
       "selectUser": "Select {{name}}",
       "selectPage": "Select all users on this page",
-      "removeEmail": "Remove {{email}}"
+      "removeEmail": "Remove {{email}}",
+      "roleModerator": "Moderation",
+      "moderatorBadge": "Moderation",
+      "moderatorTitle": "Moderation",
+      "moderatorHint": "Reviews reported content and decides on it: removes posts, suspends accounts and writes the reasons everyone involved receives. Sees only what was reported, never the projects themselves. No access to the admin area.",
+      "moderatorInfo": "What can moderation do?",
+      "makeModerator": "Make moderator",
+      "moderatorConfirmOne": "{{name}} will then review reported content and decide on it, up to removing posts and suspending accounts. {{name}} sees only what was reported.",
+      "moderatorConfirmMany": "{{names}} will then review reported content and decide on it, up to removing posts and suspending accounts. They see only what was reported.",
+      "toastModeratorGranted": "Moderation role granted",
+      "toastModeratorRevoked": "Moderation role revoked",
+      "reasonOwnModeratorRole": "Another person from the administration gives you this role."
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3611,6 +3623,20 @@
       "label": "Shift planning",
       "desc": "Off: Hinata stays as it is. On: projects plan events with shifts, and members sign up for open ones.",
       "unavailable": "Needs a MongoDB replica set. This server runs without one, so shift planning stays off."
+    },
+    "moderation": {
+      "title": "Moderation",
+      "whoTitle": "Who moderates",
+      "whoHint": "These people review reports and decide on them. You hand out the role in user management.",
+      "nobody": "Nobody moderates yet. Give the role to at least one person in user management, or reports go unanswered.",
+      "onlyOne": "At least two are good, so that nobody decides on a report about themselves.",
+      "more": "and {{count}} more in user management",
+      "contactTitle": "Contact for reports",
+      "contactHint": "People reach whoever runs this instance here, in the app and on the sign in page. The app stores and the Digital Services Act require a contact.",
+      "contactMissing": "No contact for reports is set yet. Enter an email address so people can reach you about content.",
+      "operatorName": "Operator, as named in the imprint",
+      "contactEmail": "Email for reports",
+      "imprintUrl": "Link to the imprint"
     }
   },
   "audit": {
@@ -5738,7 +5764,8 @@
     "you": "This is you",
     "deactivated": "Deactivated",
     "role": {
-      "member": "Member"
+      "member": "Member",
+      "moderator": "Moderation"
     },
     "localTime": "Local time",
     "localTimeValue": "{{time}} · {{zone}}",

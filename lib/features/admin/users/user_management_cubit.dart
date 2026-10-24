@@ -17,7 +17,7 @@ class UserManagementCubit extends Cubit<void> {
   /// One page (1-based) of the directory with its global counts.
   Future<AdminUserPage> users({
     String query = '',
-    AdminRole? role,
+    UserRoleFilter? role,
     UserStatus? status,
     UserOrigin? origin,
     UserSortKey sort = UserSortKey.lastActive,
@@ -57,6 +57,9 @@ class UserManagementCubit extends Cubit<void> {
 
   Future<void> setOrgAdmin(List<String> ids, bool orgAdmin) =>
       _admin.adminSetOrgRole(ids, orgAdmin);
+
+  Future<void> setModerator(List<String> ids, bool moderator) =>
+      _admin.adminSetModeratorRole(ids, moderator);
 
   Future<void> sendPasswordReset(List<String> ids) =>
       _admin.adminSendPasswordReset(ids);

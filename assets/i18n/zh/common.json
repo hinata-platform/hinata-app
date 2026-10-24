@@ -124,7 +124,8 @@
       "bodyRequired": "请输入消息内容。",
       "notEmailSourced": "该工单不是由邮件创建的，因此没有可回复的收件人。",
       "noSmtp": "尚未配置邮件服务器。请联系平台管理员以启用邮件发送。",
-      "sendFailed": "回复发送失败。请重试。"
+      "sendFailed": "回复发送失败。请重试。",
+      "attachmentsTooLarge": "附件太大，无法通过一封邮件发送。请减少文件数量或使用更小的文件。"
     },
     "sessionNotPersisted": {
       "snap": "hinata 尚无权使用本系统的密码存储，因此每次重启后都需要重新登录。其他功能一切正常。用 {{command}} 授权一次，或在 App Center 中为 hinata 打开“password manager service”，然后重新登录。",
@@ -3490,7 +3491,18 @@
       "reasonOwnOrgRole": "此角色需由管理团队中的其他人授予你。",
       "selectUser": "选择 {{name}}",
       "selectPage": "选择本页所有用户",
-      "removeEmail": "移除 {{email}}"
+      "removeEmail": "移除 {{email}}",
+      "roleModerator": "内容审核",
+      "moderatorBadge": "审核员",
+      "moderatorTitle": "内容审核",
+      "moderatorHint": "审核被举报的内容并作出决定：删除帖子、停用账户，并写下所有相关人员都会收到的理由。只能看到被举报的内容，看不到项目本身。无法访问管理区域。",
+      "moderatorInfo": "内容审核可以做什么？",
+      "makeModerator": "设为审核员",
+      "moderatorConfirmOne": "{{name}} 将审核被举报的内容并作出决定，包括删除帖子和停用账户。{{name}} 只能看到被举报的内容。",
+      "moderatorConfirmMany": "{{names}} 将审核被举报的内容并作出决定，包括删除帖子和停用账户。他们只能看到被举报的内容。",
+      "toastModeratorGranted": "已授予审核角色",
+      "toastModeratorRevoked": "已撤销审核角色",
+      "reasonOwnModeratorRole": "此角色需由管理团队中的其他人授予你。"
     },
     "iosStoreUrl": "iOS App Store URL",
     "androidStoreUrl": "Android Play Store URL",
@@ -3611,6 +3623,20 @@
       "label": "排班计划",
       "desc": "关闭：Hinata 保持不变。开启：项目可以规划带班次的活动，成员可报名空余班次。",
       "unavailable": "需要 MongoDB 副本集。此服务器未使用副本集运行，因此排班计划保持关闭。"
+    },
+    "moderation": {
+      "title": "内容审核",
+      "whoTitle": "审核人员",
+      "whoHint": "这些人负责审核举报并作出决定。角色在用户管理中授予。",
+      "nobody": "目前还没有人负责审核。请在用户管理中至少为一人授予该角色，否则举报将无人处理。",
+      "onlyOne": "最好至少有两人，这样就没有人会对针对自己的举报作出决定。",
+      "more": "另有 {{count}} 人，见用户管理",
+      "contactTitle": "举报联系方式",
+      "contactHint": "用户可通过应用内和登录页面联系此实例的运营方。应用商店和《数字服务法》都要求提供联系方式。",
+      "contactMissing": "尚未设置举报联系方式。请填写一个电子邮件地址，以便他人就内容问题联系你。",
+      "operatorName": "运营方（与法律声明一致）",
+      "contactEmail": "举报邮箱",
+      "imprintUrl": "法律声明链接"
     }
   },
   "audit": {
@@ -5738,7 +5764,8 @@
     "you": "这是你",
     "deactivated": "已停用",
     "role": {
-      "member": "成员"
+      "member": "成员",
+      "moderator": "内容审核"
     },
     "localTime": "当地时间",
     "localTimeValue": "{{time}} · {{zone}}",

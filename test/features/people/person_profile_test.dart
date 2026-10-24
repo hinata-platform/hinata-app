@@ -349,7 +349,7 @@ class _FakeAdmin implements AdminRepository {
   @override
   Future<AdminUserPage> adminUsersPage({
     String query = '',
-    AdminRole? role,
+    UserRoleFilter? role,
     UserStatus? status,
     UserOrigin? origin,
     UserSortKey sort = UserSortKey.lastActive,
