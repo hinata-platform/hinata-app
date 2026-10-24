@@ -368,7 +368,8 @@
       "emailNotVerified": "Confirm your email address first. You will find the link in your inbox."
     },
     "showPassword": "Show password",
-    "hidePassword": "Hide password"
+    "hidePassword": "Hide password",
+    "contact": "Contact"
   },
   "authShell": {
     "heroTitle": "Where your team's work comes together.",
@@ -3662,6 +3663,46 @@
         "voice": "Voice messages",
         "voiceHint": "Recordings in comments"
       }
+    },
+    "entry": {
+      "title": "Who comes in",
+      "registration": "The registration lets new accounts in without approval.",
+      "provider": "Signing in with “{{name}}” creates active accounts the first time, without anybody agreeing.",
+      "consequence": "Whoever has such an account reads organisation-wide pages and the directory. Under the DSA this content then counts as public, with the duties of an online platform.",
+      "enable": "Switch approval on",
+      "proxy": "Requests come through a proxy this server does not trust. Every request then counts as the proxy's address, and the limits per address apply to everybody together. Add the proxy to HINATA_TRUSTED_PROXIES.",
+      "confirmTitle": "Let new accounts in without approval?",
+      "confirmBody": "Through {{ways}}, anybody then comes in without anybody agreeing. Whoever has such an account reads organisation-wide pages and the directory. Under the DSA this content then counts as public, with the duties of an online platform.",
+      "confirm": "Open without approval",
+      "way": {
+        "registration": "the registration"
+      }
+    },
+    "ssoApproval": {
+      "title": "New accounts need approval",
+      "hint": "Every first sign-in waits until an administrator agrees, as with a registration.",
+      "domains": "Allowed email domains",
+      "domainsHint": "Without approval, only addresses at these domains come in straight away; everyone else waits. Separate several with commas."
+    },
+    "rules": {
+      "title": "House rules",
+      "hint": "Everybody agrees once before writing.",
+      "versionSince": "Version {{version}} since {{date}}.",
+      "mode": {
+        "builtIn": "Standard",
+        "text": "Own text",
+        "url": "Address"
+      },
+      "builtInHint": "The standard comes in nine languages and names your contact.",
+      "text": "Your house rules",
+      "textHint": "Markdown. The server always adds “How we moderate”.",
+      "url": "Address of your house rules",
+      "versionHint": "Saving a change makes a new version. Whoever already agreed does not have to agree again unless you ask everybody.",
+      "reaccept": "Ask everybody to agree again",
+      "reacceptTitle": "Ask everybody to agree again?",
+      "reacceptBody": "Everybody agrees to the current version before working on. Until then nobody gets a new access token or connects an AI client.",
+      "reacceptConfirm": "Ask everybody",
+      "reacceptDone": "Everybody agrees to version {{version}} anew."
     }
   },
   "audit": {
@@ -3727,7 +3768,8 @@
       "configuration": "Configuration",
       "data": "Data & privacy",
       "integration": "Integration",
-      "unknown": "Other"
+      "unknown": "Other",
+      "moderation": "Moderation"
     },
     "action": {
       "LOGIN_SUCCESS": "Signed in",
@@ -3883,7 +3925,30 @@
       "SHIFT_ASSIGNMENT_DECLINED": "Shift declined",
       "SHIFT_ASSIGNMENT_RELEASED": "Place on a shift freed",
       "SHIFT_PLANNER_GRANTED": "Shift planning granted",
-      "SHIFT_PLANNER_REVOKED": "Shift planning revoked"
+      "SHIFT_PLANNER_REVOKED": "Shift planning revoked",
+      "USER_SUSPENDED": "Account suspended",
+      "USER_SUSPENSION_LIFTED": "Suspension lifted",
+      "USER_SUSPENSION_ENDED": "Suspension ended",
+      "TIME_CALENDAR_SUBSCRIPTION_CREATED": "Calendar subscription added",
+      "TIME_CALENDAR_SUBSCRIPTION_DELETED": "Calendar subscription removed",
+      "SHIFT_FEED_TOKEN_CREATED": "Shift feed link created",
+      "SHIFT_FEED_TOKEN_REVOKED": "Shift feed link revoked",
+      "SHIFT_SERIES_CREATED": "Event series created",
+      "SHIFT_SERIES_UPDATED": "Event series changed",
+      "SHIFT_SERIES_DELETED": "Event series deleted",
+      "SHIFT_PLAN_EXPORTED": "Shift plan exported",
+      "MODERATION_CASE_CREATED": "Case opened",
+      "MODERATION_CASE_CLAIMED": "Case taken on",
+      "MODERATION_REPORTER_REVEALED": "Reporter shown",
+      "MODERATION_EVIDENCE_REVEALED": "Content released for the case",
+      "MODERATION_EVIDENCE_VIEWED": "Content viewed",
+      "MODERATION_DECIDED": "Case decided",
+      "MODERATION_RESTORED": "Content restored",
+      "MODERATION_APPEAL_RECORDED": "Appeal received",
+      "MODERATION_APPEAL_DECIDED": "Appeal decided",
+      "MODERATION_LEGAL_HOLD_CHANGED": "Retention for law enforcement changed",
+      "MODERATION_RULES_VERSION_CREATED": "New version of the house rules",
+      "ACCOUNT_APPROVAL_CHANGED": "Approval of new accounts changed"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -4589,7 +4654,8 @@
       "account": "Account",
       "preferences": "Preferences",
       "privacy": "Privacy",
-      "administration": "Administration"
+      "administration": "Administration",
+      "help": "Help"
     },
     "timerSurfaces": {
       "title": "Timer outside the app",
@@ -4723,6 +4789,10 @@
       "removeTitle": "Remove the subscription?",
       "removeMessage": "Your calendars then receive no more shifts. Those already shown disappear on the next fetch.",
       "removed": "Subscription removed"
+    },
+    "help": {
+      "title": "Help and contact",
+      "subtitle": "Moderation, house rules, reporting, imprint and the app."
     }
   },
   "twofa": {
@@ -5848,6 +5918,82 @@
       "emptyTitle": "You have not blocked anyone",
       "emptyMessage": "You can block someone from their profile or from the menu of a comment.",
       "more": "Load more"
+    }
+  },
+  "moderation": {
+    "appTerms": {
+      "title": "Before you start",
+      "body": "Hinata connects you to your organisation's server. There is zero tolerance for offensive, threatening or objectionable content and for people who harass others. Every organisation has moderation for this, which usually looks at reports within 24 hours.",
+      "read": "Read the terms of service",
+      "accept": "Agree and continue"
+    },
+    "rules": {
+      "title": "House rules",
+      "gateTitle": "House rules of {{name}}",
+      "gateLead": "Before you write: many people work together here. For that to go well:",
+      "gateChanged": "The house rules have changed. Please read them and agree to the new version.",
+      "respect": "Respect",
+      "respectText": "No insults, threats or putting others down. There is zero tolerance for that.",
+      "lawful": "Only what is allowed",
+      "lawfulText": "Nothing unlawful, and no private data of others without their consent.",
+      "report": "Report instead of looking away",
+      "reportText": "Through ⋯ › Report you reach moderation. It usually answers within 24 hours.",
+      "consequences": "Consequences",
+      "consequencesText": "Moderation removes violations. In serious or repeated cases it suspends accounts.",
+      "readAll": "Full house rules",
+      "appTerms": "App terms of service",
+      "accept": "Agree and continue",
+      "loadFailed": "The house rules could not be loaded.",
+      "version": "Version {{version}}",
+      "versionSince": "Version {{version}} since {{date}}"
+    },
+    "help": {
+      "moderation": "Moderation of {{name}}",
+      "moderationPlain": "Moderation of this server",
+      "reportElsewhere": "Report something else …",
+      "reportElsewhereDetail": "Say where it is, for example a project's name",
+      "imprint": "Imprint of {{name}}",
+      "imprintPlain": "Imprint of the operator",
+      "aboutApp": "About the app",
+      "aboutAppDetail": "Provider, terms of service, privacy",
+      "rulesAccepted": "Version {{version}}, agreed on {{date}}",
+      "aboutVersion": "Hinata {{version}}",
+      "provider": "Provider of the app",
+      "operatorNote": "Your organisation runs its own server and is responsible for what is on it. Reports and blocks go to its moderation, not to the provider of the app."
+    },
+    "report": {
+      "thanks": "Thank you. Moderation will look into it.",
+      "elsewhereTitle": "Report something else",
+      "whyTitle": "What is the problem?",
+      "elsewhereSubtitle": "Where it is and what moderation should know",
+      "send": "Report",
+      "change": "Change",
+      "location": "Where is it?",
+      "locationHint": "For example a project, a board or a team",
+      "locationRequired": "Say where it can be found.",
+      "explanationRequired": "What should moderation know?",
+      "explanationOptional": "What should moderation know? Optional",
+      "explanationTooShort": "Please describe it in at least {{min}} characters.",
+      "whoSees": "Moderation sees that you reported this. Nobody else learns of it.",
+      "goodFaith": "By sending you confirm that your details are true to the best of your knowledge."
+    },
+    "category": {
+      "harassment": "Harassment, insults or hate",
+      "harassmentHint": "Attacks on a person or putting down a group",
+      "threat": "Threat or violence",
+      "threatHint": "Someone is threatened or violence is approved of",
+      "sexual": "Sexual content",
+      "sexualHint": "Suggestive or pornographic material",
+      "childSafety": "Endangering children",
+      "childSafetyHint": "Looked at at once and without a preview",
+      "privacy": "Private data without consent",
+      "privacyHint": "Addresses, numbers, health, photos of people",
+      "spam": "Spam, fraud or malware",
+      "spamHint": "Advertising, phishing, dangerous files",
+      "illegal": "Infringement of the law",
+      "illegalHint": "Copyright or another law, please give a short reason",
+      "other": "Something else",
+      "otherHint": "Please describe it briefly"
     }
   }
 }

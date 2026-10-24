@@ -368,7 +368,8 @@
       "emailNotVerified": "请先确认你的邮箱地址。确认链接已发送到你的收件箱。"
     },
     "showPassword": "显示密码",
-    "hidePassword": "隐藏密码"
+    "hidePassword": "隐藏密码",
+    "contact": "联系"
   },
   "authShell": {
     "heroTitle": "让团队的工作汇聚于此。",
@@ -3662,6 +3663,46 @@
         "voice": "语音消息",
         "voiceHint": "评论中的录音"
       }
+    },
+    "entry": {
+      "title": "谁可以加入",
+      "registration": "注册功能允许新账号无需批准即可加入。",
+      "provider": "通过“{{name}}”登录会在首次登录时直接创建有效账号，无需任何人批准。",
+      "consequence": "拥有此类账号的人可以阅读全组织页面和通讯录。根据 DSA，这些内容即被视为公开，你需承担在线平台的义务。",
+      "enable": "开启审批",
+      "proxy": "请求经过一个此服务器不信任的代理。这样每个请求都会被算作代理的地址，按地址的限制会对所有人合并计算。请将该代理加入 HINATA_TRUSTED_PROXIES。",
+      "confirmTitle": "允许新账号无需批准即可加入？",
+      "confirmBody": "通过 {{ways}}，任何人都可以在无人批准的情况下加入。拥有此类账号的人可以阅读全组织页面和通讯录。根据 DSA，这些内容即被视为公开，你需承担在线平台的义务。",
+      "confirm": "无需批准开放",
+      "way": {
+        "registration": "注册"
+      }
+    },
+    "ssoApproval": {
+      "title": "新账号需要审批",
+      "hint": "每次首次登录都需等待管理员批准，与注册相同。",
+      "domains": "允许的邮箱域名",
+      "domainsHint": "在无需审批的情况下，只有这些域名的地址可以直接加入，其他人需等待。多个域名请用逗号分隔。"
+    },
+    "rules": {
+      "title": "站规",
+      "hint": "每个人在写作前都要同意一次。",
+      "versionSince": "第 {{version}} 版，自 {{date}} 起。",
+      "mode": {
+        "builtIn": "标准",
+        "text": "自定义文本",
+        "url": "网址"
+      },
+      "builtInHint": "标准站规提供九种语言，并列出你们的联系方式。",
+      "text": "你们的站规",
+      "textHint": "Markdown。服务器总会附上“我们如何审核”。",
+      "url": "你们站规的网址",
+      "versionHint": "保存更改会生成新版本。已同意的人无需再次同意，除非你要求所有人重新同意。",
+      "reaccept": "请所有人重新同意",
+      "reacceptTitle": "请所有人重新同意？",
+      "reacceptBody": "每个人都要先同意当前版本才能继续工作。在此之前，任何人都无法获取新的访问令牌或连接 AI 客户端。",
+      "reacceptConfirm": "请所有人同意",
+      "reacceptDone": "所有人将重新同意第 {{version}} 版。"
     }
   },
   "audit": {
@@ -3727,7 +3768,8 @@
       "configuration": "配置",
       "data": "数据与隐私",
       "integration": "集成",
-      "unknown": "其他"
+      "unknown": "其他",
+      "moderation": "审核"
     },
     "action": {
       "LOGIN_SUCCESS": "已登录",
@@ -3883,7 +3925,30 @@
       "SHIFT_ASSIGNMENT_DECLINED": "已拒绝班次",
       "SHIFT_ASSIGNMENT_RELEASED": "已释放班次名额",
       "SHIFT_PLANNER_GRANTED": "已授予排班权限",
-      "SHIFT_PLANNER_REVOKED": "已撤销排班权限"
+      "SHIFT_PLANNER_REVOKED": "已撤销排班权限",
+      "USER_SUSPENDED": "账号已封禁",
+      "USER_SUSPENSION_LIFTED": "封禁已解除",
+      "USER_SUSPENSION_ENDED": "封禁已到期",
+      "TIME_CALENDAR_SUBSCRIPTION_CREATED": "已添加日历订阅",
+      "TIME_CALENDAR_SUBSCRIPTION_DELETED": "已移除日历订阅",
+      "SHIFT_FEED_TOKEN_CREATED": "已创建排班订阅链接",
+      "SHIFT_FEED_TOKEN_REVOKED": "已撤销排班订阅链接",
+      "SHIFT_SERIES_CREATED": "已创建活动系列",
+      "SHIFT_SERIES_UPDATED": "已更改活动系列",
+      "SHIFT_SERIES_DELETED": "已删除活动系列",
+      "SHIFT_PLAN_EXPORTED": "已导出排班表",
+      "MODERATION_CASE_CREATED": "已创建案件",
+      "MODERATION_CASE_CLAIMED": "已接手案件",
+      "MODERATION_REPORTER_REVEALED": "已显示举报人",
+      "MODERATION_EVIDENCE_REVEALED": "已为案件开放内容",
+      "MODERATION_EVIDENCE_VIEWED": "已查看内容",
+      "MODERATION_DECIDED": "案件已裁决",
+      "MODERATION_RESTORED": "内容已恢复",
+      "MODERATION_APPEAL_RECORDED": "已收到申诉",
+      "MODERATION_APPEAL_DECIDED": "申诉已裁决",
+      "MODERATION_LEGAL_HOLD_CHANGED": "为执法保留的设置已更改",
+      "MODERATION_RULES_VERSION_CREATED": "站规新版本",
+      "ACCOUNT_APPROVAL_CHANGED": "新账号审批设置已更改"
     },
     "meta": {
       "oldRole": "原角色",
@@ -4589,7 +4654,8 @@
       "account": "账户",
       "preferences": "偏好设置",
       "privacy": "隐私",
-      "administration": "管理"
+      "administration": "管理",
+      "help": "帮助"
     },
     "timerSurfaces": {
       "title": "应用外的计时器",
@@ -4723,6 +4789,10 @@
       "removeTitle": "移除订阅？",
       "removeMessage": "你的日历将不再收到班次。已显示的班次会在下次获取时消失。",
       "removed": "订阅已移除"
+    },
+    "help": {
+      "title": "帮助与联系",
+      "subtitle": "审核、站规、举报、版本说明与应用信息。"
     }
   },
   "twofa": {
@@ -5848,6 +5918,82 @@
       "emptyTitle": "你还没有屏蔽任何人",
       "emptyMessage": "你可以在某人的个人资料或评论菜单中屏蔽对方。",
       "more": "加载更多"
+    }
+  },
+  "moderation": {
+    "appTerms": {
+      "title": "开始之前",
+      "body": "Hinata 将你连接到你所在组织的服务器。对侮辱性、威胁性或令人反感的内容以及骚扰他人的人零容忍。每个组织都设有审核，通常会在 24 小时内处理举报。",
+      "read": "阅读使用条款",
+      "accept": "同意并继续"
+    },
+    "rules": {
+      "title": "站规",
+      "gateTitle": "{{name}} 的站规",
+      "gateLead": "在你写作之前：这里有很多人一起工作。为了让合作顺利：",
+      "gateChanged": "站规已更改。请阅读并同意新版本。",
+      "respect": "尊重",
+      "respectText": "不得侮辱、威胁或贬低他人。对此零容忍。",
+      "lawful": "只发布合法内容",
+      "lawfulText": "不得发布违法内容，未经同意不得发布他人的私人信息。",
+      "report": "举报，而不是视而不见",
+      "reportText": "通过 ⋯ › 举报 即可联系审核，通常会在 24 小时内答复。",
+      "consequences": "后果",
+      "consequencesText": "审核会删除违规内容。情节严重或屡次违规时会封禁账号。",
+      "readAll": "完整站规",
+      "appTerms": "应用使用条款",
+      "accept": "同意并继续",
+      "loadFailed": "无法加载站规。",
+      "version": "第 {{version}} 版",
+      "versionSince": "第 {{version}} 版，自 {{date}} 起"
+    },
+    "help": {
+      "moderation": "{{name}} 的审核",
+      "moderationPlain": "此服务器的审核",
+      "reportElsewhere": "举报其他内容 …",
+      "reportElsewhereDetail": "说明位置，例如项目名称",
+      "imprint": "{{name}} 的法律信息",
+      "imprintPlain": "运营方的法律信息",
+      "aboutApp": "关于应用",
+      "aboutAppDetail": "提供者、使用条款、隐私",
+      "rulesAccepted": "第 {{version}} 版，已于 {{date}} 同意",
+      "aboutVersion": "Hinata {{version}}",
+      "provider": "应用提供者",
+      "operatorNote": "你所在的组织自行运营服务器，并对其中的内容负责。举报和屏蔽交由该组织的审核处理，而不是应用提供者。"
+    },
+    "report": {
+      "thanks": "谢谢。审核会进行查看。",
+      "elsewhereTitle": "举报其他内容",
+      "whyTitle": "问题是什么？",
+      "elsewhereSubtitle": "在哪里，以及审核需要了解什么",
+      "send": "举报",
+      "change": "更改",
+      "location": "在哪里？",
+      "locationHint": "例如某个项目、看板或团队",
+      "locationRequired": "请说明在哪里可以找到。",
+      "explanationRequired": "审核需要了解什么？",
+      "explanationOptional": "审核需要了解什么？可选",
+      "explanationTooShort": "请至少用 {{min}} 个字符描述。",
+      "whoSees": "审核会看到是你举报的，其他人不会知道。",
+      "goodFaith": "发送即表示你确认所提供的信息据你所知真实无误。"
+    },
+    "category": {
+      "harassment": "骚扰、侮辱或仇恨",
+      "harassmentHint": "攻击个人或贬低某一群体",
+      "threat": "威胁或暴力",
+      "threatHint": "有人受到威胁，或有人赞同暴力",
+      "sexual": "色情内容",
+      "sexualHint": "带有性暗示或色情的材料",
+      "childSafety": "危害儿童",
+      "childSafetyHint": "会立即审核，且不显示预览",
+      "privacy": "未经同意的私人信息",
+      "privacyHint": "地址、号码、健康状况、他人照片",
+      "spam": "垃圾信息、诈骗或恶意软件",
+      "spamHint": "广告、网络钓鱼、危险文件",
+      "illegal": "违法内容",
+      "illegalHint": "版权或其他法律，请简要说明理由",
+      "other": "其他",
+      "otherHint": "请简要描述"
     }
   }
 }

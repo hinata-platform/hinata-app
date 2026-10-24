@@ -26,6 +26,9 @@ class AppStorage {
   static const _kAccessToken = 'access_token';
   static const _kRefreshToken = 'refresh_token';
   static const _kOnboardingDone = 'onboarding_done';
+  // The version is part of the key: new terms are a new key, and everybody
+  // agrees once more (HIN-175).
+  static const _kAppTermsAccepted = 'app_terms_accepted.v1';
   static const _kConnectHintSeen = 'connect_hint_seen';
   static const _kMultiSelectHintSeen = 'multi_select_hint_seen';
   static const _kLocale = 'locale';
@@ -416,6 +419,13 @@ class AppStorage {
 
   bool get onboardingDone => _prefs.getBool(_kOnboardingDone) ?? false;
   Future<void> setOnboardingDone() => _prefs.setBool(_kOnboardingDone, true);
+
+  /// Whether this device agreed to the app's own terms, with the zero
+  /// tolerance the stores ask for, before anybody signs in (HIN-175). Per
+  /// device, not per server: the terms are the app's, not an instance's.
+  bool get appTermsAccepted => _prefs.getBool(_kAppTermsAccepted) ?? false;
+  Future<void> setAppTermsAccepted() =>
+      _prefs.setBool(_kAppTermsAccepted, true);
 
   // --- Hinata Connect first-login hint (scoped per server) -------------------
 
