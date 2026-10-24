@@ -12,6 +12,7 @@ import '../../../core/repositories/moderation_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/quiet_info_line.dart';
 import '../../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../../blocks/hidden_content_cubit.dart';
 import '../../sprint/modals/glass_modal.dart';
@@ -420,7 +421,7 @@ class _Details extends StatelessWidget {
                 ),
               ],
               const SizedBox(height: 8),
-              _Line(
+              QuietInfoLine(
                 icon: LucideIcons.lockKeyhole,
                 text: name == null
                     ? context.t('moderation.report.whoSees')
@@ -429,7 +430,7 @@ class _Details extends StatelessWidget {
                         variables: {'name': name},
                       ),
               ),
-              _Line(
+              QuietInfoLine(
                 icon: LucideIcons.scale,
                 text: context.t('moderation.report.goodFaith'),
               ),
@@ -481,41 +482,6 @@ class _Details extends StatelessWidget {
       variables: {'time': time},
     );
   }
-}
-
-/// One thing sending means, with its glyph.
-class _Line extends StatelessWidget {
-  const _Line({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 4),
-    child: Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.only(top: 2),
-          child: ExcludeSemantics(
-            child: Icon(icon, size: 16, color: AppColors.inkSoft),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: AppType.label,
-              height: 1.4,
-              color: AppColors.inkSoft,
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 /// Cancel on the first step; back and send on the second.

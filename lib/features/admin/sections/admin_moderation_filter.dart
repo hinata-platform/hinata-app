@@ -13,6 +13,7 @@ import '../../../core/repositories/admin_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
+import '../../../core/widgets/quiet_info_line.dart';
 import '../admin_form_helpers.dart';
 
 enum TextTestStatus { idle, testing, done, failure }
@@ -170,7 +171,7 @@ class _TextCheckCardState extends State<TextCheckCard> {
           onRemove: (term) => _remove('allowTerms', term),
         ),
         const SizedBox(height: 8),
-        _Line(
+        QuietInfoLine(
           icon: LucideIcons.languages,
           text: context.t('admin.textCheck.languages'),
         ),
@@ -179,7 +180,7 @@ class _TextCheckCardState extends State<TextCheckCard> {
         const SizedBox(height: 12),
         Divider(color: AppColors.hairline, height: 1),
         const SizedBox(height: 12),
-        _Line(
+        QuietInfoLine(
           icon: LucideIcons.imageOff,
           text: context.t('admin.textCheck.images'),
         ),
@@ -356,7 +357,7 @@ class _TextTest extends StatelessWidget {
                 const SizedBox(height: 8),
                 Semantics(
                   liveRegion: true,
-                  child: _Line(
+                  child: QuietInfoLine(
                     icon: switch (result.verdict) {
                       TextVerdict.allow => LucideIcons.circleCheck,
                       TextVerdict.flag => LucideIcons.flag,
@@ -369,7 +370,7 @@ class _TextTest extends StatelessWidget {
               if (state.status == TextTestStatus.failure &&
                   state.errorKey != null) ...[
                 const SizedBox(height: 8),
-                _Line(
+                QuietInfoLine(
                   icon: LucideIcons.triangleAlert,
                   text: context.t(state.errorKey!),
                 ),
@@ -416,33 +417,4 @@ class _TextTest extends StatelessWidget {
     }
     return parts.join(' ');
   }
-}
-
-class _Line extends StatelessWidget {
-  const _Line({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Icon(icon, size: 16, color: AppColors.inkSoft),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: AppType.label,
-            height: 1.4,
-            color: AppColors.inkSoft,
-          ),
-        ),
-      ),
-    ],
-  );
 }
