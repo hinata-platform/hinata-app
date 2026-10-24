@@ -1,37 +1,13 @@
-import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
-import '../api/api_client.dart';
 import '../i18n/i18n.dart';
+import '../models/moderation_models.dart' show ContentRefusal;
 import '../theme/app_colors.dart';
 import '../theme/app_theme.dart';
 import '../theme/app_type.dart';
 
-/// What the server's text check refused (HIN-176), read off a failed save by
-/// `details.code`, never by the status alone: a 422 means other things too.
-class ContentRefusal extends Equatable {
-  const ContentRefusal(this.terms);
-
-  /// The words refused, as the author wrote them; the author may see them.
-  final List<String> terms;
-
-  static const code = 'moderation.refused';
-
-  /// The refusal in [error], if it is one.
-  static ContentRefusal? of(Object? error) {
-    if (error is! ApiFailure || error.details['code'] != code) return null;
-    final terms = (error.details['terms'] ?? '')
-        .split(',')
-        .map((term) => term.trim())
-        .where((term) => term.isNotEmpty)
-        .toList();
-    return ContentRefusal(terms);
-  }
-
-  @override
-  List<Object?> get props => [terms];
-}
+export '../models/moderation_models.dart' show ContentRefusal;
 
 /// The refusal where the person was writing (HIN-176): what was refused, that
 /// the draft stays where it is, and the way to the house rules.
