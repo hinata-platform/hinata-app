@@ -20,6 +20,7 @@ import 'package:hinata/features/people/person_profile_cubit.dart';
 import 'package:hinata/features/people/person_profile_screen.dart';
 
 import '../../support/recording_fake.dart';
+import '../../support/fixed_app_config.dart';
 import '../blocks/block_fakes.dart';
 
 /// A person's profile (HIN-165): what every member sees, what an admin sees on
@@ -370,7 +371,7 @@ Future<GoRouter> _pumpPage(
           BlocProvider<AuthBloc>.value(value: _FakeAuthBloc(admin: admin)),
           if (hidden != null) ...[
             BlocProvider<AppConfigBloc>.value(
-              value: ModerationAppConfig(supported: moderation),
+              value: FixedAppConfig(moderation: ModerationMeta(version: moderation ? 1 : 0)),
             ),
             BlocProvider<HiddenContentCubit>.value(value: hidden),
           ],
