@@ -292,6 +292,93 @@ class _AttachmentTileState extends State<_AttachmentTile> {
   }
 }
 
+/// A file the moderation removed (HIN-173): no preview, no download, no
+/// menu, only that it is gone and since when.
+class _RemovedTile extends StatelessWidget {
+  const _RemovedTile({required this.attachment});
+
+  final IssueAttachment attachment;
+
+  @override
+  Widget build(BuildContext context) {
+    final at = attachment.moderation['file']?.at;
+    final by = context.t('moderation.placeholder.fileBy');
+    return Semantics(
+      container: true,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            border: Border.all(color: AppColors.hairline),
+            borderRadius: BorderRadius.circular(AppTheme.radiusControl),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              AspectRatio(
+                aspectRatio: AttachmentGrid.previewRatio,
+                child: ColoredBox(
+                  color: AppColors.canvas2,
+                  child: Center(
+                    child: Container(
+                      width: 46,
+                      height: 46,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: AppColors.hairline2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ExcludeSemantics(
+                        child: Icon(
+                          LucideIcons.eyeOff,
+                          size: 22,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(11, 8, 11, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        context.t('moderation.placeholder.file'),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: FontWeight.w600,
+                          fontStyle: FontStyle.italic,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        at == null ? by : '$by · ${recentDay(context, at)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppType.caption,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _KindTag extends StatelessWidget {
   const _KindTag({required this.label});
   final String label;

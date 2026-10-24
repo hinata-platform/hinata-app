@@ -13,7 +13,7 @@ import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart';
-import '../../moderation/house_rules_sheet.dart' show moderationDay;
+import '../../../core/util/dates.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../admin_form_helpers.dart';
 import 'ingest_connection_editor.dart';
@@ -444,7 +444,7 @@ class _ConnectionTile extends StatelessWidget {
                           count: connection.textRefusals,
                           variables: {
                             if (connection.lastTextRefusalAt != null)
-                              'date': moderationDay(
+                              'date': recentDay(
                                 context,
                                 connection.lastTextRefusalAt!,
                               ),

@@ -38,6 +38,18 @@ class CommentBubbleRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Removed by moderation (HIN-173): one quiet line in place of the whole
+    // row, voice messages included. The person who wrote it gets why.
+    if (_c.isRemoved) {
+      final mark = _c.moderation['text'];
+      final caseId = mark?.caseId;
+      return ModerationPlaceholder(
+        at: mark?.at,
+        onWhy: caseId != null && _c.authorId == _x.meId
+            ? () => context.push(noticeLocation(caseId))
+            : null,
+      );
+    }
     final avatarSize = isReply ? 26.0 : 32.0;
     final name = _x.nameFor(_c.authorId);
 
@@ -213,6 +225,10 @@ class _CommentActionsState extends State<_CommentActions> {
   // overlay layout (`!_skipMarkNeedsLayout`). See [[reference_web_hover_transform_assert]].
   Rect? _reactAnchor;
 
+  /// The menu button's screen rect, captured as the menu opens: the report
+  /// popover hangs off it once the menu has closed (HIN-173).
+  Rect? _moreAnchor;
+
   IssueComment get _c => widget.comment;
   CommentInteractions get _x => widget.interactions;
 
@@ -279,7 +295,13 @@ class _CommentActionsState extends State<_CommentActions> {
           triggerBuilder: (context, toggle) => _ActionButton(
             icon: LucideIcons.chevronDown,
             tooltip: context.t('comments.more'),
-            onTap: toggle,
+            onTap: () {
+              final box = context.findRenderObject() as RenderBox?;
+              if (box != null && box.hasSize) {
+                _moreAnchor = box.localToGlobal(Offset.zero) & box.size;
+              }
+              toggle();
+            },
           ),
           contentBuilder: (context, close) =>
               _ContextMenuCard(rows: _menuRows(context, close)),
@@ -313,7 +335,8 @@ class _CommentActionsState extends State<_CommentActions> {
           context.t('comments.select'),
           () => run(() => _x.onEnterSelection(_c)),
         ),
-      if (widget.canManage && !isVoice)
+      // A removed comment cannot be edited; the server answers 409.
+      if (widget.canManage && !isVoice && !_c.isRemoved)
         _MenuRowData(
           LucideIcons.pencil,
           context.t('common.edit'),
@@ -339,6 +362,13 @@ class _CommentActionsState extends State<_CommentActions> {
           LucideIcons.userX,
           context.t('blocks.action'),
           () => run(() => _x.onBlockAuthor!(_c)),
+        ),
+      // Somebody else's comment that is still there (HIN-173).
+      if (!widget.canManage && _x.onReport != null && !_c.isRemoved)
+        _MenuRowData(
+          LucideIcons.flag,
+          context.t('moderation.report.action'),
+          () => run(() => _x.onReport!(_c, _moreAnchor)),
         ),
       if (widget.canManage)
         _MenuRowData(

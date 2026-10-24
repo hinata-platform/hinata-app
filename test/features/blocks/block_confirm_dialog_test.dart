@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart' show CupertinoSwitch;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/theme/app_colors.dart';
@@ -13,16 +14,17 @@ void main() {
   setUp(() => AppColors.brightness = Brightness.light);
 
   /// Opens the dialog from a button and hands back what it answered.
-  Future<List<bool?>> open(
+  Future<List<BlockChoice?>> open(
     WidgetTester tester,
     Future<void> Function() onConfirm, {
     double width = 1200,
     double textScale = 1,
+    bool offerReport = false,
   }) async {
     tester.view.physicalSize = Size(width, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
-    final answers = <bool?>[];
+    final answers = <BlockChoice?>[];
     await tester.pumpWidget(
       MaterialApp(
         builder: (context, child) => MediaQuery(
@@ -39,6 +41,7 @@ void main() {
                   context,
                   name: 'Jonas Becker',
                   onConfirm: onConfirm,
+                  offerReport: offerReport,
                 ),
               ),
               child: const Text('open'),
@@ -74,8 +77,32 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(blocked, 1);
-    expect(answers, [true]);
+    expect(answers, [(alsoReport: false)]);
     expect(find.text('blocks.confirm.title'), findsNothing);
+    // Not opened from a comment: nothing to report besides.
+    expect(find.text('blocks.alsoReport'), findsNothing);
+  });
+
+  testWidgets('from a comment it offers to report it too, switched on', (
+    tester,
+  ) async {
+    final answers = await open(tester, () async {}, offerReport: true);
+    expect(find.text('blocks.alsoReport'), findsOneWidget);
+
+    await tester.tap(find.text('blocks.confirm.button'));
+    await tester.pumpAndSettle();
+
+    expect(answers, [(alsoReport: true)]);
+  });
+
+  testWidgets('switched off, it only blocks', (tester) async {
+    final answers = await open(tester, () async {}, offerReport: true);
+    await tester.tap(find.byType(CupertinoSwitch));
+    await tester.pump();
+    await tester.tap(find.text('blocks.confirm.button'));
+    await tester.pumpAndSettle();
+
+    expect(answers, [(alsoReport: false)]);
   });
 
   testWidgets('cancelling blocks nobody', (tester) async {
