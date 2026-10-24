@@ -567,7 +567,7 @@ class _RuleField extends StatelessWidget {
   }
 }
 
-/// A house rule as the decision names it: Hausregel 2: Kein Herabsetzen anderer.
+/// A house rule as the decision names it: Hausregel 2: Niemanden herabsetzen.
 String ruleLabel(BuildContext context, HouseRule rule) => context.t(
   'moderation.decision.ruleLabel',
   variables: {'number': '${rule.number}', 'title': rule.title},
