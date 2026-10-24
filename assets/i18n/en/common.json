@@ -3749,7 +3749,8 @@
       "resultFound": "Found, but without effect: {{terms}}.",
       "resultException": "Exceptions apply: {{words}}.",
       "images": "Images and attachments are not checked. Reports cover those."
-    }
+    },
+    "connectContactMissing": "The terms of Hinata Connect ask for a contact for reports. Enter an email for reports under Moderation."
   },
   "audit": {
     "title": "Audit log",

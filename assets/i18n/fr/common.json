@@ -3749,7 +3749,8 @@
       "resultFound": "Trouvé, mais sans effet : {{terms}}.",
       "resultException": "Exceptions appliquées : {{words}}.",
       "images": "Les images et les pièces jointes ne sont pas vérifiées. Les signalements s'en chargent."
-    }
+    },
+    "connectContactMissing": "Les conditions de Hinata Connect demandent un contact pour les signalements. Indique un e-mail pour les signalements sous Modération."
   },
   "audit": {
     "title": "Journal d'audit",

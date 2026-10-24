@@ -3749,7 +3749,8 @@
       "resultFound": "見つかりましたが、影響はありません：{{terms}}。",
       "resultException": "例外が適用されました：{{words}}。",
       "images": "画像と添付ファイルはチェックされません。それらには報告機能があります。"
-    }
+    },
+    "connectContactMissing": "Hinata Connect の規約では、報告の連絡先が必要です。「モデレーション」で報告用メールアドレスを入力してください。"
   },
   "audit": {
     "title": "監査ログ",
