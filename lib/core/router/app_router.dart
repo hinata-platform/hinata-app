@@ -163,9 +163,10 @@ class BootGate {
     }
 
     // The app's own terms come before connecting and before signing in, once
-    // per device (HIN-175). Only for a device that is signed out for sure: one
-    // whose session is still being checked may well be signed in, and an
-    // existing session meets the terms at its next sign-in instead.
+    // per device (HIN-175). Not while the session is still being checked: it
+    // may well be signed in, and a session from before the terms counts as
+    // having agreed (AppStorage). One that a link signed in on a fresh device
+    // meets them right after (below).
     final termsDue = !appTermsAccepted && auth == AuthStatus.unauthenticated;
 
     /// [entry], or the terms first while they are due.
@@ -241,6 +242,14 @@ class BootGate {
       final login = pendingLogin ?? '/login';
       pendingLogin = null;
       return login;
+    }
+    // Signed in without the app's terms: an invitation, a reset, a verification
+    // or a sign-in by SSO passed the gate signed out and signed the person in
+    // on a fresh device. The terms first, then the house rules (HIN-175).
+    if (!appTermsAccepted) {
+      if (location == '/terms') return null;
+      parkIfDeepLink();
+      return '/terms';
     }
     // Signed in: the instance's house rules, whenever a version waits for this
     // person, before anything else and before the parked link (HIN-175).
@@ -320,8 +329,9 @@ GoRouter buildRouter({
         path: '/terms',
         builder: (context, _) => AppTermsScreen(
           storage: storage,
-          // Wherever the boot goes next: connecting, or signing in.
-          onDone: () => GoRouter.of(context).go('/login'),
+          // Wherever the boot goes next: connecting, signing in, the house
+          // rules, or the link that waited.
+          onDone: () => GoRouter.of(context).go('/dashboard'),
         ),
       ),
       GoRoute(path: '/rules', builder: (_, _) => const HouseRulesGateScreen()),
