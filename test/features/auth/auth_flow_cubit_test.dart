@@ -24,11 +24,11 @@ void main() {
       auth.answer<_Tokens>(member, tokens);
     }
 
-    expect(await cubit.exchangeSso('c1'), tokens);
+    expect(await cubit.exchangeSso('c1', 'v1'), tokens);
     expect(await cubit.acceptInvite('t1', 'pw1'), tokens);
     expect(await cubit.acceptPasswordReset('t2', 'pw2'), tokens);
     expect(auth.calls.map((c) => c.positionalArguments), [
-      ['c1'],
+      ['c1', 'v1'],
       ['t1', 'pw1'],
       ['t2', 'pw2'],
     ]);
@@ -89,6 +89,6 @@ void main() {
   test('a refused redemption comes back as the same failure', () async {
     auth.fail(#exchangeSso, failure);
 
-    await expectLater(cubit.exchangeSso('c1'), throwsA(same(failure)));
+    await expectLater(cubit.exchangeSso('c1', 'v1'), throwsA(same(failure)));
   });
 }

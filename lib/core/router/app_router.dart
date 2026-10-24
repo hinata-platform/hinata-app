@@ -148,6 +148,7 @@ class BootGate {
     required bool onboardingDone,
     bool appTermsAccepted = true,
     bool rulesPending = false,
+    bool ssoPending = false,
   }) {
     // Remember a real (non-gate) destination that we're about to bounce off a
     // gate, so we can return to it once the app is ready + authenticated.
@@ -177,13 +178,20 @@ class BootGate {
       return target;
     }
 
-    // The SSO callback carries a one-time token pair in its query string.
-    // On a web login the whole app reloads at this URL, so AppConfig is still
+    // The SSO callback carries a one-time code in its query string. On a web
+    // login the whole app reloads at this URL, so AppConfig is still
     // (re)connecting — without this guard the config switch below would bounce
-    // us to /connect and discard the tokens before SsoCallbackScreen reads
-    // them. Hold the route until the tokens have signed the user in.
+    // us to /connect and discard the code before SsoCallbackScreen reads it.
+    // Hold the route until the code has signed the user in.
+    //
+    // Only for a sign-in this device started ([ssoPending]), and while the
+    // tokens it redeemed sign the person in. Any page can link here, and a
+    // callback nobody here asked for carries somebody else's sign-in: it goes
+    // where the app would have gone without it.
     if (location == '/auth-callback' && auth != AuthStatus.authenticated) {
-      return null;
+      return ssoPending || auth == AuthStatus.authenticating
+          ? null
+          : '/dashboard';
     }
 
     // The invite + password-reset deep links are self-contained public flows
@@ -225,14 +233,8 @@ class BootGate {
       return '/onboarding';
     }
     if (auth != AuthStatus.authenticated) {
-      // /auth-callback carries the SSO token pair and signs the user in;
       // /register + /forgot-password are the public logged-out auth flows.
-      const allowed = {
-        '/login',
-        '/auth-callback',
-        '/register',
-        '/forgot-password',
-      };
+      const allowed = {'/login', '/register', '/forgot-password'};
       if (termsDue) return toEntry('/login');
       if (allowed.contains(location)) {
         if (location == '/login' && uri == pendingLogin) pendingLogin = null;
@@ -298,6 +300,7 @@ GoRouter buildRouter({
       onboardingDone: storage.onboardingDone,
       appTermsAccepted: storage.appTermsAccepted,
       rulesPending: auth.state.user?.rulesPending ?? false,
+      ssoPending: storage.pendingSsoVerifier() != null,
     ),
     // A path that matches nothing used to render an empty page under the brand
     // mark, which reads as a broken app rather than a bad link.
@@ -372,11 +375,8 @@ GoRouter buildRouter({
         path: '/auth-callback',
         builder: (_, state) => SsoCallbackScreen(
           // A single-use handoff code, redeemed for tokens via a POST — the
-          // bearer tokens are never carried in the URL. `access_token`/
-          // `refresh_token` are still read as a fallback for older redirects.
+          // bearer tokens are never carried in the URL.
           code: state.uri.queryParameters['code'],
-          accessToken: state.uri.queryParameters['access_token'],
-          refreshToken: state.uri.queryParameters['refresh_token'],
           error: state.uri.queryParameters['error'],
         ),
       ),

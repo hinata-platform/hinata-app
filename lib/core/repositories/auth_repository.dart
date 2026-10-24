@@ -39,11 +39,18 @@ class AuthRepository {
           .toList();
 
   /// Redeems the single-use SSO handoff [code] delivered to `/auth-callback`
-  /// for the real token pair. The tokens travel only in this POST response body
-  /// over TLS — never in a URL — so they can't leak into history/proxy logs.
-  Future<({String access, String refresh})> exchangeSso(String code) async {
+  /// for the real token pair, with the [verifier] whose challenge started the
+  /// sign-in. The tokens travel only in this POST response body over TLS —
+  /// never in a URL — so they can't leak into history/proxy logs.
+  Future<({String access, String refresh})> exchangeSso(
+    String code,
+    String verifier,
+  ) async {
     final data =
-        await _api.post('/api/v1/auth/sso/exchange', body: {'code': code})
+        await _api.post(
+              '/api/v1/auth/sso/exchange',
+              body: {'code': code, 'verifier': verifier},
+            )
             as Map<String, dynamic>;
     return (
       access: data['accessToken'] as String,

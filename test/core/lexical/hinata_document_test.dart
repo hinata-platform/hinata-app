@@ -437,6 +437,25 @@ void main() {
       expect(hinataLinkTarget('   ', resolvesRelative: true), isNull);
     });
 
+    test('in a browser a path that signs a person in does not open', () {
+      // Any document can link to these, and they act on what the address
+      // carries: a code or token from somebody else's sign-in or account.
+      for (final url in [
+        '/auth-callback?code=c1',
+        '/auth-callback/?code=c1',
+        '/./auth-callback?code=c1',
+        '/invite?token=t1',
+        '/reset-password?token=t1',
+        '/verify-email?token=t1',
+      ]) {
+        expect(
+          hinataLinkTarget(url, resolvesRelative: true),
+          isNull,
+          reason: url,
+        );
+      }
+    });
+
     testWidgets('a document with no host callback still reacts to a tap', (
       tester,
     ) async {
