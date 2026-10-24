@@ -13,6 +13,7 @@ import '../../../core/theme/hue_colors.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/hive_widgets.dart';
+import '../../moderation/house_rules_sheet.dart' show moderationDay;
 import '../../sprint/modals/glass_modal.dart';
 import '../admin_form_helpers.dart';
 import 'ingest_connection_editor.dart';
@@ -431,6 +432,25 @@ class _ConnectionTile extends StatelessWidget {
                           ? colorFromHex(project!.color)
                           : null,
                     ),
+                    // Mails the text check refused (HIN-176): nothing of them
+                    // is kept, so the count is all an administrator can see.
+                    if (connection.textRefusals > 0)
+                      _MetaChip(
+                        icon: LucideIcons.shieldAlert,
+                        text: context.t(
+                          connection.lastTextRefusalAt == null
+                              ? 'admin.ingest.textRefusals'
+                              : 'admin.ingest.textRefusalsSince',
+                          count: connection.textRefusals,
+                          variables: {
+                            if (connection.lastTextRefusalAt != null)
+                              'date': moderationDay(
+                                context,
+                                connection.lastTextRefusalAt!,
+                              ),
+                          },
+                        ),
+                      ),
                   ],
                 ),
               ],
