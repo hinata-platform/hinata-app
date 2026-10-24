@@ -1,5 +1,7 @@
 import 'package:equatable/equatable.dart';
 
+import '../api/api_client.dart' show ApiFailure;
+
 import '../util/dates.dart';
 
 /// How an instance words its house rules (HIN-175): the text the server ships
@@ -418,6 +420,7 @@ class Statement extends Equatable {
     this.measure = '',
     this.scope,
     this.until,
+    this.suspends = false,
     this.basis,
     this.facts,
     this.automatedDetection = false,
@@ -442,6 +445,11 @@ class Statement extends Equatable {
 
   /// When a suspension ends; none for none, or for one without an end.
   final DateTime? until;
+
+  /// Whether the decision suspended the account, as the server says it: the
+  /// suspension decided, however it stands now, and not a guess from [until],
+  /// which is empty for one without an end and for one that ended.
+  final bool suspends;
 
   /// What led to it, and what moderation found.
   final String? basis;
@@ -474,9 +482,6 @@ class Statement extends Equatable {
   /// What moderation wrote to the person, if anything.
   final String? messageToAuthor;
 
-  /// Whether the decision suspended the account rather than removed content.
-  bool get suspends => scope == null || until != null;
-
   /// This statement with the words a moderator is still typing put in: the
   /// preview while deciding follows every keystroke without asking the server
   /// for each (HIN-174).
@@ -490,6 +495,7 @@ class Statement extends Equatable {
     measure: measure,
     scope: scope,
     until: until,
+    suspends: suspends,
     basis: basis,
     facts: facts,
     automatedDetection: automatedDetection,
@@ -511,6 +517,7 @@ class Statement extends Equatable {
     measure: json['measure'] as String? ?? '',
     scope: RemovalScope.of(json['scope']),
     until: parseInstant(json['until']),
+    suspends: json['suspension'] != null,
     basis: json['basis'] as String?,
     facts: json['facts'] as String?,
     automatedDetection: json['automatedDetection'] as bool? ?? false,
@@ -533,6 +540,7 @@ class Statement extends Equatable {
     measure,
     scope,
     until,
+    suspends,
     basis,
     facts,
     automatedDetection,
@@ -548,3 +556,61 @@ class Statement extends Equatable {
     messageToAuthor,
   ];
 }
+
+/// What the server's text check refused (HIN-176), read off a failed save by
+/// `details.code`, never by the status alone: a 422 means other things too.
+class ContentRefusal extends Equatable {
+  const ContentRefusal(this.terms);
+
+  /// The words refused, as the author wrote them; the author may see them.
+  final List<String> terms;
+
+  static const code = 'error.moderation.refused';
+
+  /// The refusal in [error], if it is one.
+  static ContentRefusal? of(Object? error) {
+    if (error is! ApiFailure || error.details['code'] != code) return null;
+    final terms = (error.details['terms'] ?? '')
+        .split(',')
+        .map((term) => term.trim())
+        .where((term) => term.isNotEmpty)
+        .toList();
+    return ContentRefusal(terms);
+  }
+
+  @override
+  List<Object?> get props => [terms];
+}
+
+/// A save that would open a way in without approval, refused until the
+/// administrator confirmed what that makes of the instance (HIN-175): which
+/// ways.
+class OpenAccessRefusal extends Equatable {
+  const OpenAccessRefusal(this.ways);
+
+  /// As the server names them: `registration`, `oidc` and so on.
+  final List<String> ways;
+
+  static const code = 'error.moderation.openAccessUnconfirmed';
+
+  /// The refusal in [failure], if it is one.
+  static OpenAccessRefusal? of(ApiFailure failure) =>
+      failure.statusCode == 409 && failure.details['code'] == code
+      ? OpenAccessRefusal(
+          (failure.details['ways'] ?? '')
+              .split(',')
+              .where((way) => way.isNotEmpty)
+              .toList(),
+        )
+      : null;
+
+  @override
+  List<Object?> get props => [ways];
+}
+
+/// Whether [failure] refused a save that would put texts before moderation,
+/// until the administrator confirmed that the works council was involved and
+/// the impact assessment done (HIN-176).
+bool flagConfirmRequired(ApiFailure failure) =>
+    failure.statusCode == 409 &&
+    failure.details['code'] == 'error.moderation.flagUnconfirmed';

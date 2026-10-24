@@ -60,7 +60,10 @@ void main() {
         ApiFailure(
           'Not allowed here',
           statusCode: 422,
-          details: const {'code': 'moderation.refused', 'terms': 'Spoiler'},
+          details: const {
+            'code': 'error.moderation.refused',
+            'terms': 'Spoiler',
+          },
         ),
       );
     final cubit = AccountCubit(account);
