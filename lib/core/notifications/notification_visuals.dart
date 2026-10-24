@@ -56,6 +56,11 @@ import '../theme/app_colors.dart';
     LucideIcons.calendarClock,
     AppColors.accentTeal,
   ),
+  // Moderation, for members (HIN-173): a report looked at, a notice about
+  // their own content, and a change to that notice.
+  'MODERATION_DECISION' => (LucideIcons.circleCheck, AppColors.inkSoft),
+  'MODERATION_NOTICE' => (LucideIcons.shieldAlert, AppColors.accentInk),
+  'MODERATION_NOTICE_UPDATED' => (LucideIcons.rotateCcw, AppColors.accentInk),
   _ => (LucideIcons.bell, AppColors.inkSoft),
 };
 
