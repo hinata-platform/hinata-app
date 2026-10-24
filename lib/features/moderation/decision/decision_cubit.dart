@@ -9,7 +9,7 @@ import '../../../core/models/moderation_models.dart';
 import '../../../core/models/person_profile.dart';
 import '../../../core/repositories/moderation_repository.dart';
 import '../../../core/repositories/user_repository.dart';
-import '../case/case_detail_cubit.dart' show movedMeanwhile;
+import '../case/case_detail_cubit.dart' show CaseNotice, movedMeanwhile;
 
 /// What still keeps a decision from going out, each said beside its field.
 enum DecisionProblem { outcome, measure, scope, reference, facts, suspension }
@@ -107,7 +107,7 @@ class DecisionState extends Equatable {
   final String? errorKey;
 
   /// Set once the dialog is done: what to tell the reader on the case.
-  final String? closedWith;
+  final CaseNotice? closedWith;
 
   bool get acting => outcome == CaseOutcome.action;
 
@@ -162,7 +162,7 @@ class DecisionState extends Equatable {
     bool? sending,
     bool? showProblems,
     String? errorKey,
-    String? closedWith,
+    CaseNotice? closedWith,
   }) => DecisionState(
     outcome: outcome ?? this.outcome,
     remove: remove ?? this.remove,
@@ -529,7 +529,10 @@ class DecisionCubit extends Cubit<DecisionState> {
       await _moderation.decide(detail.id, _draft(preview: false));
       if (isClosed) return;
       emit(
-        state.copyWith(sending: false, closedWith: 'moderation.decision.sent'),
+        state.copyWith(
+          sending: false,
+          closedWith: const CaseNotice('moderation.decision.sent'),
+        ),
       );
     } on ApiFailure catch (failure) {
       if (isClosed) return;
