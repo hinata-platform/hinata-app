@@ -35,6 +35,8 @@ dependencies:
   # Consumed solely by sse_transport_web.dart; native uses dio.
   fetch_client: ^1.1.2
   http: ^1.2.0
+  # SHA-256 for the challenge that binds an SSO sign-in to this device.
+  crypto: ^3.0.7
   shared_preferences: ^2.3.0
   flutter_secure_storage: ^10.3.1
   path_provider: ^2.1.0

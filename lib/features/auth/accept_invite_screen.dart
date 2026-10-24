@@ -136,18 +136,14 @@ class _AcceptInviteScreenState extends State<_AcceptInviteScreenBody> {
   }
 
   Future<void> _joinWithSso(SsoProvider provider) async {
-    final serverUrl = context.read<AuthBloc>().storage.serverUrl ?? '';
+    final storage = context.read<AuthBloc>().storage;
     setState(() => _launchingSsoId = provider.id);
     try {
       // As on the login screen: let the loader reach the screen before the
       // web app hands this tab to the provider.
       await Future<void>.delayed(const Duration(milliseconds: 150));
       if (!mounted) return;
-      final launched = await launchSso(
-        serverUrl,
-        provider,
-        invite: widget.token,
-      );
+      final launched = await launchSso(storage, provider, invite: widget.token);
       if (!mounted) return;
       // On the web a launched sign-in has left this page; anywhere else the
       // browser took over, and the buttons come back for a retry.

@@ -279,13 +279,31 @@ Future<void> openHinataLink(String url) async {
 /// `/Windows/System32/calc.exe` as a program to run. So there it opens
 /// nothing, though [isSafeUrl] lets it through. [resolvesRelative] is whether
 /// this runs in a browser.
+///
+/// Nor does a path that signs a person in or acts on their account from what
+/// the address carries ([_signInPaths]): in a document, the code or token in
+/// it is somebody else's.
 Uri? hinataLinkTarget(String url, {bool resolvesRelative = kIsWeb}) {
   final trimmed = url.trim();
   if (trimmed.isEmpty || !isSafeUrl(trimmed)) return null;
   final uri = Uri.tryParse(trimmed);
   if (uri == null) return null;
-  return uri.hasScheme || resolvesRelative ? uri : null;
+  if (uri.hasScheme) return uri;
+  if (!resolvesRelative) return null;
+  final path = uri.normalizePath().path;
+  final bare = path.length > 1 && path.endsWith('/')
+      ? path.substring(0, path.length - 1)
+      : path;
+  return _signInPaths.contains(bare) ? null : uri;
 }
+
+/// The app's paths that act on the code or token in their address.
+const _signInPaths = {
+  '/auth-callback',
+  '/invite',
+  '/reset-password',
+  '/verify-email',
+};
 
 /// The resolver a surface uses, given the API client it can reach.
 ///
