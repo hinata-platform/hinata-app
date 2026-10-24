@@ -194,19 +194,19 @@ RELEASE_NOTES = {
 • Flüssigere Glaseffekte und mehrere kleinere Korrekturen""",
 }
 
-# Apple App Review information. The sign-in accounts (a member and a moderator)
-# never live here: the repository is public. The release lanes read them from
-# the APP_REVIEW_* secrets and add the moderator to these notes on upload.
+# Apple App Review information. The review server, the phone number and the
+# sign-in accounts (a member and a moderator) never live here: the repository
+# is public. The release lanes read them from the APP_REVIEW_* secrets, put the
+# server into these notes and add the moderator on upload.
 REVIEW = {
     "first_name": "Rebar",
     "last_name": "Ahmad",
     "email_address": "mail@ahmadre.com",
-    "phone_number": "***REMOVED***",   # TODO: real reachable number for review
     "notes": """Hinata is the app for a self-hosted Hinata server. It has no backend of its own, so it first asks which server to connect to.
 
 SIGNING IN
 1. On first launch the app asks you to agree to its terms of service: zero tolerance for objectionable content and for people who harass others. Tap "Agree and continue".
-2. On "Connect to your server", enter https://api.track.asta.hn and tap Connect.
+2. On "Connect to your server", enter {{REVIEW_SERVER}} and tap Connect.
 3. Sign in with the account in the Sign-In Information fields. It is a regular member of the demo organization.
 4. The server then asks you to agree to its house rules. They end with how reporting and moderation work.
 
@@ -288,7 +288,7 @@ def apple(base: str, platform: str):
         w(f"{md}/{loc}/privacy_url.txt", PRIVACY_URL)
     # App review information
     ri = f"{md}/review_information"
-    for k in ("first_name", "last_name", "email_address", "phone_number", "notes"):
+    for k in ("first_name", "last_name", "email_address", "notes"):
         w(f"{ri}/{k}.txt", REVIEW[k])
 
 

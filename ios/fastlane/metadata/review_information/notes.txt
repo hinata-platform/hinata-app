@@ -2,7 +2,7 @@ Hinata is the app for a self-hosted Hinata server. It has no backend of its own,
 
 SIGNING IN
 1. On first launch the app asks you to agree to its terms of service: zero tolerance for objectionable content and for people who harass others. Tap "Agree and continue".
-2. On "Connect to your server", enter https://api.track.asta.hn and tap Connect.
+2. On "Connect to your server", enter {{REVIEW_SERVER}} and tap Connect.
 3. Sign in with the account in the Sign-In Information fields. It is a regular member of the demo organization.
 4. The server then asks you to agree to its house rules. They end with how reporting and moderation work.
 
