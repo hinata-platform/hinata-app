@@ -22,7 +22,6 @@ import '../../../core/repositories/issue_repository.dart';
 import '../../../core/api/sse.dart';
 import '../../../core/api/sse_connection.dart';
 import '../../../core/blocs/app_config_bloc.dart';
-import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
 import '../../../core/models/moderation_models.dart';
@@ -640,12 +639,8 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   }
 
   /// Somebody else's file, on a server that knows reporting (HIN-173).
-  bool _reportable(IssueAttachment a) {
-    final me = context.read<AuthBloc?>()?.state.user?.id;
-    final moderated =
-        context.read<AppConfigBloc?>()?.state.meta?.supportsModeration ?? false;
-    return moderated && me != null && a.uploaderId != me && !a.isRemoved;
-  }
+  bool _reportable(IssueAttachment a) =>
+      canReport(context, authorId: a.uploaderId, removed: a.isRemoved);
 
   Future<void> _report(ViewerItem item, Rect? anchor) async {
     final match = _server.where((a) => a.id == item.id);

@@ -5,13 +5,15 @@ import '../../../core/api/api_client.dart';
 import '../../../core/models/moderation_models.dart';
 import '../../../core/repositories/moderation_repository.dart';
 
-/// Reporting one thing from the app (HIN-173): first the reason, then what
-/// moderation should know, then sending it.
+/// Reporting one thing from the app (HIN-173), or something without a menu of
+/// its own (HIN-175): first the reason, then what moderation should know, then
+/// sending it.
 class ReportState extends Equatable {
   const ReportState({
     this.category,
     this.previous,
     this.alsoBlock = false,
+    this.locationMissing = false,
     this.explanationMissing = false,
     this.sending = false,
     this.sent = false,
@@ -29,6 +31,9 @@ class ReportState extends Equatable {
   /// Whether the author is blocked with the report.
   final bool alsoBlock;
 
+  /// Something without a menu of its own needs to be said where it is.
+  final bool locationMissing;
+
   /// The reason needs an explanation the field does not hold yet.
   final bool explanationMissing;
 
@@ -45,6 +50,7 @@ class ReportState extends Equatable {
 
   ReportState copyWith({
     bool? alsoBlock,
+    bool? locationMissing,
     bool? explanationMissing,
     bool? sending,
     bool? sent,
@@ -54,6 +60,7 @@ class ReportState extends Equatable {
     category: category,
     previous: previous,
     alsoBlock: alsoBlock ?? this.alsoBlock,
+    locationMissing: locationMissing ?? this.locationMissing,
     explanationMissing: explanationMissing ?? this.explanationMissing,
     sending: sending ?? this.sending,
     sent: sent ?? this.sent,
@@ -66,6 +73,7 @@ class ReportState extends Equatable {
     category,
     previous,
     alsoBlock,
+    locationMissing,
     explanationMissing,
     sending,
     sent,
@@ -81,7 +89,8 @@ class ReportCubit extends Cubit<ReportState> {
 
   final ModerationRepository _moderation;
 
-  /// What is reported.
+  /// What is reported; [TargetRef.elsewhere] for something that has no menu
+  /// of its own, which the reader then says where it is.
   final TargetRef target;
 
   final DateTime Function() _now;
@@ -100,20 +109,32 @@ class ReportCubit extends Cubit<ReportState> {
 
   void setAlsoBlock(bool value) => emit(state.copyWith(alsoBlock: value));
 
-  /// Sends the report with [explanation]. Fails in the sheet, never after it
-  /// closed, and leaves the field as it is.
-  Future<void> send(String explanation) async {
+  /// Sends the report with [explanation], and [location] for something
+  /// without a menu of its own. Fails in the sheet, never after it closed, and
+  /// leaves the fields as they are.
+  Future<void> send(String explanation, {String location = ''}) async {
     final category = state.category;
     if (category == null || state.sending) return;
     final text = explanation.trim();
-    if (category.needsExplanation &&
-        text.length < ReportCategory.explanationMin) {
-      emit(state.copyWith(explanationMissing: true, errorKey: () => null));
+    final place = location.trim();
+    final locationMissing = target.kind == ContentKind.other && place.isEmpty;
+    final explanationMissing =
+        category.needsExplanation &&
+        text.length < ReportCategory.explanationMin;
+    if (locationMissing || explanationMissing) {
+      emit(
+        state.copyWith(
+          locationMissing: locationMissing,
+          explanationMissing: explanationMissing,
+          errorKey: () => null,
+        ),
+      );
       return;
     }
     emit(
       state.copyWith(
         sending: true,
+        locationMissing: false,
         explanationMissing: false,
         errorKey: () => null,
         retryAt: () => null,
@@ -125,6 +146,7 @@ class ReportCubit extends Cubit<ReportState> {
         category,
         explanation: text.isEmpty ? null : text,
         alsoBlock: state.alsoBlock,
+        location: place.isEmpty ? null : place,
       );
       emit(state.copyWith(sending: false, sent: true));
     } on ApiFailure catch (failure) {

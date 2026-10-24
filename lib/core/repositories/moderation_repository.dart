@@ -22,18 +22,21 @@ class ModerationRepository {
   ({String server, String locale, DateTime at, ModerationRules rules})? _rules;
 
   /// Reports [target] for [category]. With [alsoBlock] the author is blocked
-  /// in the same step. Nobody is told who reported.
+  /// in the same step; [location] is where something without a menu of its
+  /// own is ([TargetRef.elsewhere]). Nobody is told who reported.
   Future<void> report(
     TargetRef target,
     ReportCategory category, {
     String? explanation,
     bool alsoBlock = false,
+    String? location,
   }) => _api.post(
     '/api/v1/me/moderation/reports',
     body: {
       'target': target.toJson(),
       'category': category.wire,
       'explanation': ?explanation,
+      'location': ?location,
       if (alsoBlock) 'alsoBlock': true,
     },
   );

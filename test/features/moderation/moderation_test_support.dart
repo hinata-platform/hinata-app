@@ -7,6 +7,7 @@ import 'package:hinata/core/models/core_models.dart';
 import 'package:hinata/core/repositories/account_repository.dart';
 import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
+import 'package:hinata/core/repositories/moderation_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
 
 /// A phone at 390 points, with the text as large as a person may set it.
@@ -17,17 +18,24 @@ void onPhone(WidgetTester tester) {
   addTearDown(tester.view.reset);
 }
 
-/// [child] in an app with the blocs and the account repository the
-/// moderation screens read, at text scale [textScale].
+/// [child] in an app with the blocs and the repositories the moderation
+/// screens read, at text scale [textScale].
 Widget moderationApp({
   required Widget child,
   required AccountRepository account,
+  ModerationRepository? moderationRepository,
   AuthBloc? auth,
   ModerationMeta moderation = const ModerationMeta(version: 1),
   String? organizationName = 'Werkhaus',
   double textScale = 2.0,
-}) => RepositoryProvider<AccountRepository>.value(
-  value: account,
+}) => MultiRepositoryProvider(
+  providers: [
+    RepositoryProvider<AccountRepository>.value(value: account),
+    if (moderationRepository != null)
+      RepositoryProvider<ModerationRepository>.value(
+        value: moderationRepository,
+      ),
+  ],
   child: MultiBlocProvider(
     providers: [
       BlocProvider<AppConfigBloc>.value(
@@ -72,11 +80,20 @@ class FixedAppConfig extends AppConfigBloc {
   AppConfigState get state => _fixed;
 }
 
-/// An auth bloc that keeps what it is asked to do instead of doing it.
+/// An auth bloc that keeps what it is asked to do instead of doing it, with
+/// [user] signed in when given.
 class RecordingAuth extends AuthBloc {
-  RecordingAuth() : super(repository: _UnusedAuth(), storage: _UnusedStorage());
+  RecordingAuth({this.user})
+    : super(repository: _UnusedAuth(), storage: _UnusedStorage());
+
+  final AuthUser? user;
 
   final List<AuthEvent> events = [];
+
+  @override
+  AuthState get state => user == null
+      ? super.state
+      : AuthState(status: AuthStatus.authenticated, user: user);
 
   @override
   void add(AuthEvent event) => events.add(event);
