@@ -235,10 +235,12 @@ class DecisionCubit extends Cubit<DecisionState> {
     this._users, {
     required this.detail,
     bool suspendPerson = false,
+    String facts = '',
   }) : super(
          DecisionState(
            outcome: suspendPerson ? CaseOutcome.action : null,
            suspend: suspendPerson,
+           facts: facts,
            responsibleId: detail.evidence?.suggestedResponsible,
          ),
        );
