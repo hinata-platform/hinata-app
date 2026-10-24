@@ -2296,7 +2296,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   // A title the moderation removed reads as its placeholder,
                   // quiet and with the glyph (HIN-173).
                   child: issue.isRemoved('title')
-                      ? _RemovedTitle(text: issue.title, style: titleStyle)
+                      ? RemovedTitle(text: issue.title, style: titleStyle)
                       : Text(issue.title, style: titleStyle),
                 ),
               ),

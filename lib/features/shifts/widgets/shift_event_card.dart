@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/shift_models.dart';
+import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/soft_card.dart';
@@ -36,7 +37,7 @@ class ShiftEventCard extends StatelessWidget {
       recurrenceLabel: event.recurrenceLabel,
       detached: event.detached,
     );
-    final large = MediaQuery.textScalerOf(context).scale(10) >= 15;
+    final large = context.largeText;
     final card = SoftCard(
       padding: const EdgeInsets.all(16),
       onTap: onTap,

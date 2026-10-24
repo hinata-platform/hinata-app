@@ -170,6 +170,10 @@ extension ResponsiveContext on BuildContext {
   bool get isCompact => layoutSize == LayoutSize.compact;
   bool get isExpanded => layoutSize == LayoutSize.expanded;
 
+  /// Whether the reader set their text half again as large or larger: the
+  /// size from which parts laid side by side stack instead.
+  bool get largeText => MediaQuery.textScalerOf(this).scale(10) >= 15;
+
   /// Page gutter that grows with the golden ratio between sizes.
   double get pageGutter => switch (layoutSize) {
     LayoutSize.compact => 16,
