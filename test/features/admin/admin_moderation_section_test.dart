@@ -255,9 +255,32 @@ void main() {
     expect(rules['text'], '# Unsere Regeln');
   });
 
-  testWidgets('the house rules switcher is as wide as its choices', (
-    tester,
-  ) async {
+  testWidgets('how long cases are kept writes into the draft, six months '
+      'until somebody chooses', (tester) async {
+    final settings = <String, dynamic>{'moderation': <String, dynamic>{}};
+    await pump(tester, moderators: [], settings: settings);
+
+    final chips = find.byWidgetPredicate(
+      (widget) =>
+          widget is GlassSwitchChip &&
+          widget.label == 'admin.moderation.retentionMonths',
+    );
+    expect(chips, findsNWidgets(2));
+    expect(tester.widget<GlassSwitchChip>(chips.first).active, isTrue);
+    // Looking writes nothing: the server keeps its own value.
+    expect(
+      (settings['moderation'] as Map).containsKey('retentionMonths'),
+      isFalse,
+    );
+
+    await tester.ensureVisible(chips.last);
+    await tester.tap(chips.last);
+    await tester.pumpAndSettle();
+    expect((settings['moderation'] as Map)['retentionMonths'], 12);
+  });
+
+  testWidgets('every switcher is as wide as its choices: the house rules '
+      'and how long cases are kept', (tester) async {
     // Room enough for the raw keys in the test font, so nothing scrolls.
     tester.view
       ..physicalSize = const Size(2400, 1600)
@@ -265,13 +288,22 @@ void main() {
     addTearDown(tester.view.reset);
     await pump(tester, moderators: []);
 
-    final bar = tester.getSize(find.byType(GlassSwitchBar)).width;
-    final chips = tester
-        .widgetList<GlassSwitchChip>(find.byType(GlassSwitchChip))
-        .map((chip) => tester.getSize(find.byWidget(chip)).width)
-        .fold<double>(0, (sum, width) => sum + width);
-
-    expect(bar, closeTo(chips + GlassSwitchBar.inset, 0.5));
+    final bars = find.byType(GlassSwitchBar);
+    expect(bars, findsNWidgets(2));
+    for (final bar in bars.evaluate()) {
+      final chips = find.descendant(
+        of: find.byWidget(bar.widget),
+        matching: find.byType(GlassSwitchChip),
+      );
+      final width = tester
+          .widgetList<GlassSwitchChip>(chips)
+          .map((chip) => tester.getSize(find.byWidget(chip)).width)
+          .fold<double>(0, (sum, width) => sum + width);
+      expect(
+        tester.getSize(find.byWidget(bar.widget)).width,
+        closeTo(width + GlassSwitchBar.inset, 0.5),
+      );
+    }
   });
 
   testWidgets('asking everybody to agree again takes a confirmation', (
