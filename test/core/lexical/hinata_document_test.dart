@@ -404,19 +404,37 @@ void main() {
   });
 
   group('links', () {
-    test('only an address with a scheme reaches the platform', () {
+    test('outside a browser only an address with a scheme reaches the '
+        'platform', () {
       expect(
-        hinataLinkTarget(' https://example.org/a '),
+        hinataLinkTarget(' https://example.org/a ', resolvesRelative: false),
         Uri.parse('https://example.org/a'),
       );
-      expect(hinataLinkTarget('mailto:team@example.org'), isNotNull);
-      // A relative address has no base to resolve against here; a Windows
-      // shell would take the bare string as a program or as SMB.
-      expect(hinataLinkTarget('/Windows/System32/calc.exe'), isNull);
-      expect(hinataLinkTarget('//evil.example/share'), isNull);
-      expect(hinataLinkTarget(r'\\evil.example\share'), isNull);
-      expect(hinataLinkTarget('javascript:alert(1)'), isNull);
-      expect(hinataLinkTarget('   '), isNull);
+      expect(
+        hinataLinkTarget('mailto:team@example.org', resolvesRelative: false),
+        isNotNull,
+      );
+      // No base to resolve against: a Windows shell would take the bare
+      // string as a program, or as SMB.
+      for (final url in [
+        '/Windows/System32/calc.exe',
+        '//evil.example/share',
+        r'\\evil.example\share',
+      ]) {
+        expect(hinataLinkTarget(url, resolvesRelative: false), isNull);
+      }
+    });
+
+    test('in a browser a path of the app opens, a script never', () {
+      expect(
+        hinataLinkTarget('/issues/ACME-1', resolvesRelative: true),
+        Uri.parse('/issues/ACME-1'),
+      );
+      expect(
+        hinataLinkTarget('javascript:alert(1)', resolvesRelative: true),
+        isNull,
+      );
+      expect(hinataLinkTarget('   ', resolvesRelative: true), isNull);
     });
 
     testWidgets('a document with no host callback still reacts to a tap', (
