@@ -10,14 +10,8 @@ import '../../core/repositories/account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
 import '../sprint/modals/glass_modal.dart';
+import 'report/report_reasons.dart';
 import 'report_elsewhere_cubit.dart';
-
-/// The words of [category] in the reason list, as `moderation.category.*`.
-String reportCategoryTitle(BuildContext context, ReportCategory category) =>
-    context.t('moderation.category.${category.name}');
-
-String reportCategoryHint(BuildContext context, ReportCategory category) =>
-    context.t('moderation.category.${category.name}Hint');
 
 /// "Report something else …" from Settings › Help and contact (HIN-175): for
 /// what has no menu of its own, a project's name, a board, a team. First the
@@ -100,7 +94,7 @@ class _ReportElsewhereBodyState extends State<_ReportElsewhereBody> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                   child: category == null
-                      ? _Reasons(
+                      ? ReportReasons(
                           onChoose: context.read<ReportElsewhereCubit>().choose,
                         )
                       : _Details(
@@ -127,100 +121,6 @@ class _ReportElsewhereBodyState extends State<_ReportElsewhereBody> {
           );
         },
       );
-}
-
-/// The first step: why. Threats and the safety of children are looked at
-/// first, and the row says so with a glyph.
-class _Reasons extends StatelessWidget {
-  const _Reasons({required this.onChoose});
-
-  final ValueChanged<ReportCategory> onChoose;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      for (final category in ReportCategory.values)
-        _ReasonRow(
-          title: reportCategoryTitle(context, category),
-          hint: reportCategoryHint(context, category),
-          urgent: category.urgent,
-          onTap: () => onChoose(category),
-        ),
-    ],
-  );
-}
-
-class _ReasonRow extends StatelessWidget {
-  const _ReasonRow({
-    required this.title,
-    required this.hint,
-    required this.onTap,
-    this.urgent = false,
-    this.chosen = false,
-  });
-
-  final String title;
-  final String hint;
-  final VoidCallback onTap;
-  final bool urgent;
-  final bool chosen;
-
-  @override
-  Widget build(BuildContext context) => Semantics(
-    button: true,
-    selected: chosen,
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 56),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-        decoration: BoxDecoration(
-          color: chosen ? AppColors.accentSoft : null,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: AppType.body,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.ink,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    hint,
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 10),
-            if (urgent)
-              Padding(
-                padding: const EdgeInsetsDirectional.only(end: 8),
-                child: Icon(
-                  LucideIcons.siren,
-                  size: 16,
-                  color: AppColors.warningInk,
-                ),
-              ),
-            Icon(LucideIcons.chevronRight, size: 18, color: AppColors.inkFaint),
-          ],
-        ),
-      ),
-    ),
-  );
 }
 
 /// The second step: where it is, what moderation should know, and what
@@ -252,7 +152,7 @@ class _Details extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _ReasonRow(
+          ReportReasonRow(
             title: reportCategoryTitle(context, category),
             hint: context.t('moderation.report.change'),
             chosen: true,
@@ -265,6 +165,7 @@ class _Details extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 GlassField(
+                  wrapCaption: true,
                   label: context.t('moderation.report.location'),
                   child: TextFormField(
                     controller: location,
@@ -281,6 +182,7 @@ class _Details extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 GlassField(
+                  wrapCaption: true,
                   label: context.t(
                     required
                         ? 'moderation.report.explanationRequired'
