@@ -13,7 +13,6 @@ import '../../core/models/moderation_models.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
-import '../../core/widgets/content_refused_notice.dart';
 import '../../core/widgets/glass_filter_bar.dart'
     show GlassSearchButton, GlassSearchDock, kGlassControlHeight, kGlassDockRow;
 import '../../core/widgets/glass_popup_menu.dart';

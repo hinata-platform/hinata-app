@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/models/moderation_case_models.dart';
 import 'package:hinata/core/models/moderation_models.dart';
+import 'package:hinata/features/moderation/case/case_detail_cubit.dart'
+    show CaseNotice, movedMeanwhile;
 
 /// The names the moderation page sends and reads (HIN-174), kept in step with
 /// the server by hand: its `ModerationCaseContractTest` holds the very same
@@ -136,6 +139,42 @@ void main() {
       expect(detail(state: 'ACTED').sinceReport, isNull);
       expect(detail().removalIncomplete, isTrue);
     });
+  });
+
+  /// The server's `ModerationCaseContractTest` holds the very same list.
+  test('the refusals the app acts on are named by their keys', () {
+    const codes = [
+      'error.moderation.refused',
+      'error.moderation.tooManyReports',
+      'error.moderation.tooManyReveals',
+      'error.moderation.openAccessUnconfirmed',
+      'error.moderation.flagUnconfirmed',
+      'error.moderation.caseDecided',
+      'error.moderation.caseChanged',
+    ];
+    ApiFailure refusal(String code, [Map<String, String> more = const {}]) =>
+        ApiFailure('x', statusCode: 409, details: {'code': code, ...more});
+
+    expect(
+      ContentRefusal.of(refusal(codes[0], {'terms': 'Spoiler, Leak'})),
+      const ContentRefusal(['Spoiler', 'Leak']),
+    );
+    expect(
+      OpenAccessRefusal.of(refusal(codes[3], {'ways': 'registration,oidc'})),
+      const OpenAccessRefusal(['registration', 'oidc']),
+    );
+    expect(flagConfirmRequired(refusal(codes[4])), isTrue);
+    expect(
+      movedMeanwhile(refusal(codes[5])),
+      const CaseNotice('moderation.case.decidedMeanwhile', moved: true),
+    );
+    expect(
+      movedMeanwhile(refusal(codes[6])),
+      const CaseNotice('moderation.case.changedMeanwhile', moved: true),
+    );
+    // The codes before they were the keys are nothing any more.
+    expect(flagConfirmRequired(refusal('moderation.flagConfirm')), isFalse);
+    expect(movedMeanwhile(refusal('decided')), isNull);
   });
 
   test('a decision sends only what it says, trimmed', () {
