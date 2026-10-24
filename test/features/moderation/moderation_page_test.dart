@@ -26,6 +26,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../support/recording_fake.dart';
 import 'case_fixtures.dart';
+import 'moderation_test_support.dart';
 
 /// The moderation page (HIN-174): the lists, a case beside them or on its own
 /// page, and the decision. Nothing here asserts on translated copy: widget
@@ -70,7 +71,7 @@ void main() {
       RepositoryProvider<UserRepository>.value(value: users),
     ],
     child: BlocProvider<AuthBloc>(
-      create: (_) => _FakeAuthBloc(),
+      create: (_) => RecordingAuth(user: _sara),
       child: MaterialApp(
         builder: (context, app) => MediaQuery(
           data: MediaQuery.of(
@@ -238,7 +239,7 @@ void main() {
             RepositoryProvider<UserRepository>.value(value: users),
           ],
           child: BlocProvider<AuthBloc>(
-            create: (_) => _FakeAuthBloc(),
+            create: (_) => RecordingAuth(user: _sara),
             child: PageChromeScope(
               controller: chrome,
               child: MaterialApp.router(
@@ -623,22 +624,11 @@ void main() {
   });
 }
 
-class _FakeAuthBloc extends Bloc<AuthEvent, AuthState> implements AuthBloc {
-  _FakeAuthBloc()
-    : super(
-        const AuthState(
-          status: AuthStatus.authenticated,
-          user: AuthUser(
-            id: 'sara',
-            email: 'sara@example.org',
-            username: 'sara',
-            displayName: 'Sara Klein',
-            roles: {'USER', 'MODERATOR'},
-          ),
-        ),
-      );
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} is not faked');
-}
+/// The moderator reading the page.
+const _sara = AuthUser(
+  id: 'sara',
+  email: 'sara@example.org',
+  username: 'sara',
+  displayName: 'Sara Klein',
+  roles: {'USER', 'MODERATOR'},
+);

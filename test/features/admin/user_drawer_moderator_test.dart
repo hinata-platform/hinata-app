@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/models/admin_user_models.dart';
-import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/widgets/hive_widgets.dart' show HiveSwitch;
 import 'package:hinata/features/admin/users/user_management_modals.dart';
 import 'package:hinata/features/admin/users/user_management_widgets.dart';
+
+import '../../support/recording_fake.dart';
 
 /// The moderation role in user management (HIN-26): a switch in the drawer
 /// beside the organisation role, a badge in the row, and a question before it
@@ -31,7 +32,7 @@ void main() {
     sessions: 0,
   );
 
-  UserActions actions(_FakeAdminRepository repository) => UserActions(
+  UserActions actions(FakeAdminRepository repository) => UserActions(
     openDrawer: (_) {},
     openEdit: (_) {},
     activate: (_) {},
@@ -59,7 +60,7 @@ void main() {
     currentUserId: 'me',
   );
 
-  Widget host(AdminUser user, _FakeAdminRepository repository) => MaterialApp(
+  Widget host(AdminUser user, FakeAdminRepository repository) => MaterialApp(
     home: Scaffold(
       body: SizedBox(
         width: 440,
@@ -77,7 +78,7 @@ void main() {
   testWidgets(
     'the drawer names the role, and what it grants waits behind the "i"',
     (tester) async {
-      await tester.pumpWidget(host(user(), _FakeAdminRepository()));
+      await tester.pumpWidget(host(user(), _admin()));
       await tester.pumpAndSettle();
 
       expect(find.text('admin.um.moderatorTitle'), findsOneWidget);
@@ -97,7 +98,7 @@ void main() {
     tester,
   ) async {
     final semantics = tester.ensureSemantics();
-    await tester.pumpWidget(host(user(), _FakeAdminRepository()));
+    await tester.pumpWidget(host(user(), _admin()));
     await tester.pumpAndSettle();
 
     expect(
@@ -110,7 +111,7 @@ void main() {
   testWidgets('switching it on and off goes through the repository', (
     tester,
   ) async {
-    final repository = _FakeAdminRepository();
+    final repository = _admin();
     await tester.pumpWidget(host(user(), repository));
     await tester.pumpAndSettle();
 
@@ -122,17 +123,20 @@ void main() {
     await tester.pumpAndSettle();
 
     // Records compare lists by identity, so the halves are read apart.
-    expect(repository.calls.map((c) => c.$1), [
+    expect(repository.calls.map((c) => c.positionalArguments[0]), [
       ['u1'],
       ['u1'],
     ]);
-    expect(repository.calls.map((c) => c.$2), [true, false]);
+    expect(repository.calls.map((c) => c.positionalArguments[1]), [
+      true,
+      false,
+    ]);
   });
 
   testWidgets('a refused change, such as the last moderator, puts it back', (
     tester,
   ) async {
-    final repository = _FakeAdminRepository(fail: true);
+    final repository = _admin(fail: true);
     await tester.pumpWidget(host(user(moderator: true), repository));
     await tester.pumpAndSettle();
 
@@ -147,14 +151,12 @@ void main() {
   testWidgets('nobody switches it on their own row or for an open invitation', (
     tester,
   ) async {
-    await tester.pumpWidget(host(user(id: 'me'), _FakeAdminRepository()));
+    await tester.pumpWidget(host(user(id: 'me'), _admin()));
     await tester.pumpAndSettle();
     expect(tester.widget<HiveSwitch>(moderatorSwitch()).onChanged, isNull);
     expect(find.text('admin.um.reasonOwnModeratorRole'), findsOneWidget);
 
-    await tester.pumpWidget(
-      host(user(status: UserStatus.invited), _FakeAdminRepository()),
-    );
+    await tester.pumpWidget(host(user(status: UserStatus.invited), _admin()));
     await tester.pumpAndSettle();
     expect(tester.widget<HiveSwitch>(moderatorSwitch()).onChanged, isNull);
   });
@@ -240,19 +242,10 @@ void main() {
   });
 }
 
-class _FakeAdminRepository implements AdminRepository {
-  _FakeAdminRepository({this.fail = false});
-
-  final bool fail;
-  final List<(List<String>, bool)> calls = [];
-
-  @override
-  Future<void> adminSetModeratorRole(List<String> ids, bool moderator) async {
-    calls.add((ids, moderator));
-    if (fail) throw StateError('refused');
-  }
-
-  @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError(invocation.memberName.toString());
-}
+/// The admin calls the role switch makes, refused when [fail].
+FakeAdminRepository _admin({bool fail = false}) => FakeAdminRepository()
+  ..answerWith(
+    #adminSetModeratorRole,
+    (_) =>
+        fail ? Future<void>.error(StateError('refused')) : Future<void>.value(),
+  );
