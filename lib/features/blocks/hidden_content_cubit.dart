@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -71,7 +73,7 @@ class HiddenContentCubit extends Cubit<HiddenContentState> {
   HiddenContentCubit(
     this._account,
     this._moderation, {
-    required bool Function() enabled,
+    required FutureOr<bool> Function() enabled,
   }) : _enabled = enabled,
        super(const HiddenContentState());
 
@@ -79,8 +81,9 @@ class HiddenContentCubit extends Cubit<HiddenContentState> {
   final ModerationRepository _moderation;
 
   /// Whether the server knows blocking and reporting at all; an older one has
-  /// no route.
-  final bool Function() _enabled;
+  /// no route. Answered once the server has said so, which may be after the
+  /// sign-in.
+  final FutureOr<bool> Function() _enabled;
 
   /// Bumped by [reset], so an answer meant for an account that has left is
   /// dropped instead of folding the next account's comments.
@@ -90,8 +93,8 @@ class HiddenContentCubit extends Cubit<HiddenContentState> {
   /// nothing: a comment that shows when it should have folded is the lesser
   /// harm than a thread that cannot load, and the next sign-in asks again.
   Future<void> load() async {
-    if (!_enabled()) return;
     final session = _session;
+    if (!await _enabled() || isClosed || session != _session) return;
     await Future.wait([
       _read(
         _account.blockedIds,
