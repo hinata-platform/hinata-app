@@ -16,6 +16,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/util/dates.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/widgets/hive_loader.dart';
+import '../../../core/widgets/quiet_info_line.dart';
 import '../../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../../sprint/modals/glass_modal.dart';
 import '../case/case_detail_cubit.dart' show CaseNotice;
@@ -419,21 +420,21 @@ class _Measures extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            CaseInfoLine(
+            QuietInfoLine(
               icon: LucideIcons.logOut,
               text: context.t(
                 'moderation.decision.suspendSignOut',
                 variables: {'name': name},
               ),
             ),
-            CaseInfoLine(
+            QuietInfoLine(
               icon: LucideIcons.mail,
               text: context.t(
                 'moderation.decision.suspendMail',
                 variables: {'name': name},
               ),
             ),
-            CaseInfoLine(
+            QuietInfoLine(
               icon: LucideIcons.calendarClock,
               text: until == null
                   ? context.t('moderation.decision.suspendIndefinite')
@@ -443,7 +444,7 @@ class _Measures extends StatelessWidget {
                     ),
             ),
             if (state.needsSecondPerson)
-              CaseInfoLine(
+              QuietInfoLine(
                 icon: LucideIcons.usersRound,
                 text: context.t('moderation.decision.secondPerson'),
               ),
