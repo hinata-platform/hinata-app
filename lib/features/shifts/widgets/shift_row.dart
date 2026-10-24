@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/models/shift_models.dart';
+import '../../../core/responsive/responsive.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/app_type.dart';
@@ -81,7 +82,7 @@ class ShiftRow extends StatelessWidget {
     );
     // From one and a half times the text size the time column would squeeze
     // the title to a sliver; it moves above the title instead.
-    final large = MediaQuery.textScalerOf(context).scale(10) >= 15;
+    final large = context.largeText;
     final time = large
         ? Wrap(
             spacing: 8,

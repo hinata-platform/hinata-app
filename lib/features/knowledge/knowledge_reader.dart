@@ -65,6 +65,16 @@ class KnowledgeReader extends StatefulWidget {
 }
 
 class _KnowledgeReaderState extends State<KnowledgeReader> {
+  /// The article's title as the page heads it.
+  TextStyle get _titleStyle => TextStyle(
+    fontFamily: AppTheme.fontBrand,
+    fontSize: AppType.hero,
+    fontWeight: FontWeight.w800,
+    height: 1.15,
+    letterSpacing: -0.7,
+    color: AppColors.ink,
+  );
+
   /// Publishes the mounted blocks so the outline can scroll to one.
   final BlockRegistry _blocks = BlockRegistry();
 
@@ -209,42 +219,16 @@ class _KnowledgeReaderState extends State<KnowledgeReader> {
         const SizedBox(height: 12),
         Semantics(
           header: true,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // A title the moderation removed is its placeholder: quiet,
-              // italic and behind the glyph of every removal (HIN-173).
-              if (a.isRemoved('title')) ...[
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: ExcludeSemantics(
-                    child: Icon(
-                      LucideIcons.eyeOff,
-                      size: 24,
-                      color: AppColors.inkSoft,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-              ],
-              Expanded(
-                child: Text(
-                  a.title,
-                  style: TextStyle(
-                    fontFamily: AppTheme.fontBrand,
-                    fontSize: AppType.hero,
-                    fontWeight: FontWeight.w800,
-                    height: 1.15,
-                    letterSpacing: -0.7,
-                    fontStyle: a.isRemoved('title') ? FontStyle.italic : null,
-                    color: a.isRemoved('title')
-                        ? AppColors.inkSoft
-                        : AppColors.ink,
-                  ),
-                ),
-              ),
-            ],
-          ),
+          // A title the moderation removed is its placeholder: quiet, italic
+          // and behind the glyph of every removal (HIN-173).
+          child: a.isRemoved('title')
+              ? RemovedTitle(
+                  text: a.title,
+                  style: _titleStyle,
+                  glyphSize: 24,
+                  glyphTop: 8,
+                )
+              : Text(a.title, style: _titleStyle),
         ),
         const SizedBox(height: 14),
         Row(
