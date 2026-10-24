@@ -15,7 +15,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
 import '../../../core/widgets/soft_card.dart';
-import '../house_rules_sheet.dart' show openHouseRules;
+import '../house_rules_sheet.dart' show showHouseRulesSheet;
 import '../widgets/moderation_hex.dart';
 import '../widgets/statement_view.dart';
 import 'appeal_sheet.dart';
@@ -55,7 +55,7 @@ class NoticeView extends StatelessWidget {
           title: context.t('moderation.notice.goneTitle'),
           message: context.t('moderation.notice.goneMessage'),
           action: OutlinedButton(
-            onPressed: () => unawaited(openHouseRules(context)),
+            onPressed: () => unawaited(showHouseRulesSheet(context)),
             child: Text(context.t('moderation.notice.rules')),
           ),
         ),
@@ -75,7 +75,10 @@ class NoticeView extends StatelessWidget {
                 constraints: const BoxConstraints(maxWidth: _readingWidth),
                 child: SoftCard(
                   padding: EdgeInsets.all(context.isCompact ? 18 : 24),
-                  child: _Notice(statement: statement),
+                  child: _Notice(
+                    statement: statement,
+                    rulesPage: state.rulesPage,
+                  ),
                 ),
               ),
             ),
@@ -88,14 +91,15 @@ class NoticeView extends StatelessWidget {
 }
 
 class _Notice extends StatelessWidget {
-  const _Notice({required this.statement});
+  const _Notice({required this.statement, required this.rulesPage});
 
   final Statement statement;
+  final Uri? rulesPage;
 
   @override
   Widget build(BuildContext context) {
     final s = statement;
-    final rules = s.rulesUrl;
+    final rules = rulesPage;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -109,13 +113,10 @@ class _Notice extends StatelessWidget {
           overflowSpacing: 8,
           overflowAlignment: OverflowBarAlignment.end,
           children: [
-            if (rules != null && rules.isNotEmpty)
+            if (rules != null)
               OutlinedButton(
                 onPressed: () => unawaited(
-                  launchUrl(
-                    context.read<ModerationRepository>().page(rules),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  launchUrl(rules, mode: LaunchMode.externalApplication),
                 ),
                 child: Text(context.t('moderation.notice.rules')),
               ),

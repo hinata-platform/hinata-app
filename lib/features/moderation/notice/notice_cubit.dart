@@ -13,6 +13,7 @@ class NoticeState extends Equatable {
   const NoticeState({
     this.status = NoticeStatus.loading,
     this.statement,
+    this.rulesPage,
     this.errorKey,
     this.appealing = false,
     this.appealErrorKey,
@@ -20,6 +21,10 @@ class NoticeState extends Equatable {
 
   final NoticeStatus status;
   final Statement? statement;
+
+  /// The house rules as they read when it was decided, as a page of the
+  /// server; null when the statement names none.
+  final Uri? rulesPage;
 
   /// Why the notice could not be read.
   final String? errorKey;
@@ -32,12 +37,14 @@ class NoticeState extends Equatable {
   NoticeState copyWith({
     NoticeStatus? status,
     Statement? statement,
+    Uri? rulesPage,
     String? Function()? errorKey,
     bool? appealing,
     String? Function()? appealErrorKey,
   }) => NoticeState(
     status: status ?? this.status,
     statement: statement ?? this.statement,
+    rulesPage: rulesPage ?? this.rulesPage,
     errorKey: errorKey == null ? this.errorKey : errorKey(),
     appealing: appealing ?? this.appealing,
     appealErrorKey: appealErrorKey == null
@@ -49,6 +56,7 @@ class NoticeState extends Equatable {
   List<Object?> get props => [
     status,
     statement,
+    rulesPage,
     errorKey,
     appealing,
     appealErrorKey,
@@ -68,7 +76,7 @@ class NoticeCubit extends Cubit<NoticeState> {
     try {
       final statement = await _moderation.notice(caseId);
       if (isClosed) return;
-      emit(state.copyWith(status: NoticeStatus.ready, statement: statement));
+      emit(_showing(statement).copyWith(status: NoticeStatus.ready));
     } on ApiFailure catch (failure) {
       if (isClosed) return;
       emit(
@@ -100,7 +108,7 @@ class NoticeCubit extends Cubit<NoticeState> {
     try {
       final statement = await _moderation.appeal(caseId, words);
       if (isClosed) return true;
-      emit(state.copyWith(appealing: false, statement: statement));
+      emit(_showing(statement).copyWith(appealing: false));
       return true;
     } on ApiFailure catch (failure) {
       if (isClosed) return false;
@@ -121,11 +129,22 @@ class NoticeCubit extends Cubit<NoticeState> {
     }
   }
 
+  /// The state with [statement] on screen, and the page of its rules.
+  NoticeState _showing(Statement statement) {
+    final rules = statement.rulesUrl;
+    return state.copyWith(
+      statement: statement,
+      rulesPage: rules == null || rules.isEmpty
+          ? null
+          : _moderation.page(rules),
+    );
+  }
+
   /// Reads the notice again without leaving the page.
   Future<void> _refresh() async {
     try {
       final statement = await _moderation.notice(caseId);
-      if (!isClosed) emit(state.copyWith(statement: statement));
+      if (!isClosed) emit(_showing(statement));
     } catch (_) {
       // The page keeps what it showed.
     }

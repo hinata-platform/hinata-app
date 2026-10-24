@@ -2279,7 +2279,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 padding: const EdgeInsets.only(top: 8),
                 child: ContentRefusedNotice(
                   refusal: refusal,
-                  onReadRules: () => unawaited(openHouseRules(context)),
+                  onReadRules: () => unawaited(showHouseRulesSheet(context)),
                 ),
               ),
           ] else
@@ -2314,7 +2314,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                 if (_descRefusal case final refusal?) ...[
                   ContentRefusedNotice(
                     refusal: refusal,
-                    onReadRules: () => unawaited(openHouseRules(context)),
+                    onReadRules: () => unawaited(showHouseRulesSheet(context)),
                   ),
                   const SizedBox(height: 8),
                 ],
@@ -3611,7 +3611,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           padding: const EdgeInsets.only(bottom: 8),
           child: ContentRefusedNotice(
             refusal: refusal,
-            onReadRules: () => unawaited(openHouseRules(context)),
+            onReadRules: () => unawaited(showHouseRulesSheet(context)),
           ),
         ),
         composer,

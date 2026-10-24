@@ -10,7 +10,7 @@ import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/content_refused_notice.dart';
-import '../moderation/house_rules_sheet.dart' show openHouseRules;
+import '../moderation/house_rules_sheet.dart' show showHouseRulesSheet;
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, GlassField, glassInputDecoration;
 import 'account_cubit.dart';
@@ -155,7 +155,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                   const SizedBox(height: 14),
                   ContentRefusedNotice(
                     refusal: refusal,
-                    onReadRules: () => unawaited(openHouseRules(context)),
+                    onReadRules: () => unawaited(showHouseRulesSheet(context)),
                   ),
                 ],
                 if (_error != null) ...[
