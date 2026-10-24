@@ -44,6 +44,47 @@ void main() {
     expect(hidden.state, const HiddenContentState());
   });
 
+  test('waits for the server to say whether it knows blocking', () async {
+    account.answer<Set<String>>(#blockedIds, {'jonas'});
+    final known = Completer<bool>();
+    final hidden = HiddenContentCubit(
+      account,
+      moderation,
+      enabled: () => known.future,
+    );
+    addTearDown(hidden.close);
+
+    final loading = hidden.load();
+    await pumpEventQueue();
+    expect(account.calls, isEmpty);
+
+    known.complete(true);
+    await loading;
+    expect(hidden.state.blocks('jonas'), isTrue);
+  });
+
+  test(
+    'an account that left before the server answered loads nothing',
+    () async {
+      account.answer<Set<String>>(#blockedIds, {'jonas'});
+      final known = Completer<bool>();
+      final hidden = HiddenContentCubit(
+        account,
+        moderation,
+        enabled: () => known.future,
+      );
+      addTearDown(hidden.close);
+
+      final loading = hidden.load();
+      hidden.reset();
+      known.complete(true);
+      await loading;
+
+      expect(account.calls, isEmpty);
+      expect(moderation.calls, isEmpty);
+    },
+  );
+
   test('folds the comments one reported, and says why', () async {
     account.answer<Set<String>>(#blockedIds, {'jonas'});
     moderation.answer<Set<String>>(#reportedIds, {'c2'});
