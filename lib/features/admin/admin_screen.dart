@@ -15,7 +15,8 @@ import '../../core/blocs/time_policy_cubit.dart';
 import '../../core/repositories/admin_repository.dart';
 import '../../core/repositories/meta_repository.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/models/moderation_models.dart' show OpenWay;
+import '../../core/models/moderation_models.dart'
+    show OpenAccessRefusal, OpenWay, flagConfirmRequired;
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
@@ -264,9 +265,7 @@ class _AdminViewState extends State<_AdminView> {
             );
       }
       // Putting the unclear before moderation, said in words first (HIN-176).
-      if (failure.statusCode == 409 &&
-          failure.details['code'] == 'moderation.flagConfirm' &&
-          !flagConfirmed) {
+      if (flagConfirmRequired(failure) && !flagConfirmed) {
         final confirmed = await showGlassConfirm(
           context,
           icon: LucideIcons.scale,
@@ -295,9 +294,7 @@ class _AdminViewState extends State<_AdminView> {
           context,
           OpenWay(
             way: way,
-            name: way == 'ldap'
-                ? 'LDAP'
-                : (settings[way] as Map?)?['displayName'] as String?,
+            name: (settings[way] as Map?)?['displayName'] as String?,
           ),
         ),
     ].join(', ');

@@ -273,9 +273,7 @@ class _ProviderAdmissionState extends State<_ProviderAdmission> {
           OpenWayLine(
             way: OpenWay(
               way: widget.way,
-              name: widget.way == 'ldap'
-                  ? 'LDAP'
-                  : section['displayName'] as String?,
+              name: section['displayName'] as String?,
             ),
           ),
         ],

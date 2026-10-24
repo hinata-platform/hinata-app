@@ -59,11 +59,26 @@ void main() {
       'measure': 'Gesperrt bis zum 1. November.',
       'scope': null,
       'until': '2026-11-01T00:00:00Z',
+      'suspension': 'DAYS_7',
       'ground': 'LAW',
       'appealState': 'PENDING',
     });
 
     expect(notice.suspends, isTrue);
+    // A removal with a suspension until further notice suspends too, though
+    // it names no end; a removal alone does not.
+    expect(
+      Statement.fromJson(const {
+        'caseId': 'k1',
+        'scope': 'WHOLE',
+        'suspension': 'INDEFINITE',
+      }).suspends,
+      isTrue,
+    );
+    expect(
+      Statement.fromJson(const {'caseId': 'k1', 'scope': 'WHOLE'}).suspends,
+      isFalse,
+    );
     expect(notice.lawGround, isTrue);
     expect(notice.appealState, AppealState.pending);
     expect(notice.appealable, isFalse);
