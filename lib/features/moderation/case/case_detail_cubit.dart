@@ -198,8 +198,9 @@ class CaseDetailCubit extends Cubit<CaseDetailState> {
     doneKey: 'moderation.case.held',
   );
 
-  /// Reads the case again after a decision made in its dialog.
-  Future<void> decided() => _read(noticeKey: 'moderation.decision.sent');
+  /// Reads the case again after its decision dialog closed with [noticeKey]:
+  /// sent, or decided or changed by somebody else meanwhile.
+  Future<void> afterDecision(String noticeKey) => _read(noticeKey: noticeKey);
 
   /// File [index] of the evidence, into memory and never onto the disk.
   Future<Uint8List> file(int index) => _moderation.evidenceFile(caseId, index);
