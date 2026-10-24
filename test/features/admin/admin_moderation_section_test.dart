@@ -8,6 +8,7 @@ import 'package:hinata/core/models/moderation_models.dart';
 import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/core/repositories/meta_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
+import 'package:hinata/core/widgets/glass_switch_chip.dart';
 import 'package:hinata/features/admin/admin_form_helpers.dart';
 import 'package:hinata/features/admin/admin_settings_cubit.dart';
 import 'package:hinata/features/admin/sections/admin_moderation_section.dart';
@@ -252,6 +253,25 @@ void main() {
     final rules = (settings['moderation'] as Map)['rules'] as Map;
     expect(rules['mode'], 'TEXT');
     expect(rules['text'], '# Unsere Regeln');
+  });
+
+  testWidgets('the house rules switcher is as wide as its choices', (
+    tester,
+  ) async {
+    // Room enough for the raw keys in the test font, so nothing scrolls.
+    tester.view
+      ..physicalSize = const Size(2400, 1600)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await pump(tester, moderators: []);
+
+    final bar = tester.getSize(find.byType(GlassSwitchBar)).width;
+    final chips = tester
+        .widgetList<GlassSwitchChip>(find.byType(GlassSwitchChip))
+        .map((chip) => tester.getSize(find.byWidget(chip)).width)
+        .fold<double>(0, (sum, width) => sum + width);
+
+    expect(bar, closeTo(chips + GlassSwitchBar.inset, 0.5));
   });
 
   testWidgets('asking everybody to agree again takes a confirmation', (
