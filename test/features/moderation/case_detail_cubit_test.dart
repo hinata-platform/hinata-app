@@ -237,4 +237,74 @@ void main() {
       );
     },
   );
+
+  group(
+    'the other steps go out at the revision seen and say they are done',
+    () {
+      final held = DateTime.utc(2027, 10, 24);
+      for (final (name, member, step, positional, done) in [
+        (
+          'confirming',
+          #confirm,
+          (CaseDetailCubit cubit) => cubit.confirm(),
+          ['k1', 3],
+          'moderation.case.confirmed',
+        ),
+        (
+          'rejecting',
+          #reject,
+          (CaseDetailCubit cubit) => cubit.reject('Bitte erst nachfragen.'),
+          ['k1', 3, 'Bitte erst nachfragen.'],
+          'moderation.case.rejected',
+        ),
+        (
+          'restoring',
+          #restore,
+          (CaseDetailCubit cubit) => cubit.restore('War doch erlaubt.'),
+          ['k1', 3, 'War doch erlaubt.'],
+          'moderation.case.restored',
+        ),
+        (
+          'lifting a suspension',
+          #liftSuspension,
+          (CaseDetailCubit cubit) => cubit.liftSuspension('Hat sich gemeldet.'),
+          ['k1', 3, 'Hat sich gemeldet.'],
+          'moderation.suspension.lifted',
+        ),
+        (
+          'holding a case',
+          #legalHold,
+          (CaseDetailCubit cubit) =>
+              cubit.legalHold(until: held, reason: 'Verfahren läuft.'),
+          ['k1'],
+          'moderation.case.held',
+        ),
+      ]) {
+        test(name, () async {
+          moderation.answer<CaseSummary>(member, caseRow());
+          final cubit = build();
+          addTearDown(cubit.close);
+          await cubit.load();
+
+          await step(cubit);
+
+          expect(moderation.callTo(member).positionalArguments, positional);
+          expect(cubit.state.notice, CaseNotice(done));
+          expect(cubit.state.busy, isFalse);
+        });
+      }
+
+      test('releasing a case says nothing, the row shows it', () async {
+        moderation.answer<CaseSummary>(#release, caseRow());
+        final cubit = build();
+        addTearDown(cubit.close);
+        await cubit.load();
+
+        await cubit.release();
+
+        expect(moderation.callTo(#release).positionalArguments, ['k1', 3]);
+        expect(cubit.state.notice, isNull);
+      });
+    },
+  );
 }
