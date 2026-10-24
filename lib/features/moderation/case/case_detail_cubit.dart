@@ -10,6 +10,32 @@ import '../../../core/repositories/user_repository.dart';
 
 enum CaseLoad { loading, ready, gone, failure }
 
+/// A word about the last step, shown once: what was done, or what [moved]
+/// meanwhile, which reads as news rather than as success.
+class CaseNotice extends Equatable {
+  const CaseNotice(this.key, {this.moved = false});
+
+  final String key;
+  final bool moved;
+
+  @override
+  List<Object?> get props => [key, moved];
+}
+
+/// Display names by person id, shared by every case of one moderation page:
+/// a name is looked up once, however many cases name the person.
+class KnownNames {
+  KnownNames([Map<String, String> seed = const {}]) : _names = {...seed};
+
+  final Map<String, String> _names;
+
+  Map<String, String> get all => Map.unmodifiable(_names);
+
+  bool knows(String id) => _names.containsKey(id);
+
+  void addAll(Map<String, String> names) => _names.addAll(names);
+}
+
 class CaseDetailState extends Equatable {
   const CaseDetailState({
     this.load = CaseLoad.loading,
@@ -17,7 +43,7 @@ class CaseDetailState extends Equatable {
     this.names = const {},
     this.busy = false,
     this.loadingReports = false,
-    this.noticeKey,
+    this.notice,
     this.errorKey,
   });
 
@@ -32,7 +58,7 @@ class CaseDetailState extends Equatable {
   final bool loadingReports;
 
   /// A word about the last step, shown once: done, or what moved meanwhile.
-  final String? noticeKey;
+  final CaseNotice? notice;
 
   /// Why the last step was refused, as the server worded it.
   final String? errorKey;
@@ -43,7 +69,7 @@ class CaseDetailState extends Equatable {
     Map<String, String>? names,
     bool? busy,
     bool? loadingReports,
-    String? noticeKey,
+    CaseNotice? notice,
     String? errorKey,
   }) => CaseDetailState(
     load: load ?? this.load,
@@ -52,7 +78,7 @@ class CaseDetailState extends Equatable {
     busy: busy ?? this.busy,
     loadingReports: loadingReports ?? this.loadingReports,
     // Both words are said once; the next state drops them unless it says one.
-    noticeKey: noticeKey,
+    notice: notice,
     errorKey: errorKey,
   );
 
@@ -63,7 +89,7 @@ class CaseDetailState extends Equatable {
     names,
     busy,
     loadingReports,
-    noticeKey,
+    notice,
     errorKey,
   ];
 }
@@ -75,12 +101,21 @@ class CaseDetailState extends Equatable {
 /// Each step sends the revision last read. A 409 means somebody else moved
 /// the case meanwhile: it is read again, and the reader is told whether it was
 /// decided or only changed.
+///
+/// The case shows as soon as it is read; the names of the people it names
+/// follow, from [KnownNames] the page shares or in one more request.
 class CaseDetailCubit extends Cubit<CaseDetailState> {
-  CaseDetailCubit(this._moderation, this._users, this.caseId)
-    : super(const CaseDetailState());
+  CaseDetailCubit(
+    this._moderation,
+    this._users,
+    this.caseId, {
+    KnownNames? names,
+  }) : _known = names ?? KnownNames(),
+       super(CaseDetailState(names: (names ?? KnownNames()).all));
 
   final ModerationRepository _moderation;
   final UserRepository _users;
+  final KnownNames _known;
   final String caseId;
 
   static const _reportsPage = 20;
@@ -92,20 +127,11 @@ class CaseDetailCubit extends Cubit<CaseDetailState> {
     await _read();
   }
 
-  Future<void> _read({String? noticeKey}) async {
+  Future<void> _read({CaseNotice? notice}) async {
     try {
       final detail = await _moderation.detail(caseId);
-      final names = await _namesOf(detail);
       if (isClosed) return;
-      emit(
-        state.copyWith(
-          load: CaseLoad.ready,
-          detail: detail,
-          names: names,
-          busy: false,
-          noticeKey: noticeKey,
-        ),
-      );
+      await _show(detail, notice: notice);
     } on ApiFailure catch (failure) {
       if (isClosed) return;
       emit(
@@ -121,23 +147,52 @@ class CaseDetailCubit extends Cubit<CaseDetailState> {
     }
   }
 
-  /// The names held already, and the missing ones in one request. Names are a
-  /// courtesy: without them the case still reads.
-  Future<Map<String, String>> _namesOf(CaseDetail detail) async {
+  /// Shows [read] at once, with the reports loaded past its first page kept,
+  /// and then the names nobody looked up yet. Names are a courtesy: without
+  /// them the case still reads.
+  Future<void> _show(CaseDetail read, {CaseNotice? notice}) async {
+    final detail = _keepingReports(read);
+    emit(
+      state.copyWith(
+        load: CaseLoad.ready,
+        detail: detail,
+        names: _known.all,
+        busy: false,
+        notice: notice,
+      ),
+    );
     final missing = [
       for (final id in detail.personIds)
-        if (!state.names.containsKey(id)) id,
+        if (!_known.knows(id)) id,
     ];
-    if (missing.isEmpty) return state.names;
+    if (missing.isEmpty) return;
     try {
       final found = await _users.usersByIds(missing);
-      return {
-        ...state.names,
-        for (final user in found) user.id: user.displayName,
-      };
+      _known.addAll({for (final user in found) user.id: user.displayName});
     } catch (_) {
-      return state.names;
+      return;
     }
+    if (isClosed) return;
+    emit(state.copyWith(names: _known.all));
+  }
+
+  /// [read] with the reports loaded past its first page, while their number
+  /// stayed: a step must not cost the pages read so far.
+  CaseDetail _keepingReports(CaseDetail read) {
+    final held = state.detail;
+    if (held == null ||
+        held.reportTotal != read.reportTotal ||
+        held.reports.length <= read.reports.length) {
+      return read;
+    }
+    final known = {for (final report in read.reports) report.id};
+    return read.copyWith(
+      reports: [
+        ...read.reports,
+        for (final report in held.reports)
+          if (!known.contains(report.id)) report,
+      ],
+    );
   }
 
   Future<void> claim({bool takeOver = false}) =>
@@ -198,9 +253,9 @@ class CaseDetailCubit extends Cubit<CaseDetailState> {
     doneKey: 'moderation.case.held',
   );
 
-  /// Reads the case again after its decision dialog closed with [noticeKey]:
+  /// Reads the case again after its decision dialog closed with [notice]:
   /// sent, or decided or changed by somebody else meanwhile.
-  Future<void> afterDecision(String noticeKey) => _read(noticeKey: noticeKey);
+  Future<void> afterDecision(CaseNotice notice) => _read(notice: notice);
 
   /// File [index] of the evidence, into memory and never onto the disk.
   Future<Uint8List> file(int index) => _moderation.evidenceFile(caseId, index);
@@ -246,14 +301,21 @@ class CaseDetailCubit extends Cubit<CaseDetailState> {
   Future<void> _step(Future<Object?> Function() run, {String? doneKey}) async {
     if (state.busy) return;
     emit(state.copyWith(busy: true));
+    final done = doneKey == null ? null : CaseNotice(doneKey);
     try {
-      await run();
-      await _read(noticeKey: doneKey);
+      final result = await run();
+      if (isClosed) return;
+      // A step that answers with the whole case needs no second read.
+      if (result is CaseDetail) {
+        await _show(result, notice: done);
+      } else {
+        await _read(notice: done);
+      }
     } on ApiFailure catch (failure) {
       if (isClosed) return;
       final moved = movedMeanwhile(failure);
       if (moved != null) {
-        await _read(noticeKey: moved);
+        await _read(notice: moved);
         return;
       }
       emit(state.copyWith(busy: false, errorKey: failure.message));
@@ -266,11 +328,17 @@ class CaseDetailCubit extends Cubit<CaseDetailState> {
 
 /// What a 409 on a step means for the reader: the case was decided or only
 /// changed meanwhile; null for any other refusal.
-String? movedMeanwhile(ApiFailure failure) {
+CaseNotice? movedMeanwhile(ApiFailure failure) {
   if (failure.statusCode != 409) return null;
   return switch (failure.details['code']) {
-    'decided' => 'moderation.case.decidedMeanwhile',
-    'changed' => 'moderation.case.changedMeanwhile',
+    'error.moderation.caseDecided' => const CaseNotice(
+      'moderation.case.decidedMeanwhile',
+      moved: true,
+    ),
+    'error.moderation.caseChanged' => const CaseNotice(
+      'moderation.case.changedMeanwhile',
+      moved: true,
+    ),
     _ => null,
   };
 }

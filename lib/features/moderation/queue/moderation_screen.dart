@@ -29,18 +29,10 @@ import 'case_row.dart';
 import 'moderation_cases_cubit.dart';
 import 'moderation_summary_cubit.dart';
 import 'moderation_summary_scope.dart';
+import '../moderation_locations.dart';
 
-/// Where the moderation page shows [view], with case [caseId] open.
-String moderationLocation({CaseView view = CaseView.open, String? caseId}) {
-  final query = {if (view != CaseView.open) 'view': view.name, 'case': ?caseId};
-  return Uri(
-    path: '/moderation',
-    queryParameters: query.isEmpty ? null : query,
-  ).toString();
-}
-
-/// The suspended accounts, a page of the moderation page.
-const suspensionsLocation = '/moderation/suspensions';
+export '../moderation_locations.dart'
+    show caseViewOf, moderationLocation, suspensionsLocation;
 
 /// The moderators' page (HIN-174): the open, appealed and done cases, urgent
 /// first and then the oldest, and one case beside the list on a wide window
@@ -79,6 +71,17 @@ class _ModerationPageState extends State<_ModerationPage> {
       .read<ModerationRepository>();
   final Map<CaseView, ModerationCasesCubit> _lists = {};
 
+  /// The names every case of the page names, looked up once; the reader's own
+  /// is known from the start.
+  late final KnownNames _names = KnownNames({
+    if (context.read<AuthBloc>().state.user case final me?)
+      me.id: me.displayName,
+  });
+
+  /// The bar's pills, kept while their view and numbers stay: the shell
+  /// re-publishes its bar for every new widget it is handed.
+  _ScopeRow? _scopes;
+
   ModerationCasesCubit _list(CaseView view) => _lists.putIfAbsent(
     view,
     () => ModerationCasesCubit(_moderation, view)..load(),
@@ -97,10 +100,47 @@ class _ModerationPageState extends State<_ModerationPage> {
   void _openCase(String id) =>
       context.go(moderationLocation(view: widget.view, caseId: id));
 
-  /// A step on a case moved it: the list and its numbers read again.
-  void _caseChanged() {
-    unawaited(_list(widget.view).refreshLoaded());
+  void _backToList() => context.go(moderationLocation(view: widget.view));
+
+  void _openMore(Rect? anchor) => unawaited(_more(anchor));
+
+  /// A step moved case [summary]. Its row shows how it stands now while the
+  /// case belongs to the list; otherwise it leaves the list, the numbers are
+  /// read again, and the other lists read afresh once shown.
+  void _caseChanged(CaseSummary summary) {
+    final list = _list(widget.view);
+    if (_belongsTo(summary, widget.view)) {
+      list.replaceItem(summary);
+      return;
+    }
+    list.removeItem(summary.id);
     unawaited(context.read<ModerationSummaryCubit>().refresh());
+    for (final view in [..._lists.keys]) {
+      if (view != widget.view) unawaited(_lists.remove(view)!.close());
+    }
+  }
+
+  /// Whether [summary] is one of [view]'s cases, as the server lists them.
+  static bool _belongsTo(CaseSummary summary, CaseView view) => switch (view) {
+    CaseView.open => summary.state.undecided,
+    CaseView.appeal => summary.state == CaseState.appeal,
+    CaseView.done => !summary.state.undecided,
+  };
+
+  _ScopeRow _scopeRow(int? open, int? appeals) {
+    final kept = _scopes;
+    if (kept != null &&
+        kept.view == widget.view &&
+        kept.open == open &&
+        kept.appeals == appeals) {
+      return kept;
+    }
+    return _scopes = _ScopeRow(
+      view: widget.view,
+      open: open,
+      appeals: appeals,
+      onSelected: _openView,
+    );
   }
 
   Future<void> _more(Rect? anchor) async {
@@ -120,119 +160,135 @@ class _ModerationPageState extends State<_ModerationPage> {
     if (choice == 'suspensions' && mounted) context.go(suspensionsLocation);
   }
 
+  Widget _caseScope(String caseId, Widget child) => _CaseScope(
+    key: ValueKey(caseId),
+    caseId: caseId,
+    names: _names,
+    onChanged: _caseChanged,
+    child: child,
+  );
+
   @override
-  Widget build(BuildContext context) => BlocProvider.value(
-    value: _list(widget.view),
-    child: LayoutBuilder(
-      builder: (context, constraints) {
-        final split = constraints.maxWidth >= _split;
-        final caseId = widget.caseId;
-        final scopes = _ScopeRow(view: widget.view, onSelected: _openView);
-        final more = PageAction(
-          icon: LucideIcons.ellipsis,
-          label: context.t('moderation.queue.more'),
-          onTap: (anchor) => unawaited(_more(anchor)),
-        );
-        if (!split && caseId != null) {
-          return PageChrome(
-            title: context.t('moderation.queue.title'),
-            onBack: () => context.go(moderationLocation(view: widget.view)),
-            child: _CaseScope(
-              key: ValueKey(caseId),
-              caseId: caseId,
-              onChanged: _caseChanged,
-              child: CaseDetailView(padding: context.pagePadding),
-            ),
-          );
-        }
-        if (!split) {
+  Widget build(BuildContext context) {
+    // Read here, above the shell's bar the pills are drawn in: the bar is no
+    // child of this page and finds no summary of its own.
+    final (open, appeals) = context.select(
+      (ModerationSummaryCubit cubit) =>
+          (cubit.state?.open, cubit.state?.appeals),
+    );
+    final scopes = _scopeRow(open, appeals);
+    // A tear-off, so the action equals the last one and the bar stays.
+    final more = PageAction(
+      icon: LucideIcons.ellipsis,
+      label: context.t('moderation.queue.more'),
+      onTap: _openMore,
+    );
+    return BlocProvider.value(
+      value: _list(widget.view),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final split = constraints.maxWidth >= _split;
+          final caseId = widget.caseId;
+          if (!split && caseId != null) {
+            return PageChrome(
+              title: context.t('moderation.queue.title'),
+              onBack: _backToList,
+              child: _caseScope(
+                caseId,
+                CaseDetailView(padding: context.pagePadding),
+              ),
+            );
+          }
+          if (!split) {
+            return PageChrome(
+              title: context.t('moderation.queue.title'),
+              actions: [more],
+              bottom: scopes,
+              bottomHeight: kGlassDockRow,
+              child: _CaseList(
+                view: widget.view,
+                selected: null,
+                padding: context.pagePadding,
+                onOpen: _openCase,
+              ),
+            );
+          }
           return PageChrome(
             title: context.t('moderation.queue.title'),
             actions: [more],
-            bottom: scopes,
-            bottomHeight: kGlassDockRow,
-            child: _CaseList(
-              view: widget.view,
-              selected: null,
-              padding: context.pagePadding,
-              onOpen: _openCase,
-            ),
-          );
-        }
-        return PageChrome(
-          title: context.t('moderation.queue.title'),
-          actions: [more],
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              context.pageGutter,
-              18 + context.topGutter,
-              context.pageGutter,
-              0,
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _WideHead(scopes: scopes),
-                const SizedBox(height: 18),
-                Expanded(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: _listWidth,
-                        child: _CaseList(
-                          view: widget.view,
-                          selected: caseId,
-                          padding: EdgeInsets.only(
-                            bottom: context.bottomGutter + 24,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                context.pageGutter,
+                18 + context.topGutter,
+                context.pageGutter,
+                0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _WideHead(scopes: scopes),
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: _listWidth,
+                          child: _CaseList(
+                            view: widget.view,
+                            selected: caseId,
+                            padding: EdgeInsets.only(
+                              bottom: context.bottomGutter + 24,
+                            ),
+                            onOpen: _openCase,
                           ),
-                          onOpen: _openCase,
                         ),
-                      ),
-                      const SizedBox(width: 24),
-                      Expanded(
-                        child: caseId == null
-                            ? const _NoCaseChosen()
-                            : SoftCard(
-                                padding: EdgeInsets.zero,
-                                child: _CaseScope(
-                                  key: ValueKey(caseId),
-                                  caseId: caseId,
-                                  onChanged: _caseChanged,
-                                  child: const CaseDetailView(
-                                    padding: EdgeInsets.fromLTRB(
-                                      24,
-                                      22,
-                                      24,
-                                      24,
+                        const SizedBox(width: 24),
+                        Expanded(
+                          child: caseId == null
+                              ? const _NoCaseChosen()
+                              : SoftCard(
+                                  padding: EdgeInsets.zero,
+                                  child: _caseScope(
+                                    caseId,
+                                    const CaseDetailView(
+                                      padding: EdgeInsets.fromLTRB(
+                                        24,
+                                        22,
+                                        24,
+                                        24,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
-                      ),
-                    ],
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
-    ),
-  );
+          );
+        },
+      ),
+    );
+  }
 }
 
-/// One case's cubit, read on open; [onChanged] runs after each step moved it.
+/// One case's cubit, read on open; [onChanged] runs with the case's row after
+/// each step moved it.
 class _CaseScope extends StatelessWidget {
   const _CaseScope({
     super.key,
     required this.caseId,
+    required this.names,
     required this.onChanged,
     required this.child,
   });
 
   final String caseId;
-  final VoidCallback onChanged;
+  final KnownNames names;
+  final ValueChanged<CaseSummary> onChanged;
   final Widget child;
 
   @override
@@ -241,28 +297,35 @@ class _CaseScope extends StatelessWidget {
       context.read<ModerationRepository>(),
       context.read<UserRepository>(),
       caseId,
+      names: names,
     )..load(),
     child: BlocListener<CaseDetailCubit, CaseDetailState>(
       listenWhen: (previous, current) =>
           previous.detail != null &&
           current.detail != null &&
           previous.detail!.summary.rev != current.detail!.summary.rev,
-      listener: (_, _) => onChanged(),
+      listener: (_, state) => onChanged(state.detail!.summary),
       child: child,
     ),
   );
 }
 
-/// The three lists as pills, with their numbers.
+/// The three lists as pills, with the numbers of [open] and appealed cases.
 class _ScopeRow extends StatelessWidget {
-  const _ScopeRow({required this.view, required this.onSelected});
+  const _ScopeRow({
+    required this.view,
+    required this.open,
+    required this.appeals,
+    required this.onSelected,
+  });
 
   final CaseView view;
+  final int? open;
+  final int? appeals;
   final ValueChanged<CaseView> onSelected;
 
   @override
   Widget build(BuildContext context) {
-    final summary = context.watch<ModerationSummaryCubit>().state;
     String label(String key, int? count) {
       final word = context.t('moderation.queue.view.$key');
       return count == null || count == 0
@@ -278,12 +341,12 @@ class _ScopeRow extends StatelessWidget {
         (
           key: CaseView.open.name,
           icon: LucideIcons.inbox,
-          label: label('open', summary?.open),
+          label: label('open', open),
         ),
         (
           key: CaseView.appeal.name,
           icon: LucideIcons.rotateCcw,
-          label: label('appeal', summary?.appeals),
+          label: label('appeal', appeals),
         ),
         (
           key: CaseView.done.name,
@@ -292,8 +355,7 @@ class _ScopeRow extends StatelessWidget {
         ),
       ],
       active: view.name,
-      onSelected: (key) =>
-          onSelected(CaseView.values.firstWhere((v) => v.name == key)),
+      onSelected: (key) => onSelected(caseViewOf(key)),
     );
   }
 }
@@ -410,6 +472,9 @@ class _CaseList extends StatelessWidget {
           return RefreshIndicator(
             onRefresh: cubit.load,
             child: ListView.builder(
+              // Where the list was scrolled to survives a case opened on a
+              // phone, which takes the list's place until Back.
+              key: PageStorageKey('moderation-${view.name}'),
               padding: padding,
               itemCount: state.items.length + 1,
               itemBuilder: (context, index) {
