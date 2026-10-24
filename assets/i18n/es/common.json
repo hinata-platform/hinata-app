@@ -3645,7 +3645,23 @@
       "contactMissing": "Todavía no hay contacto para denuncias. Introduce una dirección de correo para que puedan escribirte sobre el contenido.",
       "operatorName": "Responsable, como en el aviso legal",
       "contactEmail": "Correo para denuncias",
-      "imprintUrl": "Enlace al aviso legal"
+      "imprintUrl": "Enlace al aviso legal",
+      "typesTitle": "Tipos de archivo",
+      "typesHint": "Nadie puede adjuntar, insertar ni enviar un tipo desactivado. Los tipos inseguros como SVG o los programas nunca están permitidos.",
+      "types": {
+        "images": "Imágenes",
+        "imagesHint": "PNG, JPEG, GIF y WebP, como adjuntos y en textos. Las fotos de perfil y el logotipo siguen permitidos.",
+        "pdf": "PDF",
+        "pdfHint": "Documentos PDF como adjuntos",
+        "office": "Documentos de Office",
+        "officeHint": "Word y Excel (DOCX, XLSX)",
+        "text": "Texto y tablas",
+        "textHint": "TXT, CSV y JSON",
+        "zip": "Archivos ZIP",
+        "zipHint": "Archivos ZIP como adjuntos",
+        "voice": "Mensajes de voz",
+        "voiceHint": "Grabaciones en comentarios"
+      }
     }
   },
   "audit": {
