@@ -3,8 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
 import '../../core/i18n/i18n.dart';
-import '../../core/theme/app_colors.dart';
-import '../../core/theme/app_type.dart';
+import '../../core/widgets/quiet_info_line.dart';
 import '../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../sprint/modals/glass_modal.dart'
     show GlassModalFooter, GlassModalHeader, GlassOptionRow, showGlassModal;
@@ -101,26 +100,26 @@ class _BlockConfirmDialogState extends State<BlockConfirmDialog> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _InfoLine(
+                QuietInfoLine(
                   icon: LucideIcons.bellOff,
                   text: context.t(
                     'blocks.confirm.notifications',
                     variables: name,
                   ),
                 ),
-                _InfoLine(
+                QuietInfoLine(
                   icon: LucideIcons.chevronsDownUp,
                   text: context.t('blocks.confirm.folded', variables: name),
                 ),
-                _InfoLine(
+                QuietInfoLine(
                   icon: LucideIcons.userRoundMinus,
                   text: context.t('blocks.confirm.contact', variables: name),
                 ),
-                _InfoLine(
+                QuietInfoLine(
                   icon: LucideIcons.folderOpen,
                   text: context.t('blocks.confirm.work', variables: name),
                 ),
-                _InfoLine(
+                QuietInfoLine(
                   icon: LucideIcons.eyeOff,
                   text: context.t('blocks.confirm.private', variables: name),
                 ),
@@ -154,43 +153,6 @@ class _BlockConfirmDialogState extends State<BlockConfirmDialog> {
           onConfirm: _run,
         ),
       ],
-    );
-  }
-}
-
-/// One thing that changes, or does not, with its glyph.
-class _InfoLine extends StatelessWidget {
-  const _InfoLine({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.only(top: 2),
-            child: ExcludeSemantics(
-              child: Icon(icon, size: 16, color: AppColors.inkSoft),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              text,
-              style: TextStyle(
-                fontSize: AppType.label,
-                height: 1.4,
-                color: AppColors.inkSoft,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

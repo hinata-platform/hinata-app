@@ -12,6 +12,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
 import '../../../core/util/dates.dart';
+import '../../../core/widgets/quiet_info_line.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../admin_form_helpers.dart';
 
@@ -127,7 +128,7 @@ class _HouseRulesCardState extends State<HouseRulesCard> {
         ),
         const SizedBox(height: 12),
         switch (mode) {
-          HouseRulesMode.builtIn => _Line(
+          HouseRulesMode.builtIn => QuietInfoLine(
             icon: LucideIcons.bookOpenCheck,
             text: context.t('admin.rules.builtInHint'),
           ),
@@ -155,7 +156,7 @@ class _HouseRulesCardState extends State<HouseRulesCard> {
           ),
         },
         const SizedBox(height: 8),
-        _Line(
+        QuietInfoLine(
           icon: LucideIcons.info,
           text: context.t('admin.rules.versionHint'),
         ),
@@ -173,33 +174,4 @@ class _HouseRulesCardState extends State<HouseRulesCard> {
       ],
     );
   }
-}
-
-class _Line extends StatelessWidget {
-  const _Line({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Padding(
-        padding: const EdgeInsets.only(top: 2),
-        child: Icon(icon, size: 16, color: AppColors.inkSoft),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: AppType.label,
-            height: 1.4,
-            color: AppColors.inkSoft,
-          ),
-        ),
-      ),
-    ],
-  );
 }

@@ -7,6 +7,7 @@ import '../../../core/models/moderation_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/util/dates.dart';
+import '../../../core/widgets/quiet_info_line.dart';
 import '../report/report_reasons.dart' show reportCategoryTitle;
 import '../widgets/case_look.dart';
 
@@ -90,7 +91,7 @@ class _ReportersCovered extends StatelessWidget {
   final bool childSafety;
 
   @override
-  Widget build(BuildContext context) => CaseInfoLine(
+  Widget build(BuildContext context) => QuietInfoLine(
     icon: LucideIcons.eyeOff,
     text: context.t(
       childSafety
@@ -380,12 +381,12 @@ class DecisionSummary extends StatelessWidget {
         if (d.internalNote != null)
           _Pair(context.t('moderation.decision.internalNote'), d.internalNote!),
         if (d.lawEnforcementNotified)
-          CaseInfoLine(
+          QuietInfoLine(
             icon: LucideIcons.scale,
             text: context.t('moderation.case.lawEnforcementTold'),
           ),
         if (d.confirmedBy != null)
-          CaseInfoLine(
+          QuietInfoLine(
             icon: LucideIcons.usersRound,
             text: context.t(
               'moderation.case.confirmedBy',
@@ -486,7 +487,7 @@ class AppealPanel extends StatelessWidget {
           ),
         ],
         if (a.pending && decidedByReader)
-          CaseInfoLine(
+          QuietInfoLine(
             icon: LucideIcons.usersRound,
             text: context.t('moderation.appealReview.notYours'),
           )
@@ -513,7 +514,7 @@ class AppealPanel extends StatelessWidget {
             ),
           )
         else ...[
-          CaseInfoLine(
+          QuietInfoLine(
             icon: a.state == AppealState.upheld
                 ? LucideIcons.check
                 : LucideIcons.rotateCcw,

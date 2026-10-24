@@ -16,6 +16,7 @@ import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/glass_popup_menu.dart';
 import '../../../core/widgets/hive_empty_state.dart';
 import '../../../core/widgets/hive_loader.dart';
+import '../../../core/widgets/quiet_info_line.dart';
 import '../../issues/attachments/attachment_kind.dart' show kindFromName;
 import '../../issues/attachments/attachment_viewer.dart';
 import '../../people/person_profile_screen.dart' show personLocation;
@@ -135,12 +136,12 @@ class _CaseBody extends StatelessWidget {
           const SizedBox(height: 6),
           _SinceReport(detail: detail),
         ] else if (!summary.state.undecided)
-          CaseInfoLine(
+          QuietInfoLine(
             icon: LucideIcons.fileX,
             text: context.t('moderation.case.noCopyKept'),
           ),
         if (detail.removalIncomplete)
-          CaseInfoLine(
+          QuietInfoLine(
             icon: LucideIcons.hourglass,
             text: context.t('moderation.case.removalIncomplete'),
           ),
@@ -156,7 +157,7 @@ class _CaseBody extends StatelessWidget {
           DecisionSummary(decision: decision, kind: summary.kind, names: names),
         ],
         if (detail.restoration case final restoration?)
-          CaseInfoLine(
+          QuietInfoLine(
             icon: LucideIcons.undo2,
             text: context.t(
               'moderation.case.restoredBy.${(restoration.outcome ?? RestoreOutcome.restored).name}',
@@ -385,14 +386,14 @@ class _SinceReport extends StatelessWidget {
       'moderation.case.scope.${detail.summary.kind.name}',
     );
     if (since == null) {
-      return CaseInfoLine(icon: LucideIcons.scanEye, text: scope);
+      return QuietInfoLine(icon: LucideIcons.scanEye, text: scope);
     }
     final (icon, key) = switch (since) {
       SinceReport.unchanged => (LucideIcons.fileCheck, 'unchanged'),
       SinceReport.changed => (LucideIcons.filePen, 'changed'),
       SinceReport.deleted => (LucideIcons.fileX, 'deleted'),
     };
-    return CaseInfoLine(
+    return QuietInfoLine(
       icon: icon,
       text: '${context.t('moderation.case.since.$key')} $scope',
     );
@@ -417,7 +418,7 @@ class _Withheld extends StatelessWidget {
         : askedByMe
         ? null
         : 'moderation.case.open';
-    return CaseInfoLine(
+    return QuietInfoLine(
       icon: LucideIcons.fileLock,
       text: context.t(
         askedByMe ? 'moderation.case.askedToOpen' : 'moderation.case.withheld',
@@ -457,7 +458,7 @@ class _PendingConfirmation extends StatelessWidget {
     final mine = requestedBy != null && requestedBy == me;
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: CaseInfoLine(
+      child: QuietInfoLine(
         icon: LucideIcons.usersRound,
         text: context.t(
           mine
