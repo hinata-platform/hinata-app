@@ -282,6 +282,9 @@ class ModerationMeta extends Equatable {
     this.contactEmail,
     this.imprintUrl,
     this.contactMissing = false,
+    this.rulesVersion,
+    this.rulesUrl,
+    this.reportUrl,
   });
 
   final int version;
@@ -298,6 +301,16 @@ class ModerationMeta extends Equatable {
   /// No contact for reports is named yet; the admin area warns until there is.
   final bool contactMissing;
 
+  /// The current version of the house rules (HIN-175); null on a server
+  /// without them.
+  final int? rulesVersion;
+
+  /// The house rules as a page anybody can open, without an account.
+  final String? rulesUrl;
+
+  /// The form for reports from people without an account.
+  final String? reportUrl;
+
   static String? _text(Object? value) {
     final text = (value as String?)?.trim();
     return text == null || text.isEmpty ? null : text;
@@ -309,6 +322,9 @@ class ModerationMeta extends Equatable {
     contactEmail: _text(json['contactEmail']),
     imprintUrl: _text(json['imprintUrl']),
     contactMissing: json['contactMissing'] as bool? ?? false,
+    rulesVersion: (json['rulesVersion'] as num?)?.toInt(),
+    rulesUrl: _text(json['rulesUrl']),
+    reportUrl: _text(json['reportUrl']),
   );
 
   @override
@@ -318,6 +334,9 @@ class ModerationMeta extends Equatable {
     contactEmail,
     imprintUrl,
     contactMissing,
+    rulesVersion,
+    rulesUrl,
+    reportUrl,
   ];
 }
 
@@ -376,6 +395,8 @@ class AuthUser extends Equatable {
     this.title,
     this.pronouns,
     this.locale = 'en',
+    this.rulesPending = false,
+    this.rulesVersion,
   });
 
   final String id;
@@ -387,6 +408,13 @@ class AuthUser extends Equatable {
   final String? title;
   final String? pronouns;
   final String locale;
+
+  /// Whether this person still has to accept the house rules before going on
+  /// (HIN-175). False on a server without them.
+  final bool rulesPending;
+
+  /// The current version of the house rules, as the server said at sign-in.
+  final int? rulesVersion;
 
   bool get isAdmin => roles.contains('ADMIN');
 
@@ -409,6 +437,8 @@ class AuthUser extends Equatable {
     title: json['title'] as String?,
     pronouns: json['pronouns'] as String?,
     locale: json['locale'] as String? ?? 'en',
+    rulesPending: json['rulesPending'] as bool? ?? false,
+    rulesVersion: (json['rulesVersion'] as num?)?.toInt(),
   );
 
   @override
@@ -420,6 +450,8 @@ class AuthUser extends Equatable {
     roles,
     title,
     pronouns,
+    rulesPending,
+    rulesVersion,
   ];
 }
 
