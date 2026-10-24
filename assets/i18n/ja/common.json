@@ -368,7 +368,8 @@
       "emailNotVerified": "まずメールアドレスを確認してください。リンクは受信トレイに届いています。"
     },
     "showPassword": "パスワードを表示",
-    "hidePassword": "パスワードを隠す"
+    "hidePassword": "パスワードを隠す",
+    "contact": "連絡先"
   },
   "authShell": {
     "heroTitle": "チームの仕事が、ひとつになる場所。",
@@ -3662,6 +3663,46 @@
         "voice": "ボイスメッセージ",
         "voiceHint": "コメントの録音"
       }
+    },
+    "entry": {
+      "title": "誰が入れるか",
+      "registration": "登録では、新しいアカウントが承認なしで入れます。",
+      "provider": "「{{name}}」でのサインインは、初回で誰の承認もなく有効なアカウントを作成します。",
+      "consequence": "そのようなアカウントを持つ人は、組織全体のページとディレクトリを読めます。DSA では、これらのコンテンツは公開とみなされ、オンラインプラットフォームとしての義務が生じます。",
+      "enable": "承認をオンにする",
+      "proxy": "リクエストが、このサーバーが信頼していないプロキシを経由しています。その場合、すべてのリクエストがプロキシのアドレスとして数えられ、アドレスごとの制限が全員にまとめて適用されます。プロキシを HINATA_TRUSTED_PROXIES に追加してください。",
+      "confirmTitle": "新しいアカウントを承認なしで入れますか？",
+      "confirmBody": "{{ways}} から、誰の承認もなく誰でも入れるようになります。そのようなアカウントを持つ人は、組織全体のページとディレクトリを読めます。DSA では、これらのコンテンツは公開とみなされ、オンラインプラットフォームとしての義務が生じます。",
+      "confirm": "承認なしで開く",
+      "way": {
+        "registration": "登録"
+      }
+    },
+    "ssoApproval": {
+      "title": "新しいアカウントには承認が必要",
+      "hint": "初回のサインインは、登録と同じく管理者が承認するまで待機します。",
+      "domains": "許可するメールドメイン",
+      "domainsHint": "承認なしの場合、これらのドメインのアドレスだけがすぐに入れ、ほかは待機します。複数ある場合はカンマで区切ってください。"
+    },
+    "rules": {
+      "title": "ハウスルール",
+      "hint": "全員が書き込む前に一度同意します。",
+      "versionSince": "第 {{version}} 版（{{date}} から）。",
+      "mode": {
+        "builtIn": "標準",
+        "text": "独自の文章",
+        "url": "アドレス"
+      },
+      "builtInHint": "標準は 9 言語で用意されており、あなたたちの連絡先が記載されます。",
+      "text": "あなたたちのハウスルール",
+      "textHint": "Markdown。サーバーは必ず「モデレーションの方法」を追加します。",
+      "url": "ハウスルールのアドレス",
+      "versionHint": "変更を保存すると新しい版になります。すでに同意した人は、全員に再同意を求めない限り再度同意する必要はありません。",
+      "reaccept": "全員に再同意を求める",
+      "reacceptTitle": "全員に再同意を求めますか？",
+      "reacceptBody": "全員が作業を続ける前に現在の版に同意します。それまでは誰も新しいアクセストークンを取得できず、AI クライアントも接続できません。",
+      "reacceptConfirm": "全員に求める",
+      "reacceptDone": "全員が第 {{version}} 版に改めて同意します。"
     }
   },
   "audit": {
@@ -3727,7 +3768,8 @@
       "configuration": "設定",
       "data": "データとプライバシー",
       "integration": "連携",
-      "unknown": "その他"
+      "unknown": "その他",
+      "moderation": "モデレーション"
     },
     "action": {
       "LOGIN_SUCCESS": "ログイン",
@@ -3883,7 +3925,30 @@
       "SHIFT_ASSIGNMENT_DECLINED": "シフトを辞退",
       "SHIFT_ASSIGNMENT_RELEASED": "シフトの枠を解放",
       "SHIFT_PLANNER_GRANTED": "シフト計画の権限を付与",
-      "SHIFT_PLANNER_REVOKED": "シフト計画の権限を取り消し"
+      "SHIFT_PLANNER_REVOKED": "シフト計画の権限を取り消し",
+      "USER_SUSPENDED": "アカウント停止",
+      "USER_SUSPENSION_LIFTED": "停止を解除",
+      "USER_SUSPENSION_ENDED": "停止期間が終了",
+      "TIME_CALENDAR_SUBSCRIPTION_CREATED": "カレンダー購読を追加",
+      "TIME_CALENDAR_SUBSCRIPTION_DELETED": "カレンダー購読を削除",
+      "SHIFT_FEED_TOKEN_CREATED": "シフト購読リンクを作成",
+      "SHIFT_FEED_TOKEN_REVOKED": "シフト購読リンクを無効化",
+      "SHIFT_SERIES_CREATED": "イベントシリーズを作成",
+      "SHIFT_SERIES_UPDATED": "イベントシリーズを変更",
+      "SHIFT_SERIES_DELETED": "イベントシリーズを削除",
+      "SHIFT_PLAN_EXPORTED": "シフト表をエクスポート",
+      "MODERATION_CASE_CREATED": "ケースを作成",
+      "MODERATION_CASE_CLAIMED": "ケースを担当",
+      "MODERATION_REPORTER_REVEALED": "報告者を表示",
+      "MODERATION_EVIDENCE_REVEALED": "ケースのためにコンテンツを開示",
+      "MODERATION_EVIDENCE_VIEWED": "コンテンツを閲覧",
+      "MODERATION_DECIDED": "ケースを判断",
+      "MODERATION_RESTORED": "コンテンツを復元",
+      "MODERATION_APPEAL_RECORDED": "異議申し立てを受領",
+      "MODERATION_APPEAL_DECIDED": "異議申し立てを判断",
+      "MODERATION_LEGAL_HOLD_CHANGED": "捜査機関向けの保管を変更",
+      "MODERATION_RULES_VERSION_CREATED": "ハウスルールの新しい版",
+      "ACCOUNT_APPROVAL_CHANGED": "新規アカウントの承認を変更"
     },
     "meta": {
       "oldRole": "変更前のロール",
@@ -4589,7 +4654,8 @@
       "account": "アカウント",
       "preferences": "環境設定",
       "privacy": "プライバシー",
-      "administration": "管理"
+      "administration": "管理",
+      "help": "ヘルプ"
     },
     "timerSurfaces": {
       "title": "アプリ外のタイマー",
@@ -4723,6 +4789,10 @@
       "removeTitle": "購読を削除しますか？",
       "removeMessage": "カレンダーにシフトが届かなくなります。表示中のシフトは次回の取得で消えます。",
       "removed": "購読を削除しました"
+    },
+    "help": {
+      "title": "ヘルプと連絡先",
+      "subtitle": "モデレーション、ハウスルール、報告、運営者情報、アプリについて。"
     }
   },
   "twofa": {
@@ -5848,6 +5918,82 @@
       "emptyTitle": "ブロックしている人はいません",
       "emptyMessage": "ユーザーのプロフィールやコメントのメニューからブロックできます。",
       "more": "さらに読み込む"
+    }
+  },
+  "moderation": {
+    "appTerms": {
+      "title": "はじめる前に",
+      "body": "Hinata はあなたを所属する組織のサーバーにつなぎます。侮辱的、脅迫的、または不快なコンテンツと、他人に嫌がらせをする人は一切容認されません。各組織にはそのためのモデレーションがあり、通常 24 時間以内に報告を確認します。",
+      "read": "利用規約を読む",
+      "accept": "同意して続ける"
+    },
+    "rules": {
+      "title": "ハウスルール",
+      "gateTitle": "{{name}} のハウスルール",
+      "gateLead": "書き込む前に：ここでは多くの人が一緒に働いています。うまくいくように、次のことを守ってください。",
+      "gateChanged": "ハウスルールが変更されました。内容を読み、新しい版に同意してください。",
+      "respect": "敬意",
+      "respectText": "侮辱、脅迫、見下す言動は禁止です。一切容認されません。",
+      "lawful": "許されることだけ",
+      "lawfulText": "違法なものは禁止です。他人の個人情報を本人の同意なく載せないでください。",
+      "report": "見て見ぬふりをせず報告を",
+      "reportText": "⋯ › 報告 からモデレーションに届きます。通常 24 時間以内に返答します。",
+      "consequences": "結果",
+      "consequencesText": "違反はモデレーションが削除します。重大な場合や繰り返す場合はアカウントを停止します。",
+      "readAll": "ハウスルール全文",
+      "appTerms": "アプリの利用規約",
+      "accept": "同意して続ける",
+      "loadFailed": "ハウスルールを読み込めませんでした。",
+      "version": "第 {{version}} 版",
+      "versionSince": "第 {{version}} 版（{{date}} から）"
+    },
+    "help": {
+      "moderation": "{{name}} のモデレーション",
+      "moderationPlain": "このサーバーのモデレーション",
+      "reportElsewhere": "その他を報告 …",
+      "reportElsewhereDetail": "場所を添えて。例：プロジェクト名",
+      "imprint": "{{name}} の運営者情報",
+      "imprintPlain": "運営者情報",
+      "aboutApp": "アプリについて",
+      "aboutAppDetail": "提供者、利用規約、プライバシー",
+      "rulesAccepted": "第 {{version}} 版、{{date}} に同意",
+      "aboutVersion": "Hinata {{version}}",
+      "provider": "アプリの提供者",
+      "operatorNote": "サーバーはあなたの組織が自ら運営し、その内容に責任を負います。報告とブロックは組織のモデレーションに届き、アプリの提供者には届きません。"
+    },
+    "report": {
+      "thanks": "ありがとうございます。モデレーションが確認します。",
+      "elsewhereTitle": "その他を報告",
+      "whyTitle": "何が問題ですか？",
+      "elsewhereSubtitle": "どこにあり、モデレーションに何を伝えたいか",
+      "send": "報告する",
+      "change": "変更",
+      "location": "どこにありますか？",
+      "locationHint": "例：プロジェクト、ボード、チーム",
+      "locationRequired": "どこにあるかを書いてください。",
+      "explanationRequired": "モデレーションに何を伝えますか？",
+      "explanationOptional": "モデレーションに何を伝えますか？任意",
+      "explanationTooShort": "{{min}} 文字以上で説明してください。",
+      "whoSees": "報告したのがあなただとモデレーションには分かります。ほかの人には知らされません。",
+      "goodFaith": "送信すると、記入内容が知る限り正しいことを確認したことになります。"
+    },
+    "category": {
+      "harassment": "嫌がらせ、侮辱、憎悪",
+      "harassmentHint": "個人への攻撃や集団への蔑視",
+      "threat": "脅迫や暴力",
+      "threatHint": "誰かが脅されている、または暴力が肯定されている",
+      "sexual": "性的なコンテンツ",
+      "sexualHint": "わいせつ、またはポルノ的なもの",
+      "childSafety": "子どもへの危険",
+      "childSafetyHint": "すぐに、プレビューなしで確認されます",
+      "privacy": "同意のない個人情報",
+      "privacyHint": "住所、番号、健康、人物の写真",
+      "spam": "スパム、詐欺、マルウェア",
+      "spamHint": "広告、フィッシング、危険なファイル",
+      "illegal": "法律違反",
+      "illegalHint": "著作権やその他の法律。理由を簡単に書いてください",
+      "other": "その他",
+      "otherHint": "簡単に説明してください"
     }
   }
 }

@@ -368,7 +368,8 @@
       "emailNotVerified": "Primero confirma tu dirección de correo. Encontrarás el enlace en tu bandeja de entrada."
     },
     "showPassword": "Mostrar contraseña",
-    "hidePassword": "Ocultar contraseña"
+    "hidePassword": "Ocultar contraseña",
+    "contact": "Contacto"
   },
   "authShell": {
     "heroTitle": "Donde converge el trabajo de tu equipo.",
@@ -3662,6 +3663,46 @@
         "voice": "Mensajes de voz",
         "voiceHint": "Grabaciones en comentarios"
       }
+    },
+    "entry": {
+      "title": "Quién entra",
+      "registration": "El registro deja entrar cuentas nuevas sin aprobación.",
+      "provider": "El acceso con «{{name}}» crea cuentas activas la primera vez, sin que nadie lo apruebe.",
+      "consequence": "Quien tiene una cuenta así lee las páginas de toda la organización y el directorio. Según la DSA, ese contenido pasa a ser público, con las obligaciones de una plataforma en línea.",
+      "enable": "Activar la aprobación",
+      "proxy": "Las solicitudes llegan a través de un proxy en el que este servidor no confía. Cada solicitud cuenta entonces como la dirección del proxy y los límites por dirección se aplican a todos a la vez. Añade el proxy a HINATA_TRUSTED_PROXIES.",
+      "confirmTitle": "¿Dejar entrar cuentas nuevas sin aprobación?",
+      "confirmBody": "A través de {{ways}} entra entonces cualquiera sin que nadie lo apruebe. Quien tiene una cuenta así lee las páginas de toda la organización y el directorio. Según la DSA, ese contenido pasa a ser público, con las obligaciones de una plataforma en línea.",
+      "confirm": "Abrir sin aprobación",
+      "way": {
+        "registration": "el registro"
+      }
+    },
+    "ssoApproval": {
+      "title": "Las cuentas nuevas necesitan aprobación",
+      "hint": "Cada primer acceso espera a que alguien de la administración lo apruebe, como en un registro.",
+      "domains": "Dominios de correo permitidos",
+      "domainsHint": "Sin aprobación, solo entran directamente las direcciones de estos dominios; el resto espera. Separa varios con comas."
+    },
+    "rules": {
+      "title": "Normas de la casa",
+      "hint": "Todos aceptan una vez antes de escribir.",
+      "versionSince": "Versión {{version}} desde el {{date}}.",
+      "mode": {
+        "builtIn": "Estándar",
+        "text": "Texto propio",
+        "url": "Dirección"
+      },
+      "builtInHint": "El estándar viene en nueve idiomas e indica vuestro contacto.",
+      "text": "Vuestras normas de la casa",
+      "textHint": "Markdown. El servidor siempre añade «Así moderamos».",
+      "url": "Dirección de vuestras normas de la casa",
+      "versionHint": "Guardar un cambio crea una nueva versión. Quien ya aceptó no tiene que volver a hacerlo, salvo que se lo pidas a todos.",
+      "reaccept": "Pedir a todos que acepten de nuevo",
+      "reacceptTitle": "¿Pedir a todos que acepten de nuevo?",
+      "reacceptBody": "Todos aceptan la versión actual antes de seguir trabajando. Hasta entonces nadie obtiene un nuevo token de acceso ni conecta un cliente de IA.",
+      "reacceptConfirm": "Pedírselo a todos",
+      "reacceptDone": "Todos aceptan de nuevo la versión {{version}}."
     }
   },
   "audit": {
@@ -3727,7 +3768,8 @@
       "configuration": "Configuración",
       "data": "Datos y privacidad",
       "integration": "Integración",
-      "unknown": "Otros"
+      "unknown": "Otros",
+      "moderation": "Moderación"
     },
     "action": {
       "LOGIN_SUCCESS": "Sesión iniciada",
@@ -3883,7 +3925,30 @@
       "SHIFT_ASSIGNMENT_DECLINED": "Turno rechazado",
       "SHIFT_ASSIGNMENT_RELEASED": "Plaza liberada en un turno",
       "SHIFT_PLANNER_GRANTED": "Planificación de turnos concedida",
-      "SHIFT_PLANNER_REVOKED": "Planificación de turnos retirada"
+      "SHIFT_PLANNER_REVOKED": "Planificación de turnos retirada",
+      "USER_SUSPENDED": "Cuenta suspendida",
+      "USER_SUSPENSION_LIFTED": "Suspensión levantada",
+      "USER_SUSPENSION_ENDED": "Suspensión finalizada",
+      "TIME_CALENDAR_SUBSCRIPTION_CREATED": "Suscripción de calendario añadida",
+      "TIME_CALENDAR_SUBSCRIPTION_DELETED": "Suscripción de calendario eliminada",
+      "SHIFT_FEED_TOKEN_CREATED": "Enlace de suscripción a turnos creado",
+      "SHIFT_FEED_TOKEN_REVOKED": "Enlace de suscripción a turnos revocado",
+      "SHIFT_SERIES_CREATED": "Serie de eventos creada",
+      "SHIFT_SERIES_UPDATED": "Serie de eventos modificada",
+      "SHIFT_SERIES_DELETED": "Serie de eventos eliminada",
+      "SHIFT_PLAN_EXPORTED": "Plan de turnos exportado",
+      "MODERATION_CASE_CREATED": "Caso abierto",
+      "MODERATION_CASE_CLAIMED": "Caso asumido",
+      "MODERATION_REPORTER_REVEALED": "Denunciante mostrado",
+      "MODERATION_EVIDENCE_REVEALED": "Contenido liberado para el caso",
+      "MODERATION_EVIDENCE_VIEWED": "Contenido consultado",
+      "MODERATION_DECIDED": "Caso resuelto",
+      "MODERATION_RESTORED": "Contenido restaurado",
+      "MODERATION_APPEAL_RECORDED": "Recurso recibido",
+      "MODERATION_APPEAL_DECIDED": "Recurso resuelto",
+      "MODERATION_LEGAL_HOLD_CHANGED": "Conservación para las autoridades modificada",
+      "MODERATION_RULES_VERSION_CREATED": "Nueva versión de las normas de la casa",
+      "ACCOUNT_APPROVAL_CHANGED": "Aprobación de cuentas nuevas modificada"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -4589,7 +4654,8 @@
       "account": "Cuenta",
       "preferences": "Preferencias",
       "privacy": "Privacidad",
-      "administration": "Administración"
+      "administration": "Administración",
+      "help": "Ayuda"
     },
     "timerSurfaces": {
       "title": "Temporizador fuera de la app",
@@ -4723,6 +4789,10 @@
       "removeTitle": "¿Quitar la suscripción?",
       "removeMessage": "Tus calendarios ya no reciben turnos. Los que ya se muestran desaparecen en la próxima consulta.",
       "removed": "Suscripción quitada"
+    },
+    "help": {
+      "title": "Ayuda y contacto",
+      "subtitle": "Moderación, normas de la casa, denuncias, aviso legal y la app."
     }
   },
   "twofa": {
@@ -5848,6 +5918,82 @@
       "emptyTitle": "No has bloqueado a nadie",
       "emptyMessage": "Puedes bloquear a alguien desde su perfil o desde el menú de un comentario.",
       "more": "Cargar más"
+    }
+  },
+  "moderation": {
+    "appTerms": {
+      "title": "Antes de empezar",
+      "body": "Hinata te conecta con el servidor de tu organización. No se tolera ningún contenido ofensivo, amenazante o inapropiado ni a quienes acosan a otras personas. Cada organización tiene para ello una moderación, que suele revisar las denuncias en menos de 24 horas.",
+      "read": "Leer las condiciones de uso",
+      "accept": "Aceptar y continuar"
+    },
+    "rules": {
+      "title": "Normas de la casa",
+      "gateTitle": "Normas de la casa de {{name}}",
+      "gateLead": "Antes de escribir: aquí trabajan muchas personas juntas. Para que salga bien:",
+      "gateChanged": "Las normas de la casa han cambiado. Léelas y acepta la nueva versión.",
+      "respect": "Respeto",
+      "respectText": "Nada de insultos, amenazas ni desprecio. No se tolera en absoluto.",
+      "lawful": "Solo lo permitido",
+      "lawfulText": "Nada ilegal y ningún dato privado de otras personas sin su permiso.",
+      "report": "Denunciar en vez de mirar a otro lado",
+      "reportText": "Con ⋯ › Denunciar llegas a la moderación. Suele responder en menos de 24 horas.",
+      "consequences": "Consecuencias",
+      "consequencesText": "La moderación elimina las infracciones. En casos graves o repetidos suspende cuentas.",
+      "readAll": "Normas completas",
+      "appTerms": "Condiciones de uso de la app",
+      "accept": "Aceptar y continuar",
+      "loadFailed": "No se pudieron cargar las normas de la casa.",
+      "version": "Versión {{version}}",
+      "versionSince": "Versión {{version}} desde el {{date}}"
+    },
+    "help": {
+      "moderation": "Moderación de {{name}}",
+      "moderationPlain": "Moderación de este servidor",
+      "reportElsewhere": "Denunciar otra cosa …",
+      "reportElsewhereDetail": "Indicando dónde, por ejemplo el nombre de un proyecto",
+      "imprint": "Aviso legal de {{name}}",
+      "imprintPlain": "Aviso legal del operador",
+      "aboutApp": "Acerca de la app",
+      "aboutAppDetail": "Proveedor, condiciones de uso, privacidad",
+      "rulesAccepted": "Versión {{version}}, aceptada el {{date}}",
+      "aboutVersion": "Hinata {{version}}",
+      "provider": "Proveedor de la app",
+      "operatorNote": "Tu organización gestiona su propio servidor y responde de lo que hay en él. Las denuncias y los bloqueos van a su moderación, no al proveedor de la app."
+    },
+    "report": {
+      "thanks": "Gracias. La moderación lo revisará.",
+      "elsewhereTitle": "Denunciar otra cosa",
+      "whyTitle": "¿Cuál es el problema?",
+      "elsewhereSubtitle": "Dónde está y qué debe saber la moderación",
+      "send": "Denunciar",
+      "change": "Cambiar",
+      "location": "¿Dónde está?",
+      "locationHint": "Por ejemplo un proyecto, un tablero o un equipo",
+      "locationRequired": "Indica dónde se encuentra.",
+      "explanationRequired": "¿Qué debe saber la moderación?",
+      "explanationOptional": "¿Qué debe saber la moderación? Opcional",
+      "explanationTooShort": "Descríbelo con al menos {{min}} caracteres.",
+      "whoSees": "La moderación ve que has denunciado. Nadie más se entera.",
+      "goodFaith": "Al enviar confirmas que tus datos son ciertos según tu leal saber."
+    },
+    "category": {
+      "harassment": "Acoso, insultos u odio",
+      "harassmentHint": "Ataques a una persona o desprecio hacia un grupo",
+      "threat": "Amenaza o violencia",
+      "threatHint": "Se amenaza a alguien o se aprueba la violencia",
+      "sexual": "Contenido sexual",
+      "sexualHint": "Material insinuante o pornográfico",
+      "childSafety": "Peligro para menores",
+      "childSafetyHint": "Se revisa de inmediato y sin vista previa",
+      "privacy": "Datos privados sin permiso",
+      "privacyHint": "Direcciones, números, salud, fotos de personas",
+      "spam": "Spam, fraude o software malicioso",
+      "spamHint": "Publicidad, phishing, archivos peligrosos",
+      "illegal": "Infracción de la ley",
+      "illegalHint": "Derechos de autor u otra ley, explícalo brevemente",
+      "other": "Otra cosa",
+      "otherHint": "Descríbelo brevemente"
     }
   }
 }
