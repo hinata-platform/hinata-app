@@ -61,6 +61,7 @@ class _OwnCaseDialogState extends State<_OwnCaseDialog> {
             context,
             anchorRect: anchor,
             width: 400,
+            minHeight: 480,
             maxHeight: 560,
             builder: reasons,
           )
