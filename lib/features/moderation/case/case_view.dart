@@ -212,6 +212,7 @@ class _CaseBody extends StatelessWidget {
       if (go != true || !context.mounted) return;
     }
     final media = detail.evidence!.media;
+    final cubit = context.read<CaseDetailCubit>();
     String nameOf(int i) =>
         media[i].fileName ??
         context.t('moderation.case.fileNumber', variables: {'n': '${i + 1}'});
@@ -225,9 +226,10 @@ class _CaseBody extends StatelessWidget {
             kind: kindFromName(nameOf(i), media[i].contentType),
             mime: media[i].contentType,
             size: media[i].size,
-            // Through the server and never by a link that could be passed
-            // on; the viewer holds the bytes in memory only.
-            url: evidenceFilePath(detail.id, i),
+            // Through the server on every look, which its audit log records,
+            // never by a link that could be passed on; held in memory only,
+            // and not past the viewer.
+            load: () => cubit.file(i),
           ),
       ],
       initialIndex: index,
@@ -282,10 +284,6 @@ class _CaseBody extends StatelessWidget {
     await context.read<CaseDetailCubit>().decideAppeal(result, note);
   }
 }
-
-/// The API path of file [index] of case [caseId]'s evidence.
-String evidenceFilePath(String caseId, int index) =>
-    '/api/v1/moderation/cases/${Uri.encodeComponent(caseId)}/evidence/$index';
 
 /// The cell, the category, what it is and where, and how long it waited.
 class _Head extends StatelessWidget {
