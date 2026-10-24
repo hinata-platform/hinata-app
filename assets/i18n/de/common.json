@@ -542,7 +542,9 @@
       "cancelEdit": "Bearbeiten abbrechen",
       "closeFormat": "Formatierung schließen",
       "discardRecording": "Aufnahme verwerfen",
-      "sendVoice": "Sprachnachricht senden"
+      "sendVoice": "Sprachnachricht senden",
+      "retryVoice": "Erneut senden",
+      "voiceNotSent": "Sprachnachricht ({{time}}) nicht gesendet"
     },
     "moreReactions": "Weitere Reaktionen",
     "voice": {
@@ -737,7 +739,8 @@
         "emptyFile": "Diese Datei ist leer.",
         "renderFailed": "Diese Datei konnte nicht dargestellt werden.",
         "retry": "Erneut versuchen",
-        "tooLarge": "Zu groß für die Vorschau – zum Lesen herunterladen."
+        "tooLarge": "Zu groß für die Vorschau – zum Lesen herunterladen.",
+        "more": "Mehr"
       },
       "source": {
         "title": "Anhang hinzufügen",
@@ -5955,7 +5958,9 @@
       "emptyTitle": "Du hast niemanden blockiert",
       "emptyMessage": "Blockieren kannst du im Profil einer Person und im Menü eines Kommentars.",
       "more": "Mehr laden"
-    }
+    },
+    "alsoReport": "Diesen Kommentar auch melden",
+    "alsoReportHint": "Danach wählst du den Grund, die Moderation prüft ihn."
   },
   "moderation": {
     "appTerms": {
@@ -6012,7 +6017,23 @@
       "explanationOptional": "Was soll die Moderation wissen? Freiwillig",
       "explanationTooShort": "Bitte beschreib es in mindestens {{min}} Zeichen.",
       "whoSees": "Die Moderation sieht, dass du gemeldet hast. Sonst erfährt es niemand.",
-      "goodFaith": "Mit dem Senden bestätigst du, dass deine Angaben nach bestem Wissen stimmen."
+      "goodFaith": "Mit dem Senden bestätigst du, dass deine Angaben nach bestem Wissen stimmen.",
+      "action": "Melden …",
+      "alsoBlock": "{{name}} auch blockieren",
+      "alsoBlockHint": "Du bekommst keine Mitteilungen mehr von {{name}}.",
+      "byIn": "Von {{name}} in {{where}}",
+      "counter": "{{count}} von {{max}}",
+      "folded": "Von dir gemeldet, für dich eingeklappt",
+      "personDetail": "Geht an die Moderation, {{name}} erfährt nicht, von wem",
+      "titleArticle": "Seite melden",
+      "titleAttachment": "Datei melden",
+      "titleComment": "Kommentar melden",
+      "titleIssue": "Vorgang melden",
+      "titlePerson": "Person melden",
+      "titleVoice": "Sprachnachricht melden",
+      "tooMany": "Du hast gerade sehr viele Meldungen geschickt. Spätestens um {{time}} geht es wieder.",
+      "tooManyTomorrow": "Du hast heute sehr viele Meldungen geschickt. Spätestens morgen um {{time}} geht es wieder.",
+      "whoSeesNamed": "Die Moderation sieht, dass du gemeldet hast. {{name}} erfährt es nicht."
     },
     "category": {
       "harassment": "Belästigung, Beleidigung oder Hass",
@@ -6037,6 +6058,44 @@
       "body": "Der Text enthält etwas, das die Hausregeln nicht erlauben: {{terms}}. Dein Entwurf bleibt erhalten, du kannst ihn ändern.",
       "bodyPlain": "Der Text enthält etwas, das die Hausregeln nicht erlauben. Dein Entwurf bleibt erhalten, du kannst ihn ändern.",
       "readRules": "Hausregeln lesen"
+    },
+    "appeal": {
+      "hint": "Was sieht die Moderation falsch? Was soll sie wissen?",
+      "label": "Dein Widerspruch",
+      "send": "Widerspruch senden",
+      "sent": "Dein Widerspruch ist eingegangen.",
+      "subtitle": "Eine andere Person aus der Moderation prüft die Entscheidung neu.",
+      "title": "Widersprechen"
+    },
+    "notice": {
+      "appeal": "Widersprechen …",
+      "failedTitle": "Der Hinweis konnte nicht geladen werden",
+      "from": "Hinweis der Moderation",
+      "goneMessage": "Er wurde nach Ablauf der Frist gelöscht oder gehört zu einem anderen Konto.",
+      "goneTitle": "Diesen Hinweis gibt es nicht mehr",
+      "pageTitle": "Hinweis der Moderation",
+      "rules": "Hausregeln"
+    },
+    "placeholder": {
+      "description": "Beschreibung von der Moderation entfernt",
+      "file": "Datei entfernt",
+      "fileBy": "Von der Moderation",
+      "page": "Inhalt von der Moderation entfernt",
+      "removed": "Von der Moderation entfernt",
+      "why": "Warum?"
+    },
+    "state": {
+      "removed": "Entfernt",
+      "suspended": "Gesperrt"
+    },
+    "statement": {
+      "automation": "Automatische Mittel",
+      "basis": "Anlass und Festgestelltes",
+      "law": "Rechtsgrundlage",
+      "measure": "Maßnahme",
+      "message": "Nachricht der Moderation",
+      "remedies": "Was du tun kannst",
+      "rule": "Regel"
     }
   }
 }
