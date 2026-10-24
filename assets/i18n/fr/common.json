@@ -3736,6 +3736,7 @@
       "confirm": "Activer",
       "ownTerms": "Termes propres",
       "ownTermsHint": "Toujours refusés, quelle que soit l'écriture. Jusqu'à 500 termes de 60 caractères chacun.",
+      "ownTermsPublic": "Vos propres termes figurent mot pour mot dans les règles de la maison publiques, y compris dans chaque version antérieure. N'y inscrivez ni noms de personnes ni rien de confidentiel.",
       "exceptions": "Exceptions",
       "exceptionsHint": "Des mots anodins chez vous, comme des termes techniques. Les contenus qui mettent des enfants en danger restent toujours bloqués.",
       "addTerm": "Ajouter un terme",

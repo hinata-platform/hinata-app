@@ -359,6 +359,14 @@ void main() {
     expect(find.text('admin.textCheck.flagNote'), findsOneWidget);
   });
 
+  testWidgets('own terms say they are public, word for word', (tester) async {
+    await pump(tester, moderators: []);
+
+    final warning = find.text('admin.textCheck.ownTermsPublic');
+    await tester.ensureVisible(warning);
+    expect(warning, findsOneWidget);
+  });
+
   testWidgets('an own term is added once, in any case, and removed by its '
       'chip', (tester) async {
     // As decoded from JSON, with an exception already kept.

@@ -3736,6 +3736,7 @@
       "confirm": "Activar",
       "ownTerms": "Términos propios",
       "ownTermsHint": "Siempre se rechazan, se escriban como se escriban. Hasta 500 términos de 60 caracteres cada uno.",
+      "ownTermsPublic": "Tus propios términos aparecen palabra por palabra en las normas de la casa públicas, también en cada versión anterior. No escribas nombres de personas ni nada confidencial.",
       "exceptions": "Excepciones",
       "exceptionsHint": "Palabras inofensivas para la organización, como términos técnicos. El contenido que pone en peligro a menores siempre sigue bloqueado.",
       "addTerm": "Añadir término",
