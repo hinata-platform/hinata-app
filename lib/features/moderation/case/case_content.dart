@@ -191,10 +191,12 @@ class CaseFiles extends StatelessWidget {
   });
 
   final List<CaseMedia> media;
+
+  /// The safety of children: the files are listed, never opened.
   final bool childSafety;
 
-  /// Opens file [index]; null where files are never shown.
-  final void Function(int index)? onOpen;
+  /// Opens file [index].
+  final void Function(int index) onOpen;
   final VoidCallback onProcedure;
 
   @override
@@ -205,7 +207,7 @@ class CaseFiles extends StatelessWidget {
         _FileRow(
           file: media[i],
           index: i,
-          onOpen: childSafety || onOpen == null ? null : () => onOpen!(i),
+          onOpen: childSafety ? null : () => onOpen(i),
         ),
       if (childSafety)
         Padding(
