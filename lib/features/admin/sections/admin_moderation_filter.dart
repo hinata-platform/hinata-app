@@ -162,6 +162,13 @@ class _TextCheckCardState extends State<TextCheckCard> {
           onAdd: (term) => _add('blockTerms', term),
           onRemove: (term) => _remove('blockTerms', term),
         ),
+        // The public rules list them, so the people they are refused to can
+        // read why (HIN-176), and no version of the rules ever changes.
+        AdminNote(
+          text: context.t('admin.textCheck.ownTermsPublic'),
+          icon: LucideIcons.globe,
+          tone: AdminNoteTone.warning,
+        ),
         const SizedBox(height: 12),
         _TermList(
           label: context.t('admin.textCheck.exceptions'),
