@@ -641,9 +641,9 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
 
   /// Somebody else's file, on a server that knows reporting (HIN-173).
   bool _reportable(IssueAttachment a) {
-    final me = context.read<AuthBloc>().state.user?.id;
+    final me = context.read<AuthBloc?>()?.state.user?.id;
     final moderated =
-        context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false;
+        context.read<AppConfigBloc?>()?.state.meta?.supportsModeration ?? false;
     return moderated && me != null && a.uploaderId != me && !a.isRemoved;
   }
 
