@@ -35,6 +35,7 @@ Future<void> suspendFromProfile(
     detail,
     suspendPerson: true,
     facts: own.facts,
+    person: profile,
   );
   if (!context.mounted) return;
   if (notice != null) {

@@ -50,11 +50,17 @@ void main() {
       );
   });
 
-  Future<DecisionCubit> started({CaseDetail? detail}) async {
+  Future<DecisionCubit> started({
+    CaseDetail? detail,
+    PersonProfile? person,
+  }) async {
     final cubit = DecisionCubit(
       moderation,
       users,
       detail: detail ?? caseDetail(),
+      person: person,
+      // A change waits for nothing but the next turn of the event loop.
+      previewDelay: Duration.zero,
     );
     addTearDown(cubit.close);
     await cubit.start();
@@ -135,7 +141,9 @@ void main() {
     });
     final cubit = await started();
     cubit.choose(CaseOutcome.action);
+    await pumpEventQueue();
     cubit.chooseRule(const HouseRule(1, 'Respekt'));
+    await pumpEventQueue();
     expect(answers, hasLength(2));
 
     answers[1].complete(
@@ -147,6 +155,31 @@ void main() {
     );
     await pumpEventQueue();
     expect(cubit.state.preview?.measure, 'Neuer Wortlaut');
+  });
+
+  test('changes in quick succession ask the server once', () async {
+    final cubit = await started();
+    cubit
+      ..choose(CaseOutcome.action)
+      ..chooseRule(const HouseRule(1, 'Respekt'))
+      ..setScope(RemovalScope.whole);
+    await pumpEventQueue();
+
+    expect(previews(), hasLength(1));
+    final draft = previews().single.positionalArguments[1] as DecisionDraft;
+    expect(draft.ruleReference, '1. Respekt');
+  });
+
+  test('the person the dialog was opened with is not read again', () async {
+    const person = PersonProfile(
+      id: jonas,
+      displayName: 'Jonas',
+      username: jonas,
+    );
+    final cubit = await started(person: person);
+
+    expect(cubit.state.responsible, person);
+    expect(users.calls, isEmpty);
   });
 
   test('what is still missing is said once sending was tried', () async {
