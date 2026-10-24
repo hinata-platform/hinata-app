@@ -642,37 +642,45 @@ class _Footer extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            const Spacer(),
-            TextButton(
-              onPressed: busy ? null : () => Navigator.of(context).maybePop(),
-              child: Text(context.t('common.cancel')),
-            ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: busy ? null : onConfirm,
-              style: FilledButton.styleFrom(
-                backgroundColor: danger ? AppColors.danger : null,
-                foregroundColor: danger ? Colors.white : null,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 13,
-                ),
+        // A wrap, not a row: at a large text size the two buttons do not fit
+        // side by side on a phone, and the confirm button moves below. Full
+        // width, or the wrap shrinks to its buttons and leaves the end.
+        child: SizedBox(
+          width: double.infinity,
+          child: Wrap(
+            alignment: WrapAlignment.end,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              TextButton(
+                onPressed: busy ? null : () => Navigator.of(context).maybePop(),
+                child: Text(context.t('common.cancel')),
               ),
-              icon: busy
-                  ? SizedBox(
-                      width: 15,
-                      height: 15,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: danger ? Colors.white : AppColors.navy,
-                      ),
-                    )
-                  : Icon(icon, size: 15),
-              label: Text(label),
-            ),
-          ],
+              FilledButton.icon(
+                onPressed: busy ? null : onConfirm,
+                style: FilledButton.styleFrom(
+                  backgroundColor: danger ? AppColors.danger : null,
+                  foregroundColor: danger ? Colors.white : null,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 13,
+                  ),
+                ),
+                icon: busy
+                    ? SizedBox(
+                        width: 15,
+                        height: 15,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: danger ? Colors.white : AppColors.navy,
+                        ),
+                      )
+                    : Icon(icon, size: 15),
+                label: Text(label),
+              ),
+            ],
+          ),
         ),
       ),
     );
