@@ -52,6 +52,7 @@ void main() {
     openReset: (_) {},
     revokeSessions: (_) {},
     openUnlinkSso: (_) {},
+    openLiftSuspension: (_) {},
     openDelete: (_) {},
     isLastActiveAdmin: (_) => false,
     nameById: (_) => null,

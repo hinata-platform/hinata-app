@@ -362,6 +362,7 @@
       "ssoAccountNotLinkedSsoOnly": "このメールアドレスのアカウントは既に存在しますが、このサインイン方法とは連携されていません。管理者にお問い合わせください。",
       "ssoEmailNotVerified": "サインインサービスによると、このメールアドレスは未確認です。未確認のアドレスに既存のアカウントが連携されることはありません。管理者にお問い合わせください。",
       "ssoNoEmail": "サインインサービスからメールアドレスが送られてきませんでした。アドレスがないとアカウントを作成できません。管理者にお問い合わせください。",
+      "accountSuspended": "あなたのアカウントは停止されています。理由、期限、異議の申し立て方はモデレーションからのメールに記載されています。",
       "accountDeactivated": "アカウントは無効になっています。管理者にお問い合わせください。",
       "pendingApproval": "アカウントは管理者の承認待ちです。",
       "emailNotVerified": "まずメールアドレスを確認してください。リンクは受信トレイに届いています。"
@@ -3502,7 +3503,15 @@
       "moderatorConfirmMany": "{{names}} は報告されたコンテンツを確認して判断するようになります。投稿の削除やアカウントの停止も含まれます。見られるのは報告された内容だけです。",
       "toastModeratorGranted": "モデレーションのロールを付与しました",
       "toastModeratorRevoked": "モデレーションのロールを取り消しました",
-      "reasonOwnModeratorRole": "この役割は、管理者の別の人があなたに付与します。"
+      "reasonOwnModeratorRole": "この役割は、管理者の別の人があなたに付与します。",
+      "suspended": "停止中",
+      "suspendedUntil": "{{date}} まで停止",
+      "liftSuspension": "停止を解除",
+      "liftSuspensionSub": "モデレーションがこのアカウントを停止しました。解除すると本人は再びサインインでき、モデレーションに通知されます。",
+      "liftSuspensionRowSub": "モデレーションにより停止。理由はモデレーションが保持します。",
+      "liftSuspensionNote": "記録用メモ（任意）",
+      "liftSuspensionAction": "停止を解除",
+      "toastSuspensionLifted": "停止を解除しました"
     },
     "iosStoreUrl": "iOS App Store の URL",
     "androidStoreUrl": "Android Play ストアの URL",

@@ -270,6 +270,13 @@ class AdminRepository {
   Future<void> adminUnlinkSso(String id) =>
       _api.delete('/api/v1/admin/users/$id/sso-link');
 
+  /// Ends a suspension moderation decided (HIN-172), with a note for the
+  /// record. The moderators hear that an administrator lifted it.
+  Future<void> adminLiftSuspension(String id, String note) => _api.post(
+    '/api/v1/admin/users/$id/suspension/lift',
+    body: {'note': note},
+  );
+
   Future<void> adminUpdateUserDetails(
     String id, {
     String? displayName,

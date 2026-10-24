@@ -266,6 +266,15 @@ class StatusBadge extends StatelessWidget {
       );
     }
     final (bg, fg) = statusColors(user.status);
+    if (user.suspended) {
+      // Suspended by moderation (HIN-172): disabled, with an end to say.
+      return _Badge(
+        icon: LucideIcons.lock,
+        label: suspensionLabel(context, user),
+        bg: bg,
+        fg: fg,
+      );
+    }
     return _Badge(
       icon: statusIcon(user.status),
       label: statusLabel(context, user.status),
@@ -274,6 +283,14 @@ class StatusBadge extends StatelessWidget {
     );
   }
 }
+
+/// "Suspended until 31 Oct 2026", or "Suspended" until further notice.
+String suspensionLabel(BuildContext c, AdminUser u) => u.suspendedUntil == null
+    ? c.t('admin.um.suspended')
+    : c.t(
+        'admin.um.suspendedUntil',
+        variables: {'date': umPrettyDate(c, u.suspendedUntil)},
+      );
 
 class OriginTag extends StatelessWidget {
   const OriginTag(this.origin, {super.key});
@@ -466,6 +483,7 @@ class UserActions {
     required this.openReset,
     required this.revokeSessions,
     required this.openUnlinkSso,
+    required this.openLiftSuspension,
     required this.openDelete,
     required this.isLastActiveAdmin,
     required this.nameById,
@@ -492,6 +510,9 @@ class UserActions {
 
   /// Asks, then undoes the account's binding to its SSO identity (HIN-179).
   final void Function(AdminUser u) openUnlinkSso;
+
+  /// Ends a suspension moderation decided, after asking for a note (HIN-172).
+  final void Function(AdminUser u) openLiftSuspension;
   final void Function(List<String> ids) openDelete;
   final bool Function(AdminUser u) isLastActiveAdmin;
   final String? Function(String? id) nameById;
