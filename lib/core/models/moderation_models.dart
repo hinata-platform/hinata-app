@@ -181,6 +181,12 @@ enum ReportCategory {
 
   static const explanationMin = 10;
   static const explanationMax = 1000;
+
+  /// Something else for a value this app does not know.
+  static ReportCategory of(Object? wire) => values.firstWhere(
+    (category) => category.wire == wire,
+    orElse: () => ReportCategory.other,
+  );
 }
 
 /// What the text check says when nothing is stored (HIN-176):
@@ -361,9 +367,10 @@ class ContentMark extends Equatable {
   List<Object?> get props => [state, caseId, at];
 }
 
-/// What a decision did to the content, as the notice names it (HIN-171); none
-/// for a suspension alone.
-enum StatementScope {
+/// How much of a content a removal takes (HIN-171): all of it, one field of an
+/// issue, a page back to the version before, a person's picture or the words
+/// on their profile. A notice names it; none for a suspension alone.
+enum RemovalScope {
   whole('WHOLE'),
   title('TITLE'),
   description('DESCRIPTION'),
@@ -371,11 +378,11 @@ enum StatementScope {
   avatar('AVATAR'),
   profileText('PROFILE_TEXT');
 
-  const StatementScope(this.wire);
+  const RemovalScope(this.wire);
 
   final String wire;
 
-  static StatementScope? of(Object? wire) {
+  static RemovalScope? of(Object? wire) {
     for (final scope in values) {
       if (scope.wire == wire) return scope;
     }
@@ -431,7 +438,7 @@ class Statement extends Equatable {
 
   /// What was done, how far, and for how long.
   final String measure;
-  final StatementScope? scope;
+  final RemovalScope? scope;
 
   /// When a suspension ends; none for none, or for one without an end.
   final DateTime? until;
@@ -470,11 +477,39 @@ class Statement extends Equatable {
   /// Whether the decision suspended the account rather than removed content.
   bool get suspends => scope == null || until != null;
 
+  /// This statement with the words a moderator is still typing put in: the
+  /// preview while deciding follows every keystroke without asking the server
+  /// for each (HIN-174).
+  Statement withTexts({
+    String? facts,
+    String? groundText,
+    String? messageToAuthor,
+  }) => Statement(
+    caseId: caseId,
+    headline: headline,
+    measure: measure,
+    scope: scope,
+    until: until,
+    basis: basis,
+    facts: facts,
+    automatedDetection: automatedDetection,
+    automation: automation,
+    lawGround: lawGround,
+    groundText: groundText,
+    rulesUrl: rulesUrl,
+    appealUntil: appealUntil,
+    appealable: appealable,
+    appeal: appeal,
+    appealState: appealState,
+    courtsNote: courtsNote,
+    messageToAuthor: messageToAuthor,
+  );
+
   factory Statement.fromJson(Map<String, dynamic> json) => Statement(
     caseId: json['caseId'] as String? ?? '',
     headline: json['headline'] as String? ?? '',
     measure: json['measure'] as String? ?? '',
-    scope: StatementScope.of(json['scope']),
+    scope: RemovalScope.of(json['scope']),
     until: parseInstant(json['until']),
     basis: json['basis'] as String?,
     facts: json['facts'] as String?,
