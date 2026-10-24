@@ -406,7 +406,9 @@
     "more": "Ещё",
     "collapse": "Свернуть",
     "expandSidebar": "Развернуть боковую панель",
-    "shifts": "Смены"
+    "shifts": "Смены",
+    "groupWork": "Работа",
+    "groupPlan": "Планирование"
   },
   "dashboard": {
     "title": "Панель",

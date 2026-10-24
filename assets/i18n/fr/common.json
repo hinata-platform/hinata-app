@@ -406,7 +406,9 @@
     "more": "Plus",
     "collapse": "Réduire",
     "expandSidebar": "Déployer la barre latérale",
-    "shifts": "Créneaux"
+    "shifts": "Créneaux",
+    "groupWork": "Travail",
+    "groupPlan": "Planification"
   },
   "dashboard": {
     "title": "Tableau de bord",

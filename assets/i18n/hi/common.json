@@ -406,7 +406,9 @@
     "more": "और",
     "collapse": "समेटें",
     "expandSidebar": "साइडबार खोलें",
-    "shifts": "शिफ्ट"
+    "shifts": "शिफ्ट",
+    "groupWork": "काम",
+    "groupPlan": "योजना"
   },
   "dashboard": {
     "title": "डैशबोर्ड",

@@ -406,7 +406,9 @@
     "more": "Más",
     "collapse": "Contraer",
     "expandSidebar": "Desplegar barra lateral",
-    "shifts": "Turnos"
+    "shifts": "Turnos",
+    "groupWork": "Trabajo",
+    "groupPlan": "Planificación"
   },
   "dashboard": {
     "title": "Panel",

@@ -406,7 +406,9 @@
     "more": "Mehr",
     "collapse": "Einklappen",
     "expandSidebar": "Seitenleiste ausklappen",
-    "shifts": "Schichten"
+    "shifts": "Schichten",
+    "groupWork": "Arbeit",
+    "groupPlan": "Planung"
   },
   "dashboard": {
     "title": "Dashboard",
