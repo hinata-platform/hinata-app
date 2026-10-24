@@ -3676,7 +3676,11 @@
       "retentionHint": "処理済みの案件、その通報、隔離された内容はこの期間の後に削除されます。法執行機関に通知した場合を除きます。",
       "retentionLabel": "削除まで",
       "retentionMonths": "{{count}} か月",
-      "retentionMonths_plural": "{{count}} か月"
+      "retentionMonths_plural": "{{count}} か月",
+      "figures": "{{year}} 年の数値をダウンロード",
+      "figuresHint": "欧州委員会のテンプレートに沿って、パートごとに 1 つの CSV ファイルを ZIP にまとめます。公開する前に数値を確認し、当局からの命令など Hinata が知らない情報を補ってください。",
+      "figuresDone": "数値を保存しました",
+      "figuresFailed": "数値を保存できませんでした"
     },
     "entry": {
       "title": "誰が入れるか",
