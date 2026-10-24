@@ -3612,7 +3612,11 @@
       "reprocessFullTitle": "Recréer les tickets manquants ?",
       "reprocessFullBody": "Chaque e-mail de « {{name}} » sans ticket en reçoit un nouveau — y compris ceux que vous avez supprimés volontairement. Cette action ne peut pas être annulée en bloc.",
       "reprocessFullConfirm": "Recréer",
-      "reprocessDone": "{{scanned}} analysés · {{updated}} reconstruits · {{created}} créés"
+      "reprocessDone": "{{scanned}} analysés · {{updated}} reconstruits · {{created}} créés",
+      "textRefusals": "{{count}} e-mail refusé par la vérification des textes",
+      "textRefusals_plural": "{{count}} e-mails refusés par la vérification des textes",
+      "textRefusalsSince": "{{count}} e-mail refusé par la vérification des textes, le dernier le {{date}}",
+      "textRefusalsSince_plural": "{{count}} e-mails refusés par la vérification des textes, le dernier le {{date}}"
     },
     "windowsStoreUrl": "URL du Microsoft Store",
     "linuxStoreUrl": "URL de téléchargement Linux",
@@ -3703,6 +3707,34 @@
       "reacceptBody": "Chacun accepte la version actuelle avant de continuer. D'ici là, personne n'obtient de nouveau jeton d'accès ni ne connecte de client d'IA.",
       "reacceptConfirm": "Demander à tous",
       "reacceptDone": "Tout le monde accepte à nouveau la version {{version}}."
+    },
+    "textCheck": {
+      "title": "Vérification automatique des textes",
+      "hint": "Compare les textes à des listes de mots lors de l'enregistrement. Rien ne quitte le serveur.",
+      "block": "Refuser les infractions claires",
+      "blockHint": "Menaces, propos haineux et autres ne sont pas enregistrés. La personne voit pourquoi et garde son brouillon.",
+      "flag": "Transmettre les cas douteux à la modération",
+      "flagHint": "Le texte est enregistré, et la modération reçoit un signalement sans auteur.",
+      "flagNote": "Le système vérifie alors lui-même les textes de vos membres et crée des signalements. Réglez cela d'abord avec vos représentants du personnel et votre délégué à la protection des données. Selon l'organisation, il faut un accord ou une analyse d'impact relative à la protection des données.",
+      "confirmTitle": "Transmettre les cas douteux à la modération ?",
+      "confirmBody": "Dès lors, le système signale lui-même les textes qui enfreignent peut-être les règles de la maison, et la modération les lit. N'active cela qu'après l'accord des représentants du personnel et du délégué à la protection des données.",
+      "confirm": "Activer",
+      "ownTerms": "Termes propres",
+      "ownTermsHint": "Toujours refusés, quelle que soit l'écriture. Jusqu'à 500 termes de 60 caractères chacun.",
+      "exceptions": "Exceptions",
+      "exceptionsHint": "Des mots anodins chez vous, comme des termes techniques. Les contenus qui mettent des enfants en danger restent toujours bloqués.",
+      "addTerm": "Ajouter un terme",
+      "removeTerm": "Retirer {{term}}",
+      "languages": "Les listes fournies couvrent l'allemand et l'anglais. Pour les autres langues, seuls vos propres termes agissent.",
+      "test": "Essayer un texte",
+      "testHint": "Avec les réglages enregistrés. Rien n'est enregistré ni compté.",
+      "testButton": "Vérifier",
+      "resultAllow": "Serait enregistré.",
+      "resultFlag": "Serait enregistré et transmis à la modération : {{terms}}.",
+      "resultBlock": "Serait refusé : {{terms}}.",
+      "resultFound": "Trouvé, mais sans effet : {{terms}}.",
+      "resultException": "Exceptions appliquées : {{words}}.",
+      "images": "Les images et les pièces jointes ne sont pas vérifiées. Les signalements s'en chargent."
     }
   },
   "audit": {
@@ -3948,7 +3980,8 @@
       "MODERATION_APPEAL_DECIDED": "Contestation tranchée",
       "MODERATION_LEGAL_HOLD_CHANGED": "Conservation pour les autorités modifiée",
       "MODERATION_RULES_VERSION_CREATED": "Nouvelle version des règles de la maison",
-      "ACCOUNT_APPROVAL_CHANGED": "Validation des nouveaux comptes modifiée"
+      "ACCOUNT_APPROVAL_CHANGED": "Validation des nouveaux comptes modifiée",
+      "MODERATION_FILTER_CHANGED": "Vérification des textes modifiée"
     },
     "meta": {
       "oldRole": "Rôle précédent",
@@ -3962,7 +3995,11 @@
       "newEmail": "Nouvelle adresse e-mail",
       "method": "Méthode",
       "setting": "Réglage",
-      "provider": "Fournisseur"
+      "provider": "Fournisseur",
+      "block": "Refuse",
+      "flag": "Transmet à la modération",
+      "blockTerms": "Termes propres",
+      "allowTerms": "Exceptions"
     }
   },
   "sprint": {
@@ -5994,6 +6031,12 @@
       "illegalHint": "Droit d'auteur ou autre loi, merci de motiver brièvement",
       "other": "Autre chose",
       "otherHint": "Décris-le brièvement"
+    },
+    "refused": {
+      "title": "Non enregistré",
+      "body": "Le texte contient quelque chose que les règles de la maison n'autorisent pas : {{terms}}. Ton brouillon reste là, tu peux le modifier.",
+      "bodyPlain": "Le texte contient quelque chose que les règles de la maison n'autorisent pas. Ton brouillon reste là, tu peux le modifier.",
+      "readRules": "Lire les règles de la maison"
     }
   }
 }

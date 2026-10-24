@@ -3612,7 +3612,11 @@
       "reprocessFullTitle": "Fehlende Tickets neu erstellen?",
       "reprocessFullBody": "Für jede E-Mail in „{{name}}“ ohne Ticket wird ein neues erstellt – auch für absichtlich gelöschte. Das lässt sich nicht in einem Schritt rückgängig machen.",
       "reprocessFullConfirm": "Neu erstellen",
-      "reprocessDone": "{{scanned}} geprüft · {{updated}} neu aufgebaut · {{created}} erstellt"
+      "reprocessDone": "{{scanned}} geprüft · {{updated}} neu aufgebaut · {{created}} erstellt",
+      "textRefusals": "{{count}} Mail von der Textprüfung abgelehnt",
+      "textRefusals_plural": "{{count}} Mails von der Textprüfung abgelehnt",
+      "textRefusalsSince": "{{count}} Mail von der Textprüfung abgelehnt, zuletzt am {{date}}",
+      "textRefusalsSince_plural": "{{count}} Mails von der Textprüfung abgelehnt, zuletzt am {{date}}"
     },
     "windowsStoreUrl": "Microsoft-Store-URL",
     "linuxStoreUrl": "Linux-Download-URL",
@@ -3703,6 +3707,34 @@
       "reacceptBody": "Jede Person stimmt der aktuellen Fassung zu, bevor sie weiterarbeitet. Bis dahin bekommt niemand ein neues Zugriffstoken oder verbindet einen KI-Client.",
       "reacceptConfirm": "Alle neu zustimmen lassen",
       "reacceptDone": "Alle stimmen Fassung {{version}} neu zu."
+    },
+    "textCheck": {
+      "title": "Automatische Textprüfung",
+      "hint": "Prüft Texte beim Speichern gegen Wortlisten. Nichts verlässt den Server.",
+      "block": "Klare Verstöße ablehnen",
+      "blockHint": "Drohungen, Hetze und Ähnliches werden nicht gespeichert. Wer schreibt, sieht den Grund und behält den Entwurf.",
+      "flag": "Unklare Fälle zur Moderation geben",
+      "flagHint": "Der Text wird gespeichert, und die Moderation bekommt eine Meldung ohne meldende Person.",
+      "flagNote": "Damit prüft das System die Texte eurer Mitglieder selbst und legt Meldungen an. Klärt das vorher mit eurer Interessenvertretung und dem Datenschutz. Je nach Organisation braucht es eine Vereinbarung oder eine Datenschutz-Folgenabschätzung.",
+      "confirmTitle": "Unklare Fälle zur Moderation geben?",
+      "confirmBody": "Ab dann meldet das System selbst Texte, die vielleicht gegen die Hausregeln verstoßen, und die Moderation liest sie. Schalte das erst ein, wenn Interessenvertretung und Datenschutz zugestimmt haben.",
+      "confirm": "Einschalten",
+      "ownTerms": "Eigene Begriffe",
+      "ownTermsHint": "Werden immer abgelehnt, in jeder Schreibweise. Bis zu 500 Begriffe mit je 60 Zeichen.",
+      "exceptions": "Ausnahmen",
+      "exceptionsHint": "Wörter, die bei euch harmlos sind, etwa Fachbegriffe. Inhalte, die Kinder gefährden, bleiben immer gesperrt.",
+      "addTerm": "Begriff hinzufügen",
+      "removeTerm": "{{term}} entfernen",
+      "languages": "Die mitgelieferten Listen kennen Deutsch und Englisch. Für andere Sprachen wirken nur eure eigenen Begriffe.",
+      "test": "Text ausprobieren",
+      "testHint": "Mit den gespeicherten Einstellungen. Nichts wird gespeichert oder gezählt.",
+      "testButton": "Prüfen",
+      "resultAllow": "Würde gespeichert.",
+      "resultFlag": "Würde gespeichert und zur Moderation gegeben: {{terms}}.",
+      "resultBlock": "Würde abgelehnt: {{terms}}.",
+      "resultFound": "Gefunden, aber ohne Folge: {{terms}}.",
+      "resultException": "Ausnahmen greifen: {{words}}.",
+      "images": "Bilder und Anhänge prüft das System nicht. Dafür gibt es Meldungen."
     }
   },
   "audit": {
@@ -3948,7 +3980,8 @@
       "MODERATION_APPEAL_DECIDED": "Widerspruch entschieden",
       "MODERATION_LEGAL_HOLD_CHANGED": "Aufbewahrung für die Strafverfolgung geändert",
       "MODERATION_RULES_VERSION_CREATED": "Neue Fassung der Hausregeln",
-      "ACCOUNT_APPROVAL_CHANGED": "Freigabe neuer Konten geändert"
+      "ACCOUNT_APPROVAL_CHANGED": "Freigabe neuer Konten geändert",
+      "MODERATION_FILTER_CHANGED": "Textprüfung geändert"
     },
     "meta": {
       "oldRole": "Vorherige Rolle",
@@ -3962,7 +3995,11 @@
       "newEmail": "Neue E-Mail",
       "method": "Methode",
       "setting": "Einstellung",
-      "provider": "Anbieter"
+      "provider": "Anbieter",
+      "block": "Lehnt ab",
+      "flag": "Gibt zur Moderation",
+      "blockTerms": "Eigene Begriffe",
+      "allowTerms": "Ausnahmen"
     }
   },
   "sprint": {
@@ -5994,6 +6031,12 @@
       "illegalHint": "Urheberrecht oder ein anderes Gesetz, bitte kurz begründen",
       "other": "Etwas anderes",
       "otherHint": "Bitte kurz beschreiben"
+    },
+    "refused": {
+      "title": "Nicht gespeichert",
+      "body": "Der Text enthält etwas, das die Hausregeln nicht erlauben: {{terms}}. Dein Entwurf bleibt erhalten, du kannst ihn ändern.",
+      "bodyPlain": "Der Text enthält etwas, das die Hausregeln nicht erlauben. Dein Entwurf bleibt erhalten, du kannst ihn ändern.",
+      "readRules": "Hausregeln lesen"
     }
   }
 }
