@@ -392,7 +392,8 @@ class _NavRail extends StatelessWidget {
                               const SizedBox(height: 16),
 
                               // Primary group
-                              if (!collapsed) const _RailGroupLabel('WORK'),
+                              if (!collapsed)
+                                _RailGroupLabel(context.t('nav.groupWork')),
                               for (final dest in primaryDestinations)
                                 _RailItem(
                                   destination: dest,
@@ -405,7 +406,8 @@ class _NavRail extends StatelessWidget {
                                 ),
 
                               const SizedBox(height: 8),
-                              if (!collapsed) const _RailGroupLabel('PLAN'),
+                              if (!collapsed)
+                                _RailGroupLabel(context.t('nav.groupPlan')),
                               for (final dest in secondaryDestinations(
                                 advancedTime: advancedTime,
                                 shiftPlanning: shiftPlanning,
@@ -527,8 +529,9 @@ class _RailGroupLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 8, 20, 4),
+      // Capitals as the rail sets them; a script without case keeps its own.
       child: Text(
-        label,
+        label.toUpperCase(),
         style: TextStyle(
           fontFamily: AppTheme.fontMono,
           fontSize: AppType.caption,
