@@ -32,6 +32,8 @@ import '../../features/issues/issues_screen.dart';
 import '../../features/issues/watched_issues_screen.dart';
 import '../../features/knowledge/knowledge_location.dart';
 import '../../features/knowledge/knowledge_screen.dart';
+import '../../features/moderation/app_terms_screen.dart';
+import '../../features/moderation/house_rules_gate_screen.dart';
 import '../../features/people/person_profile_screen.dart'
     show peopleRoute, personProfilePage;
 import '../../features/notifications/notifications_screen.dart';
@@ -118,6 +120,8 @@ class BootGate {
     '/register',
     '/forgot-password',
     '/verify-email',
+    '/terms',
+    '/rules',
   };
 
   /// The destination waiting for the app to become able to show it.
@@ -139,6 +143,8 @@ class BootGate {
     required AuthStatus auth,
     required bool hasServerUrl,
     required bool onboardingDone,
+    bool appTermsAccepted = true,
+    bool rulesPending = false,
   }) {
     // Remember a real (non-gate) destination that we're about to bounce off a
     // gate, so we can return to it once the app is ready + authenticated.
@@ -151,6 +157,20 @@ class BootGate {
     if (location == '/login' &&
         Uri.parse(uri).queryParameters.containsKey('ssoError')) {
       pendingLogin = uri;
+    }
+
+    // The app's own terms come before connecting and before signing in, once
+    // per device (HIN-175). Only for a device that is signed out for sure: one
+    // whose session is still being checked may well be signed in, and an
+    // existing session meets the terms at its next sign-in instead.
+    final termsDue = !appTermsAccepted && auth == AuthStatus.unauthenticated;
+
+    /// [entry], or the terms first while they are due.
+    String? toEntry(String entry) {
+      final target = termsDue ? '/terms' : entry;
+      if (location == target) return null;
+      parkIfDeepLink();
+      return target;
     }
 
     // The SSO callback carries a one-time token pair in its query string.
@@ -178,18 +198,12 @@ class BootGate {
         // No server chosen yet → URL-entry screen. Otherwise (boot with a
         // saved server, or a deliberate server switch) show a brief branded
         // splash rather than flashing the connect form.
-        if (!hasServerUrl) {
-          if (location == '/connect') return null;
-          parkIfDeepLink();
-          return '/connect';
-        }
+        if (!hasServerUrl) return toEntry('/connect');
         if (location == '/connecting') return null;
         parkIfDeepLink();
         return '/connecting';
       case AppConfigStatus.needsServerUrl:
-        if (location == '/connect') return null;
-        parkIfDeepLink();
-        return '/connect';
+        return toEntry('/connect');
       case AppConfigStatus.updateRequired:
         if (location == '/update') return null;
         parkIfDeepLink();
@@ -215,6 +229,7 @@ class BootGate {
         '/register',
         '/forgot-password',
       };
+      if (termsDue) return toEntry('/login');
       if (allowed.contains(location)) {
         if (location == '/login' && uri == pendingLogin) pendingLogin = null;
         return null;
@@ -223,6 +238,13 @@ class BootGate {
       final login = pendingLogin ?? '/login';
       pendingLogin = null;
       return login;
+    }
+    // Signed in: the instance's house rules, whenever a version waits for this
+    // person, before anything else and before the parked link (HIN-175).
+    if (rulesPending) {
+      if (location == '/rules') return null;
+      parkIfDeepLink();
+      return '/rules';
     }
     // Authenticated and ready: hand back the parked deep link, wherever the
     // user is standing right now. Deliberately not limited to the gates: the
@@ -262,6 +284,8 @@ GoRouter buildRouter({
       auth: auth.state.status,
       hasServerUrl: storage.serverUrl != null,
       onboardingDone: storage.onboardingDone,
+      appTermsAccepted: storage.appTermsAccepted,
+      rulesPending: auth.state.user?.rulesPending ?? false,
     ),
     // A path that matches nothing used to render an empty page under the brand
     // mark, which reads as a broken app rather than a bad link.
@@ -289,6 +313,15 @@ GoRouter buildRouter({
           ),
         ),
       ),
+      GoRoute(
+        path: '/terms',
+        builder: (context, _) => AppTermsScreen(
+          storage: storage,
+          // Wherever the boot goes next: connecting, or signing in.
+          onDone: () => GoRouter.of(context).go('/login'),
+        ),
+      ),
+      GoRoute(path: '/rules', builder: (_, _) => const HouseRulesGateScreen()),
       GoRoute(path: '/login', builder: (_, _) => const LoginScreen()),
       GoRoute(path: '/register', builder: (_, _) => const RegisterScreen()),
       GoRoute(
