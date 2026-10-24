@@ -138,6 +138,7 @@ class GlassCommentComposer extends StatefulWidget {
     this.replyingToPreview,
     this.onCancelReply,
     this.enabled = true,
+    this.recorder = VoiceRecorder.new,
   });
 
   final TextEditingController controller;
@@ -146,7 +147,10 @@ class GlassCommentComposer extends StatefulWidget {
   /// Posts the draft. Carries the Lexical document when format mode wrote one,
   /// and null from the single-line field, which has none.
   final void Function(String? doc) onSubmitText;
-  final void Function(VoiceRecording recording) onSendVoice;
+
+  /// Sends a voice message; true once it went out. A recording that did not is
+  /// kept in the composer to send again, never thrown away with the upload.
+  final Future<bool> Function(VoiceRecording recording) onSendVoice;
   final void Function(ComposerAttach kind) onAttach;
 
   /// True while editing an existing comment inline (shows the edit banner).
@@ -161,11 +165,16 @@ class GlassCommentComposer extends StatefulWidget {
 
   final bool enabled;
 
+  /// Makes the recorder for a voice message; the microphone by default.
+  final VoiceRecorder Function() recorder;
+
   @override
   State<GlassCommentComposer> createState() => _GlassCommentComposerState();
 }
 
-enum _Mode { idle, recording, format }
+/// What the composer shows: the field, a recording in progress, a recording
+/// that could not be sent yet, or the format editor.
+enum _Mode { idle, recording, unsent, format }
 
 class _GlassCommentComposerState extends State<GlassCommentComposer> {
   _Mode _mode = _Mode.idle;
@@ -230,6 +239,10 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   Duration _recElapsed = Duration.zero;
   bool _starting = false;
 
+  /// A recording whose upload failed, kept to send again (HIN-173).
+  VoiceRecording? _unsent;
+  bool _sendingVoice = false;
+
   bool get _canSend => widget.controller.text.trim().isNotEmpty;
 
   // Last computed send-ability, so a keystroke only rebuilds this composer (which
@@ -267,7 +280,7 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
   Future<void> _startRecording() async {
     if (_starting) return;
     _starting = true;
-    final recorder = VoiceRecorder();
+    final recorder = widget.recorder();
     bool ok;
     // The message matters as much as the failure: a denied microphone and a
     // desktop missing `parecord`/`ffmpeg` both stop the recording, and only one
@@ -338,13 +351,31 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
       await r.dispose();
     }
     if (recording != null && recording.durationMs > 300) {
-      widget.onSendVoice(recording);
+      await _deliver(recording);
     } else if (mounted) {
       // The recording bar already closed; without this the message would just
       // vanish with no explanation (stop failed, empty bytes, or too short).
       showGlassErrorToast(context, context.t('comments.voiceFailed'));
     }
   }
+
+  /// Sends [recording]; what did not go out stays here to try again.
+  Future<void> _deliver(VoiceRecording recording) async {
+    if (_sendingVoice) return;
+    setState(() => _sendingVoice = true);
+    final sent = await widget.onSendVoice(recording);
+    if (!mounted) return;
+    setState(() {
+      _sendingVoice = false;
+      _unsent = sent ? null : recording;
+      _mode = sent ? _Mode.idle : _Mode.unsent;
+    });
+  }
+
+  void _discardUnsent() => setState(() {
+    _unsent = null;
+    _mode = _Mode.idle;
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -355,6 +386,16 @@ class _GlassCommentComposerState extends State<GlassCommentComposer> {
         buttonSize: _composerButtonSize(context),
         onCancel: _cancelRecording,
         onSend: _sendRecording,
+      );
+    }
+    final unsent = _unsent;
+    if (_mode == _Mode.unsent && unsent != null) {
+      return _UnsentVoiceBar(
+        duration: Duration(milliseconds: unsent.durationMs),
+        buttonSize: _composerButtonSize(context),
+        sending: _sendingVoice,
+        onDiscard: _discardUnsent,
+        onRetry: () => unawaited(_deliver(unsent)),
       );
     }
 
