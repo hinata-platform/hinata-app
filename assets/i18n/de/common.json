@@ -124,7 +124,8 @@
       "bodyRequired": "Bitte gib eine Nachricht ein.",
       "notEmailSourced": "Dieses Ticket wurde nicht aus einer E-Mail erstellt – es gibt keinen Empfänger für eine Antwort.",
       "noSmtp": "Es ist noch kein Mailserver konfiguriert. Bitte wende dich an die Plattform-Admins, um E-Mails senden zu können.",
-      "sendFailed": "Die Antwort konnte nicht gesendet werden. Bitte versuche es erneut."
+      "sendFailed": "Die Antwort konnte nicht gesendet werden. Bitte versuche es erneut.",
+      "attachmentsTooLarge": "Die Anhänge sind zu groß für eine E-Mail. Bitte schick weniger oder kleinere Dateien."
     },
     "sessionNotPersisted": {
       "snap": "Hinata darf den Passwortspeicher dieses Systems noch nicht nutzen — nach jedem Neustart ist deshalb eine erneute Anmeldung nötig. Alles andere funktioniert normal. Einmalig erlauben mit {{command}} — oder in App Center bei Hinata „password manager service“ einschalten — und dann erneut anmelden.",
@@ -3490,7 +3491,18 @@
       "reasonOwnOrgRole": "Diese Rolle vergibt dir eine andere Person aus der Administration.",
       "selectUser": "{{name}} auswählen",
       "selectPage": "Alle Personen auf dieser Seite auswählen",
-      "removeEmail": "{{email}} entfernen"
+      "removeEmail": "{{email}} entfernen",
+      "roleModerator": "Moderation",
+      "moderatorBadge": "Moderation",
+      "moderatorTitle": "Moderation",
+      "moderatorHint": "Prüft gemeldete Inhalte und entscheidet über sie: entfernt Beiträge, sperrt Konten und schreibt die Begründung, die alle Beteiligten bekommen. Sieht nur, was gemeldet ist, nie die Projekte selbst. Kein Zugang zum Adminbereich.",
+      "moderatorInfo": "Was darf die Moderation?",
+      "makeModerator": "Moderation übertragen",
+      "moderatorConfirmOne": "{{name}} prüft dann gemeldete Inhalte und entscheidet über sie, bis hin zum Entfernen von Beiträgen und Sperren von Konten. {{name}} sieht nur, was gemeldet ist.",
+      "moderatorConfirmMany": "{{names}} prüfen dann gemeldete Inhalte und entscheiden über sie, bis hin zum Entfernen von Beiträgen und Sperren von Konten. Sie sehen nur, was gemeldet ist.",
+      "toastModeratorGranted": "Rolle Moderation vergeben",
+      "toastModeratorRevoked": "Rolle Moderation entzogen",
+      "reasonOwnModeratorRole": "Diese Rolle vergibt dir eine andere Person aus der Administration."
     },
     "iosStoreUrl": "iOS App-Store-URL",
     "androidStoreUrl": "Android Play-Store-URL",
@@ -3611,6 +3623,20 @@
       "label": "Schichtplanung",
       "desc": "Aus: Hinata bleibt, wie es ist. An: Projekte planen Events mit Schichten, und Mitglieder tragen sich in freie Schichten ein.",
       "unavailable": "Braucht ein MongoDB Replica Set. Dieser Server läuft ohne, deshalb bleibt die Schichtplanung aus."
+    },
+    "moderation": {
+      "title": "Moderation",
+      "whoTitle": "Wer moderiert",
+      "whoHint": "Diese Personen prüfen Meldungen und entscheiden über sie. Die Rolle vergibst du in der Benutzerverwaltung.",
+      "nobody": "Noch moderiert niemand. Gib die Rolle in der Benutzerverwaltung mindestens einer Person, sonst bleiben Meldungen unbeantwortet.",
+      "onlyOne": "Mindestens zwei sind gut, damit niemand über eine Meldung gegen sich selbst entscheidet.",
+      "more": "und {{count}} weitere in der Benutzerverwaltung",
+      "contactTitle": "Kontakt für Meldungen",
+      "contactHint": "Darüber erreichen Menschen, wer diese Instanz betreibt, in der App und auf der Anmeldeseite. Die App-Stores und der Digital Services Act verlangen einen Kontakt.",
+      "contactMissing": "Noch ist kein Kontakt für Meldungen hinterlegt. Trag eine E-Mail-Adresse ein, damit man dich zu Inhalten erreicht.",
+      "operatorName": "Betreiber, wie im Impressum",
+      "contactEmail": "E-Mail für Meldungen",
+      "imprintUrl": "Link zum Impressum"
     }
   },
   "audit": {
@@ -5738,7 +5764,8 @@
     "you": "Das bist du",
     "deactivated": "Deaktiviert",
     "role": {
-      "member": "Mitglied"
+      "member": "Mitglied",
+      "moderator": "Moderation"
     },
     "localTime": "Ortszeit",
     "localTimeValue": "{{time}} · {{zone}}",

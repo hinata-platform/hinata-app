@@ -34,7 +34,7 @@ class PersonProfile extends Equatable {
   final String? title;
   final String? pronouns;
 
-  /// A subset of `ADMIN`, `ORG_ADMIN`, `MEMBER`, in that order.
+  /// A subset of `ADMIN`, `ORG_ADMIN`, `MODERATOR`, `MEMBER`, in that order.
   final List<String> roles;
 
   /// The person's own IANA zone, else the instance's, else `UTC`.
@@ -58,6 +58,7 @@ class PersonProfile extends Equatable {
 
   bool get isAdmin => roles.contains('ADMIN');
   bool get isOrgAdmin => roles.contains('ORG_ADMIN');
+  bool get isModerator => roles.contains('MODERATOR');
 
   factory PersonProfile.fromJson(Map<String, dynamic> json) => PersonProfile(
     id: json['id'] as String? ?? '',

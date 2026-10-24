@@ -121,6 +121,27 @@ UserActions buildUserActions(
       await reload();
       return true;
     },
+    setModerator: (ids, moderator) async {
+      final involved = usersFor(ids);
+      if (!await confirmModeratorChange(context, involved, grant: moderator)) {
+        return false;
+      }
+      if (!context.mounted) return false;
+      try {
+        await users.setModerator(ids, moderator);
+      } on ApiFailure catch (failure) {
+        toastError(failure.message);
+        return false;
+      }
+      clearSelection?.call();
+      toast(
+        moderator
+            ? 'admin.um.toastModeratorGranted'
+            : 'admin.um.toastModeratorRevoked',
+      );
+      await reload();
+      return true;
+    },
     openDemote: (ids) async {
       if (!await showRevokeAdminModal(context, usersFor(ids))) return;
       await run(
