@@ -259,9 +259,7 @@ Widget hinataImagePlaceholder(BuildContext context, String src) => Container(
 /// address in one is a stored attack waiting for a tap, and the tap is exactly
 /// where it has to be stopped.
 Future<void> openHinataLink(String url) async {
-  final trimmed = url.trim();
-  if (trimmed.isEmpty || !isSafeUrl(trimmed)) return;
-  final uri = Uri.tryParse(trimmed);
+  final uri = hinataLinkTarget(url);
   if (uri == null) return;
   try {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -269,6 +267,20 @@ Future<void> openHinataLink(String url) async {
     // No handler for the scheme, or the platform refused. Silently: a reader
     // tapping a link is not a place for an error dialog about URL handlers.
   }
+}
+
+/// What [openHinataLink] hands the platform for [url], or null when it opens
+/// nothing.
+///
+/// A relative address is refused too, though [isSafeUrl] lets it through: it
+/// names nothing until it is resolved against a base, and there is none here.
+/// A launcher reads the bare string as a path, and on Windows the shell takes
+/// `/Windows/System32/calc.exe` as a program and `//host/share` as SMB.
+Uri? hinataLinkTarget(String url) {
+  final trimmed = url.trim();
+  if (trimmed.isEmpty || !isSafeUrl(trimmed)) return null;
+  final uri = Uri.tryParse(trimmed);
+  return uri != null && uri.hasScheme ? uri : null;
 }
 
 /// The resolver a surface uses, given the API client it can reach.
