@@ -313,7 +313,7 @@ class TimerSurfacePermissionGate {
 
   Future<void> openSettings(Uri uri) async {
     try {
-      await launchUrl(uri);
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } catch (_) {
       // Nothing to do: the note already says where to look.
     }
