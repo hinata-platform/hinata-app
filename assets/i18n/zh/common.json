@@ -3612,7 +3612,11 @@
       "reprocessFullTitle": "重新创建缺失的工单？",
       "reprocessFullBody": "“{{name}}”中每一封没有工单的邮件都会生成新工单，包括你有意删除的那些。此操作无法批量撤销。",
       "reprocessFullConfirm": "重新创建",
-      "reprocessDone": "已扫描 {{scanned}} 封 · 重建 {{updated}} 个 · 新建 {{created}} 个"
+      "reprocessDone": "已扫描 {{scanned}} 封 · 重建 {{updated}} 个 · 新建 {{created}} 个",
+      "textRefusals": "被文本检查拒绝的邮件：{{count}} 封",
+      "textRefusals_plural": "被文本检查拒绝的邮件：{{count}} 封",
+      "textRefusalsSince": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}",
+      "textRefusalsSince_plural": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}"
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux 下载 URL",
@@ -3703,6 +3707,34 @@
       "reacceptBody": "每个人都要先同意当前版本才能继续工作。在此之前，任何人都无法获取新的访问令牌或连接 AI 客户端。",
       "reacceptConfirm": "请所有人同意",
       "reacceptDone": "所有人将重新同意第 {{version}} 版。"
+    },
+    "textCheck": {
+      "title": "自动文本检查",
+      "hint": "保存时将文本与词表比对。任何内容都不会离开服务器。",
+      "block": "拒绝明显违规",
+      "blockHint": "威胁、仇恨言论等不会被保存。作者会看到原因，草稿也会保留。",
+      "flag": "将不明确的情况交给审核",
+      "flagHint": "文本会被保存，审核会收到一条没有举报人的举报。",
+      "flagNote": "这样系统会自行检查成员的文本并创建举报。请先与员工代表和数据保护负责人商定。视组织而定，可能需要签订协议或进行数据保护影响评估。",
+      "confirmTitle": "将不明确的情况交给审核？",
+      "confirmBody": "此后系统会自行举报可能违反站规的文本，审核人员会阅读这些文本。请在员工代表和数据保护负责人同意后再开启。",
+      "confirm": "开启",
+      "ownTerms": "自定义词",
+      "ownTermsHint": "无论怎样书写都会被拒绝。最多 500 个，每个不超过 60 个字符。",
+      "exceptions": "例外",
+      "exceptionsHint": "在你们这里无害的词，例如专业术语。危害儿童的内容始终会被拦截。",
+      "addTerm": "添加词",
+      "removeTerm": "移除 {{term}}",
+      "languages": "内置词表支持德语和英语。其他语言只有自定义词有效。",
+      "test": "试一段文本",
+      "testHint": "使用已保存的设置。不会保存或计数任何内容。",
+      "testButton": "检查",
+      "resultAllow": "会被保存。",
+      "resultFlag": "会被保存并交给审核：{{terms}}。",
+      "resultBlock": "会被拒绝：{{terms}}。",
+      "resultFound": "已找到，但没有影响：{{terms}}。",
+      "resultException": "例外生效：{{words}}。",
+      "images": "图片和附件不会被检查，可通过举报处理。"
     }
   },
   "audit": {
@@ -3948,7 +3980,8 @@
       "MODERATION_APPEAL_DECIDED": "申诉已裁决",
       "MODERATION_LEGAL_HOLD_CHANGED": "为执法保留的设置已更改",
       "MODERATION_RULES_VERSION_CREATED": "站规新版本",
-      "ACCOUNT_APPROVAL_CHANGED": "新账号审批设置已更改"
+      "ACCOUNT_APPROVAL_CHANGED": "新账号审批设置已更改",
+      "MODERATION_FILTER_CHANGED": "文本检查已更改"
     },
     "meta": {
       "oldRole": "原角色",
@@ -3962,7 +3995,11 @@
       "newEmail": "新邮箱",
       "method": "方式",
       "setting": "设置项",
-      "provider": "提供方"
+      "provider": "提供方",
+      "block": "拒绝",
+      "flag": "交给审核",
+      "blockTerms": "自定义词",
+      "allowTerms": "例外"
     }
   },
   "sprint": {
@@ -5994,6 +6031,12 @@
       "illegalHint": "版权或其他法律，请简要说明理由",
       "other": "其他",
       "otherHint": "请简要描述"
+    },
+    "refused": {
+      "title": "未保存",
+      "body": "文本中有站规不允许的内容：{{terms}}。你的草稿仍在这里，可以修改。",
+      "bodyPlain": "文本中有站规不允许的内容。你的草稿仍在这里，可以修改。",
+      "readRules": "阅读站规"
     }
   }
 }
