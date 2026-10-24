@@ -2,19 +2,16 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
-import 'package:hinata/core/repositories/admin_repository.dart';
 import 'package:hinata/features/admin/sections/admin_moderation_figures.dart';
 
 import '../../support/recording_fake.dart';
 
-class _FakeAdmin with RecordingFake implements AdminRepository {}
-
 /// The yearly figures in the admin area (HIN-178): the years there are, this
 /// one always, and the file of the year chosen.
 void main() {
-  late _FakeAdmin admin;
+  late FakeAdminRepository admin;
 
-  setUp(() => admin = _FakeAdmin());
+  setUp(() => admin = FakeAdminRepository());
 
   FiguresCubit build() => FiguresCubit(admin, now: () => DateTime(2027, 2, 1));
 
