@@ -493,11 +493,13 @@ class _Actions extends StatelessWidget {
     final menu = _menuItems(context);
     final buttons = <Widget>[
       if (menu.isNotEmpty)
-        GlassPopupMenu<String>(
-          value: '',
+        GlassPopupMenu<CaseMenuAction?>(
+          value: null,
           width: 260,
           items: menu,
-          onSelected: (key) => unawaited(_onMenu(context, key)),
+          onSelected: (action) {
+            if (action != null) unawaited(_onMenu(context, action));
+          },
           child: const _MoreButton(),
         ),
       if (open && mine)
@@ -546,54 +548,34 @@ class _Actions extends StatelessWidget {
     );
   }
 
-  List<GlassMenuEntry<String>> _menuItems(BuildContext context) {
-    final summary = detail.summary;
-    final decision = detail.decision;
-    final acted =
-        summary.state == CaseState.acted &&
-        decision?.outcome == CaseOutcome.action;
-    final appealPending = detail.appeal?.pending ?? false;
-    return [
-      if (detail.personConcerned != null)
-        GlassMenuItem(
-          value: 'profile',
-          leading: const Icon(LucideIcons.userRound, size: 16),
-          label: context.t('moderation.case.viewProfile'),
-        ),
-      if (acted && summary.removed && !appealPending)
-        GlassMenuItem(
-          value: 'restore',
-          leading: const Icon(LucideIcons.undo2, size: 16),
-          label: context.t('moderation.case.restore'),
-        ),
-      if (summary.suspended)
-        GlassMenuItem(
-          value: 'lift',
-          leading: const Icon(LucideIcons.userCheck, size: 16),
-          label: context.t('moderation.suspension.lift'),
-        ),
-      if (acted && detail.appeal == null && detail.restoration == null)
-        GlassMenuItem(
-          value: 'appeal',
-          leading: const Icon(LucideIcons.mailOpen, size: 16),
-          label: context.t('moderation.appealReview.recordAction'),
-        ),
-      if (!summary.state.undecided)
-        GlassMenuItem(
-          value: 'hold',
-          leading: const Icon(LucideIcons.archive, size: 16),
-          label: context.t('moderation.case.holdAction'),
-        ),
-    ];
-  }
+  List<GlassMenuEntry<CaseMenuAction?>> _menuItems(BuildContext context) => [
+    for (final action in caseMenuActions(detail))
+      GlassMenuItem<CaseMenuAction?>(
+        value: action,
+        leading: Icon(switch (action) {
+          CaseMenuAction.profile => LucideIcons.userRound,
+          CaseMenuAction.restore => LucideIcons.undo2,
+          CaseMenuAction.lift => LucideIcons.userCheck,
+          CaseMenuAction.appeal => LucideIcons.mailOpen,
+          CaseMenuAction.hold => LucideIcons.archive,
+        }, size: 16),
+        label: context.t(switch (action) {
+          CaseMenuAction.profile => 'moderation.case.viewProfile',
+          CaseMenuAction.restore => 'moderation.case.restore',
+          CaseMenuAction.lift => 'moderation.suspension.lift',
+          CaseMenuAction.appeal => 'moderation.appealReview.recordAction',
+          CaseMenuAction.hold => 'moderation.case.holdAction',
+        }),
+      ),
+  ];
 
-  Future<void> _onMenu(BuildContext context, String key) async {
+  Future<void> _onMenu(BuildContext context, CaseMenuAction action) async {
     final cubit = context.read<CaseDetailCubit>();
-    switch (key) {
-      case 'profile':
+    switch (action) {
+      case CaseMenuAction.profile:
         final person = detail.personConcerned;
         if (person != null) context.go(personLocation(person));
-      case 'restore':
+      case CaseMenuAction.restore:
         final note = await askCaseNote(
           context,
           icon: LucideIcons.undo2,
@@ -603,7 +585,7 @@ class _Actions extends StatelessWidget {
           confirmLabel: context.t('moderation.case.restoreConfirm'),
         );
         if (note != null) await cubit.restore(note);
-      case 'lift':
+      case CaseMenuAction.lift:
         final note = await askCaseNote(
           context,
           icon: LucideIcons.userCheck,
@@ -613,12 +595,12 @@ class _Actions extends StatelessWidget {
           confirmLabel: context.t('moderation.suspension.liftConfirm'),
         );
         if (note != null) await cubit.liftSuspension(note);
-      case 'appeal':
+      case CaseMenuAction.appeal:
         final appeal = await askRecordedAppeal(context);
         if (appeal != null) {
           await cubit.recordAppeal(appeal.text, appeal.receivedAt);
         }
-      case 'hold':
+      case CaseMenuAction.hold:
         final hold = await askLegalHold(context);
         if (hold != null) {
           await cubit.legalHold(
@@ -649,6 +631,29 @@ class _Actions extends StatelessWidget {
     final notice = await showDecisionDialog(context, detail);
     if (notice != null) await cubit.afterDecision(notice);
   }
+}
+
+/// A step the case's ⋯ menu offers.
+enum CaseMenuAction { profile, restore, lift, appeal, hold }
+
+/// What the case's ⋯ menu offers on [detail]: the profile of the person it is
+/// about, undoing a removal no appeal is pending on, lifting a suspension, an
+/// appeal that came by mail on an acted case without one, and holding a
+/// decided case beyond its time.
+List<CaseMenuAction> caseMenuActions(CaseDetail detail) {
+  final summary = detail.summary;
+  final acted =
+      summary.state == CaseState.acted &&
+      detail.decision?.outcome == CaseOutcome.action;
+  final appealPending = detail.appeal?.pending ?? false;
+  return [
+    if (detail.personConcerned != null) CaseMenuAction.profile,
+    if (acted && summary.removed && !appealPending) CaseMenuAction.restore,
+    if (summary.suspended) CaseMenuAction.lift,
+    if (acted && detail.appeal == null && detail.restoration == null)
+      CaseMenuAction.appeal,
+    if (!summary.state.undecided) CaseMenuAction.hold,
+  ];
 }
 
 /// The ⋯ beside the case's buttons, as large as they are.
