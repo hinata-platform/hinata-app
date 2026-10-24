@@ -76,16 +76,20 @@ class KnowledgeLabelField extends StatelessWidget {
                     children: [
                       Icon(LucideIcons.tag, size: 15, color: AppColors.inkSoft),
                       const SizedBox(width: 6),
-                      Text(
-                        context.t(
-                          labels.isEmpty
-                              ? 'knowledge.labels.add'
-                              : 'knowledge.labels.edit',
-                        ),
-                        style: TextStyle(
-                          fontSize: AppType.label,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.inkSoft,
+                      // Flexible, so a large text size wraps the label
+                      // rather than running off the screen.
+                      Flexible(
+                        child: Text(
+                          context.t(
+                            labels.isEmpty
+                                ? 'knowledge.labels.add'
+                                : 'knowledge.labels.edit',
+                          ),
+                          style: TextStyle(
+                            fontSize: AppType.label,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.inkSoft,
+                          ),
                         ),
                       ),
                     ],

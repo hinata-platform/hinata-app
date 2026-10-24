@@ -450,8 +450,11 @@ class _LoginScreenState extends State<_LoginScreenBody>
                       ],
                       if (localAuth && registrationEnabled) ...[
                         const SizedBox(height: 12),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        // A wrap: at a large text size the question and
+                        // the button do not fit on one line of a phone.
+                        Wrap(
+                          alignment: WrapAlignment.center,
+                          crossAxisAlignment: WrapCrossAlignment.center,
                           children: [
                             Text(
                               context.t('auth.noAccount'),
