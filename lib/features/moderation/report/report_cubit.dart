@@ -148,8 +148,10 @@ class ReportCubit extends Cubit<ReportState> {
         alsoBlock: state.alsoBlock,
         location: place.isEmpty ? null : place,
       );
+      if (isClosed) return;
       emit(state.copyWith(sending: false, sent: true));
     } on ApiFailure catch (failure) {
+      if (isClosed) return;
       final window = failure.statusCode == 429
           ? int.tryParse(failure.details['retryAfter'] ?? '')
           : null;
@@ -162,6 +164,7 @@ class ReportCubit extends Cubit<ReportState> {
         ),
       );
     } catch (_) {
+      if (isClosed) return;
       emit(state.copyWith(sending: false, errorKey: () => 'errors.unexpected'));
     }
   }

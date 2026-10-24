@@ -67,8 +67,10 @@ class NoticeCubit extends Cubit<NoticeState> {
     emit(state.copyWith(status: NoticeStatus.loading, errorKey: () => null));
     try {
       final statement = await _moderation.notice(caseId);
+      if (isClosed) return;
       emit(state.copyWith(status: NoticeStatus.ready, statement: statement));
     } on ApiFailure catch (failure) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           status: failure.statusCode == 404
@@ -78,6 +80,7 @@ class NoticeCubit extends Cubit<NoticeState> {
         ),
       );
     } catch (_) {
+      if (isClosed) return;
       emit(
         state.copyWith(
           status: NoticeStatus.failure,
@@ -96,15 +99,18 @@ class NoticeCubit extends Cubit<NoticeState> {
     emit(state.copyWith(appealing: true, appealErrorKey: () => null));
     try {
       final statement = await _moderation.appeal(caseId, words);
+      if (isClosed) return true;
       emit(state.copyWith(appealing: false, statement: statement));
       return true;
     } on ApiFailure catch (failure) {
+      if (isClosed) return false;
       emit(
         state.copyWith(appealing: false, appealErrorKey: () => failure.message),
       );
       if (failure.statusCode == 409) await _refresh();
       return false;
     } catch (_) {
+      if (isClosed) return false;
       emit(
         state.copyWith(
           appealing: false,

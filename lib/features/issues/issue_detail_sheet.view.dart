@@ -3700,8 +3700,6 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     }
   }
 
-  /// Uploads a recorded voice message as a comment, then refreshes to the newest
-  /// page so the playable bubble appears at the bottom of the thread.
   /// Reports somebody else's comment (HIN-173): beside its menu on a wide
   /// window, as a sheet on a phone.
   Future<void> _reportComment(IssueComment c, Rect? anchor) async {
