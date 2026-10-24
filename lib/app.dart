@@ -181,9 +181,18 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
   late final HiddenContentCubit _hiddenContent = HiddenContentCubit(
     widget.repositories.account,
     widget.repositories.moderation,
-    // Unknown until the server's meta arrives; asking then costs one request
-    // that an older server answers with an error the cubit swallows.
-    enabled: () => _appConfig.state.meta?.supportsModeration ?? true,
+    // Once the server's meta has said so: the sign-in can be checked before
+    // it arrives, and asking a server without moderation then cost two
+    // failed requests on every sign-in.
+    enabled: () async {
+      final meta =
+          _appConfig.state.meta ??
+          (await _appConfig.stream.firstWhere(
+            (state) => state.meta != null,
+            orElse: () => _appConfig.state,
+          )).meta;
+      return meta?.supportsModeration ?? false;
+    },
   );
 
   /// The identity [_timer] was built for, so the rebuild happens once.
