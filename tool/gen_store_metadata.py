@@ -29,7 +29,7 @@ VERSION = "10.4.1"
 ANDROID_VERSION_CODE = 89          # pubspec 10.4.1+89
 COPYRIGHT = "© 2026 - Rebar Ahmad"
 MARKETING_URL = "https://hinata.ahmadre.com"
-SUPPORT_URL = "https://hinata.ahmadre.com/en/terms-of-service.html#16-contact"
+SUPPORT_URL = "https://hinata.ahmadre.com/en/terms-of-service.html#17-contact"
 PRIVACY_URL = "https://hinata.ahmadre.com/en/privacy-policy.html"
 
 # Apple locale codes are en-US / de-DE; Play uses the same here.
@@ -210,19 +210,19 @@ SIGNING IN
 3. Sign in with the account in the Sign-In Information fields. It is a regular member of the demo organization.
 4. The server then asks you to agree to its house rules. They end with how reporting and moderation work.
 
-A second account with the moderator role is at the end of these notes. To switch accounts, open My account and tap Sign out.
+A second account with the moderator role is at the end of these notes. To switch accounts, open Settings (the gear icon) and tap Sign out.
 
 REPORTING
-Open the menu of an issue, a comment, a voice message, a file or a knowledge base page and choose "Report …". Every person's profile has the same entry. Pick a reason (harassment, threat, sexual content, child safety, privacy, spam and more), add a note if needed and send. The reported person never learns who reported. For anything without a menu of its own, such as the name of a project, use My account, Help and contact, Report something else.
+Open the menu of an issue, a comment, a voice message, a file or a knowledge base page and choose "Report …". Every person's profile has the same entry. Pick a reason (harassment, threat, sexual content, child safety, privacy, spam and more), add a note if needed and send. The reported person never learns who reported. For anything without a menu of its own, such as the name of a project, use Settings, Help and contact, Report something else.
 
 BLOCKING
-Choose "Block person" in the menu of a comment, or Privacy, Block on a person's profile. The app first shows what changes. Nothing the blocked person sets off reaches you any more (no notifications, mentions or replies), and their comments and voice messages are folded away. My account, Blocked people lists every block, each with Unblock.
+Choose "Block person" in the menu of a comment, or Privacy, Block on a person's profile. The app first shows what changes. Nothing the blocked person sets off reaches you any more (no notifications, mentions or replies), and their comments and voice messages are folded away. Settings, Blocked people lists every block, each with Unblock.
 
 HOUSE RULES AND CONTACT
-My account, Help and contact holds the house rules in full, the email address of the server's moderation and the imprint. The sign in screen has a Contact link as well.
+Settings, Help and contact holds the house rules in full, the email address of the server's moderation and the imprint. The sign in screen has a Contact link as well.
 
 MODERATION
-Sign in with the moderator account and open My account, Moderation. Reports on the same content form one case, and a new case notifies the moderators at once. A moderator opens the case, sees the reported content and decides: remove the content, suspend the account for a time or for good, or take no action. The author receives a statement of reasons and can appeal. A different moderator decides the appeal. Cases waiting longer than 24 hours are marked overdue.
+Sign in with the moderator account and open Settings, Moderation. Reports on the same content form one case, and a new case notifies the moderators at once. A moderator opens the case, sees the reported content and decides: remove the content, suspend the account for a time or for good, or take no action. The author receives a statement of reasons and can appeal. A different moderator decides the appeal. Cases waiting longer than 24 hours are marked overdue.
 
 CONTENT CHECKS AND INTIMATE IMAGES
 Texts are checked when they are saved, and clear violations such as threats or hate speech are refused. Uploads are checked by file type. Images are not checked by a machine. Hinata is the closed workspace of one organization, not a public network, and these measures work against non-consensual intimate images:

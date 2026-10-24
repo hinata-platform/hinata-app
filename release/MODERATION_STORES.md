@@ -52,8 +52,8 @@ Von Hand:
   Hinata is the app for a self-hosted server. On "Connect to your server", enter
   https://api.track.asta.hn and tap Connect, then sign in. Report: the menu of an
   issue, comment, file, knowledge base page or person, "Report …". Block: "Block
-  person" in the menu of a comment. House rules and contact: My account, Help and
-  contact. Moderation: sign in with the moderator account, My account, Moderation.
+  person" in the menu of a comment. House rules and contact: Settings, Help and
+  contact. Moderation: sign in with the moderator account, Settings, Moderation.
   ```
 
 - **Altersfreigabe (IARC):** Fragebogen neu ausfüllen. „Können Nutzer
