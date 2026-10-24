@@ -104,3 +104,9 @@ String recentDay(BuildContext context, DateTime at) {
       : DateFormat.yMMMd(locale);
   return format.format(local);
 }
+
+/// The day and time of [at] as the app tells a recent moment: 22. Okt., 09:14.
+String recentMoment(BuildContext context, DateTime at) {
+  final locale = Localizations.localeOf(context).toString();
+  return '${recentDay(context, at)}, ${DateFormat.Hm(locale).format(at.toLocal())}';
+}
