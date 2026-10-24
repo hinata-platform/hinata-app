@@ -29,6 +29,8 @@ class AppStorage {
   // The version is part of the key: new terms are a new key, and everybody
   // agrees once more (HIN-175).
   static const _kAppTermsAccepted = 'app_terms_accepted.v1';
+  // Whether this device's first launch with the terms looked for a session.
+  static const _kAppTermsGrandfathered = 'app_terms_grandfathered.v1';
   static const _kConnectHintSeen = 'connect_hint_seen';
   static const _kMultiSelectHintSeen = 'multi_select_hint_seen';
   static const _kLocale = 'locale';
@@ -145,6 +147,24 @@ class AppStorage {
     await _migrateToMultiServer();
     await _migrateTokensToSecureStorage();
     await _loadTokenCache();
+    await _grandfatherAppTerms();
+  }
+
+  /// A device signed in when the app's terms arrived keeps its session: it
+  /// counts as having agreed, once. The first launch of this version decides
+  /// it under a flag of its own, so a sign-in on a fresh device later meets
+  /// the terms like any other (HIN-175).
+  Future<void> _grandfatherAppTerms() async {
+    try {
+      if (_prefs.getBool(_kAppTermsGrandfathered) ?? false) return;
+      if (_refreshCache.values.any((token) => token.isNotEmpty) &&
+          !appTermsAccepted) {
+        await setAppTermsAccepted();
+      }
+      await _prefs.setBool(_kAppTermsGrandfathered, true);
+    } catch (_) {
+      // Nothing in the boot sequence may throw; the next launch asks again.
+    }
   }
 
   // --- current server --------------------------------------------------------
