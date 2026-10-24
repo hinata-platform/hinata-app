@@ -12,6 +12,7 @@ import '../../core/repositories/account_repository.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
 import '../../core/widgets/hive_widgets.dart' show GhostButton;
+import '../../core/util/dates.dart';
 import '../account/account_widgets.dart' show AccountSection;
 import '../legal/legal_links.dart';
 import '../sprint/modals/glass_modal.dart';
@@ -117,7 +118,7 @@ class _RulesRow extends StatelessWidget {
               'moderation.help.rulesAccepted',
               variables: {
                 'version': '${rules.version}',
-                'date': moderationDay(context, accepted),
+                'date': recentDay(context, accepted),
               },
             ),
           _ => houseRulesVersionLine(context, rules),

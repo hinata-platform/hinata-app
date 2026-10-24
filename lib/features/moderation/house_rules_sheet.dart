@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart' show DateFormat;
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../core/api/api_client.dart';
@@ -9,19 +8,9 @@ import '../../core/lexical/hinata_markdown_preview.dart';
 import '../../core/models/moderation_models.dart';
 import '../../core/repositories/account_repository.dart';
 import '../../core/theme/app_type.dart';
+import '../../core/util/dates.dart';
 import '../../core/widgets/hive_widgets.dart' show GhostButton;
 import '../sprint/modals/glass_modal.dart';
-
-/// The day of [at] as the rest of the app tells a recent date: without the
-/// year within this one, with it once it is older.
-String moderationDay(BuildContext context, DateTime at) {
-  final locale = Localizations.localeOf(context).toString();
-  final local = at.toLocal();
-  final format = local.year == DateTime.now().year
-      ? DateFormat.MMMd(locale)
-      : DateFormat.yMMMd(locale);
-  return format.format(local);
-}
 
 /// The version of [rules] and since when it holds, for a header.
 String houseRulesVersionLine(BuildContext context, HouseRules rules) {
@@ -35,7 +24,7 @@ String houseRulesVersionLine(BuildContext context, HouseRules rules) {
           'moderation.rules.versionSince',
           variables: {
             'version': '${rules.version}',
-            'date': moderationDay(context, since),
+            'date': recentDay(context, since),
           },
         );
 }

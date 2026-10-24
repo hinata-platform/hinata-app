@@ -11,6 +11,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_image.dart';
+import '../../../core/util/dates.dart';
 import '../../../core/util/file_download.dart';
 import '../../../core/util/share_origin.dart';
 import '../../../core/util/file_pick.dart';
@@ -21,11 +22,14 @@ import '../../../core/repositories/issue_repository.dart';
 import '../../../core/api/sse.dart';
 import '../../../core/api/sse_connection.dart';
 import '../../../core/blocs/app_config_bloc.dart';
+import '../../../core/blocs/auth_bloc.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/models/core_models.dart';
+import '../../../core/models/moderation_models.dart';
 import '../../../core/models/work_models.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../moderation/report/report_sheet.dart';
 import '../../sprint/modals/glass_modal.dart'
     show GlassToastKind, anchorRectOf, showGlassConfirm, showGlassToast;
 import 'attachment_grid.dart';
@@ -622,7 +626,8 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
   /// order the grid shows them. Paging used to cover the pictures only, so
   /// looking through what is attached meant returning to the grid each time.
   Future<void> _open(IssueAttachment tapped) async {
-    final ordered = _server.reversed.toList(); // newest first, like the grid
+    // Newest first, like the grid; a removed file has nothing to show.
+    final ordered = _server.reversed.where((a) => !a.isRemoved).toList();
     final items = [for (final a in ordered) _toViewerItem(a)];
     final idx = ordered.indexWhere((a) => a.id == tapped.id);
     await showAttachmentViewer(
@@ -630,6 +635,41 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       items: items,
       initialIndex: idx < 0 ? 0 : idx,
       onDownload: (it) => _downloadById(it.id, it.name),
+      onReport: (it, anchor) => unawaited(_report(it, anchor)),
+    );
+  }
+
+  /// Somebody else's file, on a server that knows reporting (HIN-173).
+  bool _reportable(IssueAttachment a) {
+    final me = context.read<AuthBloc>().state.user?.id;
+    final moderated =
+        context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false;
+    return moderated && me != null && a.uploaderId != me && !a.isRemoved;
+  }
+
+  Future<void> _report(ViewerItem item, Rect? anchor) async {
+    final match = _server.where((a) => a.id == item.id);
+    final by = match.isEmpty || match.first.uploaderId == null
+        ? null
+        : widget.userNames[match.first.uploaderId];
+    final where = widget.issueKey ?? '';
+    await showReportSheet(
+      context,
+      anchorRect: anchor,
+      subject: ReportSubject(
+        target: TargetRef(
+          ContentKind.attachment,
+          item.id,
+          parentId: widget.issueId,
+        ),
+        title: context.t('moderation.report.titleAttachment'),
+        subtitle: by == null || by.isEmpty
+            ? '${item.name} · $where'
+            : context.t(
+                'moderation.report.byIn',
+                variables: {'name': by, 'where': where},
+              ),
+      ),
     );
   }
 
@@ -658,6 +698,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
       blurHash: a.blurHash,
       mime: a.contentType,
       subtitle: _subtitle(a),
+      reportable: _reportable(a),
     );
   }
 
@@ -857,6 +898,7 @@ class AttachmentsSectionState extends State<AttachmentsSection> {
             }
             // Server attachments newest-first below the in-flight uploads.
             final a = _server[_server.length - 1 - (i - _uploads.length)];
+            if (a.isRemoved) return _RemovedTile(attachment: a);
             return _AttachmentTile.done(
               attachment: a,
               subtitle: _subtitle(a),
