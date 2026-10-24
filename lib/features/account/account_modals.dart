@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -7,6 +9,8 @@ import '../../core/i18n/i18n.dart';
 import '../../core/models/account_models.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/content_refused_notice.dart';
+import '../moderation/house_rules_sheet.dart' show openHouseRules;
 import '../sprint/modals/glass_modal.dart'
     show showGlassModal, GlassModalHeader, GlassField, glassInputDecoration;
 import 'account_cubit.dart';
@@ -41,6 +45,9 @@ class _EditProfileModalState extends State<_EditProfileModal> {
   bool _busy = false;
   String? _error;
 
+  /// What the text check refused (HIN-176); the fields keep what was typed.
+  ContentRefusal? _refusal;
+
   @override
   void dispose() {
     _name.dispose();
@@ -54,6 +61,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
     setState(() {
       _busy = true;
       _error = null;
+      _refusal = null;
     });
     try {
       // No locale here: the language lives in Settings → Sprache, which applies
@@ -66,7 +74,13 @@ class _EditProfileModalState extends State<_EditProfileModal> {
       );
       if (mounted) Navigator.of(context).maybePop(saved);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = context.t(f.message));
+      final refusal = ContentRefusal.of(f);
+      if (mounted) {
+        setState(() {
+          _refusal = refusal;
+          _error = refusal == null ? context.t(f.message) : null;
+        });
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -137,6 +151,13 @@ class _EditProfileModalState extends State<_EditProfileModal> {
                     ),
                   ),
                 ),
+                if (_refusal case final refusal?) ...[
+                  const SizedBox(height: 14),
+                  ContentRefusedNotice(
+                    refusal: refusal,
+                    onReadRules: () => unawaited(openHouseRules(context)),
+                  ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 14),
                   AccountNote(

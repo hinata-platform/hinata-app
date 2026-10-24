@@ -11,6 +11,7 @@ import '../../core/models/content_models.dart' show ArticleVersion;
 import '../../core/repositories/issue_repository.dart';
 import '../../core/responsive/responsive.dart';
 import '../../core/theme/app_colors.dart';
+import '../../core/widgets/content_refused_notice.dart';
 import '../../core/widgets/glass_filter_bar.dart'
     show GlassSearchButton, GlassSearchDock, kGlassControlHeight, kGlassDockRow;
 import '../../core/widgets/glass_popup_menu.dart';
@@ -115,6 +116,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
   bool _dirty = false;
   bool _saving = false;
 
+  /// What the text check refused in the last save (HIN-176); the editor keeps
+  /// the page and shows why.
+  ContentRefusal? _refusal;
+
   // ── history ──
   PagedCubit<ArticleVersion>? _versions;
   String? _versionsOf;
@@ -183,7 +188,11 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
 
   // ── navigation ──
 
-  void _go(KnowledgeLocation to) => context.go(to.path);
+  void _go(KnowledgeLocation to) {
+    // A refusal belongs to the page it was about.
+    _refusal = null;
+    context.go(to.path);
+  }
 
   void _openArticle(String id) => _go(KnowledgeArticleLocation(id));
   void _openSpace(String id) => _go(KnowledgeSpaceLocation(id));
@@ -258,7 +267,10 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
     final title = r.title.trim().isEmpty
         ? context.t('knowledge.untitled')
         : r.title.trim();
-    setState(() => _saving = true);
+    setState(() {
+      _saving = true;
+      _refusal = null;
+    });
     try {
       switch (_at) {
         case KnowledgeNewLocation(:final parentId):
@@ -294,7 +306,13 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
           break;
       }
     } on ApiFailure catch (failure) {
-      if (mounted) _toast(failure.message, kind: GlassToastKind.error);
+      final refusal = ContentRefusal.of(failure);
+      if (!mounted) return;
+      if (refusal != null) {
+        setState(() => _refusal = refusal);
+      } else {
+        _toast(failure.message, kind: GlassToastKind.error);
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -1105,6 +1123,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         onSave: _save,
         onDirtyChanged: (dirty) => _dirty = dirty,
         bottomPadding: 32 + context.bottomGutter,
+        refusal: _refusal,
       ),
     );
   }
@@ -1134,6 +1153,7 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
         onSave: _save,
         onDirtyChanged: (dirty) => _dirty = dirty,
         bottomPadding: 32 + context.bottomGutter,
+        refusal: _refusal,
       ),
     );
   }
