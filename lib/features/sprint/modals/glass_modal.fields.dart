@@ -192,6 +192,60 @@ class GlassSegmented extends StatelessWidget {
   }
 }
 
+/// A field that shows what is chosen and opens the choice beside it: the
+/// app's pattern for a choice too long for a row of chips. [label] names it
+/// for a screen reader, [value] is the choice in words, or the prompt while
+/// nothing is chosen ([chosen] false). [onOpen] gets the field's rectangle to
+/// hang a popover off; null when it is not on screen.
+class GlassChoiceField extends StatelessWidget {
+  const GlassChoiceField({
+    super.key,
+    required this.label,
+    required this.value,
+    required this.onOpen,
+    this.chosen = true,
+  });
+
+  final String label;
+  final String value;
+  final bool chosen;
+  final ValueChanged<Rect?> onOpen;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    label: label,
+    value: value,
+    excludeSemantics: true,
+    child: InkWell(
+      onTap: () => onOpen(anchorRectOfContext(context)),
+      borderRadius: BorderRadius.circular(AppTheme.radiusControl + 4),
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 48),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(AppTheme.radiusControl + 4),
+          border: Border.all(color: AppColors.hairline2),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                value,
+                style: TextStyle(
+                  fontSize: AppType.body,
+                  color: chosen ? AppColors.ink : AppColors.inkSoft,
+                ),
+              ),
+            ),
+            Icon(LucideIcons.chevronDown, size: 18, color: AppColors.inkSoft),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 /// A read-only "commitment" / info line used in the start & complete modals.
 class GlassInfoLine extends StatelessWidget {
   const GlassInfoLine({super.key, required this.icon, required this.child});

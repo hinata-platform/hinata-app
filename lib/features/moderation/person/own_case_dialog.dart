@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
@@ -6,7 +8,7 @@ import '../../../core/models/moderation_case_models.dart';
 import '../../../core/models/moderation_models.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../case/case_dialogs.dart' show noteCounter;
-import '../report/report_reasons.dart' show reportCategoryTitle;
+import '../report/report_reasons.dart';
 
 /// Why moderation opens a case of its own on a person: the category and what
 /// was found, at least twenty characters.
@@ -40,6 +42,37 @@ class _OwnCaseDialogState extends State<_OwnCaseDialog> {
     super.dispose();
   }
 
+  /// The reasons as a report lists them, beside the field on a wide window,
+  /// as a card on a phone: this dialog may be a sheet already.
+  Future<void> _pickCategory(Rect? anchor) async {
+    final view = View.of(context);
+    final wide =
+        view.physicalSize.width / view.devicePixelRatio >=
+        kGlassPopoverBreakpoint;
+    Widget reasons(BuildContext context) => SingleChildScrollView(
+      padding: const EdgeInsets.all(8),
+      child: ReportReasons(
+        focused: _category,
+        onChoose: (category) => Navigator.of(context).pop(category),
+      ),
+    );
+    final picked = wide && anchor != null
+        ? await showGlassAnchoredPopover<ReportCategory>(
+            context,
+            anchorRect: anchor,
+            width: 400,
+            maxHeight: 560,
+            builder: reasons,
+          )
+        : await showGlassModal<ReportCategory>(
+            context,
+            width: 460,
+            adaptive: false,
+            builder: reasons,
+          );
+    if (picked != null && mounted) setState(() => _category = picked);
+  }
+
   @override
   Widget build(BuildContext context) => Column(
     mainAxisSize: MainAxisSize.min,
@@ -61,17 +94,10 @@ class _OwnCaseDialogState extends State<_OwnCaseDialog> {
             children: [
               GlassField(
                 label: context.t('moderation.suspension.ownCategory'),
-                child: Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    for (final category in ReportCategory.values)
-                      ChoiceChip(
-                        label: Text(reportCategoryTitle(context, category)),
-                        selected: category == _category,
-                        onSelected: (_) => setState(() => _category = category),
-                      ),
-                  ],
+                child: GlassChoiceField(
+                  label: context.t('moderation.suspension.ownCategory'),
+                  value: reportCategoryTitle(context, _category),
+                  onOpen: (anchor) => unawaited(_pickCategory(anchor)),
                 ),
               ),
               const SizedBox(height: 8),
