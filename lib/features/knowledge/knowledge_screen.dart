@@ -545,6 +545,8 @@ class _KnowledgeBodyState extends State<_KnowledgeBody> {
       context: context,
       anchorRect: rect,
       value: '',
+      // Room for the longest label, German "Unterseite hinzufügen", uncut.
+      width: 280,
       items: [
         GlassMenuItem(
           value: 'history',
