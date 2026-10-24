@@ -406,7 +406,9 @@
     "more": "المزيد",
     "collapse": "طي",
     "expandSidebar": "توسيع الشريط الجانبي",
-    "shifts": "المناوبات"
+    "shifts": "المناوبات",
+    "groupWork": "العمل",
+    "groupPlan": "التخطيط"
   },
   "dashboard": {
     "title": "لوحة المعلومات",
