@@ -182,7 +182,7 @@ class _CaseBody extends StatelessWidget {
           ),
         ],
         const SizedBox(height: 14),
-        CaseReports(
+        ...caseReportRows(
           detail: detail,
           loadingMore: state.loadingReports,
           onReveal: summary.state.undecided && !state.busy
@@ -191,7 +191,7 @@ class _CaseBody extends StatelessWidget {
           onMore: () => unawaited(cubit.moreReports()),
         ),
         const SizedBox(height: 10),
-        CaseHistory(events: detail.history, names: names),
+        ...caseHistoryRows(events: detail.history, names: names),
         const SizedBox(height: 16),
         _Actions(detail: detail, me: me, busy: state.busy),
       ],
