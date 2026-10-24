@@ -48,8 +48,10 @@ class HouseRulesCubit extends Cubit<HouseRulesState> {
     );
     try {
       final rules = await _account.houseRules();
+      if (isClosed) return;
       emit(HouseRulesState(status: HouseRulesStatus.ready, rules: rules));
     } on ApiFailure catch (failure) {
+      if (isClosed) return;
       emit(
         HouseRulesState(
           status: HouseRulesStatus.failure,
@@ -57,6 +59,7 @@ class HouseRulesCubit extends Cubit<HouseRulesState> {
         ),
       );
     } catch (_) {
+      if (isClosed) return;
       emit(
         const HouseRulesState(
           status: HouseRulesStatus.failure,
@@ -84,11 +87,12 @@ class HouseRulesCubit extends Cubit<HouseRulesState> {
       await _account.acceptHouseRules(rules.version);
       return true;
     } on ApiFailure catch (failure) {
+      if (isClosed) return false;
       if (failure.statusCode == 409) {
         await load();
         // Said only once the newer version is on screen; a failed read says
         // why it failed instead.
-        if (state.status == HouseRulesStatus.ready) {
+        if (!isClosed && state.status == HouseRulesStatus.ready) {
           emit(state.copyWith(errorKey: () => failure.message));
         }
         return false;
@@ -101,6 +105,7 @@ class HouseRulesCubit extends Cubit<HouseRulesState> {
       );
       return false;
     } catch (_) {
+      if (isClosed) return false;
       emit(
         state.copyWith(
           status: HouseRulesStatus.ready,
