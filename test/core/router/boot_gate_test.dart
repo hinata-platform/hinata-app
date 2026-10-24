@@ -292,12 +292,45 @@ void main() {
       expect(at('/login'), issue);
     });
 
-    test('never interrupt a session that is still being checked or is on', () {
+    /// A session from before the terms counts as agreed: storage settles that
+    /// at the first launch (`app_storage_secret_store_test.dart`).
+    test('never interrupt a session that is still being checked', () {
       expect(
         at('/dashboard', auth: AuthStatus.unknown, appTermsAccepted: false),
         '/login',
       );
-      expect(at('/dashboard', appTermsAccepted: false), null);
+    });
+
+    test('meet a person a link signed in on a fresh device, before the '
+        'house rules, and the link waits behind them', () {
+      for (final link in [
+        '/invite?token=t1',
+        '/reset-password?token=t1',
+        '/verify-email?token=t1',
+        '/auth-callback?code=c1',
+      ]) {
+        // The flow itself renders while signed out, as before.
+        expect(
+          at(
+            Uri.parse(link).path,
+            uri: link,
+            auth: AuthStatus.unauthenticated,
+            appTermsAccepted: false,
+          ),
+          null,
+          reason: link,
+        );
+        // It signed the person in: wherever it goes next, the terms first.
+        expect(
+          at('/dashboard', appTermsAccepted: false, rulesPending: true),
+          '/terms',
+          reason: link,
+        );
+      }
+      expect(at(issue, uri: issue, appTermsAccepted: false), '/terms');
+      expect(at('/terms', appTermsAccepted: false), null);
+      // Agreed: the link that waited, before the rules ask anything.
+      expect(at('/dashboard'), issue);
     });
 
     test('leave the public flows alone', () {

@@ -83,6 +83,34 @@ void main() {
   String plaintext(SharedPreferences prefs) =>
       prefs.getKeys().map((k) => '$k=${prefs.get(k)}').join(' ');
 
+  /// The app's terms arrived with a version (HIN-175): a device signed in by
+  /// then counts as having agreed, once; any sign-in after meets the terms.
+  group('the app terms', () {
+    test('a session from before them counts as agreed', () async {
+      final prefs = await prefsWithServer();
+      final storage = AppStorage(
+        prefs,
+        _WorkingSecretStore({'refresh_token::$server': 'r1'}),
+      );
+      await storage.restore();
+      expect(storage.appTermsAccepted, isTrue);
+    });
+
+    test(
+      'a device signed out then, and signed in later, still meets them',
+      () async {
+        final prefs = await prefsWithServer();
+        final secure = _WorkingSecretStore();
+        await AppStorage(prefs, secure).restore();
+        // Signed in afterwards, say by an invitation on this fresh device.
+        await secure.write(key: 'refresh_token::$server', value: 'r1');
+        final next = AppStorage(prefs, secure);
+        await next.restore();
+        expect(next.appTermsAccepted, isFalse);
+      },
+    );
+  });
+
   group('boot', () {
     test('a launch with nothing saved never touches the store', () async {
       // There is no availability probe, on any platform, and this is the test
