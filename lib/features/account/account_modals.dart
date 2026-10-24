@@ -66,7 +66,7 @@ class _EditProfileModalState extends State<_EditProfileModal> {
       );
       if (mounted) Navigator.of(context).maybePop(saved);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -207,7 +207,7 @@ class _ChangeEmailModalState extends State<_ChangeEmailModal> {
       await widget.account.requestEmailChange(value);
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -339,7 +339,7 @@ class _ConfirmModalState extends State<_ConfirmModal> {
       await widget.onConfirm();
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -535,7 +535,7 @@ class _DeleteAccountModalState extends State<_DeleteAccountModal> {
       await widget.account.deleteAccount();
       if (mounted) Navigator.of(context).maybePop(true);
     } on ApiFailure catch (f) {
-      if (mounted) setState(() => _error = f.message);
+      if (mounted) setState(() => _error = context.t(f.message));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
