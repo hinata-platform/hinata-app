@@ -25,6 +25,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/util/file_pick.dart';
 import '../../core/widgets/glass_popup_menu.dart';
 import '../../core/widgets/app_avatar.dart';
+import '../../core/widgets/count_badge.dart';
 import '../../core/widgets/hex_mark.dart';
 import '../../core/widgets/hive_loader.dart';
 import '../../core/widgets/hive_widgets.dart' show HiveSwitch, forwardChevron;
@@ -40,6 +41,9 @@ import 'account_widgets.dart';
 import 'tint_customizer.dart';
 import '../blocks/blocked_people_section.dart';
 import '../moderation/help_contact_section.dart';
+import '../moderation/queue/moderation_screen.dart' show moderationLocation;
+import '../moderation/queue/moderation_summary_cubit.dart';
+import '../moderation/queue/moderation_summary_scope.dart';
 import 'availability_section.dart';
 import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
@@ -73,7 +77,7 @@ enum _SettingsSection {
 /// are looked up per-section so the index row, the sub-page app bar and the
 /// section card header all stay in sync.
 /// Rail entries that leave the settings page for a page of their own.
-enum _RailLink { admin, organization }
+enum _RailLink { admin, organization, moderation }
 
 const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.security, icon: LucideIcons.shieldCheck),
@@ -100,10 +104,17 @@ class AccountScreen extends StatelessWidget {
   final String? section;
 
   @override
-  Widget build(BuildContext context) => BlocProvider(
-    create: (context) => AccountCubit(context.read<AccountRepository>()),
-    child: _AccountBody(section: section),
-  );
+  Widget build(BuildContext context) {
+    final moderator = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state.user?.isModerator ?? false,
+    );
+    final body = _AccountBody(section: section);
+    return BlocProvider(
+      create: (context) => AccountCubit(context.read<AccountRepository>()),
+      // The badge on Moderation (HIN-174) counts while the settings are open.
+      child: moderator ? ModerationSummaryScope(child: body) : body,
+    );
+  }
 }
 
 class _AccountBody extends StatefulWidget {
@@ -135,6 +146,9 @@ const _notifEvents = <({String id, IconData icon, bool locked})>[
   // Shift planning (HIN-46): assigned, changed, called off, the reminder a
   // day ahead. Listed only while the module is on.
   (id: 'shifts', icon: LucideIcons.calendarClock, locked: false),
+  // Moderation (HIN-174): new and overdue cases, a second pair of eyes, notes
+  // to the team. Listed only for moderators.
+  (id: 'moderation', icon: LucideIcons.flag, locked: false),
   (id: 'security', icon: LucideIcons.shieldCheck, locked: true),
 ];
 
@@ -606,6 +620,16 @@ class _AccountScreenState extends State<_AccountBody> {
                 group: adminGroup,
                 trailing: LucideIcons.externalLink,
               ),
+            if (user?.isModerator ?? false)
+              SettingsNavEntry<Object>(
+                id: _RailLink.moderation,
+                icon: LucideIcons.flag,
+                label: context.t('moderation.queue.title'),
+                group: adminGroup,
+                trailing: LucideIcons.externalLink,
+                badge: _openCases,
+                badgeLabel: _openCasesLabel,
+              ),
           ],
           selected: section,
           onSelect: (id) {
@@ -614,6 +638,8 @@ class _AccountScreenState extends State<_AccountBody> {
                 context.go('/admin');
               case _RailLink.organization:
                 context.go('/organization');
+              case _RailLink.moderation:
+                context.go(moderationLocation());
               case final _SettingsSection s:
                 setState(() => _wideSection = s);
             }
@@ -695,6 +721,8 @@ class _AccountScreenState extends State<_AccountBody> {
   Widget _sectionMenu() {
     final isAdmin = context.read<AuthBloc>().state.user?.isAdmin ?? false;
     final isOrgAdmin = context.read<AuthBloc>().state.user?.isOrgAdmin ?? false;
+    final isModerator =
+        context.read<AuthBloc>().state.user?.isModerator ?? false;
     final mcpEnabled = _mcpEnabled;
     final advancedTime = _advancedTime;
     final moderation = _moderation;
@@ -734,6 +762,19 @@ class _AccountScreenState extends State<_AccountBody> {
           ),
         );
       }
+      // Moderation (HIN-174), with the cases waiting.
+      if (item.section == _SettingsSection.appearance && isModerator) {
+        tiles.add(
+          _navTile(
+            icon: LucideIcons.flag,
+            title: context.t('moderation.queue.title'),
+            subtitle: context.t('moderation.queue.settingsHint'),
+            badge: _openCases,
+            badgeLabel: _openCasesLabel,
+            onTap: () => context.go(moderationLocation()),
+          ),
+        );
+      }
     }
     return Container(
       decoration: BoxDecoration(
@@ -754,6 +795,17 @@ class _AccountScreenState extends State<_AccountBody> {
     );
   }
 
+  /// The cases waiting for moderation, for the badge on its entry; null
+  /// before the first count or for somebody who does not moderate.
+  int? get _openCases => context.watch<ModerationSummaryCubit?>()?.state?.open;
+
+  String? get _openCasesLabel {
+    final open = _openCases;
+    return open == null
+        ? null
+        : context.t('moderation.queue.openCount', count: open);
+  }
+
   /// A tappable navigation row: amber (or red) icon tile, title, subtitle and a
   /// chevron, as the compact index lists them.
   Widget _navTile({
@@ -762,6 +814,8 @@ class _AccountScreenState extends State<_AccountBody> {
     required String subtitle,
     required VoidCallback onTap,
     bool danger = false,
+    int? badge,
+    String? badgeLabel,
   }) {
     final accent = danger ? AppColors.danger : AppColors.accentStrong;
     final accentBg = danger
@@ -816,6 +870,10 @@ class _AccountScreenState extends State<_AccountBody> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                if (badge case final count? when count > 0) ...[
+                  CountBadge(count, semanticLabel: badgeLabel),
+                  const SizedBox(width: 8),
+                ],
                 Icon(
                   forwardChevron(context),
                   size: 18,
@@ -1389,9 +1447,13 @@ class _AccountScreenState extends State<_AccountBody> {
   List<({String id, IconData icon, bool locked})> get _visibleNotifEvents {
     final shifts =
         context.watch<AppConfigBloc>().state.meta?.shiftPlanning ?? false;
+    final moderator = context.select<AuthBloc, bool>(
+      (bloc) => bloc.state.user?.isModerator ?? false,
+    );
     return [
       for (final e in _notifEvents)
-        if (e.id != 'shifts' || shifts) e,
+        if ((e.id != 'shifts' || shifts) && (e.id != 'moderation' || moderator))
+          e,
     ];
   }
 
