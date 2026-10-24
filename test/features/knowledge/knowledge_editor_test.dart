@@ -13,6 +13,7 @@ import 'package:hinata/core/repositories/article_repository.dart';
 import 'package:hinata/core/repositories/auth_repository.dart';
 import 'package:hinata/core/repositories/user_repository.dart';
 import 'package:hinata/core/storage/app_storage.dart';
+import 'package:hinata/core/widgets/content_refused_notice.dart';
 import 'package:hinata/features/knowledge/data/knowledge_repository.dart';
 import 'package:hinata/features/knowledge/knowledge_editor.dart';
 import 'package:hinata/features/knowledge/knowledge_scope.dart';
@@ -111,5 +112,54 @@ void main() {
 
     expect(saved, isEmpty);
     expect(find.text('knowledge.saveWouldBlank'), findsOneWidget);
+  });
+
+  testWidgets('a page the text check refused keeps what was typed and says '
+      'why above it', (tester) async {
+    tester.view
+      ..physicalSize = const Size(390, 844)
+      ..devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    final refusal = ValueNotifier<ContentRefusal?>(null);
+    addTearDown(refusal.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        builder: (context, app) => MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: const TextScaler.linear(2)),
+          child: app!,
+        ),
+        home: Scaffold(
+          body: KnowledgeScope(
+            repo: repo,
+            openArticle: (_) {},
+            openUser: (_) {},
+            child: ValueListenableBuilder<ContentRefusal?>(
+              valueListenable: refusal,
+              builder: (context, refused, _) => KnowledgeEditor(
+                isNew: false,
+                initialTitle: 'Titel',
+                initialDoc: null,
+                initialBody: 'Inhalt',
+                spaceId: '',
+                onSave: (_) {},
+                refusal: refused,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(find.widgetWithText(TextField, 'Titel'), 'Neu');
+
+    // What the screen does with the server's answer to the save.
+    refusal.value = const ContentRefusal(['Spoiler']);
+    await tester.pumpAndSettle();
+
+    expect(find.text('moderation.refused.title'), findsOneWidget);
+    expect(find.text('Neu'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 }
