@@ -3656,8 +3656,10 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Uploads a recorded voice message as a comment, then refreshes to the newest
   /// page so the playable bubble appears at the bottom of the thread.
-  Future<void> _sendVoiceComment(VoiceRecording recording) async {
-    if (_sendingComment) return;
+  /// Posts a voice message; false when it did not go out, so the composer
+  /// keeps the recording to send again.
+  Future<bool> _sendVoiceComment(VoiceRecording recording) async {
+    if (_sendingComment) return false;
     _sendingComment = true;
     try {
       final replyTarget = _replyingTo;
@@ -3669,7 +3671,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         peaks: recording.peaks,
         replyToId: replyTarget?.id,
       );
-      if (!mounted) return;
+      if (!mounted) return true;
       setState(() => _replyingTo = null);
       _bumpComposer();
       if (created.isReply) {
@@ -3678,9 +3680,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
         await _refreshTopLevelAfterPost();
       }
       _notifyChanged();
+      return true;
     } catch (_) {
-      if (!mounted) return;
-      showGlassErrorToast(context, context.t('comments.voiceFailed'));
+      if (mounted) {
+        showGlassErrorToast(context, context.t('comments.voiceFailed'));
+      }
+      return false;
     } finally {
       _sendingComment = false;
     }
