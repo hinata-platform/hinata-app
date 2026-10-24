@@ -3676,7 +3676,11 @@
       "retentionHint": "Done cases, their reports and the quarantine are deleted after this, unless law enforcement was told.",
       "retentionLabel": "Delete after",
       "retentionMonths": "{{count}} month",
-      "retentionMonths_plural": "{{count}} months"
+      "retentionMonths_plural": "{{count}} months",
+      "figures": "Download figures for {{year}}",
+      "figuresHint": "In the European Commission's template, one CSV file per part in a ZIP. Check the figures and add what Hinata does not know, such as orders from authorities, before you publish them.",
+      "figuresDone": "Figures saved",
+      "figuresFailed": "The figures could not be saved"
     },
     "entry": {
       "title": "Who comes in",
