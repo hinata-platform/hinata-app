@@ -18,6 +18,8 @@ CaseSummary caseRow({
   bool reportedByMe = false,
   bool overdue = false,
   CaseOutcome? outcome,
+  bool removed = false,
+  bool suspended = false,
   int rev = 3,
 }) => CaseSummary(
   id: id,
@@ -33,6 +35,8 @@ CaseSummary caseRow({
   reportedByMe: reportedByMe,
   overdue: overdue,
   outcome: outcome,
+  removed: removed,
+  suspended: suspended,
   rev: rev,
 );
 
