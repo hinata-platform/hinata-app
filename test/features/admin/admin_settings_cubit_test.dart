@@ -73,6 +73,17 @@ void main() {
     expect(admin.saved, isEmpty);
   });
 
+  test('a confirmation goes with the one save it was given for', () async {
+    await cubit.load();
+
+    await cubit.save(flagConfirmed: true);
+    await cubit.save();
+
+    expect(admin.saved.first['flagConfirmed'], isTrue);
+    expect(admin.saved.last.containsKey('flagConfirmed'), isFalse);
+    expect(cubit.state.settings!.containsKey('flagConfirmed'), isFalse);
+  });
+
   test('the logo calls reach their repositories', () async {
     final file = MultipartFile.fromBytes(const [1, 2, 3], filename: 'a.png');
 

@@ -314,6 +314,17 @@ class AdminRepository {
             as Map<String, dynamic>,
       );
 
+  /// What the text check would say about [text]; nothing is stored, logged or
+  /// counted (HIN-176).
+  Future<TextCheckResult> testText(String text) async =>
+      TextCheckResult.fromJson(
+        await _api.post(
+              '/api/v1/admin/moderation/filter/test',
+              body: {'text': text},
+            )
+            as Map<String, dynamic>,
+      );
+
   // --- Audit log ---------------------------------------------------------------
 
   /// One filtered, paginated page of the security audit log. Blank/null filters
