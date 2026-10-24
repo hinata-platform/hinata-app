@@ -196,11 +196,16 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-          # The two App Review accounts (member, moderator), read by the release lane.
-          APP_REVIEW_DEMO_USER: ${{ secrets.APP_REVIEW_DEMO_USER }}
-          APP_REVIEW_DEMO_PASSWORD: ${{ secrets.APP_REVIEW_DEMO_PASSWORD }}
-          APP_REVIEW_MODERATOR_USER: ${{ secrets.APP_REVIEW_MODERATOR_USER }}
-          APP_REVIEW_MODERATOR_PASSWORD: ${{ secrets.APP_REVIEW_MODERATOR_PASSWORD }}
+          # The review server, its two accounts (member, moderator) and the phone
+          # App Review calls, read by the release lane. Only for a submission:
+          # a TestFlight build has no use for them, and every build script of
+          # the step would inherit them.
+          APP_REVIEW_SERVER: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' && secrets.APP_REVIEW_SERVER || '' }}
+          APP_REVIEW_PHONE: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' && secrets.APP_REVIEW_PHONE || '' }}
+          APP_REVIEW_DEMO_USER: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' && secrets.APP_REVIEW_DEMO_USER || '' }}
+          APP_REVIEW_DEMO_PASSWORD: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' && secrets.APP_REVIEW_DEMO_PASSWORD || '' }}
+          APP_REVIEW_MODERATOR_USER: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' && secrets.APP_REVIEW_MODERATOR_USER || '' }}
+          APP_REVIEW_MODERATOR_PASSWORD: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' && secrets.APP_REVIEW_MODERATOR_PASSWORD || '' }}
           SUBMIT: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' }}
         run: |
           cd ios
@@ -242,11 +247,13 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
-          # The two App Review accounts (member, moderator), read by the release lane.
-          APP_REVIEW_DEMO_USER: ${{ secrets.APP_REVIEW_DEMO_USER }}
-          APP_REVIEW_DEMO_PASSWORD: ${{ secrets.APP_REVIEW_DEMO_PASSWORD }}
-          APP_REVIEW_MODERATOR_USER: ${{ secrets.APP_REVIEW_MODERATOR_USER }}
-          APP_REVIEW_MODERATOR_PASSWORD: ${{ secrets.APP_REVIEW_MODERATOR_PASSWORD }}
+          # As for iOS: only for a submission.
+          APP_REVIEW_SERVER: ${{ inputs.submit == 'true' && secrets.APP_REVIEW_SERVER || '' }}
+          APP_REVIEW_PHONE: ${{ inputs.submit == 'true' && secrets.APP_REVIEW_PHONE || '' }}
+          APP_REVIEW_DEMO_USER: ${{ inputs.submit == 'true' && secrets.APP_REVIEW_DEMO_USER || '' }}
+          APP_REVIEW_DEMO_PASSWORD: ${{ inputs.submit == 'true' && secrets.APP_REVIEW_DEMO_PASSWORD || '' }}
+          APP_REVIEW_MODERATOR_USER: ${{ inputs.submit == 'true' && secrets.APP_REVIEW_MODERATOR_USER || '' }}
+          APP_REVIEW_MODERATOR_PASSWORD: ${{ inputs.submit == 'true' && secrets.APP_REVIEW_MODERATOR_PASSWORD || '' }}
           SUBMIT: ${{ inputs.submit }}
         run: |
           cd macos
