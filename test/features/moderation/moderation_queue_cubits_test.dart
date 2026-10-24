@@ -58,7 +58,7 @@ void main() {
       'while paused', (tester) async {
     moderation.answer<ModerationSummary>(
       #summary,
-      const ModerationSummary(open: 5, overdue: 1, appeals: 1),
+      const ModerationSummary(open: 5, appeals: 1),
     );
     final summary = ModerationSummaryCubit(moderation);
     addTearDown(summary.close);

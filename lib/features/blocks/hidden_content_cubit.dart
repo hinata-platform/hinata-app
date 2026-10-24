@@ -49,10 +49,6 @@ class HiddenContentState extends Equatable {
     return null;
   }
 
-  /// Whether [contentId], written by [authorId], shows as a folded line.
-  bool folds({required String authorId, required String contentId}) =>
-      foldOf(authorId: authorId, contentId: contentId) != null;
-
   HiddenContentState copyWith({
     Set<String>? blocked,
     Set<String>? reported,
