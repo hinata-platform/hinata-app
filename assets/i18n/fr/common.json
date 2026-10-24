@@ -542,7 +542,9 @@
       "cancelEdit": "Arrêter la modification",
       "closeFormat": "Fermer la mise en forme",
       "discardRecording": "Supprimer l’enregistrement",
-      "sendVoice": "Envoyer le message vocal"
+      "sendVoice": "Envoyer le message vocal",
+      "retryVoice": "Renvoyer",
+      "voiceNotSent": "Message vocal ({{time}}) non envoyé"
     },
     "moreReactions": "Plus de réactions",
     "voice": {
@@ -737,7 +739,8 @@
         "emptyFile": "Ce fichier est vide.",
         "renderFailed": "Ce fichier n'a pas pu être affiché.",
         "retry": "Réessayer",
-        "tooLarge": "Trop volumineux pour un aperçu intégré — téléchargez-le pour le lire."
+        "tooLarge": "Trop volumineux pour un aperçu intégré — téléchargez-le pour le lire.",
+        "more": "Plus"
       },
       "source": {
         "title": "Ajouter une pièce jointe",
@@ -5955,7 +5958,9 @@
       "emptyTitle": "Vous n'avez bloqué personne",
       "emptyMessage": "Vous pouvez bloquer quelqu'un depuis son profil ou depuis le menu d'un commentaire.",
       "more": "Charger plus"
-    }
+    },
+    "alsoReport": "Signaler aussi ce commentaire",
+    "alsoReportHint": "Tu choisis ensuite le motif, et la modération l'examine."
   },
   "moderation": {
     "appTerms": {
@@ -6012,7 +6017,23 @@
       "explanationOptional": "Que doit savoir la modération ? Facultatif",
       "explanationTooShort": "Décris-le en au moins {{min}} caractères.",
       "whoSees": "La modération voit que tu as signalé. Personne d'autre ne l'apprend.",
-      "goodFaith": "En envoyant, tu confirmes que tes indications sont exactes à ta connaissance."
+      "goodFaith": "En envoyant, tu confirmes que tes indications sont exactes à ta connaissance.",
+      "action": "Signaler …",
+      "alsoBlock": "Bloquer aussi {{name}}",
+      "alsoBlockHint": "Tu ne reçois plus de notifications de {{name}}.",
+      "byIn": "De {{name}} dans {{where}}",
+      "counter": "{{count}} sur {{max}}",
+      "folded": "Signalé par toi, replié pour toi",
+      "personDetail": "Va à la modération, et {{name}} ne sait pas qui l'a signalé",
+      "titleArticle": "Signaler la page",
+      "titleAttachment": "Signaler le fichier",
+      "titleComment": "Signaler le commentaire",
+      "titleIssue": "Signaler le ticket",
+      "titlePerson": "Signaler la personne",
+      "titleVoice": "Signaler le message vocal",
+      "tooMany": "Tu viens d'envoyer beaucoup de signalements. Tu pourras à nouveau signaler au plus tard à {{time}}.",
+      "tooManyTomorrow": "Tu as envoyé beaucoup de signalements aujourd'hui. Tu pourras à nouveau signaler demain au plus tard à {{time}}.",
+      "whoSeesNamed": "La modération voit que tu as signalé. {{name}} ne le sait pas."
     },
     "category": {
       "harassment": "Harcèlement, insultes ou haine",
@@ -6037,6 +6058,44 @@
       "body": "Le texte contient quelque chose que les règles de la maison n'autorisent pas : {{terms}}. Ton brouillon reste là, tu peux le modifier.",
       "bodyPlain": "Le texte contient quelque chose que les règles de la maison n'autorisent pas. Ton brouillon reste là, tu peux le modifier.",
       "readRules": "Lire les règles de la maison"
+    },
+    "appeal": {
+      "hint": "Qu'est-ce que la modération a mal jugé ? Que doit-elle savoir ?",
+      "label": "Ta contestation",
+      "send": "Envoyer la contestation",
+      "sent": "Ta contestation est bien arrivée.",
+      "subtitle": "Une autre personne de la modération réexamine la décision.",
+      "title": "Contester"
+    },
+    "notice": {
+      "appeal": "Contester …",
+      "failedTitle": "Impossible de charger l'avis",
+      "from": "Avis de la modération",
+      "goneMessage": "Il a été supprimé à la fin du délai, ou il concerne un autre compte.",
+      "goneTitle": "Cet avis n'existe plus",
+      "pageTitle": "Avis de la modération",
+      "rules": "Règles de la maison"
+    },
+    "placeholder": {
+      "description": "Description retirée par la modération",
+      "file": "Fichier retiré",
+      "fileBy": "Par la modération",
+      "page": "Contenu retiré par la modération",
+      "removed": "Retiré par la modération",
+      "why": "Pourquoi ?"
+    },
+    "state": {
+      "removed": "Retiré",
+      "suspended": "Suspendu"
+    },
+    "statement": {
+      "automation": "Moyens automatisés",
+      "basis": "Motif et constatations",
+      "law": "Base légale",
+      "measure": "Mesure",
+      "message": "Message de la modération",
+      "remedies": "Ce que tu peux faire",
+      "rule": "Règle"
     }
   }
 }
