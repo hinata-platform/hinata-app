@@ -48,6 +48,7 @@ void main() {
     Size screen = const Size(390, 844),
     double textScale = 2,
     bool anchored = false,
+    Rect anchor = const Rect.fromLTWH(40, 40, 40, 40),
   }) async {
     tester.view
       ..physicalSize = screen
@@ -74,9 +75,7 @@ void main() {
                       await showReportSheet(
                         context,
                         subject: subject,
-                        anchorRect: anchored
-                            ? const Rect.fromLTWH(40, 40, 40, 40)
-                            : null,
+                        anchorRect: anchored ? anchor : null,
                       ),
                     ),
                     child: const Text('open'),
@@ -183,6 +182,23 @@ void main() {
     // Beside the anchor at the top left, not centred or rising from below.
     expect(title.left, lessThan(700));
     expect(title.top, lessThan(500));
+  });
+
+  testWidgets('from a menu low in a short window it opens above, where the '
+      'reasons have room', (tester) async {
+    // A comment's menu near the foot of an 800 by 632 window: 166 points
+    // below it, 402 above.
+    await open(
+      tester,
+      screen: const Size(800, 632),
+      textScale: 1,
+      anchored: true,
+      anchor: const Rect.fromLTWH(300, 420, 32, 28),
+    );
+    expect(tester.takeException(), isNull);
+    final reason = tester.getRect(find.text('moderation.category.harassment'));
+    expect(tester.getRect(find.text('Kommentar melden')).bottom, lessThan(420));
+    expect(reason.bottom, lessThan(420));
   });
 
   testWidgets('the reasons are buttons, and the next step is announced', (
