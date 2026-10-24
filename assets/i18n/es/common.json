@@ -3612,7 +3612,11 @@
       "reprocessFullTitle": "¿Volver a crear los tickets que faltan?",
       "reprocessFullBody": "Cada correo de «{{name}}» sin ticket recibirá uno nuevo, incluidos los que eliminaste a propósito. Esto no se puede deshacer en bloque.",
       "reprocessFullConfirm": "Volver a crear",
-      "reprocessDone": "{{scanned}} revisados · {{updated}} reconstruidos · {{created}} creados"
+      "reprocessDone": "{{scanned}} revisados · {{updated}} reconstruidos · {{created}} creados",
+      "textRefusals": "{{count}} correo rechazado por la revisión de textos",
+      "textRefusals_plural": "{{count}} correos rechazados por la revisión de textos",
+      "textRefusalsSince": "{{count}} correo rechazado por la revisión de textos, el último el {{date}}",
+      "textRefusalsSince_plural": "{{count}} correos rechazados por la revisión de textos, el último el {{date}}"
     },
     "windowsStoreUrl": "URL de Microsoft Store",
     "linuxStoreUrl": "URL de descarga para Linux",
@@ -3703,6 +3707,34 @@
       "reacceptBody": "Todos aceptan la versión actual antes de seguir trabajando. Hasta entonces nadie obtiene un nuevo token de acceso ni conecta un cliente de IA.",
       "reacceptConfirm": "Pedírselo a todos",
       "reacceptDone": "Todos aceptan de nuevo la versión {{version}}."
+    },
+    "textCheck": {
+      "title": "Revisión automática de textos",
+      "hint": "Compara los textos con listas de palabras al guardarlos. Nada sale del servidor.",
+      "block": "Rechazar infracciones claras",
+      "blockHint": "Las amenazas, el discurso de odio y similares no se guardan. Quien escribe ve el motivo y conserva su borrador.",
+      "flag": "Pasar los casos dudosos a moderación",
+      "flagHint": "El texto se guarda, y moderación recibe una denuncia sin denunciante.",
+      "flagNote": "Así el sistema revisa por sí mismo los textos de los miembros y crea denuncias. Acuérdalo antes con la representación del personal y con protección de datos. Según la organización, hace falta un acuerdo o una evaluación de impacto de protección de datos.",
+      "confirmTitle": "¿Pasar los casos dudosos a moderación?",
+      "confirmBody": "A partir de entonces el sistema denuncia por sí mismo los textos que quizá infrinjan las normas de la casa, y moderación los lee. Actívalo solo cuando la representación del personal y protección de datos lo hayan aprobado.",
+      "confirm": "Activar",
+      "ownTerms": "Términos propios",
+      "ownTermsHint": "Siempre se rechazan, se escriban como se escriban. Hasta 500 términos de 60 caracteres cada uno.",
+      "exceptions": "Excepciones",
+      "exceptionsHint": "Palabras inofensivas para la organización, como términos técnicos. El contenido que pone en peligro a menores siempre sigue bloqueado.",
+      "addTerm": "Añadir término",
+      "removeTerm": "Quitar {{term}}",
+      "languages": "Las listas incluidas cubren alemán e inglés. Para otros idiomas solo sirven los términos propios.",
+      "test": "Probar un texto",
+      "testHint": "Con los ajustes guardados. No se guarda ni se cuenta nada.",
+      "testButton": "Comprobar",
+      "resultAllow": "Se guardaría.",
+      "resultFlag": "Se guardaría y pasaría a moderación: {{terms}}.",
+      "resultBlock": "Se rechazaría: {{terms}}.",
+      "resultFound": "Encontrado, pero sin efecto: {{terms}}.",
+      "resultException": "Se aplican excepciones: {{words}}.",
+      "images": "Las imágenes y los adjuntos no se revisan. Para eso están las denuncias."
     }
   },
   "audit": {
@@ -3948,7 +3980,8 @@
       "MODERATION_APPEAL_DECIDED": "Recurso resuelto",
       "MODERATION_LEGAL_HOLD_CHANGED": "Conservación para las autoridades modificada",
       "MODERATION_RULES_VERSION_CREATED": "Nueva versión de las normas de la casa",
-      "ACCOUNT_APPROVAL_CHANGED": "Aprobación de cuentas nuevas modificada"
+      "ACCOUNT_APPROVAL_CHANGED": "Aprobación de cuentas nuevas modificada",
+      "MODERATION_FILTER_CHANGED": "Revisión de textos modificada"
     },
     "meta": {
       "oldRole": "Rol anterior",
@@ -3962,7 +3995,11 @@
       "newEmail": "Correo nuevo",
       "method": "Método",
       "setting": "Ajuste",
-      "provider": "Proveedor"
+      "provider": "Proveedor",
+      "block": "Rechaza",
+      "flag": "Pasa a moderación",
+      "blockTerms": "Términos propios",
+      "allowTerms": "Excepciones"
     }
   },
   "sprint": {
@@ -5994,6 +6031,12 @@
       "illegalHint": "Derechos de autor u otra ley, explícalo brevemente",
       "other": "Otra cosa",
       "otherHint": "Descríbelo brevemente"
+    },
+    "refused": {
+      "title": "No guardado",
+      "body": "El texto contiene algo que las normas de la casa no permiten: {{terms}}. Tu borrador sigue aquí y puedes cambiarlo.",
+      "bodyPlain": "El texto contiene algo que las normas de la casa no permiten. Tu borrador sigue aquí y puedes cambiarlo.",
+      "readRules": "Leer las normas de la casa"
     }
   }
 }

@@ -3612,7 +3612,11 @@
       "reprocessFullTitle": "Re-create missing tickets?",
       "reprocessFullBody": "Every e-mail in \"{{name}}\" without a ticket gets a new one — including any you deleted intentionally. This cannot be undone in bulk.",
       "reprocessFullConfirm": "Re-create",
-      "reprocessDone": "{{scanned}} scanned · {{updated}} rebuilt · {{created}} created"
+      "reprocessDone": "{{scanned}} scanned · {{updated}} rebuilt · {{created}} created",
+      "textRefusals": "{{count}} mail refused by the text check",
+      "textRefusals_plural": "{{count}} mails refused by the text check",
+      "textRefusalsSince": "{{count}} mail refused by the text check, last on {{date}}",
+      "textRefusalsSince_plural": "{{count}} mails refused by the text check, last on {{date}}"
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux download URL",
@@ -3703,6 +3707,34 @@
       "reacceptBody": "Everybody agrees to the current version before working on. Until then nobody gets a new access token or connects an AI client.",
       "reacceptConfirm": "Ask everybody",
       "reacceptDone": "Everybody agrees to version {{version}} anew."
+    },
+    "textCheck": {
+      "title": "Automatic text check",
+      "hint": "Checks texts against word lists when they are saved. Nothing leaves the server.",
+      "block": "Refuse clear violations",
+      "blockHint": "Threats, hate speech and the like are not saved. The writer sees why and keeps the draft.",
+      "flag": "Send unclear cases to moderation",
+      "flagHint": "The text is saved, and moderation gets a report without a reporter.",
+      "flagNote": "The system then checks your members' texts itself and files reports. Settle this first with your staff representatives and your data protection officer. Depending on your organisation it needs an agreement or a data protection impact assessment.",
+      "confirmTitle": "Send unclear cases to moderation?",
+      "confirmBody": "From then on the system itself reports texts that may break the house rules, and moderation reads them. Only turn this on once your staff representatives and data protection officer have agreed.",
+      "confirm": "Turn on",
+      "ownTerms": "Own terms",
+      "ownTermsHint": "Always refused, however they are spelled. Up to 500 terms of 60 characters each.",
+      "exceptions": "Exceptions",
+      "exceptionsHint": "Words that are harmless for you, such as technical terms. Content that endangers children always stays blocked.",
+      "addTerm": "Add term",
+      "removeTerm": "Remove {{term}}",
+      "languages": "The built-in lists know German and English. For other languages only your own terms work.",
+      "test": "Try a text",
+      "testHint": "With the saved settings. Nothing is stored or counted.",
+      "testButton": "Check",
+      "resultAllow": "Would be saved.",
+      "resultFlag": "Would be saved and sent to moderation: {{terms}}.",
+      "resultBlock": "Would be refused: {{terms}}.",
+      "resultFound": "Found, but without effect: {{terms}}.",
+      "resultException": "Exceptions apply: {{words}}.",
+      "images": "Images and attachments are not checked. Reports cover those."
     }
   },
   "audit": {
@@ -3948,7 +3980,8 @@
       "MODERATION_APPEAL_DECIDED": "Appeal decided",
       "MODERATION_LEGAL_HOLD_CHANGED": "Retention for law enforcement changed",
       "MODERATION_RULES_VERSION_CREATED": "New version of the house rules",
-      "ACCOUNT_APPROVAL_CHANGED": "Approval of new accounts changed"
+      "ACCOUNT_APPROVAL_CHANGED": "Approval of new accounts changed",
+      "MODERATION_FILTER_CHANGED": "Text check changed"
     },
     "meta": {
       "oldRole": "Previous role",
@@ -3962,7 +3995,11 @@
       "newEmail": "New email",
       "method": "Method",
       "setting": "Setting",
-      "provider": "Provider"
+      "provider": "Provider",
+      "block": "Refuses",
+      "flag": "Sends to moderation",
+      "blockTerms": "Own terms",
+      "allowTerms": "Exceptions"
     }
   },
   "sprint": {
@@ -5994,6 +6031,12 @@
       "illegalHint": "Copyright or another law, please give a short reason",
       "other": "Something else",
       "otherHint": "Please describe it briefly"
+    },
+    "refused": {
+      "title": "Not saved",
+      "body": "The text contains something the house rules do not allow: {{terms}}. Your draft stays here so you can change it.",
+      "bodyPlain": "The text contains something the house rules do not allow. Your draft stays here so you can change it.",
+      "readRules": "Read the house rules"
     }
   }
 }
