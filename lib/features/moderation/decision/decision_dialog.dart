@@ -554,6 +554,7 @@ class _RuleField extends StatelessWidget {
             context,
             anchorRect: anchor,
             width: 380,
+            minHeight: 360,
             builder: list,
           )
         : await showGlassModal<HouseRule>(
