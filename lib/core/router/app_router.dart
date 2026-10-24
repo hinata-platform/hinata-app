@@ -35,6 +35,8 @@ import '../../features/knowledge/knowledge_screen.dart';
 import '../../features/moderation/app_terms_screen.dart';
 import '../../features/moderation/house_rules_gate_screen.dart';
 import '../../features/moderation/notice/notice_screen.dart';
+import '../../features/moderation/queue/moderation_screen.dart';
+import '../../features/moderation/suspensions/suspensions_screen.dart';
 import '../../features/people/person_profile_screen.dart'
     show peopleRoute, personProfilePage;
 import '../../features/notifications/notifications_screen.dart';
@@ -62,6 +64,7 @@ import '../../features/weekly_summary/weekly_summary_screen.dart';
 import '../blocs/app_config_bloc.dart';
 import '../blocs/auth_bloc.dart';
 import '../models/core_models.dart' show AuthUser;
+import '../models/moderation_case_models.dart' show CaseView;
 import '../models/time_share_models.dart' show TimeShareBox;
 import '../storage/app_storage.dart';
 import 'board_routes.dart';
@@ -768,6 +771,37 @@ GoRouter buildRouter({
               NoticeScreen(caseId: state.pathParameters['caseId']!),
             ),
           ),
+          // Moderation (HIN-174): the moderators' page, a page of the
+          // settings like Organisation. One route for list and case, so the
+          // lists stay while cases are opened; a case's own address, which
+          // the notifications use, lands on it. The server refuses everybody
+          // else too; the guard keeps them from a page that could only say so.
+          GoRoute(
+            path: '/moderation',
+            redirect: (_, _) => moderationGuard(auth.state.user),
+            pageBuilder: (_, state) => _transition(
+              state,
+              ModerationScreen(
+                view: CaseView.values.firstWhere(
+                  (view) => view.name == state.uri.queryParameters['view'],
+                  orElse: () => CaseView.open,
+                ),
+                caseId: state.uri.queryParameters['case'],
+              ),
+            ),
+          ),
+          GoRoute(
+            path: '/moderation/cases/:id',
+            redirect: (_, state) =>
+                moderationGuard(auth.state.user) ??
+                moderationLocation(caseId: state.pathParameters['id']),
+          ),
+          GoRoute(
+            path: suspensionsLocation,
+            redirect: (_, _) => moderationGuard(auth.state.user),
+            pageBuilder: (_, state) =>
+                _transition(state, const SuspensionsScreen()),
+          ),
           GoRoute(
             path: '/weekly-summary',
             pageBuilder: (_, state) =>
@@ -881,6 +915,12 @@ String adminUsersRedirect(Uri uri) {
     },
   ).toString();
 }
+
+/// Where somebody who does not moderate is sent from the moderation pages
+/// (HIN-174), or null to let a moderator through.
+@visibleForTesting
+String? moderationGuard(AuthUser? user) =>
+    (user?.isModerator ?? false) ? null : '/dashboard';
 
 /// Where somebody without the organisation role is sent from the Organisation
 /// pages, or null to let an organisation admin through.
