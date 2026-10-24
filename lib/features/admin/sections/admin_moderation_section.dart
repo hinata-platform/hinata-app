@@ -19,6 +19,7 @@ import '../admin_form_helpers.dart';
 import 'admin_moderation_cubit.dart';
 import 'admin_moderation_entry.dart';
 import 'admin_moderation_filter.dart';
+import 'admin_moderation_retention.dart';
 import 'admin_moderation_rules.dart';
 
 /// Admin → Moderation (HIN-26): who comes in without anybody deciding, who
@@ -136,6 +137,7 @@ class _AdminModerationView extends StatelessWidget {
             ),
           ],
         ),
+        'retention': RetentionCard(moderation: _moderation),
         'rules': HouseRulesCard(moderation: _moderation),
         'textCheck': TextCheckCard(moderation: _moderation),
         'types': AdminSectionCard(
