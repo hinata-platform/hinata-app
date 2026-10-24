@@ -38,6 +38,7 @@ import 'account_cubit.dart';
 import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'tint_customizer.dart';
+import '../blocks/blocked_people_section.dart';
 import 'availability_section.dart';
 import 'calendar_subscriptions_section.dart';
 import 'notification_schedule_row.dart';
@@ -62,6 +63,7 @@ enum _SettingsSection {
   tokens,
   appearance,
   data,
+  blocked,
   danger,
 }
 
@@ -80,6 +82,7 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.appearance, icon: LucideIcons.sunMoon),
   (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
   (section: _SettingsSection.data, icon: LucideIcons.fileText),
+  (section: _SettingsSection.blocked, icon: LucideIcons.userX),
   (section: _SettingsSection.danger, icon: LucideIcons.triangleAlert),
 ];
 
@@ -142,6 +145,11 @@ class _AccountScreenState extends State<_AccountBody> {
         PlatformFlags.mcp,
       ) ??
       false;
+
+  /// Whether the server knows blocking (HIN-168); an older one has no route
+  /// for the list.
+  bool get _moderation =>
+      context.read<AppConfigBloc>().state.meta?.supportsModeration ?? false;
 
   /// Whether the extended time module is on. Watched rather than read: an
   /// administrator can switch it on while this page is open, and a settings
@@ -549,6 +557,7 @@ class _AccountScreenState extends State<_AccountBody> {
       _SettingsSection.time ||
       _SettingsSection.appearance => 'account.rail.preferences',
       _SettingsSection.data ||
+      _SettingsSection.blocked ||
       _SettingsSection.danger => 'account.rail.privacy',
     });
     final adminGroup = context.t('account.rail.administration');
@@ -631,7 +640,8 @@ class _AccountScreenState extends State<_AccountBody> {
   List<_SettingsSection> _visibleSections() => [
     for (final item in _settingsMenu)
       if (!(item.section == _SettingsSection.tokens && !_mcpEnabled) &&
-          !(item.section == _SettingsSection.time && !_advancedTime))
+          !(item.section == _SettingsSection.time && !_advancedTime) &&
+          !(item.section == _SettingsSection.blocked && !_moderation))
         item.section,
   ];
 
@@ -683,11 +693,13 @@ class _AccountScreenState extends State<_AccountBody> {
     final isOrgAdmin = context.read<AuthBloc>().state.user?.isOrgAdmin ?? false;
     final mcpEnabled = _mcpEnabled;
     final advancedTime = _advancedTime;
+    final moderation = _moderation;
     final tiles = <Widget>[];
     for (final item in _settingsMenu) {
       if (item.section == _SettingsSection.tokens && !mcpEnabled) continue;
       // Nothing to configure where there is no pomodoro to configure.
       if (item.section == _SettingsSection.time && !advancedTime) continue;
+      if (item.section == _SettingsSection.blocked && !moderation) continue;
       tiles.add(
         _navTile(
           icon: item.icon,
@@ -822,6 +834,7 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.tokens => 'account.tokens.title',
     _SettingsSection.appearance => 'account.appearance.title',
     _SettingsSection.data => 'account.data.title',
+    _SettingsSection.blocked => 'account.blocked.title',
     _SettingsSection.danger => 'account.danger.title',
   });
 
@@ -834,6 +847,7 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.tokens => 'account.tokens.subtitle',
     _SettingsSection.appearance => 'account.appearance.subtitle',
     _SettingsSection.data => 'account.data.subtitle',
+    _SettingsSection.blocked => 'account.blocked.subtitle',
     _SettingsSection.danger => 'account.danger.subtitle',
   });
 
@@ -862,6 +876,7 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.tokens => const PatSection(),
     _SettingsSection.appearance => _appearanceSection(),
     _SettingsSection.data => _dataSection(),
+    _SettingsSection.blocked => const BlockedPeopleSection(),
     _SettingsSection.danger => _dangerSection(),
   };
 
