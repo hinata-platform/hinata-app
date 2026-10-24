@@ -196,6 +196,11 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          # The two App Review accounts (member, moderator), read by the release lane.
+          APP_REVIEW_DEMO_USER: ${{ secrets.APP_REVIEW_DEMO_USER }}
+          APP_REVIEW_DEMO_PASSWORD: ${{ secrets.APP_REVIEW_DEMO_PASSWORD }}
+          APP_REVIEW_MODERATOR_USER: ${{ secrets.APP_REVIEW_MODERATOR_USER }}
+          APP_REVIEW_MODERATOR_PASSWORD: ${{ secrets.APP_REVIEW_MODERATOR_PASSWORD }}
           SUBMIT: ${{ inputs.submit == 'true' && steps.queue.outputs.queued != 'true' }}
         run: |
           cd ios
@@ -237,6 +242,11 @@ jobs:
           MATCH_GIT_URL: ${{ secrets.MATCH_GIT_URL }}
           MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
           MATCH_GIT_BASIC_AUTHORIZATION: ${{ secrets.MATCH_GIT_BASIC_AUTHORIZATION }}
+          # The two App Review accounts (member, moderator), read by the release lane.
+          APP_REVIEW_DEMO_USER: ${{ secrets.APP_REVIEW_DEMO_USER }}
+          APP_REVIEW_DEMO_PASSWORD: ${{ secrets.APP_REVIEW_DEMO_PASSWORD }}
+          APP_REVIEW_MODERATOR_USER: ${{ secrets.APP_REVIEW_MODERATOR_USER }}
+          APP_REVIEW_MODERATOR_PASSWORD: ${{ secrets.APP_REVIEW_MODERATOR_PASSWORD }}
           SUBMIT: ${{ inputs.submit }}
         run: |
           cd macos

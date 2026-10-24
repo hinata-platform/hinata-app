@@ -35,7 +35,7 @@ android/upload-keystore.jks
 
 # Screenshot tooling: local Python venv + raw (un-framed) captures
 tool/.venv/
-tool/__pycache__/
+__pycache__/
 docs/screenshots/raw/
 
 # Firebase Admin / Google SERVICE-ACCOUNT keys (true secrets) — NEVER commit.
