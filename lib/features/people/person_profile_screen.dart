@@ -8,6 +8,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/blocs/app_config_bloc.dart';
 import '../../core/blocs/auth_bloc.dart';
 import '../../core/i18n/i18n.dart';
+import '../../core/models/moderation_models.dart';
 import '../../core/repositories/admin_repository.dart';
 import '../../core/repositories/user_repository.dart';
 import '../../core/responsive/responsive.dart';
@@ -21,6 +22,7 @@ import '../admin/users/user_management_cubit.dart';
 import '../admin/users/user_management_widgets.dart' show UserAdminSections;
 import '../blocks/block_actions.dart';
 import '../blocks/hidden_content_cubit.dart';
+import '../moderation/report/report_sheet.dart';
 import '../shell/page_chrome.dart';
 import 'person_admin_cubit.dart';
 import 'person_profile_cubit.dart';
@@ -272,6 +274,21 @@ class _PersonProfileBody extends StatelessWidget {
                         personId: profile.id,
                         name: profile.displayName,
                       ),
+              )
+            : null,
+        report: canBlock
+            ? (anchor) => unawaited(
+                showReportSheet(
+                  context,
+                  anchorRect: anchor,
+                  subject: ReportSubject(
+                    target: TargetRef(ContentKind.person, profile.id),
+                    title: context.t('moderation.report.titlePerson'),
+                    subtitle: profile.displayName,
+                    authorId: blocked ? null : profile.id,
+                    authorName: profile.displayName,
+                  ),
+                ),
               )
             : null,
         close: panel ? () => _leave(context) : null,

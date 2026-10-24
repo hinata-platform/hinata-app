@@ -11,7 +11,7 @@ import '../../../core/repositories/admin_repository.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_type.dart';
 import '../../../core/widgets/glass_switch_chip.dart';
-import '../../moderation/house_rules_sheet.dart' show moderationDay;
+import '../../../core/util/dates.dart';
 import '../../sprint/modals/glass_modal.dart';
 import '../admin_form_helpers.dart';
 
@@ -113,7 +113,7 @@ class _HouseRulesCardState extends State<HouseRulesCard> {
       title: context.t('admin.rules.title'),
       subtitle: version == null || since == null
           ? context.t('admin.rules.hint')
-          : '${context.t('admin.rules.hint')} ${context.t('admin.rules.versionSince', variables: {'version': '$version', 'date': moderationDay(context, since)})}',
+          : '${context.t('admin.rules.hint')} ${context.t('admin.rules.versionSince', variables: {'version': '$version', 'date': recentDay(context, since)})}',
       children: [
         // Start-aligned: in the card's stretching column the bar would take
         // the whole width and trail an empty track after its last choice.

@@ -11,22 +11,26 @@ import 'hidden_content_cubit.dart';
 /// Asks first, then blocks [personId] and says so (HIN-168).
 ///
 /// Pass a [context] that outlives the thing blocked from: a comment folds the
-/// moment the block lands, and the toast needs somewhere to appear.
+/// moment the block lands, and the toast needs somewhere to appear. With
+/// [reportAfter] the dialog offers to report what it was opened from, and
+/// runs it once the block is in place (HIN-173).
 Future<void> confirmBlock(
   BuildContext context, {
   required String personId,
   required String name,
+  Future<void> Function()? reportAfter,
 }) async {
   final hidden = context.read<HiddenContentCubit>();
   final done = context.t('blocks.blockedToast', variables: {'name': name});
-  final blocked = await showBlockConfirm(
+  final choice = await showBlockConfirm(
     context,
     name: name,
     onConfirm: () => hidden.block(personId),
+    offerReport: reportAfter != null,
   );
-  if (blocked == true && context.mounted) {
-    showGlassToast(context, done, kind: GlassToastKind.success);
-  }
+  if (choice == null || !context.mounted) return;
+  showGlassToast(context, done, kind: GlassToastKind.success);
+  if (choice.alsoReport) await reportAfter?.call();
 }
 
 /// Lifts the block on [personId] without asking: nothing is lost by it, and

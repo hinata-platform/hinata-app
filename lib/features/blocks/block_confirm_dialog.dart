@@ -7,24 +7,35 @@ import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_type.dart';
 import '../account/account_widgets.dart' show AccountNote, AccountNoteTone;
 import '../sprint/modals/glass_modal.dart'
-    show GlassModalFooter, GlassModalHeader, showGlassModal;
+    show GlassModalFooter, GlassModalHeader, GlassOptionRow, showGlassModal;
+
+/// What the reader chose besides blocking: whether to report the comment they
+/// blocked from, too (HIN-173).
+typedef BlockChoice = ({bool alsoReport});
 
 /// Asks before blocking [name] (HIN-168), and runs [onConfirm] behind the
 /// button so a refusal shows in the dialog instead of after it closed.
 ///
-/// True once the block is in place; null when the reader changed their mind.
-/// Says plainly what ends and what stays, including the part that surprises:
-/// assigning and adding still work, and their notices still arrive.
-Future<bool?> showBlockConfirm(
+/// A choice once the block is in place; null when the reader changed their
+/// mind. Says plainly what ends and what stays, including the part that
+/// surprises: assigning and adding still work, and their notices still
+/// arrive. [offerReport] adds the switch to report the comment as well, on by
+/// default, so blocking can reach the moderation.
+Future<BlockChoice?> showBlockConfirm(
   BuildContext context, {
   required String name,
   required Future<void> Function() onConfirm,
+  bool offerReport = false,
 }) {
-  return showGlassModal<bool>(
+  return showGlassModal<BlockChoice>(
     context,
     adaptive: false,
     width: 460,
-    builder: (_) => BlockConfirmDialog(name: name, onConfirm: onConfirm),
+    builder: (_) => BlockConfirmDialog(
+      name: name,
+      onConfirm: onConfirm,
+      offerReport: offerReport,
+    ),
   );
 }
 
@@ -34,10 +45,14 @@ class BlockConfirmDialog extends StatefulWidget {
     super.key,
     required this.name,
     required this.onConfirm,
+    this.offerReport = false,
   });
 
   final String name;
   final Future<void> Function() onConfirm;
+
+  /// Whether the dialog offers to report the comment it was opened from.
+  final bool offerReport;
 
   @override
   State<BlockConfirmDialog> createState() => _BlockConfirmDialogState();
@@ -46,6 +61,7 @@ class BlockConfirmDialog extends StatefulWidget {
 class _BlockConfirmDialogState extends State<BlockConfirmDialog> {
   bool _busy = false;
   String? _error;
+  bool _alsoReport = true;
 
   Future<void> _run() async {
     setState(() {
@@ -54,7 +70,12 @@ class _BlockConfirmDialogState extends State<BlockConfirmDialog> {
     });
     try {
       await widget.onConfirm();
-      if (mounted) Navigator.of(context).maybePop(true);
+      if (mounted) {
+        final BlockChoice choice = (
+          alsoReport: widget.offerReport && _alsoReport,
+        );
+        Navigator.of(context).maybePop(choice);
+      }
     } on ApiFailure catch (failure) {
       if (mounted) setState(() => _error = context.t(failure.message));
     } finally {
@@ -103,6 +124,17 @@ class _BlockConfirmDialogState extends State<BlockConfirmDialog> {
                   icon: LucideIcons.eyeOff,
                   text: context.t('blocks.confirm.private', variables: name),
                 ),
+                if (widget.offerReport) ...[
+                  const SizedBox(height: 12),
+                  GlassOptionRow(
+                    title: context.t('blocks.alsoReport'),
+                    subtitle: context.t('blocks.alsoReportHint'),
+                    value: _alsoReport,
+                    onChanged: _busy
+                        ? null
+                        : (value) => setState(() => _alsoReport = value),
+                  ),
+                ],
                 if (_error != null) ...[
                   const SizedBox(height: 8),
                   AccountNote(
