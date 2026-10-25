@@ -202,7 +202,7 @@ class _Form extends StatelessWidget {
           _FactsField(state: state, problems: problems),
         ],
         if (state.acting) ...[
-          const SizedBox(height: 4),
+          const SizedBox(height: 12),
           _TextField(
             label: _personName(state) == null
                 ? context.t('moderation.decision.messageToAnyone')
@@ -655,29 +655,25 @@ class _FactsField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final required = state.outcome != CaseOutcome.noViolation;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _TextField(
-          label: context.t(
-            required
-                ? 'moderation.decision.factsRequired'
-                : 'moderation.decision.factsOptional',
-          ),
-          hint: context.t('moderation.decision.factsHint'),
-          initial: state.facts,
-          max: caseNoteMax,
-          lines: 3,
-          onChanged: context.read<DecisionCubit>().setFacts,
-        ),
-        if (problems.contains(DecisionProblem.facts))
-          _Problem(
-            context.t(
+    // The problem is the field's own error, red rim and all: a line of its own
+    // stood just above the optional message and read as if that were required.
+    return _TextField(
+      label: context.t(
+        required
+            ? 'moderation.decision.factsRequired'
+            : 'moderation.decision.factsOptional',
+      ),
+      hint: context.t('moderation.decision.factsHint'),
+      initial: state.facts,
+      max: caseNoteMax,
+      lines: 3,
+      error: problems.contains(DecisionProblem.facts)
+          ? context.t(
               'moderation.decision.problem.facts',
               variables: {'min': '$caseNoteMin'},
-            ),
-          ),
-      ],
+            )
+          : null,
+      onChanged: context.read<DecisionCubit>().setFacts,
     );
   }
 }
@@ -848,10 +844,14 @@ class _TextField extends StatefulWidget {
     required this.onChanged,
     this.hint,
     this.lines = 1,
+    this.error,
   });
 
   final String label;
   final String? hint;
+
+  /// What still keeps the decision from going out because of this field.
+  final String? error;
   final String initial;
   final int max;
   final int lines;
@@ -881,7 +881,9 @@ class _TextFieldState extends State<_TextField> {
       maxLength: widget.max,
       buildCounter: widget.lines == 1 ? _noCounter : charCounter,
       onChanged: widget.onChanged,
-      decoration: glassInputDecoration(hint: widget.hint),
+      decoration: glassInputDecoration(
+        hint: widget.hint,
+      ).copyWith(errorText: widget.error, errorMaxLines: 3),
     ),
   );
 }
