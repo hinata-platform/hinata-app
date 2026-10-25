@@ -39,7 +39,15 @@ Future<void> showUserDrawer(
       return Stack(
         children: [
           Positioned.fill(
-            child: GestureDetector(onTap: () => Navigator.of(ctx).pop()),
+            // Only while the drawer is the top route: a second tap during its
+            // slide out would pop the page below, the router's last one included.
+            child: GestureDetector(
+              onTap: () {
+                if (ModalRoute.of(ctx)?.isCurrent ?? false) {
+                  Navigator.of(ctx).pop();
+                }
+              },
+            ),
           ),
           Align(
             alignment: AlignmentDirectional.centerEnd,
