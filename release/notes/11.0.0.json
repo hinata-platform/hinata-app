@@ -1,0 +1,5 @@
+{
+  "_comment": "Hand-written store release notes for 11.0.0, in both listing languages. tool/gen_changelog.py prefers this file over anything it can derive from the commits, then runs it through the same per-store platform gate as every other source — so keep every line free of operating-system, device and store names. One line per bullet; the leading bullet character is added when the note is written. Keep it short: the Play note is capped at 480 characters including the bullets.",
+  "en": "Report comments, issues, files, pages and people, and block people who bother you\nModeration with a clear reason for every decision and a way to appeal\nHouse rules of your organisation, agreed to once\nSigning in with single sign-on stays bound to your own account\nMany smaller fixes and improvements",
+  "de": "Kommentare, Vorgänge, Dateien, Seiten und Personen melden und Personen blockieren\nModeration mit nachvollziehbarer Begründung und Widerspruch\nHausregeln deiner Organisation, einmal bestätigt\nAnmeldung per Single Sign-on bleibt an dein eigenes Konto gebunden\nViele kleinere Korrekturen und Verbesserungen"
+}
