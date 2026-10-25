@@ -41,8 +41,12 @@ platform :android do
       # only the publish run touches it; this mirrors the Apple side, where
       # `beta` uploads the binary and `release` owns the listing.
       skip_upload_metadata: !submit,
-      skip_upload_images: !submit,
-      skip_upload_screenshots: !submit,
+      # Images and screenshots travel with the `listing` lane (Actions,
+      # "Store screenshots"), not with every release: they rarely change, and
+      # re-sending the same set is where Google answered "Internal error" on the
+      # German listing twice in a row for 11.0.0.
+      skip_upload_images: true,
+      skip_upload_screenshots: true,
       # Changelogs stay on for both: they are per versionCode, land on the track
       # being written, and internal testers should see what's new. Absent for a
       # Release-button build (only the publish flow generates them) — supply then
