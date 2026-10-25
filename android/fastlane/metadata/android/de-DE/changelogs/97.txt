@@ -1,0 +1,5 @@
+• Kommentare, Vorgänge, Dateien, Seiten und Personen melden und Personen blockieren
+• Moderation mit nachvollziehbarer Begründung und Widerspruch
+• Hausregeln deiner Organisation, einmal bestätigt
+• Anmeldung per Single Sign-on bleibt an dein eigenes Konto gebunden
+• Viele kleinere Korrekturen und Verbesserungen

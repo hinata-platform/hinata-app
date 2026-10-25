@@ -1,5 +1,5 @@
-• Schichtplanung: Veranstaltungen und Schichten planen, selbst eintragen, mit Warteliste und Kalender
-• Die eigenen Schichten im eigenen Kalender abonnieren und Pläne exportieren
-• Überall in der App suchen und das Profil einer Person öffnen
-• Budgets in Stunden und ein Schalter für Abrechenbarkeit je Projekt
+• Kommentare, Vorgänge, Dateien, Seiten und Personen melden und Personen blockieren
+• Moderation mit nachvollziehbarer Begründung und Widerspruch
+• Hausregeln deiner Organisation, einmal bestätigt
+• Anmeldung per Single Sign-on bleibt an dein eigenes Konto gebunden
 • Viele kleinere Korrekturen und Verbesserungen

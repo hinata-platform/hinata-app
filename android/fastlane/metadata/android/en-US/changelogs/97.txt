@@ -1,0 +1,5 @@
+• Report comments, issues, files, pages and people, and block people who bother you
+• Moderation with a clear reason for every decision and a way to appeal
+• House rules of your organisation, agreed to once
+• Signing in with single sign-on stays bound to your own account
+• Many smaller fixes and improvements
