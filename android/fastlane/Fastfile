@@ -1,5 +1,23 @@
 default_platform(:android)
 
+# Google's API now and then answers a server error in the middle of an upload
+# (11.0.0: "Internal error encountered" on a screenshot). supply commits its
+# edit only at the very end, so a failed attempt leaves nothing behind and the
+# next one starts a fresh edit. Only server errors are tried again; anything
+# the request itself got wrong fails at once.
+def upload_to_play_with_retries(**options)
+  attempts = 3
+  begin
+    upload_to_play_store(**options)
+  rescue StandardError => e
+    attempts -= 1
+    raise unless attempts.positive? && e.message.match?(/Server error|Internal error|Backend Error|50[0-4]/i)
+    UI.important("Google answered a server error, trying again in 60 seconds (#{attempts} left): #{e.message}")
+    sleep(60)
+    retry
+  end
+end
+
 platform :android do
   desc "Build the app bundle and upload it to the Play Store internal track"
   lane :internal do
@@ -11,7 +29,7 @@ platform :android do
     # SUBMIT=true publishes to production (Play auto-reviews it, then rolls out);
     # otherwise it lands on the internal track as a draft to finish by hand.
     submit = ENV["SUBMIT"] == "true"
-    upload_to_play_store(
+    upload_to_play_with_retries(
       json_key_data: ENV["PLAY_JSON_KEY"], # Play service account JSON (secret)
       track: submit ? "production" : "internal",
       aab: "../build/app/outputs/bundle/release/app-release.aab",
