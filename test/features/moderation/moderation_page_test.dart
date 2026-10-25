@@ -607,6 +607,12 @@ void main() {
     await tester.tap(send);
     await tester.pumpAndSettle();
     expect(find.text('moderation.decision.problem.facts'), findsOneWidget);
+    // The problem belongs to the facts field itself, not to a line that stands
+    // just above the optional message and reads as if that were required.
+    expect(
+      tester.widget<TextField>(facts).decoration?.errorText,
+      'moderation.decision.problem.facts',
+    );
     await tester.enterText(facts, 'Beleidigt eine andere Person mit Namen.');
     await tester.pump();
     expect(find.text('moderation.decision.problem.facts'), findsNothing);
