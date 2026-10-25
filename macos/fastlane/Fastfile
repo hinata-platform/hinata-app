@@ -261,8 +261,9 @@ platform :mac do
       skip_metadata: false,
       app_review_information: review,
       # Only the answers age_rating.json names; the rest of the questionnaire
-      # stays as App Store Connect holds it.
-      app_rating_config_path: File.join(__dir__, "age_rating.json"),
+      # stays as App Store Connect holds it. Absolute: __dir__ is relative in a
+      # Fastfile, and deliver resolves it from the project folder, not this one.
+      app_rating_config_path: File.expand_path("age_rating.json", __dir__),
       # The screenshots in fastlane/screenshots travel with every release, so a
       # version can never go out with an older set than the repo holds. Synced,
       # not overwritten: see the `screenshots` lane below for why
