@@ -106,6 +106,13 @@ double hinataBlockSpacing(double fontSize) => fontSize * 0.75;
 /// proportion in a comment, an article and a heading alike — and so it follows
 /// the platform's text scale, which a hard-coded size would ignore.
 Widget? _linkMark(BuildContext context, ElementNode node, TextStyle style) {
+  // A picture that links is visibly one already, and a mail rebuilt in its own
+  // layout (HIN-181) brings its own link styling: a mark there would add a
+  // glyph the original never had.
+  if (!node.children.any((child) => child is TextNode)) return null;
+  if (node.getParents().any((parent) => parent.type == 'layout-item')) {
+    return null;
+  }
   final size = (style.fontSize ?? 15) * 0.82;
   return Padding(
     padding: EdgeInsetsDirectional.only(end: size * 0.22),
