@@ -529,6 +529,43 @@ void main() {
       expect(find.byIcon(LucideIcons.link), findsNWidgets(2));
     });
 
+    testWidgets('a mail in its own layout keeps its links as it styled them', (
+      tester,
+    ) async {
+      // A rebuilt mail (HIN-181) brings its own link styling; a picture that
+      // links needs no mark at all. Only the plain link outside gets one.
+      String text(String t) =>
+          '{"detail":0,"format":0,"mode":"normal","style":"","text":"$t",'
+          '"type":"text","version":1}';
+      String link(String child) =>
+          '{"children":[$child],"direction":null,"format":"","indent":0,'
+          '"type":"link","version":1,"rel":null,"target":null,"title":null,'
+          '"url":"https://example.com"}';
+      String paragraph(String child) =>
+          '{"children":[$child],"direction":null,"format":"","indent":0,'
+          '"type":"paragraph","version":1,"textFormat":0,"textStyle":""}';
+      const image =
+          '{"altText":"","caption":{"editorState":{"root":{"children":[{'
+          '"children":[],"direction":null,"format":"","indent":0,'
+          '"type":"paragraph","version":1}],'
+          '"direction":null,"format":"","indent":0,"type":"root",'
+          '"version":1}}},"height":32,"maxWidth":32,"showCaption":false,'
+          '"src":"/api/v1/media/00000000-0000-0000-0000-000000000000",'
+          '"type":"image","version":1,"width":32}';
+      final doc =
+          '{"root":{"children":[${paragraph(link(text('Draußen')))},'
+          '{"children":[{"children":[${paragraph(link(text('Drinnen')))},'
+          '${paragraph(link(image))}],"direction":null,"format":"",'
+          '"indent":0,"type":"layout-item","version":1}],"direction":null,'
+          '"format":"","indent":0,"type":"layout-container","version":1,'
+          '"templateColumns":"1fr"}],"direction":null,"format":"","indent":0,'
+          '"type":"root","version":1}}';
+      await pumpDoc(tester, doc, size: const Size(800, 900));
+
+      expect(find.byType(LexicalDocument), findsOneWidget);
+      expect(find.byIcon(LucideIcons.link), findsOneWidget);
+    });
+
     testWidgets('the mark is drawn beside the link, not written into it', (
       tester,
     ) async {
