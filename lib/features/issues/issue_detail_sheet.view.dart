@@ -1969,135 +1969,76 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     // own. Both are intrinsically sized — the route wraps this in a scroll view,
     // the sheet scrolls its own content.
     final documented = _documentedInSection();
-    return SmartLinkScope(
-      resolver: _buildResolver(issue),
-      // Tap anywhere on the body (feed bubbles, empty gaps between them and the
-      // docked composer) to drop focus and dismiss the keyboard — there's no
-      // other way out on a full-screen chat. The composer lives in a separate
-      // subtree (sticky action bar / route overlay) so tapping it keeps focus,
-      // and interactive children (buttons, links, menus) still win their taps.
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // On the COMPACT full-screen route the top bar is not inline — it's
-            // pinned as a scroll-reactive glass bar by IssueDetailScreen (see
-            // [buildRouteTopBar]) so back/minimize stay reachable when the thread
-            // gets long. The sheet uses Wolt's own nav bar. The WIDE route keeps
-            // an inline bar (no overlap with the desktop shell's own top bar).
-            if (widget.header == null && !context.isCompact)
-              _RouteTopBar(
-                issue: issue,
-                busy: _busy,
-                stateColor: _projStateColor(_project, issue.state),
-                link: issueWebLink(_detail.apiBaseUrl, issue.linkId),
-                onMinimize: widget.canMinimize ? _minimizeToModal : null,
-                onDelete: () => _confirmDelete(issue),
-                onExport: exportIssue,
-                onClone: () => cloneIssue(),
-                onMove: () => moveIssue(),
-                onClose: _closeRoute,
-                onReply: _replyEmailAction(issue),
-                watch: watchMenu,
-                canDelete: _canDelete,
-                onShare: shareAction,
-                onReport: reportAction,
-                readOnly: isParticipant,
-              ),
-            if (isParticipant)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: ParticipantBanner(
-                  projectName: _project?.name ?? '',
-                  onLeave: _leaveIssue,
+    return ExternalImagesScope(
+      value: _externalImages(issue),
+      child: SmartLinkScope(
+        resolver: _buildResolver(issue),
+        // Tap anywhere on the body (feed bubbles, empty gaps between them and the
+        // docked composer) to drop focus and dismiss the keyboard — there's no
+        // other way out on a full-screen chat. The composer lives in a separate
+        // subtree (sticky action bar / route overlay) so tapping it keeps focus,
+        // and interactive children (buttons, links, menus) still win their taps.
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // On the COMPACT full-screen route the top bar is not inline — it's
+              // pinned as a scroll-reactive glass bar by IssueDetailScreen (see
+              // [buildRouteTopBar]) so back/minimize stay reachable when the thread
+              // gets long. The sheet uses Wolt's own nav bar. The WIDE route keeps
+              // an inline bar (no overlap with the desktop shell's own top bar).
+              if (widget.header == null && !context.isCompact)
+                _RouteTopBar(
+                  issue: issue,
+                  busy: _busy,
+                  stateColor: _projStateColor(_project, issue.state),
+                  link: issueWebLink(_detail.apiBaseUrl, issue.linkId),
+                  onMinimize: widget.canMinimize ? _minimizeToModal : null,
+                  onDelete: () => _confirmDelete(issue),
+                  onExport: exportIssue,
+                  onClone: () => cloneIssue(),
+                  onMove: () => moveIssue(),
+                  onClose: _closeRoute,
+                  onReply: _replyEmailAction(issue),
+                  watch: watchMenu,
+                  canDelete: _canDelete,
+                  onShare: shareAction,
+                  onReport: reportAction,
+                  readOnly: isParticipant,
                 ),
-              ),
-            Padding(
-              // Extra bottom room when the composer floats, so the last comment
-              // isn't hidden behind the docked input. The sheet no longer
-              // resizes for the keyboard, so its height is added here too —
-              // otherwise the newest comments can't be scrolled above it.
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                (composerFloats(context) ? 128 : 24) +
-                    MediaQuery.viewInsetsOf(context).bottom,
-              ),
-              child: LayoutBuilder(
-                builder: (context, c) {
-                  final hierarchy = _hierarchyCard(issue);
-                  final left = <Widget>[
-                    _contentCard(issue),
-                    if (hierarchy != null) ...[
-                      const SizedBox(height: 14),
-                      hierarchy,
-                    ],
-                    // The Development block owns its own leading gap and hides
-                    // entirely when no work is linked (Jira-style).
-                    if (_gitConnected && !isParticipant)
-                      _developmentBlock(issue),
-                    const SizedBox(height: 14),
-                    _linksSection(issue),
-                    const SizedBox(height: 14),
-                    _attachmentsSection(issue),
-                    if (documented != null) ...[
-                      const SizedBox(height: 14),
-                      documented,
-                    ],
-                    const SizedBox(height: 14),
-                    _activityCard(),
-                  ];
-                  final right = <Widget>[
-                    _detailsCard(issue),
-                    // Deployment sits between Details and Timeline. Neither is
-                    // a participant's business: they read the issue only.
-                    if (_project != null && !isParticipant) ...[
-                      const SizedBox(height: 14),
-                      _deploymentPanel(issue),
-                    ],
-                    if (!isParticipant) ...[
-                      const SizedBox(height: 14),
-                      _timeCard(issue),
-                    ],
-                    const SizedBox(height: 14),
-                    _issueMeta(issue),
-                  ];
-                  // Two columns once the narrow one still holds a row of
-                  // chips: at φ : 1, 800 leaves it about 300.
-                  if (c.maxWidth >= 800) {
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 1618,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: left,
-                          ),
-                        ),
-                        const SizedBox(width: 18),
-                        Expanded(
-                          flex: 1000,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: right,
-                          ),
-                        ),
-                      ],
-                    );
-                  }
-                  // Stacked (phone): content, details, time, activity.
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+              if (isParticipant)
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                  child: ParticipantBanner(
+                    projectName: _project?.name ?? '',
+                    onLeave: _leaveIssue,
+                  ),
+                ),
+              Padding(
+                // Extra bottom room when the composer floats, so the last comment
+                // isn't hidden behind the docked input. The sheet no longer
+                // resizes for the keyboard, so its height is added here too —
+                // otherwise the newest comments can't be scrolled above it.
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  16,
+                  20,
+                  (composerFloats(context) ? 128 : 24) +
+                      MediaQuery.viewInsetsOf(context).bottom,
+                ),
+                child: LayoutBuilder(
+                  builder: (context, c) {
+                    final hierarchy = _hierarchyCard(issue);
+                    final left = <Widget>[
                       _contentCard(issue),
                       if (hierarchy != null) ...[
                         const SizedBox(height: 14),
                         hierarchy,
                       ],
+                      // The Development block owns its own leading gap and hides
+                      // entirely when no work is linked (Jira-style).
                       if (_gitConnected && !isParticipant)
                         _developmentBlock(issue),
                       const SizedBox(height: 14),
@@ -2109,8 +2050,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                         documented,
                       ],
                       const SizedBox(height: 14),
+                      _activityCard(),
+                    ];
+                    final right = <Widget>[
                       _detailsCard(issue),
-                      // Deployment sits between Details and Timeline.
+                      // Deployment sits between Details and Timeline. Neither is
+                      // a participant's business: they read the issue only.
                       if (_project != null && !isParticipant) ...[
                         const SizedBox(height: 14),
                         _deploymentPanel(issue),
@@ -2121,14 +2066,72 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                       ],
                       const SizedBox(height: 14),
                       _issueMeta(issue),
-                      const SizedBox(height: 14),
-                      _activityCard(),
-                    ],
-                  );
-                },
+                    ];
+                    // Two columns once the narrow one still holds a row of
+                    // chips: at φ : 1, 800 leaves it about 300.
+                    if (c.maxWidth >= 800) {
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            flex: 1618,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: left,
+                            ),
+                          ),
+                          const SizedBox(width: 18),
+                          Expanded(
+                            flex: 1000,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: right,
+                            ),
+                          ),
+                        ],
+                      );
+                    }
+                    // Stacked (phone): content, details, time, activity.
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _contentCard(issue),
+                        if (hierarchy != null) ...[
+                          const SizedBox(height: 14),
+                          hierarchy,
+                        ],
+                        if (_gitConnected && !isParticipant)
+                          _developmentBlock(issue),
+                        const SizedBox(height: 14),
+                        _linksSection(issue),
+                        const SizedBox(height: 14),
+                        _attachmentsSection(issue),
+                        if (documented != null) ...[
+                          const SizedBox(height: 14),
+                          documented,
+                        ],
+                        const SizedBox(height: 14),
+                        _detailsCard(issue),
+                        // Deployment sits between Details and Timeline.
+                        if (_project != null && !isParticipant) ...[
+                          const SizedBox(height: 14),
+                          _deploymentPanel(issue),
+                        ],
+                        if (!isParticipant) ...[
+                          const SizedBox(height: 14),
+                          _timeCard(issue),
+                        ],
+                        const SizedBox(height: 14),
+                        _issueMeta(issue),
+                        const SizedBox(height: 14),
+                        _activityCard(),
+                      ],
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

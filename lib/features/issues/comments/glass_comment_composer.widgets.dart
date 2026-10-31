@@ -542,11 +542,7 @@ class _UnsentVoiceBar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  Icon(
-                    LucideIcons.micOff,
-                    size: 18,
-                    color: AppColors.inkSoft,
-                  ),
+                  Icon(LucideIcons.micOff, size: 18, color: AppColors.inkSoft),
                   const SizedBox(width: 10),
                   Flexible(
                     child: Text(

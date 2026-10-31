@@ -433,6 +433,7 @@ class Issue extends Equatable {
     subtaskCount,
     subtaskDoneCount,
     epicId,
+    externalImageSender,
     externalImagesTrusted,
     // Both dates and both rules: a row shows the date and marks that it hangs
     // off the event, so a list that compared neither would not repaint when a
@@ -684,7 +685,8 @@ class IssueComment extends Equatable {
   final String text;
 
   /// The Lexical document — what the bubble renders. Null for a voice message,
-  /// which has no text at all.
+  /// which has no text at all. The full one with its layout (HIN-181); the
+  /// server keeps `textDoc` readable for published apps.
   final String? textDoc;
 
   final CommentType type;
@@ -785,7 +787,7 @@ class IssueComment extends Equatable {
     id: json['id'] as String,
     authorId: json['authorId'] as String? ?? '',
     text: json['text'] as String? ?? '',
-    textDoc: json['textDoc'] as String?,
+    textDoc: json['textLayoutDoc'] as String? ?? json['textDoc'] as String?,
     // Legacy documents predate `type`; a missing value is plain text.
     type: (json['type'] as String?)?.toUpperCase() == 'VOICE'
         ? CommentType.voice

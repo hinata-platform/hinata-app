@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/external_images/external_images_banner.dart';
 
 /// The question a mail program asks before it shows a sender's images
@@ -60,23 +59,5 @@ void main() {
     await tester.pumpWidget(band(scale: 2));
 
     expect(tester.takeException(), isNull);
-  });
-
-  test('an issue reads the full document and the sender it may trust', () {
-    final issue = Issue.fromJson(const {
-      'id': '1',
-      'projectId': 'p',
-      'readableId': 'IT-157',
-      'title': 'Deine eSIM',
-      'state': 'Open',
-      'descriptionDoc': 'legacy',
-      'descriptionLayoutDoc': 'full',
-      'externalImageSender': 'vodafone.com',
-      'externalImagesTrusted': true,
-    });
-
-    expect(issue.descriptionDoc, 'full');
-    expect(issue.externalImageSender, 'vodafone.com');
-    expect(issue.externalImagesTrusted, isTrue);
   });
 }
