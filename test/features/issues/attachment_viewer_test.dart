@@ -1071,6 +1071,11 @@ void main() {
           expect(field.controller!.selection.start, 0);
           expect(field.controller!.selection.end, 'falsch'.length);
 
+          // Editing it takes the complaint away: it was about that text.
+          await tester.enterText(passwordField, 'geheim');
+          await tester.pump();
+          expect(find.text(wrongText), findsNothing);
+
           // …and the right one, typed over it, opens the document.
           await submit(tester, 'geheim');
           await pumpUntil(tester, sheets);
