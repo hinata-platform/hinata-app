@@ -3,7 +3,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show compute, visibleForTesting;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
+import 'package:flutter/rendering.dart'
+    show ScrollCacheExtent, SemanticsService;
 import 'package:flutter/services.dart';
 import 'package:flutter_blurhash/flutter_blurhash.dart' show BlurHashImage;
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -14,6 +15,7 @@ import 'package:printing/printing.dart';
 import '../../../core/api/api_client.dart';
 import '../../../core/api/api_image.dart';
 import '../../../core/i18n/i18n.dart';
+import '../../../core/pdf/pdf_unlock.dart';
 import '../../../core/platform/pdf_annotations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -536,6 +538,12 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
       _close();
       return KeyEventResult.handled;
     }
+    // Typing into a field (the PDF password) bubbles every key up to here.
+    // Claiming one would keep it from the field: no "0" in a password, no
+    // arrow keys to move the caret.
+    final typing = FocusManager.instance.primaryFocus?.context
+        ?.findAncestorStateOfType<EditableTextState>();
+    if (typing != null) return KeyEventResult.ignored;
     if (key == LogicalKeyboardKey.arrowRight ||
         key == LogicalKeyboardKey.pageDown) {
       _go(_index + 1);

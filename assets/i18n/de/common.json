@@ -742,6 +742,9 @@
         "emptyFile": "Diese Datei ist leer.",
         "renderFailed": "Diese Datei konnte nicht dargestellt werden.",
         "retry": "Erneut versuchen",
+        "passwordProtected": "Diese PDF ist mit einem Passwort geschützt.",
+        "passwordWrong": "Mit diesem Passwort lässt sich die Datei nicht öffnen.",
+        "passwordOpen": "Öffnen",
         "tooLarge": "Zu groß für die Vorschau – zum Lesen herunterladen.",
         "more": "Mehr"
       },

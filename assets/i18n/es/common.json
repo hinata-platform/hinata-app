@@ -742,6 +742,9 @@
         "emptyFile": "Este archivo está vacío.",
         "renderFailed": "No se pudo mostrar este archivo.",
         "retry": "Reintentar",
+        "passwordProtected": "Este PDF está protegido con contraseña.",
+        "passwordWrong": "Esa contraseña no abre este archivo.",
+        "passwordOpen": "Abrir",
         "tooLarge": "Demasiado grande para la vista previa: descárgalo para leerlo.",
         "more": "Más"
       },

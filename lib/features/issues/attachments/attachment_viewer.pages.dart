@@ -40,9 +40,13 @@ Future<Uint8List> _fetchBytes(BuildContext context, ViewerItem item) async {
   return bytes;
 }
 
-/// The bytes the PDF stage hands to the rasterizer: the downloaded file, with
-/// its annotations drawn into the pages where the platform would otherwise drop
+/// The bytes the PDF stage hands to the rasterizer: the downloaded file,
+/// decrypted when it is password-protected ([PdfUnlock], HIN-180), with its
+/// annotations drawn into the pages where the platform would otherwise drop
 /// them ([PdfAnnotations] — Apple only, a pass-through everywhere else).
+///
+/// Throws [_PdfPasswordRequired] when the document needs a [password] it was
+/// not given, or the one it was given does not open it.
 ///
 /// Deliberately *not* folded into [_fetchBytes]: that cache is what a second
 /// look at the same attachment is served from, and what it holds must stay the
@@ -52,9 +56,29 @@ Future<Uint8List> _fetchBytes(BuildContext context, ViewerItem item) async {
 /// viewer has passed, and the redrawn one is the bigger of the two: a form
 /// comes back around three times its size. What a swipe back costs instead is
 /// one redraw of a document that carries visible annotations at all — a
-/// millisecond or so for the forms this is for.
-Future<Uint8List> _fetchPdfBytes(BuildContext context, ViewerItem item) =>
-    _fetchBytes(context, item).then(PdfAnnotations.flatten);
+/// millisecond or so for the forms this is for. The same goes for a decrypted
+/// copy, and twice over: the password is not kept either, so a document opened
+/// once asks again after the viewer has let go of it.
+Future<Uint8List> _fetchPdfBytes(
+  BuildContext context,
+  ViewerItem item, {
+  String password = '',
+}) async {
+  final raw = await _fetchBytes(context, item);
+  return switch (await PdfUnlock.unlock(raw, password: password)) {
+    PdfUnlocked(:final bytes) => PdfAnnotations.flatten(bytes),
+    PdfNeedsPassword(:final wrongPassword) => throw _PdfPasswordRequired(
+      wrongPassword: wrongPassword,
+    ),
+  };
+}
+
+/// The PDF stage's way of saying "ask for the password" through the same
+/// error path a failed render takes.
+class _PdfPasswordRequired implements Exception {
+  const _PdfPasswordRequired({required this.wrongPassword});
+  final bool wrongPassword;
+}
 
 /// Forgets a memoized download, so the next [_fetchBytes] really goes back to
 /// the server. What "retry" has to mean: re-awaiting the same future — or
@@ -606,7 +630,13 @@ class _PdfPageState extends State<_PdfPage> {
   static const _pageMargin = EdgeInsets.symmetric(horizontal: 10, vertical: 8);
 
   // Fetch once; PdfPreview's build callback can fire repeatedly on relayout.
+  // Null until the document is downloaded and, if it has to be, unlocked: the
+  // preview is only built for bytes a renderer can open.
   Future<Uint8List>? _bytes;
+
+  /// Which call to [_open] is the current one. A slow answer for a file this
+  /// page has since been handed away from must not land on the new one.
+  int _opening = 0;
 
   /// Both scroll axes belong to this state, because the page list does: the
   /// vertical one used to live inside the package's own `ListView`, where there
@@ -615,6 +645,14 @@ class _PdfPageState extends State<_PdfPage> {
   final _vertical = ScrollController();
 
   bool _failed = false;
+
+  /// Set while the document waits for its password; [_PdfPasswordRequired]
+  /// says whether the last one was wrong.
+  _PdfPasswordRequired? _locked;
+
+  /// A password is being tried. The card stays up meanwhile, so a wrong one
+  /// does not flash the loading state before it asks again.
+  bool _unlocking = false;
 
   /// Bumped on every retry (and whenever this page is handed a different file)
   /// so the preview is rebuilt from a fresh element. The package only
@@ -661,15 +699,53 @@ class _PdfPageState extends State<_PdfPage> {
     // file's error card for as long as the element lives.
     if (old.item.id != widget.item.id) {
       _failed = false;
-      _attempt++;
-      _bytes = _fetchPdfBytes(context, widget.item);
+      _locked = null;
+      _unlocking = false;
+      _bytes = null;
+      _open();
     }
   }
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _bytes ??= _fetchPdfBytes(context, widget.item);
+    if (_bytes == null && _opening == 0) _open();
+  }
+
+  /// Downloads the document and unlocks it with [password] when it needs one.
+  /// Ends in exactly one of: bytes for the preview, the password card, or the
+  /// error card. Opening happens here and not inside the preview so that "this
+  /// needs a password" is a question asked, not a render failure reported.
+  Future<void> _open({String password = ''}) async {
+    final ticket = ++_opening;
+    try {
+      final bytes = await _fetchPdfBytes(
+        context,
+        widget.item,
+        password: password,
+      );
+      if (!mounted || ticket != _opening) return;
+      setState(() {
+        _unlocking = false;
+        _locked = null;
+        _attempt++;
+        _bytes = Future.value(bytes);
+      });
+    } on _PdfPasswordRequired catch (e) {
+      if (!mounted || ticket != _opening) return;
+      setState(() {
+        _unlocking = false;
+        _locked = e;
+      });
+    } on Object catch (e) {
+      debugPrint('PDF preview: cannot open ${widget.item.name}: $e');
+      if (!mounted || ticket != _opening) return;
+      setState(() {
+        _unlocking = false;
+        _locked = null;
+        _failed = true;
+      });
+    }
   }
 
   @override
@@ -730,9 +806,14 @@ class _PdfPageState extends State<_PdfPage> {
     if (url != null) _dropCachedBytes(url);
     setState(() {
       _failed = false;
-      _attempt++;
-      _bytes = _fetchPdfBytes(context, widget.item);
+      _bytes = null;
     });
+    _open();
+  }
+
+  void _unlock(String password) {
+    setState(() => _unlocking = true);
+    _open(password: password);
   }
 
   Widget _errorCard(BuildContext context) => Center(
@@ -751,9 +832,32 @@ class _PdfPageState extends State<_PdfPage> {
   );
 
   // ── Build ─────────────────────────────────────────────────────────────────
+  /// Rasterizing a PDF locally takes a moment; the server already rendered its
+  /// first page once, so the blur of that page stands in meanwhile.
+  Widget _loading() => (widget.item.blurHash?.isNotEmpty ?? false)
+      ? Image(
+          image: BlurHashImage(widget.item.blurHash!),
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) =>
+              const Padding(padding: EdgeInsets.all(40), child: HiveLoader()),
+        )
+      : const Padding(padding: EdgeInsets.all(40), child: HiveLoader());
+
   @override
   Widget build(BuildContext context) {
     if (_failed) return _errorCard(context);
+    final locked = _locked;
+    if (locked != null) {
+      return _PdfPasswordCard(
+        item: widget.item,
+        wrongPassword: locked.wrongPassword,
+        busy: _unlocking,
+        onSubmit: _unlock,
+      );
+    }
+    // The same stand-in the preview shows while it rasterizes, so download,
+    // unlock and raster read as one wait.
+    if (_bytes == null) return _loading();
     return _PinchZoom(
       zoom: widget.zoom,
       range: _range,
@@ -787,19 +891,7 @@ class _PdfPageState extends State<_PdfPage> {
         canDebug: false,
         allowPrinting: false,
         allowSharing: false,
-        // Rasterizing a PDF locally takes a moment; the server already
-        // rendered its first page once, so the blur of that page
-        // stands in meanwhile.
-        loadingWidget: (widget.item.blurHash?.isNotEmpty ?? false)
-            ? Image(
-                image: BlurHashImage(widget.item.blurHash!),
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => const Padding(
-                  padding: EdgeInsets.all(40),
-                  child: HiveLoader(),
-                ),
-              )
-            : const Padding(padding: EdgeInsets.all(40), child: HiveLoader()),
+        loadingWidget: _loading(),
         onError: (context, error) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (mounted) setState(() => _failed = true);
@@ -1367,6 +1459,124 @@ class _FileCard extends StatelessWidget {
   }
 }
 
+/// Asks for the password of a protected PDF: the file's card, with a password
+/// field and an "open" pill where the reason and its action would be.
+class _PdfPasswordCard extends StatefulWidget {
+  const _PdfPasswordCard({
+    required this.item,
+    required this.wrongPassword,
+    required this.busy,
+    required this.onSubmit,
+  });
+
+  final ViewerItem item;
+  final bool wrongPassword;
+  final bool busy;
+  final ValueChanged<String> onSubmit;
+
+  @override
+  State<_PdfPasswordCard> createState() => _PdfPasswordCardState();
+}
+
+class _PdfPasswordCardState extends State<_PdfPasswordCard> {
+  final _password = TextEditingController();
+  final _focus = FocusNode();
+  bool _obscure = true;
+
+  @override
+  void didUpdateWidget(covariant _PdfPasswordCard old) {
+    super.didUpdateWidget(old);
+    // A wrong password comes back selected, so the next attempt overwrites it
+    // instead of appending to it — and a screen reader hears why.
+    if (old.busy && !widget.busy && widget.wrongPassword) {
+      _password.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _password.text.length,
+      );
+      _focus.requestFocus();
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        context.t('issues.attachments.viewer.passwordWrong'),
+        Directionality.of(context),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _password.dispose();
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    if (widget.busy || _password.text.isEmpty) return;
+    widget.onSubmit(_password.text);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // The keyboard comes up over a centred card on a phone; the card moves up
+    // out of its way and scrolls when there is not room for both.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom;
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: keyboard),
+        child: _FileCard(
+          item: widget.item,
+          note: context.t('issues.attachments.viewer.passwordProtected'),
+          action: AutofillGroup(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: _password,
+                  focusNode: _focus,
+                  enabled: !widget.busy,
+                  obscureText: _obscure,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  autofillHints: const [AutofillHints.password],
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _submit(),
+                  style: const TextStyle(color: _ViewerInk.ink),
+                  decoration: InputDecoration(
+                    labelText: context.t('auth.password'),
+                    prefixIcon: const Icon(LucideIcons.lock),
+                    errorText: widget.wrongPassword && !widget.busy
+                        ? context.t('issues.attachments.viewer.passwordWrong')
+                        : null,
+                    errorMaxLines: 3,
+                    suffixIcon: IconButton(
+                      tooltip: context.t(
+                        _obscure ? 'auth.showPassword' : 'auth.hidePassword',
+                      ),
+                      icon: Icon(
+                        _obscure ? LucideIcons.eye : LucideIcons.eyeOff,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _password,
+                  builder: (context, value, _) => _CardAction(
+                    icon: LucideIcons.lockOpen,
+                    label: context.t('issues.attachments.viewer.passwordOpen'),
+                    busy: widget.busy,
+                    onTap: value.text.isEmpty ? null : _submit,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// The one thing to do about a card's bad news — an amber pill under the
 /// reason, sized to its label.
 class _CardAction extends StatelessWidget {
@@ -1374,51 +1584,83 @@ class _CardAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onTap,
+    this.busy = false,
   });
 
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+
+  /// Null while there is nothing to act on yet; the pill dims and ignores taps.
+  final VoidCallback? onTap;
+
+  /// The action is running: a spinner stands in for the icon and taps are
+  /// ignored, so it cannot be fired twice.
+  final bool busy;
 
   @override
   Widget build(BuildContext context) {
+    final enabled = onTap != null && !busy;
     return Semantics(
       button: true,
+      enabled: enabled,
       label: label,
-      child: Material(
-        // Same token pairing as the toolbar's active state: the wash carries
-        // its own opacity, so it stays a wash on dark instead of solid amber.
-        color: _ViewerInk.accentSoft,
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: _ViewerInk.accentLine),
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(AppTheme.radiusPill),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 9),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, size: 15, color: _ViewerInk.accentInk),
-                const SizedBox(width: 8),
-                // Flexible, not bare: the pill shrink-wraps its label, and a
-                // long translation (or a large text scale) would otherwise push
-                // the row straight out of the card it sits in.
-                Flexible(
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
-                      fontSize: AppType.label,
-                      fontWeight: FontWeight.w600,
-                      color: _ViewerInk.accentInk,
-                    ),
-                  ),
+      child: AnimatedOpacity(
+        opacity: onTap == null ? 0.55 : 1,
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 150),
+        child: Material(
+          // Same token pairing as the toolbar's active state: the wash carries
+          // its own opacity, so it stays a wash on dark instead of solid amber.
+          color: _ViewerInk.accentSoft,
+          shape: RoundedRectangleBorder(
+            side: BorderSide(color: _ViewerInk.accentLine),
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+          ),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(AppTheme.radiusPill),
+            onTap: enabled ? onTap : null,
+            // The pill reads small, the target does not: 44 pt is the floor for
+            // a thumb, whatever the label's height.
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 44),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 9,
                 ),
-              ],
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (busy)
+                      SizedBox.square(
+                        dimension: 15,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: _ViewerInk.accentInk,
+                        ),
+                      )
+                    else
+                      Icon(icon, size: 15, color: _ViewerInk.accentInk),
+                    const SizedBox(width: 8),
+                    // Flexible, not bare: the pill shrink-wraps its label, and a
+                    // long translation (or a large text scale) would otherwise push
+                    // the row straight out of the card it sits in.
+                    Flexible(
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          fontWeight: FontWeight.w600,
+                          color: _ViewerInk.accentInk,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ),
