@@ -55,11 +55,6 @@ class PdfSecurityHandler {
   final Uint8List? _oe;
   final Uint8List? _ue;
 
-  Uint8List? _key;
-
-  /// Whether streams of `/Type /Metadata` stay readable without the key.
-  bool get encryptsMetadata => _encryptMetadata;
-
   /// Reads the `/Encrypt` dictionary. [firstId] is the first element of the
   /// trailer's `/ID`, which the older revisions mix into the key.
   static PdfSecurityHandler parse(PdfDict encrypt, Uint8List firstId) {
@@ -134,46 +129,14 @@ class PdfSecurityHandler {
     );
   }
 
-  /// Tries [password] as the user password, then as the owner password; true
-  /// when either opens the document, after which the decrypt calls work.
-  bool authenticate(String password) {
-    _key = _revision >= 5
+  /// Tries [password] as the user password, then as the owner password. A
+  /// decryptor holding the file key when either opens the document, null when
+  /// neither does.
+  PdfDecryptor? authenticate(String password) {
+    final key = _revision >= 5
         ? _authenticateAes256(password)
         : _authenticateLegacy(password);
-    return _key != null;
-  }
-
-  Uint8List decryptString(Uint8List data, int num, int gen) =>
-      _decrypt(_strings, data, num, gen);
-
-  Uint8List decryptStream(Uint8List data, int num, int gen) =>
-      _decrypt(_streams, data, num, gen);
-
-  Uint8List _decrypt(_Cipher cipher, Uint8List data, int num, int gen) {
-    final key = _key;
-    if (key == null) throw StateError('authenticate() first');
-    switch (cipher) {
-      case _Cipher.identity:
-        return data;
-      case _Cipher.aes256:
-        return _aesCbcDecrypt(key, data);
-      case _Cipher.rc4:
-      case _Cipher.aes128:
-        // Algorithm 1: every object gets its own key.
-        final aes = cipher == _Cipher.aes128;
-        final material = BytesBuilder(copy: false)
-          ..add(key)
-          ..add([num & 0xFF, (num >> 8) & 0xFF, (num >> 16) & 0xFF])
-          ..add([gen & 0xFF, (gen >> 8) & 0xFF]);
-        if (aes) material.add(const [0x73, 0x41, 0x6C, 0x54]); // sAlT
-        final digest = _md5(material.takeBytes());
-        final objectKey = Uint8List.sublistView(
-          digest,
-          0,
-          (key.length + 5).clamp(0, 16),
-        );
-        return aes ? _aesCbcDecrypt(objectKey, data) : _rc4(objectKey, data);
-    }
+    return key == null ? null : PdfDecryptor._(this, key);
   }
 
   // ── R2–R4 ─────────────────────────────────────────────────────────────────
@@ -403,5 +366,67 @@ class PdfSecurityHandler {
       cipher.processBlock(data, off, out, off);
     }
     return out;
+  }
+}
+
+/// Decrypts the strings and streams of one document with its file key, which
+/// only [PdfSecurityHandler.authenticate] hands out.
+class PdfDecryptor {
+  PdfDecryptor._(this._handler, this._key);
+
+  final PdfSecurityHandler _handler;
+  final Uint8List _key;
+
+  /// Whether streams of `/Type /Metadata` are encrypted too.
+  bool get encryptsMetadata => _handler._encryptMetadata;
+
+  Uint8List decryptString(Uint8List data, int num, int gen) =>
+      _decrypt(_handler._strings, data, num, gen);
+
+  Uint8List decryptStream(Uint8List data, int num, int gen) =>
+      _decrypt(_handler._streams, data, num, gen);
+
+  /// Algorithm 1 derives a key per object, and every string and stream of
+  /// that object shares it; the document is written object by object, so the
+  /// last one derived is the one asked for next.
+  (int, int, bool, Uint8List)? _objectKey;
+
+  Uint8List _decrypt(_Cipher cipher, Uint8List data, int num, int gen) {
+    switch (cipher) {
+      case _Cipher.identity:
+        return data;
+      case _Cipher.aes256:
+        return PdfSecurityHandler._aesCbcDecrypt(_key, data);
+      case _Cipher.rc4:
+      case _Cipher.aes128:
+        final aes = cipher == _Cipher.aes128;
+        final key = _keyFor(num, gen, aes);
+        return aes
+            ? PdfSecurityHandler._aesCbcDecrypt(key, data)
+            : PdfSecurityHandler._rc4(key, data);
+    }
+  }
+
+  Uint8List _keyFor(int num, int gen, bool aes) {
+    final cached = _objectKey;
+    if (cached != null &&
+        cached.$1 == num &&
+        cached.$2 == gen &&
+        cached.$3 == aes) {
+      return cached.$4;
+    }
+    final material = BytesBuilder(copy: false)
+      ..add(_key)
+      ..add([num & 0xFF, (num >> 8) & 0xFF, (num >> 16) & 0xFF])
+      ..add([gen & 0xFF, (gen >> 8) & 0xFF]);
+    if (aes) material.add(const [0x73, 0x41, 0x6C, 0x54]); // sAlT
+    final digest = PdfSecurityHandler._md5(material.takeBytes());
+    final key = Uint8List.sublistView(
+      digest,
+      0,
+      (_key.length + 5).clamp(0, 16),
+    );
+    _objectKey = (num, gen, aes, key);
+    return key;
   }
 }

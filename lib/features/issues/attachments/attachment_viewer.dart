@@ -16,6 +16,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/api/api_image.dart';
 import '../../../core/i18n/i18n.dart';
 import '../../../core/pdf/pdf_unlock.dart';
+import '../../../core/shortcuts/app_shortcuts.dart' show textIsBeingEdited;
 import '../../../core/platform/pdf_annotations.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_theme.dart';
@@ -541,9 +542,7 @@ class _ViewerScaffoldState extends State<_ViewerScaffold>
     // Typing into a field (the PDF password) bubbles every key up to here.
     // Claiming one would keep it from the field: no "0" in a password, no
     // arrow keys to move the caret.
-    final typing = FocusManager.instance.primaryFocus?.context
-        ?.findAncestorStateOfType<EditableTextState>();
-    if (typing != null) return KeyEventResult.ignored;
+    if (textIsBeingEdited()) return KeyEventResult.ignored;
     if (key == LogicalKeyboardKey.arrowRight ||
         key == LogicalKeyboardKey.pageDown) {
       _go(_index + 1);

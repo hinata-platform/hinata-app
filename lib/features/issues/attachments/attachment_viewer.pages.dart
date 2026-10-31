@@ -73,8 +73,8 @@ Future<Uint8List> _fetchPdfBytes(
   };
 }
 
-/// The PDF stage's way of saying "ask for the password" through the same
-/// error path a failed render takes.
+/// Thrown by [_fetchPdfBytes] so [_PdfPageState._open] can tell "ask for the
+/// password" apart from a download or decryption failure.
 class _PdfPasswordRequired implements Exception {
   const _PdfPasswordRequired({required this.wrongPassword});
   final bool wrongPassword;
@@ -654,8 +654,8 @@ class _PdfPageState extends State<_PdfPage> {
   /// does not flash the loading state before it asks again.
   bool _unlocking = false;
 
-  /// Bumped on every retry (and whenever this page is handed a different file)
-  /// so the preview is rebuilt from a fresh element. The package only
+  /// Bumped whenever [_open] lands new bytes (first open, unlock, retry, a
+  /// different file), so the preview is rebuilt from a fresh element. The package only
   /// re-rasterizes when its `build` callback changes identity, and ours must
   /// not — a new key is the honest way to ask for another attempt.
   int _attempt = 0;
@@ -709,7 +709,7 @@ class _PdfPageState extends State<_PdfPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    if (_bytes == null && _opening == 0) _open();
+    if (_opening == 0) _open();
   }
 
   /// Downloads the document and unlocks it with [password] when it needs one.
@@ -738,7 +738,9 @@ class _PdfPageState extends State<_PdfPage> {
         _locked = e;
       });
     } on Object catch (e) {
-      debugPrint('PDF preview: cannot open ${widget.item.name}: $e');
+      // The id, not the name: file names carry people's names and case
+      // numbers, and this line reaches the device log in release builds too.
+      debugPrint('PDF preview: cannot open ${widget.item.id}: $e');
       if (!mounted || ticket != _opening) return;
       setState(() {
         _unlocking = false;
@@ -811,9 +813,13 @@ class _PdfPageState extends State<_PdfPage> {
     _open();
   }
 
-  void _unlock(String password) {
+  Future<void> _unlock(String password) async {
     setState(() => _unlocking = true);
-    _open(password: password);
+    // On the web the key check runs on this thread; let the spinner reach the
+    // screen before it starts, so the wait does not look like a hang.
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
+    await _open(password: password);
   }
 
   Widget _errorCard(BuildContext context) => Center(
@@ -1525,51 +1531,49 @@ class _PdfPasswordCardState extends State<_PdfPasswordCard> {
         child: _FileCard(
           item: widget.item,
           note: context.t('issues.attachments.viewer.passwordProtected'),
-          action: AutofillGroup(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _password,
-                  focusNode: _focus,
-                  enabled: !widget.busy,
-                  obscureText: _obscure,
-                  autocorrect: false,
-                  enableSuggestions: false,
-                  autofillHints: const [AutofillHints.password],
-                  textInputAction: TextInputAction.done,
-                  onSubmitted: (_) => _submit(),
-                  style: const TextStyle(color: _ViewerInk.ink),
-                  decoration: InputDecoration(
-                    labelText: context.t('auth.password'),
-                    prefixIcon: const Icon(LucideIcons.lock),
-                    errorText: widget.wrongPassword && !widget.busy
-                        ? context.t('issues.attachments.viewer.passwordWrong')
-                        : null,
-                    errorMaxLines: 3,
-                    suffixIcon: IconButton(
-                      tooltip: context.t(
-                        _obscure ? 'auth.showPassword' : 'auth.hidePassword',
-                      ),
-                      icon: Icon(
-                        _obscure ? LucideIcons.eye : LucideIcons.eyeOff,
-                      ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
+          action: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _password,
+                focusNode: _focus,
+                enabled: !widget.busy,
+                obscureText: _obscure,
+                autocorrect: false,
+                enableSuggestions: false,
+                // A document's password, not an account's: nothing for the
+                // system to offer here, and nothing for it to save.
+                autofillHints: null,
+                textInputAction: TextInputAction.done,
+                onSubmitted: (_) => _submit(),
+                style: const TextStyle(color: _ViewerInk.ink),
+                decoration: InputDecoration(
+                  labelText: context.t('auth.password'),
+                  prefixIcon: const Icon(LucideIcons.lock),
+                  errorText: widget.wrongPassword && !widget.busy
+                      ? context.t('issues.attachments.viewer.passwordWrong')
+                      : null,
+                  errorMaxLines: 3,
+                  suffixIcon: IconButton(
+                    tooltip: context.t(
+                      _obscure ? 'auth.showPassword' : 'auth.hidePassword',
                     ),
+                    icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
+                    onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
-                const SizedBox(height: 16),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: _password,
-                  builder: (context, value, _) => _CardAction(
-                    icon: LucideIcons.lockOpen,
-                    label: context.t('issues.attachments.viewer.passwordOpen'),
-                    busy: widget.busy,
-                    onTap: value.text.isEmpty ? null : _submit,
-                  ),
+              ),
+              const SizedBox(height: 16),
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _password,
+                builder: (context, value, _) => _CardAction(
+                  icon: LucideIcons.lockOpen,
+                  label: context.t('issues.attachments.viewer.passwordOpen'),
+                  busy: widget.busy,
+                  onTap: value.text.isEmpty ? null : _submit,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

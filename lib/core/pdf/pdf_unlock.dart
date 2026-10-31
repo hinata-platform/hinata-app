@@ -1,7 +1,8 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart' show ZLibDecoder;
+import 'package:archive/archive.dart' show ArchiveException, ZLibDecoder;
 import 'package:flutter/foundation.dart' show compute, debugPrint;
 
 import 'pdf_security.dart';
@@ -36,26 +37,30 @@ final class PdfNeedsPassword extends PdfUnlockResult {
 /// gets a plain PDF.
 ///
 /// Documents that only carry an owner password (open freely, restricted
-/// printing or copying) are decrypted with the empty password and need no
-/// prompt. Whatever this reader cannot handle goes to the renderer unchanged,
-/// which is how such a file was shown before.
+/// printing or copying) go to the renderer as they are: every one of them
+/// opens those itself. Whatever this reader cannot handle goes there unchanged
+/// too, which is how such a file was shown before.
 class PdfUnlock {
   const PdfUnlock._();
 
   /// Runs [unlockSync] off the UI isolate: a large document means a lot of
-  /// AES, and R6 key checks are deliberately slow.
+  /// AES, and R6 key checks are deliberately slow. The look for encryption
+  /// comes first and stays here, so the PDFs that have none — nearly all of
+  /// them — are handed back as they are, without a copy into an isolate.
   static Future<PdfUnlockResult> unlock(
     Uint8List bytes, {
     String password = '',
-  }) => compute(_unlockMessage, (bytes: bytes, password: password));
+  }) async {
+    if (!_mayBeEncrypted(bytes)) return PdfUnlocked(bytes);
+    return compute(_unlockMessage, (bytes: bytes, password: password));
+  }
 
   static PdfUnlockResult _unlockMessage(
     ({Uint8List bytes, String password}) m,
   ) => unlockSync(m.bytes, password: m.password);
 
   static PdfUnlockResult unlockSync(Uint8List bytes, {String password = ''}) {
-    // Most PDFs are not encrypted; this keeps them from being parsed at all.
-    if (!_contains(bytes, _encryptKey)) return PdfUnlocked(bytes);
+    if (!_mayBeEncrypted(bytes)) return PdfUnlocked(bytes);
     final _Document doc;
     final PdfSecurityHandler handler;
     try {
@@ -69,30 +74,41 @@ class PdfUnlock {
       debugPrint('PDF unlock: cannot read security settings: $e');
       return PdfUnlocked(bytes);
     }
-    if (!handler.authenticate(password)) {
+    final decryptor = handler.authenticate(password);
+    if (decryptor == null) {
       return PdfNeedsPassword(wrongPassword: password.isNotEmpty);
     }
-    try {
-      return PdfUnlocked(doc.rewriteDecrypted(handler));
-    } on Object catch (e) {
-      debugPrint('PDF unlock: decryption failed: $e');
-      if (password.isEmpty) return PdfUnlocked(bytes);
-      rethrow;
-    }
+    // Opened by the empty password: there is no user password, and every
+    // renderer opens such a file itself.
+    if (password.isEmpty) return PdfUnlocked(bytes);
+    return PdfUnlocked(doc.rewriteDecrypted(decryptor));
   }
 
   static final Uint8List _encryptKey = latin1.encode('/Encrypt');
 
-  static bool _contains(Uint8List hay, Uint8List needle) {
-    outer:
-    for (var i = 0; i <= hay.length - needle.length; i++) {
-      if (hay[i] != needle[0]) continue;
-      for (var j = 1; j < needle.length; j++) {
-        if (hay[i + j] != needle[j]) continue outer;
-      }
-      return true;
-    }
-    return false;
+  /// Whether the document's last trailer can name an `/Encrypt` dictionary.
+  ///
+  /// Every update of an encrypted file has to repeat the key in its trailer
+  /// (ISO 32000-2, 7.5.6), so two windows are enough instead of the whole
+  /// file: its end, where a classic trailer sits, and the start of the section
+  /// `startxref` points to, which is where a cross-reference stream keeps its
+  /// dictionary (and a linearized file its first-page trailer).
+  static bool _mayBeEncrypted(Uint8List bytes) {
+    final tailStart = math.max(0, bytes.length - 4096);
+    final tail = Uint8List.sublistView(bytes, tailStart);
+    if (indexOfBytes(tail, _encryptKey) >= 0) return true;
+    final match = RegExp(
+      r'startxref\s+(\d{1,15})',
+    ).allMatches(latin1.decode(tail)).lastOrNull;
+    if (match == null) return false;
+    final offset = int.parse(match.group(1)!);
+    if (offset >= bytes.length) return false;
+    final window = Uint8List.sublistView(
+      bytes,
+      offset,
+      math.min(bytes.length, offset + 65536),
+    );
+    return indexOfBytes(window, _encryptKey) >= 0;
   }
 }
 
@@ -121,10 +137,30 @@ class _Document {
   final Map<String, PdfValue> trailer = {};
   final Map<int, PdfIndirect> _objects = {};
 
+  /// Every place in the file read so far, with what was found there (or why
+  /// nothing could be). A file can list one offset under any number of object
+  /// numbers; each place is still read once, and only the number its object
+  /// header carries gets the object.
+  final Map<int, Object> _atOffset = {};
+
   /// Upper bounds that keep a hostile file from running the reader in circles
   /// or out of memory; real documents are orders of magnitude below them.
   static const int _maxSections = 1024;
-  static const int _maxObjects = 4000000;
+  static const int _maxObjects = 1000000;
+
+  /// The largest object number ISO 32000 allows. The copy's cross-reference
+  /// table has a row for every number up to the highest, so a file must not
+  /// get to pick that number freely.
+  static const int _maxObjectNumber = 8388607;
+
+  /// What inflating cross-reference and object streams may produce, all
+  /// together: generous for real files, where both are a fraction of the
+  /// document, and a hard stop for a few kilobytes that inflate to gigabytes.
+  late final int _inflateBudget = math.min(
+    256 << 20,
+    (1 << 20) + 64 * _bytes.length,
+  );
+  int _inflated = 0;
 
   static _Document read(Uint8List bytes) {
     final doc = _Document._(bytes);
@@ -188,6 +224,9 @@ class _Document {
   // object in the copy and nothing else, while recording them would hide the
   // compressed objects a hybrid file lists as free in its table.
   void _put(int num, _Entry entry) {
+    if (num < 0 || num > _maxObjectNumber) {
+      throw PdfSyntaxException('object number $num out of range');
+    }
     if (_entries.length >= _maxObjects) {
       throw const PdfSyntaxException('too many objects');
     }
@@ -263,8 +302,9 @@ class _Document {
     return dict;
   }
 
-  /// Follows a reference to the object it names, through compressed object
-  /// streams too.
+  /// Follows a reference to the top-level object it names. Objects packed into
+  /// an object stream come back null here; [rewriteDecrypted] reads those
+  /// through [_compressed], which needs the decryptor.
   PdfValue? resolve(PdfValue value) =>
       value is PdfRef ? _object(value.num)?.value : value;
 
@@ -277,19 +317,32 @@ class _Document {
     if (entry == null || !_resolving.add(num)) return null;
     try {
       final object = switch (entry) {
-        _AtOffset(:final offset) => PdfReader(_bytes).readIndirect(
-          offset,
-          streamLength: (v) => switch (resolve(v)) {
-            PdfNumber n => n.asInt,
-            _ => null,
-          },
-        ),
+        _AtOffset(:final offset) => _readAt(offset),
         _InStream() => null, // only reached through [_compressed]
       };
-      if (object != null) _objects[num] = object;
+      if (object == null || object.num != num) return null;
+      _objects[num] = object;
       return object;
     } finally {
       _resolving.remove(num);
+    }
+  }
+
+  PdfIndirect _readAt(int offset) {
+    final known = _atOffset[offset];
+    if (known is PdfIndirect) return known;
+    if (known != null) throw known;
+    try {
+      return _atOffset[offset] = PdfReader(_bytes).readIndirect(
+        offset,
+        streamLength: (v) => switch (resolve(v)) {
+          PdfNumber n => n.asInt,
+          _ => null,
+        },
+      );
+    } on PdfSyntaxException catch (e) {
+      _atOffset[offset] = e;
+      rethrow;
     }
   }
 
@@ -298,7 +351,7 @@ class _Document {
   /// gives, which has to match the cross-reference entry that led there.
   final Map<int, List<(int, PdfValue)>> _streams = {};
 
-  List<(int, PdfValue)> _compressed(int num, PdfSecurityHandler handler) =>
+  List<(int, PdfValue)> _compressed(int num, PdfDecryptor decryptor) =>
       _streams.putIfAbsent(num, () {
         final object = _object(num);
         final stream = object?.value;
@@ -306,7 +359,7 @@ class _Document {
         final plain = _decodeStream(
           PdfStream(
             stream.dict,
-            handler.decryptStream(stream.data, object.num, object.gen),
+            decryptor.decryptStream(stream.data, object.num, object.gen),
           ),
         );
         final count = stream.dict.intOf('N') ?? 0;
@@ -325,7 +378,7 @@ class _Document {
   /// Writes the whole document out again without its encryption: every
   /// object at the top level (object streams unpacked), a classic
   /// cross-reference table, and a trailer without `/Encrypt`.
-  Uint8List rewriteDecrypted(PdfSecurityHandler handler) {
+  Uint8List rewriteDecrypted(PdfDecryptor decryptor) {
     final encryptRef = trailer['Encrypt'];
     final encryptNum = encryptRef is PdfRef ? encryptRef.num : null;
     final out = PdfWriter()
@@ -342,7 +395,7 @@ class _Document {
         switch (_entries[num]!) {
           case _AtOffset():
             final object = _object(num);
-            if (object == null || object.num != num) continue;
+            if (object == null) continue;
             final v = object.value;
             if (v is PdfStream) {
               final type = v.dict.nameOf('Type');
@@ -350,9 +403,9 @@ class _Document {
               if (type == 'XRef' || type == 'ObjStm') continue;
             }
             gen = object.gen;
-            value = _decrypt(v, handler, num, gen);
+            value = _decrypt(v, decryptor, num, gen);
           case _InStream(:final stream, :final index):
-            final objects = _compressed(stream, handler);
+            final objects = _compressed(stream, decryptor);
             if (index >= objects.length || objects[index].$1 != num) continue;
             // Strings inside an object stream were encrypted with the stream.
             value = objects[index].$2;
@@ -403,19 +456,19 @@ class _Document {
     return match?.group(0) ?? '%PDF-1.7';
   }
 
-  PdfValue _decrypt(PdfValue v, PdfSecurityHandler h, int num, int gen) =>
+  PdfValue _decrypt(PdfValue v, PdfDecryptor d, int num, int gen) =>
       switch (v) {
-        PdfString(:final bytes) => PdfString(h.decryptString(bytes, num, gen)),
+        PdfString(:final bytes) => PdfString(d.decryptString(bytes, num, gen)),
         PdfArray(:final items) => PdfArray([
-          for (final item in items) _decrypt(item, h, num, gen),
+          for (final item in items) _decrypt(item, d, num, gen),
         ]),
         PdfDict(:final entries) => PdfDict({
           for (final MapEntry(:key, :value) in entries.entries)
-            key: _decrypt(value, h, num, gen),
+            key: _decrypt(value, d, num, gen),
         }),
         PdfStream(:final dict, :final data) => PdfStream(
-          _decrypt(dict, h, num, gen) as PdfDict,
-          _streamIsClear(dict, h) ? data : h.decryptStream(data, num, gen),
+          _decrypt(dict, d, num, gen) as PdfDict,
+          _streamIsClear(dict, d) ? data : d.decryptStream(data, num, gen),
         ),
         _ => v,
       };
@@ -423,8 +476,8 @@ class _Document {
   /// Streams the security handler leaves alone: metadata when the document
   /// says so, and anything routed through its own crypt filter (in practice
   /// `/Identity`, the only one this reader would meet).
-  static bool _streamIsClear(PdfDict dict, PdfSecurityHandler h) {
-    if (!h.encryptsMetadata && dict.nameOf('Type') == 'Metadata') return true;
+  static bool _streamIsClear(PdfDict dict, PdfDecryptor d) {
+    if (!d.encryptsMetadata && dict.nameOf('Type') == 'Metadata') return true;
     return _filters(dict).contains('Crypt');
   }
 
@@ -447,7 +500,15 @@ class _Document {
       if (f != 'FlateDecode' && f != 'Fl') {
         throw PdfSyntaxException('unsupported filter $f');
       }
-      data = const ZLibDecoder().decodeBytes(data);
+      try {
+        data = const ZLibDecoder().decodeBytes(
+          data,
+          maxOutputSize: _inflateBudget - _inflated,
+        );
+      } on ArchiveException catch (e) {
+        throw PdfSyntaxException('cannot inflate stream: ${e.message}');
+      }
+      _inflated += data.length;
     }
     final parms = switch (stream.dict['DecodeParms']) {
       PdfDict d => d,

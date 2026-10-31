@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:archive/archive.dart' show ZLibDecoder;
+import 'package:archive/archive.dart' show ZLibDecoder, ZLibEncoder;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/pdf/pdf_syntax.dart';
 import 'package:hinata/core/pdf/pdf_unlock.dart';
@@ -108,13 +108,99 @@ void main() {
     );
   });
 
-  test('an owner-only PDF opens without a prompt', () {
-    final result = PdfUnlock.unlockSync(_fixture('owner_only'));
-    expect(result, isA<PdfUnlocked>());
-    expect(
-      _visibleText((result as PdfUnlocked).bytes),
-      contains('Geheimer Text HIN-180'),
-    );
+  test('an owner-only PDF goes to the renderer as it is, without a prompt', () {
+    // Every renderer opens a file without a user password itself; decrypting
+    // it here would only cost time and memory on each view.
+    final file = _fixture('owner_only');
+    final result = PdfUnlock.unlockSync(file);
+    expect(identical((result as PdfUnlocked).bytes, file), isTrue);
+  });
+
+  group('a hostile file', () {
+    /// [_fixture] with an incremental update appended: [objects] (already
+    /// serialized) and a trailer or cross-reference stream ([section]),
+    /// which `startxref` then points at.
+    Uint8List update(
+      String name,
+      String Function(int at) section, {
+      List<int> objects = const [],
+    }) {
+      final base = _fixture(name);
+      final out = BytesBuilder()
+        ..add(base)
+        ..add(objects);
+      final at = out.length;
+      out
+        ..add(latin1.encode(section(at)))
+        ..add(latin1.encode('\nstartxref\n$at\n%%EOF\n'));
+      return out.takeBytes();
+    }
+
+    test('cannot make the copy as long as the object numbers it claims', () {
+      // One entry with the largest number the syntax can carry would have the
+      // rewrite write ten billion rows of cross-reference table.
+      final file = update(
+        'aes_256',
+        (_) =>
+            'xref\n9999999999 1\n0000000010 00000 n \n'
+            'trailer\n<< /Size 10000000000 /Root 1 0 R /Prev 1286 /Encrypt 7 0 R >>',
+      );
+      final watch = Stopwatch()..start();
+      final result = PdfUnlock.unlockSync(file, password: 'geheim');
+      expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
+      // Unreadable here, so it goes to the renderer as it was.
+      expect(identical((result as PdfUnlocked).bytes, file), isTrue);
+    });
+
+    test('cannot inflate a few kilobytes into gigabytes', () {
+      // A cross-reference stream is inflated before any password is checked.
+      // 64 MB of zeros compress to some 64 KB; the budget for a file this
+      // small is a fraction of that.
+      final bomb = const ZLibEncoder().encodeBytes(Uint8List(64 << 20));
+      final file = update(
+        'aes_256',
+        (_) => '',
+        objects: [
+          ...latin1.encode(
+            '99 0 obj\n<< /Type /XRef /W [1 4 2] /Size 100 /Root 1 0 R /Encrypt 7 0 R '
+            '/Prev 1286 /Filter /FlateDecode /Length ${bomb.length} >>\n'
+            'stream\n',
+          ),
+          ...bomb,
+          ...latin1.encode('\nendstream\nendobj\n'),
+        ],
+      );
+      // Point startxref at the stream object rather than at the empty section.
+      final text = latin1.decode(file);
+      final at = text.lastIndexOf('99 0 obj');
+      final bytes = Uint8List.fromList([
+        ...file.sublist(0, text.lastIndexOf('startxref')),
+        ...latin1.encode('startxref\n$at\n%%EOF\n'),
+      ]);
+      final result = PdfUnlock.unlockSync(bytes, password: 'geheim');
+      // Unreadable here, so it goes to the renderer as it was.
+      expect(identical((result as PdfUnlocked).bytes, bytes), isTrue);
+    });
+
+    test('cannot have one object read once per entry pointing at it', () {
+      // Every entry of this section names the place of object 1. Honouring
+      // them all would read that object once per entry and copy it 50 000
+      // times; it is read once, and kept under its own number only.
+      final at = latin1.decode(_fixture('aes_256')).indexOf('1 0 obj');
+      final row = '${'$at'.padLeft(10, '0')} 00000 n \n';
+      final file = update(
+        'aes_256',
+        (_) =>
+            'xref\n100 50000\n${List.filled(50000, row).join()}'
+            'trailer\n<< /Size 50100 /Root 1 0 R /Prev 1286 '
+            '/Encrypt 7 0 R >>',
+      );
+      final result = PdfUnlock.unlockSync(file, password: 'geheim');
+      final copy = latin1.decode((result as PdfUnlocked).bytes);
+      expect(RegExp(r'\d+ 0 obj').allMatches(copy).length, lessThan(10));
+      expect(copy, contains('1 0 obj\n<< /Extensions'));
+      expect(_visibleText(result.bytes), contains('Geheimer Text HIN-180'));
+    });
   });
 
   test('a file that is not a PDF at all goes to the renderer as it is', () {

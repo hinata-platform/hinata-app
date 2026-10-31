@@ -78,6 +78,21 @@ final class PdfStream extends PdfValue {
   final Uint8List data;
 }
 
+/// Where [needle] first occurs in [hay] at or after [from], or -1.
+int indexOfBytes(Uint8List hay, List<int> needle, [int from = 0]) {
+  if (needle.isEmpty) return from;
+  final first = needle[0];
+  outer:
+  for (var i = from; i <= hay.length - needle.length; i++) {
+    if (hay[i] != first) continue;
+    for (var j = 1; j < needle.length; j++) {
+      if (hay[i + j] != needle[j]) continue outer;
+    }
+    return i;
+  }
+  return -1;
+}
+
 /// Malformed input, or a feature this reader does not handle.
 class PdfSyntaxException implements Exception {
   const PdfSyntaxException(this.message);
@@ -158,11 +173,18 @@ class PdfReader {
   int readInt() {
     skipWhite();
     final start = pos;
+    var value = 0;
     while (pos < bytes.length && bytes[pos] >= 0x30 && bytes[pos] <= 0x39) {
+      // An offset or a count needs ten digits at most; past fifteen it can
+      // only be a file trying to overflow the arithmetic.
+      if (pos - start >= 15) {
+        throw PdfSyntaxException('integer too long at $start');
+      }
+      value = value * 10 + bytes[pos] - 0x30;
       pos++;
     }
     if (pos == start) throw PdfSyntaxException('expected integer at $start');
-    return int.parse(latin1.decode(bytes.sublist(start, pos)));
+    return value;
   }
 
   /// `num gen obj <value> [stream … endstream] endobj` at [offset].
@@ -219,18 +241,8 @@ class PdfReader {
     return Uint8List.sublistView(bytes, start, dataEnd);
   }
 
-  int _indexOf(String word, int from) {
-    final first = word.codeUnitAt(0);
-    outer:
-    for (var i = from; i <= bytes.length - word.length; i++) {
-      if (bytes[i] != first) continue;
-      for (var j = 1; j < word.length; j++) {
-        if (bytes[i + j] != word.codeUnitAt(j)) continue outer;
-      }
-      return i;
-    }
-    return -1;
-  }
+  int _indexOf(String word, int from) =>
+      indexOfBytes(bytes, latin1.encode(word), from);
 
   PdfValue readValue([int depth = 0]) {
     if (depth > _maxDepth) throw const PdfSyntaxException('nesting too deep');
