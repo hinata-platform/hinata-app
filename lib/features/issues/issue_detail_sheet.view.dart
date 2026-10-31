@@ -650,6 +650,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// title PATCH answered with a pre-watch roster, say) can't undo it.
   void _adoptIssue(Issue issue) {
     _issue = issue;
+    // A response that did not work trust out leaves the last answer standing.
+    _externalTrusted = issue.externalImagesTrusted ?? _externalTrusted;
     _watch.sync(issue.watcherIds);
   }
 
@@ -2436,11 +2438,8 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Whether [issue]'s external images may load: the reader trusts the sender,
   /// or allowed them for this view (HIN-181).
-  bool _externalAllowed(Issue issue) {
-    final answer = issue.externalImagesTrusted;
-    if (answer != null) _externalTrusted = answer;
-    return _externalTrusted || _externalTrustedNow || _externalOnce;
-  }
+  bool _externalAllowed(Issue issue) =>
+      _externalTrusted || _externalTrustedNow || _externalOnce;
 
   ExternalImages _externalImages(Issue issue) =>
       ExternalImages(issueKey: issue.readableId, load: _externalAllowed(issue));
@@ -2448,7 +2447,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// Whether the description holds external images the reader has not let
   /// load yet — the case the banner asks about.
   bool _externalImagesHeld(Issue issue) =>
-      !_externalAllowed(issue) && hasExternalImages(_describedDoc(issue));
+      !_externalAllowed(issue) &&
+      (hasExternalImages(_describedDoc(issue)) ||
+          _comments.any((comment) => hasExternalImages(comment.textDoc)));
 
   Future<void> _trustSender(Issue issue) async {
     final domain = issue.externalImageSender;
