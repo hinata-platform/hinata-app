@@ -13,6 +13,10 @@ import 'package:hinata/core/pdf/pdf_unlock.dart';
 Uint8List _fixture(String name) =>
     File('test/fixtures/pdf/$name.pdf').readAsBytesSync();
 
+/// Where [name]'s last cross-reference section starts: what an update
+/// appended to it has to name as /Prev.
+int _startXref(String name) => startXrefOffset(_fixture(name))!;
+
 /// Every string and (inflated) stream payload in [pdf], as Latin-1 text: what
 /// a reader of the document would see once it is decrypted.
 String _visibleText(Uint8List pdf) {
@@ -143,7 +147,7 @@ void main() {
         'aes_256',
         (_) =>
             'xref\n9999999999 1\n0000000010 00000 n \n'
-            'trailer\n<< /Size 10000000000 /Root 1 0 R /Prev 1286 /Encrypt 7 0 R >>',
+            'trailer\n<< /Size 10000000000 /Root 1 0 R /Prev ${_startXref('aes_256')} /Encrypt 7 0 R >>',
       );
       final watch = Stopwatch()..start();
       final result = PdfUnlock.unlockSync(file, password: 'geheim');
@@ -152,34 +156,63 @@ void main() {
       expect(identical((result as PdfUnlocked).bytes, file), isTrue);
     });
 
+    test('cannot make the copy\'s table as long as its highest number', () {
+      // The largest number the PDF limits allow, for one small object: the
+      // table of the copy follows the objects there are, not that number.
+      final base = _fixture('aes_256');
+      final at = base.length;
+      final xref = at + '8388607 0 obj\n<< >>\nendobj\n'.length;
+      final file = Uint8List.fromList([
+        ...base,
+        ...latin1.encode(
+          '8388607 0 obj\n<< >>\nendobj\n'
+          'xref\n8388607 1\n${'$at'.padLeft(10, '0')} 00000 n \n'
+          'trailer\n<< /Size 8388608 /Root 1 0 R '
+          '/Prev ${_startXref('aes_256')} /Encrypt 7 0 R >>\n'
+          'startxref\n$xref\n%%EOF\n',
+        ),
+      ]);
+      final result = PdfUnlock.unlockSync(file, password: 'geheim');
+      final copy = (result as PdfUnlocked).bytes;
+      expect(copy.length, lessThan(8 * 1024));
+      expect(latin1.decode(copy), contains('8388607 0 obj'));
+      expect(_visibleText(copy), contains('Geheimer Text HIN-180'));
+    });
+
     test('cannot inflate a few kilobytes into gigabytes', () {
       // A cross-reference stream is inflated before any password is checked.
       // 64 MB of zeros compress to some 64 KB; the budget for a file this
-      // small is a fraction of that.
-      final bomb = const ZLibEncoder().encodeBytes(Uint8List(64 << 20));
-      final file = update(
-        'aes_256',
-        (_) => '',
-        objects: [
+      // small is a fraction of that. The same section with 700 zeros — 100
+      // free rows — is fine, which shows it is the size that is refused.
+      Uint8List withXrefStream(int zeros) {
+        final data = const ZLibEncoder().encodeBytes(Uint8List(zeros));
+        final base = _fixture('aes_256');
+        final at = base.length;
+        return Uint8List.fromList([
+          ...base,
           ...latin1.encode(
-            '99 0 obj\n<< /Type /XRef /W [1 4 2] /Size 100 /Root 1 0 R /Encrypt 7 0 R '
-            '/Prev 1286 /Filter /FlateDecode /Length ${bomb.length} >>\n'
-            'stream\n',
+            '99 0 obj\n<< /Type /XRef /W [1 4 2] /Size 100 /Root 1 0 R '
+            '/Prev ${_startXref('aes_256')} /Encrypt 7 0 R '
+            '/Filter /FlateDecode /Length ${data.length} >>\nstream\n',
           ),
-          ...bomb,
-          ...latin1.encode('\nendstream\nendobj\n'),
-        ],
+          ...data,
+          ...latin1.encode('\nendstream\nendobj\nstartxref\n$at\n%%EOF\n'),
+        ]);
+      }
+
+      final fine = PdfUnlock.unlockSync(
+        withXrefStream(700),
+        password: 'geheim',
       );
-      // Point startxref at the stream object rather than at the empty section.
-      final text = latin1.decode(file);
-      final at = text.lastIndexOf('99 0 obj');
-      final bytes = Uint8List.fromList([
-        ...file.sublist(0, text.lastIndexOf('startxref')),
-        ...latin1.encode('startxref\n$at\n%%EOF\n'),
-      ]);
-      final result = PdfUnlock.unlockSync(bytes, password: 'geheim');
+      expect(
+        _visibleText((fine as PdfUnlocked).bytes),
+        contains('Geheimer Text HIN-180'),
+      );
+
+      final bomb = withXrefStream(64 << 20);
+      final result = PdfUnlock.unlockSync(bomb, password: 'geheim');
       // Unreadable here, so it goes to the renderer as it was.
-      expect(identical((result as PdfUnlocked).bytes, bytes), isTrue);
+      expect(identical((result as PdfUnlocked).bytes, bomb), isTrue);
     });
 
     test('cannot have one object read once per entry pointing at it', () {
@@ -192,7 +225,7 @@ void main() {
         'aes_256',
         (_) =>
             'xref\n100 50000\n${List.filled(50000, row).join()}'
-            'trailer\n<< /Size 50100 /Root 1 0 R /Prev 1286 '
+            'trailer\n<< /Size 50100 /Root 1 0 R /Prev ${_startXref('aes_256')} '
             '/Encrypt 7 0 R >>',
       );
       final result = PdfUnlock.unlockSync(file, password: 'geheim');
