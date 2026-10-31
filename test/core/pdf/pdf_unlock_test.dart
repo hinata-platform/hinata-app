@@ -121,23 +121,14 @@ void main() {
   });
 
   group('a hostile file', () {
-    /// [_fixture] with an incremental update appended: [objects] (already
-    /// serialized) and a trailer or cross-reference stream ([section]),
-    /// which `startxref` then points at.
-    Uint8List update(
-      String name,
-      String Function(int at) section, {
-      List<int> objects = const [],
-    }) {
+    /// [_fixture] with an incremental update appended: [section], a
+    /// classic cross-reference section, which `startxref` then points at.
+    Uint8List update(String name, String section) {
       final base = _fixture(name);
-      final out = BytesBuilder()
-        ..add(base)
-        ..add(objects);
-      final at = out.length;
-      out
-        ..add(latin1.encode(section(at)))
-        ..add(latin1.encode('\nstartxref\n$at\n%%EOF\n'));
-      return out.takeBytes();
+      return Uint8List.fromList([
+        ...base,
+        ...latin1.encode('$section\nstartxref\n${base.length}\n%%EOF\n'),
+      ]);
     }
 
     test('cannot make the copy as long as the object numbers it claims', () {
@@ -145,8 +136,7 @@ void main() {
       // rewrite write ten billion rows of cross-reference table.
       final file = update(
         'aes_256',
-        (_) =>
-            'xref\n9999999999 1\n0000000010 00000 n \n'
+        'xref\n9999999999 1\n0000000010 00000 n \n'
             'trailer\n<< /Size 10000000000 /Root 1 0 R /Prev ${_startXref('aes_256')} /Encrypt 7 0 R >>',
       );
       final watch = Stopwatch()..start();
@@ -154,6 +144,36 @@ void main() {
       expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
       // Unreadable here, so it goes to the renderer as it was.
       expect(identical((result as PdfUnlocked).bytes, file), isTrue);
+    });
+
+    test('cannot have one large object read through many offsets', () {
+      // 20 000 entries point into the whitespace before one 200 KB string, at
+      // a different byte each: every read skips to the same object. Without a
+      // budget that is some 8 GB of reading, minutes at best; with it the copy
+      // is refused after a few megabytes.
+      final base = _fixture('aes_256');
+      final spaces = base.length + 1;
+      final object = '50 0 obj\n(${'A' * 200000})\nendobj\n';
+      final rows = [
+        for (var k = 0; k < 20000; k++)
+          '${'${spaces + k}'.padLeft(10, '0')} 00000 n \n',
+      ].join();
+      final body = '\n${' ' * 20000}$object';
+      final xref = base.length + body.length;
+      final file = Uint8List.fromList([
+        ...base,
+        ...latin1.encode(
+          '${body}xref\n100 20000\n${rows}trailer\n<< /Size 20100 /Root 1 0 R '
+          '/Prev ${_startXref('aes_256')} /Encrypt 7 0 R >>\n'
+          'startxref\n$xref\n%%EOF\n',
+        ),
+      ]);
+      final watch = Stopwatch()..start();
+      expect(
+        () => PdfUnlock.unlockSync(file, password: 'geheim'),
+        throwsA(isA<PdfSyntaxException>()),
+      );
+      expect(watch.elapsed, lessThan(const Duration(seconds: 10)));
     });
 
     test('cannot make the copy\'s table as long as its highest number', () {
@@ -223,8 +243,7 @@ void main() {
       final row = '${'$at'.padLeft(10, '0')} 00000 n \n';
       final file = update(
         'aes_256',
-        (_) =>
-            'xref\n100 50000\n${List.filled(50000, row).join()}'
+        'xref\n100 50000\n${List.filled(50000, row).join()}'
             'trailer\n<< /Size 50100 /Root 1 0 R /Prev ${_startXref('aes_256')} '
             '/Encrypt 7 0 R >>',
       );
