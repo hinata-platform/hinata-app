@@ -519,59 +519,21 @@ void main() {
       expect(document.interaction!.types, contains('link'));
     });
 
-    testWidgets('a link is marked as one, not only coloured', (tester) async {
-      // Colour and an underline are the whole vocabulary text styling has for
-      // "this goes somewhere" — and headings, mentions and callouts are
-      // coloured too, so a reader has to know the convention before a link
-      // reads as one.
+    testWidgets('a link carries no mark, in a mail or anywhere else', (
+      tester,
+    ) async {
+      // The mark was dropped for HIN-181: a mail rebuilt in its own layout
+      // must look like the mail, and colour and underline already say "link".
       await pumpDoc(tester, fixture('links'));
 
-      expect(find.byIcon(LucideIcons.link), findsNWidgets(2));
+      expect(find.byIcon(LucideIcons.link), findsNothing);
     });
 
-    testWidgets('a mail in its own layout keeps its links as it styled them', (
+    testWidgets('rendering a link leaves the document as it was', (
       tester,
     ) async {
-      // A rebuilt mail (HIN-181) brings its own link styling; a picture that
-      // links needs no mark at all. Only the plain link outside gets one.
-      String text(String t) =>
-          '{"detail":0,"format":0,"mode":"normal","style":"","text":"$t",'
-          '"type":"text","version":1}';
-      String link(String child) =>
-          '{"children":[$child],"direction":null,"format":"","indent":0,'
-          '"type":"link","version":1,"rel":null,"target":null,"title":null,'
-          '"url":"https://example.com"}';
-      String paragraph(String child) =>
-          '{"children":[$child],"direction":null,"format":"","indent":0,'
-          '"type":"paragraph","version":1,"textFormat":0,"textStyle":""}';
-      const image =
-          '{"altText":"","caption":{"editorState":{"root":{"children":[{'
-          '"children":[],"direction":null,"format":"","indent":0,'
-          '"type":"paragraph","version":1}],'
-          '"direction":null,"format":"","indent":0,"type":"root",'
-          '"version":1}}},"height":32,"maxWidth":32,"showCaption":false,'
-          '"src":"/api/v1/media/00000000-0000-0000-0000-000000000000",'
-          '"type":"image","version":1,"width":32}';
-      final doc =
-          '{"root":{"children":[${paragraph(link(text('Draußen')))},'
-          '{"children":[{"children":[${paragraph(link(text('Drinnen')))},'
-          '${paragraph(link(image))}],"direction":null,"format":"",'
-          '"indent":0,"type":"layout-item","version":1}],"direction":null,'
-          '"format":"","indent":0,"type":"layout-container","version":1,'
-          '"templateColumns":"1fr"}],"direction":null,"format":"","indent":0,'
-          '"type":"root","version":1}}';
-      await pumpDoc(tester, doc, size: const Size(800, 900));
-
-      expect(find.byType(LexicalDocument), findsOneWidget);
-      expect(find.byIcon(LucideIcons.link), findsOneWidget);
-    });
-
-    testWidgets('the mark is drawn beside the link, not written into it', (
-      tester,
-    ) async {
-      // It occupies a position in the laid-out text; it must not occupy one
-      // in the document. A mark that reached the model would be saved, sent
-      // to the web client, and exported into the markdown.
+      // Whatever is drawn beside a link must not reach the model, or it would
+      // be saved, sent to the web client, and exported into the markdown.
       final before = jsonDecode(fixture('links'));
       await pumpDoc(tester, fixture('links'));
 
