@@ -199,7 +199,12 @@ class _AttachmentTileState extends State<_AttachmentTile> {
         ),
       ),
     );
-    if (att == null || !kindHasPreview(kind) || widget.imagePath == null) {
+    // A PDF that needs a password has no page to show, and asking would only
+    // make the server read the whole file to say so.
+    if (att == null ||
+        att.passwordProtected ||
+        !kindHasPreview(kind) ||
+        widget.imagePath == null) {
       return glyph;
     }
     // The server-side thumbnail — the picture itself, or a PDF's first page —
@@ -386,6 +391,10 @@ class _RemovedTile extends StatelessWidget {
   }
 }
 
+/// The dark wash under the facts a tile states about its file (kind, lock):
+/// light ink stays legible on it over any preview, light or dark.
+const Color _factChip = Color(0x8C14122D);
+
 class _KindTag extends StatelessWidget {
   const _KindTag({required this.label});
   final String label;
@@ -395,7 +404,7 @@ class _KindTag extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: const Color(0xFF14122D).withValues(alpha: 0.55),
+        color: _factChip,
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
@@ -428,7 +437,7 @@ class _LockBadge extends StatelessWidget {
         width: 28,
         height: 28,
         decoration: BoxDecoration(
-          color: const Color(0xFF14122D).withValues(alpha: 0.55),
+          color: _factChip,
           borderRadius: BorderRadius.circular(8),
         ),
         child: const Icon(LucideIcons.lock, size: 14, color: Colors.white),
