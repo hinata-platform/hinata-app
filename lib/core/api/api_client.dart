@@ -109,6 +109,10 @@ class ApiClient {
           // ngrok answers API calls with an HTML warning page instead of JSON.
           // Harmless against any other host, so it is sent unconditionally.
           'ngrok-skip-browser-warning': 'true',
+          // This app reads documents with their layout (HIN-181): the server
+          // then sends the full one alone instead of the projection published
+          // apps need beside it.
+          'X-Hinata-Doc': 'layout',
         },
       ),
     );
@@ -520,6 +524,7 @@ class ApiClient {
         // ngrok's browser warning and is localized like every other call.
         'ngrok-skip-browser-warning': 'true',
         'Accept-Language': localeCode,
+        'X-Hinata-Doc': 'layout',
       },
       cancelToken: cancelToken,
     );
