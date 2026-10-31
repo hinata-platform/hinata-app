@@ -83,6 +83,9 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
   late final _poll = TextEditingController(
     text: '${widget.connection.pollSeconds}',
   );
+  late final _authservId = TextEditingController(
+    text: widget.connection.authservId,
+  );
 
   late bool _ssl = widget.connection.ssl;
   late IngestProjectOption? _project = widget.initialProject;
@@ -112,6 +115,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
       _password,
       _folder,
       _poll,
+      _authservId,
     ]) {
       c.dispose();
     }
@@ -254,6 +258,7 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
       folder: _folder.text.trim().isEmpty ? 'INBOX' : _folder.text.trim(),
       projectId: _project!.id,
       pollSeconds: int.tryParse(_poll.text) ?? 60,
+      authservId: _authservId.text.trim().toLowerCase(),
       enabled: _isNew ? true : widget.connection.enabled,
     );
     setState(() => _saving = true);
@@ -461,6 +466,13 @@ class _IngestConnectionEditorState extends State<_IngestConnectionEditor> {
             _poll,
             context.t('admin.ingest.pollSeconds'),
             keyboardType: TextInputType.number,
+          ),
+          _field(
+            _authservId,
+            context.t('admin.ingest.authservId'),
+            hint: 'mx.example.org',
+            helper: context.t('admin.ingest.authservIdHelp'),
+            keyboardType: TextInputType.url,
           ),
           const SizedBox(height: 8),
           Row(

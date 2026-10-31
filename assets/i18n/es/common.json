@@ -3628,7 +3628,9 @@
       "textRefusals": "{{count}} correo rechazado por la revisión de textos",
       "textRefusals_plural": "{{count}} correos rechazados por la revisión de textos",
       "textRefusalsSince": "{{count}} correo rechazado por la revisión de textos, el último el {{date}}",
-      "textRefusalsSince_plural": "{{count}} correos rechazados por la revisión de textos, el último el {{date}}"
+      "textRefusalsSince_plural": "{{count}} correos rechazados por la revisión de textos, el último el {{date}}",
+      "authservId": "Nombre del servidor de correo (authserv-id)",
+      "authservIdHelp": "El nombre que tu servidor escribe en «Authentication-Results». Solo los remitentes que confirma pueden marcarse como de confianza para mostrar sus imágenes. Vacío: no se ofrece a nadie."
     },
     "windowsStoreUrl": "URL de Microsoft Store",
     "linuxStoreUrl": "URL de descarga para Linux",

@@ -3628,7 +3628,9 @@
       "textRefusals": "رسائل رفضها فحص النصوص: {{count}}",
       "textRefusals_plural": "رسائل رفضها فحص النصوص: {{count}}",
       "textRefusalsSince": "رسائل رفضها فحص النصوص: {{count}}، آخرها في {{date}}",
-      "textRefusalsSince_plural": "رسائل رفضها فحص النصوص: {{count}}، آخرها في {{date}}"
+      "textRefusalsSince_plural": "رسائل رفضها فحص النصوص: {{count}}، آخرها في {{date}}",
+      "authservId": "اسم خادم البريد (authserv-id)",
+      "authservIdHelp": "الاسم الذي يكتبه خادم بريدك في «Authentication-Results». لا يمكن الوثوق لعرض الصور إلا بالمرسلين الذين يؤكدهم. فارغ: لا يُعرض ذلك على أحد."
     },
     "windowsStoreUrl": "عنوان متجر Microsoft Store",
     "linuxStoreUrl": "عنوان تنزيل Linux",

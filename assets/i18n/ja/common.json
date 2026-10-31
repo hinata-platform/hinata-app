@@ -3628,7 +3628,9 @@
       "textRefusals": "テキストチェックで拒否されたメール：{{count}} 件",
       "textRefusals_plural": "テキストチェックで拒否されたメール：{{count}} 件",
       "textRefusalsSince": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}",
-      "textRefusalsSince_plural": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}"
+      "textRefusalsSince_plural": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}",
+      "authservId": "メールサーバー名（authserv-id）",
+      "authservIdHelp": "メールサーバーが「Authentication-Results」に書き込む名前です。サーバーが確認した送信者だけを、画像表示のために信頼できます。空欄の場合は誰にも提案されません。"
     },
     "windowsStoreUrl": "Microsoft Store の URL",
     "linuxStoreUrl": "Linux のダウンロード URL",

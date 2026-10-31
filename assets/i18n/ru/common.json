@@ -3628,7 +3628,9 @@
       "textRefusals": "Писем отклонено проверкой текстов: {{count}}",
       "textRefusals_plural": "Писем отклонено проверкой текстов: {{count}}",
       "textRefusalsSince": "Писем отклонено проверкой текстов: {{count}}, последнее {{date}}",
-      "textRefusalsSince_plural": "Писем отклонено проверкой текстов: {{count}}, последнее {{date}}"
+      "textRefusalsSince_plural": "Писем отклонено проверкой текстов: {{count}}, последнее {{date}}",
+      "authservId": "Имя почтового сервера (authserv-id)",
+      "authservIdHelp": "Имя, которое ваш почтовый сервер пишет в «Authentication-Results». Доверять показ изображений можно только подтверждённым им отправителям. Пусто: это никому не предлагается."
     },
     "windowsStoreUrl": "Ссылка на Microsoft Store",
     "linuxStoreUrl": "Ссылка на загрузку для Linux",

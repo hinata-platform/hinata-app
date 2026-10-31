@@ -3628,7 +3628,9 @@
       "textRefusals": "{{count}} Mail von der Textprüfung abgelehnt",
       "textRefusals_plural": "{{count}} Mails von der Textprüfung abgelehnt",
       "textRefusalsSince": "{{count}} Mail von der Textprüfung abgelehnt, zuletzt am {{date}}",
-      "textRefusalsSince_plural": "{{count}} Mails von der Textprüfung abgelehnt, zuletzt am {{date}}"
+      "textRefusalsSince_plural": "{{count}} Mails von der Textprüfung abgelehnt, zuletzt am {{date}}",
+      "authservId": "Name des Mailservers (authserv-id)",
+      "authservIdHelp": "Der Name, den dein Mailserver in „Authentication-Results“ einträgt. Nur Absender, die er bestätigt, können für ihre Bilder als vertrauenswürdig markiert werden. Leer: Das wird niemandem angeboten."
     },
     "windowsStoreUrl": "Microsoft-Store-URL",
     "linuxStoreUrl": "Linux-Download-URL",
