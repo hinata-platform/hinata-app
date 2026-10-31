@@ -45,7 +45,9 @@ final class PdfNeedsPassword extends PdfUnlockResult {
 /// Documents that only carry an owner password (open freely, restricted
 /// printing or copying) go to the renderer as they are: every one of them
 /// opens those itself. Whatever this reader cannot handle goes there unchanged
-/// too, which is how such a file was shown before.
+/// too, which is how such a file was shown before. A file that opens with the
+/// password but cannot be copied out throws [PdfSyntaxException]: without its
+/// password it is of no use to a renderer either.
 class PdfUnlock {
   const PdfUnlock._();
 
@@ -162,6 +164,10 @@ class _Document {
 
   void _charge(int bytes) {
     _parsed += bytes;
+    _checkBudget();
+  }
+
+  void _checkBudget() {
     if (_parsed > _parseBudget) {
       throw const PdfSyntaxException('read far more than the file holds');
     }
@@ -349,7 +355,7 @@ class _Document {
     if (known != null) return known;
     final failed = _unreadableAtOffset[offset];
     if (failed != null) throw failed;
-    _charge(0);
+    _checkBudget();
     final reader = PdfReader(_bytes);
     try {
       return _readAtOffset[offset] = reader.readIndirect(
@@ -400,7 +406,7 @@ class _Document {
     // A header is two numbers, so the stream cannot hold more of them
     // than a quarter of its bytes, whatever /N says.
     final count = math.min(stream.dict.intOf('N') ?? 0, plain.length ~/ 4);
-    return _ObjectStream(plain, stream.dict.intOf('First') ?? 0, _charge, [
+    return _ObjectStream(plain, stream.dict.intOf('First') ?? 0, this, [
       for (var i = 0; i < count; i++) (reader.readInt(), reader.readInt()),
     ]);
   }
@@ -420,9 +426,7 @@ class _Document {
     for (final num in nums) {
       // Over budget is the file's doing, not one object's: stop altogether
       // rather than skip object after object.
-      if (_parsed > _parseBudget) {
-        throw const PdfSyntaxException('read far more than the file holds');
-      }
+      _checkBudget();
       if (num == encryptNum) continue;
       final PdfValue value;
       var gen = 0;
@@ -623,13 +627,13 @@ class _Document {
 /// /First) and the objects behind them, each read when first asked for and
 /// once per place, however many headers name it.
 class _ObjectStream {
-  _ObjectStream(this._plain, this._first, this._charge, this._headers);
+  _ObjectStream(this._plain, this._first, this._document, this._headers);
 
   final Uint8List _plain;
   final int _first;
 
-  /// The document's parse budget, which reads in here count against too.
-  final void Function(int bytes) _charge;
+  /// Whose parse budget the reads in here count against.
+  final _Document _document;
   final List<(int, int)> _headers;
   final Map<int, PdfValue> _byOffset = {};
 
@@ -640,12 +644,12 @@ class _ObjectStream {
     if (owner != num) return null;
     final known = _byOffset[offset];
     if (known != null) return known;
-    _charge(0);
+    _document._checkBudget();
     final reader = PdfReader(_plain)..pos = _first + offset;
     try {
       return _byOffset[offset] = reader.readValue();
     } finally {
-      _charge((reader.pos - _first - offset).abs());
+      _document._charge((reader.pos - _first - offset).abs());
     }
   }
 }

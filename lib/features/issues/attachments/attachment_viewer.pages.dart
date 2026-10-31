@@ -1538,7 +1538,10 @@ class _PdfPasswordCardState extends State<_PdfPasswordCard> {
               TextField(
                 controller: _password,
                 focusNode: _focus,
-                enabled: !widget.busy,
+                // Read-only, not disabled, while a password is checked: a
+                // disabled field drops its focus, and the keyboard would fold
+                // away and come back on every attempt.
+                readOnly: widget.busy,
                 obscureText: _obscure,
                 autocorrect: false,
                 enableSuggestions: false,
