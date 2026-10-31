@@ -93,6 +93,14 @@ int indexOfBytes(Uint8List hay, List<int> needle, [int from = 0]) {
   return -1;
 }
 
+/// The offset after the file's last `startxref`, if its last 4 KB carry one.
+int? startXrefOffset(Uint8List bytes) {
+  final from = bytes.length > 4096 ? bytes.length - 4096 : 0;
+  final tail = latin1.decode(Uint8List.sublistView(bytes, from));
+  final match = RegExp(r'startxref\s+(\d{1,15})').allMatches(tail).lastOrNull;
+  return match == null ? null : int.parse(match.group(1)!);
+}
+
 /// Malformed input, or a feature this reader does not handle.
 class PdfSyntaxException implements Exception {
   const PdfSyntaxException(this.message);

@@ -655,9 +655,10 @@ class _PdfPageState extends State<_PdfPage> {
   bool _unlocking = false;
 
   /// Bumped whenever [_open] lands new bytes (first open, unlock, retry, a
-  /// different file), so the preview is rebuilt from a fresh element. The package only
-  /// re-rasterizes when its `build` callback changes identity, and ours must
-  /// not — a new key is the honest way to ask for another attempt.
+  /// different file), so the preview is rebuilt from a fresh element. The
+  /// package only re-rasterizes when its `build` callback changes identity,
+  /// and ours must not — a new key is the honest way to ask for another
+  /// attempt.
   int _attempt = 0;
 
   /// The zoom the pages are currently laid out at, so the next change knows how

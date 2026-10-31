@@ -13,11 +13,17 @@ sealed class PdfUnlockResult {
   const PdfUnlockResult();
 }
 
-/// Bytes a renderer can draw: the file itself when it was never encrypted (or
-/// could not be read here), otherwise a decrypted copy.
+/// Bytes a renderer can draw: the file itself when it needs no password
+/// (never encrypted, owner password only, or not readable here), otherwise a
+/// decrypted copy.
 final class PdfUnlocked extends PdfUnlockResult {
-  const PdfUnlocked(this.bytes);
+  const PdfUnlocked(this.bytes) : _unchanged = false;
+  const PdfUnlocked._unchanged(this.bytes) : _unchanged = true;
   final Uint8List bytes;
+
+  /// [bytes] are the input as it came in. Across an isolate that is a copy,
+  /// and the caller's own instance is the one to hand on.
+  final bool _unchanged;
 }
 
 /// The document needs a password. [wrongPassword] is true when one was given
@@ -52,7 +58,13 @@ class PdfUnlock {
     String password = '',
   }) async {
     if (!_mayBeEncrypted(bytes)) return PdfUnlocked(bytes);
-    return compute(_unlockMessage, (bytes: bytes, password: password));
+    final result = await compute(_unlockMessage, (
+      bytes: bytes,
+      password: password,
+    ));
+    return result is PdfUnlocked && result._unchanged
+        ? PdfUnlocked(bytes)
+        : result;
   }
 
   static PdfUnlockResult _unlockMessage(
@@ -60,19 +72,19 @@ class PdfUnlock {
   ) => unlockSync(m.bytes, password: m.password);
 
   static PdfUnlockResult unlockSync(Uint8List bytes, {String password = ''}) {
-    if (!_mayBeEncrypted(bytes)) return PdfUnlocked(bytes);
+    if (!_mayBeEncrypted(bytes)) return PdfUnlocked._unchanged(bytes);
     final _Document doc;
     final PdfSecurityHandler handler;
     try {
       doc = _Document.read(bytes);
       final encrypt = doc.trailer['Encrypt'];
-      if (encrypt == null) return PdfUnlocked(bytes);
+      if (encrypt == null) return PdfUnlocked._unchanged(bytes);
       final dict = doc.resolve(encrypt);
       if (dict is! PdfDict) throw const PdfSyntaxException('bad /Encrypt');
       handler = PdfSecurityHandler.parse(dict, doc.firstId);
     } on Object catch (e) {
       debugPrint('PDF unlock: cannot read security settings: $e');
-      return PdfUnlocked(bytes);
+      return PdfUnlocked._unchanged(bytes);
     }
     final decryptor = handler.authenticate(password);
     if (decryptor == null) {
@@ -80,7 +92,7 @@ class PdfUnlock {
     }
     // Opened by the empty password: there is no user password, and every
     // renderer opens such a file itself.
-    if (password.isEmpty) return PdfUnlocked(bytes);
+    if (password.isEmpty) return PdfUnlocked._unchanged(bytes);
     return PdfUnlocked(doc.rewriteDecrypted(decryptor));
   }
 
@@ -94,15 +106,10 @@ class PdfUnlock {
   /// `startxref` points to, which is where a cross-reference stream keeps its
   /// dictionary (and a linearized file its first-page trailer).
   static bool _mayBeEncrypted(Uint8List bytes) {
-    final tailStart = math.max(0, bytes.length - 4096);
-    final tail = Uint8List.sublistView(bytes, tailStart);
+    final tail = Uint8List.sublistView(bytes, math.max(0, bytes.length - 4096));
     if (indexOfBytes(tail, _encryptKey) >= 0) return true;
-    final match = RegExp(
-      r'startxref\s+(\d{1,15})',
-    ).allMatches(latin1.decode(tail)).lastOrNull;
-    if (match == null) return false;
-    final offset = int.parse(match.group(1)!);
-    if (offset >= bytes.length) return false;
+    final offset = startXrefOffset(bytes);
+    if (offset == null || offset >= bytes.length) return false;
     final window = Uint8List.sublistView(
       bytes,
       offset,
@@ -141,7 +148,8 @@ class _Document {
   /// nothing could be). A file can list one offset under any number of object
   /// numbers; each place is still read once, and only the number its object
   /// header carries gets the object.
-  final Map<int, Object> _atOffset = {};
+  final Map<int, PdfIndirect> _read = {};
+  final Map<int, PdfSyntaxException> _unreadable = {};
 
   /// Upper bounds that keep a hostile file from running the reader in circles
   /// or out of memory; real documents are orders of magnitude below them.
@@ -177,19 +185,9 @@ class _Document {
     _ => Uint8List(0),
   };
 
-  int _startXref() {
-    final tail = latin1.decode(
-      Uint8List.sublistView(
-        _bytes,
-        (_bytes.length - 2048).clamp(0, _bytes.length),
-      ),
-    );
-    final at = tail.lastIndexOf('startxref');
-    if (at < 0) throw const PdfSyntaxException('no startxref');
-    final match = RegExp(r'startxref\s+(\d+)').matchAsPrefix(tail, at);
-    if (match == null) throw const PdfSyntaxException('bad startxref');
-    return int.parse(match.group(1)!);
-  }
+  int _startXref() =>
+      startXrefOffset(_bytes) ??
+      (throw const PdfSyntaxException('no usable startxref'));
 
   void _readXref(int start) {
     final seen = <int>{};
@@ -329,11 +327,12 @@ class _Document {
   }
 
   PdfIndirect _readAt(int offset) {
-    final known = _atOffset[offset];
-    if (known is PdfIndirect) return known;
-    if (known != null) throw known;
+    final known = _read[offset];
+    if (known != null) return known;
+    final failed = _unreadable[offset];
+    if (failed != null) throw failed;
     try {
-      return _atOffset[offset] = PdfReader(_bytes).readIndirect(
+      return _read[offset] = PdfReader(_bytes).readIndirect(
         offset,
         streamLength: (v) => switch (resolve(v)) {
           PdfNumber n => n.asInt,
@@ -341,38 +340,32 @@ class _Document {
         },
       );
     } on PdfSyntaxException catch (e) {
-      _atOffset[offset] = e;
+      _unreadable[offset] = e;
       rethrow;
     }
   }
 
-  /// The objects packed into the object stream [num], decrypted and inflated,
-  /// by their index in it: each with the object number the stream's header
-  /// gives, which has to match the cross-reference entry that led there.
-  final Map<int, List<(int, PdfValue)>> _streams = {};
+  /// The object streams opened so far, decrypted and inflated.
+  final Map<int, _ObjectStream?> _streams = {};
 
-  List<(int, PdfValue)> _compressed(int num, PdfDecryptor decryptor) =>
+  _ObjectStream? _compressed(int num, PdfDecryptor decryptor) =>
       _streams.putIfAbsent(num, () {
         final object = _object(num);
         final stream = object?.value;
-        if (object == null || stream is! PdfStream) return const [];
+        if (object == null || stream is! PdfStream) return null;
         final plain = _decodeStream(
           PdfStream(
             stream.dict,
             decryptor.decryptStream(stream.data, object.num, object.gen),
           ),
         );
-        final count = stream.dict.intOf('N') ?? 0;
-        final first = stream.dict.intOf('First') ?? 0;
         final reader = PdfReader(plain);
-        final headers = <(int, int)>[];
-        for (var i = 0; i < count; i++) {
-          headers.add((reader.readInt(), reader.readInt()));
-        }
-        return [
-          for (final (objNum, offset) in headers)
-            (objNum, (reader..pos = first + offset).readValue()),
-        ];
+        // A header is two numbers, so the stream cannot hold more of them
+        // than a quarter of its bytes, whatever /N says.
+        final count = math.min(stream.dict.intOf('N') ?? 0, plain.length ~/ 4);
+        return _ObjectStream(plain, stream.dict.intOf('First') ?? 0, [
+          for (var i = 0; i < count; i++) (reader.readInt(), reader.readInt()),
+        ]);
       });
 
   /// Writes the whole document out again without its encryption: every
@@ -405,10 +398,10 @@ class _Document {
             gen = object.gen;
             value = _decrypt(v, decryptor, num, gen);
           case _InStream(:final stream, :final index):
-            final objects = _compressed(stream, decryptor);
-            if (index >= objects.length || objects[index].$1 != num) continue;
             // Strings inside an object stream were encrypted with the stream.
-            value = objects[index].$2;
+            final v = _compressed(stream, decryptor)?.object(index, num);
+            if (v == null) continue;
+            value = v;
         }
       } on PdfSyntaxException catch (e) {
         // One unreadable object is the renderer's problem, as it would have
@@ -424,18 +417,27 @@ class _Document {
     }
     final size = (nums.isEmpty ? 0 : nums.last) + 1;
     final xref = out.length;
-    final table = StringBuffer('xref\n0 $size\n');
-    for (var n = 0; n < size; n++) {
-      final at = offsets[n];
-      table.write(
-        at == null
-            ? '0000000000 65535 f \n'
-            : '${at.$1.toString().padLeft(10, '0')} '
-                  '${at.$2.toString().padLeft(5, '0')} n \n',
-      );
+    // One subsection per run of written numbers: the table grows with the
+    // objects there are, not with the highest number a file chose to use.
+    out.ascii('xref\n0 1\n0000000000 65535 f \n');
+    final written = offsets.keys.toList()..sort();
+    for (var start = 0; start < written.length;) {
+      var end = start + 1;
+      while (end < written.length && written[end] == written[end - 1] + 1) {
+        end++;
+      }
+      final run = StringBuffer('${written[start]} ${end - start}\n');
+      for (var k = start; k < end; k++) {
+        final (at, gen) = offsets[written[k]]!;
+        run.write(
+          '${at.toString().padLeft(10, '0')} '
+          '${gen.toString().padLeft(5, '0')} n \n',
+        );
+      }
+      out.ascii(run.toString());
+      start = end;
     }
     out
-      ..ascii(table.toString())
       ..ascii('trailer\n')
       ..value(
         PdfDict({
@@ -572,5 +574,27 @@ class _Document {
     if (pa <= pb && pa <= pc) return a;
     if (pb <= pc) return b;
     return c;
+  }
+}
+
+/// An object stream's content: the header pairs (object number, offset after
+/// /First) and the objects behind them, each read when first asked for and
+/// once per place, however many headers name it.
+class _ObjectStream {
+  _ObjectStream(this._plain, this._first, this._headers);
+
+  final Uint8List _plain;
+  final int _first;
+  final List<(int, int)> _headers;
+  final Map<int, PdfValue> _read = {};
+
+  /// The object at [index], if the header there names object [num].
+  PdfValue? object(int index, int num) {
+    if (index < 0 || index >= _headers.length) return null;
+    final (owner, offset) = _headers[index];
+    if (owner != num) return null;
+    return _read[offset] ??= (PdfReader(
+      _plain,
+    )..pos = _first + offset).readValue();
   }
 }
