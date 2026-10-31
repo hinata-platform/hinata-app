@@ -100,30 +100,6 @@ LexicalPalette hinataPalette() => LexicalPalette(
 /// negative padding, which Flutter refuses outright.
 double hinataBlockSpacing(double fontSize) => fontSize * 0.75;
 
-/// The mark drawn in front of a link, in the link's own colour.
-///
-/// Sized from the run it belongs to rather than fixed, so it stays in
-/// proportion in a comment, an article and a heading alike — and so it follows
-/// the platform's text scale, which a hard-coded size would ignore.
-Widget? _linkMark(BuildContext context, ElementNode node, TextStyle style) {
-  // A picture that links is visibly one already, and a mail rebuilt in its own
-  // layout (HIN-181) brings its own link styling: a mark there would add a
-  // glyph the original never had.
-  if (!node.children.any((child) => child is TextNode)) return null;
-  if (node.getParents().any((parent) => parent.type == 'layout-item')) {
-    return null;
-  }
-  final size = (style.fontSize ?? 15) * 0.82;
-  return Padding(
-    padding: EdgeInsetsDirectional.only(end: size * 0.22),
-    child: Icon(
-      LucideIcons.link,
-      size: size,
-      color: style.color ?? AppColors.accentInk,
-    ),
-  );
-}
-
 /// The document theme: hinata's type scale and colours over Lexical's defaults.
 ///
 /// [fontSize] sets the body size everything else scales from — a comment reads
@@ -168,11 +144,9 @@ LexicalTheme hinataLexicalTheme({
     markerBuilders: theme.markerBuilders,
     blockLayouts: {...theme.blockLayouts, ...extraLayouts},
     tokenBuilders: theme.tokenBuilders,
-    // A colour and an underline are the whole vocabulary text styling has for
-    // "this goes somewhere" — and in a document where headings, mentions and
-    // callouts are also coloured, a reader has to know the convention before
-    // the link reads as one. The mark says it outright.
-    inlinePrefixes: const {'link': _linkMark, 'autolink': _linkMark},
+    // No mark in front of a link (HIN-181): colour and underline say it, and a
+    // rebuilt mail must look like the mail.
+    inlinePrefixes: theme.inlinePrefixes,
     styleResolver: theme.styleResolver,
     defaultBlockStyle: theme.defaultBlockStyle,
     linkStyle: theme.linkStyle,
