@@ -728,6 +728,7 @@
       "ageWeeks": "{{n}}w ago",
       "ageMonths": "{{n}}mo ago",
       "ageYears": "{{n}}y ago",
+      "passwordProtected": "Password-protected",
       "viewer": {
         "close": "Close",
         "previous": "Previous file",

@@ -728,6 +728,7 @@
       "ageWeeks": "{{n}} सप्ताह पहले",
       "ageMonths": "{{n}} माह पहले",
       "ageYears": "{{n}} वर्ष पहले",
+      "passwordProtected": "पासवर्ड से सुरक्षित",
       "viewer": {
         "close": "बंद करें",
         "previous": "पिछली फ़ाइल",

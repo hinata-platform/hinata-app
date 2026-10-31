@@ -566,6 +566,7 @@ class IssueAttachment extends Equatable {
     this.uploaderId,
     this.uploadedAt,
     this.blurHash,
+    this.passwordProtected = false,
     this.moderation = const {},
   });
 
@@ -580,6 +581,11 @@ class IssueAttachment extends Equatable {
   /// before requesting any image bytes. Null for non-images and for uploads the
   /// server could not decode (e.g. webp).
   final String? blurHash;
+
+  /// A PDF that only opens with a password (HIN-180): the file list marks it
+  /// with a lock. The server sets it on upload, and for older files on the
+  /// first request for their preview.
+  final bool passwordProtected;
 
   /// The moderation's mark on the `file` (HIN-173).
   final Map<String, ContentMark> moderation;
@@ -596,11 +602,18 @@ class IssueAttachment extends Equatable {
         uploaderId: json['uploaderId'] as String?,
         uploadedAt: _instant(json['uploadedAt']),
         blurHash: json['blurHash'] as String?,
+        passwordProtected: json['passwordProtected'] == true,
         moderation: ContentMark.mapOf(json['moderation']),
       );
 
   @override
-  List<Object?> get props => [id, fileName, size, moderation];
+  List<Object?> get props => [
+    id,
+    fileName,
+    size,
+    passwordProtected,
+    moderation,
+  ];
 }
 
 /// A comment is either plain Markdown ([text]) or a recorded [voice] message.

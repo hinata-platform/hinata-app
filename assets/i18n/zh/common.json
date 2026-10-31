@@ -728,6 +728,7 @@
       "ageWeeks": "{{n}} 周前",
       "ageMonths": "{{n}} 个月前",
       "ageYears": "{{n}} 年前",
+      "passwordProtected": "受密码保护",
       "viewer": {
         "close": "关闭",
         "previous": "上一个文件",
