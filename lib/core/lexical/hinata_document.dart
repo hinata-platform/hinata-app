@@ -339,6 +339,25 @@ class ExternalImages {
   int get hashCode => Object.hash(issueKey, load);
 }
 
+/// The [ExternalImages] of the issue a document sits on, for every document
+/// below it — the description and the comments alike (HIN-181).
+class ExternalImagesScope extends InheritedWidget {
+  const ExternalImagesScope({
+    super.key,
+    required this.value,
+    required super.child,
+  });
+
+  final ExternalImages value;
+
+  static ExternalImages? maybeOf(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<ExternalImagesScope>()?.value;
+
+  @override
+  bool updateShouldNotify(ExternalImagesScope oldWidget) =>
+      value != oldWidget.value;
+}
+
 /// Whether the stored document [doc] shows an image from another host.
 ///
 /// Read from the JSON text rather than by opening the document: the answer is
@@ -346,7 +365,10 @@ class ExternalImages {
 bool hasExternalImages(String? doc) =>
     doc != null && _externalImageSrc.hasMatch(doc);
 
-final RegExp _externalImageSrc = RegExp(r'"src"\s*:\s*"https?://');
+final RegExp _externalImageSrc = RegExp(
+  r'"src"\s*:\s*"https?://',
+  caseSensitive: false,
+);
 
 /// Whether [src] names an image on another host.
 bool isExternalImage(String src) {
@@ -562,7 +584,8 @@ class HinataDocument extends StatefulWidget {
     this.externalImages,
   });
 
-  /// Whether external images in [doc] load (HIN-181). Null: they never do.
+  /// Whether external images in [doc] load (HIN-181). Null: the nearest
+  /// [ExternalImagesScope] decides, and without one they never do.
   final ExternalImages? externalImages;
 
   /// The stored Lexical JSON. Null or unreadable renders nothing.
@@ -677,6 +700,11 @@ class _HinataDocumentState extends State<HinataDocument> {
     }
   }
 
+  /// Whether external images load here: this document's own answer, or the
+  /// issue's around it.
+  ExternalImages? get _externalImages =>
+      widget.externalImages ?? ExternalImagesScope.maybeOf(context);
+
   @override
   void initState() {
     super.initState();
@@ -776,7 +804,7 @@ class _HinataDocumentState extends State<HinataDocument> {
       editor: editor,
       tappable: widget.onTapSmartLink != null,
       api: api,
-      externalImages: widget.externalImages,
+      externalImages: _externalImages,
     );
     if (_memoKey == key && _theme != null && _decorators != null) return;
     _memoKey = key;
@@ -791,7 +819,7 @@ class _HinataDocumentState extends State<HinataDocument> {
     _decorators = hinataDecoratorBuilders(
       editor: editor,
       api: api,
-      externalImages: widget.externalImages,
+      externalImages: _externalImages,
       onTapSmartLink: widget.onTapSmartLink == null ? null : _tapSmartLink,
       chipBuilder: _chipBuilder,
     );

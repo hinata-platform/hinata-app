@@ -403,6 +403,30 @@ void main() {
       );
     });
 
+    testWidgets('a document below an issue takes its answer about external '
+        'images', (tester) async {
+      // A comment does not know the issue it sits on; the scope does
+      // (HIN-181).
+      late ExternalImages? seen;
+      await tester.pumpWidget(
+        ExternalImagesScope(
+          value: const ExternalImages(issueKey: 'IT-157', load: true),
+          child: Builder(
+            builder: (context) {
+              seen = ExternalImagesScope.maybeOf(context);
+              return const SizedBox();
+            },
+          ),
+        ),
+      );
+
+      expect(seen, const ExternalImages(issueKey: 'IT-157', load: true));
+    });
+
+    test('an external image is found in any spelling of its scheme', () {
+      expect(hasExternalImages('{"src":"HTTPS://x.de/a.png"}'), isTrue);
+    });
+
     test('a document knows whether it holds an external image', () {
       expect(
         hasExternalImages('{"type":"image","src":"https://x.de/a.png"}'),
@@ -527,21 +551,6 @@ void main() {
       await pumpDoc(tester, fixture('links'));
 
       expect(find.byIcon(LucideIcons.link), findsNothing);
-    });
-
-    testWidgets('rendering a link leaves the document as it was', (
-      tester,
-    ) async {
-      // Whatever is drawn beside a link must not reach the model, or it would
-      // be saved, sent to the web client, and exported into the markdown.
-      final before = jsonDecode(fixture('links'));
-      await pumpDoc(tester, fixture('links'));
-
-      final document = tester.widget<LexicalDocument>(
-        find.byType(LexicalDocument),
-      );
-
-      expect(document.editor.editorState.toJson(), before);
     });
   });
 

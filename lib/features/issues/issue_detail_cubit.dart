@@ -233,12 +233,12 @@ class IssueDetailCubit extends Cubit<void> {
     required RelativeDate offset,
   }) => _projects.resolveOffset(projectId, offset: offset);
 
-  /// The knowledge-base articles that mention [issueReadableId], once the
-  /// article cache is seeded.
   /// Always loads the external images of mail from [domain] for the reader
   /// (HIN-181).
   Future<void> trustSender(String domain) => _account.trustSender(domain);
 
+  /// The knowledge-base articles that mention [issueReadableId], once the
+  /// article cache is seeded.
   Future<List<KbArticle>> documentedIn(String issueReadableId) async {
     await knowledge.init();
     return knowledge.articlesReferencingIssue(issueReadableId);
