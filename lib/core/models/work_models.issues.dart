@@ -171,7 +171,7 @@ class Issue extends Equatable {
     this.epicId,
     this.moderation = const {},
     this.externalImageSender,
-    this.externalImagesTrusted = false,
+    this.externalImagesTrusted,
   });
 
   final String id;
@@ -206,8 +206,9 @@ class Issue extends Equatable {
   final String? externalImageSender;
 
   /// Whether the reader trusts [externalImageSender], so its images load
-  /// without asking.
-  final bool externalImagesTrusted;
+  /// without asking. Null where the server did not work it out for this
+  /// response; the previous answer still holds then.
+  final bool? externalImagesTrusted;
 
   final String type;
   final String priority;
@@ -355,7 +356,7 @@ class Issue extends Equatable {
     epicId: json['epicId'] as String?,
     moderation: ContentMark.mapOf(json['moderation']),
     externalImageSender: json['externalImageSender'] as String?,
-    externalImagesTrusted: json['externalImagesTrusted'] as bool? ?? false,
+    externalImagesTrusted: json['externalImagesTrusted'] as bool?,
   );
 
   /// Returns a copy with the given fields replaced — used for optimistic

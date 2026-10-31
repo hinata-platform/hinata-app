@@ -284,6 +284,9 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   /// for this view, trusted the sender just now, or the save is under way.
   bool _externalOnce = false;
   bool _externalTrustedNow = false;
+
+  /// The server's last answer on trust; a response without one keeps it.
+  bool _externalTrusted = false;
   bool _trustingSender = false;
   // Default the activity panel to the Comments tab so the conversation shows
   // up front when an issue is opened.
@@ -2433,8 +2436,11 @@ class IssueDetailBodyState extends State<IssueDetailBody>
 
   /// Whether [issue]'s external images may load: the reader trusts the sender,
   /// or allowed them for this view (HIN-181).
-  bool _externalAllowed(Issue issue) =>
-      issue.externalImagesTrusted || _externalTrustedNow || _externalOnce;
+  bool _externalAllowed(Issue issue) {
+    final answer = issue.externalImagesTrusted;
+    if (answer != null) _externalTrusted = answer;
+    return _externalTrusted || _externalTrustedNow || _externalOnce;
+  }
 
   ExternalImages _externalImages(Issue issue) =>
       ExternalImages(issueKey: issue.readableId, load: _externalAllowed(issue));
