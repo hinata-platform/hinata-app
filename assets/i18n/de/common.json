@@ -1054,6 +1054,12 @@
       "shareWith": "Mit {{name}} teilen",
       "aMember": "einem Mitglied",
       "noDescription": "Noch keine Beschreibung."
+    },
+    "externalImages": {
+      "blocked": "Externe Bilder wurden blockiert, um deine Privatsphäre zu schützen.",
+      "loadOnce": "Einmal laden",
+      "trust": "Immer von {{domain}} laden",
+      "trustedToast": "Bilder von {{domain}} werden jetzt immer geladen."
     }
   },
   "type": {
@@ -4851,6 +4857,17 @@
     "help": {
       "title": "Hilfe und Kontakt",
       "subtitle": "Moderation, Hausregeln, Melden, Impressum und die App."
+    },
+    "trustedSenders": {
+      "title": "Vertrauenswürdige Absender",
+      "subtitle": "E-Mails dieser Absender zeigen ihre Bilder ohne Rückfrage.",
+      "emptyTitle": "Keine vertrauenswürdigen Absender",
+      "emptyMessage": "Wähle „Immer laden“ über einem Vorgang aus einer E-Mail, um den Absender hinzuzufügen.",
+      "more": "Mehr laden",
+      "since": "Seit {{date}}",
+      "remove": "Entfernen",
+      "removeLabel": "{{domain}} nicht mehr vertrauen",
+      "removedToast": "Bei Bildern von {{domain}} wird wieder gefragt."
     }
   },
   "twofa": {

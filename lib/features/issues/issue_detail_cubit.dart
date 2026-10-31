@@ -7,6 +7,7 @@ import '../../core/api/api_client.dart';
 import '../../core/models/core_models.dart';
 import '../../core/models/issue_detail.dart';
 import '../../core/models/work_models.dart';
+import '../../core/repositories/account_repository.dart';
 import '../../core/repositories/comment_repository.dart';
 import '../../core/repositories/issue_repository.dart';
 import '../../core/repositories/media_repository.dart';
@@ -33,8 +34,10 @@ class IssueDetailCubit extends Cubit<void> {
     required ProjectRepository projects,
     required UserRepository users,
     required MediaRepository media,
+    required AccountRepository account,
     required this.knowledge,
   }) : _issues = issues,
+       _account = account,
        _comments = comments,
        _projects = projects,
        _users = users,
@@ -46,6 +49,7 @@ class IssueDetailCubit extends Cubit<void> {
   final ProjectRepository _projects;
   final UserRepository _users;
   final MediaRepository _media;
+  final AccountRepository _account;
 
   /// The shared article cache. Smart-link chips and the "Documented in" list
   /// look articles and spaces up in it synchronously while they build, so it
@@ -231,6 +235,10 @@ class IssueDetailCubit extends Cubit<void> {
 
   /// The knowledge-base articles that mention [issueReadableId], once the
   /// article cache is seeded.
+  /// Always loads the external images of mail from [domain] for the reader
+  /// (HIN-181).
+  Future<void> trustSender(String domain) => _account.trustSender(domain);
+
   Future<List<KbArticle>> documentedIn(String issueReadableId) async {
     await knowledge.init();
     return knowledge.articlesReferencingIssue(issueReadableId);

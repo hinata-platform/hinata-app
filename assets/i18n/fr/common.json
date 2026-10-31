@@ -1054,6 +1054,12 @@
       "shareWith": "Partager avec {{name}}",
       "aMember": "un membre",
       "noDescription": "Pas encore de description."
+    },
+    "externalImages": {
+      "blocked": "Les images externes ont été bloquées pour protéger votre vie privée.",
+      "loadOnce": "Charger une fois",
+      "trust": "Toujours charger depuis {{domain}}",
+      "trustedToast": "Les images de {{domain}} se chargent désormais toujours."
     }
   },
   "type": {
@@ -4851,6 +4857,17 @@
     "help": {
       "title": "Aide et contact",
       "subtitle": "Modération, règles de la maison, signalements, mentions légales et application."
+    },
+    "trustedSenders": {
+      "title": "Expéditeurs de confiance",
+      "subtitle": "Les e-mails de ces expéditeurs affichent leurs images sans demander.",
+      "emptyTitle": "Aucun expéditeur de confiance",
+      "emptyMessage": "Choisissez « Toujours charger » au-dessus d’un ticket créé depuis un e-mail pour ajouter son expéditeur.",
+      "more": "Charger plus",
+      "since": "Depuis le {{date}}",
+      "remove": "Retirer",
+      "removeLabel": "Ne plus faire confiance à {{domain}}",
+      "removedToast": "Les images de {{domain}} demanderont à nouveau."
     }
   },
   "twofa": {

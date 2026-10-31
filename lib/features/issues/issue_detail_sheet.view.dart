@@ -279,6 +279,12 @@ class IssueDetailBodyState extends State<IssueDetailBody>
   ContentRefusal? _titleRefusal;
   ContentRefusal? _descRefusal;
   bool _editingDesc = false;
+
+  /// External images of the description (HIN-181): the reader let them load
+  /// for this view, trusted the sender just now, or the save is under way.
+  bool _externalOnce = false;
+  bool _externalTrustedNow = false;
+  bool _trustingSender = false;
   // Default the activity panel to the Comments tab so the conversation shows
   // up front when an issue is opened.
   _ActivityFilter _activityFilter = _ActivityFilter.comments;
@@ -308,6 +314,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
       projects: context.read<ProjectRepository>(),
       users: context.read<UserRepository>(),
       media: context.read<MediaRepository>(),
+      account: context.read<AccountRepository>(),
       knowledge: context.read<KnowledgeRepository>(),
     );
     _watch = IssueWatchCubit(
@@ -2323,6 +2330,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                   fontSize: AppType.body,
                   minHeight: 140,
                   autofocus: true,
+                  externalImages: _externalImages(issue),
                   // Image upload and the mention picker: the two authoring
                   // actions the toolbar cannot own, because they need this
                   // host's upload repository and smart-link resolver.
@@ -2354,6 +2362,15 @@ class IssueDetailBodyState extends State<IssueDetailBody>
           else ...[
             _sectionLabel(context.t('issues.description')),
             const SizedBox(height: 8),
+            if (_externalImagesHeld(issue)) ...[
+              ExternalImagesBanner(
+                sender: issue.externalImageSender,
+                trusting: _trustingSender,
+                onLoadOnce: () => setState(() => _externalOnce = true),
+                onTrust: () => unawaited(_trustSender(issue)),
+              ),
+              const SizedBox(height: 10),
+            ],
             // Double-tap is invisible to assistive tech; the semantic tap opens the
             // same editor.
             Semantics(
@@ -2378,6 +2395,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
                     ? HinataDocument(
                         doc: _describedDoc(issue),
                         fontSize: AppType.body,
+                        externalImages: _externalImages(issue),
                         onChecked: isParticipant
                             ? null
                             : _saveCheckedDescription,
@@ -2408,6 +2426,39 @@ class IssueDetailBodyState extends State<IssueDetailBody>
     final me = context.read<AuthBloc>().state.user?.id;
     if (caseId == null || me == null || issue.reporterId != me) return null;
     return () => context.push(noticeLocation(caseId));
+  }
+
+  /// Whether [issue]'s external images may load: the reader trusts the sender,
+  /// or allowed them for this view (HIN-181).
+  bool _externalAllowed(Issue issue) =>
+      issue.externalImagesTrusted || _externalTrustedNow || _externalOnce;
+
+  ExternalImages _externalImages(Issue issue) =>
+      ExternalImages(issueKey: issue.readableId, load: _externalAllowed(issue));
+
+  /// Whether the description holds external images the reader has not let
+  /// load yet — the case the banner asks about.
+  bool _externalImagesHeld(Issue issue) =>
+      !_externalAllowed(issue) && hasExternalImages(_describedDoc(issue));
+
+  Future<void> _trustSender(Issue issue) async {
+    final domain = issue.externalImageSender;
+    if (domain == null) return;
+    setState(() => _trustingSender = true);
+    final done = context.t(
+      'issues.externalImages.trustedToast',
+      variables: {'domain': domain},
+    );
+    try {
+      await _detail.trustSender(domain);
+      if (!mounted) return;
+      setState(() => _externalTrustedNow = true);
+      showGlassToast(context, done, kind: GlassToastKind.success);
+    } on ApiFailure catch (failure) {
+      if (mounted) showGlassErrorToast(context, context.t(failure.message));
+    } finally {
+      if (mounted) setState(() => _trustingSender = false);
+    }
   }
 
   /// The description to render: the stored document, or the legacy markdown

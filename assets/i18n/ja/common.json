@@ -1054,6 +1054,12 @@
       "shareWith": "{{name}} さんと共有",
       "aMember": "メンバー",
       "noDescription": "説明はまだありません。"
+    },
+    "externalImages": {
+      "blocked": "プライバシー保護のため、外部の画像をブロックしました。",
+      "loadOnce": "今回だけ読み込む",
+      "trust": "{{domain}} から常に読み込む",
+      "trustedToast": "{{domain}} の画像を常に読み込みます。"
     }
   },
   "type": {
@@ -4851,6 +4857,17 @@
     "help": {
       "title": "ヘルプと連絡先",
       "subtitle": "モデレーション、ハウスルール、報告、運営者情報、アプリについて。"
+    },
+    "trustedSenders": {
+      "title": "信頼できる送信者",
+      "subtitle": "これらの送信者のメールは確認なしで画像を表示します。",
+      "emptyTitle": "信頼できる送信者はいません",
+      "emptyMessage": "メールから作成された課題の上で「常に読み込む」を選ぶと送信者を追加できます。",
+      "more": "さらに読み込む",
+      "since": "{{date}} から",
+      "remove": "削除",
+      "removeLabel": "{{domain}} の信頼をやめる",
+      "removedToast": "{{domain}} の画像は再び確認されます。"
     }
   },
   "twofa": {

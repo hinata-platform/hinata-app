@@ -39,6 +39,7 @@ import 'account_modals.dart';
 import 'account_widgets.dart';
 import 'tint_customizer.dart';
 import '../blocks/blocked_people_section.dart';
+import '../trusted_senders/trusted_senders_section.dart';
 import '../moderation/help_contact_section.dart';
 import '../moderation/queue/moderation_screen.dart' show moderationLocation;
 import '../moderation/queue/open_cases_badge.dart';
@@ -69,6 +70,7 @@ enum _SettingsSection {
   appearance,
   data,
   blocked,
+  trustedSenders,
   help,
   danger,
 }
@@ -89,6 +91,7 @@ const _settingsMenu = <({_SettingsSection section, IconData icon})>[
   (section: _SettingsSection.tokens, icon: LucideIcons.keyRound),
   (section: _SettingsSection.data, icon: LucideIcons.fileText),
   (section: _SettingsSection.blocked, icon: LucideIcons.userX),
+  (section: _SettingsSection.trustedSenders, icon: LucideIcons.imageUp),
   (section: _SettingsSection.help, icon: LucideIcons.lifeBuoy),
   (section: _SettingsSection.danger, icon: LucideIcons.triangleAlert),
 ];
@@ -575,6 +578,7 @@ class _AccountScreenState extends State<_AccountBody> {
       _SettingsSection.appearance => 'account.rail.preferences',
       _SettingsSection.data ||
       _SettingsSection.blocked ||
+      _SettingsSection.trustedSenders ||
       _SettingsSection.danger => 'account.rail.privacy',
       _SettingsSection.help => 'account.rail.help',
     });
@@ -876,6 +880,7 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.appearance => 'account.appearance.title',
     _SettingsSection.data => 'account.data.title',
     _SettingsSection.blocked => 'account.blocked.title',
+    _SettingsSection.trustedSenders => 'account.trustedSenders.title',
     _SettingsSection.help => 'account.help.title',
     _SettingsSection.danger => 'account.danger.title',
   });
@@ -890,6 +895,7 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.appearance => 'account.appearance.subtitle',
     _SettingsSection.data => 'account.data.subtitle',
     _SettingsSection.blocked => 'account.blocked.subtitle',
+    _SettingsSection.trustedSenders => 'account.trustedSenders.subtitle',
     _SettingsSection.help => 'account.help.subtitle',
     _SettingsSection.danger => 'account.danger.subtitle',
   });
@@ -920,6 +926,7 @@ class _AccountScreenState extends State<_AccountBody> {
     _SettingsSection.appearance => _appearanceSection(),
     _SettingsSection.data => _dataSection(),
     _SettingsSection.blocked => const BlockedPeopleSection(),
+    _SettingsSection.trustedSenders => const TrustedSendersSection(),
     _SettingsSection.help => const HelpContactSection(),
     _SettingsSection.danger => _dangerSection(),
   };

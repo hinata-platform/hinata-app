@@ -1054,6 +1054,12 @@
       "shareWith": "Share with {{name}}",
       "aMember": "a member",
       "noDescription": "No description yet."
+    },
+    "externalImages": {
+      "blocked": "External images were blocked to protect your privacy.",
+      "loadOnce": "Load once",
+      "trust": "Always load from {{domain}}",
+      "trustedToast": "Images from {{domain}} now always load."
     }
   },
   "type": {
@@ -4851,6 +4857,17 @@
     "help": {
       "title": "Help and contact",
       "subtitle": "Moderation, house rules, reporting, imprint and the app."
+    },
+    "trustedSenders": {
+      "title": "Trusted senders",
+      "subtitle": "Mail from these senders shows its images without asking.",
+      "emptyTitle": "No trusted senders",
+      "emptyMessage": "Choose “Always load” above an issue made from an e-mail to add its sender.",
+      "more": "Load more",
+      "since": "Since {{date}}",
+      "remove": "Remove",
+      "removeLabel": "Stop trusting {{domain}}",
+      "removedToast": "Images from {{domain}} will ask again."
     }
   },
   "twofa": {

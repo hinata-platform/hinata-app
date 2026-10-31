@@ -170,6 +170,8 @@ class Issue extends Equatable {
     this.formerReadableIds = const [],
     this.epicId,
     this.moderation = const {},
+    this.externalImageSender,
+    this.externalImagesTrusted = false,
   });
 
   final String id;
@@ -193,7 +195,19 @@ class Issue extends Equatable {
   final String? description;
 
   /// The Lexical document — the source of truth, and what the editor opens.
+  ///
+  /// The full document, layout included (HIN-181). The server keeps
+  /// `descriptionDoc` readable for published apps, which do not know the layout
+  /// nodes, and sends the full one beside it as `descriptionLayoutDoc`.
   final String? descriptionDoc;
+
+  /// The domain of the mail this issue was made from, when its description has
+  /// external images; the domain a reader may choose to trust (HIN-181).
+  final String? externalImageSender;
+
+  /// Whether the reader trusts [externalImageSender], so its images load
+  /// without asking.
+  final bool externalImagesTrusted;
 
   final String type;
   final String priority;
@@ -305,7 +319,9 @@ class Issue extends Equatable {
     title: json['title'] as String? ?? '',
     state: json['state'] as String? ?? '',
     description: json['description'] as String?,
-    descriptionDoc: json['descriptionDoc'] as String?,
+    descriptionDoc:
+        json['descriptionLayoutDoc'] as String? ??
+        json['descriptionDoc'] as String?,
     type: json['type'] as String? ?? 'TASK',
     priority: json['priority'] as String? ?? 'NORMAL',
     assigneeId: json['assigneeId'] as String?,
@@ -338,6 +354,8 @@ class Issue extends Equatable {
     subtaskDoneCount: json['subtaskDoneCount'] as int? ?? 0,
     epicId: json['epicId'] as String?,
     moderation: ContentMark.mapOf(json['moderation']),
+    externalImageSender: json['externalImageSender'] as String?,
+    externalImagesTrusted: json['externalImagesTrusted'] as bool? ?? false,
   );
 
   /// Returns a copy with the given fields replaced — used for optimistic
@@ -392,6 +410,8 @@ class Issue extends Equatable {
     subtaskDoneCount: subtaskDoneCount,
     epicId: epicId,
     moderation: moderation,
+    externalImageSender: externalImageSender,
+    externalImagesTrusted: externalImagesTrusted,
   );
 
   @override
@@ -413,6 +433,7 @@ class Issue extends Equatable {
     subtaskCount,
     subtaskDoneCount,
     epicId,
+    externalImagesTrusted,
     // Both dates and both rules: a row shows the date and marks that it hangs
     // off the event, so a list that compared neither would not repaint when a
     // reschedule moved every deadline on screen.

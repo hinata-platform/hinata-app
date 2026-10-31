@@ -1054,6 +1054,12 @@
       "shareWith": "共享给 {{name}}",
       "aMember": "一位成员",
       "noDescription": "暂无描述。"
+    },
+    "externalImages": {
+      "blocked": "为保护你的隐私，已阻止外部图片。",
+      "loadOnce": "加载一次",
+      "trust": "始终加载来自 {{domain}} 的图片",
+      "trustedToast": "来自 {{domain}} 的图片将始终加载。"
     }
   },
   "type": {
@@ -4851,6 +4857,17 @@
     "help": {
       "title": "帮助与联系",
       "subtitle": "审核、站规、举报、版本说明与应用信息。"
+    },
+    "trustedSenders": {
+      "title": "受信任的发件人",
+      "subtitle": "这些发件人的邮件无需询问即可显示图片。",
+      "emptyTitle": "没有受信任的发件人",
+      "emptyMessage": "在由邮件创建的事项上方选择“始终加载”即可添加其发件人。",
+      "more": "加载更多",
+      "since": "自 {{date}} 起",
+      "remove": "移除",
+      "removeLabel": "不再信任 {{domain}}",
+      "removedToast": "来自 {{domain}} 的图片将再次询问。"
     }
   },
   "twofa": {

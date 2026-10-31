@@ -1054,6 +1054,12 @@
       "shareWith": "Compartir con {{name}}",
       "aMember": "un miembro",
       "noDescription": "Todavía no hay descripción."
+    },
+    "externalImages": {
+      "blocked": "Las imágenes externas se bloquearon para proteger tu privacidad.",
+      "loadOnce": "Cargar una vez",
+      "trust": "Cargar siempre de {{domain}}",
+      "trustedToast": "Las imágenes de {{domain}} se cargarán siempre."
     }
   },
   "type": {
@@ -4851,6 +4857,17 @@
     "help": {
       "title": "Ayuda y contacto",
       "subtitle": "Moderación, normas de la casa, denuncias, aviso legal y la app."
+    },
+    "trustedSenders": {
+      "title": "Remitentes de confianza",
+      "subtitle": "Los correos de estos remitentes muestran sus imágenes sin preguntar.",
+      "emptyTitle": "No hay remitentes de confianza",
+      "emptyMessage": "Elige «Cargar siempre» sobre una incidencia creada desde un correo para añadir su remitente.",
+      "more": "Cargar más",
+      "since": "Desde el {{date}}",
+      "remove": "Quitar",
+      "removeLabel": "Dejar de confiar en {{domain}}",
+      "removedToast": "Las imágenes de {{domain}} volverán a preguntar."
     }
   },
   "twofa": {

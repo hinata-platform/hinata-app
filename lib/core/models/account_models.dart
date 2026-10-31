@@ -814,4 +814,21 @@ class BlockedPerson extends Equatable {
   List<Object?> get props => [id, displayName, avatarUrl, blockedAt];
 }
 
+/// A mail sender whose external images the reader always loads (HIN-181):
+/// the domain they trusted and when.
+class TrustedSender extends Equatable {
+  const TrustedSender({required this.domain, this.addedAt});
+
+  final String domain;
+  final DateTime? addedAt;
+
+  factory TrustedSender.fromJson(Map<String, dynamic> json) => TrustedSender(
+    domain: json['domain'] as String,
+    addedAt: _date(json['addedAt']),
+  );
+
+  @override
+  List<Object?> get props => [domain, addedAt];
+}
+
 DateTime? _date(dynamic value) => parseInstant(value);

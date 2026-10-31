@@ -111,7 +111,11 @@ class HinataEditor extends StatefulWidget {
     this.trailing,
     this.placeholderKey = 'md.placeholder',
     this.framed = true,
+    this.externalImages,
   });
+
+  /// Whether external images in the document load (HIN-181); null: never.
+  final ExternalImages? externalImages;
 
   /// The document being edited.
   final HinataEditorController controller;
@@ -442,7 +446,13 @@ class HinataEditorState extends State<HinataEditor> {
   /// is where it costs the most.
   LexicalTheme? _themeCache;
   Map<String, DecoratorBuilder>? _decoratorCache;
-  ({double fontSize, int themeKey, ApiClient? api})? _styleKey;
+  ({
+    double fontSize,
+    int themeKey,
+    ApiClient? api,
+    ExternalImages? externalImages,
+  })?
+  _styleKey;
 
   void _refreshStyling(ApiClient? api) {
     final key = (
@@ -452,6 +462,7 @@ class HinataEditorState extends State<HinataEditor> {
       // changes.
       themeKey: AppColors.themeKey,
       api: api,
+      externalImages: widget.externalImages,
     );
     if (_styleKey == key && _themeCache != null && _decoratorCache != null) {
       return;
@@ -472,6 +483,7 @@ class HinataEditorState extends State<HinataEditor> {
       // path rather than a URL. Without the client it renders as a broken box —
       // which is what "inserting an image does nothing" looked like.
       api: api,
+      externalImages: widget.externalImages,
       onTapSmartLink: (kind, targetId) =>
           widget.onTapSmartLink?.call(kind, targetId),
       // The same fallback the reader uses. Without it a `@`-mention shows the

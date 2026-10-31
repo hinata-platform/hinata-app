@@ -361,11 +361,58 @@ void main() {
           '/api/v1/media/abc',
         ),
       );
-      // Everything else keeps the behaviour it had.
+      // An image on another host is never fetched from there (HIN-181).
       expect(
         hinataImageResolverFor(api)('https://wiki.example.org/a.png'),
-        isA<NetworkImage>(),
+        isNull,
       );
+    });
+
+    test('an external image waits for the reader, then comes through the '
+        'server', () async {
+      // Fetched from its own host, it would hand the sender every reader's
+      // address. Until the reader allows it the placeholder stands in, and
+      // then the server delivers it for this issue (HIN-181).
+      SharedPreferences.setMockInitialValues(<String, Object>{});
+      final api = ApiClient(
+        AppStorage(
+          await SharedPreferences.getInstance(),
+          const FlutterSecureStorage(),
+        ),
+      );
+      const src = 'https://mail.example.com/img/header.jpg?a=1&b=2';
+
+      expect(
+        hinataImageResolverFor(
+          api,
+          external: const ExternalImages(issueKey: 'IT-157', load: false),
+        )(src),
+        isNull,
+      );
+      expect(
+        hinataImageResolverFor(
+          api,
+          external: const ExternalImages(issueKey: 'IT-157', load: true),
+        )(src),
+        isA<ApiImage>().having(
+          (image) => image.path,
+          'path',
+          '/api/v1/issues/IT-157/external-image'
+              '?src=https%3A%2F%2Fmail.example.com%2Fimg%2Fheader.jpg%3Fa%3D1%26b%3D2',
+        ),
+      );
+    });
+
+    test('a document knows whether it holds an external image', () {
+      expect(
+        hasExternalImages('{"type":"image","src":"https://x.de/a.png"}'),
+        isTrue,
+      );
+      expect(
+        hasExternalImages('{"type":"image","src":"/api/v1/media/abc"}'),
+        isFalse,
+      );
+      expect(hasExternalImages(null), isFalse);
     });
 
     test('a media path falls back to the app\'s own client', () {
@@ -394,10 +441,11 @@ void main() {
       addTearDown(() => ApiClient.instance = previous);
 
       expect(hinataImageResolverFor(null)('/api/v1/media/abc'), isNull);
-      // Everything that is not a path on this server is unaffected.
+      // An external image is never fetched from its host (HIN-181); anything
+      // else that is not a path on this server is unaffected.
       expect(
         hinataImageResolverFor(null)('https://wiki.example.org/a.png'),
-        isA<NetworkImage>(),
+        isNull,
       );
       expect(hinataImageResolverFor(null)('bilder/a.png'), isA<AssetImage>());
     });

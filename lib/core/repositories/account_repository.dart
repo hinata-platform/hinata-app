@@ -196,6 +196,38 @@ class AccountRepository {
           .cast<String>()
           .toSet();
 
+  // Trusted mail senders (HIN-181) ---------------------------------------------
+
+  /// Always loads the external images of mail from [domain] for the reader.
+  /// Idempotent.
+  Future<void> trustSender(String domain) => _api.put(
+    '/api/v1/me/trusted-image-senders/${Uri.encodeComponent(domain)}',
+  );
+
+  /// Asks again before loading [domain]'s images. Idempotent.
+  Future<void> distrustSender(String domain) => _api.delete(
+    '/api/v1/me/trusted-image-senders/${Uri.encodeComponent(domain)}',
+  );
+
+  /// The senders the reader trusts, newest first.
+  Future<({List<TrustedSender> items, int total})> trustedSendersPage({
+    int page = 0,
+    int size = 25,
+  }) async {
+    final data =
+        await _api.get(
+              '/api/v1/me/trusted-image-senders',
+              query: {'page': page, 'size': size},
+            )
+            as Map<String, dynamic>;
+    return (
+      items: ((data['items'] as List<dynamic>?) ?? [])
+          .map((s) => TrustedSender.fromJson(s as Map<String, dynamic>))
+          .toList(),
+      total: data['total'] as int? ?? 0,
+    );
+  }
+
   // House rules and reports (HIN-175) -----------------------------------------
 
   /// The current house rules in the reader's language, and whether they still

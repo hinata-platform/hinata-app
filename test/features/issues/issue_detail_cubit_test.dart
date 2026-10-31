@@ -34,6 +34,7 @@ void main() {
       projects: projects,
       users: users,
       media: media,
+      account: FakeAccountRepository(),
       knowledge: knowledge,
     );
   });

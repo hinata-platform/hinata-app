@@ -155,12 +155,13 @@ Map<String, DecoratorBuilder> hinataDecoratorBuilders({
   SmartLinkChipBuilder? chipBuilder,
   bool editable = false,
   ApiClient? api,
+  ExternalImages? externalImages,
 }) => {
   ...lexicalDecoratorBuilders(
     editor: editor,
     editable: editable,
     captionsEnabled: editable,
-    imageResolver: hinataImageResolverFor(api),
+    imageResolver: hinataImageResolverFor(api, external: externalImages),
     imageStyle: hinataImageStyle(),
     imagePlaceholderBuilder: hinataImagePlaceholder,
   ),
@@ -305,6 +306,54 @@ const _signInPaths = {
   '/verify-email',
 };
 
+/// Whether the external images of an issue's document may load, and where
+/// from (HIN-181).
+///
+/// An external image is never fetched from its own host: the address of every
+/// reader would reach the sender, and the bytes would skip every check. It
+/// loads through the server, and only once the reader allowed it — for this
+/// view, or for every mail from the sender's domain.
+@immutable
+class ExternalImages {
+  const ExternalImages({required this.issueKey, required this.load});
+
+  /// The issue whose stored documents name the images; the server proxies only
+  /// those.
+  final String issueKey;
+
+  /// Whether the reader allowed them.
+  final bool load;
+
+  /// The server address that delivers [src] for this issue.
+  String proxyPath(String src) =>
+      '/api/v1/issues/${Uri.encodeComponent(issueKey)}/external-image'
+      '?src=${Uri.encodeQueryComponent(src)}';
+
+  @override
+  bool operator ==(Object other) =>
+      other is ExternalImages &&
+      other.issueKey == issueKey &&
+      other.load == load;
+
+  @override
+  int get hashCode => Object.hash(issueKey, load);
+}
+
+/// Whether the stored document [doc] shows an image from another host.
+///
+/// Read from the JSON text rather than by opening the document: the answer is
+/// needed on every build of the page that hosts it.
+bool hasExternalImages(String? doc) =>
+    doc != null && _externalImageSrc.hasMatch(doc);
+
+final RegExp _externalImageSrc = RegExp(r'"src"\s*:\s*"https?://');
+
+/// Whether [src] names an image on another host.
+bool isExternalImage(String src) {
+  final lower = src.trim().toLowerCase();
+  return lower.startsWith('https://') || lower.startsWith('http://');
+}
+
 /// The resolver a surface uses, given the API client it can reach.
 ///
 /// An uploaded image is stored behind the authenticated media proxy, so its
@@ -313,8 +362,18 @@ const _signInPaths = {
 /// which is why an upload that reached the server perfectly still rendered as a
 /// broken box. With a client in hand the bytes are fetched properly; without
 /// one — a test, a preview — everything else still resolves as before.
-ImageResolver hinataImageResolverFor(ApiClient? api) => (src) {
-  final trimmed = src.trim();
+///
+/// An external image draws the placeholder until [external] allows it, and
+/// then loads through the server's proxy, never from its own host.
+ImageResolver hinataImageResolverFor(
+  ApiClient? api, {
+  ExternalImages? external,
+}) => (src) {
+  var trimmed = src.trim();
+  if (isExternalImage(trimmed)) {
+    if (external == null || !external.load) return null;
+    trimmed = external.proxyPath(trimmed);
+  }
   if (!trimmed.startsWith('/')) return hinataImageResolver(trimmed);
   // The client from the tree when there is one, the app's own otherwise.
   //
@@ -500,7 +559,11 @@ class HinataDocument extends StatefulWidget {
     this.chipBuilder,
     this.onTapLink,
     this.stats,
+    this.externalImages,
   });
+
+  /// Whether external images in [doc] load (HIN-181). Null: they never do.
+  final ExternalImages? externalImages;
 
   /// The stored Lexical JSON. Null or unreadable renders nothing.
   final String? doc;
@@ -598,6 +661,7 @@ class _HinataDocumentState extends State<HinataDocument> {
     LexicalEditor? editor,
     bool tappable,
     ApiClient? api,
+    ExternalImages? externalImages,
   })?
   _memoKey;
 
@@ -712,6 +776,7 @@ class _HinataDocumentState extends State<HinataDocument> {
       editor: editor,
       tappable: widget.onTapSmartLink != null,
       api: api,
+      externalImages: widget.externalImages,
     );
     if (_memoKey == key && _theme != null && _decorators != null) return;
     _memoKey = key;
@@ -726,6 +791,7 @@ class _HinataDocumentState extends State<HinataDocument> {
     _decorators = hinataDecoratorBuilders(
       editor: editor,
       api: api,
+      externalImages: widget.externalImages,
       onTapSmartLink: widget.onTapSmartLink == null ? null : _tapSmartLink,
       chipBuilder: _chipBuilder,
     );
