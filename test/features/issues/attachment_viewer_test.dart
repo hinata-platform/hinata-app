@@ -1005,6 +1005,110 @@ void main() {
         expect(vertical.offset, closeTo(anchored, 2));
       });
 
+      // ── Password-protected PDFs (HIN-180) ───────────────────────────────
+      group('with a password', () {
+        final passwordField = find.byWidgetPredicate(
+          (w) => w is TextField && w.obscureText,
+        );
+        const wrongText = 'issues.attachments.viewer.passwordWrong';
+
+        Future<void> openLocked(
+          WidgetTester tester,
+          String path, {
+          List<ViewerItem> extra = const [],
+        }) async {
+          printing.install(tester);
+          api.serveBytes(
+            path,
+            File('test/fixtures/pdf/aes_256.pdf').readAsBytesSync(),
+          );
+          await openViewer(tester, [pdfItem(path: path), ...extra]);
+          await pumpUntil(tester, passwordField);
+          await settle(tester);
+        }
+
+        Future<void> submit(WidgetTester tester, String password) async {
+          await tester.enterText(passwordField, password);
+          await tester.pump();
+          await tester.tap(find.byIcon(LucideIcons.lockOpen));
+          await tester.pump();
+          await settle(tester);
+        }
+
+        testWidgets('asks for it instead of failing to render', (tester) async {
+          await openLocked(tester, '/dl/locked-ask');
+
+          expect(passwordField, findsOneWidget);
+          expect(find.text(wrongText), findsNothing);
+          expect(find.byIcon(LucideIcons.rotateCcw), findsNothing);
+          expect(sheets, findsNothing);
+          // Nothing is tried until there is something to try.
+          await tester.tap(find.byIcon(LucideIcons.lockOpen));
+          await tester.pump();
+          expect(find.text(wrongText), findsNothing);
+          expect(tester.takeException(), isNull);
+        });
+
+        testWidgets('says so when the password is wrong, and keeps asking', (
+          tester,
+        ) async {
+          await openLocked(tester, '/dl/locked-wrong');
+          await submit(tester, 'falsch');
+
+          expect(find.text(wrongText), findsOneWidget);
+          expect(passwordField, findsOneWidget);
+          expect(sheets, findsNothing);
+          // The wrong one comes back selected, ready to be typed over.
+          final field = tester.widget<TextField>(passwordField);
+          expect(field.controller!.selection.start, 0);
+          expect(field.controller!.selection.end, 'falsch'.length);
+        });
+
+        testWidgets('renders the decrypted document with the right one', (
+          tester,
+        ) async {
+          await openLocked(tester, '/dl/locked-right');
+          await submit(tester, 'geheim');
+          await pumpUntil(tester, sheets);
+          await settle(tester);
+
+          expect(sheets, findsWidgets);
+          expect(passwordField, findsNothing);
+          // The rasterizer got a plain PDF, not the encrypted download.
+          final doc = latin1.decode(printing.lastDoc!);
+          expect(doc, startsWith('%PDF-'));
+          expect(doc, isNot(contains('/Encrypt')));
+        });
+
+        testWidgets(
+          'the viewer keeps its hands off keys typed into the field',
+          (tester) async {
+            await openLocked(
+              tester,
+              '/dl/locked-keys',
+              extra: [textItem(id: 'b', path: '/dl/locked-keys-next')],
+            );
+            await tester.tap(passwordField);
+            await tester.pump();
+
+            // On the stage these page and zoom; in the field they are text and
+            // caret movement, and the viewer must let them through.
+            for (final key in [
+              LogicalKeyboardKey.arrowRight,
+              LogicalKeyboardKey.digit0,
+              LogicalKeyboardKey.minus,
+            ]) {
+              await tester.sendKeyEvent(key);
+            }
+            await tester.pump(const Duration(milliseconds: 400));
+            // Still on the PDF, at the zoom it opened with.
+            expect(passwordField, findsOneWidget);
+            expect(find.text('1 / 2'), findsOneWidget);
+            expect(find.text('71%'), findsNothing);
+          },
+        );
+      });
+
       testWidgets('a render failure is offered a second chance', (
         tester,
       ) async {

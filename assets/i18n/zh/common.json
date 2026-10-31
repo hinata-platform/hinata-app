@@ -742,6 +742,9 @@
         "emptyFile": "该文件为空。",
         "renderFailed": "该文件无法渲染。",
         "retry": "重试",
+        "passwordProtected": "此 PDF 受密码保护。",
+        "passwordWrong": "此密码无法打开该文件。",
+        "passwordOpen": "打开",
         "tooLarge": "文件过大，无法内嵌预览，请下载后查看。",
         "more": "更多"
       },

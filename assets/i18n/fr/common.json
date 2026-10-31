@@ -742,6 +742,9 @@
         "emptyFile": "Ce fichier est vide.",
         "renderFailed": "Ce fichier n'a pas pu être affiché.",
         "retry": "Réessayer",
+        "passwordProtected": "Ce PDF est protégé par un mot de passe.",
+        "passwordWrong": "Ce mot de passe n'ouvre pas ce fichier.",
+        "passwordOpen": "Ouvrir",
         "tooLarge": "Trop volumineux pour un aperçu intégré — téléchargez-le pour le lire.",
         "more": "Plus"
       },

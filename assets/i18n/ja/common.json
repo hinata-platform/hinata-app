@@ -742,6 +742,9 @@
         "emptyFile": "このファイルは空です。",
         "renderFailed": "このファイルを表示できませんでした。",
         "retry": "もう一度試す",
+        "passwordProtected": "このPDFはパスワードで保護されています。",
+        "passwordWrong": "このパスワードではファイルを開けません。",
+        "passwordOpen": "開く",
         "tooLarge": "その場でプレビューするには大きすぎます。ダウンロードしてご覧ください。",
         "more": "その他"
       },

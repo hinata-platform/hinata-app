@@ -742,6 +742,9 @@
         "emptyFile": "This file is empty.",
         "renderFailed": "This file couldn't be rendered.",
         "retry": "Try again",
+        "passwordProtected": "This PDF is protected with a password.",
+        "passwordWrong": "That password doesn't open this file.",
+        "passwordOpen": "Open",
         "tooLarge": "Too large for an inline preview — download it to read it.",
         "more": "More"
       },
