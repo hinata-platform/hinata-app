@@ -1071,18 +1071,18 @@ packages:
     dependency: transitive
     description:
       name: lexical_core
-      sha256: ce3fc069010d55f828e71c0d6ea9b962c08e2efa489468e444c053805a05b00b
+      sha256: "495102eca02e10cfe017b575f5f7017b4e86686d1e4c6908191ca7a0e7c54849"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.2"
+    version: "1.11.0"
   lexical_editor_flutter:
     dependency: "direct main"
     description:
       name: lexical_editor_flutter
-      sha256: "72d9f82b424b24c5bc7919d7eafae4f0c5195114d74869354f39f70a1536820a"
+      sha256: "05ac72536ebc3b77c7d377c67f2b277359195970762dcc6a4833bcc23e625c6b"
       url: "https://pub.dev"
     source: hosted
-    version: "1.10.0"
+    version: "1.11.0"
   lexical_embed:
     dependency: transitive
     description:
@@ -1095,10 +1095,10 @@ packages:
     dependency: transitive
     description:
       name: lexical_flutter
-      sha256: "8ebf6f35a2ec3267e64209b8ba4084567283faf4977c2b7f22a96b1d57558267"
+      sha256: "795c5bee72af153d8db0fbdf2e16210e8ee32295f6a4fedb6eea772be2ae0dae"
       url: "https://pub.dev"
     source: hosted
-    version: "1.9.2"
+    version: "1.11.0"
   lexical_hashtag:
     dependency: transitive
     description:
@@ -1119,10 +1119,18 @@ packages:
     dependency: transitive
     description:
       name: lexical_image
-      sha256: "162932231631e77906e6949e3a29f4f7e11a795fbfad263e09701dd6589fbcfb"
+      sha256: "115951e87c1d8d1ff6188d855fdabce4c4201a37567de94db698b6254bbdb07a"
       url: "https://pub.dev"
     source: hosted
-    version: "1.8.0"
+    version: "1.11.0"
+  lexical_layout:
+    dependency: transitive
+    description:
+      name: lexical_layout
+      sha256: "2fa5de87da8bbf4834cea1737433adbb9b68c182312f789e38c15b14a164ad22"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.11.0"
   lexical_link:
     dependency: transitive
     description:
@@ -1151,10 +1159,10 @@ packages:
     dependency: "direct main"
     description:
       name: lexical_markdown
-      sha256: "8cf1d4aaaf05a042717d4e04adb1063cf5bf319018df9e20d2af4623cf89ce45"
+      sha256: aa037b81f0a8dedb62ba501d39f062db3ecd8a597276d892c01ab943dd888578
       url: "https://pub.dev"
     source: hosted
-    version: "1.7.4"
+    version: "1.11.0"
   lexical_mention:
     dependency: transitive
     description:
