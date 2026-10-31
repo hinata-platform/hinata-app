@@ -1042,10 +1042,18 @@ void main() {
           expect(find.text(wrongText), findsNothing);
           expect(find.byIcon(LucideIcons.rotateCcw), findsNothing);
           expect(sheets, findsNothing);
-          // Nothing is tried until there is something to try.
-          await tester.tap(find.byIcon(LucideIcons.lockOpen));
+          // Nothing is tried until there is something to try: with the field
+          // empty the pill takes no taps.
+          InkWell pill() => tester.widget<InkWell>(
+            find.ancestor(
+              of: find.byIcon(LucideIcons.lockOpen),
+              matching: find.byType(InkWell),
+            ),
+          );
+          expect(pill().onTap, isNull);
+          await tester.enterText(passwordField, 'x');
           await tester.pump();
-          expect(find.text(wrongText), findsNothing);
+          expect(pill().onTap, isNotNull);
           expect(tester.takeException(), isNull);
         });
 
@@ -1104,7 +1112,7 @@ void main() {
             // Still on the PDF, at the zoom it opened with.
             expect(passwordField, findsOneWidget);
             expect(find.text('1 / 2'), findsOneWidget);
-            expect(find.text('71%'), findsNothing);
+            expect(find.text('100%'), findsOneWidget);
           },
         );
       });
