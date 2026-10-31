@@ -17,6 +17,7 @@ class IngestConnection extends Equatable {
     this.folder = 'INBOX',
     this.projectId,
     this.pollSeconds = 60,
+    this.authservId = '',
     this.passwordSet = false,
     this.textRefusals = 0,
     this.lastTextRefusalAt,
@@ -34,6 +35,7 @@ class IngestConnection extends Equatable {
         folder: (json['folder'] as String?) ?? 'INBOX',
         projectId: json['projectId'] as String?,
         pollSeconds: (json['pollSeconds'] as num?)?.toInt() ?? 60,
+        authservId: (json['authservId'] as String?) ?? '',
         passwordSet: json['passwordSet'] == true,
         textRefusals: (json['textRefusals'] as num?)?.toInt() ?? 0,
         lastTextRefusalAt: parseInstant(json['lastTextRefusalAt']),
@@ -52,6 +54,11 @@ class IngestConnection extends Equatable {
   final String folder;
   final String? projectId;
   final int pollSeconds;
+
+  /// The name the receiving mail server signs its `Authentication-Results`
+  /// with (HIN-181). Only a sender that header vouches for may be trusted to
+  /// show its images; empty, no sender of this mailbox is offered trust.
+  final String authservId;
 
   /// Read-only server flag: whether a password is stored for this connection.
   final bool passwordSet;
@@ -72,6 +79,7 @@ class IngestConnection extends Equatable {
     'folder': folder,
     'projectId': ?projectId,
     'pollSeconds': pollSeconds,
+    'authservId': authservId,
   };
 
   IngestConnection copyWith({
@@ -86,6 +94,7 @@ class IngestConnection extends Equatable {
     String? folder,
     String? projectId,
     int? pollSeconds,
+    String? authservId,
     bool? passwordSet,
   }) => IngestConnection(
     id: id ?? this.id,
@@ -99,6 +108,7 @@ class IngestConnection extends Equatable {
     folder: folder ?? this.folder,
     projectId: projectId ?? this.projectId,
     pollSeconds: pollSeconds ?? this.pollSeconds,
+    authservId: authservId ?? this.authservId,
     passwordSet: passwordSet ?? this.passwordSet,
     textRefusals: textRefusals,
     lastTextRefusalAt: lastTextRefusalAt,
@@ -122,6 +132,7 @@ class IngestConnection extends Equatable {
     folder,
     projectId,
     pollSeconds,
+    authservId,
     passwordSet,
     textRefusals,
     lastTextRefusalAt,

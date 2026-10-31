@@ -3632,7 +3632,9 @@
       "textRefusals": "被文本检查拒绝的邮件：{{count}} 封",
       "textRefusals_plural": "被文本检查拒绝的邮件：{{count}} 封",
       "textRefusalsSince": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}",
-      "textRefusalsSince_plural": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}"
+      "textRefusalsSince_plural": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}",
+      "authservId": "邮件服务器名称（authserv-id）",
+      "authservIdHelp": "你的邮件服务器写入“Authentication-Results”的名称。只有经其确认的发件人才能被信任以显示图片。留空：不向任何人提供此选项。"
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux 下载 URL",

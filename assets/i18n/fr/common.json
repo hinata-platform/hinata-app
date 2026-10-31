@@ -3632,7 +3632,9 @@
       "textRefusals": "{{count}} e-mail refusé par la vérification des textes",
       "textRefusals_plural": "{{count}} e-mails refusés par la vérification des textes",
       "textRefusalsSince": "{{count}} e-mail refusé par la vérification des textes, le dernier le {{date}}",
-      "textRefusalsSince_plural": "{{count}} e-mails refusés par la vérification des textes, le dernier le {{date}}"
+      "textRefusalsSince_plural": "{{count}} e-mails refusés par la vérification des textes, le dernier le {{date}}",
+      "authservId": "Nom du serveur de messagerie (authserv-id)",
+      "authservIdHelp": "Le nom que votre serveur inscrit dans « Authentication-Results ». Seuls les expéditeurs qu’il confirme peuvent être approuvés pour afficher leurs images. Vide : personne ne se le voit proposer."
     },
     "windowsStoreUrl": "URL du Microsoft Store",
     "linuxStoreUrl": "URL de téléchargement Linux",

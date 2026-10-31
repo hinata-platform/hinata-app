@@ -3632,7 +3632,9 @@
       "textRefusals": "{{count}} mail refused by the text check",
       "textRefusals_plural": "{{count}} mails refused by the text check",
       "textRefusalsSince": "{{count}} mail refused by the text check, last on {{date}}",
-      "textRefusalsSince_plural": "{{count}} mails refused by the text check, last on {{date}}"
+      "textRefusalsSince_plural": "{{count}} mails refused by the text check, last on {{date}}",
+      "authservId": "Mail server name (authserv-id)",
+      "authservIdHelp": "The name your mail server writes into “Authentication-Results”. Only senders it confirms can be trusted to show their images. Empty: nobody is offered that."
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux download URL",

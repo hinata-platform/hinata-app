@@ -3632,7 +3632,9 @@
       "textRefusals": "पाठ जाँच ने {{count}} ईमेल अस्वीकार किया",
       "textRefusals_plural": "पाठ जाँच ने {{count}} ईमेल अस्वीकार किए",
       "textRefusalsSince": "पाठ जाँच ने {{count}} ईमेल अस्वीकार किया, आख़िरी {{date}} को",
-      "textRefusalsSince_plural": "पाठ जाँच ने {{count}} ईमेल अस्वीकार किए, आख़िरी {{date}} को"
+      "textRefusalsSince_plural": "पाठ जाँच ने {{count}} ईमेल अस्वीकार किए, आख़िरी {{date}} को",
+      "authservId": "मेल सर्वर का नाम (authserv-id)",
+      "authservIdHelp": "वह नाम जो आपका मेल सर्वर “Authentication-Results” में लिखता है। केवल उसके द्वारा पुष्ट प्रेषकों पर ही चित्र दिखाने के लिए भरोसा किया जा सकता है। खाली: यह किसी को नहीं दिया जाता।"
     },
     "windowsStoreUrl": "Microsoft Store का URL",
     "linuxStoreUrl": "Linux डाउनलोड URL",
