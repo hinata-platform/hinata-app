@@ -1490,12 +1490,17 @@ class _PdfPasswordCardState extends State<_PdfPasswordCard> {
   final _focus = FocusNode();
   bool _obscure = true;
 
+  /// The text the last wrong attempt was made with. The error stands for that
+  /// text only; once it is edited, the field has nothing to complain about.
+  String? _rejected;
+
   @override
   void didUpdateWidget(covariant _PdfPasswordCard old) {
     super.didUpdateWidget(old);
     // A wrong password comes back selected, so the next attempt overwrites it
     // instead of appending to it — and a screen reader hears why.
     if (old.busy && !widget.busy && widget.wrongPassword) {
+      _rejected = _password.text;
       _password.selection = TextSelection(
         baseOffset: 0,
         extentOffset: _password.text.length,
@@ -1535,35 +1540,43 @@ class _PdfPasswordCardState extends State<_PdfPasswordCard> {
           action: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: _password,
-                focusNode: _focus,
-                // Read-only, not disabled, while a password is checked: a
-                // disabled field drops its focus, and the keyboard would fold
-                // away and come back on every attempt.
-                readOnly: widget.busy,
-                obscureText: _obscure,
-                autocorrect: false,
-                enableSuggestions: false,
-                // A document's password, not an account's: nothing for the
-                // system to offer here, and nothing for it to save.
-                autofillHints: null,
-                textInputAction: TextInputAction.done,
-                onSubmitted: (_) => _submit(),
-                style: const TextStyle(color: _ViewerInk.ink),
-                decoration: InputDecoration(
-                  labelText: context.t('auth.password'),
-                  prefixIcon: const Icon(LucideIcons.lock),
-                  errorText: widget.wrongPassword && !widget.busy
-                      ? context.t('issues.attachments.viewer.passwordWrong')
-                      : null,
-                  errorMaxLines: 3,
-                  suffixIcon: IconButton(
-                    tooltip: context.t(
-                      _obscure ? 'auth.showPassword' : 'auth.hidePassword',
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _password,
+                builder: (context, value, _) => TextField(
+                  controller: _password,
+                  focusNode: _focus,
+                  // Read-only, not disabled, while a password is checked: a
+                  // disabled field drops its focus, and the keyboard would fold
+                  // away and come back on every attempt.
+                  readOnly: widget.busy,
+                  obscureText: _obscure,
+                  autocorrect: false,
+                  enableSuggestions: false,
+                  // A document's password, not an account's: nothing for the
+                  // system to offer here, and nothing for it to save.
+                  autofillHints: null,
+                  textInputAction: TextInputAction.done,
+                  onSubmitted: (_) => _submit(),
+                  style: const TextStyle(color: _ViewerInk.ink),
+                  decoration: InputDecoration(
+                    labelText: context.t('auth.password'),
+                    prefixIcon: const Icon(LucideIcons.lock),
+                    errorText:
+                        widget.wrongPassword &&
+                            !widget.busy &&
+                            value.text == _rejected
+                        ? context.t('issues.attachments.viewer.passwordWrong')
+                        : null,
+                    errorMaxLines: 3,
+                    suffixIcon: IconButton(
+                      tooltip: context.t(
+                        _obscure ? 'auth.showPassword' : 'auth.hidePassword',
+                      ),
+                      icon: Icon(
+                        _obscure ? LucideIcons.eye : LucideIcons.eyeOff,
+                      ),
+                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
-                    icon: Icon(_obscure ? LucideIcons.eye : LucideIcons.eyeOff),
-                    onPressed: () => setState(() => _obscure = !_obscure),
                   ),
                 ),
               ),
