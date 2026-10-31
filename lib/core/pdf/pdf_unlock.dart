@@ -144,12 +144,28 @@ class _Document {
   final Map<String, PdfValue> trailer = {};
   final Map<int, PdfIndirect> _objects = {};
 
-  /// Every place in the file read so far, with what was found there (or why
-  /// nothing could be). A file can list one offset under any number of object
-  /// numbers; each place is still read once, and only the number its object
-  /// header carries gets the object.
-  final Map<int, PdfIndirect> _read = {};
-  final Map<int, PdfSyntaxException> _unreadable = {};
+  // Every place in the file read so far, with what was found there or why
+  // nothing could be. A file can list one offset under any number of object
+  // numbers; each place is still read once, and only the number its object
+  // header carries gets the object.
+  final Map<int, PdfIndirect> _readAtOffset = {};
+  final Map<int, PdfSyntaxException> _unreadableAtOffset = {};
+
+  /// Bytes the reader has gone through for objects so far. Caching by offset
+  /// is not enough on its own: a file can list a thousand offsets in the
+  /// whitespace before one large object, or a thousand headers into one long
+  /// string, and each of them reads that object again. Real documents read
+  /// each byte about once; [_parseBudget] allows four times that.
+  int _parsed = 0;
+
+  int get _parseBudget => 4 * (_bytes.length + _inflated) + (1 << 20);
+
+  void _charge(int bytes) {
+    _parsed += bytes;
+    if (_parsed > _parseBudget) {
+      throw const PdfSyntaxException('read far more than the file holds');
+    }
+  }
 
   /// Upper bounds that keep a hostile file from running the reader in circles
   /// or out of memory; real documents are orders of magnitude below them.
@@ -222,6 +238,8 @@ class _Document {
   // object in the copy and nothing else, while recording them would hide the
   // compressed objects a hybrid file lists as free in its table.
   void _put(int num, _Entry entry) {
+    // Object 0 heads the free list in every file; the copy writes its own.
+    if (num == 0) return;
     if (num < 0 || num > _maxObjectNumber) {
       throw PdfSyntaxException('object number $num out of range');
     }
@@ -327,12 +345,14 @@ class _Document {
   }
 
   PdfIndirect _readAt(int offset) {
-    final known = _read[offset];
+    final known = _readAtOffset[offset];
     if (known != null) return known;
-    final failed = _unreadable[offset];
+    final failed = _unreadableAtOffset[offset];
     if (failed != null) throw failed;
+    _charge(0);
+    final reader = PdfReader(_bytes);
     try {
-      return _read[offset] = PdfReader(_bytes).readIndirect(
+      return _readAtOffset[offset] = reader.readIndirect(
         offset,
         streamLength: (v) => switch (resolve(v)) {
           PdfNumber n => n.asInt,
@@ -340,8 +360,10 @@ class _Document {
         },
       );
     } on PdfSyntaxException catch (e) {
-      _unreadable[offset] = e;
+      _unreadableAtOffset[offset] = e;
       rethrow;
+    } finally {
+      _charge((reader.pos - offset).abs());
     }
   }
 
@@ -353,20 +375,35 @@ class _Document {
         final object = _object(num);
         final stream = object?.value;
         if (object == null || stream is! PdfStream) return null;
-        final plain = _decodeStream(
-          PdfStream(
-            stream.dict,
-            decryptor.decryptStream(stream.data, object.num, object.gen),
-          ),
-        );
-        final reader = PdfReader(plain);
-        // A header is two numbers, so the stream cannot hold more of them
-        // than a quarter of its bytes, whatever /N says.
-        final count = math.min(stream.dict.intOf('N') ?? 0, plain.length ~/ 4);
-        return _ObjectStream(plain, stream.dict.intOf('First') ?? 0, [
-          for (var i = 0; i < count; i++) (reader.readInt(), reader.readInt()),
-        ]);
+        try {
+          return _openStream(object, stream, decryptor);
+        } on PdfSyntaxException catch (e) {
+          // Remembered as unreadable: retrying it for each object it holds
+          // would redo the AES and spend the inflate budget every time.
+          debugPrint('PDF unlock: object stream $num unreadable: ${e.message}');
+          return null;
+        }
       });
+
+  _ObjectStream _openStream(
+    PdfIndirect object,
+    PdfStream stream,
+    PdfDecryptor decryptor,
+  ) {
+    final plain = _decodeStream(
+      PdfStream(
+        stream.dict,
+        decryptor.decryptStream(stream.data, object.num, object.gen),
+      ),
+    );
+    final reader = PdfReader(plain);
+    // A header is two numbers, so the stream cannot hold more of them
+    // than a quarter of its bytes, whatever /N says.
+    final count = math.min(stream.dict.intOf('N') ?? 0, plain.length ~/ 4);
+    return _ObjectStream(plain, stream.dict.intOf('First') ?? 0, _charge, [
+      for (var i = 0; i < count; i++) (reader.readInt(), reader.readInt()),
+    ]);
+  }
 
   /// Writes the whole document out again without its encryption: every
   /// object at the top level (object streams unpacked), a classic
@@ -381,6 +418,11 @@ class _Document {
     final offsets = <int, (int, int)>{};
     final nums = _entries.keys.toList()..sort();
     for (final num in nums) {
+      // Over budget is the file's doing, not one object's: stop altogether
+      // rather than skip object after object.
+      if (_parsed > _parseBudget) {
+        throw const PdfSyntaxException('read far more than the file holds');
+      }
       if (num == encryptNum) continue;
       final PdfValue value;
       var gen = 0;
@@ -581,20 +623,29 @@ class _Document {
 /// /First) and the objects behind them, each read when first asked for and
 /// once per place, however many headers name it.
 class _ObjectStream {
-  _ObjectStream(this._plain, this._first, this._headers);
+  _ObjectStream(this._plain, this._first, this._charge, this._headers);
 
   final Uint8List _plain;
   final int _first;
+
+  /// The document's parse budget, which reads in here count against too.
+  final void Function(int bytes) _charge;
   final List<(int, int)> _headers;
-  final Map<int, PdfValue> _read = {};
+  final Map<int, PdfValue> _byOffset = {};
 
   /// The object at [index], if the header there names object [num].
   PdfValue? object(int index, int num) {
     if (index < 0 || index >= _headers.length) return null;
     final (owner, offset) = _headers[index];
     if (owner != num) return null;
-    return _read[offset] ??= (PdfReader(
-      _plain,
-    )..pos = _first + offset).readValue();
+    final known = _byOffset[offset];
+    if (known != null) return known;
+    _charge(0);
+    final reader = PdfReader(_plain)..pos = _first + offset;
+    try {
+      return _byOffset[offset] = reader.readValue();
+    } finally {
+      _charge((reader.pos - _first - offset).abs());
+    }
   }
 }
