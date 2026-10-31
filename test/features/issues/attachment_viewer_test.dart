@@ -1070,6 +1070,12 @@ void main() {
           final field = tester.widget<TextField>(passwordField);
           expect(field.controller!.selection.start, 0);
           expect(field.controller!.selection.end, 'falsch'.length);
+
+          // …and the right one, typed over it, opens the document.
+          await submit(tester, 'geheim');
+          await pumpUntil(tester, sheets);
+          expect(sheets, findsWidgets);
+          expect(passwordField, findsNothing);
         });
 
         testWidgets('renders the decrypted document with the right one', (
