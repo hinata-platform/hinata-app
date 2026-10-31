@@ -728,6 +728,7 @@
       "ageWeeks": "قبل {{n}} أسبوع",
       "ageMonths": "قبل {{n}} شهر",
       "ageYears": "قبل {{n}} سنة",
+      "passwordProtected": "محمي بكلمة مرور",
       "viewer": {
         "close": "إغلاق",
         "previous": "الملف السابق",

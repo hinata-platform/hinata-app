@@ -728,6 +728,7 @@
       "ageWeeks": "{{n}} нед. назад",
       "ageMonths": "{{n}} мес. назад",
       "ageYears": "{{n}} г. назад",
+      "passwordProtected": "Защищено паролем",
       "viewer": {
         "close": "Закрыть",
         "previous": "Предыдущий файл",

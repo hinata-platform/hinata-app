@@ -728,6 +728,7 @@
       "ageWeeks": "hace {{n}} sem.",
       "ageMonths": "hace {{n}} mes.",
       "ageYears": "hace {{n}} a.",
+      "passwordProtected": "Protegido con contraseña",
       "viewer": {
         "close": "Cerrar",
         "previous": "Archivo anterior",

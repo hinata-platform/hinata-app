@@ -728,6 +728,7 @@
       "ageWeeks": "{{n}} 週間前",
       "ageMonths": "{{n}} か月前",
       "ageYears": "{{n}} 年前",
+      "passwordProtected": "パスワード保護",
       "viewer": {
         "close": "閉じる",
         "previous": "前のファイル",

@@ -58,6 +58,7 @@ class _AttachmentTileState extends State<_AttachmentTile> {
     final kind = up?.kind ?? kindFromName(att!.fileName, att.contentType);
     final km = kindMeta(kind);
     final showActions = att != null && (_hover || _touch);
+    final locked = att?.passwordProtected ?? false;
 
     final tile = ClipRRect(
       borderRadius: BorderRadius.circular(AppTheme.radiusControl),
@@ -148,25 +149,31 @@ class _AttachmentTileState extends State<_AttachmentTile> {
                 ),
               ),
             ),
-            if (showActions)
+            if (showActions || locked)
               Positioned(
                 top: 8,
                 right: 8,
                 child: Row(
                   children: [
-                    _TileAction(
-                      icon: LucideIcons.download,
-                      tooltip: context.t('issues.attachments.download'),
-                      onTap: widget.onDownload!,
-                    ),
-                    if (widget.onDelete != null) ...[
-                      const SizedBox(width: 6),
+                    // The lock leads the corner and stays when the actions
+                    // come and go, so it is in the same place for every file.
+                    if (locked) const _LockBadge(),
+                    if (locked && showActions) const SizedBox(width: 6),
+                    if (showActions) ...[
                       _TileAction(
-                        icon: LucideIcons.trash2,
-                        tooltip: context.t('issues.attachments.remove'),
-                        danger: true,
-                        onTap: widget.onDelete!,
+                        icon: LucideIcons.download,
+                        tooltip: context.t('issues.attachments.download'),
+                        onTap: widget.onDownload!,
                       ),
+                      if (widget.onDelete != null) ...[
+                        const SizedBox(width: 6),
+                        _TileAction(
+                          icon: LucideIcons.trash2,
+                          tooltip: context.t('issues.attachments.remove'),
+                          danger: true,
+                          onTap: widget.onDelete!,
+                        ),
+                      ],
                     ],
                   ],
                 ),
@@ -400,6 +407,31 @@ class _KindTag extends StatelessWidget {
           letterSpacing: 0.4,
           color: Colors.white,
         ),
+      ),
+    );
+  }
+}
+
+/// Marks a PDF that only opens with a password (HIN-180), so nobody has to
+/// open it to find out. Not a control: it explains itself on hover or a long
+/// press, and a screen reader hears it with the file's name.
+class _LockBadge extends StatelessWidget {
+  const _LockBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: context.t('issues.attachments.passwordProtected'),
+      // Same chip as the kind tag in the opposite corner, so the tile keeps one
+      // language for "facts about this file": light on dark over any preview.
+      child: Container(
+        width: 28,
+        height: 28,
+        decoration: BoxDecoration(
+          color: const Color(0xFF14122D).withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: const Icon(LucideIcons.lock, size: 14, color: Colors.white),
       ),
     );
   }

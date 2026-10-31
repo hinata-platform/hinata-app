@@ -728,6 +728,7 @@
       "ageWeeks": "vor {{n}} Wo.",
       "ageMonths": "vor {{n}} Mon.",
       "ageYears": "vor {{n}} J.",
+      "passwordProtected": "Passwortgeschützt",
       "viewer": {
         "close": "Schließen",
         "previous": "Vorherige Datei",
