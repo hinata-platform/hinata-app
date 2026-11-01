@@ -4,7 +4,6 @@
 
 #include "flutter/generated_plugin_registrant.h"
 #include "taskbar_channel.h"
-#include "wns_channel.h"
 
 FlutterWindow::FlutterWindow(const flutter::DartProject& project)
     : project_(project) {}
@@ -33,17 +32,13 @@ bool FlutterWindow::OnCreate() {
   // über dem Flutter-View liegt.
   splash_ = HinataSplash::Present(GetHandle());
 
-  // Hinata: WNS-Kanal für Push (FCM hat keine Windows-Implementierung).
-  hinata::RegisterWnsChannel(flutter_controller_->engine(), GetHandle());
-
   // Hinata: the timer on the taskbar button (HIN-101).
   hinata::RegisterTaskbarChannel(flutter_controller_->engine(), GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
+    // windows_push raises the window here when a notification click
+    // launched the app: only now is it really on screen.
     this->Show();
-    // Only now is the window really on screen — a click that launched the app
-    // can raise it from here, not earlier.
-    hinata::ForegroundIfLaunchedFromNotification(GetHandle());
   });
 
   // Flutter can complete the first frame before the "show window" callback is
@@ -76,12 +71,6 @@ FlutterWindow::MessageHandler(HWND hwnd, UINT const message,
     if (result) {
       return *result;
     }
-  }
-
-  // Completed WNS channel requests hop back onto the platform thread through a
-  // WM_APP message — flutter::MethodResult must not be completed off-thread.
-  if (hinata::HandleWnsChannelMessage(message)) {
-    return 0;
   }
 
   if (hinata::HandleTaskbarMessage(hwnd, message, wparam, lparam)) {

@@ -118,6 +118,34 @@ jobs:
       - name: The widget extension is embedded
         run: test -x build/macos/Build/Products/Release/hinata.app/Contents/PlugIns/HinataWidgetsMac.appex/Contents/MacOS/HinataWidgetsMac
 
+  build-windows:
+    name: Build Windows (Store package, unsigned)
+    needs: quality
+    # The image the release job uses (see release.yml for why it is pinned).
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build windows --release
+      # The same three steps as windows/fastlane, so a manifest the Store
+      # would reject fails here instead of in a release.
+      - name: Package with the push activators
+        shell: bash
+        run: |
+          dart run msix:build --store --build-windows false
+          dart run windows_push:patch_manifest \
+            --remote-id=e89a5a67-af01-4c79-98a7-09e609f0c831 \
+            --toast-clsid=C2EC5161-3E44-44EC-97FF-90DC93713ADF \
+            --runtime=2
+          grep -q "ToastActivatorCLSID=\"C2EC5161-3E44-44EC-97FF-90DC93713ADF\"" \
+            build/windows/x64/runner/Release/AppxManifest.xml
+          dart run msix:pack --store
+
   build-linux:
     name: Build Linux
     needs: quality

@@ -44,7 +44,7 @@ sobald das Mapping eingetragen ist.
 ## Danach prüfen
 
 Sobald die Bestätigung da ist und der Runner umgebaut wurde: Die MSIX-Version
-installieren und starten. Der Kanal kommt über den Method-Channel `hinata/wns`
+installieren und starten. Der Kanal kommt über das Plugin `windows_push`
 in Dart an und wird beim Anmelden an `/api/v1/me/devices` gemeldet. Kommt dort
 eine `https://…notify.windows.com/?token=…`-URI an, steht die Client-Seite.
 

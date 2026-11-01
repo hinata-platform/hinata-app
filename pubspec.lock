@@ -2144,6 +2144,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.2"
+  windows_push:
+    dependency: "direct main"
+    description:
+      name: windows_push
+      sha256: b277ea4193a9b4c8a6386e0cef5aa1d13a57b1b1c79815fd6fe35dbbb680dc3e
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.0"
   wolt_modal_sheet:
     dependency: "direct main"
     description:
