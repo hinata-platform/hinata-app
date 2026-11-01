@@ -3,6 +3,26 @@
 Stand 2026-11-01. Für die Fortsetzung auf dem Windows-Gerät, mit Rebar am Gerät
 und Claude in derselben Sitzung.
 
+## Start in Claude Code auf dem Windows-Gerät
+
+Im Klon von hinata-app auf Branch `HIN-25` Claude Code starten und schreiben:
+
+> Lies `release/HANDOFF_HIN25_WINDOWS_LIVE_TEST.md` und führe mit mir den
+> Live-Test von HIN-25 durch.
+
+Die Notizen der Mac-Sitzung gibt es auf diesem Gerät nicht. Was daraus für die
+Arbeit hier gilt:
+
+- Antworten auf Deutsch; Commits, Code und Kommentare auf Englisch.
+- Keine Claude-Attribution in Commits oder PRs.
+- Nie ungesicherte Änderungen verwerfen (kein `git checkout --`, `reset --hard`,
+  `clean`, `rm` auf Uncommittetem).
+- Fehler im Plugin im Plugin beheben und veröffentlichen, nicht in hinata-app
+  umgehen (Abschnitt 5).
+- Eigene Plugins und Pakete laufen unter MIT, Hinata selbst nicht.
+- Das Gerät ist Rebars Arbeitsgerät: beschreiben, was zu klicken ist, und
+  Rebar ausführen lassen, statt die laufende App fernzusteuern.
+
 ## Worum es geht
 
 Hinata nutzt für Windows-Push ab Branch `HIN-25` (PR #169) nur noch das eigene
