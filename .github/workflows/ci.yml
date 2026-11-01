@@ -130,6 +130,9 @@ jobs:
           flutter-version: ${{ env.FLUTTER_VERSION }}
           channel: stable
           cache: true
+      # flutter_local_notifications comes from git, and its iOS sources nest
+      # deeper than Windows' 260 character path limit (same as release.yml).
+      - run: git config --global core.longpaths true
       - run: flutter pub get
       - run: flutter build windows --release
       # The same three steps as windows/fastlane, so a manifest the Store
