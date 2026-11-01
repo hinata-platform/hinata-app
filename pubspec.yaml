@@ -171,6 +171,11 @@ dependencies:
   # Imported for its app id registration (an AppImage is not known to the
   # portal by a sandbox).
   system_hotkeys_linux: ^0.2.1
+  # Our own (hinata-platform/windows_push, HIN-25): the WNS channel URI where
+  # the other platforms have an FCM token, notification clicks on warm and cold
+  # start, and the timer's toasts. Its patch_manifest runs between msix:build
+  # and msix:pack (windows/fastlane).
+  windows_push: ^0.1.0
   # Our own (hinata-platform/alarm_kit, HIN-106): the end of an interval as a
   # system alarm on iOS and iPadOS 26. Below that it answers "unsupported".
   alarm_kit: ^0.1.1

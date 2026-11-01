@@ -106,8 +106,12 @@ platform :windows do
     # activator and framework dependency that Windows App SDK push requires,
     # but it does split building from packing.
     dart("run", "msix:build", "--store", "--version", msix_version)
-    dart("run", "tool/patch_msix_manifest.dart",
-         "--app-id=#{AZURE_APP_ID}", "--runtime=2")
+    # The toast CLSID is the one the runner has always registered. It must
+    # never change: the shell finds the app for a delivered toast by it.
+    dart("run", "windows_push:patch_manifest",
+         "--remote-id=#{AZURE_APP_ID}",
+         "--toast-clsid=C2EC5161-3E44-44EC-97FF-90DC93713ADF",
+         "--runtime=2")
     dart("run", "msix:pack", "--store", "--version", msix_version)
     UI.user_error!("MSIX not found at #{msix_path}") unless File.exist?(msix_path)
     UI.success("Packaged #{msix_path}")
