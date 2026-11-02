@@ -1,5 +1,25 @@
 # Windows-Push als eigenständiges Flutter-Plugin auslösen
 
+## Stand (1. November 2026)
+
+Das Plugin existiert: [`hinata-platform/windows_push`](https://github.com/hinata-platform/windows_push),
+Version 0.1.0, noch nicht auf pub.dev. hinata-app konsumiert es als
+Git-Abhängigkeit (Commit-Pin in `pubspec.yaml`); `wns_channel.cpp/.h`,
+`windows/cmake/WindowsAppSDK.cmake` und `tool/patch_msix_manifest.dart` sind
+gelöscht. `lib/core/notifications/wns_channel.dart` ist nur noch ein Adapter
+mit Hinatas Remote-ID, Routen-Guard und der Toast-Gruppe `timer`.
+
+Fastlane ruft `dart run windows_push:patch_manifest` mit der **bisherigen**
+Toast-CLSID (`C2EC5161-…`) auf. Ohne `--toast-clsid` würde das Plugin eine
+aus dem Paketnamen abgeleitete CLSID setzen, und jeder Toast, der beim Update
+noch im Info-Center liegt, öffnete die App nicht mehr.
+
+**Zwei GUIDs, nicht eine.** `CreateChannelAsync` bekommt die Object ID des
+Service Principals (`33fa840e-…`), die COM-Klasse im Manifest die Application
+(client) ID (`e89a5a67-…`). Das Plugin hatte beides als Client-ID
+dokumentiert und die Patcher-Option `--remote-id` genannt; korrigiert, die
+Option heißt jetzt `--app-id`.
+
 ## Ausgangslage
 
 In `hinata-app` ist WNS-Push für Windows vollständig implementiert und im Betrieb
@@ -108,20 +128,28 @@ Quelldateien.
 ## Offene Punkte vor einer Veröffentlichung
 
 - [ ] Auf einer **zweiten Maschine** verifizieren (bisher nur eine Konstellation)
-- [ ] Verhalten **ohne Paket-Identität** definieren (aktuell: liefert `null`)
-- [ ] Abhängigkeit vom `msix`-Paket klären — der Manifest-Patcher setzt dessen
-      `build`/`pack`-Trennung voraus. Alternativen für andere Packaging-Wege?
-- [ ] **Framework-abhängig vs. self-contained** entscheiden und dokumentieren
-- [ ] cppwinrt-Version zur Laufzeit aus dem installierten Windows SDK ermitteln
-      statt sie zu pinnen
-- [ ] Beispiel-App mit minimalem Server-Stub
-- [ ] Namensfindung und Abgrenzung zu `flutter_local_notifications_windows`
+      — Build, Patch und Pack von Plugin-Beispiel und Hinata laufen auf dem
+      Windows-11-Rechner (VS 2022, Windows Kits 10.0.26100); Kanal und Klick
+      stehen noch aus, weil ein Test mit Hinatas Paket-Identität eine
+      Store-Version braucht
+- [x] Verhalten **ohne Paket-Identität** definieren: `isSupported()` false,
+      `getChannelUri` null, Toast-Methoden false, nichts wirft
+- [x] Abhängigkeit vom `msix`-Paket klären: der Patcher nimmt `--manifest=<pfad>`
+      und läuft vor jedem `makeappx`, nicht nur mit `msix`
+- [x] **Framework-abhängig vs. self-contained** entschieden und dokumentiert
+      (`--runtime=2` = framework-abhängig; self-contained liefert das Plugin nicht)
+- [x] cppwinrt-Version aus dem installierten Windows SDK ermitteln statt pinnen
+- [x] Beispiel-App mit minimalem Server-Stub (`example/tool/send_push.dart`)
+- [x] Namensfindung: `windows_push`; Abgrenzung im README
+- [ ] Auf pub.dev veröffentlichen (erster Upload von Hand, siehe RELEASING.md
+      im Plugin) und hier die Git-Abhängigkeit durch eine Version ersetzen
 
 ## Abnahmekriterien
 
 - [ ] Eine frische Flutter-Windows-App bekommt mit dem Plugin eine Kanal-URI
 - [ ] Toast-Klick routet bei **laufender und geschlossener** App
-- [ ] Unverpackter Build startet und meldet sauber „nicht verfügbar"
+- [x] Unverpackter Build startet und meldet sauber „nicht verfügbar"
+      (Plugin-CI und lokal mit Hinata)
 - [ ] MSIX besteht die Store-Validierung
 
 ## Referenzen

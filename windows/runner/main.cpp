@@ -1,10 +1,10 @@
 #include <flutter/dart_project.h>
 #include <flutter/flutter_view_controller.h>
 #include <windows.h>
+#include <windows_push/windows_push_plugin_c_api.h>
 
 #include "flutter_window.h"
 #include "utils.h"
-#include "wns_channel.h"
 
 int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
                       _In_ wchar_t *command_line, _In_ int show_command) {
@@ -21,7 +21,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   // Hinata: push/notification registration must happen before any window or
   // engine exists — a notification click COM-activates the process and the
   // activation is dispatched almost immediately. Registering later loses it.
-  hinata::InitNotifications();
+  WindowsPushInitialize();
 
   flutter::DartProject project(L"data");
 

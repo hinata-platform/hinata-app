@@ -1207,10 +1207,10 @@ packages:
     dependency: "direct main"
     description:
       name: liquid_glass_widgets
-      sha256: "1fd7c1593f19d33fb166179c20b6a5158f67c2cb15ad2087ab3908a5b395a9ea"
+      sha256: "959da0600b5f9e582f45f975858dea0f060d66d2752243227b3320195b40b179"
       url: "https://pub.dev"
     source: hosted
-    version: "1.15.0"
+    version: "1.16.1"
   logging:
     dependency: transitive
     description:
@@ -2144,6 +2144,15 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.5.2"
+  windows_push:
+    dependency: "direct main"
+    description:
+      path: "."
+      ref: "84b75cc912664120eccc41d19d9c9fbf17343609"
+      resolved-ref: "84b75cc912664120eccc41d19d9c9fbf17343609"
+      url: "https://github.com/hinata-platform/windows_push.git"
+    source: git
+    version: "0.1.0"
   wolt_modal_sheet:
     dependency: "direct main"
     description:
