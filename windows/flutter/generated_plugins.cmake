@@ -22,6 +22,7 @@ list(APPEND FLUTTER_PLUGIN_LIST
   tray_manager
   url_launcher_windows
   window_manager
+  windows_push
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST

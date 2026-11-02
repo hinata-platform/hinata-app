@@ -33,6 +33,12 @@ STORE_PRODUCT_ID = "9N5NVNPKBBLR".freeze
 # push. Public identity, not a credential — the secret lives in the gateway.
 AZURE_APP_ID = "e89a5a67-af01-4c79-98a7-09e609f0c831".freeze
 
+# CLSID the shell activates when a Hinata toast is clicked. Arbitrary but MUST
+# NEVER CHANGE: every toast still in Action Center points at it. Passed
+# explicitly because windows_push would otherwise derive one from the package
+# name — a different GUID than the one the runner shipped with.
+TOAST_ACTIVATOR_CLSID = "C2EC5161-3E44-44EC-97FF-90DC93713ADF".freeze
+
 def repo_root
   File.expand_path("../..", __dir__)
 end
@@ -106,8 +112,9 @@ platform :windows do
     # activator and framework dependency that Windows App SDK push requires,
     # but it does split building from packing.
     dart("run", "msix:build", "--store", "--version", msix_version)
-    dart("run", "tool/patch_msix_manifest.dart",
-         "--app-id=#{AZURE_APP_ID}", "--runtime=2")
+    dart("run", "windows_push:patch_manifest",
+         "--app-id=#{AZURE_APP_ID}", "--runtime=2",
+         "--toast-clsid=#{TOAST_ACTIVATOR_CLSID}", "--display-name=hinata")
     dart("run", "msix:pack", "--store", "--version", msix_version)
     UI.user_error!("MSIX not found at #{msix_path}") unless File.exist?(msix_path)
     UI.success("Packaged #{msix_path}")
