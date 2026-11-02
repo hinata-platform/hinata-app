@@ -1,5 +1,18 @@
-• Report comments, issues, files, pages and people, and block people who bother you
-• Moderation with a clear reason for every decision and a way to appeal
-• House rules of your organisation, agreed to once
-• Signing in with single sign-on stays bound to your own account
-• Many smaller fixes and improvements
+• Take push from the windows_push plugin, pin liquid_glass_widgets 1.16.1
+• Let an admin name the mail server whose Authentication-Results vouch for a sender
+• Ask about external images in comments too, and take the trust answer where an issue arrives instead of while building
+• Ask for documents with their layout and keep the last answer on trust when a response leaves it out
+• Give comments the issue's answer about external images, read their full documents, and tidy what the review found
+• Drop the mark in front of links: colour and underline say it, and a rebuilt mail looks like the mail
+• Leave the link mark out of a mail in its own layout and off links that are pictures
+• Skip the thumbnail request for a locked PDF and share the tile chip colour
+• Mark a password-protected PDF with a lock in the file list
+• Clear the wrong-password message once the password is edited
+• Keep the password field focused while a password is checked
+• Give the PDF reader one parse budget per document
+• Read each object stream entry once and size the copy's xref by its objects
+• Harden the PDF unlock against hostile files and keep plain PDFs off the isolate
+• Ask for the password of a protected PDF instead of failing to show it
+• Ask before loading a mail's external images, load them through the server, and keep trusted senders in the settings
+• Leave the Play images to the listing lane instead of re-sending them with every release [skip ci]
+• Pass deliver an absolute path to the age rating answers, which a relative __dir__ sent to the wrong folder [skip ci]

@@ -1,0 +1,4 @@
+• Take push from the windows_push plugin, pin liquid_glass_widgets 1.16.1
+• Let an admin name the mail server whose Authentication-Results vouch for a sender
+• Ask about external images in comments too, and take the trust answer where an issue arrives instead of while building
+• Ask for documents with their layout and keep the last answer on trust when a response leaves it out
