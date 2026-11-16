@@ -1134,7 +1134,10 @@
       "none": "无项目",
       "assigned": "已归属",
       "search": "搜索项目和事项",
-      "searchProjects": "搜索项目"
+      "searchProjects": "搜索项目",
+      "noIssue": "无事项",
+      "searchIssues": "搜索事项",
+      "issuesIn": "{{project}} 中的事项"
     },
     "filter": {
       "search": "搜索记录",
@@ -1160,6 +1163,8 @@
       "subtitle": "可以是某天的时长，也可以是开始和结束时间。",
       "description": "你做了什么？",
       "placement": "项目或事项",
+      "project": "项目",
+      "issue": "事项",
       "day": "日期",
       "duration": "时长",
       "pickDuration": "选择时长",

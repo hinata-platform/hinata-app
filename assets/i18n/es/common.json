@@ -1134,7 +1134,10 @@
       "none": "Sin proyecto",
       "assigned": "Asignado",
       "search": "Buscar proyectos e incidencias",
-      "searchProjects": "Buscar proyectos"
+      "searchProjects": "Buscar proyectos",
+      "noIssue": "Sin incidencia",
+      "searchIssues": "Buscar incidencias",
+      "issuesIn": "Incidencias en {{project}}"
     },
     "filter": {
       "search": "Buscar entradas",
@@ -1160,6 +1163,8 @@
       "subtitle": "Una duración en un día, o un inicio y un fin.",
       "description": "¿En qué has trabajado?",
       "placement": "Proyecto o incidencia",
+      "project": "Proyecto",
+      "issue": "Incidencia",
       "day": "Día",
       "duration": "Duración",
       "pickDuration": "Elegir duración",

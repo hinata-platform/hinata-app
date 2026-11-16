@@ -161,8 +161,11 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
             // Inside the carried repositories, so it reads the same ones the
             // pickers and the lock notice in the sheet read.
             BlocProvider(
-              create: (context) =>
-                  TimeEntrySheetCubit(context.read<TimeRepository>()),
+              create: (context) => TimeEntrySheetCubit(
+                context.read<TimeRepository>(),
+                projects: context.read<ProjectRepository>(),
+                issues: context.read<IssueRepository>(),
+              ),
             ),
             BlocProvider(
               create: (context) =>
@@ -232,8 +235,9 @@ class _TimeEntryForm extends StatefulWidget {
 }
 
 class _TimeEntryFormState extends State<_TimeEntryForm> {
-  /// The placement row, so the picker it opens can be anchored to it.
-  final _placementKey = GlobalKey();
+  /// The project and issue rows, so the pickers they open hang off them.
+  final _projectKey = GlobalKey();
+  final _issueKey = GlobalKey();
 
   /// The same, for the tag row.
   final _tagsKey = GlobalKey();
@@ -282,6 +286,32 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
           issueId: widget.entry?.issueId ?? widget.timer?.issueId,
         )
       : widget.placement ?? TimePlacement.unfiled;
+
+  /// The names the two placement rows show. An entry and a timer carry only
+  /// ids, so theirs are read once the sheet is open; a placement handed in
+  /// from an issue's time card brings its own.
+  late String? _projectLabel =
+      widget.placement?.projectLabel ??
+      (widget.placement?.issueId == null ? widget.placement?.label : null);
+  late String? _issueLabel =
+      widget.placement?.issueLabel ??
+      (widget.placement?.issueId != null ? widget.placement?.label : null);
+
+  /// Whether this edit files the entry somewhere else than it was. Only then
+  /// does the save mention the placement — the server leaves it alone
+  /// otherwise, which keeps an entry editable after its owner left the project
+  /// it is filed under.
+  bool get _placementMoved {
+    final entry = widget.entry;
+    return entry != null &&
+        (entry.projectId != _placement.projectId ||
+            entry.issueId != _placement.issueId);
+  }
+
+  /// The default of the project the edited entry sat in, read once it moves:
+  /// a flag that was that default follows the entry to its new project.
+  bool? _entryProjectBillable;
+  bool _entryBillableAsked = false;
 
   late List<String> _tags = List.of(
     widget.entry?.tags ?? widget.timer?.tags ?? const <String>[],
@@ -454,6 +484,29 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   void initState() {
     super.initState();
     _readProjectBillable();
+    _readPlacementLabels();
+  }
+
+  /// Names the project and the issue the sheet opened on, where nobody handed
+  /// them in.
+  void _readPlacementLabels() {
+    final projectId = _projectLabel == null ? _placement.projectId : null;
+    final issueId = _issueLabel == null ? _placement.issueId : null;
+    if (projectId == null && issueId == null) return;
+    final asked = _placement;
+    unawaited(
+      context
+          .read<TimeEntrySheetCubit>()
+          .placementLabels(projectId: projectId, issueId: issueId)
+          .then((names) {
+            // Moved on in the meantime: these names are for where it was.
+            if (!mounted || _placement != asked) return;
+            setState(() {
+              _projectLabel ??= names.project;
+              _issueLabel ??= names.issue;
+            });
+          }),
+    );
   }
 
   /// Reads the default of the project a new entry or a finishing timer is
@@ -464,9 +517,23 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final projectId = _placement.projectId;
     _billableReadFor = projectId;
     _projectBillable = null;
-    if (_isEdit || projectId == null) return;
-    if (_timerFlagApplies) return;
     final entries = context.read<TimeEntrySheetCubit>();
+    if (_isEdit) {
+      final from = widget.entry!.projectId;
+      // An edit in place shows the entry's own flag; only a move asks.
+      if (projectId == from) return;
+      if (from != null && !_entryBillableAsked) {
+        _entryBillableAsked = true;
+        unawaited(
+          entries.projectDefaultBillable(from).then((billable) {
+            if (!mounted) return;
+            setState(() => _entryProjectBillable = billable);
+          }),
+        );
+      }
+    }
+    if (projectId == null) return;
+    if (_timerFlagApplies) return;
     unawaited(
       entries.projectDefaultBillable(projectId).then((billable) {
         if (!mounted || _billableReadFor != projectId) return;
@@ -480,12 +547,26 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// somebody set it or while it is filed where it ran, otherwise the
   /// project's default or the instance's.
   bool _billableShown(TimePolicySnapshot policy) {
-    return _billable ??
-        (_isEdit
-            ? widget.entry!.billable
-            : _timerFlagApplies
-            ? widget.timer!.billable
-            : _projectBillable ?? policy.defaultBillable);
+    final chosen = _billable;
+    if (chosen != null) return chosen;
+    final entry = widget.entry;
+    if (entry != null) {
+      if (entry.projectId == _placement.projectId) return entry.billable;
+      // The server's rule for a move: a flag that was the old project's
+      // default follows the entry to the new one; anything else was chosen.
+      final wasDefault =
+          entry.billable ==
+          (entry.projectId == null
+              ? policy.defaultBillable
+              : _entryProjectBillable ?? policy.defaultBillable);
+      if (!wasDefault) return entry.billable;
+      return _placement.projectId == null
+          ? policy.defaultBillable
+          : _projectBillable ?? policy.defaultBillable;
+    }
+    return _timerFlagApplies
+        ? widget.timer!.billable
+        : _projectBillable ?? policy.defaultBillable;
   }
 
   /// Whether the timer's own flag stands for this entry: somebody set it, or
@@ -545,14 +626,17 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       return TimeLockInfo(reason: 'invoice', entryId: entry.id);
     }
     // Both sides of the change, the way the server's gate is: moving an entry
-    // *off* a frozen day changes that day as surely as moving one onto it.
-    for (final day in [_filedOn, if (_isEdit) entry?.date]) {
+    // *off* a frozen day or project changes it as surely as moving one onto
+    // it. The project decides half the freeze — a period is somebody's hours
+    // for one project — so each side is judged with its own.
+    final sides = <(DateTime?, String?)>[
+      (_filedOn, _placement.projectId),
+      if (entry != null) (entry.date, entry.projectId),
+    ];
+    for (final (day, projectId) in sides) {
       final lock = policy.lockFor(
         day,
-        // The project decides half the freeze: a period is somebody's hours for
-        // one project. On an edit that is the entry's own — a patch cannot move
-        // it — and on a create it is whatever the composer is pointing at.
-        projectId: entry?.projectId ?? _placement.projectId,
+        projectId: projectId,
         entryId: entry?.id,
       );
       if (lock != null) return lock;
@@ -566,8 +650,9 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       issueId: _placement.issueId,
       description: _description.text,
       tags: _tags,
-      // Only a create settles the placement; see [TimePolicySnapshot.unmetBy].
-      placement: !_isEdit,
+      // Only a create or a move settles the placement; an edit in place is not
+      // held to a rule it never touched. See [TimePolicySnapshot.unmetBy].
+      placement: !_isEdit || _placementMoved,
     );
   }
 
@@ -619,7 +704,8 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   int get _pendingMinutes {
     final minutes = _minutesShown ?? 0;
     final before = widget.entry;
-    if (before == null) return minutes;
+    // Moved, all of it lands somewhere new.
+    if (before == null || _placementMoved) return minutes;
     return minutes - before.durationMinutes;
   }
 
@@ -650,9 +736,10 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final entries = context.read<TimeEntrySheetCubit>();
     final interval = _mode == _EntryMode.interval;
     final draft = TimeEntryDraft(
-      // Only a create places an entry; see the field above.
-      projectId: _isEdit ? null : _placement.projectId,
-      issueId: _isEdit ? null : _placement.issueId,
+      // A create always places the entry; an edit only when it moves it.
+      projectId: !_isEdit || _placementMoved ? _placement.projectId : null,
+      issueId: !_isEdit || _placementMoved ? _placement.issueId : null,
+      movesPlacement: _placementMoved,
       // One of the two, never both: sending a duration alongside an interval
       // would leave the server to pick a winner, and the pair already defines
       // the length.
@@ -920,33 +1007,44 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                     ],
                   ),
                 ],
-                // Creating only. `PATCH /time/entries/{id}` carries no project
-                // or issue — the patch shape is shared with the 1.x route, where
-                // moving an entry between projects is a different act with
-                // different rules (it moves hours out of one project's reports
-                // and into another's). Showing the field here would be a control
-                // that closes the sheet, reports success, and changes nothing.
-                if (!_isEdit) ...[
-                  const SizedBox(height: 14),
-                  KeyedSubtree(
-                    key: _placementKey,
-                    child: FieldButton(
-                      icon: _placement.isUnfiled
-                          ? LucideIcons.circleSlash
-                          : LucideIcons.folder,
-                      label: _required(
-                        context.t('time.entry.placement'),
-                        policy.requiresPlacement,
-                      ),
-                      value:
-                          _placement.label ??
-                          (_placement.isUnfiled
-                              ? context.t('time.placement.none')
-                              : context.t('time.placement.assigned')),
-                      onTap: _pickPlacement,
+                // Where the entry is filed, in two rows because they are two
+                // questions: the project, and optionally an issue inside it.
+                // On every shape of the sheet — an entry the timer filed
+                // unfiled is assigned afterwards right here.
+                const SizedBox(height: 14),
+                KeyedSubtree(
+                  key: _projectKey,
+                  child: FieldButton(
+                    icon: _placement.projectId == null
+                        ? LucideIcons.circleSlash
+                        : LucideIcons.folder,
+                    label: _required(
+                      context.t('time.entry.project'),
+                      policy.requiresPlacement,
                     ),
+                    value: _placement.projectId == null
+                        ? context.t('time.placement.none')
+                        : _projectLabel ?? context.t('time.placement.assigned'),
+                    empty: _placement.projectId == null,
+                    onTap: _pickProject,
                   ),
-                ],
+                ),
+                const SizedBox(height: 12),
+                KeyedSubtree(
+                  key: _issueKey,
+                  child: FieldButton(
+                    icon: LucideIcons.circleCheckBig,
+                    label: _required(
+                      context.t('time.entry.issue'),
+                      policy.requiredIssue,
+                    ),
+                    value: _placement.issueId == null
+                        ? context.t('time.placement.noIssue')
+                        : _issueLabel ?? context.t('time.placement.assigned'),
+                    empty: _placement.issueId == null,
+                    onTap: _pickIssue,
+                  ),
+                ),
                 const SizedBox(height: 14),
                 // A timer's interval is not a field. It came off the clock, and
                 // the two shapes below are the choice between typing a length
@@ -1057,12 +1155,9 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                     issueId: _placement.issueId,
                     issueLabel: _placement.issueId == null
                         ? null
-                        : (_placement.label ??
-                              context.t('budget.subject.issue')),
-                    projectLabel: _placement.issueId == null
-                        ? (_placement.label ??
-                              context.t('budget.subject.project'))
-                        : context.t('budget.subject.project'),
+                        : (_issueLabel ?? context.t('budget.subject.issue')),
+                    projectLabel:
+                        _projectLabel ?? context.t('budget.subject.project'),
                     pendingMinutes: _pendingMinutes,
                   ),
                 ),
@@ -1132,23 +1227,66 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         '${localizations.formatTimeOfDay(TimeOfDay.fromDateTime(moment), alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(context))}';
   }
 
-  Future<void> _pickPlacement() async {
-    final picked = await showTimePlacementPicker(
+  Future<void> _pickProject() async {
+    final picked = await showTimeProjectPicker(
       context,
       // The row's own rectangle: on a wide window the picker hangs off the
-      // field being edited. Without it every caller fell through to the bottom
-      // sheet, so a desktop reader changing one field of a dialog got a panel
-      // rising out of the bottom of the display.
-      anchorRect: anchorRectOf(_placementKey),
-      current: _placement,
+      // field being edited, on a phone it is a sheet.
+      anchorRect: anchorRectOf(_projectKey),
+      currentProjectId: _placement.projectId,
     );
     if (picked == null || !mounted) return;
+    // Another project lets go of the issue, which belonged to the old one;
+    // the same project keeps it.
+    _place(
+      picked.projectId == _placement.projectId
+          ? _placement
+          : TimePlacement(projectId: picked.projectId),
+      projectLabel: picked.projectId == _placement.projectId
+          ? _projectLabel
+          : picked.projectLabel,
+      issueLabel: picked.projectId == _placement.projectId ? _issueLabel : null,
+    );
+  }
+
+  Future<void> _pickIssue() async {
+    final picked = await showTimeIssuePicker(
+      context,
+      anchorRect: anchorRectOf(_issueKey),
+      // Inside the entry's project when it has one: an issue elsewhere would
+      // quietly move the entry along with it.
+      projectId: _placement.projectId,
+      projectLabel: _projectLabel,
+      currentIssueId: _placement.issueId,
+    );
+    if (picked == null || !mounted) return;
+    final sameProject = picked.projectId == _placement.projectId;
+    _place(
+      TimePlacement(projectId: picked.projectId, issueId: picked.issueId),
+      // An issue brings its project; its name is read if the search did not
+      // already know it.
+      projectLabel: picked.projectLabel ?? (sameProject ? _projectLabel : null),
+      issueLabel: picked.issueLabel,
+    );
+    if (_projectLabel == null && picked.projectId != null) {
+      _readPlacementLabels();
+    }
+  }
+
+  void _place(
+    TimePlacement placement, {
+    String? projectLabel,
+    String? issueLabel,
+  }) {
     setState(() {
       // The people named with `+` were found in the project the entry had;
       // another project may not have them.
-      final moved = picked.projectId != _placement.projectId;
+      final moved = placement.projectId != _placement.projectId;
       if (moved) _mentioned.clear();
-      _placement = picked;
+      _placement = placement;
+      _projectLabel = projectLabel;
+      _issueLabel = issueLabel;
+      _refusedBy = null;
       if (moved) _readProjectBillable();
     });
   }

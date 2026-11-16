@@ -53,6 +53,23 @@ void main() {
     expect(issues.calls.single, invoked(#issues, named: {#query: null}));
   });
 
+  test('pages on, and keeps an issue search inside one project', () async {
+    projects.answer(#searchProjects, (projects: [alpha], total: 30));
+    issues.answer(#issues, (issues: [issue], total: 30));
+
+    await cubit.searchProjects(query: '', size: 20, page: 1);
+    await cubit.searchIssues(size: 20, page: 2, projectId: 'p1');
+
+    expect(
+      projects.calls.single,
+      invoked(#searchProjects, named: {#page: 1, #size: 20}),
+    );
+    expect(
+      issues.calls.single,
+      invoked(#issues, named: {#page: 2, #size: 20, #projectId: 'p1'}),
+    );
+  });
+
   test('passes a failure through', () async {
     projects.fail(#searchProjects, failure);
     issues.fail(#issues, failure);

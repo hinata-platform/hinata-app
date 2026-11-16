@@ -1134,7 +1134,10 @@
       "none": "Sans projet",
       "assigned": "Affecté",
       "search": "Rechercher projets et tickets",
-      "searchProjects": "Rechercher des projets"
+      "searchProjects": "Rechercher des projets",
+      "noIssue": "Sans ticket",
+      "searchIssues": "Rechercher des tickets",
+      "issuesIn": "Tickets de {{project}}"
     },
     "filter": {
       "search": "Rechercher des saisies",
@@ -1160,6 +1163,8 @@
       "subtitle": "Soit une durée sur une journée, soit un début et une fin.",
       "description": "Sur quoi as-tu travaillé ?",
       "placement": "Projet ou ticket",
+      "project": "Projet",
+      "issue": "Ticket",
       "day": "Jour",
       "duration": "Durée",
       "pickDuration": "Choisir une durée",
