@@ -49,7 +49,8 @@ class _MacPasteShimState extends State<MacPasteShim> {
   /// dialog is not held on to.
   FocusNode? _previous;
 
-  /// The text field whose focus the framework parked, until focus moves on.
+  /// The text field whose focus the framework parked, until focus moves on or
+  /// a key finds it taken down.
   FocusNode? _parked;
 
   bool _installed = false;
@@ -158,7 +159,15 @@ class _MacPasteShimState extends State<MacPasteShim> {
 
     if (_focusIsParked) {
       final node = _parked;
-      if (node == null || !_canPaste(node)) return false;
+      if (node == null) return false;
+      // A field taken down while focus was parked — its dialog closed — is
+      // dropped here: it is neither focused nor pasted into, and not held on
+      // to any longer.
+      if (editableTextOf(node) == null) {
+        _parked = null;
+        return false;
+      }
+      if (!_canPaste(node)) return false;
       // The framework is about to give focus back to exactly this field; the
       // key only arrived first. Nothing is decided here: in a microtask, after
       // whatever focus change is already pending has been applied, the field
