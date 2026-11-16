@@ -209,48 +209,99 @@ const int hinataMaxInlineImageBytes = 512 * 1024;
 /// uploaded screenshot that quietly turns into a grey rectangle is the kind of
 /// thing people report as "it saved wrong". This says what happened, and keeps
 /// the name so the picture is still identifiable.
-Widget hinataImagePlaceholder(BuildContext context, String src) => Container(
-  constraints: const BoxConstraints(minHeight: 88),
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-  decoration: BoxDecoration(
-    color: AppColors.surfaceMuted,
-    borderRadius: BorderRadius.circular(10),
-    border: Border.all(color: AppColors.hairline),
-  ),
-  child: Row(
-    children: [
-      Icon(LucideIcons.imageOff, size: 18, color: AppColors.inkFaint),
-      const SizedBox(width: 12),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              context.t('md.imageFailed'),
-              style: TextStyle(
-                fontSize: AppType.label,
-                color: AppColors.inkSoft,
+///
+/// It fits any cell the image was given. A mail lays out a logo in a 64 px
+/// cell, and a row of an icon, its gap and the words does not fit there: below
+/// [hinataPlaceholderTextWidth] wide, or [hinataPlaceholderTextHeight] high
+/// when the height is fixed, only the icon is drawn, scaled down if even that
+/// is too big, and the words go to the screen reader.
+Widget hinataImagePlaceholder(BuildContext context, String src) =>
+    LayoutBuilder(
+      builder: (context, constraints) {
+        final failed = context.t('md.imageFailed');
+        final decoration = BoxDecoration(
+          color: AppColors.surfaceMuted,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppColors.hairline),
+        );
+        final roomy =
+            constraints.maxWidth >= hinataPlaceholderTextWidth &&
+            (!constraints.hasBoundedHeight ||
+                constraints.maxHeight >= hinataPlaceholderTextHeight);
+        if (!roomy) {
+          return Semantics(
+            label: failed,
+            image: true,
+            child: Container(
+              decoration: decoration,
+              alignment: Alignment.center,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Icon(
+                    LucideIcons.imageOff,
+                    size: 18,
+                    color: AppColors.inkFaint,
+                  ),
+                ),
               ),
             ),
-            const SizedBox(height: 2),
-            // The address, not the alt text: when an image will not load, what
-            // is worth reading is where it was supposed to come from.
-            Text(
-              src,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: AppType.caption,
-                color: AppColors.inkFaint,
+          );
+        }
+        return Container(
+          constraints: const BoxConstraints(minHeight: 88),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+          decoration: decoration,
+          child: Row(
+            children: [
+              Icon(LucideIcons.imageOff, size: 18, color: AppColors.inkFaint),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  // Flexible lines: in a cell of fixed height, at a large text
+                  // size, the words are cut off instead of overflowing it.
+                  children: [
+                    Flexible(
+                      child: Text(
+                        failed,
+                        style: TextStyle(
+                          fontSize: AppType.label,
+                          color: AppColors.inkSoft,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    // The address, not the alt text: when an image will not
+                    // load, what is worth reading is where it was supposed to
+                    // come from.
+                    Flexible(
+                      child: Text(
+                        src,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: AppType.caption,
+                          color: AppColors.inkFaint,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
-        ),
-      ),
-    ],
-  ),
-);
+            ],
+          ),
+        );
+      },
+    );
+
+/// Narrowest cell [hinataImagePlaceholder] writes its words in.
+const double hinataPlaceholderTextWidth = 200;
+
+/// Lowest cell of fixed height [hinataImagePlaceholder] writes its words in.
+const double hinataPlaceholderTextHeight = 72;
 
 /// Opens [url] in the browser — what tapping a link does unless a host says
 /// otherwise.
