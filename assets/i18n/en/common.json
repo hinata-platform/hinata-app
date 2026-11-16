@@ -1134,7 +1134,10 @@
       "none": "No project",
       "assigned": "Assigned",
       "search": "Search projects and issues",
-      "searchProjects": "Search projects"
+      "searchProjects": "Search projects",
+      "noIssue": "No issue",
+      "searchIssues": "Search issues",
+      "issuesIn": "Issues in {{project}}"
     },
     "filter": {
       "search": "Search entries",
@@ -1160,6 +1163,8 @@
       "subtitle": "Either a duration on a day, or a start and an end.",
       "description": "What did you work on?",
       "placement": "Project or issue",
+      "project": "Project",
+      "issue": "Issue",
       "day": "Day",
       "duration": "Duration",
       "pickDuration": "Pick a duration",

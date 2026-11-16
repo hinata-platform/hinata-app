@@ -369,10 +369,17 @@ class TimeEntryDraft extends Equatable {
     this.endedAt,
     this.tags,
     this.billable,
+    this.movesPlacement = false,
   });
 
   final String? projectId;
   final String? issueId;
+
+  /// Whether a patch moves the entry to [projectId] and [issueId] — both sent,
+  /// explicitly null where the entry is taken off its project or issue. False,
+  /// a patch says nothing about where the entry sits and the server leaves it
+  /// there; a create always places it.
+  final bool movesPlacement;
   final int? durationMinutes;
   final DateTime? date;
   final String? activityType;
@@ -413,6 +420,7 @@ class TimeEntryDraft extends Equatable {
   /// you losing; the entry sheet now shows the field and sends it only once it
   /// has been opened (`_tagsTouched`).
   Map<String, dynamic> toPatchJson() => {
+    if (movesPlacement) ...{'projectId': projectId, 'issueId': issueId},
     'durationMinutes': ?durationMinutes,
     if (date != null) 'date': formatDateOnly(date!),
     'activityType': ?activityType,
@@ -427,6 +435,7 @@ class TimeEntryDraft extends Equatable {
   List<Object?> get props => [
     projectId,
     issueId,
+    movesPlacement,
     durationMinutes,
     date,
     activityType,

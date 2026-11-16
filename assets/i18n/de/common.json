@@ -1134,7 +1134,10 @@
       "none": "Ohne Projekt",
       "assigned": "Zugeordnet",
       "search": "Projekte und Vorgänge suchen",
-      "searchProjects": "Projekte suchen"
+      "searchProjects": "Projekte suchen",
+      "noIssue": "Ohne Vorgang",
+      "searchIssues": "Vorgänge suchen",
+      "issuesIn": "Vorgänge in {{project}}"
     },
     "filter": {
       "search": "Einträge durchsuchen",
@@ -1160,6 +1163,8 @@
       "subtitle": "Entweder eine Dauer an einem Tag oder Beginn und Ende.",
       "description": "Woran hast du gearbeitet?",
       "placement": "Projekt oder Vorgang",
+      "project": "Projekt",
+      "issue": "Vorgang",
       "day": "Tag",
       "duration": "Dauer",
       "pickDuration": "Dauer auswählen",

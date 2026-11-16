@@ -18,11 +18,21 @@ class PlacementPickerCubit extends Cubit<void> {
   Future<({List<Project> projects, int total})> searchProjects({
     required String query,
     required int size,
-  }) => _projects.searchProjects(query: query, size: size);
+    int page = 0,
+  }) => _projects.searchProjects(query: query, size: size, page: page);
 
-  /// Issues matching [query]; null lists the newest.
+  /// Issues matching [query]; null lists the newest. [projectId] keeps the
+  /// search inside one project — the issue field of an entry that already has
+  /// one, where an issue of another project would move the entry with it.
   Future<({List<Issue> issues, int total})> searchIssues({
     String? query,
     required int size,
-  }) => _issues.issues(query: query, size: size);
+    int page = 0,
+    String? projectId,
+  }) => _issues.issues(
+    query: query,
+    size: size,
+    page: page,
+    projectId: projectId,
+  );
 }

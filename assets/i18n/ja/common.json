@@ -1134,7 +1134,10 @@
       "none": "プロジェクトなし",
       "assigned": "割り当て済み",
       "search": "プロジェクトと課題を検索",
-      "searchProjects": "プロジェクトを検索"
+      "searchProjects": "プロジェクトを検索",
+      "noIssue": "課題なし",
+      "searchIssues": "課題を検索",
+      "issuesIn": "{{project}} の課題"
     },
     "filter": {
       "search": "記録を検索",
@@ -1160,6 +1163,8 @@
       "subtitle": "ある日の長さ、または開始と終了のどちらかです。",
       "description": "何に取り組みましたか？",
       "placement": "プロジェクトまたは課題",
+      "project": "プロジェクト",
+      "issue": "課題",
       "day": "日",
       "duration": "長さ",
       "pickDuration": "長さを選択",

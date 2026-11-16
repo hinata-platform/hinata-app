@@ -25,8 +25,14 @@ import 'fake_time_policy_cubit.dart';
 /// pick a winner.
 void main() {
   late _FakeTimeRepository repository;
+  late _FakeProjectRepository projects;
+  late _FakeIssueRepository issues;
 
-  setUp(() => repository = _FakeTimeRepository());
+  setUp(() {
+    repository = _FakeTimeRepository();
+    projects = _FakeProjectRepository();
+    issues = _FakeIssueRepository();
+  });
 
   var deletions = 0;
 
@@ -48,12 +54,8 @@ void main() {
       MultiRepositoryProvider(
         providers: [
           RepositoryProvider<TimeRepository>.value(value: repository),
-          RepositoryProvider<ProjectRepository>.value(
-            value: _FakeProjectRepository(),
-          ),
-          RepositoryProvider<IssueRepository>.value(
-            value: _FakeIssueRepository(),
-          ),
+          RepositoryProvider<ProjectRepository>.value(value: projects),
+          RepositoryProvider<IssueRepository>.value(value: issues),
         ],
         child: MultiBlocProvider(
           providers: [
@@ -415,32 +417,164 @@ void main() {
     expect(find.textContaining('*'), findsNothing);
   });
 
-  testWidgets(
-    'the placement field is not offered on an entry that cannot move',
-    (tester) async {
-      // PATCH /time/entries/{id} carries no project or issue. A field shown here
-      // would close the sheet, report success and change nothing.
+  group('project and issue', () {
+    WorkItem unfiled({bool billable = false}) => WorkItem(
+      id: 'w1',
+      durationMinutes: 60,
+      activityType: 'Development',
+      date: DateTime.now(),
+      billable: billable,
+    );
+
+    Future<void> pick(WidgetTester tester, String row, String option) async {
+      await tester.tap(find.text(row));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(option).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a new entry offers both rows', (tester) async {
+      await open(tester);
+
+      expect(find.text('time.entry.project'), findsOneWidget);
+      expect(find.text('time.entry.issue'), findsOneWidget);
+    });
+
+    testWidgets('an edit offers them too, and leaves the placement out of a '
+        'save that did not move the entry', (tester) async {
+      await open(tester, entry: unfiled());
+
+      expect(find.text('time.entry.project'), findsOneWidget);
+      expect(find.text('time.entry.issue'), findsOneWidget);
+      await save(tester);
+
+      final draft = repository.updated.single.$2;
+      expect(draft.movesPlacement, isFalse);
+      expect(draft.toPatchJson(), isNot(contains('projectId')));
+      expect(draft.toPatchJson(), isNot(contains('issueId')));
+    });
+
+    testWidgets('an entry the timer left unfiled is filed on an issue, which '
+        'brings its project', (tester) async {
+      issues.found = [_issue];
+      await open(tester, entry: unfiled());
+
+      await pick(tester, 'time.placement.noIssue', 'Fix the gate');
+      expect(find.text('ALP-1 · Fix the gate'), findsOneWidget);
+      // The project's name is read for the row above.
+      expect(find.text('Alpha'), findsOneWidget);
+      await save(tester);
+
+      final draft = repository.updated.single.$2;
+      expect(draft.movesPlacement, isTrue);
+      expect(draft.toPatchJson(), containsPair('projectId', 'p1'));
+      expect(draft.toPatchJson(), containsPair('issueId', 'i1'));
+    });
+
+    testWidgets('the issue search stays inside the entry\'s project', (
+      tester,
+    ) async {
+      issues.found = [_issue];
       await open(
         tester,
         entry: WorkItem(
           id: 'w1',
+          projectId: 'p1',
+          durationMinutes: 60,
+          activityType: 'Development',
+          date: DateTime.now(),
+        ),
+      );
+      // The entry's project is named from its id.
+      expect(find.text('Alpha'), findsOneWidget);
+
+      await tester.tap(find.text('time.placement.noIssue'));
+      await tester.pumpAndSettle();
+
+      expect(issues.askedProjectIds, ['p1']);
+    });
+
+    testWidgets('another project lets go of the issue; no project unfiles '
+        'the entry', (tester) async {
+      projects.found = [_alpha, _beta];
+      await open(
+        tester,
+        entry: WorkItem(
+          id: 'w1',
+          projectId: 'p1',
+          issueId: 'i1',
+          durationMinutes: 60,
+          activityType: 'Development',
+          date: DateTime.now(),
+        ),
+      );
+      expect(find.text('ALP-1 · Fix the gate'), findsOneWidget);
+
+      await pick(tester, 'Alpha', 'Beta');
+      expect(find.text('ALP-1 · Fix the gate'), findsNothing);
+      expect(find.text('time.placement.noIssue'), findsOneWidget);
+
+      await pick(tester, 'Beta', 'time.placement.none');
+      await save(tester);
+
+      final json = repository.updated.single.$2.toPatchJson();
+      expect(json, containsPair('projectId', null));
+      expect(json, containsPair('issueId', null));
+    });
+
+    testWidgets('taking the issue away keeps the project', (tester) async {
+      issues.found = [_issue];
+      await open(
+        tester,
+        entry: WorkItem(
+          id: 'w1',
+          projectId: 'p1',
+          issueId: 'i1',
           durationMinutes: 60,
           activityType: 'Development',
           date: DateTime.now(),
         ),
       );
 
-      expect(find.text('time.entry.placement'), findsNothing);
+      await pick(tester, 'ALP-1 · Fix the gate', 'time.placement.noIssue');
       await save(tester);
-      expect(repository.updated.single.$2.projectId, isNull);
-      expect(repository.updated.single.$2.issueId, isNull);
-    },
-  );
 
-  testWidgets('a new entry still offers it', (tester) async {
-    await open(tester);
+      final json = repository.updated.single.$2.toPatchJson();
+      expect(json, containsPair('projectId', 'p1'));
+      expect(json, containsPair('issueId', null));
+    });
 
-    expect(find.text('time.entry.placement'), findsOneWidget);
+    testWidgets('a flag that was the default follows the entry to a project '
+        'that bills, and is left to the server', (tester) async {
+      projects.found = [_alpha];
+      repository.settings = const ProjectTimeSettings(defaultBillable: true);
+      await open(tester, entry: unfiled());
+      bool shown() => tester.widget<HiveSwitch>(find.byType(HiveSwitch)).value;
+      expect(shown(), isFalse);
+
+      await pick(tester, 'time.placement.none', 'Alpha');
+
+      expect(shown(), isTrue);
+      await save(tester);
+      expect(repository.updated.single.$2.billable, isNull);
+    });
+
+    testWidgets('a required issue holds a move to a project without one', (
+      tester,
+    ) async {
+      projects.found = [_alpha];
+      await open(
+        tester,
+        entry: unfiled(),
+        policy: const TimePolicySnapshot(requiredIssue: true),
+      );
+      // An edit in place is not held to it.
+      expect(find.text('time.policy.needIssue'), findsNothing);
+
+      await pick(tester, 'time.placement.none', 'Alpha');
+
+      expect(find.text('time.policy.needIssue'), findsOneWidget);
+    });
   });
 
   testWidgets('a new entry opened from an issue is filed on it', (
@@ -729,9 +863,24 @@ class _FakeTimeRepository implements TimeRepository {
       throw UnimplementedError('${invocation.memberName} is not faked');
 }
 
+const _alpha = Project(id: 'p1', key: 'ALP', name: 'Alpha');
+const _beta = Project(id: 'p2', key: 'BET', name: 'Beta');
+const _issue = Issue(
+  id: 'i1',
+  projectId: 'p1',
+  readableId: 'ALP-1',
+  title: 'Fix the gate',
+  state: 'todo',
+);
+
 class _FakeProjectRepository implements ProjectRepository {
+  List<Project> found = const [];
+
   @override
-  Future<List<Project>> resolveProjects(List<String> ids) async => const [];
+  Future<List<Project>> resolveProjects(List<String> ids) async => [
+    for (final project in [_alpha, _beta])
+      if (ids.contains(project.id)) project,
+  ];
 
   @override
   Future<({List<Project> projects, int total})> searchProjects({
@@ -739,7 +888,7 @@ class _FakeProjectRepository implements ProjectRepository {
     int page = 0,
     int size = 25,
     bool archived = false,
-  }) async => (projects: const <Project>[], total: 0);
+  }) async => (projects: found, total: found.length);
 
   @override
   dynamic noSuchMethod(Invocation invocation) =>
@@ -747,9 +896,22 @@ class _FakeProjectRepository implements ProjectRepository {
 }
 
 class _FakeIssueRepository implements IssueRepository {
+  List<Issue> found = const [];
+  final List<String?> askedProjectIds = [];
+
   @override
-  dynamic noSuchMethod(Invocation invocation) =>
-      throw UnimplementedError('${invocation.memberName} is not faked');
+  Future<Issue> issue(String id) async => _issue;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) {
+    // The list call has two dozen filters; only the one the picker narrows
+    // by is of interest here.
+    if (invocation.memberName == #issues) {
+      askedProjectIds.add(invocation.namedArguments[#projectId] as String?);
+      return Future.value((issues: found, total: found.length));
+    }
+    throw UnimplementedError('${invocation.memberName} is not faked');
+  }
 }
 
 /// The sheet carries the timer cubit across to its route; nothing here stops.
