@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/models/work_models.dart';
 import 'package:hinata/features/issues/external_images/external_images_banner.dart';
 
 /// The question a mail program asks before it shows a sender's images
@@ -10,6 +11,7 @@ void main() {
     VoidCallback? onLoadOnce,
     VoidCallback? onTrust,
     double scale = 1,
+    ExternalImageTrustUnavailable? unavailable,
   }) => MaterialApp(
     home: MediaQuery(
       data: MediaQueryData(
@@ -21,6 +23,7 @@ void main() {
           sender: sender,
           onLoadOnce: onLoadOnce ?? () {},
           onTrust: onTrust ?? () {},
+          trustUnavailable: unavailable,
         ),
       ),
     ),
@@ -57,6 +60,49 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(band(scale: 2));
+
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('says why there is no "always" for an unverified sender', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      band(sender: null, unavailable: ExternalImageTrustUnavailable.unverified),
+    );
+
+    expect(find.text('issues.externalImages.unavailable.unverified'), findsOne);
+    expect(find.byType(FilledButton), findsNothing);
+    expect(find.text('issues.externalImages.loadOnce'), findsOneWidget);
+  });
+
+  testWidgets('says so when the mail is not signed at all', (tester) async {
+    await tester.pumpWidget(
+      band(sender: null, unavailable: ExternalImageTrustUnavailable.unsigned),
+    );
+
+    expect(find.text('issues.externalImages.unavailable.unsigned'), findsOne);
+  });
+
+  testWidgets('explains nothing when the sender can be trusted', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      band(unavailable: ExternalImageTrustUnavailable.unverified),
+    );
+
+    expect(find.textContaining('unavailable'), findsNothing);
+    expect(find.byType(FilledButton), findsOneWidget);
+  });
+
+  testWidgets('the explanation wraps at twice the text size', (tester) async {
+    await tester.pumpWidget(
+      band(
+        sender: null,
+        unavailable: ExternalImageTrustUnavailable.unsigned,
+        scale: 2,
+      ),
+    );
 
     expect(tester.takeException(), isNull);
   });

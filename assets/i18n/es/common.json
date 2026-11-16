@@ -1063,7 +1063,11 @@
       "blocked": "Las imágenes externas se bloquearon para proteger tu privacidad.",
       "loadOnce": "Cargar una vez",
       "trust": "Cargar siempre de {{domain}}",
-      "trustedToast": "Las imágenes de {{domain}} se cargarán siempre."
+      "trustedToast": "Las imágenes de {{domain}} se cargarán siempre.",
+      "unavailable": {
+        "unsigned": "Este correo no está firmado, así que no se puede confirmar su remitente. Por eso no aparece «Cargar siempre».",
+        "unverified": "No se pudo confirmar el remitente de este correo. Por eso no aparece «Cargar siempre»."
+      }
     }
   },
   "type": {
@@ -4868,7 +4872,7 @@
       "title": "Remitentes de confianza",
       "subtitle": "Los correos de estos remitentes muestran sus imágenes sin preguntar.",
       "emptyTitle": "No hay remitentes de confianza",
-      "emptyMessage": "Elige «Cargar siempre» sobre una incidencia creada desde un correo para añadir su remitente.",
+      "emptyMessage": "Elige «Cargar siempre de …» sobre las imágenes bloqueadas de una incidencia creada desde un correo. Aparece cuando la firma del correo confirma su remitente.",
       "more": "Cargar más",
       "since": "Desde el {{date}}",
       "remove": "Quitar",

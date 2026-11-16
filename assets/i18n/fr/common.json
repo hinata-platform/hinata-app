@@ -1063,7 +1063,11 @@
       "blocked": "Les images externes ont été bloquées pour protéger votre vie privée.",
       "loadOnce": "Charger une fois",
       "trust": "Toujours charger depuis {{domain}}",
-      "trustedToast": "Les images de {{domain}} se chargent désormais toujours."
+      "trustedToast": "Les images de {{domain}} se chargent désormais toujours.",
+      "unavailable": {
+        "unsigned": "Cet e-mail n’est pas signé, son expéditeur ne peut donc pas être confirmé. C’est pourquoi « Toujours charger » n’est pas proposé.",
+        "unverified": "L’expéditeur de cet e-mail n’a pas pu être confirmé. C’est pourquoi « Toujours charger » n’est pas proposé."
+      }
     }
   },
   "type": {
@@ -4868,7 +4872,7 @@
       "title": "Expéditeurs de confiance",
       "subtitle": "Les e-mails de ces expéditeurs affichent leurs images sans demander.",
       "emptyTitle": "Aucun expéditeur de confiance",
-      "emptyMessage": "Choisissez « Toujours charger » au-dessus d’un ticket créé depuis un e-mail pour ajouter son expéditeur.",
+      "emptyMessage": "Choisissez « Toujours charger depuis … » au-dessus des images bloquées d’un ticket créé depuis un e-mail. L’option apparaît quand la signature de l’e-mail confirme son expéditeur.",
       "more": "Charger plus",
       "since": "Depuis le {{date}}",
       "remove": "Retirer",

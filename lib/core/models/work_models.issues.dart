@@ -172,6 +172,7 @@ class Issue extends Equatable {
     this.moderation = const {},
     this.externalImageSender,
     this.externalImagesTrusted,
+    this.externalImageTrustUnavailable,
   });
 
   final String id;
@@ -209,6 +210,11 @@ class Issue extends Equatable {
   /// without asking. Null where the server did not work it out for this
   /// response; the previous answer still holds then.
   final bool? externalImagesTrusted;
+
+  /// Why there is no [externalImageSender] to trust although the issue came
+  /// from a mail with external images: its sender could not be verified.
+  /// Null for every other issue, and from servers that do not say.
+  final ExternalImageTrustUnavailable? externalImageTrustUnavailable;
 
   final String type;
   final String priority;
@@ -357,6 +363,9 @@ class Issue extends Equatable {
     moderation: ContentMark.mapOf(json['moderation']),
     externalImageSender: json['externalImageSender'] as String?,
     externalImagesTrusted: json['externalImagesTrusted'] as bool?,
+    externalImageTrustUnavailable: ExternalImageTrustUnavailable.fromJson(
+      json['externalImageTrustUnavailable'],
+    ),
   );
 
   /// Returns a copy with the given fields replaced — used for optimistic
@@ -413,6 +422,7 @@ class Issue extends Equatable {
     moderation: moderation,
     externalImageSender: externalImageSender,
     externalImagesTrusted: externalImagesTrusted,
+    externalImageTrustUnavailable: externalImageTrustUnavailable,
   );
 
   @override
@@ -436,6 +446,7 @@ class Issue extends Equatable {
     epicId,
     externalImageSender,
     externalImagesTrusted,
+    externalImageTrustUnavailable,
     // Both dates and both rules: a row shows the date and marks that it hangs
     // off the event, so a list that compared neither would not repaint when a
     // reschedule moved every deadline on screen.
@@ -880,3 +891,21 @@ class IssueActivity extends Equatable {
 /// A stored offset, or null for a date nobody derived.
 RelativeDate? _offset(Object? value) =>
     value is Map<String, dynamic> ? RelativeDate.fromJson(value) : null;
+
+/// Why a reader cannot always load the images of a mail's sender (HIN-181).
+enum ExternalImageTrustUnavailable {
+  /// The mail carries no signature, so its sender cannot be confirmed.
+  unsigned,
+
+  /// No signature confirms the sender, or it was not checked yet.
+  unverified;
+
+  /// The server's word for it; a value this app does not know yet reads as
+  /// [unverified], the general case.
+  static ExternalImageTrustUnavailable? fromJson(Object? value) =>
+      switch (value) {
+        null => null,
+        'unsigned' => unsigned,
+        _ => unverified,
+      };
+}

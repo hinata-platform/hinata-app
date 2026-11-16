@@ -1063,7 +1063,11 @@
       "blocked": "External images were blocked to protect your privacy.",
       "loadOnce": "Load once",
       "trust": "Always load from {{domain}}",
-      "trustedToast": "Images from {{domain}} now always load."
+      "trustedToast": "Images from {{domain}} now always load.",
+      "unavailable": {
+        "unsigned": "This e-mail isn't signed, so its sender can't be confirmed. That's why there is no “Always load”.",
+        "unverified": "The sender of this e-mail couldn't be confirmed. That's why there is no “Always load”."
+      }
     }
   },
   "type": {
@@ -4868,7 +4872,7 @@
       "title": "Trusted senders",
       "subtitle": "Mail from these senders shows its images without asking.",
       "emptyTitle": "No trusted senders",
-      "emptyMessage": "Choose “Always load” above an issue made from an e-mail to add its sender.",
+      "emptyMessage": "Choose “Always load from …” above the blocked images of an issue made from an e-mail. It's there when the e-mail's signature confirms its sender.",
       "more": "Load more",
       "since": "Since {{date}}",
       "remove": "Remove",

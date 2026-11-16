@@ -23,6 +23,32 @@ void main() {
     expect(issue.externalImagesTrusted, isTrue);
   });
 
+  test('an issue says why its sender cannot be trusted', () {
+    Issue read(Object? why) => Issue.fromJson({
+      'id': '1',
+      'projectId': 'p',
+      'readableId': 'IT-157',
+      'title': 'Deine eSIM',
+      'state': 'Open',
+      'externalImageTrustUnavailable': ?why,
+    });
+
+    expect(
+      read('unsigned').externalImageTrustUnavailable,
+      ExternalImageTrustUnavailable.unsigned,
+    );
+    expect(
+      read('unverified').externalImageTrustUnavailable,
+      ExternalImageTrustUnavailable.unverified,
+    );
+    // A reason a later server adds still reads as the general one.
+    expect(
+      read('expired').externalImageTrustUnavailable,
+      ExternalImageTrustUnavailable.unverified,
+    );
+    expect(read(null).externalImageTrustUnavailable, isNull);
+  });
+
   test('a comment reads its full document too', () {
     final comment = IssueComment.fromJson(const {
       'id': 'c1',
