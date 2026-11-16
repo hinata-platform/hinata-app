@@ -8,9 +8,9 @@ import 'local_notifications_surface.dart' show TimerNotificationAction;
 /// The end of an interval as a scheduled Windows toast, through windows_push.
 ///
 /// Not flutter_local_notifications: the MSIX registers exactly one
-/// `ToastActivatorCLSID`, the one windows_push patches in, and a second
-/// activator would be a second app as far as Windows is concerned. A tap
-/// arrives through the same deep-link path as a push.
+/// `ToastActivatorCLSID`, windows_push's, and a second activator would be a
+/// second app as far as Windows is concerned. A tap arrives through the same
+/// deep-link path as a push.
 class WindowsToastSurface extends TimerSurface {
   WindowsToastSurface({
     WnsChannel channel = const WnsChannel(),

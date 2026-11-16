@@ -26,8 +26,8 @@ Arbeit hier gilt:
 ## Worum es geht
 
 Hinata nutzt für Windows-Push ab Branch `HIN-25` (PR #169) nur noch das eigene
-Plugin [`windows_push`](https://pub.dev/packages/windows_push) 0.1.0
-(`hinata-platform/windows_push`, MIT). Der eingebaute Code ist entfernt:
+Plugin `windows_push` (`hinata-platform/windows_push`, MIT), auf Commit
+`84b75cc` gepinnt, bis eine Version mit `--app-id` auf pub.dev ist. Der eingebaute Code ist entfernt:
 `windows/runner/wns_channel.*`, `windows/cmake/WindowsAppSDK.cmake`,
 `tool/patch_msix_manifest.dart`. Übrig im Runner ist eine Zeile,
 `WindowsPushInitialize()` am Anfang von `wWinMain`.
@@ -129,7 +129,7 @@ Bauen wie die Fastlane-Lane `build` (Version frei wählbar, vierte Stelle 0):
 ```powershell
 flutter build windows --release
 dart run msix:build --store --version 99.0.0.0
-dart run windows_push:patch_manifest --remote-id=e89a5a67-af01-4c79-98a7-09e609f0c831 --toast-clsid=C2EC5161-3E44-44EC-97FF-90DC93713ADF --runtime=2
+dart run windows_push:patch_manifest --app-id=e89a5a67-af01-4c79-98a7-09e609f0c831 --runtime=2 --toast-clsid=C2EC5161-3E44-44EC-97FF-90DC93713ADF --display-name=hinata
 dart run msix:pack --store --version 99.0.0.0
 ```
 
