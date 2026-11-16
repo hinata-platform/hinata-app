@@ -1137,7 +1137,9 @@
       "searchProjects": "プロジェクトを検索",
       "noIssue": "課題なし",
       "searchIssues": "課題を検索",
-      "issuesIn": "{{project}} の課題"
+      "issuesIn": "{{project}} の課題",
+      "loadAgain": "もう一度読み込む",
+      "searchFailed": "検索から応答がありませんでした。"
     },
     "filter": {
       "search": "記録を検索",

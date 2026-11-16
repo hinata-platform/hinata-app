@@ -104,7 +104,7 @@ Future<bool> showLogWork(BuildContext context, Issue issue) async {
     placement: TimePlacement(
       projectId: issue.projectId,
       issueId: issue.id,
-      label: '${issue.readableId} · ${issue.title}',
+      issueLabel: '${issue.readableId} · ${issue.title}',
     ),
   );
   return saved != null;

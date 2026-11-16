@@ -50,35 +50,39 @@ class IssueRepository {
     DateTime? createdTo,
     DateTime? dueFrom,
     DateTime? dueTo,
+    // Aborts the request once a newer search supersedes it (a picker the reader
+    // keeps typing into, or closes).
+    CancelToken? cancelToken,
   }) async {
     String? day(DateTime? d) => d?.toIso8601String().substring(0, 10);
+    Future<dynamic> get(String path, Map<String, dynamic> query) =>
+        cancelToken == null
+        ? _api.get(path, query: query)
+        : _api.getCancellable(path, query: query, cancelToken: cancelToken);
     final data =
-        await _api.get(
-              '/api/v1/issues',
-              query: {
-                'projectId': ?projectId,
-                'state': ?state,
-                if (states != null && states.isNotEmpty) 'states': states,
-                'assigneeId': ?assigneeId,
-                if (assigneeIds != null && assigneeIds.isNotEmpty)
-                  'assigneeIds': assigneeIds,
-                'sprintId': ?sprintId,
-                'type': ?type,
-                if (types != null && types.isNotEmpty) 'types': types,
-                if (priorities != null && priorities.isNotEmpty)
-                  'priorities': priorities,
-                'createdFrom': ?day(createdFrom),
-                'createdTo': ?day(createdTo),
-                'dueFrom': ?day(dueFrom),
-                'dueTo': ?day(dueTo),
-                if (noSprint) 'noSprint': true,
-                if (archived) 'archived': true,
-                'sort': ?sort,
-                if (query != null && query.isNotEmpty) 'query': query,
-                'page': page,
-                'size': size,
-              },
-            )
+        await get('/api/v1/issues', {
+              'projectId': ?projectId,
+              'state': ?state,
+              if (states != null && states.isNotEmpty) 'states': states,
+              'assigneeId': ?assigneeId,
+              if (assigneeIds != null && assigneeIds.isNotEmpty)
+                'assigneeIds': assigneeIds,
+              'sprintId': ?sprintId,
+              'type': ?type,
+              if (types != null && types.isNotEmpty) 'types': types,
+              if (priorities != null && priorities.isNotEmpty)
+                'priorities': priorities,
+              'createdFrom': ?day(createdFrom),
+              'createdTo': ?day(createdTo),
+              'dueFrom': ?day(dueFrom),
+              'dueTo': ?day(dueTo),
+              if (noSprint) 'noSprint': true,
+              if (archived) 'archived': true,
+              'sort': ?sort,
+              if (query != null && query.isNotEmpty) 'query': query,
+              'page': page,
+              'size': size,
+            })
             as Map<String, dynamic>;
     return (
       issues: ((data['content'] as List<dynamic>?) ?? [])
@@ -167,6 +171,17 @@ class IssueRepository {
               as List<dynamic>)
           .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
           .toList();
+
+  /// The key and title of each issue in [ids] the caller may see, and nothing
+  /// else — for a form that holds only an issue's id and has to name it. Ids the
+  /// caller cannot see are absent from the answer.
+  Future<List<IssueRef>> issueRefs(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    return ((await _api.get('/api/v1/issues/refs', query: {'ids': ids}))
+            as List<dynamic>)
+        .map((r) => IssueRef.fromJson(r as Map<String, dynamic>))
+        .toList();
+  }
 
   /// Batch-resolves readable ids (e.g. `HIN-1,HIN-2`) to the full issues needed
   /// to render `{{issue:KEY}}` chips + hover cards (state, assignee, priority,

@@ -1137,7 +1137,9 @@
       "searchProjects": "ابحث في المشاريع",
       "noIssue": "بدون مهمة",
       "searchIssues": "ابحث في المهام",
-      "issuesIn": "المهام في {{project}}"
+      "issuesIn": "المهام في {{project}}",
+      "loadAgain": "إعادة التحميل",
+      "searchFailed": "لم يستجب البحث."
     },
     "filter": {
       "search": "ابحث في السجلات",

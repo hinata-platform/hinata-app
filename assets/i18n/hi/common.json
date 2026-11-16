@@ -1137,7 +1137,9 @@
       "searchProjects": "प्रोजेक्ट खोजें",
       "noIssue": "बिना इश्यू",
       "searchIssues": "इश्यू खोजें",
-      "issuesIn": "{{project}} के इश्यू"
+      "issuesIn": "{{project}} के इश्यू",
+      "loadAgain": "फिर से लोड करें",
+      "searchFailed": "खोज से कोई जवाब नहीं मिला।"
     },
     "filter": {
       "search": "प्रविष्टियाँ खोजें",
