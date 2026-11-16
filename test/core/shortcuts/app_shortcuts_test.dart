@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/shortcuts/app_shortcuts.dart';
+import 'package:lexical_editor_flutter/lexical_editor_flutter.dart';
 
 /// What the registry answers, and what it refuses to answer.
 ///
@@ -251,6 +252,42 @@ void main() {
         expect(shortcut(key: LogicalKeyboardKey.slash).label, 'Ctrl /');
       },
     );
+  });
+
+  group('which focus counts as typing', () {
+    // textIsBeingEdited asks the real focus tree, so these do pump one.
+    testWidgets('a focused text field does', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(home: Scaffold(body: TextField(autofocus: true))),
+      );
+      await tester.pump();
+      expect(textIsBeingEdited(), isTrue);
+    });
+
+    testWidgets('the rich-text editor does not, so ⌘K and ⌘/ work there', (
+      tester,
+    ) async {
+      final editor = createLexicalEditor();
+      registerLexical(editor);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LexicalEditable(
+              editor: editor,
+              autofocus: true,
+              scrollable: false,
+              cursorBlinkInterval: Duration.zero,
+              theme: const LexicalTheme(
+                baseTextStyle: TextStyle(fontSize: 14, height: 1.4),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(FocusManager.instance.primaryFocus, isNot(isNull));
+      expect(textIsBeingEdited(), isFalse);
+    });
   });
 }
 
