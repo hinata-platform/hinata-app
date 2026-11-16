@@ -3638,7 +3638,7 @@
       "textRefusalsSince": "{{count}} mail refused by the text check, last on {{date}}",
       "textRefusalsSince_plural": "{{count}} mails refused by the text check, last on {{date}}",
       "authservId": "Mail server name (authserv-id)",
-      "authservIdHelp": "The name your mail server writes into “Authentication-Results”. Only senders it confirms can be trusted to show their images. Empty: nobody is offered that."
+      "authservIdHelp": "Optional. The name your mail server writes into “Authentication-Results”. When it confirms a sender, that counts on top of the server's own check."
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux download URL",
@@ -4870,7 +4870,7 @@
     },
     "trustedSenders": {
       "title": "Trusted senders",
-      "subtitle": "Mail from these senders shows its images without asking.",
+      "subtitle": "Mail from these senders shows its images without asking. Only trust a domain if nobody else can put content into its mail.",
       "emptyTitle": "No trusted senders",
       "emptyMessage": "Choose “Always load from …” above the blocked images of an issue made from an e-mail. It's there when the e-mail's signature confirms its sender.",
       "more": "Load more",

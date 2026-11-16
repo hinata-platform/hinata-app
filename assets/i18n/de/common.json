@@ -3638,7 +3638,7 @@
       "textRefusalsSince": "{{count}} Mail von der Textprüfung abgelehnt, zuletzt am {{date}}",
       "textRefusalsSince_plural": "{{count}} Mails von der Textprüfung abgelehnt, zuletzt am {{date}}",
       "authservId": "Name des Mailservers (authserv-id)",
-      "authservIdHelp": "Der Name, den dein Mailserver in „Authentication-Results“ einträgt. Nur Absender, die er bestätigt, können für ihre Bilder als vertrauenswürdig markiert werden. Leer: Das wird niemandem angeboten."
+      "authservIdHelp": "Freiwillig. Der Name, den dein Mailserver in „Authentication-Results“ einträgt. Bestätigt er einen Absender, zählt das zusätzlich zur eigenen Prüfung des Servers."
     },
     "windowsStoreUrl": "Microsoft-Store-URL",
     "linuxStoreUrl": "Linux-Download-URL",
@@ -4870,7 +4870,7 @@
     },
     "trustedSenders": {
       "title": "Vertrauenswürdige Absender",
-      "subtitle": "E-Mails dieser Absender zeigen ihre Bilder ohne Rückfrage.",
+      "subtitle": "E-Mails dieser Absender zeigen ihre Bilder ohne Rückfrage. Vertraue einer Domain nur, wenn niemand sonst Inhalte in ihre E-Mails bringen kann.",
       "emptyTitle": "Keine vertrauenswürdigen Absender",
       "emptyMessage": "Wähle über den blockierten Bildern eines Vorgangs aus einer E-Mail „Immer von … laden“. Das gibt es, wenn die Signatur der E-Mail ihren Absender bestätigt.",
       "more": "Mehr laden",

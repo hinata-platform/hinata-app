@@ -3638,7 +3638,7 @@
       "textRefusalsSince": "{{count}} correo rechazado por la revisión de textos, el último el {{date}}",
       "textRefusalsSince_plural": "{{count}} correos rechazados por la revisión de textos, el último el {{date}}",
       "authservId": "Nombre del servidor de correo (authserv-id)",
-      "authservIdHelp": "El nombre que tu servidor escribe en «Authentication-Results». Solo los remitentes que confirma pueden marcarse como de confianza para mostrar sus imágenes. Vacío: no se ofrece a nadie."
+      "authservIdHelp": "Opcional. El nombre que tu servidor escribe en «Authentication-Results». Si confirma un remitente, eso cuenta además de la comprobación propia del servidor."
     },
     "windowsStoreUrl": "URL de Microsoft Store",
     "linuxStoreUrl": "URL de descarga para Linux",
@@ -4870,7 +4870,7 @@
     },
     "trustedSenders": {
       "title": "Remitentes de confianza",
-      "subtitle": "Los correos de estos remitentes muestran sus imágenes sin preguntar.",
+      "subtitle": "Los correos de estos remitentes muestran sus imágenes sin preguntar. Confía en un dominio solo si nadie más puede meter contenido en sus correos.",
       "emptyTitle": "No hay remitentes de confianza",
       "emptyMessage": "Elige «Cargar siempre de …» sobre las imágenes bloqueadas de una incidencia creada desde un correo. Aparece cuando la firma del correo confirma su remitente.",
       "more": "Cargar más",

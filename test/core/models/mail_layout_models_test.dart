@@ -34,16 +34,16 @@ void main() {
     });
 
     expect(
-      read('unsigned').externalImageTrustUnavailable,
+      read('UNSIGNED').externalImageTrustUnavailable,
       ExternalImageTrustUnavailable.unsigned,
     );
     expect(
-      read('unverified').externalImageTrustUnavailable,
+      read('UNVERIFIED').externalImageTrustUnavailable,
       ExternalImageTrustUnavailable.unverified,
     );
     // A reason a later server adds still reads as the general one.
     expect(
-      read('expired').externalImageTrustUnavailable,
+      read('EXPIRED').externalImageTrustUnavailable,
       ExternalImageTrustUnavailable.unverified,
     );
     expect(read(null).externalImageTrustUnavailable, isNull);

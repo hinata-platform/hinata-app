@@ -24,8 +24,9 @@ class ExternalImagesBanner extends StatelessWidget {
     this.trustUnavailable,
   });
 
-  /// The sender's domain; null when the document is not from a mail, which
-  /// leaves only "load once".
+  /// The sender's domain; null when the document is not from a mail, or when
+  /// its sender is not verified ([trustUnavailable] says why). Either way only
+  /// "load once" is left.
   final String? sender;
   final VoidCallback onLoadOnce;
   final VoidCallback onTrust;

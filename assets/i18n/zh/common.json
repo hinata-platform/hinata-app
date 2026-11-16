@@ -3638,7 +3638,7 @@
       "textRefusalsSince": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}",
       "textRefusalsSince_plural": "被文本检查拒绝的邮件：{{count}} 封，最近一次 {{date}}",
       "authservId": "邮件服务器名称（authserv-id）",
-      "authservIdHelp": "你的邮件服务器写入“Authentication-Results”的名称。只有经其确认的发件人才能被信任以显示图片。留空：不向任何人提供此选项。"
+      "authservIdHelp": "可选。你的邮件服务器写入“Authentication-Results”的名称。若它确认了发件人，这会在服务器自身的检查之外一并计入。"
     },
     "windowsStoreUrl": "Microsoft Store URL",
     "linuxStoreUrl": "Linux 下载 URL",
@@ -4870,7 +4870,7 @@
     },
     "trustedSenders": {
       "title": "受信任的发件人",
-      "subtitle": "这些发件人的邮件无需询问即可显示图片。",
+      "subtitle": "这些发件人的邮件无需询问即可显示图片。只有在其他人无法往其邮件中加入内容时，才信任该域名。",
       "emptyTitle": "没有受信任的发件人",
       "emptyMessage": "在由邮件创建的事项中，于被阻止的图片上方选择“始终加载来自 … 的图片”。当邮件签名确认了发件人时才会出现此选项。",
       "more": "加载更多",
