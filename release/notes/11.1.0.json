@@ -1,0 +1,5 @@
+{
+  "_comment": "Hand-written store release notes for 11.1.0, in both listing languages. tool/gen_changelog.py prefers this file over anything it can derive from the commits, then runs it through the same per-store platform gate as every other source — so keep every line free of operating-system, device and store names. One line per bullet; the leading bullet character is added when the note is written. Keep it short: the Play note is capped at 480 characters including the bullets.",
+  "en": "Assign time entries to a project and issue afterwards, including entries from the timer\nAlways load images from senders whose mail signature checks out\nEmoji and symbols from launchers and the character picker now paste into every text field\nMany smaller fixes and improvements",
+  "de": "Zeiteinträge nachträglich einem Projekt und Vorgang zuordnen, auch Einträge aus dem Timer\nBilder von Absendern mit bestätigter Mail-Signatur immer laden\nEmojis und Symbole aus Launchern und der Zeichenübersicht lassen sich in jedes Textfeld einfügen\nViele kleinere Korrekturen und Verbesserungen"
+}
