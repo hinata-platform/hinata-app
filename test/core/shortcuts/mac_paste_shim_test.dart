@@ -169,6 +169,42 @@ void main() {
     expect(focus.hasPrimaryFocus, isTrue);
   }, variant: _macOS);
 
+  testWidgets('focus parked while the app stays active is left alone', (
+    tester,
+  ) async {
+    // The view itself losing focus parks focus on the root scope too, with
+    // the app still resumed. No launcher pastes into that, and nothing typed
+    // meanwhile belongs to the field.
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    addTearDown(controller.dispose);
+    await _pump(tester, TextField(controller: controller, autofocus: true));
+    // A running app reports itself resumed; a test binding starts with no
+    // state at all.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    tester.binding.handleViewFocusChanged(
+      ui.ViewFocusEvent(
+        viewId: tester.view.viewId,
+        state: ui.ViewFocusState.unfocused,
+        direction: ui.ViewFocusDirection.undefined,
+      ),
+    );
+    await tester.pump();
+    final manager = FocusManager.instance;
+    expect(manager.primaryFocus, manager.rootScope, reason: 'parked');
+
+    final handled = _sendV(tester, modifiers: 0x100000);
+    _sendV(tester, modifiers: 0x100000, down: false);
+    await _settle(tester);
+
+    expect(controller.text, 'ab');
+    expect(reads(), 0);
+    expect(handled(), isFalse);
+    expect(manager.primaryFocus, manager.rootScope);
+  }, variant: _macOS);
+
   testWidgets('a paste Flutter handles itself is not pasted twice', (
     tester,
   ) async {

@@ -82,11 +82,19 @@ class _MacPasteShimState extends State<MacPasteShim> {
   void _remember(FocusNode? node) =>
       _previous = editableTextOf(node) != null ? node : null;
 
-  /// Remembers a text field when focus is parked away from it, and forgets it
-  /// the moment focus lands anywhere else — that is a claim of its own.
+  /// Remembers a text field when focus is parked away from it because the
+  /// app went inactive, and forgets it the moment focus lands anywhere else —
+  /// that is a claim of its own.
+  ///
+  /// Focus parked while the app is resumed means the window itself lost focus
+  /// — no launcher pastes into that — and is left alone, as lexical_flutter
+  /// does for the editor.
   void _onFocusChanged() {
     if (_focusIsParked) {
-      _parked ??= _previous;
+      final state = WidgetsBinding.instance.lifecycleState;
+      if (state != null && state != AppLifecycleState.resumed) {
+        _parked ??= _previous;
+      }
     } else {
       _parked = null;
     }
