@@ -79,7 +79,10 @@ class _AcceptShareFormState extends State<_AcceptShareForm> {
   late TimePlacement _placement = TimePlacement(
     projectId: widget.share.projectId,
     issueId: widget.share.issueId,
-    label: _offeredLabel(widget.share),
+    issueLabel: widget.share.issueKey == null
+        ? null
+        : _offeredLabel(widget.share),
+    projectLabel: widget.share.projectName,
   );
   late List<String> _tags = widget.share.tags;
   bool _placementTouched = false;

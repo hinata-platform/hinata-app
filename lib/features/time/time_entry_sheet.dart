@@ -31,6 +31,7 @@ import 'approval_actions.dart';
 import 'correction_requests.dart' show OwnCorrectionRequests;
 import 'lock_notice.dart';
 import 'placement_picker.dart';
+import 'placement_picker_cubit.dart';
 import 'tag_picker.dart';
 import 'time_entry_sheet_cubit.dart';
 import 'shares/share_entry_sheet.dart';
@@ -161,10 +162,14 @@ Future<SavedTimeEntry?> showTimeEntrySheet(
             // Inside the carried repositories, so it reads the same ones the
             // pickers and the lock notice in the sheet read.
             BlocProvider(
-              create: (context) => TimeEntrySheetCubit(
-                context.read<TimeRepository>(),
-                projects: context.read<ProjectRepository>(),
-                issues: context.read<IssueRepository>(),
+              create: (context) =>
+                  TimeEntrySheetCubit(context.read<TimeRepository>()),
+            ),
+            // The names of the project and the issue an entry carries as ids.
+            BlocProvider(
+              create: (context) => PlacementPickerCubit(
+                context.read<ProjectRepository>(),
+                context.read<IssueRepository>(),
               ),
             ),
             BlocProvider(
@@ -287,15 +292,17 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
         )
       : widget.placement ?? TimePlacement.unfiled;
 
-  /// The names the two placement rows show. An entry and a timer carry only
-  /// ids, so theirs are read once the sheet is open; a placement handed in
-  /// from an issue's time card brings its own.
+  /// The names the two placement rows show. A caller that already knows them —
+  /// the list, which has named the entry's project; an issue's time card —
+  /// hands them in with [_TimeEntryForm.placement]; whatever is still missing is
+  /// read once the sheet is open.
   late String? _projectLabel =
-      widget.placement?.projectLabel ??
-      (widget.placement?.issueId == null ? widget.placement?.label : null);
-  late String? _issueLabel =
-      widget.placement?.issueLabel ??
-      (widget.placement?.issueId != null ? widget.placement?.label : null);
+      widget.placement?.projectId == _placement.projectId
+      ? widget.placement?.projectLabel
+      : null;
+  late String? _issueLabel = widget.placement?.issueId == _placement.issueId
+      ? widget.placement?.issueLabel
+      : null;
 
   /// Whether this edit files the entry somewhere else than it was. Only then
   /// does the save mention the placement — the server leaves it alone
@@ -308,10 +315,13 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
             entry.issueId != _placement.issueId);
   }
 
-  /// The default of the project the edited entry sat in, read once it moves:
-  /// a flag that was that default follows the entry to its new project.
-  bool? _entryProjectBillable;
-  bool _entryBillableAsked = false;
+  /// Whether this sheet decides where the entry sits: a create always does, an
+  /// edit only when it moves the entry.
+  bool get _placesEntry => !_isEdit || _placementMoved;
+
+  /// The default of the project the edited entry sat in, once read; see
+  /// [TimePolicySnapshot.billableAfterMove] for why a record.
+  ({bool? value})? _entryProjectDefault;
 
   late List<String> _tags = List.of(
     widget.entry?.tags ?? widget.timer?.tags ?? const <String>[],
@@ -335,12 +345,12 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   /// flag it never showed being changed.
   bool? _billable;
 
-  /// The project's own default for the placement, once read; null while it
-  /// follows the instance or has not been read yet.
-  bool? _projectBillable;
+  /// The default of the project the entry is placed in, once read: null while
+  /// it is being read, `(value: null)` when the project follows the instance.
+  ({bool? value})? _projectDefault;
 
-  /// The project [_projectBillable] belongs to, so a late answer for a
-  /// project the person has since left is dropped.
+  /// The project [_projectDefault] belongs to, so a late answer for a project
+  /// the person has since left is dropped.
   String? _billableReadFor;
 
   bool _saving = false;
@@ -496,7 +506,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final asked = _placement;
     unawaited(
       context
-          .read<TimeEntrySheetCubit>()
+          .read<PlacementPickerCubit>()
           .placementLabels(projectId: projectId, issueId: issueId)
           .then((names) {
             // Moved on in the meantime: these names are for where it was.
@@ -516,18 +526,18 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
   void _readProjectBillable() {
     final projectId = _placement.projectId;
     _billableReadFor = projectId;
-    _projectBillable = null;
+    _projectDefault = null;
     final entries = context.read<TimeEntrySheetCubit>();
     if (_isEdit) {
       final from = widget.entry!.projectId;
-      // An edit in place shows the entry's own flag; only a move asks.
+      // An edit in place shows the entry's own flag; only a move asks. The
+      // cubit holds each project's answer, so asking again costs nothing.
       if (projectId == from) return;
-      if (from != null && !_entryBillableAsked) {
-        _entryBillableAsked = true;
+      if (from != null && _entryProjectDefault == null) {
         unawaited(
           entries.projectDefaultBillable(from).then((billable) {
             if (!mounted) return;
-            setState(() => _entryProjectBillable = billable);
+            setState(() => _entryProjectDefault = (value: billable));
           }),
         );
       }
@@ -537,7 +547,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     unawaited(
       entries.projectDefaultBillable(projectId).then((billable) {
         if (!mounted || _billableReadFor != projectId) return;
-        setState(() => _projectBillable = billable);
+        setState(() => _projectDefault = (value: billable));
       }),
     );
   }
@@ -551,22 +561,17 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     if (chosen != null) return chosen;
     final entry = widget.entry;
     if (entry != null) {
-      if (entry.projectId == _placement.projectId) return entry.billable;
-      // The server's rule for a move: a flag that was the old project's
-      // default follows the entry to the new one; anything else was chosen.
-      final wasDefault =
-          entry.billable ==
-          (entry.projectId == null
-              ? policy.defaultBillable
-              : _entryProjectBillable ?? policy.defaultBillable);
-      if (!wasDefault) return entry.billable;
-      return _placement.projectId == null
-          ? policy.defaultBillable
-          : _projectBillable ?? policy.defaultBillable;
+      return policy.billableAfterMove(
+        entryBillable: entry.billable,
+        fromProjectId: entry.projectId,
+        toProjectId: _placement.projectId,
+        fromDefault: _entryProjectDefault,
+        toDefault: _projectDefault,
+      );
     }
     return _timerFlagApplies
         ? widget.timer!.billable
-        : _projectBillable ?? policy.defaultBillable;
+        : _projectDefault?.value ?? policy.defaultBillable;
   }
 
   /// Whether the timer's own flag stands for this entry: somebody set it, or
@@ -652,7 +657,7 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
       tags: _tags,
       // Only a create or a move settles the placement; an edit in place is not
       // held to a rule it never touched. See [TimePolicySnapshot.unmetBy].
-      placement: !_isEdit || _placementMoved,
+      placement: _placesEntry,
     );
   }
 
@@ -737,8 +742,8 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
     final interval = _mode == _EntryMode.interval;
     final draft = TimeEntryDraft(
       // A create always places the entry; an edit only when it moves it.
-      projectId: !_isEdit || _placementMoved ? _placement.projectId : null,
-      issueId: !_isEdit || _placementMoved ? _placement.issueId : null,
+      projectId: _placesEntry ? _placement.projectId : null,
+      issueId: _placesEntry ? _placement.issueId : null,
       movesPlacement: _placementMoved,
       // One of the two, never both: sending a duration alongside an interval
       // would leave the server to pick a winner, and the pair already defines
@@ -1015,9 +1020,9 @@ class _TimeEntryFormState extends State<_TimeEntryForm> {
                 KeyedSubtree(
                   key: _projectKey,
                   child: FieldButton(
-                    icon: _placement.projectId == null
-                        ? LucideIcons.circleSlash
-                        : LucideIcons.folder,
+                    // One icon per field, whatever it holds: the icon says
+                    // which field this is, the text what is in it.
+                    icon: LucideIcons.folder,
                     label: _required(
                       context.t('time.entry.project'),
                       policy.requiresPlacement,

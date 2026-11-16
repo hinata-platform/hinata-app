@@ -1137,7 +1137,9 @@
       "searchProjects": "Buscar proyectos",
       "noIssue": "Sin incidencia",
       "searchIssues": "Buscar incidencias",
-      "issuesIn": "Incidencias en {{project}}"
+      "issuesIn": "Incidencias en {{project}}",
+      "loadAgain": "Volver a cargar",
+      "searchFailed": "La búsqueda no ha respondido."
     },
     "filter": {
       "search": "Buscar entradas",

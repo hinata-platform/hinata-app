@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -471,6 +472,25 @@ void main() {
       expect(draft.toPatchJson(), containsPair('issueId', 'i1'));
     });
 
+    testWidgets('a project name handed in by the list is not asked again', (
+      tester,
+    ) async {
+      await open(
+        tester,
+        entry: WorkItem(
+          id: 'w1',
+          projectId: 'p1',
+          durationMinutes: 60,
+          activityType: 'Development',
+          date: DateTime.now(),
+        ),
+        placement: const TimePlacement(projectId: 'p1', projectLabel: 'Alpha'),
+      );
+
+      expect(find.text('Alpha'), findsOneWidget);
+      expect(projects.resolved, isEmpty);
+    });
+
     testWidgets('the issue search stays inside the entry\'s project', (
       tester,
     ) async {
@@ -587,7 +607,7 @@ void main() {
       placement: const TimePlacement(
         projectId: 'p1',
         issueId: 'i1',
-        label: 'MOB-1 · Fix the login screen',
+        issueLabel: 'MOB-1 · Fix the login screen',
       ),
     );
 
@@ -875,12 +895,16 @@ const _issue = Issue(
 
 class _FakeProjectRepository implements ProjectRepository {
   List<Project> found = const [];
+  final List<List<String>> resolved = [];
 
   @override
-  Future<List<Project>> resolveProjects(List<String> ids) async => [
-    for (final project in [_alpha, _beta])
-      if (ids.contains(project.id)) project,
-  ];
+  Future<List<Project>> resolveProjects(List<String> ids) async {
+    resolved.add(ids);
+    return [
+      for (final project in [_alpha, _beta])
+        if (ids.contains(project.id)) project,
+    ];
+  }
 
   @override
   Future<({List<Project> projects, int total})> searchProjects({
@@ -888,6 +912,7 @@ class _FakeProjectRepository implements ProjectRepository {
     int page = 0,
     int size = 25,
     bool archived = false,
+    CancelToken? cancelToken,
   }) async => (projects: found, total: found.length);
 
   @override
@@ -899,8 +924,16 @@ class _FakeIssueRepository implements IssueRepository {
   List<Issue> found = const [];
   final List<String?> askedProjectIds = [];
 
+  /// The form names an issue from the slim ref lookup, never the whole issue.
   @override
-  Future<Issue> issue(String id) async => _issue;
+  Future<List<IssueRef>> issueRefs(List<String> ids) async => [
+    if (ids.contains(_issue.id))
+      IssueRef(
+        id: _issue.id,
+        readableId: _issue.readableId,
+        title: _issue.title,
+      ),
+  ];
 
   @override
   dynamic noSuchMethod(Invocation invocation) {

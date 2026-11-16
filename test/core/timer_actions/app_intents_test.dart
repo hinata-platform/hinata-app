@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' show CancelToken;
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -363,6 +364,7 @@ class _Projects implements ProjectRepository {
     int page = 0,
     int size = 25,
     bool archived = false,
+    CancelToken? cancelToken,
   }) async {
     pages.add(page);
     await hold?.future;

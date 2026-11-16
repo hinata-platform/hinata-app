@@ -1137,7 +1137,9 @@
       "searchProjects": "搜索项目",
       "noIssue": "无事项",
       "searchIssues": "搜索事项",
-      "issuesIn": "{{project}} 中的事项"
+      "issuesIn": "{{project}} 中的事项",
+      "loadAgain": "重新加载",
+      "searchFailed": "搜索没有响应。"
     },
     "filter": {
       "search": "搜索记录",

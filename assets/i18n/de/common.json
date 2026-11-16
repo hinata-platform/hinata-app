@@ -1137,7 +1137,9 @@
       "searchProjects": "Projekte suchen",
       "noIssue": "Ohne Vorgang",
       "searchIssues": "Vorgänge suchen",
-      "issuesIn": "Vorgänge in {{project}}"
+      "issuesIn": "Vorgänge in {{project}}",
+      "loadAgain": "Erneut laden",
+      "searchFailed": "Die Suche hat nicht geantwortet."
     },
     "filter": {
       "search": "Einträge durchsuchen",

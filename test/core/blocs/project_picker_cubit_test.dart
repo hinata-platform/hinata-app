@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hinata/core/api/api_client.dart';
 import 'package:hinata/core/blocs/project_picker_cubit.dart';
@@ -76,6 +77,7 @@ class _FakeProjectRepository implements ProjectRepository {
     int page = 0,
     int size = 25,
     bool archived = false,
+    CancelToken? cancelToken,
   }) async {
     searches.add((query: query, page: page, size: size));
     if (failure != null) throw failure!;

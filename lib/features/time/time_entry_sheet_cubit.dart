@@ -5,8 +5,6 @@ import '../../core/blocs/paged_cubit.dart';
 import '../../core/models/core_models.dart' show DirectoryUser;
 import '../../core/models/time_models.dart';
 import '../../core/models/work_models.dart';
-import '../../core/repositories/issue_repository.dart';
-import '../../core/repositories/project_repository.dart';
 import '../../core/repositories/time_repository.dart';
 
 /// The entry sheet's writes: a new entry, an edit, a removal, and taking a
@@ -16,17 +14,9 @@ import '../../core/repositories/time_repository.dart';
 /// refusal it shows. Stopping a timer goes through `TimerCubit`, which owns
 /// that transition. Failures pass through as the repository's `ApiFailure`.
 class TimeEntrySheetCubit extends Cubit<void> {
-  TimeEntrySheetCubit(
-    this._time, {
-    ProjectRepository? projects,
-    IssueRepository? issues,
-  }) : _projects = projects,
-       _issues = issues,
-       super(null);
+  TimeEntrySheetCubit(this._time) : super(null);
 
   final TimeRepository _time;
-  final ProjectRepository? _projects;
-  final IssueRepository? _issues;
   final Map<String, Future<bool?>> _defaultBillable = {};
 
   Future<SavedTimeEntry> create(TimeEntryDraft draft) => _time.create(draft);
@@ -63,41 +53,6 @@ class TimeEntrySheetCubit extends Cubit<void> {
           return null;
         }
       });
-
-  /// The names to show for an entry's project and issue, which the entry
-  /// itself carries only as ids. Either is null when it is not set, cannot be
-  /// read (the reader has since left the project) or the read failed: the
-  /// field then says that something is assigned without naming it, and the
-  /// entry is no less editable for it.
-  Future<({String? project, String? issue})> placementLabels({
-    String? projectId,
-    String? issueId,
-  }) async {
-    Future<String?> projectName() async {
-      final projects = _projects;
-      if (projectId == null || projects == null) return null;
-      try {
-        final found = await projects.resolveProjects([projectId]);
-        return found.isEmpty ? null : found.first.name;
-      } on ApiFailure {
-        return null;
-      }
-    }
-
-    Future<String?> issueName() async {
-      final issues = _issues;
-      if (issueId == null || issues == null) return null;
-      try {
-        final issue = await issues.issue(issueId);
-        return '${issue.readableId} · ${issue.title}';
-      } on ApiFailure {
-        return null;
-      }
-    }
-
-    final names = await Future.wait([projectName(), issueName()]);
-    return (project: names[0], issue: names[1]);
-  }
 
   /// Takes a calendar event over as an entry (HIN-94).
   Future<WorkItem> convert(String eventId, CalendarConversion conversion) =>

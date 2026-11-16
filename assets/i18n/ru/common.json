@@ -1137,7 +1137,9 @@
       "searchProjects": "Поиск проектов",
       "noIssue": "Без задачи",
       "searchIssues": "Поиск задач",
-      "issuesIn": "Задачи в {{project}}"
+      "issuesIn": "Задачи в {{project}}",
+      "loadAgain": "Загрузить снова",
+      "searchFailed": "Поиск не ответил."
     },
     "filter": {
       "search": "Поиск по записям",

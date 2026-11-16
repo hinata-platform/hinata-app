@@ -215,9 +215,10 @@ class TimePolicySnapshot extends Equatable {
     bool placement = true,
   }) {
     // [placement] is false where the caller is not settling where the entry
-    // sits: `PATCH /time/entries/{id}` carries neither field, so an edit cannot
-    // violate these two — and an entry filed before the rule existed would
-    // otherwise be read-only to the owner trying to bring it into compliance.
+    // sits: an edit that leaves the project and the issue alone. The server
+    // holds such an edit only to the description and the tags, so an entry
+    // filed before the rule existed stays editable; an edit that moves the
+    // entry passes true and is held to all four, as a create is.
     if (placement) {
       if (requiredIssue && issueId == null) return 'time.policy.needIssue';
       if (requiresPlacement && projectId == null) {
@@ -229,6 +230,38 @@ class TimePolicySnapshot extends Equatable {
     }
     if (requiredTag && tags.isEmpty) return 'time.policy.needTag';
     return null;
+  }
+
+  /// What the billable switch of an edited entry shows while nobody touched it:
+  /// what the server will store when the edit is saved without a flag.
+  ///
+  /// The server's rule for a move: a flag that was the default of the project
+  /// the entry leaves follows it to the default of the one it joins; any other
+  /// flag was somebody's choice and stays. An entry that does not move keeps
+  /// its own.
+  ///
+  /// A project's default is a record so "not read yet" (null) differs from "read,
+  /// and the project follows the instance" (`(value: null)`). Until both sides
+  /// are read the answer is the entry's own flag, so the switch does not flip
+  /// once and then flip back while the reads are on their way.
+  bool billableAfterMove({
+    required bool entryBillable,
+    required String? fromProjectId,
+    required String? toProjectId,
+    required ({bool? value})? fromDefault,
+    required ({bool? value})? toDefault,
+  }) {
+    if (fromProjectId == toProjectId) return entryBillable;
+    bool? defaultOf(String? projectId, ({bool? value})? read) {
+      if (projectId == null) return defaultBillable;
+      if (read == null) return null;
+      return read.value ?? defaultBillable;
+    }
+
+    final left = defaultOf(fromProjectId, fromDefault);
+    if (left == null) return entryBillable;
+    if (entryBillable != left) return entryBillable;
+    return defaultOf(toProjectId, toDefault) ?? entryBillable;
   }
 
   /// Whether the day of [date] is frozen by the lock date.

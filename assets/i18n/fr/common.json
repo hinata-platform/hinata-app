@@ -1137,7 +1137,9 @@
       "searchProjects": "Rechercher des projets",
       "noIssue": "Sans ticket",
       "searchIssues": "Rechercher des tickets",
-      "issuesIn": "Tickets de {{project}}"
+      "issuesIn": "Tickets de {{project}}",
+      "loadAgain": "Recharger",
+      "searchFailed": "La recherche n’a pas répondu."
     },
     "filter": {
       "search": "Rechercher des saisies",

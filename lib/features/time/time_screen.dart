@@ -915,6 +915,11 @@ class _TimeViewState extends State<_TimeView> {
     final saved = await showTimeEntrySheet(
       context,
       entry: entry,
+      // The list has already named the project; the sheet need not ask again.
+      placement: TimePlacement(
+        projectId: entry.projectId,
+        projectLabel: _projects[entry.projectId]?.name,
+      ),
       onDeleted: () {
         if (mounted) unawaited(_reload());
       },

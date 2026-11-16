@@ -70,6 +70,49 @@ void main() {
     );
   });
 
+  group('placement labels', () {
+    test('names a project and an issue known only by their ids, the issue '
+        'from the slim ref lookup', () async {
+      projects.answer(#resolveProjects, [alpha]);
+      issues.answer(#issueRefs, [
+        const IssueRef(id: 'i1', readableId: 'ALP-1', title: 'Fix the gate'),
+      ]);
+
+      final names = await cubit.placementLabels(projectId: 'p1', issueId: 'i1');
+
+      expect(names.project, 'Alpha');
+      expect(names.issue, 'ALP-1 · Fix the gate');
+      expect(
+        issues.calls.single,
+        invoked(
+          #issueRefs,
+          positional: [
+            ['i1'],
+          ],
+        ),
+      );
+    });
+
+    test('asks nothing for what is not set', () async {
+      final names = await cubit.placementLabels();
+
+      expect(names.project, isNull);
+      expect(names.issue, isNull);
+      expect(projects.calls, isEmpty);
+      expect(issues.calls, isEmpty);
+    });
+
+    test('a name that cannot be read is left out, not an error', () async {
+      projects.fail(#resolveProjects, failure);
+      issues.fail(#issueRefs, failure);
+
+      final names = await cubit.placementLabels(projectId: 'p1', issueId: 'i1');
+
+      expect(names.project, isNull);
+      expect(names.issue, isNull);
+    });
+  });
+
   test('passes a failure through', () async {
     projects.fail(#searchProjects, failure);
     issues.fail(#issues, failure);

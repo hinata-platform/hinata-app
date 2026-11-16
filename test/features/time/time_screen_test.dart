@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -1063,6 +1064,7 @@ class _FakeProjectRepository implements ProjectRepository {
     int page = 0,
     int size = 25,
     bool archived = false,
+    CancelToken? cancelToken,
   }) async => (projects: const <Project>[], total: 0);
 
   @override

@@ -52,17 +52,22 @@ class ProjectRepository {
     int page = 0,
     int size = 25,
     bool archived = false,
+    CancelToken? cancelToken,
   }) async {
+    final params = <String, dynamic>{
+      if (query != null && query.isNotEmpty) 'q': query,
+      if (archived) 'archived': true,
+      'page': page,
+      'size': size,
+    };
     final data =
-        await _api.get(
-              '/api/v1/projects/search',
-              query: {
-                if (query != null && query.isNotEmpty) 'q': query,
-                if (archived) 'archived': true,
-                'page': page,
-                'size': size,
-              },
-            )
+        (cancelToken == null
+                ? await _api.get('/api/v1/projects/search', query: params)
+                : await _api.getCancellable(
+                    '/api/v1/projects/search',
+                    query: params,
+                    cancelToken: cancelToken,
+                  ))
             as Map<String, dynamic>;
     return (
       projects: ((data['content'] as List<dynamic>?) ?? [])

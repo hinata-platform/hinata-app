@@ -138,12 +138,15 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
   /// Loads the next page and appends it. No-op while another load is running or
   /// when no more pages remain. A failed append silently stops the spinner,
   /// keeping the pages already loaded so the user can retry by scrolling again.
-  Future<void> loadMore() async {
+  /// False when the page request failed — a caller that loads on scroll stops
+  /// there until the reader asks again. True otherwise, including when there
+  /// was nothing to load.
+  Future<bool> loadMore() async {
     if (state.isLoading ||
         state.isLoadingMore ||
         !state.hasData ||
         !state.hasMore) {
-      return;
+      return true;
     }
     final token = _token;
     // Derived from the rows actually held, not from a counter that walks up on
@@ -157,7 +160,7 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     try {
       final result = await _fetch(next, pageSize);
       // A refresh started while we were fetching — discard this stale page.
-      if (token != _token) return;
+      if (token != _token) return true;
       final merged = _append(state.items, result.items);
       if (result.items.isNotEmpty && merged.length == state.items.length) {
         // A whole page of rows the list already holds. That happens when the
@@ -171,7 +174,7 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
             isLoadingMore: false,
           ),
         );
-        return;
+        return true;
       }
       emit(
         state.copyWith(
@@ -181,9 +184,11 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
           isLoadingMore: false,
         ),
       );
+      return true;
     } catch (_) {
-      if (token != _token) return;
+      if (token != _token) return true;
       emit(state.copyWith(isLoadingMore: false));
+      return false;
     }
   }
 

@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 
+import '../../core/blocs/paged_cubit.dart';
 import '../../core/i18n/i18n.dart';
 import '../../core/models/work_models.dart';
 import '../../core/repositories/issue_repository.dart';
@@ -28,7 +30,6 @@ class TimePlacement {
   const TimePlacement({
     this.projectId,
     this.issueId,
-    this.label,
     this.projectLabel,
     this.issueLabel,
   });
@@ -39,15 +40,16 @@ class TimePlacement {
   final String? projectId;
   final String? issueId;
 
-  /// What to show for it, resolved when it was picked. Null when only the ids
-  /// are known — a restored timer, an entry loaded from the list — and the
-  /// caller then labels it from whatever it has.
-  final String? label;
-
   /// The project's name and the issue's "KEY · title", each on its own, for a
-  /// form that shows the two as separate fields. Null when not known yet.
+  /// form that shows the two as separate fields. Null when only the ids are
+  /// known — a restored timer, an entry loaded from the list — and the caller
+  /// then labels it from whatever it has.
   final String? projectLabel;
   final String? issueLabel;
+
+  /// What to show for the placement as one value: the issue when there is one,
+  /// else the project.
+  String? get label => issueLabel ?? projectLabel;
 
   bool get isUnfiled => projectId == null && issueId == null;
 
@@ -61,95 +63,12 @@ class TimePlacement {
   int get hashCode => Object.hash(projectId, issueId);
 }
 
-/// Opens the placement picker: an anchored glass popover on a wide window, a
-/// glass sheet on a phone.
+/// Shows a picker [body] the way every picker of an entry is shown: an
+/// anchored glass popover on a wide window, a glass sheet on a phone.
 ///
-/// Everything it lists comes from the server as the reader types — the project
-/// search and the issue search, both paged. Nothing is pre-loaded: an instance
-/// can hold hundreds of projects and tens of thousands of issues, and a picker
-/// that drains them is a picker that stops working on exactly the instances
-/// that need it most.
-///
-/// Resolves to the chosen placement, or null if dismissed. [TimePlacement.unfiled]
-/// is a real answer, not a dismissal — clearing the field is something the
-/// reader can mean.
-Future<TimePlacement?> showTimePlacementPicker(
-  BuildContext context, {
-  Rect? anchorRect,
-  required TimePlacement current,
-  bool projectsOnly = false,
-}) {
-  // The route rides the root navigator, so the picker brings its own cubit.
-  final body = BlocProvider(
-    create: (context) => PlacementPickerCubit(
-      context.read<ProjectRepository>(),
-      context.read<IssueRepository>(),
-    ),
-    child: _PlacementPickerBody(current: current, projectsOnly: projectsOnly),
-  );
-  final wide =
-      anchorRect != null &&
-      MediaQuery.sizeOf(context).width >= kGlassPopoverBreakpoint;
-  return wide
-      ? showGlassAnchoredPopover<TimePlacement>(
-          context,
-          anchorRect: anchorRect,
-          width: 380,
-          minHeight: 320,
-          maxHeight: 460,
-          builder: (_) => body,
-        )
-      : showGlassBottomSheet<TimePlacement>(
-          context,
-          // A cap, not a height -- same reason as the tag picker beside it in
-          // the entry sheet: the body is a min-size Column, so a fixed box
-          // leaves dead glass under the buttons on a short list.
-          builder: (_) => ConstrainedBox(
-            constraints: const BoxConstraints(maxHeight: 460),
-            child: body,
-          ),
-        );
-}
-
-/// Opens the project picker of an entry: the reader's projects, searched and
-/// paged on the server, with "no project" first. Resolves to the project
-/// picked — without an issue — or [TimePlacement.unfiled]; null if dismissed.
-Future<TimePlacement?> showTimeProjectPicker(
-  BuildContext context, {
-  Rect? anchorRect,
-  String? currentProjectId,
-}) => _showFieldPicker(
-  context,
-  anchorRect: anchorRect,
-  body: _FieldPickerBody(
-    field: _PickedField.project,
-    currentId: currentProjectId,
-  ),
-);
-
-/// Opens the issue picker of an entry: issues searched and paged on the
-/// server, inside [projectId] when the entry has one, with "no issue" first.
-/// Resolves to the issue picked together with its project, or to
-/// `TimePlacement(projectId: projectId)` when the issue is taken away; null if
-/// dismissed.
-Future<TimePlacement?> showTimeIssuePicker(
-  BuildContext context, {
-  Rect? anchorRect,
-  String? projectId,
-  String? projectLabel,
-  String? currentIssueId,
-}) => _showFieldPicker(
-  context,
-  anchorRect: anchorRect,
-  body: _FieldPickerBody(
-    field: _PickedField.issue,
-    currentId: currentIssueId,
-    projectId: projectId,
-    projectLabel: projectLabel,
-  ),
-);
-
-Future<TimePlacement?> _showFieldPicker(
+/// The route rides the root navigator, so the body brings its own
+/// [PlacementPickerCubit] from the repositories in [context].
+Future<TimePlacement?> _showPicker(
   BuildContext context, {
   Rect? anchorRect,
   required Widget body,
@@ -175,6 +94,8 @@ Future<TimePlacement?> _showFieldPicker(
         )
       : showGlassBottomSheet<TimePlacement>(
           context,
+          // A cap, not a height: the body is a min-size Column, so a fixed box
+          // leaves dead glass under a short list.
           builder: (_) => ConstrainedBox(
             constraints: const BoxConstraints(maxHeight: 460),
             child: scoped,
@@ -182,10 +103,74 @@ Future<TimePlacement?> _showFieldPicker(
         );
 }
 
+/// Opens the placement picker: projects and issues in one list, for the timer
+/// bar, the focus view, filters and shared entries.
+///
+/// Everything it lists comes from the server as the reader types — the project
+/// search and the issue search, both paged. Nothing is pre-loaded: an instance
+/// can hold hundreds of projects and tens of thousands of issues.
+///
+/// Resolves to the chosen placement, or null if dismissed. [TimePlacement.unfiled]
+/// is a real answer, not a dismissal — clearing the field is something the
+/// reader can mean.
+Future<TimePlacement?> showTimePlacementPicker(
+  BuildContext context, {
+  Rect? anchorRect,
+  required TimePlacement current,
+  bool projectsOnly = false,
+}) => _showPicker(
+  context,
+  anchorRect: anchorRect,
+  body: _PlacementPickerBody(current: current, projectsOnly: projectsOnly),
+);
+
+/// Opens the project picker of an entry: the reader's projects, searched and
+/// paged on the server, with "no project" first. Resolves to the project
+/// picked — without an issue — or [TimePlacement.unfiled]; null if dismissed.
+Future<TimePlacement?> showTimeProjectPicker(
+  BuildContext context, {
+  Rect? anchorRect,
+  String? currentProjectId,
+}) => _showPicker(
+  context,
+  anchorRect: anchorRect,
+  body: _FieldPickerBody(
+    field: _PickedField.project,
+    currentId: currentProjectId,
+  ),
+);
+
+/// Opens the issue picker of an entry: issues searched and paged on the
+/// server, inside [projectId] when the entry has one, with "no issue" first.
+/// Resolves to the issue picked together with its project, or to
+/// `TimePlacement(projectId: projectId)` when the issue is taken away; null if
+/// dismissed.
+Future<TimePlacement?> showTimeIssuePicker(
+  BuildContext context, {
+  Rect? anchorRect,
+  String? projectId,
+  String? projectLabel,
+  String? currentIssueId,
+}) => _showPicker(
+  context,
+  anchorRect: anchorRect,
+  body: _FieldPickerBody(
+    field: _PickedField.issue,
+    currentId: currentIssueId,
+    projectId: projectId,
+    projectLabel: projectLabel,
+  ),
+);
+
 enum _PickedField { project, issue }
 
 /// One field's picker: a search, a "none" row, and the server's results a page
 /// at a time as the reader scrolls.
+///
+/// The pages live in a [PagedCubit] (de-duplicated by id); the widget holds the
+/// query, the token that cancels a superseded request, and whether the last
+/// page failed — after which scrolling stops asking until the reader taps
+/// "load again".
 class _FieldPickerBody extends StatefulWidget {
   const _FieldPickerBody({
     required this.field,
@@ -205,104 +190,135 @@ class _FieldPickerBody extends StatefulWidget {
   State<_FieldPickerBody> createState() => _FieldPickerBodyState();
 }
 
+/// A row of the field picker: a project or an issue, reduced to what a row
+/// shows and what picking it answers.
+@immutable
+class _Choice {
+  const _Choice({
+    required this.id,
+    required this.title,
+    required this.subtitle,
+    required this.placement,
+  });
+
+  final String id;
+  final String title;
+  final String subtitle;
+  final TimePlacement placement;
+}
+
 class _FieldPickerBodyState extends State<_FieldPickerBody> {
   static const _pageSize = 20;
 
   final _controller = TextEditingController();
   final _scroll = ScrollController();
   Timer? _debounce;
-
-  List<Project> _projects = const [];
-  List<Issue> _issues = const [];
-  int _total = 0;
-  int _page = 0;
-  bool _loading = true;
   String _query = '';
+  CancelToken _cancel = CancelToken();
 
-  /// Monotonic token, as in the combined picker: a slow answer to an older
-  /// query must not land on top of the newer one.
-  int _seq = 0;
+  /// The last page failed: scrolling no longer asks again on its own.
+  bool _pageFailed = false;
+
+  late final PagedCubit<_Choice> _pages = PagedCubit<_Choice>(
+    _fetch,
+    pageSize: _pageSize,
+    keyOf: (choice) => choice.id,
+  );
 
   bool get _isProject => widget.field == _PickedField.project;
-  int get _count => _isProject ? _projects.length : _issues.length;
 
   @override
   void initState() {
     super.initState();
     _scroll.addListener(_onScroll);
-    unawaited(_load(reset: true));
+    unawaited(_pages.load());
   }
 
   @override
   void dispose() {
     _debounce?.cancel();
+    _cancel.cancel();
     _controller.dispose();
     _scroll.dispose();
+    unawaited(_pages.close());
     super.dispose();
+  }
+
+  Future<PageResult<_Choice>> _fetch(int page, int size) async {
+    final search = context.read<PlacementPickerCubit>();
+    if (_isProject) {
+      final found = await search.searchProjects(
+        query: _query,
+        size: size,
+        page: page,
+        cancelToken: _cancel,
+      );
+      return (
+        items: [
+          for (final project in found.projects)
+            _Choice(
+              id: project.id,
+              title: project.name,
+              subtitle: project.key,
+              placement: TimePlacement(
+                projectId: project.id,
+                projectLabel: project.name,
+              ),
+            ),
+        ],
+        total: found.total,
+      );
+    }
+    final found = await search.searchIssues(
+      query: _query.isEmpty ? null : _query,
+      size: size,
+      page: page,
+      projectId: widget.projectId,
+      cancelToken: _cancel,
+    );
+    return (
+      items: [
+        for (final issue in found.issues)
+          _Choice(
+            id: issue.id,
+            title: issue.title,
+            subtitle: issue.readableId,
+            placement: TimePlacement(
+              projectId: issue.projectId,
+              issueId: issue.id,
+              issueLabel: '${issue.readableId} · ${issue.title}',
+              // Known only when the search stayed inside it.
+              projectLabel: issue.projectId == widget.projectId
+                  ? widget.projectLabel
+                  : null,
+            ),
+          ),
+      ],
+      total: found.total,
+    );
   }
 
   void _onChanged(String value) {
     _debounce?.cancel();
     _debounce = Timer(const Duration(milliseconds: 250), () {
+      // The request for the old query is of no use any more.
+      _cancel.cancel();
+      _cancel = CancelToken();
       _query = value.trim();
-      unawaited(_load(reset: true));
+      setState(() => _pageFailed = false);
+      unawaited(_pages.load());
     });
   }
 
   void _onScroll() {
-    if (_loading || _count >= _total) return;
-    if (_scroll.position.extentAfter < 120) unawaited(_load(reset: false));
+    if (_pageFailed) return;
+    if (_scroll.position.extentAfter < 120) unawaited(_loadMore());
   }
 
-  Future<void> _load({required bool reset}) async {
-    final seq = ++_seq;
-    final page = reset ? 0 : _page + 1;
-    setState(() => _loading = true);
-    final search = context.read<PlacementPickerCubit>();
-    try {
-      if (_isProject) {
-        final found = await search.searchProjects(
-          query: _query,
-          size: _pageSize,
-          page: page,
-        );
-        if (!mounted || seq != _seq) return;
-        setState(() {
-          _projects = reset
-              ? found.projects
-              : [..._projects, ...found.projects];
-          _total = found.total;
-        });
-      } else {
-        final found = await search.searchIssues(
-          query: _query.isEmpty ? null : _query,
-          size: _pageSize,
-          page: page,
-          projectId: widget.projectId,
-        );
-        if (!mounted || seq != _seq) return;
-        setState(() {
-          _issues = reset ? found.issues : [..._issues, ...found.issues];
-          _total = found.total;
-        });
-      }
-      if (!mounted || seq != _seq) return;
-      setState(() {
-        _page = page;
-        _loading = false;
-      });
-    } catch (_) {
-      if (!mounted || seq != _seq) return;
-      // What was found stays; "none" never needs the server.
-      setState(() {
-        if (reset) {
-          _projects = const [];
-          _issues = const [];
-          _total = 0;
-        }
-        _loading = false;
-      });
-    }
+  Future<void> _loadMore() async {
+    final loaded = await _pages.loadMore();
+    if (!mounted || loaded != _pageFailed) return;
+    setState(() => _pageFailed = !loaded);
   }
 
   void _pick(TimePlacement placement) => Navigator.of(context).pop(placement);
@@ -312,23 +328,6 @@ class _FieldPickerBodyState extends State<_FieldPickerBody> {
     final searchKey = _isProject
         ? 'time.placement.searchProjects'
         : 'time.placement.searchIssues';
-    final noneRow = _PlacementRow(
-      icon: LucideIcons.circleSlash,
-      title: context.t(
-        _isProject ? 'time.placement.none' : 'time.placement.noIssue',
-      ),
-      selected: widget.currentId == null,
-      onTap: () => _pick(
-        _isProject
-            ? TimePlacement.unfiled
-            : TimePlacement(
-                projectId: widget.projectId,
-                label: widget.projectLabel,
-                projectLabel: widget.projectLabel,
-              ),
-      ),
-    );
-    final more = _count < _total;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -366,81 +365,97 @@ class _FieldPickerBodyState extends State<_FieldPickerBody> {
             ),
           ),
         Flexible(
-          child: _loading && _count == 0
-              ? const Padding(
+          child: BlocBuilder<PagedCubit<_Choice>, PagedState<_Choice>>(
+            bloc: _pages,
+            builder: (context, state) {
+              if (!state.hasData && state.errorKey == null) {
+                return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 40),
                   child: HiveLoader(size: 34),
-                )
-              : ListView.builder(
-                  controller: _scroll,
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.only(bottom: 10),
-                  // The "none" row, the results, then one row that is either
-                  // the next page loading or the empty answer.
-                  itemCount: 1 + _count + (more || _count == 0 ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == 0) return noneRow;
-                    final at = index - 1;
-                    if (at < _count) {
-                      if (_isProject) {
-                        final project = _projects[at];
-                        return _PlacementRow(
-                          icon: LucideIcons.folder,
-                          title: project.name,
-                          subtitle: project.key,
-                          selected: widget.currentId == project.id,
-                          onTap: () => _pick(
-                            TimePlacement(
-                              projectId: project.id,
-                              label: project.name,
-                              projectLabel: project.name,
-                            ),
-                          ),
-                        );
-                      }
-                      final issue = _issues[at];
-                      final label = '${issue.readableId} · ${issue.title}';
-                      return _PlacementRow(
-                        icon: LucideIcons.circleCheckBig,
-                        title: issue.title,
-                        subtitle: issue.readableId,
-                        selected: widget.currentId == issue.id,
-                        onTap: () => _pick(
-                          TimePlacement(
-                            projectId: issue.projectId,
-                            issueId: issue.id,
-                            label: label,
-                            issueLabel: label,
-                            // Known only when the search stayed inside it.
-                            projectLabel: issue.projectId == widget.projectId
-                                ? widget.projectLabel
-                                : null,
-                          ),
-                        ),
-                      );
-                    }
-                    if (more) {
-                      return const Padding(
-                        padding: EdgeInsets.symmetric(vertical: 14),
-                        child: Center(child: HiveLoader(size: 22)),
-                      );
-                    }
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 24,
+                );
+              }
+              final choices = state.items;
+              // The "none" row, the results, then one row that is the next
+              // page loading, a way to ask for it again, or the empty answer.
+              final tail = state.hasMore || choices.isEmpty ? 1 : 0;
+              return ListView.builder(
+                controller: _scroll,
+                shrinkWrap: true,
+                padding: const EdgeInsets.only(bottom: 10),
+                itemCount: 1 + choices.length + tail,
+                itemBuilder: (context, index) {
+                  if (index == 0) {
+                    return _PlacementRow(
+                      icon: LucideIcons.circleSlash,
+                      title: context.t(
+                        _isProject
+                            ? 'time.placement.none'
+                            : 'time.placement.noIssue',
                       ),
-                      child: Text(
-                        context.t('search.noMatch'),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: AppType.label,
-                          color: AppColors.inkSoft,
-                        ),
+                      selected: widget.currentId == null,
+                      onTap: () => _pick(
+                        _isProject
+                            ? TimePlacement.unfiled
+                            : TimePlacement(
+                                projectId: widget.projectId,
+                                projectLabel: widget.projectLabel,
+                              ),
                       ),
                     );
-                  },
-                ),
+                  }
+                  final at = index - 1;
+                  if (at < choices.length) {
+                    final choice = choices[at];
+                    return _PlacementRow(
+                      icon: _isProject
+                          ? LucideIcons.folder
+                          : LucideIcons.circleCheckBig,
+                      title: choice.title,
+                      subtitle: choice.subtitle,
+                      selected: widget.currentId == choice.id,
+                      onTap: () => _pick(choice.placement),
+                    );
+                  }
+                  if (state.hasMore && _pageFailed) {
+                    return Center(
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() => _pageFailed = false);
+                          unawaited(_loadMore());
+                        },
+                        icon: const Icon(LucideIcons.rotateCw, size: 15),
+                        label: Text(context.t('time.placement.loadAgain')),
+                      ),
+                    );
+                  }
+                  if (state.hasMore) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 14),
+                      child: Center(child: HiveLoader(size: 22)),
+                    );
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 18,
+                      vertical: 24,
+                    ),
+                    child: Text(
+                      context.t(
+                        state.errorKey != null
+                            ? 'time.placement.searchFailed'
+                            : 'search.noMatch',
+                      ),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: AppType.label,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );
@@ -603,7 +618,7 @@ class _PlacementPickerBodyState extends State<_PlacementPickerBody> {
                         onTap: () => _pick(
                           TimePlacement(
                             projectId: project.id,
-                            label: project.name,
+                            projectLabel: project.name,
                           ),
                         ),
                       ),
@@ -619,7 +634,7 @@ class _PlacementPickerBodyState extends State<_PlacementPickerBody> {
                           TimePlacement(
                             projectId: issue.projectId,
                             issueId: issue.id,
-                            label: '${issue.readableId} · ${issue.title}',
+                            issueLabel: '${issue.readableId} · ${issue.title}',
                           ),
                         ),
                       ),

@@ -408,9 +408,11 @@ class TimeEntryDraft extends Equatable {
   /// The body a patch sends.
   ///
   /// The two instants are always present, explicitly null when they are being
-  /// cleared: the server tells "absent" from "null" for exactly these two
-  /// fields, because an instant has no empty value of its own and switching an
-  /// entry from a start/end pair to a plain duration has to be sayable.
+  /// cleared: an instant has no empty value of its own, and switching an entry
+  /// from a start/end pair to a plain duration has to be sayable. The project
+  /// and the issue follow the same rule, but only when [movesPlacement] — then
+  /// both are present, null where the entry is taken off its project or issue;
+  /// otherwise neither is, and the server leaves the entry where it is.
   ///
   /// Everything else is omitted when the draft does not carry it — the tags
   /// especially. The server reads a present tag list as an instruction and an
