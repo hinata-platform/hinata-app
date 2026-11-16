@@ -1023,14 +1023,15 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                         // glass cost per device.
                         // ignore: experimental_member_use
                         adaptiveConfig: kGlassCeiling,
-                        // Above the router's navigator, so the keys and the
-                        // end-of-interval signal reach every route — the focus
-                        // screen included, which is deliberately not in the shell.
-                        // A shortcut needs a context *below* the navigator to push
-                        // or open anything, which is what the key is for.
-                        // Repairs ⌘V into text fields as macOS delivers it from a launcher;
-                        // see MacPasteShim.
+                        // Repairs ⌘V into text fields as macOS delivers it
+                        // from a launcher; see MacPasteShim.
                         child: MacPasteShim(
+                          // Above the router's navigator, so the keys and the
+                          // end-of-interval signal reach every route — the
+                          // focus screen included, which is deliberately not
+                          // in the shell. A shortcut needs a context *below*
+                          // the navigator to push or open anything, which is
+                          // what the key is for.
                           child: ShortcutHost(
                             registry: _shortcuts,
                             navigatorKey: rootNavigatorKey,

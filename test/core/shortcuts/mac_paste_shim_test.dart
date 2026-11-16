@@ -132,7 +132,7 @@ void main() {
     // The launcher's panel made the app inactive; the framework parked focus
     // on the root scope and gives it back only at its next update. The posted
     // key-down arrives first.
-    _clipboard(tester);
+    final reads = _clipboard(tester);
     final controller = TextEditingController(text: 'ab');
     final focus = FocusNode();
     addTearDown(controller.dispose);
@@ -142,23 +142,22 @@ void main() {
       TextField(controller: controller, focusNode: focus, autofocus: true),
     );
 
-    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
     await tester.pump();
 
     // Resume and key in the same turn, as they arrive from the engine: the
-    // framework has asked for focus back but not applied it yet.
+    // framework has asked for focus back but not applied it yet. The event
+    // carries only the side-less command flag, as Raycast sends it.
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     final manager = FocusManager.instance;
     expect(manager.primaryFocus, manager.rootScope, reason: 'still parked');
-    _sendV(tester, modifiers: 0x100008);
+    _sendV(tester, modifiers: 0x100000);
+    _sendV(tester, modifiers: 0x100000, down: false);
     await _settle(tester);
-    expect(controller.text, 'ab$_emoji');
-    expect(focus.hasFocus, isTrue);
 
-    _sendV(tester, modifiers: 0x100008, down: false);
-    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
-    await tester.pump();
+    expect(controller.text, 'ab$_emoji');
+    expect(reads(), 1);
+    expect(focus.hasPrimaryFocus, isTrue);
   }, variant: _macOS);
 
   testWidgets('a paste Flutter handles itself is not pasted twice', (
@@ -259,5 +258,78 @@ void main() {
 
     expect(text(), 'ab$_emoji$_emoji');
     expect(reads(), 2);
+  }, variant: _macOS);
+
+  testWidgets('a read-only field is left alone', (tester) async {
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    addTearDown(controller.dispose);
+    await _pump(
+      tester,
+      TextField(controller: controller, readOnly: true, autofocus: true),
+    );
+
+    _sendV(tester, modifiers: 0x100000);
+    _sendV(tester, modifiers: 0x100000, down: false);
+    await _settle(tester);
+
+    expect(controller.text, 'ab');
+    expect(reads(), 0);
+  }, variant: _macOS);
+
+  testWidgets(
+    'a field taken down while parked gets nothing and keeps nothing',
+    (tester) async {
+      final reads = _clipboard(tester);
+      final controller = TextEditingController(text: 'ab');
+      addTearDown(controller.dispose);
+      await _pump(tester, TextField(controller: controller, autofocus: true));
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      await _pump(tester, const SizedBox());
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      _sendV(tester, modifiers: 0x100000);
+      _sendV(tester, modifiers: 0x100000, down: false);
+      await _settle(tester);
+
+      expect(controller.text, 'ab');
+      expect(reads(), 0);
+      expect(tester.takeException(), isNull);
+    },
+    variant: _macOS,
+  );
+
+  testWidgets('elsewhere than macOS the flag means nothing', (tester) async {
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    addTearDown(controller.dispose);
+    await _pump(tester, TextField(controller: controller, autofocus: true));
+
+    _sendV(tester, modifiers: 0x100000);
+    _sendV(tester, modifiers: 0x100000, down: false);
+    await _settle(tester);
+
+    expect(controller.text, 'ab');
+    expect(reads(), 0);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.windows));
+
+  testWidgets('⌘⇧V is not a paste', (tester) async {
+    // SingleActivator(V, meta: true) matches exactly; with Shift held the
+    // field's own shortcut does not fire, and neither may the shim.
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    addTearDown(controller.dispose);
+    await _pump(tester, TextField(controller: controller, autofocus: true));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    _sendV(tester, modifiers: 0x100000 | 0x20002);
+    _sendV(tester, modifiers: 0x100000 | 0x20002, down: false);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await _settle(tester);
+
+    expect(controller.text, 'ab');
+    expect(reads(), 0);
   }, variant: _macOS);
 }
