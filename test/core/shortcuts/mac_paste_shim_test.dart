@@ -332,4 +332,73 @@ void main() {
     expect(controller.text, 'ab');
     expect(reads(), 0);
   }, variant: _macOS);
+
+  testWidgets(
+    'an editor parked earlier does not take a text field\'s paste later',
+    (tester) async {
+      // The editor had focus when the app went inactive and armed itself for
+      // parked keys; focus then moved to a text field before the app came
+      // back. When the field is parked later and Raycast pastes, the paste
+      // belongs to the field. lexical_flutter 1.11.2 drops the editor's stale
+      // claim as soon as focus leaves the root scope.
+      final reads = _clipboard(tester);
+      final editor = createLexicalEditor();
+      registerLexical(editor);
+      editor.update(() {
+        final paragraph = $createParagraphNode()..append($createTextNode('ab'));
+        $getRoot()
+          ..clear()
+          ..append(paragraph);
+        paragraph.selectEnd();
+      }, discrete: true);
+      final controller = TextEditingController(text: 'cd');
+      final field = FocusNode();
+      addTearDown(controller.dispose);
+      addTearDown(field.dispose);
+      await _pump(
+        tester,
+        Column(
+          children: [
+            SizedBox(
+              height: 100,
+              child: LexicalEditable(
+                editor: editor,
+                autofocus: true,
+                scrollable: false,
+                cursorBlinkInterval: Duration.zero,
+                theme: const LexicalTheme(
+                  baseTextStyle: TextStyle(fontSize: 14, height: 1.4),
+                ),
+              ),
+            ),
+            TextField(controller: controller, focusNode: field),
+          ],
+        ),
+      );
+      String text() => editor.read(() => $getRoot().getTextContent());
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      field.requestFocus();
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      await tester.pump();
+      expect(field.hasPrimaryFocus, isTrue);
+      // The caret at the end, where a click into the field would put it.
+      controller.selection = const TextSelection.collapsed(offset: 2);
+      await tester.pump();
+
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+      await tester.pump();
+      tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+      _sendV(tester, modifiers: 0x100000);
+      _sendV(tester, modifiers: 0x100000, down: false);
+      await _settle(tester);
+
+      expect(controller.text, 'cd$_emoji');
+      expect(text(), 'ab');
+      expect(reads(), 1);
+    },
+    variant: _macOS,
+  );
 }
