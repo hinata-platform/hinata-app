@@ -3638,7 +3638,7 @@
       "textRefusalsSince": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}",
       "textRefusalsSince_plural": "テキストチェックで拒否されたメール：{{count}} 件、最新 {{date}}",
       "authservId": "メールサーバー名（authserv-id）",
-      "authservIdHelp": "メールサーバーが「Authentication-Results」に書き込む名前です。サーバーが確認した送信者だけを、画像表示のために信頼できます。空欄の場合は誰にも提案されません。"
+      "authservIdHelp": "任意です。メールサーバーが「Authentication-Results」に書き込む名前です。サーバーが送信者を確認した場合、それはこのサーバー自身のチェックに加えて扱われます。"
     },
     "windowsStoreUrl": "Microsoft Store の URL",
     "linuxStoreUrl": "Linux のダウンロード URL",
@@ -4870,7 +4870,7 @@
     },
     "trustedSenders": {
       "title": "信頼できる送信者",
-      "subtitle": "これらの送信者のメールは確認なしで画像を表示します。",
+      "subtitle": "これらの送信者のメールは確認なしで画像を表示します。ほかの誰もメールに内容を入れられないドメインだけを信頼してください。",
       "emptyTitle": "信頼できる送信者はいません",
       "emptyMessage": "メールから作成された課題で、ブロックされた画像の上にある「… から常に読み込む」を選んでください。メールの署名で送信者を確認できた場合に表示されます。",
       "more": "さらに読み込む",

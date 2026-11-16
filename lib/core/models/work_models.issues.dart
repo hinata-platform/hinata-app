@@ -905,7 +905,7 @@ enum ExternalImageTrustUnavailable {
   static ExternalImageTrustUnavailable? fromJson(Object? value) =>
       switch (value) {
         null => null,
-        'unsigned' => unsigned,
+        'UNSIGNED' => unsigned,
         _ => unverified,
       };
 }
