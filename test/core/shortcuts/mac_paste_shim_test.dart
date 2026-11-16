@@ -1,0 +1,263 @@
+// ⌘V into a text field, sent the way Raycast's "Paste to …" and other
+// launchers send it on macOS.
+import 'dart:ui' as ui;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:hinata/core/shortcuts/mac_paste_shim.dart';
+import 'package:lexical_editor_flutter/lexical_editor_flutter.dart';
+
+const _emoji = '✅😊☀️❤️👨‍👩‍👧';
+
+final _macOS = TargetPlatformVariant.only(TargetPlatform.macOS);
+
+/// Serves [_emoji] to `Clipboard.getData` and counts the reads.
+int Function() _clipboard(WidgetTester tester) {
+  var reads = 0;
+  tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+    SystemChannels.platform,
+    (call) async {
+      if (call.method != 'Clipboard.getData') return null;
+      reads++;
+      return {'text': _emoji};
+    },
+  );
+  return () => reads;
+}
+
+Future<void> _pump(WidgetTester tester, Widget child) async {
+  await tester.pumpWidget(
+    MaterialApp(
+      home: MacPasteShim(
+        child: Scaffold(body: Column(children: [child])),
+      ),
+    ),
+  );
+  await tester.pump();
+}
+
+/// Lets the async clipboard read and the field's update land.
+Future<void> _settle(WidgetTester tester) async {
+  await tester.pump();
+  await tester.pump();
+}
+
+/// Sends V with only the side-less command flag on it, as the engine hands
+/// such an event over: key data with no modifier, the raw message with
+/// `NSEventModifierFlagCommand` (0x100000) alone.
+Future<void> _flagOnlyCommandV(WidgetTester tester) async {
+  // The engine's own entry point. Deprecated for apps, and the only way to
+  // hand the framework exactly the pair the engine hands it.
+  // ignore: deprecated_member_use
+  final manager = tester.binding.keyEventManager;
+  for (final (type, raw) in [
+    (ui.KeyEventType.down, 'keydown'),
+    (ui.KeyEventType.up, 'keyup'),
+  ]) {
+    // ignore: deprecated_member_use
+    manager.handleKeyData(
+      ui.KeyData(
+        timeStamp: Duration.zero,
+        type: type,
+        physical: PhysicalKeyboardKey.keyV.usbHidUsage,
+        logical: LogicalKeyboardKey.keyV.keyId,
+        character: type == ui.KeyEventType.down ? 'v' : null,
+        synthesized: false,
+      ),
+    );
+    await tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+      SystemChannels.keyEvent.name,
+      SystemChannels.keyEvent.codec.encodeMessage(<String, Object?>{
+        'type': raw,
+        'keymap': 'macos',
+        'keyCode': 9,
+        'characters': 'v',
+        'charactersIgnoringModifiers': 'v',
+        'modifiers': 0x100000,
+      }),
+      (_) {},
+    );
+  }
+}
+
+/// Sends one V event the way the engine does, without yielding in between, so
+/// nothing scheduled before it can run first.
+void _sendV(WidgetTester tester, {required int modifiers, bool down = true}) {
+  // ignore: deprecated_member_use
+  tester.binding.keyEventManager.handleKeyData(
+    ui.KeyData(
+      timeStamp: Duration.zero,
+      type: down ? ui.KeyEventType.down : ui.KeyEventType.up,
+      physical: PhysicalKeyboardKey.keyV.usbHidUsage,
+      logical: LogicalKeyboardKey.keyV.keyId,
+      character: down ? 'v' : null,
+      synthesized: false,
+    ),
+  );
+  tester.binding.defaultBinaryMessenger.handlePlatformMessage(
+    SystemChannels.keyEvent.name,
+    SystemChannels.keyEvent.codec.encodeMessage(<String, Object?>{
+      'type': down ? 'keydown' : 'keyup',
+      'keymap': 'macos',
+      'keyCode': 9,
+      'characters': 'v',
+      'charactersIgnoringModifiers': 'v',
+      'modifiers': modifiers,
+    }),
+    (_) {},
+  );
+}
+
+void main() {
+  testWidgets('⌘ that only the event carries still pastes into a field', (
+    tester,
+  ) async {
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    addTearDown(controller.dispose);
+    await _pump(tester, TextField(controller: controller, autofocus: true));
+
+    await _flagOnlyCommandV(tester);
+    expect(HardwareKeyboard.instance.isMetaPressed, isFalse);
+    await _settle(tester);
+
+    expect(controller.text, 'ab$_emoji');
+    expect(reads(), 1);
+  }, variant: _macOS);
+
+  testWidgets('a V that lands while focus is parked pastes into the field', (
+    tester,
+  ) async {
+    // The launcher's panel made the app inactive; the framework parked focus
+    // on the root scope and gives it back only at its next update. The posted
+    // key-down arrives first.
+    _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    final focus = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(focus.dispose);
+    await _pump(
+      tester,
+      TextField(controller: controller, focusNode: focus, autofocus: true),
+    );
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+
+    // Resume and key in the same turn, as they arrive from the engine: the
+    // framework has asked for focus back but not applied it yet.
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    final manager = FocusManager.instance;
+    expect(manager.primaryFocus, manager.rootScope, reason: 'still parked');
+    _sendV(tester, modifiers: 0x100008);
+    await _settle(tester);
+    expect(controller.text, 'ab$_emoji');
+    expect(focus.hasFocus, isTrue);
+
+    _sendV(tester, modifiers: 0x100008, down: false);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await tester.pump();
+  }, variant: _macOS);
+
+  testWidgets('a paste Flutter handles itself is not pasted twice', (
+    tester,
+  ) async {
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    addTearDown(controller.dispose);
+    await _pump(tester, TextField(controller: controller, autofocus: true));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await _settle(tester);
+
+    expect(controller.text, 'ab$_emoji');
+    expect(reads(), 1);
+  }, variant: _macOS);
+
+  testWidgets('a field that lost focus to something else gets nothing', (
+    tester,
+  ) async {
+    final reads = _clipboard(tester);
+    final controller = TextEditingController(text: 'ab');
+    final other = FocusNode();
+    addTearDown(controller.dispose);
+    addTearDown(other.dispose);
+    await _pump(
+      tester,
+      Column(
+        children: [
+          TextField(controller: controller, autofocus: true),
+          Focus(focusNode: other, child: const SizedBox(height: 10)),
+        ],
+      ),
+    );
+
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    other.requestFocus();
+    await tester.pump();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    await _settle(tester);
+
+    expect(controller.text, 'ab');
+    expect(reads(), 0);
+    expect(other.hasFocus, isTrue);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+  }, variant: _macOS);
+
+  testWidgets('the rich-text editor is left to its own paste', (tester) async {
+    // lexical_flutter handles both cases for its editor. The shim must not
+    // paste a second time, parked or not.
+    final reads = _clipboard(tester);
+    final editor = createLexicalEditor();
+    registerLexical(editor);
+    editor.update(() {
+      final paragraph = $createParagraphNode()..append($createTextNode('ab'));
+      $getRoot()
+        ..clear()
+        ..append(paragraph);
+      paragraph.selectEnd();
+    }, discrete: true);
+    await _pump(
+      tester,
+      SizedBox(
+        height: 100,
+        child: LexicalEditable(
+          editor: editor,
+          autofocus: true,
+          scrollable: false,
+          cursorBlinkInterval: Duration.zero,
+          theme: const LexicalTheme(
+            baseTextStyle: TextStyle(fontSize: 14, height: 1.4),
+          ),
+        ),
+      ),
+    );
+    String text() => editor.read(() => $getRoot().getTextContent());
+
+    await _flagOnlyCommandV(tester);
+    await _settle(tester);
+    expect(text(), 'ab$_emoji');
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.metaLeft);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.inactive);
+    await tester.pump();
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.keyV);
+    await _settle(tester);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.keyV);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.metaLeft);
+    tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
+    await tester.pump();
+
+    expect(text(), 'ab$_emoji$_emoji');
+    expect(reads(), 2);
+  }, variant: _macOS);
+}

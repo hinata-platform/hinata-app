@@ -28,6 +28,7 @@ import 'core/router/app_router.dart';
 import 'core/router/relay_link.dart';
 import 'core/shortcuts/app_shortcuts.dart';
 import 'core/shortcuts/global_shortcuts.dart';
+import 'core/shortcuts/mac_paste_shim.dart';
 import 'core/storage/app_storage.dart';
 import 'core/util/server_link.dart' show knownServers, normalizeServerLink;
 import 'core/theme/app_colors.dart';
@@ -1027,24 +1028,29 @@ class _HinataAppState extends State<HinataApp> with WidgetsBindingObserver {
                         // screen included, which is deliberately not in the shell.
                         // A shortcut needs a context *below* the navigator to push
                         // or open anything, which is what the key is for.
-                        child: ShortcutHost(
-                          registry: _shortcuts,
-                          navigatorKey: rootNavigatorKey,
-                          child: _SignedInShortcuts(
-                            // Beside the signals, above the router: the surfaces
-                            // outside the app follow the same timer and have to
-                            // be cleared on frames no route is on screen for.
-                            child: TimerSurfacesHost(
-                              appTitle:
-                                  (organization == null || organization.isEmpty)
-                                  ? 'Hinata'
-                                  : organization,
-                              openRoute: _router.go,
-                              clearSignal: _surfaceClear,
-                              hotkeys: _hotkeys,
-                              liveActivityRegistry: _liveActivityRegistry,
-                              child: TimerSignals(
-                                child: child ?? const SizedBox.shrink(),
+                        // Repairs ⌘V into text fields as macOS delivers it from a launcher;
+                        // see MacPasteShim.
+                        child: MacPasteShim(
+                          child: ShortcutHost(
+                            registry: _shortcuts,
+                            navigatorKey: rootNavigatorKey,
+                            child: _SignedInShortcuts(
+                              // Beside the signals, above the router: the surfaces
+                              // outside the app follow the same timer and have to
+                              // be cleared on frames no route is on screen for.
+                              child: TimerSurfacesHost(
+                                appTitle:
+                                    (organization == null ||
+                                        organization.isEmpty)
+                                    ? 'Hinata'
+                                    : organization,
+                                openRoute: _router.go,
+                                clearSignal: _surfaceClear,
+                                hotkeys: _hotkeys,
+                                liveActivityRegistry: _liveActivityRegistry,
+                                child: TimerSignals(
+                                  child: child ?? const SizedBox.shrink(),
+                                ),
                               ),
                             ),
                           ),
