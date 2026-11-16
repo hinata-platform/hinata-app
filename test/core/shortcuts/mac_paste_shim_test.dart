@@ -300,12 +300,13 @@ void main() {
       await _pump(tester, const SizedBox());
 
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
-      _sendV(tester, modifiers: 0x100000);
+      final handled = _sendV(tester, modifiers: 0x100000);
       _sendV(tester, modifiers: 0x100000, down: false);
       await _settle(tester);
 
       expect(controller.text, 'ab');
       expect(reads(), 0);
+      expect(handled(), isFalse);
       expect(tester.takeException(), isNull);
     },
     variant: _macOS,
