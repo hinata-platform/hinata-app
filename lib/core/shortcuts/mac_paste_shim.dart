@@ -124,12 +124,17 @@ class _MacPasteShimState extends State<MacPasteShim> {
 
   static const _paste = PasteTextIntent(SelectionChangedCause.keyboard);
 
-  /// Whether the field [node] focuses would paste now: it is mounted, and its
-  /// paste action is there and enabled — not for a read-only field.
+  /// Whether the field [node] focuses would paste now: it is mounted, not
+  /// read-only, and its paste action is there and enabled.
+  ///
+  /// A key this answers no for is left alone, not swallowed: the field's
+  /// paste action does not check read-only before it is invoked, so that is
+  /// asked here.
   static bool _canPaste(FocusNode node) {
     final context = node.context;
     if (context == null || !context.mounted) return false;
-    if (editableTextOf(node) == null) return false;
+    final field = editableTextOf(node);
+    if (field == null || field.widget.readOnly) return false;
     final action = Actions.maybeFind<PasteTextIntent>(context, intent: _paste);
     if (action == null) return false;
     return action is ContextAction<PasteTextIntent>
