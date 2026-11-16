@@ -97,7 +97,9 @@ Future<bool> confirmAndDeleteTimeEntry(
 ///
 /// [placement] files a new entry where the sheet was opened from, an issue's
 /// time card for instance, so the field starts on that issue instead of asking
-/// for it again. An [entry] or a [timer] brings its own.
+/// for it again. An [entry] or a [timer] brings its own placement; with one,
+/// [placement] only supplies the names the caller already has for those ids
+/// (the list's project name), so the sheet need not read them again.
 ///
 /// [event] takes one of the reader's calendar events over (HIN-94): its times
 /// are shown and not edited, its title starts as the description, and the save
@@ -218,7 +220,8 @@ class _TimeEntryForm extends StatefulWidget {
   /// The calendar event this sheet takes over. See [showTimeEntrySheet].
   final CalendarEventSuggestion? event;
 
-  /// Where a new entry starts out filed. See [showTimeEntrySheet].
+  /// Where a new entry starts out filed; with an [entry] or a [timer], only the
+  /// names for the ids they carry. See [showTimeEntrySheet].
   final TimePlacement? placement;
 
   /// Hours swept out on the calendar, for a new entry. Opens the form on its
