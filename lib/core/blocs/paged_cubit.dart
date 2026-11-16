@@ -89,17 +89,20 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
   /// Initial load or pull-to-refresh: resets to page 0 and supersedes any
   /// in-flight [loadMore].
   Future<void> load() async {
+    if (isClosed) return;
     final token = ++_token;
     emit(state.copyWith(isLoading: true));
     try {
       final result = await _fetch(0, pageSize);
-      if (token != _token) return;
+      // Closed while the page was on its way (a picker dismissed mid-search):
+      // the answer has nowhere to go, and emitting would throw.
+      if (isClosed || token != _token) return;
       emit(PagedState<T>(items: result.items, total: result.total, page: 0));
     } on ApiFailure catch (failure) {
-      if (token != _token) return;
+      if (isClosed || token != _token) return;
       emit(state.copyWith(isLoading: false, errorKey: failure.message));
     } catch (_) {
-      if (token != _token) return;
+      if (isClosed || token != _token) return;
       emit(state.copyWith(isLoading: false, errorKey: 'errors.unexpected'));
     }
   }
@@ -114,13 +117,14 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
   /// [maxRows], the server's page cap) and swaps them in where they stand.
   /// A failure keeps what is on screen; nothing is lost by it.
   Future<void> refreshLoaded({int maxRows = 100}) async {
+    if (isClosed) return;
     if (!state.hasData) return load();
     final token = ++_token;
     final pages = (state.items.length + pageSize - 1) ~/ pageSize;
     final size = (pages * pageSize).clamp(pageSize, maxRows);
     try {
       final result = await _fetch(0, size);
-      if (token != _token) return;
+      if (isClosed || token != _token) return;
       emit(
         PagedState<T>(
           items: result.items,
@@ -142,7 +146,8 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
   /// there until the reader asks again. True otherwise, including when there
   /// was nothing to load.
   Future<bool> loadMore() async {
-    if (state.isLoading ||
+    if (isClosed ||
+        state.isLoading ||
         state.isLoadingMore ||
         !state.hasData ||
         !state.hasMore) {
@@ -159,8 +164,9 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
     emit(state.copyWith(isLoadingMore: true));
     try {
       final result = await _fetch(next, pageSize);
-      // A refresh started while we were fetching — discard this stale page.
-      if (token != _token) return true;
+      // A refresh started while we were fetching, or the cubit was closed —
+      // discard this stale page.
+      if (isClosed || token != _token) return true;
       final merged = _append(state.items, result.items);
       if (result.items.isNotEmpty && merged.length == state.items.length) {
         // A whole page of rows the list already holds. That happens when the
@@ -186,7 +192,7 @@ class PagedCubit<T> extends Cubit<PagedState<T>> {
       );
       return true;
     } catch (_) {
-      if (token != _token) return true;
+      if (isClosed || token != _token) return true;
       emit(state.copyWith(isLoadingMore: false));
       return false;
     }

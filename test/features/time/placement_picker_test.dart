@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart' show CancelToken;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -16,7 +18,7 @@ void main() {
 
   setUp(() => projects = _PagedProjects());
 
-  Future<void> open(WidgetTester tester) async {
+  Future<void> open(WidgetTester tester, {bool settle = true}) async {
     tester.view.physicalSize = const Size(400, 900);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.reset);
@@ -41,7 +43,12 @@ void main() {
       ),
     );
     await tester.tap(find.text('open'));
-    await tester.pumpAndSettle();
+    if (settle) {
+      await tester.pumpAndSettle();
+    } else {
+      // A loader that is still waiting never settles.
+      await tester.pump(const Duration(seconds: 1));
+    }
   }
 
   Future<void> scrollToEnd(WidgetTester tester) async {
@@ -89,6 +96,24 @@ void main() {
     expect(find.text('Project 30'), findsOneWidget);
   });
 
+  testWidgets('closing the picker while a page is on its way is not an error', (
+    tester,
+  ) async {
+    final held = Completer<void>();
+    projects.holdUntil = held.future;
+    await open(tester, settle: false);
+
+    // Dismissed before the server answered.
+    tester.state<NavigatorState>(find.byType(Navigator).first).pop();
+    await tester.pumpAndSettle();
+    expect(projects.tokens.single!.isCancelled, isTrue);
+
+    // The answer arrives anyway, to a cubit that is closed.
+    held.complete();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('a new search cancels the request it replaces', (tester) async {
     await open(tester);
 
@@ -109,6 +134,9 @@ class _PagedProjects implements ProjectRepository {
   final List<CancelToken?> tokens = [];
   int? failPage;
 
+  /// Holds every answer back until this completes, the way a slow server does.
+  Future<void>? holdUntil;
+
   @override
   Future<({List<Project> projects, int total})> searchProjects({
     String? query,
@@ -120,6 +148,7 @@ class _PagedProjects implements ProjectRepository {
     pages.add(page);
     queries.add(query);
     tokens.add(cancelToken);
+    if (holdUntil case final held?) await held;
     if (page == failPage) throw ApiFailure('errors.test', statusCode: 500);
     final from = page * size;
     final to = (from + size).clamp(0, total);
