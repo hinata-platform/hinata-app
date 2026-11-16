@@ -83,7 +83,12 @@ Future<void> _flagOnlyCommandV(WidgetTester tester) async {
 
 /// Sends one V event the way the engine does, without yielding in between, so
 /// nothing scheduled before it can run first.
-void _sendV(WidgetTester tester, {required int modifiers, bool down = true}) {
+bool? Function() _sendV(
+  WidgetTester tester, {
+  required int modifiers,
+  bool down = true,
+}) {
+  bool? handled;
   // ignore: deprecated_member_use
   tester.binding.keyEventManager.handleKeyData(
     ui.KeyData(
@@ -105,8 +110,12 @@ void _sendV(WidgetTester tester, {required int modifiers, bool down = true}) {
       'charactersIgnoringModifiers': 'v',
       'modifiers': modifiers,
     }),
-    (_) {},
+    (reply) {
+      final decoded = SystemChannels.keyEvent.codec.decodeMessage(reply);
+      handled = (decoded as Map<Object?, Object?>?)?['handled'] as bool?;
+    },
   );
+  return () => handled;
 }
 
 void main() {
@@ -269,12 +278,13 @@ void main() {
       TextField(controller: controller, readOnly: true, autofocus: true),
     );
 
-    _sendV(tester, modifiers: 0x100000);
+    final handled = _sendV(tester, modifiers: 0x100000);
     _sendV(tester, modifiers: 0x100000, down: false);
     await _settle(tester);
 
     expect(controller.text, 'ab');
     expect(reads(), 0);
+    expect(handled(), isFalse, reason: 'left alone, not swallowed');
   }, variant: _macOS);
 
   testWidgets(
