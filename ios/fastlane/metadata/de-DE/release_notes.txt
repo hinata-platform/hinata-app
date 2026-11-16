@@ -1,1 +1,4 @@
-• Verbesserungen und Fehlerbehebungen.
+• Zeiteinträge nachträglich einem Projekt und Vorgang zuordnen, auch Einträge aus dem Timer
+• Bilder von Absendern mit bestätigter Mail-Signatur immer laden
+• Emojis und Symbole aus Launchern und der Zeichenübersicht lassen sich in jedes Textfeld einfügen
+• Viele kleinere Korrekturen und Verbesserungen
