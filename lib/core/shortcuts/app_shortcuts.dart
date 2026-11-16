@@ -19,8 +19,6 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
-    show LexicalEditableState;
 
 /// Which modifier a shortcut is spelled with.
 ///
@@ -70,12 +68,18 @@ class AppShortcut {
   /// The heading it appears under in the shortcuts sheet.
   final String groupKey;
 
-  /// Whether it still fires while a text field or the editor has focus.
+  /// Whether it still fires while a text field has focus.
   ///
-  /// False by default, and that is the important half: the rich-text editor
-  /// owns combinations like ⌘B and ⌘K while it is focused, and a global handler
-  /// that ran first would take them away from it. The ⇧ combinations are the
-  /// exception — nothing types them, and no editor claims them.
+  /// False by default, and that is the important half: a text field owns its
+  /// keys while it is focused, and a global handler that ran first would take
+  /// them away from it. The ⇧ combinations are the exception — nothing types
+  /// them, and no field claims them.
+  ///
+  /// The rich-text editor is not a text field here — it has no [EditableText]
+  /// — so shortcuts fire while it is focused; ⌘K and ⌘/ are meant to work in a
+  /// description or a comment. The handler runs before the editor sees a key,
+  /// so no shortcut may use a combination the editor binds itself: ⌘A, ⌘B, ⌘C,
+  /// ⌘I, ⌘U, ⌘V, ⌘X, ⌘Z.
   final bool allowInTextField;
 
   /// Whether it appears in the shortcuts sheet. False for one that is only
@@ -247,19 +251,14 @@ EditableTextState? editableTextOf(FocusNode? node) {
   return context.findAncestorStateOfType<EditableTextState>();
 }
 
-/// Whether what has keyboard focus is somewhere text is being typed.
+/// Whether a text field has keyboard focus.
 ///
 /// Asked of the focus tree rather than tracked, because the app has many text
 /// fields and one of them being focused is not something they should each have
-/// to announce. The rich-text editor is not an [EditableText] — it talks to the
-/// platform's text input itself — so it is asked for by name.
-bool textIsBeingEdited() {
-  final focus = FocusManager.instance.primaryFocus;
-  if (editableTextOf(focus) != null) return true;
-  final context = focus?.context;
-  if (context == null || !context.mounted) return false;
-  return context.findAncestorStateOfType<LexicalEditableState>() != null;
-}
+/// to announce. The rich-text editor does not count: it has no [EditableText],
+/// so app shortcuts fire there — see [AppShortcut.allowInTextField].
+bool textIsBeingEdited() =>
+    editableTextOf(FocusManager.instance.primaryFocus) != null;
 
 /// Makes one [AppShortcutRegistry] available to the subtree, and dispatches to it.
 ///
