@@ -2373,6 +2373,7 @@ class IssueDetailBodyState extends State<IssueDetailBody>
             if (_externalImagesHeld(issue)) ...[
               ExternalImagesBanner(
                 sender: issue.externalImageSender,
+                trustUnavailable: issue.externalImageTrustUnavailable,
                 trusting: _trustingSender,
                 onLoadOnce: () => setState(() => _externalOnce = true),
                 onTrust: () => unawaited(_trustSender(issue)),
