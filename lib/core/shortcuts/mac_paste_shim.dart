@@ -27,6 +27,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import 'app_shortcuts.dart' show editableTextOf;
+
 /// Installs the macOS paste repair for the subtree, once, above the router.
 class MacPasteShim extends StatefulWidget {
   const MacPasteShim({required this.child, super.key});
@@ -42,7 +44,9 @@ class _MacPasteShimState extends State<MacPasteShim> {
   static bool get _active =>
       !kIsWeb && defaultTargetPlatform == TargetPlatform.macOS;
 
-  /// What had focus before the latest focus change.
+  /// The text field that had focus before the latest focus change, if focus
+  /// was in one. Nothing else is kept, so a field that was taken down with its
+  /// dialog is not held on to.
   FocusNode? _previous;
 
   /// The text field whose focus the framework parked, until focus moves on.
@@ -55,7 +59,7 @@ class _MacPasteShimState extends State<MacPasteShim> {
     super.initState();
     if (!_active) return;
     _installed = true;
-    _previous = FocusManager.instance.primaryFocus;
+    _remember(FocusManager.instance.primaryFocus);
     FocusManager.instance.addListener(_onFocusChanged);
     HardwareKeyboard.instance.addHandler(_onKey);
   }
@@ -74,58 +78,102 @@ class _MacPasteShimState extends State<MacPasteShim> {
     return manager.primaryFocus == manager.rootScope;
   }
 
-  /// The text field [node] focuses, or null when it is not one.
-  static EditableTextState? _editableOf(FocusNode? node) {
-    final context = node?.context;
-    if (context == null || !context.mounted) return null;
-    if (context is StatefulElement && context.state is EditableTextState) {
-      return context.state as EditableTextState;
-    }
-    return context.findAncestorStateOfType<EditableTextState>();
-  }
+  void _remember(FocusNode? node) =>
+      _previous = editableTextOf(node) != null ? node : null;
 
   /// Remembers a text field when focus is parked away from it, and forgets it
   /// the moment focus lands anywhere else — that is a claim of its own.
   void _onFocusChanged() {
-    final now = FocusManager.instance.primaryFocus;
     if (_focusIsParked) {
-      _parked ??= _editableOf(_previous) != null ? _previous : null;
+      _parked ??= _previous;
     } else {
       _parked = null;
     }
-    _previous = now;
+    _remember(FocusManager.instance.primaryFocus);
   }
 
-  /// Whether the event being dispatched carries ⌘.
+  /// The keys held while the event is dispatched, as the raw keyboard reads
+  /// them off the event's own modifier flags.
   ///
-  /// The raw keyboard reads the modifiers off each event and accepts the
-  /// side-less flag; [HardwareKeyboard] knows only the keys it was told about.
-  static bool get _commandOnEvent {
-    if (HardwareKeyboard.instance.isMetaPressed) return true;
+  /// [HardwareKeyboard] knows only the modifier keys the engine told it about,
+  /// and the macOS engine tells it nothing for a side-less flag. The raw
+  /// keyboard accepts the side-less flag, so a modifier counts when either of
+  /// the two knows it.
+  static Set<LogicalKeyboardKey> get _heldOnEvent {
+    // TODO(rebar): Remove once the macOS engine turns a side-less modifier
+    // flag into a modifier key for HardwareKeyboard, or RawKeyboard goes
+    // away — whichever comes first. The upstream report is still a draft:
+    // "[macOS] ⌘V posted by another app (Raycast, Alfred, clipboard managers)
+    // never pastes into a TextField".
     // ignore: deprecated_member_use
-    final pressed = RawKeyboard.instance.keysPressed;
-    return pressed.contains(LogicalKeyboardKey.metaLeft) ||
-        pressed.contains(LogicalKeyboardKey.metaRight);
+    final raw = RawKeyboard.instance.keysPressed;
+    return {...HardwareKeyboard.instance.logicalKeysPressed, ...raw};
+  }
+
+  /// Whether the event is ⌘V and nothing else, as `SingleActivator(V,
+  /// meta: true)` matches it: ⌘⇧V, ⌥⌘V and ⌃⌘V mean other things.
+  static bool get _isPlainCommandV {
+    final held = _heldOnEvent;
+    bool any(LogicalKeyboardKey left, LogicalKeyboardKey right) =>
+        held.contains(left) || held.contains(right);
+    return any(LogicalKeyboardKey.metaLeft, LogicalKeyboardKey.metaRight) &&
+        !any(LogicalKeyboardKey.shiftLeft, LogicalKeyboardKey.shiftRight) &&
+        !any(LogicalKeyboardKey.altLeft, LogicalKeyboardKey.altRight) &&
+        !any(LogicalKeyboardKey.controlLeft, LogicalKeyboardKey.controlRight);
+  }
+
+  static const _paste = PasteTextIntent(SelectionChangedCause.keyboard);
+
+  /// Whether the field [node] focuses would paste now: it is mounted, and its
+  /// paste action is there and enabled — not for a read-only field.
+  static bool _canPaste(FocusNode node) {
+    final context = node.context;
+    if (context == null || !context.mounted) return false;
+    if (editableTextOf(node) == null) return false;
+    final action = Actions.maybeFind<PasteTextIntent>(context, intent: _paste);
+    if (action == null) return false;
+    return action is ContextAction<PasteTextIntent>
+        ? action.isEnabled(_paste, context)
+        : action.isEnabled(_paste);
+  }
+
+  /// Pastes through the field's own action, so an override of it still
+  /// applies and the field reports its own clipboard errors.
+  static void _invokePaste(FocusNode node) {
+    final context = node.context;
+    if (context == null || !context.mounted) return;
+    Actions.maybeInvoke<PasteTextIntent>(context, _paste);
   }
 
   bool _onKey(KeyEvent event) {
     if (event is! KeyDownEvent || event.logicalKey != LogicalKeyboardKey.keyV) {
       return false;
     }
-    if (!_commandOnEvent) return false;
+    if (!_isPlainCommandV) return false;
 
     if (_focusIsParked) {
       final node = _parked;
-      final field = _editableOf(node);
-      if (node == null || field == null) return false;
+      if (node == null || !_canPaste(node)) return false;
       // The framework is about to give focus back to exactly this field; the
-      // key only arrived first. The text goes in once focus is applied, so
-      // the field has its caret back. Applying focus right here instead would
-      // hand this very key to the field's own paste shortcut as well, since
-      // the focus tree is asked after the keyboard handlers.
-      node.requestFocus();
+      // key only arrived first. Nothing is decided here: in a microtask, after
+      // whatever focus change is already pending has been applied, the field
+      // either has focus again or focus is still parked, and only then does
+      // it get focus and the text. Focus that went anywhere else in the
+      // meantime — a request already marked for focus when the key came in is
+      // applied before this runs — wins, and the key is dropped.
+      //
+      // Asking for focus right here instead would hand this very key to the
+      // field's own paste shortcut as well, since the focus tree is asked after
+      // the keyboard handlers.
       scheduleMicrotask(() {
-        if (node.hasFocus) field.pasteText(SelectionChangedCause.keyboard);
+        if (_focusIsParked) {
+          node.requestFocus();
+          scheduleMicrotask(() {
+            if (node.hasPrimaryFocus) _invokePaste(node);
+          });
+        } else if (node.hasPrimaryFocus) {
+          _invokePaste(node);
+        }
       });
       return true;
     }
@@ -134,9 +182,9 @@ class _MacPasteShimState extends State<MacPasteShim> {
     // field's own paste shortcut runs, and running it here too would paste
     // twice; only the side-less flag needs help.
     if (HardwareKeyboard.instance.isMetaPressed) return false;
-    final field = _editableOf(FocusManager.instance.primaryFocus);
-    if (field == null) return false;
-    field.pasteText(SelectionChangedCause.keyboard);
+    final node = FocusManager.instance.primaryFocus;
+    if (node == null || !_canPaste(node)) return false;
+    _invokePaste(node);
     return true;
   }
 

@@ -19,6 +19,8 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:lexical_editor_flutter/lexical_editor_flutter.dart'
+    show LexicalEditableState;
 
 /// Which modifier a shortcut is spelled with.
 ///
@@ -235,18 +237,28 @@ class AppShortcutRegistry extends ChangeNotifier {
   }
 }
 
+/// The text field [node] focuses, or null when it does not focus one.
+///
+/// A field's focus node belongs to the [Focus] that [EditableText] builds, so
+/// the field is an ancestor of the node's context.
+EditableTextState? editableTextOf(FocusNode? node) {
+  final context = node?.context;
+  if (context == null || !context.mounted) return null;
+  return context.findAncestorStateOfType<EditableTextState>();
+}
+
 /// Whether what has keyboard focus is somewhere text is being typed.
 ///
 /// Asked of the focus tree rather than tracked, because the app has many text
 /// fields and one of them being focused is not something they should each have
-/// to announce. The rich-text editor is caught by the same question: it puts an
-/// [EditableText] behind its surface, which is what receives the keystrokes.
+/// to announce. The rich-text editor is not an [EditableText] — it talks to the
+/// platform's text input itself — so it is asked for by name.
 bool textIsBeingEdited() {
   final focus = FocusManager.instance.primaryFocus;
+  if (editableTextOf(focus) != null) return true;
   final context = focus?.context;
-  if (context == null) return false;
-  if (context.widget is EditableText) return true;
-  return context.findAncestorStateOfType<EditableTextState>() != null;
+  if (context == null || !context.mounted) return false;
+  return context.findAncestorStateOfType<LexicalEditableState>() != null;
 }
 
 /// Makes one [AppShortcutRegistry] available to the subtree, and dispatches to it.
