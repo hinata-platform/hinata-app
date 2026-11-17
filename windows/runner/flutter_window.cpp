@@ -36,6 +36,8 @@ bool FlutterWindow::OnCreate() {
   hinata::RegisterTaskbarChannel(flutter_controller_->engine(), GetHandle());
 
   flutter_controller_->engine()->SetNextFrameCallback([&]() {
+    // windows_push raises the window here when a notification click
+    // launched the app: only now is it really on screen.
     this->Show();
   });
 
